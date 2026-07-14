@@ -13,24 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.edge.instructions;
+package org.thingsboard.server.common.data;
 
-import org.thingsboard.server.common.data.EdgeUpgradeInfo;
-import org.thingsboard.server.common.data.edge.EdgeInstructions;
-import org.thingsboard.server.common.data.id.EdgeId;
-import org.thingsboard.server.common.data.id.TenantId;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
-public interface EdgeUpgradeInstructionsService {
+@Data
+@Schema
+public class EdgeUpgradeMessageV2 implements Serializable {
 
-    EdgeInstructions getUpgradeInstructions(String edgeVersion, String upgradeMethod);
+    private static final long serialVersionUID = -6647214126993298281L;
 
-    void updateVersionGraph(Map<String, List<EdgeUpgradeInfo>> versionGraph);
-
-    void setPlatformEdgeVersion(String version);
-
-    boolean isUpgradeAvailable(TenantId tenantId, EdgeId edgeId) throws Exception;
-
+    @Schema(description = "Mapping of edge version to the list of available upgrade options (next ver + strategy).")
+    private final Map<String, List<EdgeUpgradeInfo>> edgeVersions;
 }

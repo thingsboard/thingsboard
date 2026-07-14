@@ -18,6 +18,7 @@ package org.thingsboard.server.service.edge.instructions;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.TbVersionUtils;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EdgeUpgradeInfo;
@@ -30,6 +31,7 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.install.InstallScripts;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -62,10 +64,35 @@ public class DefaultEdgeUpgradeInstructionsService extends BaseEdgeInstallUpgrad
     }
 
     @Override
-    public void updateInstructionMap(Map<String, EdgeUpgradeInfo> map) {
+    public void updateVersionGraph(Map<String, List<EdgeUpgradeInfo>> versionGraph) {
+        updateInstructionMap(resolveVersionGraph(versionGraph));
+    }
+
+    private void updateInstructionMap(Map<String, EdgeUpgradeInfo> map) {
         for (String key : map.keySet()) {
             upgradeVersionHashMap.put(key, map.get(key));
         }
+    }
+
+    private Map<String, EdgeUpgradeInfo> resolveVersionGraph(Map<String, List<EdgeUpgradeInfo>> versionGraph) {
+        String platformVersion = TbVersionUtils.extractStartingDigits(platformEdgeVersion);
+        Map<String, EdgeUpgradeInfo> resolved = new HashMap<>();
+        for (var entry : versionGraph.entrySet()) {
+            EdgeUpgradeInfo best = null;
+            for (EdgeUpgradeInfo option : entry.getValue()) {
+                String next = option.getNextEdgeVersion();
+                // eligible only if next is present and lower than or equal to the platform version
+                if (next == null || TbVersionUtils.compare(next, platformVersion) > 0) {
+                    continue;
+                }
+                // keep the option with the highest eligible nextEdgeVersion
+                if (best == null || TbVersionUtils.compare(next, best.getNextEdgeVersion()) >= 0) {
+                    best = option;
+                }
+            }
+            resolved.put(entry.getKey(), best != null ? best : new EdgeUpgradeInfo(false, null));
+        }
+        return resolved;
     }
 
     @Override
