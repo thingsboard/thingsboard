@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.edge.rpc.session.manager;
 
+import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
@@ -41,6 +42,7 @@ public interface EdgeGrpcSessionManager {
     void onConfigurationUpdate(Edge edge);
     void onEdgeDisconnect();
     void onEdgeRemoval();
+    void closeWithError(Status status, String errorMsg);
     void destroyAndMarkAsZombieIfFailed();
     boolean destroy();
 

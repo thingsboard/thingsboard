@@ -69,6 +69,9 @@ public class ApiUsageStateEntity extends BaseVersionedEntity<ApiUsageState> impl
     @Enumerated(EnumType.STRING)
     @Column(name = ModelConstants.API_USAGE_STATE_ALARM_EXEC_COLUMN)
     private ApiUsageStateValue alarmExecState = ApiUsageStateValue.ENABLED;
+    @Enumerated(EnumType.STRING)
+    @Column(name = ModelConstants.API_USAGE_STATE_EDGE_COLUMN)
+    private ApiUsageStateValue edgeState = ApiUsageStateValue.ENABLED;
 
     public ApiUsageStateEntity() {
     }
@@ -90,6 +93,7 @@ public class ApiUsageStateEntity extends BaseVersionedEntity<ApiUsageState> impl
         this.emailExecState = ur.getEmailExecState();
         this.smsExecState = ur.getSmsExecState();
         this.alarmExecState = ur.getAlarmExecState();
+        this.edgeState = ur.getEdgeState();
     }
 
     @Override
@@ -110,6 +114,7 @@ public class ApiUsageStateEntity extends BaseVersionedEntity<ApiUsageState> impl
         ur.setEmailExecState(emailExecState);
         ur.setSmsExecState(smsExecState);
         ur.setAlarmExecState(alarmExecState);
+        ur.setEdgeState(edgeState);
         ur.setVersion(version);
         return ur;
     }

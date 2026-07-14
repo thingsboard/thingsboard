@@ -117,9 +117,6 @@ import static org.thingsboard.server.service.transport.BasicCredentialsValidatio
 import static org.thingsboard.server.service.transport.BasicCredentialsValidationResult.VALID;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicService.DEVICE_NAME_SPLIT_SEPARATOR;
 
-/**
- * Created by ashvayka on 05.10.18.
- */
 @Slf4j
 @Service
 @TbCoreComponent

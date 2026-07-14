@@ -182,18 +182,18 @@
         <mat-hint></mat-hint>
       </mat-form-field>
       <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
-        <mat-label translate>tenant-profile.max-transport-messages</mat-label>
+        <mat-label translate>tenant-profile.max-rule-node-executions-per-message</mat-label>
         <input matInput required min="0" step="1"
-               formControlName="maxTransportMessages"
+               formControlName="maxRuleNodeExecutionsPerMessage"
                type="number">
-        @if (tenantProfileConfigurationForm.get('maxTransportMessages').hasError('required')) {
+        @if (tenantProfileConfigurationForm.get('maxRuleNodeExecutionsPerMessage').hasError('required')) {
           <mat-error>
-            {{ 'tenant-profile.max-transport-messages-required' | translate}}
+            {{ 'tenant-profile.max-rule-node-executions-per-message-required' | translate}}
           </mat-error>
         }
-        @if (tenantProfileConfigurationForm.get('maxTransportMessages').hasError('min')) {
+        @if (tenantProfileConfigurationForm.get('maxRuleNodeExecutionsPerMessage').hasError('min')) {
           <mat-error>
-            {{ 'tenant-profile.max-transport-messages-range' | translate}}
+            {{ 'tenant-profile.max-rule-node-executions-per-message-range' | translate}}
           </mat-error>
         }
         <mat-hint></mat-hint>
@@ -242,24 +242,58 @@
             <mat-hint></mat-hint>
           </mat-form-field>
         </div>
+      </ng-template>
+    </mat-expansion-panel>
+  </fieldset>
+
+  <fieldset class="fields-group">
+    <legend class="group-title">
+      {{ 'tenant-profile.api-usage' | translate }} <span translate>tenant-profile.unlimited</span>
+    </legend>
+    <div class="fields-element flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
+      <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
+        <mat-label translate>tenant-profile.max-transport-messages</mat-label>
+        <input matInput required min="0" step="1"
+               formControlName="maxTransportMessages"
+               type="number">
+        @if (tenantProfileConfigurationForm.get('maxTransportMessages').hasError('required')) {
+          <mat-error>
+            {{ 'tenant-profile.max-transport-messages-required' | translate}}
+          </mat-error>
+        }
+        @if (tenantProfileConfigurationForm.get('maxTransportMessages').hasError('min')) {
+          <mat-error>
+            {{ 'tenant-profile.max-transport-messages-range' | translate}}
+          </mat-error>
+        }
+        <mat-hint></mat-hint>
+      </mat-form-field>
+      <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
+        <mat-label translate>tenant-profile.max-edge-events</mat-label>
+        <input matInput required min="0" step="1"
+               formControlName="maxEdgeEvents"
+               type="number">
+        @if (tenantProfileConfigurationForm.get('maxEdgeEvents').hasError('required')) {
+          <mat-error>
+            {{ 'tenant-profile.max-edge-events-required' | translate}}
+          </mat-error>
+        }
+        @if (tenantProfileConfigurationForm.get('maxEdgeEvents').hasError('min')) {
+          <mat-error>
+            {{ 'tenant-profile.max-edge-events-range' | translate}}
+          </mat-error>
+        }
+        <mat-hint></mat-hint>
+      </mat-form-field>
+    </div>
+    <mat-expansion-panel class="configuration-panel">
+      <mat-expansion-panel-header>
+        <mat-panel-description class="flex items-stretch justify-end" translate>
+          tenant-profile.advanced-settings
+        </mat-panel-description>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
         <div class="flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
-          <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
-            <mat-label translate>tenant-profile.max-rule-node-executions-per-message</mat-label>
-            <input matInput required min="0" step="1"
-                   formControlName="maxRuleNodeExecutionsPerMessage"
-                   type="number">
-            @if (tenantProfileConfigurationForm.get('maxRuleNodeExecutionsPerMessage').hasError('required')) {
-              <mat-error>
-                {{ 'tenant-profile.max-rule-node-executions-per-message-required' | translate}}
-              </mat-error>
-            }
-            @if (tenantProfileConfigurationForm.get('maxRuleNodeExecutionsPerMessage').hasError('min')) {
-              <mat-error>
-                {{ 'tenant-profile.max-rule-node-executions-per-message-range' | translate}}
-              </mat-error>
-            }
-            <mat-hint></mat-hint>
-          </mat-form-field>
           <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
             <mat-label translate>tenant-profile.max-transport-data-points</mat-label>
             <input matInput required min="0" step="1"
@@ -277,10 +311,12 @@
             }
             <mat-hint></mat-hint>
           </mat-form-field>
+          <div class="flex-1"></div>
         </div>
       </ng-template>
     </mat-expansion-panel>
   </fieldset>
+
   <fieldset class="fields-group">
     <legend class="group-title">
       {{ 'tenant-profile.calculated-fields' | translate }} <span translate>tenant-profile.unlimited</span>

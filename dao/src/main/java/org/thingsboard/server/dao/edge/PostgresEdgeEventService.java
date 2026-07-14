@@ -70,6 +70,7 @@ public class PostgresEdgeEventService extends BaseEdgeEventService {
             public void onSuccess(Void result) {
                 statsCounterService.ifPresent(statsCounterService ->
                         statsCounterService.recordEvent(EdgeStatsKey.DOWNLINK_MSGS_ADDED, edgeEvent.getTenantId(), edgeEvent.getEdgeId(), 1));
+                reportEdgeEventUsage(edgeEvent);
                 eventPublisher.publishEvent(SaveEntityEvent.builder()
                         .tenantId(edgeEvent.getTenantId())
                         .entityId(edgeEvent.getEdgeId())

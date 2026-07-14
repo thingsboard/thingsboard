@@ -20,11 +20,13 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.data.util.Pair;
+import org.thingsboard.edge.exception.EdgeFeatureDisabledException;
 import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
@@ -74,6 +76,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiConsumer;
@@ -99,6 +102,7 @@ public class EdgeGrpcSession implements EdgeSession {
     private final EdgeSessionState state = new EdgeSessionState();
     private final Lock downlinkMsgLock = new ReentrantLock();
     private final ConcurrentLinkedQueue<EdgeEvent> highPriorityQueue = new ConcurrentLinkedQueue<>();
+    private final AtomicBoolean closed = new AtomicBoolean(false);
 
     private int clientMaxInboundMessageSize;
 
@@ -273,8 +277,26 @@ public class EdgeGrpcSession implements EdgeSession {
         return state.getSendDownlinkMsgsFuture();
     }
 
+    public void closeWithError(Status status, String errorMsg) {
+        if (!closed.compareAndSet(false, true)) {
+            log.debug("[{}][{}] closeWithError skipped — session already closed", getTenantId(), getSessionId());
+            return;
+        }
+        log.debug("[{}][{}] Closing session with error: {}", getTenantId(), getSessionId(), errorMsg);
+        state.setConnected(false);
+        try {
+            outputStream.onError(status.withDescription(errorMsg).asRuntimeException());
+        } catch (Exception e) {
+            log.debug("[{}][{}] Failed to close output stream with error: {}", getTenantId(), getSessionId(), e.getMessage());
+        }
+    }
+
     @Override
     public void close() {
+        if (!closed.compareAndSet(false, true)) {
+            log.debug("[{}][{}] close skipped — session already closed", getTenantId(), getSessionId());
+            return;
+        }
         log.debug("[{}][{}] Closing session", getTenantId(), getSessionId());
         state.setConnected(false);
         try {
@@ -421,7 +443,7 @@ public class EdgeGrpcSession implements EdgeSession {
                             if (state.isConnected() && pageData.hasNext()) {
                                 fetchAndSendEdgeEvents(fetcher, pageLink.nextPageLink(), result);
                             } else {
-                                EdgeEvent latestEdgeEvent = pageData.getData().get(pageData.getData().size() - 1);
+                                EdgeEvent latestEdgeEvent = pageData.getData().getLast();
                                 UUID idOffset = latestEdgeEvent.getUuidId();
                                 if (idOffset != null) {
                                     Long newStartTs = Uuids.unixTimestamp(idOffset);
@@ -457,7 +479,7 @@ public class EdgeGrpcSession implements EdgeSession {
                     stopCurrentSendDownlinkMsgsTask(true);
                     return;
                 }
-                if (!state.getPendingMsgsMap().values().isEmpty()) {
+                if (!state.getPendingMsgsMap().isEmpty()) {
                     Edge edge = state.getEdge();
                     List<DownlinkMsg> copy = new ArrayList<>(state.getPendingMsgsMap().values());
                     if (attempt > 1) {
@@ -551,45 +573,54 @@ public class EdgeGrpcSession implements EdgeSession {
     private ConnectResponseMsg processConnect(ConnectRequestMsg request) {
         log.trace("[{}] processConnect [{}]", getSessionId(), request);
         Optional<Edge> optional = ctx.getEdgeService().findEdgeByRoutingKey(TenantId.SYS_TENANT_ID, request.getEdgeRoutingKey());
-        if (optional.isPresent()) {
-            Edge edge = optional.get();
-            TenantId tenantId = edge.getTenantId();
-            state.setEdge(edge);
-            try {
-                if (edge.getSecret().equals(request.getEdgeSecret())) {
-                    sessionOpenListener.accept(edge.getId(), parentManagerRef);
-                    state.setEdgeVersion(request.getEdgeVersion());
-                    processSaveEdgeVersionAsAttribute(request.getEdgeVersion().name());
-                    return ConnectResponseMsg.newBuilder()
-                            .setResponseCode(ConnectResponseCode.ACCEPTED)
-                            .setErrorMsg("")
-                            .setConfiguration(EdgeMsgConstructorUtils.constructEdgeConfiguration(edge))
-                            .setMaxInboundMessageSize(maxInboundMessageSize)
-                            .build();
-                }
-                String error = "Failed to validate the edge!";
-                String failureMsg = String.format("%s Provided request secret: %s", error, request.getEdgeSecret());
-                ctx.getRuleProcessor().process(EdgeCommunicationFailureTrigger.builder().tenantId(tenantId).edgeId(edge.getId())
-                        .customerId(edge.getCustomerId()).edgeName(edge.getName()).failureMsg(failureMsg).error(error).build());
-                return ConnectResponseMsg.newBuilder()
-                        .setResponseCode(ConnectResponseCode.BAD_CREDENTIALS)
-                        .setErrorMsg(failureMsg)
-                        .setConfiguration(EdgeConfiguration.getDefaultInstance()).build();
-            } catch (Exception e) {
-                String failureMsg = "Failed to process edge connection!";
-                ctx.getRuleProcessor().process(EdgeCommunicationFailureTrigger.builder().tenantId(tenantId).edgeId(edge.getId())
-                        .customerId(edge.getCustomerId()).edgeName(edge.getName()).failureMsg(failureMsg).error(e.getMessage()).build());
-                log.error(failureMsg, e);
-                return ConnectResponseMsg.newBuilder()
-                        .setResponseCode(ConnectResponseCode.SERVER_UNAVAILABLE)
-                        .setErrorMsg(failureMsg)
-                        .setConfiguration(EdgeConfiguration.getDefaultInstance()).build();
-            }
+        if (optional.isEmpty()) {
+            return buildErrorResponse(ConnectResponseCode.BAD_CREDENTIALS, "Failed to find the edge! Routing key: " + request.getEdgeRoutingKey());
         }
+        Edge edge = optional.get();
+        TenantId tenantId = edge.getTenantId();
+        try {
+            if (!edge.getSecret().equals(request.getEdgeSecret())) {
+                String failureMsg = "Failed to validate the edge! Provided request secret: " + request.getEdgeSecret();
+                processConnectionFailure(edge, failureMsg, "Failed to validate the edge!");
+                return buildErrorResponse(ConnectResponseCode.BAD_CREDENTIALS, failureMsg);
+            }
+            state.setEdge(edge);
+            sessionOpenListener.accept(edge.getId(), parentManagerRef);
+            state.setEdgeVersion(request.getEdgeVersion());
+            processSaveEdgeVersionAsAttribute(request.getEdgeVersion().name());
+            return ConnectResponseMsg.newBuilder()
+                    .setResponseCode(ConnectResponseCode.ACCEPTED)
+                    .setErrorMsg("")
+                    .setConfiguration(EdgeMsgConstructorUtils.constructEdgeConfiguration(edge))
+                    .setMaxInboundMessageSize(maxInboundMessageSize)
+                    .build();
+        } catch (EdgeFeatureDisabledException e) {
+            log.trace("[{}][{}] {}", tenantId, edge.getId(), e.getMessage());
+            // Intentionally skip processConnectionFailure: edges retry aggressively when disabled,
+            // which would flood the rule engine with EdgeCommunicationFailure events. The
+            // FEATURE_DISABLED response code already conveys the cause to the operator.
+            return buildErrorResponse(ConnectResponseCode.FEATURE_DISABLED, e.getMessage());
+        } catch (Exception e) {
+            String failureMsg = "Failed to process edge connection!";
+            processConnectionFailure(edge, failureMsg, e.getMessage());
+            log.error(failureMsg, e);
+            return buildErrorResponse(ConnectResponseCode.SERVER_UNAVAILABLE, failureMsg);
+        }
+    }
+
+    private void processConnectionFailure(Edge edge, String failureMsg, String error) {
+        ctx.getRuleProcessor().process(EdgeCommunicationFailureTrigger.builder()
+                .tenantId(edge.getTenantId()).edgeId(edge.getId())
+                .customerId(edge.getCustomerId()).edgeName(edge.getName())
+                .failureMsg(failureMsg).error(error).build());
+    }
+
+    private ConnectResponseMsg buildErrorResponse(ConnectResponseCode code, String errorMsg) {
         return ConnectResponseMsg.newBuilder()
-                .setResponseCode(ConnectResponseCode.BAD_CREDENTIALS)
-                .setErrorMsg("Failed to find the edge! Routing key: " + request.getEdgeRoutingKey())
-                .setConfiguration(EdgeConfiguration.getDefaultInstance()).build();
+                .setResponseCode(code)
+                .setErrorMsg(errorMsg)
+                .setConfiguration(EdgeConfiguration.getDefaultInstance())
+                .build();
     }
 
     private void processSaveEdgeVersionAsAttribute(String edgeVersion) {
@@ -618,4 +649,5 @@ public class EdgeGrpcSession implements EdgeSession {
     private UUID getSessionId() {
         return state.getSessionId();
     }
+
 }

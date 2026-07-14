@@ -68,12 +68,12 @@ import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.service.validator.DeviceCredentialsDataValidator;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
+import org.thingsboard.server.exception.DataValidationException;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -114,7 +114,7 @@ public class DeviceServiceTest extends AbstractServiceTest {
     @MockitoSpyBean
     private DeviceCredentialsDataValidator validator;
 
-    private IdComparator<Device> idComparator = new IdComparator<>();
+    private final IdComparator<Device> idComparator = new IdComparator<>();
     private TenantId anotherTenantId;
     private static ListeningExecutorService executor;
 

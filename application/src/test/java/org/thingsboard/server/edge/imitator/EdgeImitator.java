@@ -30,9 +30,9 @@ import org.thingsboard.edge.rpc.EdgeRpcClient;
 import org.thingsboard.server.controller.AbstractWebTest;
 import org.thingsboard.server.gen.edge.v1.AdminSettingsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AiModelUpdateMsg;
-import org.thingsboard.server.gen.edge.v1.ApiKeyUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AlarmCommentUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AlarmUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.ApiKeyUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AssetProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AssetUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.CalculatedFieldUpdateMsg;
@@ -87,6 +87,7 @@ import java.util.stream.Collectors;
 public class EdgeImitator {
 
     private static final int MAX_DOWNLINK_FAILS = 2;
+
     private final String routingKey;
     private final String routingSecret;
 
@@ -106,6 +107,8 @@ public class EdgeImitator {
 
     @Getter
     private EdgeConfiguration configuration;
+    @Getter
+    private volatile Exception closeException;
     private final ConcurrentLinkedDeque<AbstractMessage> downlinkMsgs;
 
     //Returns collection copy as Unmodifiable list
@@ -195,6 +198,9 @@ public class EdgeImitator {
 
     private void onClose(Exception e) {
         log.info("onClose: {}", e.getMessage());
+        if (this.closeException == null) {
+            this.closeException = e;
+        }
     }
 
     private ListenableFuture<List<Void>> processDownlinkMsg(DownlinkMsg downlinkMsg) {

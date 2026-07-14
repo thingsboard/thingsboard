@@ -809,6 +809,31 @@ public class DefaultTransportService extends TransportActivityManager implements
         sessions.remove(toSessionId(sessionInfo));
     }
 
+    private void closeTenantSessions(TenantId tenantId, String reason) {
+        long msb = tenantId.getId().getMostSignificantBits();
+        long lsb = tenantId.getId().getLeastSignificantBits();
+        TransportProtos.SessionCloseNotificationProto notification = TransportProtos.SessionCloseNotificationProto.newBuilder()
+                .setMessage(reason).build();
+        int closed = 0;
+        for (Map.Entry<UUID, SessionMetaData> entry : sessions.entrySet()) {
+            UUID sessionId = entry.getKey();
+            SessionMetaData md = entry.getValue();
+            TransportProtos.SessionInfoProto sessionInfo = md.getSessionInfo();
+            if (sessionInfo.getTenantIdMSB() == msb && sessionInfo.getTenantIdLSB() == lsb) {
+                transportCallbackExecutor.submit(() -> {
+                    md.getListener().onRemoteSessionCloseCommand(sessionId, notification);
+                    if (md.getSessionType() == TransportProtos.SessionType.SYNC) {
+                        deregisterSession(sessionInfo);
+                    }
+                });
+                closed++;
+            }
+        }
+        if (closed > 0) {
+            log.info("[{}] Transport feature disabled due to API limits. Closing {} sessions.", tenantId, closed);
+        }
+    }
+
     @Override
     public void log(TransportProtos.SessionInfoProto sessionInfo, String msg) {
         if (!logEnabled || sessionInfo == null || StringUtils.isEmpty(msg)) {
@@ -1010,7 +1035,9 @@ public class DefaultTransportService extends TransportActivityManager implements
             case APIUSAGESTATE:
                 ApiUsageState apiUsageState = ProtoUtils.fromProto(msg.getApiUsageState());
                 rateLimitService.update(apiUsageState.getTenantId(), apiUsageState.isTransportEnabled());
-                //TODO: if transport is disabled, we should close all sessions and not to check credentials.
+                if (!apiUsageState.isTransportEnabled()) {
+                    closeTenantSessions(apiUsageState.getTenantId(), "Transport feature disabled due to API limits!");
+                }
                 break;
             case DEVICE:
                 onDeviceUpdate(ProtoUtils.fromProto(msg.getDevice()));

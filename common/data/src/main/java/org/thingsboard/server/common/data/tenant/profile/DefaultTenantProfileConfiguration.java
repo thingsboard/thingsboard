@@ -124,6 +124,8 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private long maxSms;
     @Schema(example = "1000")
     private long maxCreatedAlarms;
+    @Schema(example = "10000000")
+    private long maxEdgeEvents;
 
     @RateLimit(fieldName = "REST requests for tenant")
     private String tenantServerRestLimitsConfiguration;
@@ -222,6 +224,7 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
             case EMAIL_EXEC_COUNT -> maxEmails;
             case SMS_EXEC_COUNT -> maxSms;
             case CREATED_ALARMS_COUNT -> maxCreatedAlarms;
+            case EDGE_EVENT_COUNT -> maxEdgeEvents;
             default -> 0L;
         };
     }
@@ -230,7 +233,7 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     public boolean getProfileFeatureEnabled(ApiUsageRecordKey key) {
         switch (key) {
             case SMS_EXEC_COUNT:
-                return smsEnabled == null || Boolean.TRUE.equals(smsEnabled);
+                return smsEnabled == null || smsEnabled;
             default:
                 return true;
         }
