@@ -100,27 +100,11 @@ public class DefaultEdgeUpgradeInstructionsService extends BaseEdgeInstallUpgrad
         Optional<AttributeKvEntry> attributeKvEntryOpt = attributesService.find(tenantId, edgeId, AttributeScope.SERVER_SCOPE, DataConstants.EDGE_VERSION_ATTR_KEY).get();
         if (attributeKvEntryOpt.isPresent()) {
             String edgeVersionFormatted = convertEdgeVersionToDocsFormat(attributeKvEntryOpt.get().getValueAsString());
-            return isVersionGreaterOrEqualsThan(edgeVersionFormatted, "3.6.0") && !isVersionGreaterOrEqualsThan(edgeVersionFormatted, platformEdgeVersion);
+            String platformEdgeVersionFormatted = TbVersionUtils.extractStartingDigits(platformEdgeVersion);
+            return TbVersionUtils.compare(edgeVersionFormatted, "3.6.0") >= 0
+                    && TbVersionUtils.compare(edgeVersionFormatted, platformEdgeVersionFormatted) < 0;
         }
         return false;
-    }
-
-    private boolean isVersionGreaterOrEqualsThan(String version1, String version2) {
-        String[] v1 = version1.split("\\.");
-        String[] v2 = version2.split("\\.");
-
-        int length = Math.max(v1.length, v2.length);
-        for (int i = 0; i < length; i++) {
-            int num1 = i < v1.length ? Integer.parseInt(v1[i]) : 0;
-            int num2 = i < v2.length ? Integer.parseInt(v2[i]) : 0;
-
-            if (num1 < num2) {
-                return false;
-            } else if (num1 > num2) {
-                return true;
-            }
-        }
-        return true;
     }
 
     private EdgeInstructions getDockerUpgradeInstructions(String platformEdgeVersion, String currentEdgeVersion) {
