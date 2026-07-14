@@ -88,6 +88,12 @@ public class JpaCalculatedFieldDao extends JpaAbstractDao<CalculatedFieldEntity,
     }
 
     @Override
+    public PageData<CalculatedField> findAllByTenantIdAndEnabled(TenantId tenantId, boolean enabled, PageLink pageLink) {
+        log.debug("Try to find calculated fields by tenantId[{}], enabled [{}] and pageLink [{}]", tenantId, enabled, pageLink);
+        return DaoUtil.toPageData(calculatedFieldRepository.findAllByTenantIdAndEnabled(tenantId.getId(), enabled, DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
     public PageData<CalculatedField> findByEntityIdAndTypes(TenantId tenantId, EntityId entityId, Set<CalculatedFieldType> types, PageLink pageLink) {
         log.debug("Try to find calculated fields by entityId [{}] and type [{}] and pageLink [{}]", entityId, types, pageLink);
         return DaoUtil.toPageData(calculatedFieldRepository.findByTenantIdAndEntityIdAndTypes(tenantId.getId(), entityId.getId(),

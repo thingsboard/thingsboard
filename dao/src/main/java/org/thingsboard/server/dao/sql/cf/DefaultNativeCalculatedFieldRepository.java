@@ -44,8 +44,9 @@ import java.util.stream.Collectors;
 @Slf4j
 public class DefaultNativeCalculatedFieldRepository implements NativeCalculatedFieldRepository {
 
-    private final String CF_COUNT_QUERY = "SELECT count(id) FROM calculated_field;";
-    private final String CF_QUERY = "SELECT * FROM calculated_field ORDER BY created_time ASC LIMIT %s OFFSET %s";
+    // Only enabled calculated fields are loaded: this query feeds the processing cache, and disabled fields must not be processed.
+    private final String CF_COUNT_QUERY = "SELECT count(id) FROM calculated_field WHERE enabled = true;";
+    private final String CF_QUERY = "SELECT * FROM calculated_field WHERE enabled = true ORDER BY created_time ASC LIMIT %s OFFSET %s";
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
     private final TransactionTemplate transactionTemplate;

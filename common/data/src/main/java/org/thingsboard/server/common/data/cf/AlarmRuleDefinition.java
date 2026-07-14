@@ -44,6 +44,8 @@ public class AlarmRuleDefinition extends BaseData<CalculatedFieldId> implements 
 
     private TenantId tenantId;
     private EntityId entityId;
+    @Schema(description = "Enable/disable the alarm rule.", example = "true")
+    private boolean enabled = true;
 
     @NoXss
     @Length(fieldName = "name")
@@ -78,6 +80,7 @@ public class AlarmRuleDefinition extends BaseData<CalculatedFieldId> implements 
         super(alarmRuleDefinition);
         this.tenantId = alarmRuleDefinition.tenantId;
         this.entityId = alarmRuleDefinition.entityId;
+        this.enabled = alarmRuleDefinition.enabled;
         this.name = alarmRuleDefinition.name;
         this.debugMode = alarmRuleDefinition.debugMode;
         this.debugSettings = alarmRuleDefinition.debugSettings;
@@ -117,6 +120,7 @@ public class AlarmRuleDefinition extends BaseData<CalculatedFieldId> implements 
         cf.setCreatedTime(this.createdTime);
         cf.setTenantId(this.tenantId);
         cf.setEntityId(this.entityId);
+        cf.setEnabled(this.enabled);
         cf.setType(CalculatedFieldType.ALARM);
         cf.setName(this.name);
         cf.setDebugMode(this.debugMode);
@@ -134,6 +138,7 @@ public class AlarmRuleDefinition extends BaseData<CalculatedFieldId> implements 
         def.setCreatedTime(cf.getCreatedTime());
         def.setTenantId(cf.getTenantId());
         def.setEntityId(cf.getEntityId());
+        def.setEnabled(cf.isEnabled());
         def.setName(cf.getName());
         def.setDebugMode(cf.isDebugMode());
         def.setDebugSettings(cf.getDebugSettings());
@@ -153,6 +158,7 @@ public class AlarmRuleDefinition extends BaseData<CalculatedFieldId> implements 
                 .append("AlarmRuleDefinition[")
                 .append("tenantId=").append(tenantId)
                 .append(", entityId=").append(entityId)
+                .append(", enabled=").append(enabled)
                 .append(", name='").append(name)
                 .append(", configurationVersion=").append(configurationVersion)
                 .append(", configuration=").append(configuration)

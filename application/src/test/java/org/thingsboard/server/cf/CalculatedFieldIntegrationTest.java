@@ -1481,6 +1481,299 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                 });
     }
 
+    @Test
+    public void testDisabledCalculatedFieldDoesNotProcess() throws Exception {
+        Device testDevice = createDevice("Test device", "1234567890");
+
+        CalculatedField calculatedField = new CalculatedField();
+        calculatedField.setEntityId(testDevice.getId());
+        calculatedField.setType(CalculatedFieldType.SIMPLE);
+        calculatedField.setName("enable-disable-test");
+        calculatedField.setConfigurationVersion(1);
+
+        SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
+        Argument argument = new Argument();
+        argument.setRefEntityKey(new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null));
+        config.setArguments(Map.of("T", argument));
+        config.setExpression("T * 2");
+        TimeSeriesOutput output = new TimeSeriesOutput();
+        output.setName("doubled");
+        config.setOutput(output);
+        calculatedField.setConfiguration(config);
+
+        // Create CF (enabled by default) and verify it processes
+        CalculatedField savedCf = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
+        postTelemetry(testDevice.getId(), "{\"temperature\":10}");
+
+        await().alias("enabled CF processes telemetry").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode result = getLatestTelemetry(testDevice.getId(), "doubled");
+                    assertThat(result).isNotNull();
+                    assertThat(result.get("doubled").get(0).get("value").asText()).isEqualTo("20.0");
+                });
+
+        // Disable CF
+        savedCf = doGet("/api/calculatedField/" + savedCf.getId().getId(), CalculatedField.class);
+        savedCf.setEnabled(false);
+        savedCf = doPost("/api/calculatedField", savedCf, CalculatedField.class);
+        assertThat(savedCf.isEnabled()).isFalse();
+
+        // Send new telemetry — disabled CF should NOT recalculate
+        postTelemetry(testDevice.getId(), "{\"temperature\":50}");
+
+        await().alias("disabled CF should not recalculate").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .during(3, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode result = getLatestTelemetry(testDevice.getId(), "doubled");
+                    assertThat(result.get("doubled").get(0).get("value").asText()).isEqualTo("20.0");
+                });
+
+        doDelete("/api/calculatedField/" + savedCf.getId().getId().toString())
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void testReEnabledCalculatedFieldProcesses() throws Exception {
+        Device testDevice = createDevice("Test device", "1234567890");
+
+        CalculatedField calculatedField = new CalculatedField();
+        calculatedField.setEntityId(testDevice.getId());
+        calculatedField.setType(CalculatedFieldType.SIMPLE);
+        calculatedField.setName("re-enable-test");
+        calculatedField.setConfigurationVersion(1);
+
+        SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
+        Argument argument = new Argument();
+        argument.setRefEntityKey(new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null));
+        config.setArguments(Map.of("T", argument));
+        config.setExpression("T + 100");
+        TimeSeriesOutput output = new TimeSeriesOutput();
+        output.setName("shifted");
+        config.setOutput(output);
+        calculatedField.setConfiguration(config);
+
+        // Create CF, send telemetry, verify
+        CalculatedField savedCf = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
+        postTelemetry(testDevice.getId(), "{\"temperature\":5}");
+
+        await().alias("initial calculation").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode result = getLatestTelemetry(testDevice.getId(), "shifted");
+                    assertThat(result).isNotNull();
+                    assertThat(result.get("shifted").get(0).get("value").asText()).isEqualTo("105.0");
+                });
+
+        // Disable
+        savedCf = doGet("/api/calculatedField/" + savedCf.getId().getId(), CalculatedField.class);
+        savedCf.setEnabled(false);
+        savedCf = doPost("/api/calculatedField", savedCf, CalculatedField.class);
+
+        // Re-enable
+        savedCf = doGet("/api/calculatedField/" + savedCf.getId().getId(), CalculatedField.class);
+        savedCf.setEnabled(true);
+        savedCf = doPost("/api/calculatedField", savedCf, CalculatedField.class);
+        assertThat(savedCf.isEnabled()).isTrue();
+
+        // Send new telemetry — re-enabled CF should process
+        postTelemetry(testDevice.getId(), "{\"temperature\":20}");
+
+        await().alias("re-enabled CF processes telemetry").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode result = getLatestTelemetry(testDevice.getId(), "shifted");
+                    assertThat(result).isNotNull();
+                    assertThat(result.get("shifted").get(0).get("value").asText()).isEqualTo("120.0");
+                });
+
+        doDelete("/api/calculatedField/" + savedCf.getId().getId().toString())
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void testMultipleEnableDisableCyclesWithTelemetry() throws Exception {
+        Device testDevice = createDevice("Test device", "1234567890");
+
+        CalculatedField calculatedField = new CalculatedField();
+        calculatedField.setEntityId(testDevice.getId());
+        calculatedField.setType(CalculatedFieldType.SIMPLE);
+        calculatedField.setName("multi-cycle-test");
+        calculatedField.setConfigurationVersion(1);
+
+        SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
+        Argument argument = new Argument();
+        argument.setRefEntityKey(new ReferencedEntityKey("value", ArgumentType.TS_LATEST, null));
+        config.setArguments(Map.of("V", argument));
+        config.setExpression("V * 10");
+        TimeSeriesOutput output = new TimeSeriesOutput();
+        output.setName("result");
+        config.setOutput(output);
+        calculatedField.setConfiguration(config);
+
+        // Create enabled CF
+        CalculatedField cf = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
+
+        // --- Cycle 1: enabled → process → disable → skip → enable → process ---
+
+        postTelemetry(testDevice.getId(), "{\"value\":1}");
+        await().alias("cycle 1: enabled, processes").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode r = getLatestTelemetry(testDevice.getId(), "result");
+                    assertThat(r.get("result").get(0).get("value").asText()).isEqualTo("10.0");
+                });
+
+        // Disable
+        cf = doGet("/api/calculatedField/" + cf.getId().getId(), CalculatedField.class);
+        cf.setEnabled(false);
+        cf = doPost("/api/calculatedField", cf, CalculatedField.class);
+
+        postTelemetry(testDevice.getId(), "{\"value\":2}");
+        await().alias("cycle 1: disabled, should not recalculate").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .during(3, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode r = getLatestTelemetry(testDevice.getId(), "result");
+                    assertThat(r.get("result").get(0).get("value").asText()).isEqualTo("10.0");
+                });
+
+        // Re-enable
+        cf = doGet("/api/calculatedField/" + cf.getId().getId(), CalculatedField.class);
+        cf.setEnabled(true);
+        cf = doPost("/api/calculatedField", cf, CalculatedField.class);
+
+        postTelemetry(testDevice.getId(), "{\"value\":3}");
+        await().alias("cycle 1: re-enabled, processes").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode r = getLatestTelemetry(testDevice.getId(), "result");
+                    assertThat(r.get("result").get(0).get("value").asText()).isEqualTo("30.0");
+                });
+
+        // --- Cycle 2: disable → skip → enable → process ---
+
+        cf = doGet("/api/calculatedField/" + cf.getId().getId(), CalculatedField.class);
+        cf.setEnabled(false);
+        cf = doPost("/api/calculatedField", cf, CalculatedField.class);
+
+        postTelemetry(testDevice.getId(), "{\"value\":4}");
+        await().alias("cycle 2: disabled, should not recalculate").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .during(3, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode r = getLatestTelemetry(testDevice.getId(), "result");
+                    assertThat(r.get("result").get(0).get("value").asText()).isEqualTo("30.0");
+                });
+
+        cf = doGet("/api/calculatedField/" + cf.getId().getId(), CalculatedField.class);
+        cf.setEnabled(true);
+        cf = doPost("/api/calculatedField", cf, CalculatedField.class);
+
+        postTelemetry(testDevice.getId(), "{\"value\":5}");
+        await().alias("cycle 2: re-enabled, processes").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode r = getLatestTelemetry(testDevice.getId(), "result");
+                    assertThat(r.get("result").get(0).get("value").asText()).isEqualTo("50.0");
+                });
+
+        // --- Cycle 3: disable → skip → enable → process ---
+
+        cf = doGet("/api/calculatedField/" + cf.getId().getId(), CalculatedField.class);
+        cf.setEnabled(false);
+        cf = doPost("/api/calculatedField", cf, CalculatedField.class);
+
+        postTelemetry(testDevice.getId(), "{\"value\":6}");
+        await().alias("cycle 3: disabled, should not recalculate").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .during(3, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode r = getLatestTelemetry(testDevice.getId(), "result");
+                    assertThat(r.get("result").get(0).get("value").asText()).isEqualTo("50.0");
+                });
+
+        cf = doGet("/api/calculatedField/" + cf.getId().getId(), CalculatedField.class);
+        cf.setEnabled(true);
+        cf = doPost("/api/calculatedField", cf, CalculatedField.class);
+
+        postTelemetry(testDevice.getId(), "{\"value\":7}");
+        await().alias("cycle 3: re-enabled, processes").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode r = getLatestTelemetry(testDevice.getId(), "result");
+                    assertThat(r.get("result").get(0).get("value").asText()).isEqualTo("70.0");
+                });
+
+        doDelete("/api/calculatedField/" + cf.getId().getId().toString())
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void testDisabledCalculatedFieldWhenEntityIdIsProfile() throws Exception {
+        Device testDevice = createDevice("Test device", "1234567890");
+
+        CalculatedField calculatedField = new CalculatedField();
+        calculatedField.setEntityId(testDevice.getDeviceProfileId());
+        calculatedField.setType(CalculatedFieldType.SIMPLE);
+        calculatedField.setName("profile-enable-disable-test");
+        calculatedField.setConfigurationVersion(1);
+
+        SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
+        Argument argument = new Argument();
+        argument.setRefEntityKey(new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null));
+        config.setArguments(Map.of("T", argument));
+        config.setExpression("T + 1");
+        TimeSeriesOutput output = new TimeSeriesOutput();
+        output.setName("temp_plus_one");
+        config.setOutput(output);
+        calculatedField.setConfiguration(config);
+
+        CalculatedField cf = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
+
+        postTelemetry(testDevice.getId(), "{\"temperature\":10}");
+        await().alias("profile CF processes device telemetry").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode result = getLatestTelemetry(testDevice.getId(), "temp_plus_one");
+                    assertThat(result).isNotNull();
+                    assertThat(result.get("temp_plus_one").get(0).get("value").asText()).isEqualTo("11.0");
+                });
+
+        // Disable profile-level CF
+        cf = doGet("/api/calculatedField/" + cf.getId().getId(), CalculatedField.class);
+        cf.setEnabled(false);
+        cf = doPost("/api/calculatedField", cf, CalculatedField.class);
+
+        // Device telemetry should not be processed
+        postTelemetry(testDevice.getId(), "{\"temperature\":50}");
+
+        await().alias("disabled profile CF should not process device telemetry").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .during(3, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode result = getLatestTelemetry(testDevice.getId(), "temp_plus_one");
+                    assertThat(result.get("temp_plus_one").get(0).get("value").asText()).isEqualTo("11.0");
+                });
+
+        // Re-enable
+        cf = doGet("/api/calculatedField/" + cf.getId().getId(), CalculatedField.class);
+        cf.setEnabled(true);
+        cf = doPost("/api/calculatedField", cf, CalculatedField.class);
+
+        postTelemetry(testDevice.getId(), "{\"temperature\":99}");
+        await().alias("re-enabled profile CF processes").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode r = getLatestTelemetry(testDevice.getId(), "temp_plus_one");
+                    assertThat(r.get("temp_plus_one").get(0).get("value").asText()).isEqualTo("100.0");
+                });
+
+        doDelete("/api/calculatedField/" + cf.getId().getId().toString())
+                .andExpect(status().isOk());
+    }
+
     private ObjectNode getLatestTelemetry(EntityId entityId, String... keys) throws Exception {
         return doGetAsync("/api/plugins/telemetry/" + entityId.getEntityType() + "/" + entityId.getId() + "/values/timeseries?keys=" + String.join(",", keys), ObjectNode.class);
     }

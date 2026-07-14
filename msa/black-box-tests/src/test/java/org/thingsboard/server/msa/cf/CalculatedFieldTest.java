@@ -854,6 +854,125 @@ public class CalculatedFieldTest extends AbstractContainerTest {
         testRestClient.deleteAsset(asset2.getId());
     }
 
+    @Test
+    public void testDisableCalculatedField() {
+        testRestClient.postTelemetry(deviceToken, JacksonUtil.toJsonNode("{\"temperature\":25}"));
+        waitInitialTelemetry(device.getId(), "temperature");
+
+        CalculatedField savedCalculatedField = createSimpleCalculatedField(device.getId());
+
+        await().alias("create CF -> perform initial calculation").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    JsonNode fahrenheitTemp = testRestClient.getLatestTelemetry(device.getId());
+                    assertThat(fahrenheitTemp).isNotNull();
+                    assertThat(fahrenheitTemp.get("fahrenheitTemp")).isNotNull();
+                    assertThat(fahrenheitTemp.get("fahrenheitTemp").get(0).get("value").asText()).isEqualTo("77.0");
+                });
+
+        // Disable the CF
+        savedCalculatedField.setEnabled(false);
+        savedCalculatedField = testRestClient.postCalculatedField(savedCalculatedField);
+
+        // Send new telemetry - should NOT be processed
+        testRestClient.postTelemetry(deviceToken, JacksonUtil.toJsonNode("{\"temperature\":40}"));
+
+        // Wait a bit and verify the value did NOT change (still 77.0, not 104.0)
+        await().alias("disabled CF -> telemetry not processed").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .during(10, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    JsonNode fahrenheitTemp = testRestClient.getLatestTelemetry(device.getId());
+                    assertThat(fahrenheitTemp).isNotNull();
+                    assertThat(fahrenheitTemp.get("fahrenheitTemp")).isNotNull();
+                    assertThat(fahrenheitTemp.get("fahrenheitTemp").get(0).get("value").asText()).isEqualTo("77.0");
+                });
+
+        testRestClient.deleteCalculatedFieldIfExists(savedCalculatedField.getId());
+    }
+
+    @Test
+    public void testEnableDisableCycles() {
+        testRestClient.postTelemetry(deviceToken, JacksonUtil.toJsonNode("{\"temperature\":25}"));
+        waitInitialTelemetry(device.getId(), "temperature");
+
+        CalculatedField savedCalculatedField = createSimpleCalculatedField(device.getId());
+
+        // Cycle 1: enabled -> verify calculation
+        await().alias("cycle 1: CF enabled -> initial calculation").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    JsonNode fahrenheitTemp = testRestClient.getLatestTelemetry(device.getId());
+                    assertThat(fahrenheitTemp).isNotNull();
+                    assertThat(fahrenheitTemp.get("fahrenheitTemp")).isNotNull();
+                    assertThat(fahrenheitTemp.get("fahrenheitTemp").get(0).get("value").asText()).isEqualTo("77.0");
+                });
+
+        // Cycle 1: disable
+        savedCalculatedField.setEnabled(false);
+        savedCalculatedField = testRestClient.postCalculatedField(savedCalculatedField);
+
+        // Cycle 1: send telemetry while disabled
+        testRestClient.postTelemetry(deviceToken, JacksonUtil.toJsonNode("{\"temperature\":30}"));
+
+        await().alias("cycle 1: disabled -> no recalculation").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .during(10, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    JsonNode fahrenheitTemp = testRestClient.getLatestTelemetry(device.getId());
+                    assertThat(fahrenheitTemp).isNotNull();
+                    assertThat(fahrenheitTemp.get("fahrenheitTemp")).isNotNull();
+                    assertThat(fahrenheitTemp.get("fahrenheitTemp").get(0).get("value").asText()).isEqualTo("77.0");
+                });
+
+        // Cycle 2: re-enable
+        savedCalculatedField.setEnabled(true);
+        savedCalculatedField = testRestClient.postCalculatedField(savedCalculatedField);
+
+        // After re-enable, CF reinitializes and recalculates with current telemetry (temperature=30)
+        await().alias("cycle 2: re-enabled -> recalculation with latest telemetry").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    JsonNode fahrenheitTemp = testRestClient.getLatestTelemetry(device.getId());
+                    assertThat(fahrenheitTemp).isNotNull();
+                    assertThat(fahrenheitTemp.get("fahrenheitTemp")).isNotNull();
+                    assertThat(fahrenheitTemp.get("fahrenheitTemp").get(0).get("value").asText()).isEqualTo("86.0");
+                });
+
+        // Cycle 2: disable again
+        savedCalculatedField.setEnabled(false);
+        savedCalculatedField = testRestClient.postCalculatedField(savedCalculatedField);
+
+        // Cycle 2: send telemetry while disabled
+        testRestClient.postTelemetry(deviceToken, JacksonUtil.toJsonNode("{\"temperature\":50}"));
+
+        await().alias("cycle 2: disabled again -> no recalculation").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .during(10, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    JsonNode fahrenheitTemp = testRestClient.getLatestTelemetry(device.getId());
+                    assertThat(fahrenheitTemp).isNotNull();
+                    assertThat(fahrenheitTemp.get("fahrenheitTemp")).isNotNull();
+                    assertThat(fahrenheitTemp.get("fahrenheitTemp").get(0).get("value").asText()).isEqualTo("86.0");
+                });
+
+        // Cycle 3: re-enable again
+        savedCalculatedField.setEnabled(true);
+        savedCalculatedField = testRestClient.postCalculatedField(savedCalculatedField);
+
+        // After re-enable, recalculates with latest telemetry (temperature=50)
+        await().alias("cycle 3: re-enabled again -> recalculation").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    JsonNode fahrenheitTemp = testRestClient.getLatestTelemetry(device.getId());
+                    assertThat(fahrenheitTemp).isNotNull();
+                    assertThat(fahrenheitTemp.get("fahrenheitTemp")).isNotNull();
+                    assertThat(fahrenheitTemp.get("fahrenheitTemp").get(0).get("value").asText()).isEqualTo("122.0");
+                });
+
+        testRestClient.deleteCalculatedFieldIfExists(savedCalculatedField.getId());
+    }
+
     private void waitForDebugEvent(CalculatedField cf, String expectedEventType, int expectedTotalEvents) {
         await().alias("wait for debug event: " + expectedEventType)
                 .atMost(TIMEOUT, TimeUnit.SECONDS)

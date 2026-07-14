@@ -46,6 +46,8 @@ public interface CalculatedFieldService extends EntityDaoService {
 
     PageData<CalculatedField> findCalculatedFieldsByTenantId(TenantId tenantId, PageLink pageLink);
 
+    PageData<CalculatedField> findCalculatedFieldsByTenantIdAndEnabled(TenantId tenantId, boolean enabled, PageLink pageLink);
+
     PageData<CalculatedFieldInfo> findCalculatedFieldsByTenantIdAndFilter(TenantId tenantId, CalculatedFieldFilter filter, PageLink pageLink);
 
     PageData<String> findCalculatedFieldNamesByTenantIdAndType(TenantId tenantId, CalculatedFieldType type, PageLink pageLink);

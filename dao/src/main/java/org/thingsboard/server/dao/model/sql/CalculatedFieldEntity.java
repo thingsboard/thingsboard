@@ -46,6 +46,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.CALCULATED_FIELD_T
 import static org.thingsboard.server.dao.model.ModelConstants.CALCULATED_FIELD_TENANT_ID_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.CALCULATED_FIELD_TYPE;
 import static org.thingsboard.server.dao.model.ModelConstants.CALCULATED_FIELD_VERSION;
+import static org.thingsboard.server.dao.model.ModelConstants.CALCULATED_FIELD_ENABLED;
 import static org.thingsboard.server.dao.model.ModelConstants.DEBUG_SETTINGS;
 
 @Data
@@ -62,6 +63,9 @@ public class CalculatedFieldEntity extends BaseVersionedEntity<CalculatedField> 
 
     @Column(name = CALCULATED_FIELD_ENTITY_ID)
     private UUID entityId;
+
+    @Column(name = CALCULATED_FIELD_ENABLED)
+    private boolean enabled;
 
     @Column(name = CALCULATED_FIELD_TYPE)
     private String type;
@@ -94,6 +98,7 @@ public class CalculatedFieldEntity extends BaseVersionedEntity<CalculatedField> 
         this.tenantId = calculatedField.getTenantId().getId();
         this.entityType = calculatedField.getEntityId().getEntityType().name();
         this.entityId = calculatedField.getEntityId().getId();
+        this.enabled = calculatedField.isEnabled();
         this.type = calculatedField.getType().name();
         this.name = calculatedField.getName();
         this.configurationVersion = calculatedField.getConfigurationVersion();
@@ -109,6 +114,7 @@ public class CalculatedFieldEntity extends BaseVersionedEntity<CalculatedField> 
         calculatedField.setCreatedTime(createdTime);
         calculatedField.setTenantId(TenantId.fromUUID(tenantId));
         calculatedField.setEntityId(EntityIdFactory.getByTypeAndUuid(entityType, entityId));
+        calculatedField.setEnabled(enabled);
         calculatedField.setType(CalculatedFieldType.valueOf(type));
         calculatedField.setName(name);
         calculatedField.setConfigurationVersion(configurationVersion);
