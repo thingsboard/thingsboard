@@ -27,7 +27,7 @@
         </div>
         @if (modulesFormArray().controls.length) {
           <div class="tb-form-table-body">
-            @for (moduleControl of modulesFormArray().controls; track trackByModule($index, moduleControl)) {
+            @for (moduleControl of modulesFormArray().controls; track moduleControl) {
               <div>
                 <tb-js-func-module-row class="flex"
                                        [index]="$index"

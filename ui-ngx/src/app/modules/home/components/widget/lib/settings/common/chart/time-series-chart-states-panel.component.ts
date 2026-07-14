@@ -117,10 +117,6 @@ export class TimeSeriesChartStatesPanelComponent implements ControlValueAccessor
     return this.statesFormGroup.get('states') as UntypedFormArray;
   }
 
-  trackByState(index: number, stateControl: AbstractControl): any {
-    return stateControl;
-  }
-
   removeState(index: number) {
     (this.statesFormGroup.get('states') as UntypedFormArray).removeAt(index);
   }

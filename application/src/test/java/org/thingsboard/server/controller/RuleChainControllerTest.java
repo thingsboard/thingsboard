@@ -644,4 +644,21 @@ public class RuleChainControllerTest extends AbstractControllerTest {
         return doPost("/api/ruleChain", ruleChain, RuleChain.class);
     }
 
+    @Test
+    public void testScriptForbiddenForCustomer() throws Exception {
+        loginCustomerUser();
+
+        doPost("/api/ruleChain/testScript", (Object) """
+                {
+                  "script": "return msg;",
+                  "scriptType": "update",
+                  "argNames": ["msg", "metadata", "msgType"],
+                  "msg": "{}",
+                  "metadata": {},
+                  "msgType": "POST_TELEMETRY_REQUEST"
+                }
+                """)
+                .andExpect(status().isForbidden());
+    }
+
 }

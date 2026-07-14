@@ -18,6 +18,7 @@ package org.thingsboard.server.common.data.widget;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.validation.NoXss;
 
@@ -26,6 +27,7 @@ import java.util.Collections;
 import java.util.List;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 public class WidgetTypeInfo extends BaseWidgetType {
 
     @Serial

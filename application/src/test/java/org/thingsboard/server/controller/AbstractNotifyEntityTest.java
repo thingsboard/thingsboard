@@ -19,8 +19,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 import org.springframework.boot.info.BuildProperties;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
@@ -55,13 +55,13 @@ import static org.mockito.Mockito.times;
 @Slf4j
 public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
 
-    @SpyBean
+    @MockitoSpyBean
     protected TbClusterService tbClusterService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected AuditLogService auditLogService;
 
-    @MockBean
+    @MockitoBean
     BuildProperties buildProperties;
 
     protected final String msgErrorPermission = "You don't have permission to perform this operation!";

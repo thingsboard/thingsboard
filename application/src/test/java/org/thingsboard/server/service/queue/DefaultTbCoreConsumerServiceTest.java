@@ -27,8 +27,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.rpc.RpcError;
 import org.thingsboard.server.common.msg.queue.TbCallback;
+import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.service.rpc.TbCoreDeviceRpcService;
 import org.thingsboard.server.service.ruleengine.RuleEngineCallService;
 import org.thingsboard.server.service.state.DeviceStateService;
 
@@ -51,6 +54,8 @@ public class DefaultTbCoreConsumerServiceTest {
     private TbCoreConsumerStats statsMock;
     @Mock
     private RuleEngineCallService ruleEngineCallServiceMock;
+    @Mock
+    private TbCoreDeviceRpcService tbCoreDeviceRpcServiceMock;
 
     @Mock
     private TbCallback tbCallbackMock;
@@ -636,6 +641,33 @@ public class DefaultTbCoreConsumerServiceTest {
 
         // THEN
         then(ruleEngineCallServiceMock).should().onQueueMsg(restApiCallResponseMsgProto, tbCallbackMock);
+    }
+
+    @Test
+    public void givenNotFoundErrorAndNoResponse_whenForwardToCoreRpcService_thenNotFoundAndNullResponseAreRecovered() {
+        // GIVEN
+        ReflectionTestUtils.setField(defaultTbCoreConsumerServiceMock, "tbCoreDeviceRpcService", tbCoreDeviceRpcServiceMock);
+        var requestId = UUID.randomUUID();
+        // error = NOT_FOUND.ordinal() (0) and response left unset: the previously broken combination
+        // ('error > 0' dropped NOT_FOUND, proto3 default collapsed a null response to "").
+        var proto = TransportProtos.FromDeviceRPCResponseProto.newBuilder()
+                .setRequestIdMSB(requestId.getMostSignificantBits())
+                .setRequestIdLSB(requestId.getLeastSignificantBits())
+                .setError(RpcError.NOT_FOUND.ordinal())
+                .build();
+        doCallRealMethod().when(defaultTbCoreConsumerServiceMock).forwardToCoreRpcService(proto, tbCallbackMock);
+
+        // WHEN
+        defaultTbCoreConsumerServiceMock.forwardToCoreRpcService(proto, tbCallbackMock);
+
+        // THEN
+        var responseCaptor = ArgumentCaptor.forClass(FromDeviceRpcResponse.class);
+        then(tbCoreDeviceRpcServiceMock).should().processRpcResponseFromRuleEngine(responseCaptor.capture());
+        var response = responseCaptor.getValue();
+        assertThat(response.getId()).isEqualTo(requestId);
+        assertThat(response.getError()).contains(RpcError.NOT_FOUND);
+        assertThat(response.getResponse()).isEmpty();
+        then(tbCallbackMock).should().onSuccess();
     }
 
 }

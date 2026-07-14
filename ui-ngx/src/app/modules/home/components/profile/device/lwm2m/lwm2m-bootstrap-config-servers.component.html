@@ -17,7 +17,7 @@
 -->
 <div class="flex flex-col">
   <mat-accordion multi="true">
-    @for (serverConfig of serverConfigsFromArray.controls; track trackByParams($index)) {
+    @for (serverConfig of serverConfigsFromArray.controls; track serverConfig) {
       <div>
         <tb-profile-lwm2m-device-config-server
           [formControl]="serverConfig"

@@ -166,6 +166,10 @@ section.tb-footer-buttons {
 .tb-details-buttons {
   button {
     margin: 6px 8px;
+    &.mat-mdc-outlined-button:not(:disabled) {
+      --mat-button-outlined-outline-color: inherit;
+      border-color: inherit;
+    }
   }
 }
 
@@ -1074,6 +1078,10 @@ pre.tb-highlight {
     }
   }
 
+  .tb-dialog-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  }
+
   .tb-dialog {
     .mat-mdc-dialog-container {
       padding: 0;
@@ -1107,6 +1115,25 @@ pre.tb-highlight {
       .mat-mdc-dialog-container {
         > *:first-child, form {
           min-width: 100% !important;
+        }
+        .mat-mdc-dialog-content {
+          max-height: 100%;
+        }
+      }
+    }
+  }
+
+  .tb-fullscreen-dialog-lt-md {
+    @media #{$mat-lt-md} {
+      min-height: 100%;
+      min-width: 100%;
+      max-width: none !important;
+      position: absolute !important;
+      inset: 0;
+      .mat-mdc-dialog-container {
+        > *:first-child, form {
+          min-width: 100% !important;
+          height: 100%;
         }
         .mat-mdc-dialog-content {
           max-height: 100%;

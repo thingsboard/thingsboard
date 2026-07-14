@@ -25,7 +25,7 @@ import { EntityViewsTableConfigResolver } from '@home/pages/entity-view/entity-v
 import { DashboardsTableConfigResolver } from '@home/pages/dashboard/dashboards-table-config.resolver';
 import { RuleChainsTableConfigResolver } from '@home/pages/rulechain/rulechains-table-config.resolver';
 import { DashboardPageComponent } from '@home/components/dashboard-page/dashboard-page.component';
-import { dashboardBreadcumbLabelFunction, DashboardResolver } from '@home/pages/dashboard/dashboard-routing.module';
+import { DashboardResolver } from '@home/pages/dashboard/dashboard-routing.module';
 import { BreadCrumbConfig } from '@shared/components/breadcrumb';
 import { RuleChainPageComponent } from '@home/pages/rulechain/rulechain-page.component';
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
@@ -243,7 +243,6 @@ const routes: Routes = [
                 canDeactivate: [ConfirmOnExitGuard],
                 data: {
                   breadcrumb: {
-                    labelFunction: dashboardBreadcumbLabelFunction,
                     icon: 'dashboard'
                   } as BreadCrumbConfig<DashboardPageComponent>,
                   auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],

@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.alarm.AlarmCommentInfo;
 import org.thingsboard.server.common.data.alarm.AlarmCommentType;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AlarmCommentId;
 import org.thingsboard.server.common.data.id.AlarmId;
@@ -39,6 +40,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.alarm.TbAlarmCommentService;
+import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 
 import static org.thingsboard.server.controller.ControllerConstants.ALARM_COMMENT_ID_PARAM_DESCRIPTION;
@@ -77,9 +79,13 @@ public class AlarmCommentController extends BaseController {
         checkParameter(ALARM_ID, strAlarmId);
         AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
         Alarm alarm = checkAlarmInfoId(alarmId, Operation.WRITE);
+        SecurityUser currentUser = getCurrentUser();
+        if (alarmComment.getId() != null) {
+            checkUserPermission(alarmComment, alarmId, "edit", currentUser);
+        }
         alarmComment.setAlarmId(alarmId);
         alarmComment.setType(AlarmCommentType.OTHER);
-        return tbAlarmCommentService.saveAlarmComment(alarm, alarmComment, getCurrentUser());
+        return tbAlarmCommentService.saveAlarmComment(alarm, alarmComment, currentUser);
     }
 
     @ApiOperation(value = "Delete Alarm comment (deleteAlarmComment)",
@@ -93,7 +99,11 @@ public class AlarmCommentController extends BaseController {
 
         AlarmCommentId alarmCommentId = new AlarmCommentId(toUUID(strCommentId));
         AlarmComment alarmComment = checkAlarmCommentId(alarmCommentId, alarmId);
-        tbAlarmCommentService.deleteAlarmComment(alarm, alarmComment, getCurrentUser());
+        SecurityUser currentUser = getCurrentUser();
+        if (!currentUser.isTenantAdmin()) {
+            checkUserPermission(alarmComment, alarmId, "delete", currentUser);
+        }
+        tbAlarmCommentService.deleteAlarmComment(alarm, alarmComment, currentUser);
     }
 
     @ApiOperation(value = "Get Alarm comments (getAlarmComments)",
@@ -118,6 +128,14 @@ public class AlarmCommentController extends BaseController {
         Alarm alarm = checkAlarmId(alarmId, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, null, sortProperty, sortOrder);
         return checkNotNull(alarmCommentService.findAlarmComments(alarm.getTenantId(), alarmId, pageLink));
+    }
+
+    private void checkUserPermission(AlarmComment alarmComment, AlarmId alarmId, String operation, SecurityUser currentUser) throws ThingsboardException {
+        AlarmComment existingAlarmComment = checkAlarmCommentId(alarmComment.getId(), alarmId);
+        if (existingAlarmComment.getUserId() != null && !existingAlarmComment.getUserId().equals(currentUser.getId())) {
+            throw new ThingsboardException("User is not allowed to " + operation + " other user's comment",
+                    ThingsboardErrorCode.PERMISSION_DENIED);
+        }
     }
 
 }

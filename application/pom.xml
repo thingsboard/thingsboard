@@ -395,11 +395,7 @@
         </dependency>
         <dependency>
             <groupId>org.thingsboard.langchain4j</groupId>
-            <artifactId>langchain4j-google-ai-gemini</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.thingsboard.langchain4j</groupId>
-            <artifactId>langchain4j-vertex-ai-gemini</artifactId>
+            <artifactId>langchain4j-google-genai</artifactId>
         </dependency>
         <dependency>
             <groupId>org.thingsboard.langchain4j</groupId>
@@ -415,13 +411,7 @@
         </dependency>
         <dependency>
             <groupId>org.thingsboard.langchain4j</groupId>
-            <artifactId>langchain4j-github-models</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.azure</groupId>
-                    <artifactId>azure-core-test</artifactId>
-                </exclusion>
-            </exclusions>
+            <artifactId>langchain4j-open-ai-official</artifactId>
         </dependency>
         <dependency>
             <groupId>org.thingsboard.langchain4j</groupId>
@@ -518,11 +508,30 @@
             <build>
                 <plugins>
                     <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>build-helper-maven-plugin</artifactId>
+                        <executions>
+                            <!-- Reserve free ephemeral ports so concurrent openapi-spec builds (and orphaned
+                                 forks from prior failed builds) on the same CI agent don't collide on fixed ports. -->
+                            <execution>
+                                <id>reserve-openapi-ports</id>
+                                <phase>initialize</phase>
+                                <goals><goal>reserve-network-port</goal></goals>
+                                <configuration>
+                                    <portNames>
+                                        <portName>jmx.port</portName>
+                                        <portName>http.port</portName>
+                                    </portNames>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
                         <groupId>org.springframework.boot</groupId>
                         <artifactId>spring-boot-maven-plugin</artifactId>
                         <configuration>
                             <mainClass>org.thingsboard.server.ThingsboardServerApplication</mainClass>
-                            <jmxPort>9001</jmxPort>
+                            <jmxPort>${jmx.port}</jmxPort>
                         </configuration>
                         <executions>
                             <execution>
@@ -542,6 +551,7 @@
                                     <arguments>
                                         <argument>--spring.config.name=thingsboard</argument>
                                         <argument>--spring.profiles.active=openapi</argument>
+                                        <argument>--server.port=${http.port}</argument>
                                     </arguments>
                                     <maxAttempts>180</maxAttempts>
                                     <wait>2000</wait>
@@ -567,7 +577,7 @@
                             </execution>
                         </executions>
                         <configuration>
-                            <apiDocsUrl>http://localhost:8080/v3/api-docs/thingsboard</apiDocsUrl>
+                            <apiDocsUrl>http://localhost:${http.port}/v3/api-docs/thingsboard</apiDocsUrl>
                             <outputFileName>openapi.json</outputFileName>
                             <outputDir>${project.build.directory}</outputDir>
                         </configuration>

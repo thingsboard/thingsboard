@@ -303,10 +303,6 @@ export class CalculatedFieldGeofencingZoneGroupsPanelComponent implements OnInit
     return this.refDynamicSourceFormGroup.get('levels') as UntypedFormArray;
   }
 
-  trackByKey(_index: number, keyControl: AbstractControl): any {
-    return keyControl;
-  }
-
   removeKey(index: number) {
     this.levelsFormArray().removeAt(index);
     this.levelsFormArray().markAsDirty();

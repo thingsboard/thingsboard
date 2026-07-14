@@ -100,7 +100,7 @@ public class AlarmCommentApiClientTest extends AbstractApiClientTest {
                 .filter(alarmCommentInfo -> alarmCommentInfo.getId().getId().equals(commentToDeleteId))
                 .findFirst()
                 .get();
-        assertEquals("User " + clientTenantAdmin.getEmail() + " deleted his comment", deletedComment.getComment().get("text").asText());
+        assertEquals("Comment was deleted by user " + clientTenantAdmin.getEmail(), deletedComment.getComment().get("text").asText());
     }
 
 }

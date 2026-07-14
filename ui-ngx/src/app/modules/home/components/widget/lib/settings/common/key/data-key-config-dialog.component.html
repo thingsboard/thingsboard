@@ -16,12 +16,12 @@
 
 -->
 <form [formGroup]="dataKeyFormGroup" (ngSubmit)="save()" style="width: 900px;">
-  <mat-toolbar color="primary">
+  <mat-toolbar class="tb-dialog-header">
     <h2>{{ 'datakey.configuration' | translate }}</h2>
     <span class="flex-1"></span>
     @if (hasAdvanced) {
       <tb-toggle-select
-        appearance="fill-invert" selectMediaBreakpoint="xs" [options]="dataKeyConfigHeaderOptions"
+        appearance="fill" selectMediaBreakpoint="xs" [options]="dataKeyConfigHeaderOptions"
         [(ngModel)]="dataKeyConfigMode" [ngModelOptions]="{ standalone: true }">
       </tb-toggle-select>
     }

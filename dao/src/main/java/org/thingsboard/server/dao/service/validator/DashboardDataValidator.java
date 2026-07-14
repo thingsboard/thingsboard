@@ -32,6 +32,10 @@ public class DashboardDataValidator extends DataValidator<Dashboard> {
 
     @Override
     protected void validateCreate(TenantId tenantId, Dashboard data) {
+        validateMaxDashboardsPerTenant(tenantId);
+    }
+
+    public void validateMaxDashboardsPerTenant(TenantId tenantId) {
         validateNumberOfEntitiesPerTenant(tenantId, EntityType.DASHBOARD);
     }
 

@@ -126,13 +126,13 @@ public class DefaultTbLocalSubscriptionServiceTest {
     private TbSubscription<?> createSubscription(TenantId tenantId, EntityId entityId) {
         Map<String, Long> keys = new HashMap<>();
         for (int i = 0; i < 50; i++) {
-            keys.put(RandomStringUtils.randomAlphanumeric(5), 1L);
+            keys.put(RandomStringUtils.secure().nextAlphanumeric(5), 1L);
         }
         return TbAttributeSubscription.builder()
                 .tenantId(tenantId)
                 .entityId(entityId)
                 .subscriptionId(1)
-                .sessionId(RandomStringUtils.randomAlphanumeric(5))
+                .sessionId(RandomStringUtils.secure().nextAlphanumeric(5))
                 .keyStates(keys)
                 .build();
     }
@@ -152,7 +152,7 @@ public class DefaultTbLocalSubscriptionServiceTest {
                 .tenantId(tenantId)
                 .entityId(deviceId)
                 .subscriptionId(2)
-                .sessionId(RandomStringUtils.randomAlphanumeric(5))
+                .sessionId(RandomStringUtils.secure().nextAlphanumeric(5))
                 .keyStates(keyStates)
                 .allKeys(true)
                 .latestValues(true)

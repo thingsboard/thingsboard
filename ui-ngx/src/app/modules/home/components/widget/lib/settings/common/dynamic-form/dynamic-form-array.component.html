@@ -28,7 +28,7 @@
              cdkDropList cdkDropListOrientation="vertical"
              [cdkDropListDisabled]="!dragEnabled"
              (cdkDropListDropped)="propertyDrop($event)">
-          @for (propertyControl of propertiesFormArray().controls; track trackByProperty($index, propertyControl)) {
+          @for (propertyControl of propertiesFormArray().controls; track propertyControl) {
             <div cdkDrag [cdkDragDisabled]="!dragEnabled"
                  class="tb-draggable tb-dynamic-form-array-row"
                  >

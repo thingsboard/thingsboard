@@ -20,8 +20,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
@@ -69,38 +71,60 @@ import static org.mockito.Mockito.when;
 
 @Slf4j
 @RunWith(SpringRunner.class)
-@ContextConfiguration(classes = DefaultTransportApiService.class)
+@ContextConfiguration(classes = DefaultTransportApiServiceTest.TestConfig.class)
 public class DefaultTransportApiServiceTest {
 
-    @MockBean
+    @Configuration
+    static class TestConfig {
+        @Bean
+        public DefaultTransportApiService defaultTransportApiService(TbDeviceProfileCache deviceProfileCache,
+                                                                     TbTenantProfileCache tenantProfileCache,
+                                                                     TbApiUsageStateService apiUsageStateService,
+                                                                     DeviceService deviceService,
+                                                                     DeviceProfileService deviceProfileService,
+                                                                     RelationService relationService,
+                                                                     DeviceCredentialsService deviceCredentialsService,
+                                                                     TbClusterService tbClusterService,
+                                                                     DeviceProvisionService deviceProvisionService,
+                                                                     ResourceService resourceService,
+                                                                     OtaPackageService otaPackageService,
+                                                                     OtaPackageDataCache otaPackageDataCache,
+                                                                     QueueService queueService) {
+            return new DefaultTransportApiService(deviceProfileCache, tenantProfileCache, apiUsageStateService,
+                    deviceService, deviceProfileService, relationService, deviceCredentialsService, tbClusterService,
+                    deviceProvisionService, resourceService, otaPackageService, otaPackageDataCache, queueService);
+        }
+    }
+
+    @MockitoBean
     protected TbDeviceProfileCache deviceProfileCache;
-    @MockBean
+    @MockitoBean
     protected TbTenantProfileCache tenantProfileCache;
-    @MockBean
+    @MockitoBean
     protected TbApiUsageStateService apiUsageStateService;
-    @MockBean
+    @MockitoBean
     protected DeviceService deviceService;
-    @MockBean
+    @MockitoBean
     protected DeviceProfileService deviceProfileService;
-    @MockBean
+    @MockitoBean
     protected RelationService relationService;
-    @MockBean
+    @MockitoBean
     protected DeviceCredentialsService deviceCredentialsService;
-    @MockBean
+    @MockitoBean
     protected DbCallbackExecutorService dbCallbackExecutorService;
-    @MockBean
+    @MockitoBean
     protected TbClusterService tbClusterService;
-    @MockBean
+    @MockitoBean
     protected DeviceProvisionService deviceProvisionService;
-    @MockBean
+    @MockitoBean
     protected ResourceService resourceService;
-    @MockBean
+    @MockitoBean
     protected OtaPackageService otaPackageService;
-    @MockBean
+    @MockitoBean
     protected OtaPackageDataCache otaPackageDataCache;
-    @MockBean
+    @MockitoBean
     protected QueueService queueService;
-    @SpyBean
+    @MockitoSpyBean
     DefaultTransportApiService service;
 
     private String certificateChain;

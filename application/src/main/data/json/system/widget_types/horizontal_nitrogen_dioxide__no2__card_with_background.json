@@ -1,7 +1,7 @@
 {
   "fqn": "horizontal_nitrogen_dioxide_no2_card_with_background",
   "name": "Horizontal nitrogen dioxide (NO2) card with background",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/NO2-horizontal-value-card-with-background.svg",
   "description": "A gas produced from vehicle emissions and the burning of fossil fuels.",
   "descriptor": {

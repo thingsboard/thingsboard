@@ -327,10 +327,6 @@ export class FlotKeySettingsComponent extends PageComponent implements OnInit, C
     return this.flotKeySettingsFormGroup.get('thresholds') as UntypedFormArray;
   }
 
-  public trackByThreshold(index: number, thresholdControl: AbstractControl): any {
-    return thresholdControl;
-  }
-
   public removeThreshold(index: number) {
     (this.flotKeySettingsFormGroup.get('thresholds') as UntypedFormArray).removeAt(index);
   }

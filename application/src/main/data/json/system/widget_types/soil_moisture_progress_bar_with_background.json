@@ -1,7 +1,7 @@
 {
   "fqn": "soil_moisture_progress_bar_with_background",
   "name": "Soil moisture progress bar with background",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/soil_moisture_progress_bar_with_background_system_widget_image.png",
   "description": "Displays soil moisture reading as a horizontal progress bar with background. Allows to configure value range, bar colors, and other settings.",
   "descriptor": {

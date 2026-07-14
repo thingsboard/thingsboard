@@ -216,10 +216,6 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
     };
   }
 
-  trackByProvider(i: number, provider: TwoFactorAuthProviderType) {
-    return provider;
-  }
-
   copyToken() {
     if (+this.jwtTokenExpiration < Date.now()) {
       this.store.dispatch(new ActionNotificationShow({

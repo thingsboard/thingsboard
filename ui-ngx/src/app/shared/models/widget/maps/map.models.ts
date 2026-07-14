@@ -1251,6 +1251,8 @@ export interface ImageMapSourceSettings {
   entityKey?: DataKey;
 }
 
+export const WEBGL_ERROR_EVENT = 'gl-error';
+
 export const imageMapSourceSettingsValid = (imageSource: ImageMapSourceSettings): boolean => {
   if (!imageSource?.sourceType) {
     return false;

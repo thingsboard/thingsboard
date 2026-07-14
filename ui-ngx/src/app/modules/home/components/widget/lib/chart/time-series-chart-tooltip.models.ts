@@ -293,7 +293,9 @@ private static mapTooltipParams(params: CallbackDataParams[] | CallbackDataParam
       TimeSeriesChartTooltip.appendTooltipItem(result, seriesParams, series);
     } else if (Array.isArray(params)) {
       for (seriesParams of params) {
-        TimeSeriesChartTooltip.appendTooltipItem(result, seriesParams, series);
+        if (seriesParams.value) {
+          TimeSeriesChartTooltip.appendTooltipItem(result, seriesParams, series);
+        }
       }
     }
     return result;

@@ -717,6 +717,7 @@ public class UserControllerTest extends AbstractControllerTest {
         String email = "testEmail1";
         List<UserId> expectedCustomerUserIds = new ArrayList<>();
         expectedCustomerUserIds.add(customerUserId);
+        expectedCustomerUserIds.add(secondCustomerUserId);
         for (int i = 0; i < 45; i++) {
             User customerUser = createCustomerUser(customerId);
             customerUser.setEmail(email + StringUtils.randomAlphanumeric((int) (5 + Math.random() * 10)) + "@thingsboard.org");
@@ -1296,9 +1297,9 @@ public class UserControllerTest extends AbstractControllerTest {
         Assert.assertEquals(savedDashboard2.getTitle(), starred.getTitle());
 
         //TEST renaming in the cache.
-        savedDashboard1.setTitle(RandomStringUtils.randomAlphanumeric(10));
+        savedDashboard1.setTitle(RandomStringUtils.secure().nextAlphanumeric(10));
         savedDashboard1 = doPost("/api/dashboard", savedDashboard1, Dashboard.class);
-        savedDashboard2.setTitle(RandomStringUtils.randomAlphanumeric(10));
+        savedDashboard2.setTitle(RandomStringUtils.secure().nextAlphanumeric(10));
         savedDashboard2 = doPost("/api/dashboard", savedDashboard2, Dashboard.class);
 
         newSettings = doGet("/api/user/dashboards/" + savedDashboard1.getId().getId() + "/unstar", UserDashboardsInfo.class);

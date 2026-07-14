@@ -22,6 +22,19 @@ import { EntitiesTableAction } from '@home/models/entity/entity-table-component.
 
 export const MAX_SAFE_PAGE_SIZE = 2147483647;
 
+export type NullsOrderStrategy = 'default' | 'nulls_first' | 'nulls_last';
+
+let nullsOrderStrategy: NullsOrderStrategy = 'default';
+let edqsEnabled = false;
+
+export function setNullsOrderStrategy(value: NullsOrderStrategy): void {
+  nullsOrderStrategy = value ?? 'default';
+}
+
+export function setEdqsEnabled(value: boolean): void {
+  edqsEnabled = !!value;
+}
+
 export type PageLinkSearchFunction<T> = (entity: T, textSearch: string, searchProperty?: string) => boolean;
 
 export interface PageQueryParam extends Partial<SortOrder>{
@@ -73,9 +86,37 @@ const defaultPageLinkSearch: PageLinkSearchFunction<any> =
     return false;
   };
 
-export function sortItems(item1: any, item2: any, property: string, asc: boolean): number {
+export type SortColumnType = 'entityField' | 'attribute' | 'timeseries';
+
+export function sortItems(item1: any, item2: any, property: string, asc: boolean,
+                          columnType: SortColumnType = 'entityField'): number {
   const item1Value = getDescendantProp(item1, property);
   const item2Value = getDescendantProp(item2, property);
+  const item1Empty = item1Value === null || item1Value === undefined || item1Value === '';
+  const item2Empty = item2Value === null || item2Value === undefined || item2Value === '';
+  // Mirror backend's nulls ordering. EDQS uses fixed NULLS FIRST regardless of strategy and
+  // naive compare below already matches it, so skip this branch when EDQS is on.
+  // For entityField columns the ORDER BY hits a real nullable DB column → strategy always applies.
+  // For attribute/timeseries the strategy only applies to numeric/boolean values; string/json
+  // are coalesced to '' on the backend, so naive compare below already matches its order.
+  if (!edqsEnabled && (item1Empty || item2Empty) && !(item1Empty && item2Empty)) {
+    let applyStrategy = columnType === 'entityField';
+    if (!applyStrategy) {
+      const other = item1Empty ? item2Value : item1Value;
+      applyStrategy =
+        typeof other === 'boolean' || other === 'true' || other === 'false' ||
+        (typeof other === 'number' && isFinite(other)) ||
+        (typeof other === 'string' && other.trim() !== '' && !isNaN(Number(other)));
+    }
+    if (applyStrategy) {
+      const nullsFirst = nullsOrderStrategy === 'nulls_first'
+        || (nullsOrderStrategy === 'default' && !asc);
+      if (item1Empty) {
+        return nullsFirst ? -1 : 1;
+      }
+      return nullsFirst ? 1 : -1;
+    }
+  }
   let result = 0;
   if (item1Value !== item2Value) {
     const item1Type = typeof item1Value;

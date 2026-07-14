@@ -27,7 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
-import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.Customer;
@@ -151,7 +151,7 @@ public class AssetServiceTest extends AbstractServiceTest {
             executor.submit(() -> {
                 Asset asset = new Asset();
                 asset.setTenantId(anotherTenantId);
-                asset.setName(RandomStringUtils.randomAlphabetic(10));
+                asset.setName(RandomStringUtils.secure().nextAlphabetic(10));
                 asset.setType("default");
                 assetService.saveAsset(asset);
             });

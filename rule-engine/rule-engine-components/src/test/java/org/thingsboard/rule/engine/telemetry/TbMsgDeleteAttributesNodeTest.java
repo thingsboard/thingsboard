@@ -147,7 +147,7 @@ public class TbMsgDeleteAttributesNodeTest {
         node.onMsg(ctx, msg);
 
         ArgumentCaptor<Runnable> successCaptor = ArgumentCaptor.forClass(Runnable.class);
-        ArgumentCaptor<Consumer<Throwable>> failureCaptor = ArgumentCaptor.forClass(Consumer.class);
+        ArgumentCaptor<Consumer<Throwable>> failureCaptor = ArgumentCaptor.captor();
         ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
 
         if (sendAttributesDeletedNotification) {

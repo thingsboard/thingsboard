@@ -100,7 +100,7 @@
               @if (!atListOneProvider) {
                 <tb-error noMargin error="{{ 'admin.2fa.available-providers-required' | translate }}" class="flex h-4 items-center pl-3"/>
               }
-              @for (provider of providersForm.controls; track trackByElement(i, provider); let i = $index) {
+              @for (provider of providersForm.controls; track provider; let i = $index) {
                 <div class="tb-form-panel stroked tb-slide-toggle">
                   <mat-expansion-panel class="tb-settings" [formGroupName]="i">
                     <mat-expansion-panel-header>

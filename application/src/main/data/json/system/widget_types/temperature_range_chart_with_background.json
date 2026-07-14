@@ -1,7 +1,7 @@
 {
   "fqn": "temperature_range_chart_with_background",
   "name": "Temperature range chart with background",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/temperature_range_chart_with_background.svg",
   "description": "Displays changes to temperature data over time visualized with color ranges and background.",
   "descriptor": {

@@ -16,63 +16,63 @@
 
 -->
 <div class="tb-details-buttons xs:flex xs:flex-col">
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'open')"
           [class.!hidden]="isEdit">
     {{'dashboard.open-dashboard' | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'export')"
           [class.!hidden]="isEdit || dashboardScope !== 'tenant'">
     {{'dashboard.export' | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'import')"
           [class.!hidden]="isEdit || dashboardScope !== 'tenant'">
     {{'dashboard.update-new-version' | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'makePublic')"
           [class.!hidden]="isEdit || dashboardScope !== 'tenant' || isPublic(entity)">
     {{'dashboard.make-public' | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'makePrivate')"
           [class.!hidden]="isEdit || !(dashboardScope === 'tenant' && isPublic(entity)
                                 || dashboardScope === 'customer' && isCurrentPublicCustomer(entity))">
     {{'dashboard.make-private' | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'manageAssignedCustomers')"
           [class.!hidden]="isEdit || dashboardScope !== 'tenant'">
     {{'dashboard.manage-assigned-customers' | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'unassignFromCustomer')"
           [class.!hidden]="isEdit || dashboardScope !== 'customer' || isCurrentPublicCustomer(entity)">
     {{ 'dashboard.unassign-from-customer' | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'unassignFromEdge')"
           [class.!hidden]="isEdit || dashboardScope !== 'edge'">
     {{ 'edge.unassign-from-edge' | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'delete')"
           [class.!hidden]="hideDelete() || isEdit">
     {{'dashboard.delete' | translate }}
   </button>
   <div class="flex flex-row">
-    <button mat-raised-button
+    <button mat-stroked-button
             ngxClipboard
             (cbOnSuccess)="onDashboardIdCopied($event)"
             [cbContent]="entity?.id?.id"

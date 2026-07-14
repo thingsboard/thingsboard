@@ -71,7 +71,7 @@
           } @else {
             @if (!displayDataElement.edit) {
               <div class="user-comment flex flex-row items-center justify-start gap-2"
-                   (mouseenter)="onCommentMouseEnter(displayDataElement.commentId, i)"
+                   (mouseenter)="onCommentMouseEnter(i)"
                    (mouseleave)="onCommentMouseLeave(i)">
                 @if (displayDataElement.userExists) {
                   <div
@@ -102,16 +102,20 @@
                 </div>
                 <div class="action-buttons flex flex-row xs:flex-col"
                      [class.show-buttons]="displayDataElement.showActions">
-                  <button mat-icon-button
-                          type="button"
-                          (click)="editComment(displayDataElement.commentId)">
-                    <mat-icon class="material-icons">edit</mat-icon>
-                  </button>
-                  <button mat-icon-button
-                          type="button"
-                          (click)="deleteComment(displayDataElement.commentId)">
-                    <mat-icon class="material-icons">delete</mat-icon>
-                  </button>
+                  @if(displayDataElement.canEdit) {
+                    <button mat-icon-button
+                            type="button"
+                            (click)="editComment(displayDataElement.commentId)">
+                      <mat-icon class="material-icons">edit</mat-icon>
+                    </button>
+                  }
+                  @if(displayDataElement.canDelete) {
+                    <button mat-icon-button
+                            type="button"
+                            (click)="deleteComment(displayDataElement.commentId)">
+                      <mat-icon class="material-icons">delete</mat-icon>
+                    </button>
+                  }
                 </div>
               </div>
             } @else {

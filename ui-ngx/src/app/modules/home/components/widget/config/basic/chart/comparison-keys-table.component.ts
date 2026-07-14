@@ -98,10 +98,6 @@ export class ComparisonKeysTableComponent implements ControlValueAccessor, OnIni
     return this.keysListFormGroup.get('keys') as UntypedFormArray;
   }
 
-  trackByKey(_index: number, keyControl: AbstractControl): any {
-    return keyControl;
-  }
-
   private prepareKeysFormArray(keys: DataKey[] | undefined): UntypedFormArray {
     const keysControls: Array<AbstractControl> = [];
     if (keys) {

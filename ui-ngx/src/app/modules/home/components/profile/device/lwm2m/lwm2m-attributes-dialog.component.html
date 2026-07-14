@@ -16,7 +16,7 @@
 
 -->
 <form [formGroup]="attributeFormGroup" (ngSubmit)="save()" style="min-width: 500px;">
-  <mat-toolbar color="primary">
+  <mat-toolbar class="tb-dialog-header">
     <h2>
       {{ (readonly ? 'device-profile.lwm2m.view-attributes' : 'device-profile.lwm2m.edit-attributes') | translate : {name: name} }}
     </h2>

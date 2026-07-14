@@ -114,6 +114,7 @@ export class BarChartWithLabelsWidgetComponent implements OnInit, OnDestroy, Aft
   ngAfterViewInit() {
     const settings = barChartWithLabelsTimeSeriesSettings(this.settings);
     this.timeSeriesChart = new TbTimeSeriesChart(this.ctx, settings, this.chartShape.nativeElement, this.renderer);
+    this.ctx.widgetActions = this.timeSeriesChart.getWidgetActions();
   }
 
   ngOnDestroy() {

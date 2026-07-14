@@ -447,10 +447,8 @@ public class JacksonUtil {
 
     private static void toFlatMap(JsonNode node, String currentPath, Map<String, String> map) {
         if (node.isObject()) {
-            Iterator<Map.Entry<String, JsonNode>> fields = node.fields();
             currentPath = currentPath.isEmpty() ? "" : currentPath + ".";
-            while (fields.hasNext()) {
-                Map.Entry<String, JsonNode> entry = fields.next();
+            for (Map.Entry<String, JsonNode> entry : node.properties()) {
                 toFlatMap(entry.getValue(), currentPath + entry.getKey(), map);
             }
         } else if (node.isValueNode()) {
@@ -554,8 +552,7 @@ public class JacksonUtil {
                         }
                     } else if (node.isObject()) {
                         ObjectNode on = (ObjectNode) node;
-                        for (Iterator<Map.Entry<String, JsonNode>> it = on.fields(); it.hasNext(); ) {
-                            var kv = it.next();
+                        for (Map.Entry<String, JsonNode> kv : on.properties()) {
                             if (variableName != null) {
                                 tasks.add(task.next(kv.getValue(), variableName, kv.getKey()));
                             } else {

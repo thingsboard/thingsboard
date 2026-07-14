@@ -64,7 +64,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 public class TbRuleChainInputNodeTest extends AbstractRuleNodeUpgradeTest {
 
-    private final TenantId TENANT_ID = new TenantId(UUID.fromString("4ba69ea5-6b27-42df-ab66-e7a727a67027"));
+    private final TenantId TENANT_ID = TenantId.fromUUID(UUID.fromString("4ba69ea5-6b27-42df-ab66-e7a727a67027"));
     private final DeviceId DEVICE_ID = new DeviceId(UUID.fromString("97731954-2147-4176-8f1a-d14f1b73e4e6"));
     private final AssetId ASSET_ID = new AssetId(UUID.fromString("841a47bd-4e8e-4ea5-88e6-420da0d70e51"));
     // A stable "current" rule chain ID: this node lives here. Must differ from any target used in tests.

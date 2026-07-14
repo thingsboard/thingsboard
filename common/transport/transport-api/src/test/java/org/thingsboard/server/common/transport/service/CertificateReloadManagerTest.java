@@ -31,10 +31,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
 
 public class CertificateReloadManagerTest {
 
@@ -59,11 +56,10 @@ public class CertificateReloadManagerTest {
         }
     }
 
-    private void writeFileAndAwaitMtimeChange(Path path, String content, long baselineMtime) throws IOException {
+    private void writeFileAndBumpMtime(Path path, String content, long baselineMtime) throws IOException {
         Files.writeString(path, content);
-        await().atMost(2, SECONDS)
-                .pollInterval(10, MILLISECONDS)
-                .until(() -> Files.getLastModifiedTime(path).toMillis() != baselineMtime);
+        // Force a strictly newer mtime: back-to-back writes can share a millisecond, hiding the change from the watcher.
+        Files.setLastModifiedTime(path, FileTime.fromMillis(baselineMtime + 1000));
     }
 
     private long mtime(Path path) throws IOException {
@@ -77,7 +73,7 @@ public class CertificateReloadManagerTest {
         certificateReloadManager.registerWatcher("test-cert", certFile, reloadCount::incrementAndGet);
 
         long baseline = mtime(certFile);
-        writeFileAndAwaitMtimeChange(certFile, "-----BEGIN CERTIFICATE-----\nTEST_CERT_V2_MODIFIED\n-----END CERTIFICATE-----\n", baseline);
+        writeFileAndBumpMtime(certFile, "-----BEGIN CERTIFICATE-----\nTEST_CERT_V2_MODIFIED\n-----END CERTIFICATE-----\n", baseline);
 
         ReflectionTestUtils.invokeMethod(certificateReloadManager, "checkCertificates");
 
@@ -85,7 +81,7 @@ public class CertificateReloadManagerTest {
     }
 
     @Test
-    public void givenCertificateFileUnchanged_whenCheckForChanges_thenShouldNotTriggerReload() throws Exception {
+    public void givenCertificateFileUnchanged_whenCheckForChanges_thenShouldNotTriggerReload() {
         AtomicInteger reloadCount = new AtomicInteger(0);
 
         certificateReloadManager.registerWatcher("test-cert", certFile, reloadCount::incrementAndGet);
@@ -147,7 +143,7 @@ public class CertificateReloadManagerTest {
         certificateReloadManager.registerWatcher("test-key", keyFile, keyReloadCount::incrementAndGet);
 
         long baseline = mtime(keyFile);
-        writeFileAndAwaitMtimeChange(keyFile, "-----BEGIN PRIVATE KEY-----\nTEST_KEY_V2_MODIFIED\n-----END PRIVATE KEY-----\n", baseline);
+        writeFileAndBumpMtime(keyFile, "-----BEGIN PRIVATE KEY-----\nTEST_KEY_V2_MODIFIED\n-----END PRIVATE KEY-----\n", baseline);
 
         ReflectionTestUtils.invokeMethod(certificateReloadManager, "checkCertificates");
 
@@ -168,8 +164,8 @@ public class CertificateReloadManagerTest {
 
         long baseline1 = mtime(certFile);
         long baseline2 = mtime(cert2File);
-        writeFileAndAwaitMtimeChange(certFile, "-----BEGIN CERTIFICATE-----\nMODIFIED1\n-----END CERTIFICATE-----\n", baseline1);
-        writeFileAndAwaitMtimeChange(cert2File, "-----BEGIN CERTIFICATE-----\nMODIFIED2\n-----END CERTIFICATE-----\n", baseline2);
+        writeFileAndBumpMtime(certFile, "-----BEGIN CERTIFICATE-----\nMODIFIED1\n-----END CERTIFICATE-----\n", baseline1);
+        writeFileAndBumpMtime(cert2File, "-----BEGIN CERTIFICATE-----\nMODIFIED2\n-----END CERTIFICATE-----\n", baseline2);
 
         ReflectionTestUtils.invokeMethod(certificateReloadManager, "checkCertificates");
 
@@ -191,8 +187,8 @@ public class CertificateReloadManagerTest {
 
         long baseline1 = mtime(certFile);
         long baseline2 = mtime(cert2File);
-        writeFileAndAwaitMtimeChange(certFile, "-----BEGIN CERTIFICATE-----\nMODIFIED1\n-----END CERTIFICATE-----\n", baseline1);
-        writeFileAndAwaitMtimeChange(cert2File, "-----BEGIN CERTIFICATE-----\nMODIFIED2\n-----END CERTIFICATE-----\n", baseline2);
+        writeFileAndBumpMtime(certFile, "-----BEGIN CERTIFICATE-----\nMODIFIED1\n-----END CERTIFICATE-----\n", baseline1);
+        writeFileAndBumpMtime(cert2File, "-----BEGIN CERTIFICATE-----\nMODIFIED2\n-----END CERTIFICATE-----\n", baseline2);
 
         ReflectionTestUtils.invokeMethod(certificateReloadManager, "checkCertificates");
 
@@ -224,9 +220,7 @@ public class CertificateReloadManagerTest {
         for (int i = 0; i < 5; i++) {
             Files.writeString(certFile, "-----BEGIN CERTIFICATE-----\nCERT_VERSION_" + i + "\n-----END CERTIFICATE-----\n");
         }
-        await().atMost(2, SECONDS)
-                .pollInterval(10, MILLISECONDS)
-                .until(() -> mtime(certFile) != baseline);
+        Files.setLastModifiedTime(certFile, FileTime.fromMillis(baseline + 1000));
 
         ReflectionTestUtils.invokeMethod(certificateReloadManager, "checkCertificates");
 
@@ -242,7 +236,7 @@ public class CertificateReloadManagerTest {
         certificateReloadManager.registerWatcher("test-cert", certFile, reloadCount::incrementAndGet);
 
         long baseline = mtime(certFile);
-        writeFileAndAwaitMtimeChange(certFile, "-----BEGIN CERTIFICATE-----\nMODIFIED\n-----END CERTIFICATE-----\n", baseline);
+        writeFileAndBumpMtime(certFile, "-----BEGIN CERTIFICATE-----\nMODIFIED\n-----END CERTIFICATE-----\n", baseline);
 
         for (int i = 0; i < 5; i++) {
             new Thread(() -> {
@@ -272,7 +266,7 @@ public class CertificateReloadManagerTest {
         certificateReloadManager.registerWatcher("test-cert", certFile, reloadCount::incrementAndGet);
 
         long baseline = mtime(certFile);
-        writeFileAndAwaitMtimeChange(certFile, originalContent, baseline);
+        writeFileAndBumpMtime(certFile, originalContent, baseline);
 
         ReflectionTestUtils.invokeMethod(certificateReloadManager, "checkCertificates");
 
@@ -289,7 +283,7 @@ public class CertificateReloadManagerTest {
         });
 
         long baseline = mtime(certFile);
-        writeFileAndAwaitMtimeChange(certFile, "-----BEGIN CERTIFICATE-----\nBAD_CERT\n-----END CERTIFICATE-----\n", baseline);
+        writeFileAndBumpMtime(certFile, "-----BEGIN CERTIFICATE-----\nBAD_CERT\n-----END CERTIFICATE-----\n", baseline);
 
         for (int i = 0; i < 15; i++) {
             ReflectionTestUtils.invokeMethod(certificateReloadManager, "checkCertificates");
@@ -311,17 +305,39 @@ public class CertificateReloadManagerTest {
         });
 
         long baseline = mtime(certFile);
-        writeFileAndAwaitMtimeChange(certFile, "-----BEGIN CERTIFICATE-----\nBAD_CERT\n-----END CERTIFICATE-----\n", baseline);
+        writeFileAndBumpMtime(certFile, "-----BEGIN CERTIFICATE-----\nBAD_CERT\n-----END CERTIFICATE-----\n", baseline);
 
         ReflectionTestUtils.invokeMethod(certificateReloadManager, "checkCertificates");
         assertThat(reloadAttempts.get()).isEqualTo(1);
 
         shouldFail.set(0);
         long baseline2 = mtime(certFile);
-        writeFileAndAwaitMtimeChange(certFile, "-----BEGIN CERTIFICATE-----\nGOOD_CERT\n-----END CERTIFICATE-----\n", baseline2);
+        writeFileAndBumpMtime(certFile, "-----BEGIN CERTIFICATE-----\nGOOD_CERT\n-----END CERTIFICATE-----\n", baseline2);
 
         ReflectionTestUtils.invokeMethod(certificateReloadManager, "checkCertificates");
         assertThat(reloadAttempts.get()).isEqualTo(2);
+    }
+
+    @Test
+    public void givenContentChangedButMtimeUnchanged_whenCheckForChanges_thenShouldTriggerReload() throws Exception {
+        // Bug fingerprint: a cert-manager rotation that lands in the same wall-clock millisecond as the
+        // watcher's recorded baseline mtime. Files.getLastModifiedTime().toMillis() truncates to the ms,
+        // so the rotated content shares the baseline mtime and an mtime-only gate would never re-hash it.
+        AtomicInteger reloadCount = new AtomicInteger(0);
+
+        certificateReloadManager.registerWatcher("test-cert", certFile, reloadCount::incrementAndGet);
+
+        long baseline = mtime(certFile);
+        Files.writeString(certFile, "-----BEGIN CERTIFICATE-----\nROTATED_SAME_MS\n-----END CERTIFICATE-----\n");
+        // Force the mtime back to the exact baseline millisecond — content changed, timestamp did not.
+        Files.setLastModifiedTime(certFile, FileTime.fromMillis(baseline));
+
+        // Sanity guard: the watcher observes a timestamp identical to its recorded baseline.
+        assertThat(mtime(certFile)).isEqualTo(baseline);
+
+        ReflectionTestUtils.invokeMethod(certificateReloadManager, "checkCertificates");
+
+        assertThat(reloadCount.get()).isEqualTo(1);
     }
 
     @Test
@@ -337,7 +353,7 @@ public class CertificateReloadManagerTest {
         });
 
         long baseline = mtime(certFile);
-        writeFileAndAwaitMtimeChange(certFile, "-----BEGIN CERTIFICATE-----\nBAD_CERT\n-----END CERTIFICATE-----\n", baseline);
+        writeFileAndBumpMtime(certFile, "-----BEGIN CERTIFICATE-----\nBAD_CERT\n-----END CERTIFICATE-----\n", baseline);
 
         for (int i = 0; i < 15; i++) {
             ReflectionTestUtils.invokeMethod(certificateReloadManager, "checkCertificates");
@@ -346,7 +362,7 @@ public class CertificateReloadManagerTest {
 
         shouldFail.set(0);
         long baseline2 = mtime(certFile);
-        writeFileAndAwaitMtimeChange(certFile, "-----BEGIN CERTIFICATE-----\nFIXED_CERT\n-----END CERTIFICATE-----\n", baseline2);
+        writeFileAndBumpMtime(certFile, "-----BEGIN CERTIFICATE-----\nFIXED_CERT\n-----END CERTIFICATE-----\n", baseline2);
 
         ReflectionTestUtils.invokeMethod(certificateReloadManager, "checkCertificates");
         assertThat(reloadAttempts.get()).isEqualTo(11);

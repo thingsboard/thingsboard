@@ -585,10 +585,11 @@ public class ProtoUtils {
     }
 
     private static ToDeviceActorNotificationMsg fromProto(TransportProtos.FromDeviceRpcResponseActorMsgProto proto) {
+        TransportProtos.FromDeviceRPCResponseProto rpcResponse = proto.getRpcResponse();
         FromDeviceRpcResponse fromDeviceRpcResponse = new FromDeviceRpcResponse(
-                new UUID(proto.getRpcResponse().getRequestIdMSB(), proto.getRpcResponse().getRequestIdLSB()),
-                proto.getRpcResponse().getResponse(),
-                proto.getRpcResponse().getError() >= 0 ? RpcError.values()[proto.getRpcResponse().getError()] : null);
+                new UUID(rpcResponse.getRequestIdMSB(), rpcResponse.getRequestIdLSB()),
+                rpcResponse.hasResponse() ? rpcResponse.getResponse() : null,
+                RpcError.fromProtoErrorCode(rpcResponse.getError()));
         return new FromDeviceRpcResponseActorMsg(
                 proto.getRequestId(),
                 TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),

@@ -30,7 +30,7 @@
                  [style.background-size]="vertical ? '100% ' + (batteryFillValue + 1) + '%' : (batteryFillValue + 1) + '% 100%'">
             </div>
           } @else {
-            @for (section of batterySections; track trackBySection($index)) {
+            @for (section of batterySections; track $index) {
               <div class="tb-battery-level-indicator-box divided"
                    [style.background]="batteryLevelColor.color"
                    [style.border-radius]="dividedBorderRadius"

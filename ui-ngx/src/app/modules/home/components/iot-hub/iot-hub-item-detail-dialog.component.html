@@ -1,0 +1,402 @@
+<!--
+
+    Copyright © 2016-2026 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-iot-hub-detail-dialog">
+  <!-- Header -->
+  <div class="dlg-header">
+    @if (isCompactLayout()) {
+      <div class="dlg-header-icon" [style.background]="item.color || '#048ad3'">
+        <tb-icon>{{ getCompactIcon() }}</tb-icon>
+      </div>
+    }
+    <div class="flex min-w-0 flex-1 flex-col gap-2">
+      <span class="dlg-title">{{ item.name }}</span>
+      <div class="dlg-subtitle">
+        <span class="dlg-subtitle-group">
+          <tb-icon class="dlg-subtitle-icon">{{ getTypeIcon() }}</tb-icon>
+          <span>{{ typeTranslations.get(item.type) | translate }}</span>
+        </span>
+        <span class="dlg-dot"></span>
+        <span class="dlg-subtitle-group">
+          <tb-icon class="dlg-subtitle-icon">download</tb-icon>
+          <span>{{ item.totalInstallCount | shortNumber }} {{ 'iot-hub.installs' | translate }}</span>
+        </span>
+        <span class="dlg-dot"></span>
+        <span class="dlg-subtitle-group">
+          <mat-icon class="dlg-subtitle-icon">update</mat-icon>
+          <span>v {{ item.version }}</span>
+        </span>
+        @if (preview) {
+          <span class="dlg-dot"></span>
+          <span class="dlg-subtitle-group tb-unpublished-preview-badge">
+            <mat-icon class="dlg-subtitle-icon">warning</mat-icon>
+            <span>{{ 'iot-hub.unpublished-preview' | translate }}</span>
+          </span>
+        }
+        @if (item.publishedTime) {
+          <span class="dlg-dot"></span>
+          <span class="dlg-subtitle-group">
+            <mat-icon class="dlg-subtitle-icon">today</mat-icon>
+            <span>{{ item.publishedTime | date:'mediumDate' }}</span>
+          </span>
+        }
+      </div>
+    </div>
+    <div class="flex shrink-0 items-center gap-2">
+      @if (isInstalled()) {
+        @if (hasUpdate()) {
+          <button class="dlg-update-btn" (click)="updateItem()">
+            {{ 'iot-hub.update-to-version' | translate:{ version: item.version } }}
+          </button>
+        } @else {
+          <span class="dlg-installed-badge">
+            <mat-icon>check</mat-icon>
+            {{ 'iot-hub.installed' | translate }} v{{ installedItem.version }}
+          </span>
+        }
+      }
+      <button mat-icon-button class="dlg-close-btn-desktop" (click)="close()" type="button">
+        <tb-icon>close</tb-icon>
+      </button>
+    </div>
+  </div>
+
+  <button mat-icon-button class="dlg-close-btn-mobile" (click)="close()" type="button">
+    <tb-icon>close</tb-icon>
+  </button>
+
+  <!-- Scrollable content -->
+  <div class="dlg-body">
+    <!-- Main content -->
+    <div class="dlg-main">
+      @if (isCompactLayout()) {
+        <!-- CF/RC/Device: description + author (no image) -->
+        <div class="dlg-info dlg-info-compact">
+          <div class="dlg-info-text">
+            @if (item.description) {
+              <div class="dlg-description">
+                <tb-iot-hub-markdown [data]="item.description"></tb-iot-hub-markdown>
+              </div>
+            }
+          </div>
+        </div>
+      } @else {
+        <!-- Widget/Dashboard/Solution: image + description side by side -->
+        <div class="flex gap-6 lt-md:flex-col">
+          <div class="dlg-preview"
+               [class.dlg-preview-carousel]="item.type === ItemType.SOLUTION_TEMPLATE && carouselImages.length > 1">
+            @if (item.type === ItemType.SOLUTION_TEMPLATE && carouselImages.length > 1) {
+              <div class="dlg-hero-carousel">
+                <ngx-hm-carousel
+                  [(ngModel)]="carouselIndex"
+                  [data]="carouselImages"
+                  [infinite]="true"
+                  [autoplay-speed]="3000"
+                  [between-delay]="0"
+                  [autoplay]="true"
+                  [mouse-enable]="true"
+                  [show-num]="1"
+                  class="dlg-carousel">
+                  <section ngx-hm-carousel-container class="dlg-carousel-container">
+                    @for (imageUrl of carouselImages; track imageUrl) {
+                      <article class="dlg-carousel-item" ngx-hm-carousel-item>
+                        <img [src]="imageUrl" alt="">
+                      </article>
+                    }
+                  </section>
+                  <ng-template #carouselPrev><span class="dlg-carousel-hidden-nav"></span></ng-template>
+                  <ng-template #carouselNext><span class="dlg-carousel-hidden-nav"></span></ng-template>
+                  <ng-template #carouselDot><span></span></ng-template>
+                </ngx-hm-carousel>
+                <div class="dlg-carousel-controls">
+                  <button mat-icon-button class="dlg-carousel-nav" (click)="goToPrevSlide()">
+                    <mat-icon>chevron_left</mat-icon>
+                  </button>
+                  <div class="dlg-carousel-dots">
+                    @for (img of carouselImages; track img; let i = $index) {
+                      <div class="dlg-carousel-dot" role="button" tabindex="0"
+                           [class.active]="i === carouselIndex"
+                           (click)="carouselIndex = i"
+                           (keyup.enter)="carouselIndex = i"></div>
+                    }
+                  </div>
+                  <button mat-icon-button class="dlg-carousel-nav" (click)="goToNextSlide()">
+                    <mat-icon>chevron_right</mat-icon>
+                  </button>
+                </div>
+              </div>
+            } @else {
+              @if (getPreviewUrl(); as url) {
+                <img [src]="url" alt="" class="dlg-preview-img">
+              } @else {
+                <div class="dlg-preview-placeholder">
+                  <tb-icon>{{ getTypeIcon() }}</tb-icon>
+                </div>
+              }
+            }
+          </div>
+          <div class="dlg-info">
+            <div class="dlg-info-text">
+              @if (item.description) {
+                <div class="dlg-description">
+                  <tb-iot-hub-markdown [data]="item.description"></tb-iot-hub-markdown>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Categories & Use Cases / Device metadata -->
+    <div class="dlg-meta-bar">
+      <div class="dlg-divider"></div>
+      <div class="dlg-meta" [class.dlg-meta-4-col]="item.type === ItemType.SOLUTION_TEMPLATE || item.type === ItemType.DASHBOARD">
+        @if (showCreator) {
+          <div class="dlg-meta-group dlg-meta-creator-section">
+            <span class="dlg-meta-label">{{ 'iot-hub.creator' | translate }}</span>
+            <div class="dlg-meta-creator" role="button" tabindex="0"
+                 [class.clickable]="mode !== 'add'"
+                 (click)="mode !== 'add' && navigateToCreator()"
+                 (keyup.enter)="mode !== 'add' && navigateToCreator()">
+              <div class="dlg-meta-creator-avatar">
+                @if (getCreatorAvatarUrl(); as avatarUrl) {
+                  <img [src]="avatarUrl" alt="">
+                } @else {
+                  <mat-icon>person</mat-icon>
+                }
+                @if (item.creatorVerified) {
+                  <mat-icon class="dlg-meta-creator-verified">verified</mat-icon>
+                }
+              </div>
+              <span class="dlg-meta-creator-name" tbTruncateWithTooltip>{{ item.creatorDisplayName }}</span>
+            </div>
+          </div>
+        }
+        @if (getSubtypeLabel(); as subtypeLabel) {
+          <div class="dlg-meta-group dlg-meta-details-section">
+            <span class="dlg-meta-label">{{ 'iot-hub.type' | translate }}</span>
+            <div class="dlg-meta-chips">
+              <span class="dlg-chip dlg-chip-type dlg-chip-inline" tbTruncateWithTooltip>{{ subtypeLabel }}</span>
+            </div>
+          </div>
+        }
+        @if (item.type === ItemType.DEVICE) {
+          @if (item.dataDescriptor?.hardwareType) {
+            <div class="dlg-meta-group dlg-meta-details-section">
+              <span class="dlg-meta-label">{{ 'iot-hub.hardware-type' | translate }}</span>
+              <div class="dlg-meta-chips">
+                <span class="dlg-chip dlg-chip-type dlg-chip-inline" tbTruncateWithTooltip>{{ item.dataDescriptor.hardwareType }}</span>
+              </div>
+            </div>
+          }
+          @if (item.dataDescriptor?.connectivity?.length) {
+            <div class="dlg-meta-group dlg-meta-details-section">
+              <span class="dlg-meta-label">{{ 'iot-hub.connectivity' | translate }}</span>
+              <div class="dlg-meta-chips" tb-chip-overflow chipSelector=".dlg-chip" overflowClass="dlg-chip dlg-chip-category" [gap]="4" [minChips]="2" showOverflowedTitle>
+                @for (conn of item.dataDescriptor.connectivity; track conn) {
+                  <span class="dlg-chip dlg-chip-category">{{ conn }}</span>
+                }
+              </div>
+            </div>
+          }
+        } @else {
+          @if (item.categories?.length) {
+            <div class="dlg-meta-group dlg-meta-details-section">
+              <span class="dlg-meta-label">{{ 'iot-hub.category' | translate }}</span>
+              <div class="dlg-meta-chips" tb-chip-overflow chipSelector=".dlg-chip" overflowClass="dlg-chip dlg-chip-category" [gap]="4" [minChips]="2" showOverflowedTitle>
+                @for (cat of item.categories; track cat) {
+                  <span class="dlg-chip dlg-chip-category">{{ cat }}</span>
+                }
+              </div>
+            </div>
+          }
+        }
+        @if (item.useCases?.length) {
+          <div class="dlg-meta-group dlg-meta-details-section">
+            <span class="dlg-meta-label">{{ 'iot-hub.use-cases' | translate }}</span>
+            <div class="dlg-meta-chips" tb-chip-overflow chipSelector=".dlg-chip" overflowClass="dlg-chip dlg-chip-usecase" [gap]="4" showOverflowedTitle>
+              @for (uc of item.useCases; track uc) {
+                <span class="dlg-chip dlg-chip-usecase">{{ uc }}</span>
+              }
+            </div>
+          </div>
+        }
+        @if ((isInstalled() || installedItemsCount > 0) && mode !== 'add') {
+          <div class="dlg-meta-group dlg-meta-manage">
+            <span class="dlg-meta-label">{{ 'iot-hub.manage' | translate }}</span>
+            <div class="dlg-meta-manage-actions">
+              @if (item.type === ItemType.SOLUTION_TEMPLATE) {
+                <button mat-icon-button class="dlg-manage-icon-btn"
+                        [matTooltip]="'iot-hub.solution-instructions' | translate"
+                        matTooltipPosition="above"
+                        (click)="openSolutionInstructions()">
+                  <mat-icon>info_outline</mat-icon>
+                </button>
+                <button mat-icon-button class="dlg-manage-icon-btn"
+                        [matTooltip]="'iot-hub.remove' | translate"
+                        matTooltipPosition="above"
+                        (click)="deleteItem()">
+                  <tb-icon class="tb-mat-24">mdi:trash-can-outline</tb-icon>
+                </button>
+              } @else {
+                @if (installedItemsCount > 0) {
+                  <button mat-stroked-button color="primary" (click)="openInstalledItemsDialog()">
+                    <mat-icon>inventory_2</mat-icon>
+                    {{ 'iot-hub.installed-items' | translate }}: {{ installedItemsCount }}
+                  </button>
+                } @else {
+                  <button mat-stroked-button class="dlg-manage-remove-btn" (click)="deleteItem()">
+                    <tb-icon matButtonIcon class="tb-mat-24">mdi:trash-can-outline</tb-icon>
+                    {{ 'iot-hub.remove' | translate }}
+                  </button>
+                }
+              }
+            </div>
+          </div>
+        }
+        @if (hasDetails()) {
+          <div class="dlg-meta-group dlg-meta-details">
+            <span class="dlg-meta-label">{{ 'iot-hub.details' | translate }}</span>
+            <button mat-icon-button class="dlg-manage-icon-btn dlg-meta-details-btn"
+                    tb-popover
+                    [tbPopoverContent]="detailsPopoverContent"
+                    tbPopoverTrigger="click"
+                    tbPopoverPlacement="bottom"
+                    [tbPopoverOverlayStyle]="{width: '400px'}"
+                    [matTooltip]="'iot-hub.details' | translate"
+                    matTooltipPosition="above">
+              <tb-icon class="tb-mat-24">mdi:dots-horizontal-circle-outline</tb-icon>
+            </button>
+          </div>
+        }
+      </div>
+      <div class="dlg-divider"></div>
+    </div>
+
+    <!-- Rule Chain Nodes -->
+    @if (item.type === ItemType.RULE_CHAIN && getNodes().length) {
+      <div class="dlg-nodes">
+        @for (node of getNodes(); track node.name) {
+          <span class="dlg-node-chip" [ngClass]="'dlg-node-' + node.type.toLowerCase()">{{ node.name }}</span>
+        }
+      </div>
+      <div class="dlg-divider"></div>
+    }
+
+    <!-- Readme / Changelog -->
+    @if (readmeContent || shouldShowChangelog()) {
+      <div class="dlg-readme">
+        @if (readmeContent) {
+          <tb-iot-hub-markdown [data]="readmeContent" [item]="item"></tb-iot-hub-markdown>
+        }
+        @if (shouldShowChangelog()) {
+          <h3>{{ 'iot-hub.changelog' | translate }}</h3>
+          <tb-iot-hub-markdown [data]="item.changelog" [item]="item"></tb-iot-hub-markdown>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Footer -->
+  <div class="dlg-footer">
+    <span class="dlg-footer-spacer"></span>
+    <button mat-button (click)="close()">{{ 'action.close' | translate }}</button>
+    @if (mode === 'add' && !isInstalled()) {
+      <button mat-flat-button color="primary" (click)="addItem()">
+        {{ 'action.add' | translate }}
+      </button>
+    }
+    @if (!isInstalled() && mode !== 'add') {
+      @if (item.type === ItemType.DEVICE) {
+        <button mat-flat-button color="primary" (click)="installDevice()">
+          {{ 'iot-hub.connect-device' | translate }}
+        </button>
+      } @else {
+        <button mat-flat-button color="primary" (click)="install()">
+          {{ 'iot-hub.install' | translate }}
+        </button>
+      }
+    }
+    @if (isInstalled() && mode !== 'add') {
+      <button mat-flat-button color="primary" (click)="openEntityDetails()">
+        @if (item.type === ItemType.SOLUTION_TEMPLATE) {
+          {{ 'iot-hub.goto-main-dashboard' | translate }}
+        } @else {
+          {{ 'iot-hub.open-item-type' | translate:{ type: getTypeLabel() } }}
+        }
+      </button>
+    }
+  </div>
+</div>
+
+<ng-template #detailsPopoverContent>
+  <div class="dlg-details-popover">
+    <span class="dlg-details-popover-title">{{ 'iot-hub.details' | translate }}</span>
+    <div class="dlg-details-popover-body">
+      @if (getSubtypeLabel(); as subtypeLabel) {
+        <div class="dlg-meta-group">
+          <span class="dlg-meta-label">{{ 'iot-hub.type' | translate }}</span>
+          <div class="dlg-meta-chips">
+            <span class="dlg-chip dlg-chip-type">{{ subtypeLabel }}</span>
+          </div>
+        </div>
+      }
+      @if (item.type === ItemType.DEVICE) {
+        @if (item.dataDescriptor?.hardwareType) {
+          <div class="dlg-meta-group">
+            <span class="dlg-meta-label">{{ 'iot-hub.hardware-type' | translate }}</span>
+            <div class="dlg-meta-chips">
+              <span class="dlg-chip dlg-chip-type">{{ item.dataDescriptor.hardwareType }}</span>
+            </div>
+          </div>
+        }
+        @if (item.dataDescriptor?.connectivity?.length) {
+          <div class="dlg-meta-group">
+            <span class="dlg-meta-label">{{ 'iot-hub.connectivity' | translate }}</span>
+            <div class="dlg-meta-chips">
+              @for (conn of item.dataDescriptor.connectivity; track conn) {
+                <span class="dlg-chip dlg-chip-category">{{ conn }}</span>
+              }
+            </div>
+          </div>
+        }
+      } @else {
+        @if (item.categories?.length) {
+          <div class="dlg-meta-group">
+            <span class="dlg-meta-label">{{ 'iot-hub.category' | translate }}</span>
+            <div class="dlg-meta-chips">
+              @for (cat of item.categories; track cat) {
+                <span class="dlg-chip dlg-chip-category">{{ cat }}</span>
+              }
+            </div>
+          </div>
+        }
+      }
+      @if (item.useCases?.length) {
+        <div class="dlg-meta-group">
+          <span class="dlg-meta-label">{{ 'iot-hub.use-cases' | translate }}</span>
+          <div class="dlg-meta-chips">
+            @for (uc of item.useCases; track uc) {
+              <span class="dlg-chip dlg-chip-usecase">{{ uc }}</span>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</ng-template>

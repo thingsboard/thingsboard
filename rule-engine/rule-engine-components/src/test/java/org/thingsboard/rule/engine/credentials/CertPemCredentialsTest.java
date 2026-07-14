@@ -23,6 +23,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.thingsboard.common.util.SslUtil;
 
+import javax.security.auth.x500.X500Principal;
 import java.io.File;
 import java.io.IOException;
 import java.security.Key;
@@ -49,13 +50,13 @@ public class CertPemCredentialsTest {
 
         Assertions.assertEquals(4, x509Certificates.size());
         Assertions.assertEquals("CN=*.thingsboard.cloud, O=\"ThingsBoard, Inc.\", ST=New York, C=US",
-                x509Certificates.get(0).getSubjectDN().getName());
+                x509Certificates.get(0).getSubjectX500Principal().getName(X500Principal.RFC1779));
         Assertions.assertEquals("CN=Sectigo ECC Organization Validation Secure Server CA, O=Sectigo Limited, L=Salford, ST=Greater Manchester, C=GB",
-                x509Certificates.get(1).getSubjectDN().getName());
+                x509Certificates.get(1).getSubjectX500Principal().getName(X500Principal.RFC1779));
         Assertions.assertEquals("CN=USERTrust ECC Certification Authority, O=The USERTRUST Network, L=Jersey City, ST=New Jersey, C=US",
-                x509Certificates.get(2).getSubjectDN().getName());
+                x509Certificates.get(2).getSubjectX500Principal().getName(X500Principal.RFC1779));
         Assertions.assertEquals("CN=AAA Certificate Services, O=Comodo CA Limited, L=Salford, ST=Greater Manchester, C=GB",
-                x509Certificates.get(3).getSubjectDN().getName());
+                x509Certificates.get(3).getSubjectX500Principal().getName(X500Principal.RFC1779));
     }
 
     @Test
@@ -66,7 +67,7 @@ public class CertPemCredentialsTest {
 
         Assertions.assertEquals(1, x509Certificates.size());
         Assertions.assertEquals("CN=*.thingsboard.cloud, O=\"ThingsBoard, Inc.\", ST=New York, C=US",
-                x509Certificates.get(0).getSubjectDN().getName());
+                x509Certificates.get(0).getSubjectX500Principal().getName(X500Principal.RFC1779));
     }
 
     @Test
@@ -103,7 +104,7 @@ public class CertPemCredentialsTest {
 
         List<X509Certificate> certs = SslUtil.readCertFile(certContent);
         for (X509Certificate cert : certs) {
-            String alias = CERT_ALIAS_PREFIX + cert.getIssuerDN().getName();
+            String alias = CERT_ALIAS_PREFIX + cert.getIssuerX500Principal().getName(X500Principal.RFC1779);
             Certificate certificate = keyStore.getCertificate(alias);
             Assertions.assertNotNull(certificate);
             Assertions.assertEquals(new String(cert.getEncoded()), new String(certificate.getEncoded()));

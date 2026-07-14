@@ -1,7 +1,7 @@
 {
   "fqn": "indoor_temperature_card",
   "name": "Indoor temperature card",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/indoor_temperature_card_system_widget_image.png",
   "description": "Displays the latest indoor temperature telemetry in a scalable rectangle card.",
   "descriptor": {

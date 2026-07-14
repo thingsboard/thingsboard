@@ -18,8 +18,8 @@ package org.thingsboard.server.dao.service.validator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileType;
@@ -86,21 +86,21 @@ class DeviceProfileDataValidatorTest {
     private static final int port = 5685;
     private static final int portBs = 5687;
 
-    @MockBean
+    @MockitoBean
     DeviceProfileDao deviceProfileDao;
-    @MockBean
+    @MockitoBean
     DeviceProfileService deviceProfileService;
-    @MockBean
+    @MockitoBean
     DeviceDao deviceDao;
-    @MockBean
+    @MockitoBean
     TenantService tenantService;
-    @MockBean
+    @MockitoBean
     QueueService queueService;
-    @MockBean
+    @MockitoBean
     RuleChainService ruleChainService;
-    @MockBean
+    @MockitoBean
     DashboardService dashboardService;
-    @SpyBean
+    @MockitoSpyBean
     DeviceProfileDataValidator validator;
     TenantId tenantId = TenantId.fromUUID(UUID.fromString("9ef79cdf-37a8-4119-b682-2e7ed4e018da"));
 

@@ -116,6 +116,8 @@ export class GlobalHttpInterceptor implements HttpInterceptor {
     } else if (errorResponse.status === 429) {
       if (resendRequest) {
         return this.retryRequest(req, next);
+      } else {
+        unhandled = true;
       }
     } else if (errorResponse.status === 403) {
       if (!ignoreErrors) {

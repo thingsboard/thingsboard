@@ -1,0 +1,152 @@
+<!--
+
+    Copyright © 2016-2026 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+@if (isCompactLayout()) {
+  <!-- Compact card (CF / RC) — Design: horizontal row, icon | content | button -->
+  <div class="tb-iot-hub-card-compact" role="button" tabindex="0" (click)="onCardClick()" (keyup.enter)="onCardClick()">
+    <div class="tb-iot-hub-compact-icon" [style.background]="item.color || '#4caf50'">
+      <tb-icon>{{ getPlaceholderIcon() }}</tb-icon>
+    </div>
+    <div class="flex min-w-0 flex-1 flex-col gap-2">
+      @if (showSubtype && getSubtypeLabel(); as subtypeLabel) {
+        <span class="tb-iot-hub-card-subtype">{{ subtypeLabel }}</span>
+      }
+      <h3 class="tb-iot-hub-compact-name">{{ item.name }}</h3>
+      <div class="tb-iot-hub-compact-meta">
+        @if (showCreator) {
+          @if (item.creatorVerified) {
+            <mat-icon class="tb-iot-hub-compact-author-icon tb-iot-hub-verified-icon">verified</mat-icon>
+          } @else {
+            <tb-icon class="tb-iot-hub-compact-author-icon">person</tb-icon>
+          }
+          <span class="tb-iot-hub-compact-creator" role="button" tabindex="0"
+                [class.clickable]="mode !== 'add'"
+                (click)="mode !== 'add' && onCreatorClick($event)"
+                (keyup.enter)="mode !== 'add' && onCreatorClick($event)">{{ item.creatorDisplayName }}</span>
+          <span class="tb-iot-hub-compact-dot">&middot;</span>
+        }
+        <tb-icon class="tb-iot-hub-compact-download-icon">download</tb-icon>
+        <span class="tb-iot-hub-compact-count">{{ item.totalInstallCount | shortNumber }}</span>
+      </div>
+    </div>
+    @if (mode === 'add') {
+      @if (isInstalled()) {
+        <span class="tb-iot-hub-card-installed-chip"><tb-icon>check</tb-icon>{{ 'iot-hub.installed' | translate }}</span>
+      } @else {
+        <button class="tb-iot-hub-card-install-btn" (click)="onAddClick($event)">{{ 'action.add' | translate }}</button>
+      }
+    } @else if (isInstalled()) {
+      @if (isSameVersion()) {
+        <span class="tb-iot-hub-card-installed-chip"><tb-icon>check</tb-icon>{{ 'iot-hub.installed' | translate }}</span>
+        @if (hasInstallGuide()) {
+          <button class="tb-iot-hub-card-guide-btn" (click)="onGuideClick($event)"
+                  [matTooltip]="'iot-hub.view-setup-guide' | translate" matTooltipPosition="above">
+            <tb-icon>description</tb-icon>
+          </button>
+        }
+        <button class="tb-iot-hub-card-remove-btn" (click)="onDeleteClick($event)">
+          <tb-icon>mdi:trash-can-outline</tb-icon>
+        </button>
+      } @else {
+        <button class="tb-iot-hub-card-update-btn" (click)="onUpdateClick($event)">{{ 'iot-hub.update' | translate }}</button>
+        @if (hasInstallGuide()) {
+          <button class="tb-iot-hub-card-guide-btn" (click)="onGuideClick($event)"
+                  [matTooltip]="'iot-hub.view-setup-guide' | translate" matTooltipPosition="above">
+            <tb-icon>description</tb-icon>
+          </button>
+        }
+        <button class="tb-iot-hub-card-remove-btn" (click)="onDeleteClick($event)">
+          <tb-icon>mdi:trash-can-outline</tb-icon>
+        </button>
+      }
+    } @else {
+      <button class="tb-iot-hub-card-install-btn" (click)="onInstallClick($event)">{{ (item.type === ItemType.DEVICE ? 'iot-hub.connect' : 'iot-hub.install') | translate }}</button>
+    }
+  </div>
+} @else {
+  <!-- Big card (Widget / Dashboard / Solution Template) -->
+  <div class="tb-iot-hub-item-card" role="button" tabindex="0" (click)="onCardClick()" (keyup.enter)="onCardClick()">
+    <div class="tb-iot-hub-card-preview">
+      @if (getPreviewUrl(); as previewUrl) {
+        <img [src]="previewUrl" alt="" class="tb-iot-hub-preview-image">
+      } @else {
+        <div class="tb-iot-hub-preview-placeholder">
+          <tb-icon>{{ getPlaceholderIcon() }}</tb-icon>
+        </div>
+      }
+    </div>
+    <div class="flex flex-1 flex-col gap-2 px-4 pb-4">
+      @if (showSubtype && getSubtypeLabel(); as subtypeLabel) {
+        <span class="tb-iot-hub-card-subtype">{{ subtypeLabel }}</span>
+      }
+      <h3 class="tb-iot-hub-card-name">{{ item.name }}</h3>
+      <div class="tb-iot-hub-card-footer">
+        @if (showCreator) {
+          @if (item.creatorVerified) {
+            <mat-icon class="tb-iot-hub-card-author-icon tb-iot-hub-verified-icon">verified</mat-icon>
+          } @else {
+            <tb-icon class="tb-iot-hub-card-author-icon">person</tb-icon>
+          }
+          <span class="tb-iot-hub-card-creator" role="button" tabindex="0"
+                [class.clickable]="mode !== 'add'"
+                (click)="mode !== 'add' && onCreatorClick($event)"
+                (keyup.enter)="mode !== 'add' && onCreatorClick($event)">{{ item.creatorDisplayName }}</span>
+          <span class="tb-iot-hub-card-dot">&middot;</span>
+        }
+        <span class="tb-iot-hub-card-stat">
+          <tb-icon>download</tb-icon>
+          {{ item.totalInstallCount | shortNumber }}
+        </span>
+        <span class="tb-iot-hub-card-stats">
+          @if (mode === 'add') {
+            @if (isInstalled()) {
+              <span class="tb-iot-hub-card-installed-chip"><tb-icon>check</tb-icon>{{ 'iot-hub.installed' | translate }}</span>
+            } @else {
+              <button class="tb-iot-hub-card-install-btn" (click)="onAddClick($event)">{{ 'action.add' | translate }}</button>
+            }
+          } @else if (isInstalled()) {
+            @if (isSameVersion()) {
+              <span class="tb-iot-hub-card-installed-chip"><tb-icon>check</tb-icon>{{ 'iot-hub.installed' | translate }}</span>
+              @if (hasInstallGuide()) {
+                <button class="tb-iot-hub-card-guide-btn" (click)="onGuideClick($event)"
+                        [matTooltip]="'iot-hub.view-setup-guide' | translate" matTooltipPosition="above">
+                  <tb-icon>description</tb-icon>
+                </button>
+              }
+              <button class="tb-iot-hub-card-remove-btn" (click)="onDeleteClick($event)">
+                <tb-icon>mdi:trash-can-outline</tb-icon>
+              </button>
+            } @else {
+              <button class="tb-iot-hub-card-update-btn" (click)="onUpdateClick($event)">{{ 'iot-hub.update' | translate }}</button>
+              @if (hasInstallGuide()) {
+                <button class="tb-iot-hub-card-guide-btn" (click)="onGuideClick($event)"
+                        [matTooltip]="'iot-hub.view-setup-guide' | translate" matTooltipPosition="above">
+                  <tb-icon>description</tb-icon>
+                </button>
+              }
+              <button class="tb-iot-hub-card-remove-btn" (click)="onDeleteClick($event)">
+                <tb-icon>mdi:trash-can-outline</tb-icon>
+              </button>
+            }
+          } @else {
+            <button class="tb-iot-hub-card-install-btn" (click)="onInstallClick($event)">{{ (item.type === ItemType.DEVICE ? 'iot-hub.connect' : 'iot-hub.install') | translate }}</button>
+          }
+        </span>
+      </div>
+    </div>
+  </div>
+}

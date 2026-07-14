@@ -176,10 +176,6 @@ export class Lwm2mObserveAttrTelemetryInstancesComponent implements ControlValue
     this.instancesFormArray.updateValueAndValidity();
   }
 
-  trackByParams = (index: number, instance: Instance): number => {
-    return instance.id;
-  }
-
   getIndeterminate = (instance: AbstractControl, type: ResourceSettingTelemetry): boolean => {
     const resources = instance.get('resources').value as ResourceLwM2M[];
     if (isDefinedAndNotNull(resources)) {

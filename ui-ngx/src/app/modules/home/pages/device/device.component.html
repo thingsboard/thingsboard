@@ -16,56 +16,56 @@
 
 -->
 <div class="tb-details-buttons xs:flex xs:flex-col">
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'open')"
           [class.!hidden]="isEdit || isDetailsPage">
     {{'common.open-details-page' | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'makePublic')"
           [class.!hidden]="isEdit || deviceScope !== 'tenant' || isAssignedToCustomer(entity) || entity?.customerIsPublic">
     {{'device.make-public' | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'assignToCustomer')"
           [class.!hidden]="isEdit || deviceScope !== 'tenant' || isAssignedToCustomer(entity)">
     {{'device.assign-to-customer' | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'unassignFromCustomer')"
           [class.!hidden]="isEdit || (deviceScope !== 'customer' && deviceScope !== 'tenant') || !isAssignedToCustomer(entity)">
     {{ (entity?.customerIsPublic ? 'device.make-private' : 'device.unassign-from-customer') | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'manageCredentials')"
           [class.!hidden]="isEdit">
     {{ ((deviceScope === 'customer_user' || deviceScope === 'edge_customer_user') ? 'device.view-credentials' : 'device.manage-credentials') | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'checkConnectivity')"
           [class.!hidden]="isEdit">
     {{ 'device.connectivity.check-connectivity' | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'unassignFromEdge')"
           [class.!hidden]="isEdit || deviceScope !== 'edge'">
     {{ 'edge.unassign-from-edge' | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'delete')"
           [class.!hidden]="hideDelete() || isEdit">
     {{'device.delete' | translate }}
   </button>
   <div class="flex flex-row xs:flex-col">
-    <button mat-raised-button
+    <button mat-stroked-button
             ngxClipboard
             (cbOnSuccess)="onDeviceIdCopied($event)"
             [cbContent]="entity?.id?.id"

@@ -1,7 +1,7 @@
 {
   "fqn": "carbon_monoxide_co_chart_card",
   "name": "Carbon monoxide (CO) chart card",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/CO-value-and-chart-card.svg",
   "description": "A colorless and odorless gas resulting from incomplete combustion, particularly in motor vehicles. Results displayed by combining the latest and aggregated values and optional simplified chart. ",
   "descriptor": {

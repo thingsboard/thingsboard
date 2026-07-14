@@ -22,6 +22,7 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.device.DeviceConnectivityInfo;
+import org.thingsboard.server.dao.device.DockerComposeParams;
 
 import java.net.Inet6Address;
 import java.net.InetAddress;
@@ -51,9 +52,27 @@ public class DeviceConnectivityUtil {
     public static final String COAP_IMAGE = "thingsboard/coap-clients ";
     private final static Pattern VALID_URL_PATTERN = Pattern.compile("^(https?)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]");
 
+    private static String stripControlChars(String value) {
+        return value == null ? null : StringUtils.CONTROL_CHARS.matcher(value).replaceAll("_");
+    }
+
+    // Escapes a value that is interpolated inside a double-quoted shell argument (e.g. -u "...") in the
+    // publish commands shown to the operator, so it cannot break out of the quotes or trigger command/
+    // variable substitution. Control chars are stripped first to keep the command on a single line.
+    private static String escapeShellArg(String value) {
+        if (value == null) {
+            return null;
+        }
+        return stripControlChars(value)
+                .replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("$", "\\$")
+                .replace("`", "\\`");
+    }
+
     public static String getHttpPublishCommand(String protocol, String host, String port, DeviceCredentials deviceCredentials) {
         return String.format("curl -v -X POST %s://%s%s/api/v1/%s/telemetry --header Content-Type:application/json --data " + JSON_EXAMPLE_PAYLOAD,
-                protocol, host, port, deviceCredentials.getCredentialsId());
+                protocol, host, port, stripControlChars(deviceCredentials.getCredentialsId()));
     }
 
     public static String getMqttPublishCommand(String protocol, String host, String port, String deviceTelemetryTopic, DeviceCredentials deviceCredentials) {
@@ -66,20 +85,20 @@ public class DeviceConnectivityUtil {
 
         switch (deviceCredentials.getCredentialsType()) {
             case ACCESS_TOKEN:
-                command.append(" -u \"").append(deviceCredentials.getCredentialsId()).append("\"");
+                command.append(" -u \"").append(escapeShellArg(deviceCredentials.getCredentialsId())).append("\"");
                 break;
             case MQTT_BASIC:
                 BasicMqttCredentials credentials = JacksonUtil.fromString(deviceCredentials.getCredentialsValue(),
                         BasicMqttCredentials.class);
                 if (credentials != null) {
                     if (StringUtils.isNotEmpty(credentials.getClientId())) {
-                        command.append(" -i \"").append(credentials.getClientId()).append("\"");
+                        command.append(" -i \"").append(escapeShellArg(credentials.getClientId())).append("\"");
                     }
                     if (StringUtils.isNotEmpty(credentials.getUserName())) {
-                        command.append(" -u \"").append(credentials.getUserName()).append("\"");
+                        command.append(" -u \"").append(escapeShellArg(credentials.getUserName())).append("\"");
                     }
                     if (StringUtils.isNotEmpty(credentials.getPassword())) {
-                        command.append(" -P \"").append(credentials.getPassword()).append("\"");
+                        command.append(" -P \"").append(escapeShellArg(credentials.getPassword())).append("\"");
                     }
                 } else {
                     return null;
@@ -92,37 +111,43 @@ public class DeviceConnectivityUtil {
         return command.toString();
     }
 
-    public static Resource getGatewayDockerComposeFile(String host, String gatewayImageVersion, DeviceCredentials deviceCredentials) {
+    public static Resource getGatewayDockerComposeFile(String host, String gatewayImageVersion, DeviceCredentials deviceCredentials, DockerComposeParams params) {
         StringBuilder dockerComposeBuilder = new StringBuilder();
-        dockerComposeBuilder.append("version: '3.4'\n");
+        if (params.includeVersion()) {
+            dockerComposeBuilder.append("version: '3.4'\n");
+        }
         dockerComposeBuilder.append("services:\n");
         dockerComposeBuilder.append("  # ThingsBoard IoT Gateway Service Configuration\n");
         dockerComposeBuilder.append("  tb-gateway:\n");
         dockerComposeBuilder.append("    image: thingsboard/tb-gateway:").append(gatewayImageVersion).append("\n");
-        dockerComposeBuilder.append("    container_name: tb-gateway\n");
+        dockerComposeBuilder.append("    container_name: ").append(params.containerName()).append("\n");
         dockerComposeBuilder.append("    restart: always\n");
-        dockerComposeBuilder.append("\n");
-        dockerComposeBuilder.append("    # Ports bindings - required by some connectors\n");
-        dockerComposeBuilder.append("    ports:\n");
-        dockerComposeBuilder.append("        - \"5000:5000\" # Comment if you don't use REST connector and change if you use another port\n");
-        dockerComposeBuilder.append("        # Uncomment and modify the following ports based on connector usage:\n");
-        dockerComposeBuilder.append("#        - \"1052:1052\" # BACnet connector\n");
-        dockerComposeBuilder.append("#        - \"5026:5026\" # Modbus TCP connector (Modbus Slave)\n");
-        dockerComposeBuilder.append("#        - \"50000:50000/tcp\" # Socket connector with type TCP\n");
-        dockerComposeBuilder.append("#        - \"50000:50000/udp\" # Socket connector with type UDP\n");
-        dockerComposeBuilder.append("\n");
-        dockerComposeBuilder.append("    # Necessary mapping for Linux\n");
-        dockerComposeBuilder.append("    extra_hosts:\n");
-        dockerComposeBuilder.append("      - \"host.docker.internal:host-gateway\"\n");
+        if (params.includePortBindings()) {
+            dockerComposeBuilder.append("\n");
+            dockerComposeBuilder.append("    # Ports bindings - required by some connectors\n");
+            dockerComposeBuilder.append("    ports:\n");
+            dockerComposeBuilder.append("        - \"5000:5000\" # Comment if you don't use REST connector and change if you use another port\n");
+            dockerComposeBuilder.append("        # Uncomment and modify the following ports based on connector usage:\n");
+            dockerComposeBuilder.append("#        - \"1052:1052\" # BACnet connector\n");
+            dockerComposeBuilder.append("#        - \"5026:5026\" # Modbus TCP connector (Modbus Slave)\n");
+            dockerComposeBuilder.append("#        - \"50000:50000/tcp\" # Socket connector with type TCP\n");
+            dockerComposeBuilder.append("#        - \"50000:50000/udp\" # Socket connector with type UDP\n");
+        }
+        if (params.includeExtraHosts()) {
+            dockerComposeBuilder.append("\n");
+            dockerComposeBuilder.append("    # Necessary mapping for Linux\n");
+            dockerComposeBuilder.append("    extra_hosts:\n");
+            dockerComposeBuilder.append("      - \"host.docker.internal:host-gateway\"\n");
+        }
         dockerComposeBuilder.append("\n");
         dockerComposeBuilder.append("    # Environment variables\n");
         dockerComposeBuilder.append("    environment:\n");
-        dockerComposeBuilder.append("      - TB_GW_HOST=").append(isLocalhost(host) ? HOST_DOCKER_INTERNAL : host).append("\n");
+        dockerComposeBuilder.append("      - TB_GW_HOST=").append(stripControlChars(isLocalhost(host) ? HOST_DOCKER_INTERNAL : host)).append("\n");
         dockerComposeBuilder.append("      - TB_GW_PORT=1883\n");
         switch (deviceCredentials.getCredentialsType()) {
             case ACCESS_TOKEN:
                 dockerComposeBuilder.append("      - TB_GW_SECURITY_TYPE=accessToken\n");
-                dockerComposeBuilder.append("      - TB_GW_ACCESS_TOKEN=").append(deviceCredentials.getCredentialsId()).append("\n");
+                dockerComposeBuilder.append("      - TB_GW_ACCESS_TOKEN=").append(stripControlChars(deviceCredentials.getCredentialsId())).append("\n");
                 break;
             case MQTT_BASIC:
                 dockerComposeBuilder.append("      - TB_GW_SECURITY_TYPE=usernamePassword\n");
@@ -130,32 +155,36 @@ public class DeviceConnectivityUtil {
                         BasicMqttCredentials.class);
                 if (credentials != null) {
                     if (StringUtils.isNotEmpty(credentials.getClientId())) {
-                        dockerComposeBuilder.append("      - TB_GW_CLIENT_ID=").append(credentials.getClientId()).append("\n");
+                        dockerComposeBuilder.append("      - TB_GW_CLIENT_ID=").append(stripControlChars(credentials.getClientId())).append("\n");
                     }
                     if (StringUtils.isNotEmpty(credentials.getUserName())) {
-                        dockerComposeBuilder.append("      - TB_GW_USERNAME=").append(credentials.getUserName()).append("\n");
+                        dockerComposeBuilder.append("      - TB_GW_USERNAME=").append(stripControlChars(credentials.getUserName())).append("\n");
                     }
                     if (StringUtils.isNotEmpty(credentials.getPassword())) {
-                        dockerComposeBuilder.append("      - TB_GW_PASSWORD=").append(credentials.getPassword()).append("\n");
+                        dockerComposeBuilder.append("      - TB_GW_PASSWORD=").append(stripControlChars(credentials.getPassword())).append("\n");
                     }
                 }
                 break;
         }
-        dockerComposeBuilder.append("\n");
-        dockerComposeBuilder.append("    # Volumes bind\n");
-        dockerComposeBuilder.append("    volumes:\n");
-        dockerComposeBuilder.append("      - tb-gw-config:/thingsboard_gateway/config\n");
-        dockerComposeBuilder.append("      - tb-gw-logs:/thingsboard_gateway/logs\n");
-        dockerComposeBuilder.append("      - tb-gw-extensions:/thingsboard_gateway/extensions\n");
-        dockerComposeBuilder.append("\n");
-        dockerComposeBuilder.append("# Volumes declaration for configurations, extensions and configuration\n");
-        dockerComposeBuilder.append("volumes:\n");
-        dockerComposeBuilder.append("  tb-gw-config:\n");
-        dockerComposeBuilder.append("    name: tb-gw-config\n");
-        dockerComposeBuilder.append("  tb-gw-logs:\n");
-        dockerComposeBuilder.append("    name: tb-gw-logs\n");
-        dockerComposeBuilder.append("  tb-gw-extensions:\n");
-        dockerComposeBuilder.append("    name: tb-gw-extensions\n");
+        if (params.includeVolumesBind()) {
+            dockerComposeBuilder.append("\n");
+            dockerComposeBuilder.append("    # Volumes bind\n");
+            dockerComposeBuilder.append("    volumes:\n");
+            dockerComposeBuilder.append("      - tb-gw-config:/thingsboard_gateway/config\n");
+            dockerComposeBuilder.append("      - tb-gw-logs:/thingsboard_gateway/logs\n");
+            dockerComposeBuilder.append("      - tb-gw-extensions:/thingsboard_gateway/extensions\n");
+        }
+        if (params.includeVolumesDeclaration()) {
+            dockerComposeBuilder.append("\n");
+            dockerComposeBuilder.append("# Volumes declaration for configurations, extensions and configuration\n");
+            dockerComposeBuilder.append("volumes:\n");
+            dockerComposeBuilder.append("  tb-gw-config:\n");
+            dockerComposeBuilder.append("    name: tb-gw-config\n");
+            dockerComposeBuilder.append("  tb-gw-logs:\n");
+            dockerComposeBuilder.append("    name: tb-gw-logs\n");
+            dockerComposeBuilder.append("  tb-gw-extensions:\n");
+            dockerComposeBuilder.append("    name: tb-gw-extensions\n");
+        }
 
         return new ByteArrayResource(dockerComposeBuilder.toString().getBytes(StandardCharsets.UTF_8));
     }
@@ -201,7 +230,7 @@ public class DeviceConnectivityUtil {
                 String client = COAPS.equals(protocol) ? "coap-client-openssl" : "coap-client";
                 String certificate = COAPS.equals(protocol) ? " -R " + CA_ROOT_CERT_PEM : "";
                 return String.format("%s -v 6 -m POST%s -t \"application/json\" -e %s %s://%s%s/api/v1/%s/telemetry",
-                        client, certificate, JSON_EXAMPLE_PAYLOAD, protocol, host, port, deviceCredentials.getCredentialsId());
+                        client, certificate, JSON_EXAMPLE_PAYLOAD, protocol, host, port, stripControlChars(deviceCredentials.getCredentialsId()));
             default:
                 return null;
         }

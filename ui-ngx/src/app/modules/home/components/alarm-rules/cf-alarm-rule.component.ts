@@ -84,6 +84,7 @@ export class CfAlarmRuleComponent implements ControlValueAccessor, OnInit, Valid
   });
 
   private propagateChange = (v: any) => { };
+  private onValidatorChange = () => { };
 
   constructor(private dialog: MatDialog,
               private fb: FormBuilder,
@@ -97,11 +98,20 @@ export class CfAlarmRuleComponent implements ControlValueAccessor, OnInit, Valid
   registerOnTouched(fn: any): void {
   }
 
+  registerOnValidatorChange(fn: () => void): void {
+    this.onValidatorChange = fn;
+  }
+
   ngOnInit() {
     this.alarmRuleFormGroup.valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(() => {
       this.updateModel();
+    });
+    this.alarmRuleFormGroup.statusChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
+      this.onValidatorChange();
     });
   }
 

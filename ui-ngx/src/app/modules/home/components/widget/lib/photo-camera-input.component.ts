@@ -24,7 +24,7 @@ import {
   ViewChild,
   ViewEncapsulation
 } from '@angular/core';
-import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+
 import { ImageService } from '@app/core/public-api';
 import { AppState } from '@core/core.state';
 import { AttributeService } from '@core/http/attribute.service';
@@ -63,8 +63,7 @@ export class PhotoCameraInputWidgetComponent extends PageComponent implements On
               protected store: Store<AppState>,
               private imageService: ImageService,
               private utils: UtilsService,
-              private attributeService: AttributeService,
-              private sanitizer: DomSanitizer
+              private attributeService: AttributeService
   ) {
     super(store);
   }
@@ -115,8 +114,8 @@ export class PhotoCameraInputWidgetComponent extends PageComponent implements On
   isLoading = false;
   singleDevice = true;
   updatePhoto = false;
-  previewPhoto: SafeUrl;
-  lastPhoto: SafeUrl;
+  previewPhoto: string;
+  lastPhoto: string;
   datasourceDetected = false;
 
   private mimeType: string;
@@ -176,7 +175,7 @@ export class PhotoCameraInputWidgetComponent extends PageComponent implements On
   private updateWidgetData(data: Array<DatasourceData>) {
     const keyData = data[0].data;
     if (keyData?.length && isString(keyData[0][1])) {
-      this.lastPhoto = keyData[0][1].startsWith('data:image/') ? this.sanitizer.bypassSecurityTrustUrl(keyData[0][1]) : keyData[0][1];
+      this.lastPhoto = keyData[0][1];
     }
   }
 
@@ -309,7 +308,7 @@ export class PhotoCameraInputWidgetComponent extends PageComponent implements On
         const file = new File([blob], fileName, { type: this.mimeType });
         return this.imageService.uploadImage(file, fileName);
       }),
-      map((imageInfo) => 
+      map((imageInfo) =>
         this.settings.usePublicGalleryLink ? imageInfo.publicLink : imageInfo.link
       )
     );

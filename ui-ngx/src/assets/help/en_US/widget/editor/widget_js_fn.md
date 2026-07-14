@@ -131,7 +131,7 @@ Browser debugger (if enabled) will automatically pause code execution at the deb
 
 ##### Further reading
 
-For more information read  [Widgets Development Guide{:target="_blank"}](${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/contribution/widgets-development).
+For more information read  [Widgets Development Guide{:target="_blank"}](${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/contribution/widgets-development/).
 
 <br>
 <br>

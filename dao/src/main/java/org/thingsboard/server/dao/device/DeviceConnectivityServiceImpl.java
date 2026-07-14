@@ -48,6 +48,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -155,11 +156,17 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
 
     @Override
     public Resource createGatewayDockerComposeFile(String baseUrl, Device device) throws URISyntaxException {
+        DockerComposeParams params = new DockerComposeParams(true, "tb-gateway", true, true, true, true);
+        return createGatewayDockerComposeFile(baseUrl, device, params);
+    }
+
+    @Override
+    public Resource createGatewayDockerComposeFile(String baseUrl, Device device, DockerComposeParams params) throws URISyntaxException {
         String mqttType = isEnabled(MQTTS) ? MQTTS : MQTT;
         DeviceConnectivityInfo properties = getConnectivity(mqttType);
         DeviceCredentials creds = deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getTenantId(), device.getId());
         String host = getHost(baseUrl, properties, mqttType);
-        return DeviceConnectivityUtil.getGatewayDockerComposeFile(host, gatewayImageVersion, creds);
+        return DeviceConnectivityUtil.getGatewayDockerComposeFile(host, gatewayImageVersion, creds, params);
     }
 
     private DeviceConnectivityInfo getConnectivity(String protocol) {
@@ -174,6 +181,23 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
     public boolean isEnabled(String protocol) {
         var info = getConnectivity(protocol);
         return info != null && info.isEnabled();
+    }
+
+    @Override
+    public JsonNode getConnectivityInfo(String baseUrl) throws URISyntaxException {
+        String[] protocols = {HTTP, HTTPS, MQTT, MQTTS, COAP, COAPS};
+        Map<String, DeviceConnectivityInfo> result = new LinkedHashMap<>();
+        for (String protocol : protocols) {
+            DeviceConnectivityInfo info = getConnectivity(protocol);
+            if (info != null && info.isEnabled()) {
+                DeviceConnectivityInfo resolved = new DeviceConnectivityInfo();
+                resolved.setEnabled(true);
+                resolved.setHost(getHost(baseUrl, info, protocol));
+                resolved.setPort(getPort(info));
+                result.put(protocol, resolved);
+            }
+        }
+        return JacksonUtil.valueToTree(result);
     }
 
     private Resource getCert(String path) {

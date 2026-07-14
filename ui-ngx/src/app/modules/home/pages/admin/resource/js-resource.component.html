@@ -16,26 +16,26 @@
 
 -->
 <div class="tb-details-buttons xs:flex xs:flex-col">
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'open')"
           [class.!hidden]="isEdit || isDetailsPage">
     {{'common.open-details-page' | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'downloadResource')"
           [class.!hidden]="isEdit">
     {{ 'javascript.download' | translate }}
   </button>
-  <button mat-raised-button color="primary"
+  <button mat-stroked-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'deleteLibrary')"
           [class.!hidden]="hideDelete() || isEdit">
     {{ 'javascript.delete' | translate }}
   </button>
   <div class="flex flex-row xs:flex-col">
-    <button mat-raised-button
+    <button mat-stroked-button
             ngxClipboard
             (cbOnSuccess)="onResourceIdCopied()"
             [cbContent]="entity?.id?.id"
@@ -49,7 +49,7 @@
   <form [formGroup]="entityForm">
     <fieldset [disabled]="(isLoading$ | async) || !isEdit">
       <mat-form-field class="mat-block" appearance="outline">
-        <mat-label translate>javascript.javascript-type</mat-label>
+        <mat-label translate>javascript.script-type</mat-label>
         <mat-select formControlName="resourceSubType" required>
           @for (resourceSubType of jsResourceSubTypes; track resourceSubType) {
             <mat-option [value]="resourceSubType">

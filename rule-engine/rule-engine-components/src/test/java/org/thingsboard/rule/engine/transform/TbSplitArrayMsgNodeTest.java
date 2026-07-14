@@ -114,7 +114,7 @@ public class TbSplitArrayMsgNodeTest {
 
         if (dataNode.size() > 1) {
             ArgumentCaptor<Runnable> successCaptor = ArgumentCaptor.forClass(Runnable.class);
-            ArgumentCaptor<Consumer<Throwable>> failureCaptor = ArgumentCaptor.forClass(Consumer.class);
+            ArgumentCaptor<Consumer<Throwable>> failureCaptor = ArgumentCaptor.captor();
             verify(ctx, times(dataNode.size())).enqueueForTellNext(any(), anyString(), successCaptor.capture(), failureCaptor.capture());
             for (Runnable valueCaptor : successCaptor.getAllValues()) {
                 valueCaptor.run();

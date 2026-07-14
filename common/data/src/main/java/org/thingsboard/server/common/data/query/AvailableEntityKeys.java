@@ -37,17 +37,21 @@ public record AvailableEntityKeys(
         )
         Set<EntityType> entityTypes,
 
-        @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+        @Schema(
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                description = "List of unique time series key names available on the matched entities."
+        )
         @ArraySchema(
-                arraySchema = @Schema(description = "List of unique time series key names available on the matched entities."),
                 schema = @Schema(implementation = String.class, example = "temperature"),
                 uniqueItems = true
         )
         List<String> timeseries,
 
-        @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+        @Schema(
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                description = "List of unique attribute key names available on the matched entities."
+        )
         @ArraySchema(
-                arraySchema = @Schema(description = "List of unique attribute key names available on the matched entities."),
                 schema = @Schema(implementation = String.class, example = "serialNumber"),
                 uniqueItems = true
         )
