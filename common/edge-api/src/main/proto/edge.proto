@@ -347,6 +347,24 @@ message CalculatedFieldRequestMsg {
   string entityType = 3;
 }
 
+message SendEmailUplinkMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  string request = 3;
+}
+
+message SendSmsUplinkMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  string request = 3;
+}
+
+message SendNotificationUplinkMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  string request = 3;
+}
+
 // DEPRECATED. FOR REMOVAL
 message UserCredentialsRequestMsg {
   option deprecated = true;
@@ -447,6 +465,9 @@ message UplinkMsg {
   repeated RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg = 24;
   repeated CalculatedFieldUpdateMsg calculatedFieldUpdateMsg = 25;
   repeated CalculatedFieldRequestMsg calculatedFieldRequestMsg = 26;
+  repeated SendEmailUplinkMsg sendEmailUplinkMsg = 35;
+  repeated SendSmsUplinkMsg sendSmsUplinkMsg = 36;
+  repeated SendNotificationUplinkMsg sendNotificationUplinkMsg = 37;
 }
 
 message UplinkResponseMsg {
