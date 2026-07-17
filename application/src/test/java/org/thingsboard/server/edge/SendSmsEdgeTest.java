@@ -15,16 +15,13 @@
  */
 package org.thingsboard.server.edge;
 
-import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.SmsService;
-import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.sms.config.TestSmsRequest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.edge.v1.SendSmsUplinkMsg;
-import org.thingsboard.server.gen.edge.v1.UplinkMsg;
 import org.thingsboard.server.service.sms.EdgeSmsRequest;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -41,7 +38,7 @@ import static org.mockito.Mockito.verify;
  * connected edge).
  */
 @DaoSqlTest
-public class SmsEdgeTest extends AbstractEdgeTest {
+public class SendSmsEdgeTest extends AbstractEdgeTest {
 
     @MockitoBean
     private SmsService smsService;
@@ -81,14 +78,7 @@ public class SmsEdgeTest extends AbstractEdgeTest {
                 .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
                 .setRequest(JacksonUtil.toString(request))
                 .build();
-
-        UplinkMsg.Builder uplinkMsgBuilder = UplinkMsg.newBuilder();
-        uplinkMsgBuilder.setUplinkMsgId(EdgeUtils.nextPositiveInt());
-        uplinkMsgBuilder.addSendSmsUplinkMsg(sendSmsUplinkMsg);
-
-        edgeImitator.expectResponsesAmount(1);
-        edgeImitator.sendUplinkMsg(uplinkMsgBuilder.build());
-        Assert.assertTrue(edgeImitator.waitForResponses());
+        sendUplinkMsgAndWaitForResponse(builder -> builder.addSendSmsUplinkMsg(sendSmsUplinkMsg));
     }
 
 }
