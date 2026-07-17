@@ -76,6 +76,7 @@ import org.thingsboard.server.service.edge.rpc.processor.relation.RelationEdgePr
 import org.thingsboard.server.service.edge.rpc.processor.resource.ResourceEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.rule.RuleChainEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.rule.RuleChainMetadataEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.settings.AdminSettingsEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.telemetry.TelemetryEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.user.UserProcessor;
 import org.thingsboard.server.service.edge.rpc.sync.EdgeRequestsService;
@@ -213,6 +214,9 @@ public class EdgeContextComponent {
     private Optional<EdgeStatsCounterService> statsCounterService;
 
     // processors
+    @Autowired
+    private AdminSettingsEdgeProcessor adminSettingsProcessor;
+
     @Autowired
     private AlarmProcessor alarmProcessor;
 

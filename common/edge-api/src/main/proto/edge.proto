@@ -367,6 +367,24 @@ message CalculatedFieldRequestMsg {
   string entityType = 3;
 }
 
+message SendEmailUplinkMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  string request = 3;
+}
+
+message SendSmsUplinkMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  string request = 3;
+}
+
+message SendNotificationUplinkMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  string request = 3;
+}
+
 // DEPRECATED. FOR REMOVAL
 message UserCredentialsRequestMsg {
   option deprecated = true;
@@ -471,6 +489,9 @@ message UplinkMsg {
   repeated UserUpdateMsg userUpdateMsg = 28;
   repeated UserCredentialsUpdateMsg userCredentialsUpdateMsg = 29;
   repeated ApiKeyUpdateMsg apiKeyUpdateMsg = 30;
+  repeated SendEmailUplinkMsg sendEmailUplinkMsg = 35;
+  repeated SendSmsUplinkMsg sendSmsUplinkMsg = 36;
+  repeated SendNotificationUplinkMsg sendNotificationUplinkMsg = 37;
 }
 
 message UplinkResponseMsg {
