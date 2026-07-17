@@ -367,6 +367,10 @@ message CalculatedFieldRequestMsg {
   string entityType = 3;
 }
 
+// Edge-delegated send requests (mail/sms/notification). The Cloud always resolves the tenant from the
+// authenticated edge session (edge.getTenantId()) and ignores tenantIdMSB/tenantIdLSB below - they are kept
+// only for symmetry with other uplink messages and must not be treated as authoritative by the receiver.
+// 'request' is the JSON-serialized Edge{Mail,Sms,Notification}Request payload.
 message SendEmailUplinkMsg {
   int64 tenantIdMSB = 1;
   int64 tenantIdLSB = 2;

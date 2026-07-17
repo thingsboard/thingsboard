@@ -465,16 +465,7 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
 
     @Override
     public ListenableFuture<Void> processSendEmailMsg(TenantId tenantId, Edge edge, SendEmailUplinkMsg sendEmailUplinkMsg) {
-        log.trace("[{}] processSendEmailMsg [{}]", tenantId, edge.getName());
-        dbCallbackExecutorService.submit(() -> {
-            try {
-                sendEmailForEdge(tenantId, sendEmailUplinkMsg);
-            } catch (Exception e) {
-                log.warn("[{}] Failed to send email requested by edge [{}]", tenantId, edge.getName(), e);
-            }
-            return null;
-        });
-        return Futures.immediateFuture(null);
+        return submitEdgeSend(tenantId, edge, "email", () -> sendEmailForEdge(tenantId, sendEmailUplinkMsg));
     }
 
     private void sendEmailForEdge(TenantId tenantId, SendEmailUplinkMsg sendEmailUplinkMsg) throws Exception {
@@ -509,16 +500,7 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
 
     @Override
     public ListenableFuture<Void> processSendSmsMsg(TenantId tenantId, Edge edge, SendSmsUplinkMsg sendSmsUplinkMsg) {
-        log.trace("[{}] processSendSmsMsg [{}]", tenantId, edge.getName());
-        dbCallbackExecutorService.submit(() -> {
-            try {
-                sendSmsForEdge(tenantId, sendSmsUplinkMsg);
-            } catch (Exception e) {
-                log.warn("[{}] Failed to send sms requested by edge [{}]", tenantId, edge.getName(), e);
-            }
-            return null;
-        });
-        return Futures.immediateFuture(null);
+        return submitEdgeSend(tenantId, edge, "sms", () -> sendSmsForEdge(tenantId, sendSmsUplinkMsg));
     }
 
     private void sendSmsForEdge(TenantId tenantId, SendSmsUplinkMsg sendSmsUplinkMsg) throws Exception {
@@ -537,12 +519,16 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
 
     @Override
     public ListenableFuture<Void> processSendNotificationMsg(TenantId tenantId, Edge edge, SendNotificationUplinkMsg sendNotificationUplinkMsg) {
-        log.trace("[{}] processSendNotificationMsg [{}]", tenantId, edge.getName());
+        return submitEdgeSend(tenantId, edge, "notification", () -> sendNotificationForEdge(tenantId, sendNotificationUplinkMsg));
+    }
+
+    private ListenableFuture<Void> submitEdgeSend(TenantId tenantId, Edge edge, String what, EdgeSendTask task) {
+        log.trace("[{}] processing edge-delegated {} send [{}]", tenantId, what, edge.getName());
         dbCallbackExecutorService.submit(() -> {
             try {
-                sendNotificationForEdge(tenantId, sendNotificationUplinkMsg);
+                task.execute();
             } catch (Exception e) {
-                log.warn("[{}] Failed to send notification requested by edge [{}]", tenantId, edge.getName(), e);
+                log.warn("[{}] Failed to send {} requested by edge [{}]", tenantId, what, edge.getName(), e);
             }
             return null;
         });
@@ -612,6 +598,11 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
 
         EdgeEvent edgeEvent = EdgeUtils.constructEdgeEvent(tenantId, edgeId, type, action, entityId, body);
         return edgeEventService.saveAsync(edgeEvent);
+    }
+
+    @FunctionalInterface
+    private interface EdgeSendTask {
+        void execute() throws Exception;
     }
 
 }

@@ -15,14 +15,12 @@
  */
 package org.thingsboard.server.edge;
 
-import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.notification.FirebaseService;
 import org.thingsboard.rule.engine.api.notification.SlackService;
-import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.settings.MobileAppNotificationDeliveryMethodConfig;
@@ -32,7 +30,6 @@ import org.thingsboard.server.common.data.notification.settings.SlackNotificatio
 import org.thingsboard.server.dao.notification.NotificationSettingsService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.edge.v1.SendNotificationUplinkMsg;
-import org.thingsboard.server.gen.edge.v1.UplinkMsg;
 import org.thingsboard.server.service.notification.EdgeNotificationRequest;
 
 import java.util.HashMap;
@@ -122,13 +119,7 @@ public class SendNotificationEdgeTest extends AbstractEdgeTest {
                 .setRequest(JacksonUtil.toString(request))
                 .build();
 
-        UplinkMsg.Builder uplinkMsgBuilder = UplinkMsg.newBuilder();
-        uplinkMsgBuilder.setUplinkMsgId(EdgeUtils.nextPositiveInt());
-        uplinkMsgBuilder.addSendNotificationUplinkMsg(sendNotificationUplinkMsg);
-
-        edgeImitator.expectResponsesAmount(1);
-        edgeImitator.sendUplinkMsg(uplinkMsgBuilder.build());
-        Assert.assertTrue(edgeImitator.waitForResponses());
+        sendUplinkMsgAndWaitForResponse(builder -> builder.addSendNotificationUplinkMsg(sendNotificationUplinkMsg));
     }
 
 }
