@@ -95,8 +95,8 @@ export class KafkaTemplate implements IQueue {
         const queuePrefix: string = config.get('queue_prefix');
         const requestTopic: string = queuePrefix ? queuePrefix + "." + config.get('request_topic') : config.get('request_topic');
         const useConfluent = config.get('kafka.use_confluent_cloud');
-        const enabledSsl = Boolean(config.get('kafka.ssl.enabled'));
         const groupId:string =  queuePrefix ? queuePrefix + ".js-executor-group" : "js-executor-group";
+        let enabledSsl = config.get('kafka.ssl.enabled') === 'true';
         this.logger.info('Kafka Bootstrap Servers: %s', kafkaBootstrapServers);
         this.logger.info('Kafka Requests Topic: %s', requestTopic);
 
@@ -118,6 +118,7 @@ export class KafkaTemplate implements IQueue {
 
         if (useConfluent) {
             const saslMechanism = config.get('kafka.confluent.sasl.mechanism') as string;
+            const securityProtocol = (config.has('kafka.confluent.security.protocol') ? config.get('kafka.confluent.security.protocol') as string :'SASL_SSL').toUpperCase();
             if (saslMechanism.toLowerCase() === 'oauthbearer') {
                 const refreshThresholdMs = config.has('kafka.confluent.oauth.refresh_threshold')
                     ? Number(config.get('kafka.confluent.oauth.refresh_threshold'))
@@ -146,7 +147,7 @@ export class KafkaTemplate implements IQueue {
                     password: config.get('kafka.confluent.password')
                 };
             }
-            kafkaConfig['ssl'] = true;
+            enabledSsl = securityProtocol.endsWith('SSL');
         }
 
         if (enabledSsl) {
