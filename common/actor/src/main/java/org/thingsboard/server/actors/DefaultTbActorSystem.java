@@ -168,7 +168,8 @@ public class DefaultTbActorSystem implements TbActorSystem {
         broadcastToChildren(parent, childFilter, msg, false);
     }
 
-    private void broadcastToChildren(TbActorId parent, Predicate<TbActorId> childFilter, TbActorMsg msg, boolean highPriority) {
+    @Override
+    public void broadcastToChildren(TbActorId parent, Predicate<TbActorId> childFilter, TbActorMsg msg, boolean highPriority) {
         Set<TbActorId> children = parentChildMap.get(parent);
         if (children != null) {
             children.stream().filter(childFilter).forEach(id -> {

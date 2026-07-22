@@ -198,6 +198,32 @@ public class ActorSystemTest {
     }
 
     @Test
+    public void testBroadcastToChildrenWithFilterAndPriority() throws InterruptedException {
+        executor = ThingsBoardExecutors.newWorkStealingPool(parallelism, getClass());
+        actorSystem.createDispatcher(ROOT_DISPATCHER, executor);
+
+        TbActorId parentId = new TbEntityActorId(new DeviceId(UUID.randomUUID()));
+        ActorTestCtx parentTestCtx = getActorTestCtx(1);
+        actorSystem.createRootActor(ROOT_DISPATCHER, new TestRootActor.TestRootActorCreator(parentId, parentTestCtx));
+
+        TbActorId matchingChildId = new TbEntityActorId(new DeviceId(UUID.randomUUID()));
+        ActorTestCtx matchingChildCtx = getActorTestCtx(1);
+        actorSystem.createChildActor(ROOT_DISPATCHER,
+                new TestRootActor.TestRootActorCreator(matchingChildId, matchingChildCtx), parentId);
+
+        TbActorId otherChildId = new TbEntityActorId(new DeviceId(UUID.randomUUID()));
+        ActorTestCtx otherChildCtx = getActorTestCtx(1);
+        actorSystem.createChildActor(ROOT_DISPATCHER,
+                new TestRootActor.TestRootActorCreator(otherChildId, otherChildCtx), parentId);
+
+        actorSystem.broadcastToChildren(parentId, id -> id.equals(matchingChildId), new IntTbActorMsg(7), true);
+
+        Assertions.assertTrue(matchingChildCtx.getLatch().await(TIMEOUT_AWAIT_MAX_SEC, TimeUnit.SECONDS));
+        Assertions.assertEquals(7L, matchingChildCtx.getActual().get());
+        Assertions.assertFalse(otherChildCtx.getLatch().await(1, TimeUnit.SECONDS));
+    }
+
+    @Test
     public void testFailedInit() throws InterruptedException {
         executor = ThingsBoardExecutors.newWorkStealingPool(parallelism, getClass());
         actorSystem.createDispatcher(ROOT_DISPATCHER, executor);
