@@ -103,7 +103,8 @@ enum MobileMenuPath {
   DASHBOARD = 'DASHBOARD',
   AUDIT_LOGS = 'AUDIT_LOGS',
   CUSTOMERS = 'CUSTOMERS',
-  NOTIFICATIONS = 'NOTIFICATIONS'
+  NOTIFICATIONS = 'NOTIFICATIONS',
+  LIVE_LOCATION_TRACKING = 'LIVE_LOCATION_TRACKING'
 }
 
 export enum MobilePageType {
@@ -175,12 +176,14 @@ const defaultMobileMenu = [
   MobileMenuPath.AUDIT_LOGS,
   MobileMenuPath.NOTIFICATIONS,
   MobileMenuPath.DEVICE_LIST,
-  MobileMenuPath.DASHBOARDS
+  MobileMenuPath.DASHBOARDS,
+  MobileMenuPath.LIVE_LOCATION_TRACKING
 ];
 
 export const hideDefaultMenuItems = [
   MobileMenuPath.DEVICE_LIST,
-  MobileMenuPath.DASHBOARDS
+  MobileMenuPath.DASHBOARDS,
+  MobileMenuPath.LIVE_LOCATION_TRACKING
 ];
 
 export const getDefaultMobileMenuItem = (): DefaultMobilePage[] => {
@@ -300,6 +303,14 @@ export const defaultMobilePageMap = new Map<MobileMenuPath, Omit<DefaultMobilePa
       id: MobileMenuPath.NOTIFICATIONS,
       icon: 'notifications_active',
       label: 'Notification'
+    }
+  ],
+  [
+    MobileMenuPath.LIVE_LOCATION_TRACKING,
+    {
+      id: MobileMenuPath.LIVE_LOCATION_TRACKING,
+      icon: 'my_location',
+      label: 'Live location tracking'
     }
   ]
 ])

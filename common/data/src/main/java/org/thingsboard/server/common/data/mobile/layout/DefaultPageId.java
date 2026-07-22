@@ -25,5 +25,6 @@ public enum DefaultPageId {
     AUDIT_LOGS,
     NOTIFICATIONS,
     DEVICE_LIST,
-    DASHBOARDS
+    DASHBOARDS,
+    LIVE_LOCATION_TRACKING
 }
