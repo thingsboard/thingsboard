@@ -32,14 +32,18 @@ import org.thingsboard.server.actors.TbActorSystemSettings;
 import org.thingsboard.server.actors.app.AppActor;
 import org.thingsboard.server.actors.app.AppInitMsg;
 import org.thingsboard.server.actors.stats.StatsActor;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.util.AfterStartUp;
 
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -133,7 +137,33 @@ public class DefaultActorService extends TbApplicationEventListener<PartitionCha
     @Override
     protected void onTbApplicationEvent(PartitionChangeEvent event) {
         log.info("Received partition change event.");
-        appActor.tellWithHighPriority(new PartitionChangeMsg(event.getServiceType()));
+        appActor.tellWithHighPriority(new PartitionChangeMsg(event.getServiceType(), resolveAffectedTenants(event)));
+    }
+
+    /**
+     * Resolves which tenants are affected by a partition-ownership change, so the caller can
+     * notify only those tenant actors instead of every live one.
+     * <p>
+     * Despite its name, {@link PartitionChangeEvent#getNewPartitions()} carries only the
+     * <b>changed subset</b> of queue keys — including removed ones, mapped to an empty partition
+     * set — never the full current assignment. That invariant is what makes this method correct;
+     * if it ever carried the full assignment instead, every recalculation would resolve to
+     * "everyone".
+     * <p>
+     * Returns {@code null} when any changed queue key belongs to the shared (non-isolated) tenant
+     * pool (a sys-tenant-keyed queue) — that pool's tenants aren't individually tracked as queue
+     * keys, so they can't be enumerated, and every tenant actor must be notified. Otherwise
+     * returns the non-empty set of affected tenant IDs. Callers must treat {@code null} as
+     * "notify everyone", never as "notify nobody" — an empty set would mean the latter, but this
+     * method never returns one today, since it is only invoked when the diff is non-empty.
+     */
+    static Set<TenantId> resolveAffectedTenants(PartitionChangeEvent event) {
+        Set<QueueKey> changedQueueKeys = event.getNewPartitions().keySet();
+        boolean sharedPoolChanged = changedQueueKeys.stream().anyMatch(queueKey -> queueKey.getTenantId().isSysTenantId());
+        if (sharedPoolChanged) {
+            return null;
+        }
+        return changedQueueKeys.stream().map(QueueKey::getTenantId).collect(Collectors.toSet());
     }
 
     @Override

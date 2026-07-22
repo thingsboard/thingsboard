@@ -24,6 +24,7 @@ import org.thingsboard.server.actors.TbActorException;
 import org.thingsboard.server.actors.TbActorId;
 import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.actors.TbEntityActorId;
+import org.thingsboard.server.actors.TbEntityTypeActorIdPredicate;
 import org.thingsboard.server.actors.device.SessionTimeoutCheckMsg;
 import org.thingsboard.server.actors.service.ContextAwareActor;
 import org.thingsboard.server.actors.service.ContextBasedCreator;
@@ -31,6 +32,7 @@ import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.actors.tenant.TenantActor;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.page.PageDataIterable;
@@ -40,6 +42,7 @@ import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
 import org.thingsboard.server.common.msg.aware.TenantAwareMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
+import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
 import org.thingsboard.server.common.msg.queue.RuleEngineException;
 import org.thingsboard.server.common.msg.queue.ServiceType;
@@ -88,6 +91,8 @@ public class AppActor extends ContextAwareActor {
             case APP_INIT_MSG:
                 break;
             case PARTITION_CHANGE_MSG:
+                onPartitionChangeMsg((PartitionChangeMsg) msg);
+                break;
             case CF_PARTITIONS_CHANGE_MSG:
             case CF_STATE_PARTITION_RESTORE_MSG:
                 ctx.broadcastToChildren(msg, true);
@@ -213,6 +218,21 @@ public class AppActor extends ContextAwareActor {
         }, () -> {
             msg.getCallback().onSuccess();
         });
+    }
+
+    private void onPartitionChangeMsg(PartitionChangeMsg msg) {
+        Set<TenantId> affectedTenants = msg.getAffectedTenants();
+        log.info("Partition change for {}: notifying {} affected tenant(s)", msg.getServiceType(), affectedTenants == null ? "ALL" : affectedTenants.size());
+        if (affectedTenants == null) {
+            ctx.broadcastToChildren(msg, true);
+        } else {
+            ctx.broadcastToChildren(msg, new TbEntityTypeActorIdPredicate(EntityType.TENANT) {
+                @Override
+                protected boolean testEntityId(EntityId entityId) {
+                    return super.testEntityId(entityId) && affectedTenants.contains(entityId);
+                }
+            }, true);
+        }
     }
 
     private Optional<TbActorRef> getOrCreateTenantActor(TenantId tenantId) {
