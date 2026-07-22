@@ -39,6 +39,7 @@ import {
 import { DashboardWidget } from '@home/models/dashboard-component.models';
 import {
   MobileActionAttributeSource,
+  MobileActionLocationAccuracy,
   MobileActionSaveAs,
   MobileActionTargetEntityType,
   MobileImageResult,
@@ -1241,6 +1242,15 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
       case WidgetMobileActionType.getLocation:
         argsObservable = of([]);
         break;
+      case WidgetMobileActionType.startLiveLocation:
+        argsObservable = defer(() =>
+          this.resolveMobileActionTargetEntity(mobileAction, entityId)).pipe(
+          map((targetEntityId) => [this.buildLiveTrackingConfig(mobileAction, targetEntityId)])
+        );
+        break;
+      case WidgetMobileActionType.stopLiveLocation:
+        argsObservable = of([]);
+        break;
       case WidgetMobileActionType.deviceProvision:
         argsObservable = of([mobileAction.provisionType]);
         break;
@@ -1404,6 +1414,8 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
                     case WidgetMobileActionType.mapDirection:
                     case WidgetMobileActionType.mapLocation:
                     case WidgetMobileActionType.makePhoneCall:
+                    case WidgetMobileActionType.startLiveLocation:
+                    case WidgetMobileActionType.stopLiveLocation:
                       const launched = actionResult.launched;
                       if (isNotEmptyTbFunction(mobileAction.processLaunchResultFunction)) {
                         compileTbFunction(this.http, mobileAction.processLaunchResultFunction, 'launched', '$event', 'widgetContext', 'entityId',
@@ -1533,6 +1545,29 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
           this.translate.instant('widget-action.mobile.location-save-failed', {error: message}));
       }
     });
+  }
+
+  private buildLiveTrackingConfig(mobileAction: WidgetMobileActionDescriptor,
+                                  targetEntityId: EntityId): object {
+    return {
+      target: {
+        entityType: targetEntityId.entityType,
+        id: targetEntityId.id
+      },
+      latitudeKey: mobileAction.latitudeKey || 'latitude',
+      longitudeKey: mobileAction.longitudeKey || 'longitude',
+      includeMetadata: !!mobileAction.includeMetadata,
+      mirrorToAttributes: !!mobileAction.mirrorToAttributes,
+      accuracy: mobileAction.accuracy || MobileActionLocationAccuracy.balanced,
+      distanceFilterMeters: isDefinedAndNotNull(mobileAction.distanceFilterMeters)
+        ? mobileAction.distanceFilterMeters : null,
+      intervalSeconds: isDefinedAndNotNull(mobileAction.intervalSeconds)
+        ? mobileAction.intervalSeconds : null,
+      maxDurationMinutes: isDefinedAndNotNull(mobileAction.maxDurationMinutes)
+        ? mobileAction.maxDurationMinutes : null,
+      writeStatusAttributes: mobileAction.writeStatusAttributes !== false,
+      trackedBy: getCurrentAuthUser(this.store)?.sub || null
+    };
   }
 
   private resolveMobileActionTargetEntity(mobileAction: WidgetMobileActionDescriptor,
