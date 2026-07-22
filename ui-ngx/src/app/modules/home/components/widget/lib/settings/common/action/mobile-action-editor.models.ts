@@ -253,6 +253,12 @@ export const getDefaultProcessLaunchResultFunction = (type: WidgetMobileActionTy
     case WidgetMobileActionType.makePhoneCall:
       title = 'Phone call';
       break;
+    case WidgetMobileActionType.startLiveLocation:
+      title = 'Start live location tracking';
+      break;
+    case WidgetMobileActionType.stopLiveLocation:
+      title = 'Stop live location tracking';
+      break;
   }
   return processLaunchResultFunctionTemplate.replace('--TITLE--', title);
 };
