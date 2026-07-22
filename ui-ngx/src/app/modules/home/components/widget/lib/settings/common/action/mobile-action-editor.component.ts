@@ -27,6 +27,8 @@ import {
   ActionConfig,
   MobileActionAttributeSource,
   mobileActionAttributeSourceTranslationMap,
+  MobileActionLocationAccuracy,
+  mobileActionLocationAccuracyTranslationMap,
   MobileActionSaveAs,
   mobileActionSaveAsTranslationMap,
   MobileActionTargetEntityType,
@@ -97,6 +99,9 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
 
   saveAsOptions = Object.values(MobileActionSaveAs);
   saveAsTranslations = mobileActionSaveAsTranslationMap;
+
+  locationAccuracies = Object.values(MobileActionLocationAccuracy);
+  locationAccuracyTranslations = mobileActionLocationAccuracyTranslationMap;
 
   private requiredValue: boolean;
   get required(): boolean {
@@ -307,51 +312,79 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
             'processLocationFunction',
             this.fb.control(processLocationFunction, [Validators.required])
           );
-          const targetEntity = action?.targetEntity;
           this.mobileActionTypeFormGroup.addControl(
             'saveToEntity',
             this.fb.control(action?.saveToEntity || false, [])
           );
-          this.mobileActionTypeFormGroup.addControl(
-            'targetEntity',
-            this.fb.group({
-              type: [targetEntity?.type || MobileActionTargetEntityType.currentEntity, []],
-              aliasName: [targetEntity?.aliasName, []],
-              attributeSource: [targetEntity?.attributeSource || MobileActionAttributeSource.currentUser, []],
-              attributeKey: [targetEntity?.attributeKey, []],
-              defaultEntityType: [targetEntity?.defaultEntityType, []]
-            })
-          );
-          this.entityAliasNames = (this.callbacks?.fetchEntityAliases?.() ?? []).map((alias) => alias.alias);
-          const aliasNameControl = this.mobileActionTypeFormGroup.get('targetEntity.aliasName');
-          this.filteredEntityAliasNames = aliasNameControl.valueChanges.pipe(
-            startWith(aliasNameControl.value ?? ''),
-            map((value: string) => (value ?? '').toLowerCase()),
-            map((search) => this.entityAliasNames.filter((name) => name.toLowerCase().includes(search)))
-          );
+          this.addTargetEntityControls(action);
           this.mobileActionTypeFormGroup.addControl(
             'saveAs',
             this.fb.control(action?.saveAs || MobileActionSaveAs.attributes, [])
           );
-          this.mobileActionTypeFormGroup.addControl(
-            'latitudeKey',
-            this.fb.control(action?.latitudeKey || 'latitude', [])
-          );
-          this.mobileActionTypeFormGroup.addControl(
-            'longitudeKey',
-            this.fb.control(action?.longitudeKey || 'longitude', [])
-          );
-          this.mobileActionTypeFormGroup.addControl(
-            'includeMetadata',
-            this.fb.control(action?.includeMetadata || false, [])
-          );
-          this.updateSaveLocationValidators();
+          this.updateTargetEntityValidators(this.mobileActionTypeFormGroup.get('saveToEntity').value);
           this.mobileActionTypeFormGroup.get('saveToEntity').valueChanges.pipe(
             takeUntilDestroyed(this.destroyRef)
-          ).subscribe(() => this.updateSaveLocationValidators());
+          ).subscribe(() =>
+            this.updateTargetEntityValidators(this.mobileActionTypeFormGroup.get('saveToEntity').value));
           this.mobileActionTypeFormGroup.get('targetEntity.type').valueChanges.pipe(
             takeUntilDestroyed(this.destroyRef)
-          ).subscribe(() => this.updateSaveLocationValidators());
+          ).subscribe(() =>
+            this.updateTargetEntityValidators(this.mobileActionTypeFormGroup.get('saveToEntity').value));
+          break;
+        case WidgetMobileActionType.startLiveLocation:
+          processLaunchResultFunction = action?.processLaunchResultFunction;
+          if (changed) {
+            const defaultLaunchResultFunction = getDefaultProcessLaunchResultFunction(targetType);
+            if (defaultLaunchResultFunction !== processLaunchResultFunction) {
+              processLaunchResultFunction = getDefaultProcessLaunchResultFunction(type);
+            }
+          }
+          this.addTargetEntityControls(action);
+          this.mobileActionTypeFormGroup.addControl(
+            'accuracy',
+            this.fb.control(action?.accuracy || MobileActionLocationAccuracy.balanced, [])
+          );
+          this.mobileActionTypeFormGroup.addControl(
+            'distanceFilterMeters',
+            this.fb.control(action?.distanceFilterMeters, [Validators.min(0)])
+          );
+          this.mobileActionTypeFormGroup.addControl(
+            'intervalSeconds',
+            this.fb.control(action?.intervalSeconds, [Validators.min(1)])
+          );
+          this.mobileActionTypeFormGroup.addControl(
+            'maxDurationMinutes',
+            this.fb.control(action?.maxDurationMinutes, [Validators.min(1)])
+          );
+          this.mobileActionTypeFormGroup.addControl(
+            'mirrorToAttributes',
+            this.fb.control(action?.mirrorToAttributes || false, [])
+          );
+          this.mobileActionTypeFormGroup.addControl(
+            'writeStatusAttributes',
+            this.fb.control(action?.writeStatusAttributes !== false, [])
+          );
+          this.mobileActionTypeFormGroup.addControl(
+            'processLaunchResultFunction',
+            this.fb.control(processLaunchResultFunction, [])
+          );
+          this.updateTargetEntityValidators(true);
+          this.mobileActionTypeFormGroup.get('targetEntity.type').valueChanges.pipe(
+            takeUntilDestroyed(this.destroyRef)
+          ).subscribe(() => this.updateTargetEntityValidators(true));
+          break;
+        case WidgetMobileActionType.stopLiveLocation:
+          processLaunchResultFunction = action?.processLaunchResultFunction;
+          if (changed) {
+            const defaultStopLaunchResultFunction = getDefaultProcessLaunchResultFunction(targetType);
+            if (defaultStopLaunchResultFunction !== processLaunchResultFunction) {
+              processLaunchResultFunction = getDefaultProcessLaunchResultFunction(type);
+            }
+          }
+          this.mobileActionTypeFormGroup.addControl(
+            'processLaunchResultFunction',
+            this.fb.control(processLaunchResultFunction, [])
+          );
           break;
         case WidgetMobileActionType.deviceProvision:
           let handleProvisionSuccessFunction = action?.handleProvisionSuccessFunction;
@@ -378,15 +411,47 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
     });
   }
 
-  private updateSaveLocationValidators() {
-    const saveToEntity: boolean = this.mobileActionTypeFormGroup.get('saveToEntity').value;
+  private addTargetEntityControls(action?: WidgetMobileActionDescriptor) {
+    const targetEntity = action?.targetEntity;
+    this.mobileActionTypeFormGroup.addControl(
+      'targetEntity',
+      this.fb.group({
+        type: [targetEntity?.type || MobileActionTargetEntityType.currentEntity, []],
+        aliasName: [targetEntity?.aliasName, []],
+        attributeSource: [targetEntity?.attributeSource || MobileActionAttributeSource.currentUser, []],
+        attributeKey: [targetEntity?.attributeKey, []],
+        defaultEntityType: [targetEntity?.defaultEntityType, []]
+      })
+    );
+    this.entityAliasNames = (this.callbacks?.fetchEntityAliases?.() ?? []).map((alias) => alias.alias);
+    const aliasNameControl = this.mobileActionTypeFormGroup.get('targetEntity.aliasName');
+    this.filteredEntityAliasNames = aliasNameControl.valueChanges.pipe(
+      startWith(aliasNameControl.value ?? ''),
+      map((value: string) => (value ?? '').toLowerCase()),
+      map((search) => this.entityAliasNames.filter((name) => name.toLowerCase().includes(search)))
+    );
+    this.mobileActionTypeFormGroup.addControl(
+      'latitudeKey',
+      this.fb.control(action?.latitudeKey || 'latitude', [])
+    );
+    this.mobileActionTypeFormGroup.addControl(
+      'longitudeKey',
+      this.fb.control(action?.longitudeKey || 'longitude', [])
+    );
+    this.mobileActionTypeFormGroup.addControl(
+      'includeMetadata',
+      this.fb.control(action?.includeMetadata || false, [])
+    );
+  }
+
+  private updateTargetEntityValidators(targetRequired: boolean) {
     const type: MobileActionTargetEntityType = this.mobileActionTypeFormGroup.get('targetEntity.type').value;
     const aliasName = this.mobileActionTypeFormGroup.get('targetEntity.aliasName');
     const attributeKey = this.mobileActionTypeFormGroup.get('targetEntity.attributeKey');
     aliasName.setValidators(
-      saveToEntity && type === MobileActionTargetEntityType.entityAlias ? [Validators.required] : []);
+      targetRequired && type === MobileActionTargetEntityType.entityAlias ? [Validators.required] : []);
     attributeKey.setValidators(
-      saveToEntity && type === MobileActionTargetEntityType.fromAttribute ? [Validators.required] : []);
+      targetRequired && type === MobileActionTargetEntityType.fromAttribute ? [Validators.required] : []);
     aliasName.updateValueAndValidity({emitEvent: false});
     attributeKey.updateValueAndValidity({emitEvent: false});
   }
@@ -428,6 +493,16 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
           functionArgs: ['$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams', 'entityLabel'],
           helpId: 'widget/action/mobile_get_phone_number_fn'
         });
+        this.actionConfig.push({
+          title: 'widget-action.mobile.process-launch-result-function',
+          formControlName: 'processLaunchResultFunction',
+          functionName: 'processLaunchResult',
+          functionArgs: ['launched', '$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams', 'entityLabel'],
+          helpId: 'widget/action/mobile_process_launch_result_fn'
+        });
+        break;
+      case this.mobileActionType.startLiveLocation:
+      case this.mobileActionType.stopLiveLocation:
         this.actionConfig.push({
           title: 'widget-action.mobile.process-launch-result-function',
           formControlName: 'processLaunchResultFunction',
