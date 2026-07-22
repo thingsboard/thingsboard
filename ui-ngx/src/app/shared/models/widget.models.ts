@@ -628,6 +628,8 @@ export enum WidgetMobileActionType {
   scanQrCode = 'scanQrCode',
   makePhoneCall = 'makePhoneCall',
   getLocation = 'getLocation',
+  startLiveLocation = 'startLiveLocation',
+  stopLiveLocation = 'stopLiveLocation',
   takeScreenshot = 'takeScreenshot',
   deviceProvision = 'deviceProvision',
 }
@@ -690,6 +692,8 @@ export const widgetMobileActionTypeTranslationMap = new Map<WidgetMobileActionTy
     [ WidgetMobileActionType.scanQrCode, 'widget-action.mobile.scan-qr-code' ],
     [ WidgetMobileActionType.makePhoneCall, 'widget-action.mobile.make-phone-call' ],
     [ WidgetMobileActionType.getLocation, 'widget-action.mobile.get-location' ],
+    [ WidgetMobileActionType.startLiveLocation, 'widget-action.mobile.start-live-location' ],
+    [ WidgetMobileActionType.stopLiveLocation, 'widget-action.mobile.stop-live-location' ],
     [ WidgetMobileActionType.takeScreenshot, 'widget-action.mobile.take-screenshot' ],
     [ WidgetMobileActionType.deviceProvision, 'widget-action.mobile.device-provision' ]
   ]
@@ -830,11 +834,39 @@ export interface GetLocationDescriptor extends SaveLocationDescriptor {
   processLocationFunction: TbFunction;
 }
 
+export enum MobileActionLocationAccuracy {
+  high = 'HIGH',
+  balanced = 'BALANCED',
+  low = 'LOW'
+}
+
+export const mobileActionLocationAccuracyTranslationMap = new Map<MobileActionLocationAccuracy, string>(
+  [
+    [ MobileActionLocationAccuracy.high, 'widget-action.mobile.accuracy-high' ],
+    [ MobileActionLocationAccuracy.balanced, 'widget-action.mobile.accuracy-balanced' ],
+    [ MobileActionLocationAccuracy.low, 'widget-action.mobile.accuracy-low' ]
+  ]
+);
+
+export interface StartLiveLocationDescriptor extends ProcessLaunchResultDescriptor {
+  targetEntity?: MobileActionTargetEntityConfig;
+  latitudeKey?: string;
+  longitudeKey?: string;
+  includeMetadata?: boolean;
+  mirrorToAttributes?: boolean;
+  accuracy?: MobileActionLocationAccuracy;
+  distanceFilterMeters?: number;
+  intervalSeconds?: number;
+  maxDurationMinutes?: number;
+  writeStatusAttributes?: boolean;
+}
+
 export type WidgetMobileActionDescriptors = ProcessImageDescriptor &
                                             LaunchMapDescriptor &
                                             ScanQrCodeDescriptor &
                                             MakePhoneCallDescriptor &
                                             GetLocationDescriptor &
+                                            StartLiveLocationDescriptor &
                                             ProvisionSuccessDescriptor;
 
 export interface WidgetMobileActionDescriptor extends WidgetMobileActionDescriptors {
