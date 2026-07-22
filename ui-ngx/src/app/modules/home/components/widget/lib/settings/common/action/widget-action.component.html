@@ -284,7 +284,7 @@
       </tb-custom-action-pretty-editor>
     </ng-template>
     <ng-template [ngSwitchCase]="widgetActionType.mobileAction">
-      <tb-mobile-action-editor formControlName="mobileAction">
+      <tb-mobile-action-editor [callbacks]="callbacks" formControlName="mobileAction">
       </tb-mobile-action-editor>
     </ng-template>
   </ng-container>

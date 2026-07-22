@@ -54,6 +54,9 @@ import {
 import { WidgetService } from '@core/http/widget.service';
 import { TbFunction } from '@shared/models/js-function.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { WidgetActionCallbacks } from '@home/components/widget/action/manage-widget-actions.component.models';
+import { Observable } from 'rxjs';
+import { map, startWith } from 'rxjs/operators';
 
 @Component({
     selector: 'tb-mobile-action-editor',
@@ -106,6 +109,12 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
 
   @Input()
   disabled: boolean;
+
+  @Input()
+  callbacks: WidgetActionCallbacks;
+
+  entityAliasNames: string[] = [];
+  filteredEntityAliasNames: Observable<string[]>;
 
   private propagateChange = (_v: any) => { };
 
@@ -312,6 +321,13 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
               attributeKey: [targetEntity?.attributeKey, []],
               defaultEntityType: [targetEntity?.defaultEntityType, []]
             })
+          );
+          this.entityAliasNames = (this.callbacks?.fetchEntityAliases?.() ?? []).map((alias) => alias.alias);
+          const aliasNameControl = this.mobileActionTypeFormGroup.get('targetEntity.aliasName');
+          this.filteredEntityAliasNames = aliasNameControl.valueChanges.pipe(
+            startWith(aliasNameControl.value ?? ''),
+            map((value: string) => (value ?? '').toLowerCase()),
+            map((search) => this.entityAliasNames.filter((name) => name.toLowerCase().includes(search)))
           );
           this.mobileActionTypeFormGroup.addControl(
             'saveAs',

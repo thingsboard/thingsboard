@@ -80,7 +80,13 @@
               <div class="fixed-title-width">{{ 'widget-action.mobile.target-entity-alias-name' | translate }}*</div>
               <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
                 <input matInput required formControlName="aliasName"
+                       [matAutocomplete]="entityAliasNameAutocomplete"
                        placeholder="{{ 'widget-action.mobile.target-entity-alias-name' | translate }}">
+                <mat-autocomplete #entityAliasNameAutocomplete="matAutocomplete" class="tb-autocomplete">
+                  <mat-option *ngFor="let name of filteredEntityAliasNames | async" [value]="name">
+                    {{ name }}
+                  </mat-option>
+                </mat-autocomplete>
                 <mat-icon matSuffix
                           matTooltipPosition="above"
                           matTooltipClass="tb-error-tooltip"

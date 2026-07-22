@@ -1548,14 +1548,12 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
       case MobileActionTargetEntityType.currentUser:
         return of(this.currentUserEntityId());
       case MobileActionTargetEntityType.entityAlias: {
-        const aliases = this.widgetContext.aliasController.getEntityAliases();
-        const aliasId = Object.keys(aliases).find(id => aliases[id].alias === target.aliasName);
+        const aliasId = this.widgetContext.aliasController.getEntityAliasId(target.aliasName);
         if (!aliasId) {
           return throwError(() => new Error(`Entity alias '${target.aliasName}' not found in the dashboard`));
         }
-        return this.widgetContext.aliasController.getAliasInfo(aliasId).pipe(
-          map((aliasInfo) => {
-            const entity = aliasInfo.currentEntity;
+        return this.widgetContext.aliasController.resolveSingleEntityInfo(aliasId).pipe(
+          map((entity) => {
             if (!entity?.id || !entity?.entityType) {
               throw new Error(`Entity alias '${target.aliasName}' did not resolve to an entity`);
             }

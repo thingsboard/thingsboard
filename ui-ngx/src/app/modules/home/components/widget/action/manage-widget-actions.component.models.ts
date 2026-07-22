@@ -20,6 +20,7 @@ import {
   WidgetActionSource,
   widgetActionTypeTranslationMap
 } from '@app/shared/models/widget.models';
+import { EntityAlias } from '@shared/models/alias.models';
 import { CollectionViewer, DataSource } from '@angular/cdk/collections';
 import { BehaviorSubject, Observable, of, ReplaySubject, shareReplay } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
@@ -32,6 +33,7 @@ import { deepClone } from '@core/utils';
 export interface WidgetActionCallbacks {
   fetchDashboardStates: (query: string) => Array<string>;
   fetchCellClickColumns: () => Array<CellClickColumnInfo>;
+  fetchEntityAliases?: () => Array<EntityAlias>;
 }
 
 export interface WidgetActionsData {

@@ -169,7 +169,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     fetchEntityKeysForDevice: this.fetchEntityKeysForDevice.bind(this),
     fetchEntityKeys: this.fetchEntityKeys.bind(this),
     fetchDashboardStates: this.fetchDashboardStates.bind(this),
-    fetchCellClickColumns: this.fetchCellClickColumns.bind(this)
+    fetchCellClickColumns: this.fetchCellClickColumns.bind(this),
+    fetchEntityAliases: this.fetchEntityAliases.bind(this)
   };
 
   widgetEditMode = this.utils.widgetEditMode;
@@ -835,6 +836,10 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
       });
     }
     return this.utils.getMaterialColor(i);
+  }
+
+  private fetchEntityAliases(): Array<EntityAlias> {
+    return this.aliasController ? Object.values(this.aliasController.getEntityAliases()) : [];
   }
 
   private createEntityAlias(alias: string, allowedEntityTypes: Array<EntityType>): Observable<EntityAlias> {
