@@ -20,12 +20,15 @@ import com.google.common.hash.Hashing;
 import org.eclipse.leshan.client.resource.LwM2mObjectEnabler;
 import org.eclipse.leshan.core.ResponseCode;
 import org.eclipse.leshan.core.node.LwM2mPath;
+import org.eclipse.leshan.core.util.datatype.ULong;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.script.api.tbel.TbUtils;
 import org.thingsboard.server.transport.lwm2m.rpc.AbstractRpcLwM2MIntegrationTest;
 import java.util.Base64;
 
+import static org.eclipse.leshan.core.model.ResourceModel.Type.UNSIGNED_INTEGER;
+import static org.eclipse.leshan.core.model.ResourceModel.Type.INTEGER;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -53,6 +56,65 @@ public class RpcLwm2mIntegrationWriteTest extends AbstractRpcLwM2MIntegrationTes
         String actualValues = rpcActualResult.get("value").asText();
         String expected = "LwM2mSingleResource [id=" + RESOURCE_ID_14 + ", value=" + expectedValue + ", type=STRING]";
         assertTrue(actualValues.contains(expected));
+    }
+
+    /**
+     * update SingleResource:
+     * WriteReplace {"id":"3442/0/120","value":-1}
+     * WriteReplace {"id":"3442/0/120","value":-100}
+     * WriteReplace {"id":"3442/0/120","value":-2147483648} -> Integer.MIN_VALUE
+     * WriteReplace {"id":"3442/0/120","value":2147483647} -> Integer.MAX_VALUE
+     * {"result":"CHANGED"}
+     */
+    @Test
+    public void testWriteReplaceNegativeIntegerValuesSingleResourceById_Result_CHANGED() throws Exception {
+        Integer expectedValue = -1;
+        sendRPC_3442_ResourceId_120(expectedValue);
+
+        expectedValue = -100;
+        sendRPC_3442_ResourceId_120(expectedValue);
+
+        expectedValue = Integer.MIN_VALUE;
+        sendRPC_3442_ResourceId_120(expectedValue);
+
+        expectedValue = Integer.MAX_VALUE;
+        sendRPC_3442_ResourceId_120(expectedValue);
+    }
+
+    /**
+     * update SingleResource:
+     * WriteReplace {"id":"3442/0/120","value":"18446744073709551615}    // ULong.MAX
+     * {"result":"CHANGED"}
+     */
+    @Test
+    public void testWriteReplaceUnIntegerValuesSingleResourceById_Result_CHANGED() throws Exception {
+        String expectedPath = objectInstanceIdVer_3442 + "/" + RESOURCE_ID_125;
+        ULong expectedValue = ULong.MAX;
+        String actualResult = sendRPCWriteObjectById("WriteReplace", expectedPath, expectedValue);
+        ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
+        actualResult = sendRPCReadById(expectedPath);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        String actualValues = rpcActualResult.get("value").asText();
+        String expected = "LwM2mSingleResource [id=" + RESOURCE_ID_125 + ", value=" + expectedValue + ", type=" + UNSIGNED_INTEGER.name() + "]";
+        assertTrue(actualValues.contains(expected));
+    }
+
+    /**
+     * update SingleResource:
+     * WriteReplace {"id":"3442/0/120","value":"-1"}
+     * {"result":"BAD_REQUEST"}
+     */
+    @Test
+    public void testWriteReplaceUnIntegerValuesSingleResourceById_Result__BAD_REQUEST() throws Exception {
+        String expectedPath = objectInstanceIdVer_3442 + "/" + RESOURCE_ID_125;
+        Integer expectedValue = -1;
+        String actualResult = sendRPCWriteObjectById("WriteReplace", expectedPath, expectedValue);
+        ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.BAD_REQUEST.getName(), rpcActualResult.get("result").asText());
+        String expected = "Format value is bad. Value for this Single Resource must be UNSIGNED_INTEGER!";
+        String actual = rpcActualResult.get("error").asText();
+        assertTrue(actual.contains(expected));
     }
 
     /**
@@ -571,5 +633,17 @@ public class RpcLwm2mIntegrationWriteTest extends AbstractRpcLwM2MIntegrationTes
     private String sendRPCreateById(String path, String value) throws Exception {
         String setRpcRequest = "{\"method\": \"Create\", \"params\": {\"id\": \"" + path + "\", \"value\": " + value + " }}";
         return doPostAsync("/api/plugins/rpc/twoway/" + lwM2MTestClient.getDeviceIdStr(), setRpcRequest, String.class, status().isOk());
+    }
+
+    private void sendRPC_3442_ResourceId_120 (Integer expectedValue)  throws Exception {
+        String expectedPath = objectInstanceIdVer_3442 + "/" + RESOURCE_ID_120;
+        String actualResult = sendRPCWriteObjectById("WriteReplace", expectedPath, expectedValue);
+        ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
+        actualResult = sendRPCReadById(expectedPath);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        String actualValues = rpcActualResult.get("value").asText();
+        String expected = "LwM2mSingleResource [id=" + RESOURCE_ID_120 + ", value=" + expectedValue + ", type=" + INTEGER.name() + "]";
+        assertTrue(actualValues.contains(expected));
     }
 }
