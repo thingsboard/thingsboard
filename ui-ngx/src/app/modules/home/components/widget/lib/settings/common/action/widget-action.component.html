@@ -287,5 +287,9 @@
       <tb-mobile-action-editor [callbacks]="callbacks" formControlName="mobileAction">
       </tb-mobile-action-editor>
     </ng-template>
+    <ng-template [ngSwitchCase]="widgetActionType.saveBrowserLocation">
+      <tb-save-browser-location-action-editor [callbacks]="callbacks" formControlName="saveBrowserLocation">
+      </tb-save-browser-location-action-editor>
+    </ng-template>
   </ng-container>
 </div>

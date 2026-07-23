@@ -82,6 +82,9 @@ import {
   MobileActionEditorComponent
 } from '@home/components/widget/lib/settings/common/action/mobile-action-editor.component';
 import {
+  SaveBrowserLocationActionEditorComponent
+} from '@home/components/widget/lib/settings/common/action/save-browser-location-action-editor.component';
+import {
   WidgetActionSettingsComponent
 } from '@home/components/widget/lib/settings/common/action/widget-action-settings.component';
 import {
@@ -306,6 +309,7 @@ import { AxisScaleRowComponent } from './axis-scale-row.component';
     CustomActionPrettyResourcesTabsComponent,
     CustomActionPrettyEditorComponent,
     MobileActionEditorComponent,
+    SaveBrowserLocationActionEditorComponent,
     WidgetActionSettingsComponent,
     WidgetActionSettingsPanelComponent,
     WidgetButtonAppearanceComponent,
@@ -417,6 +421,7 @@ import { AxisScaleRowComponent } from './axis-scale-row.component';
     CustomActionPrettyResourcesTabsComponent,
     CustomActionPrettyEditorComponent,
     MobileActionEditorComponent,
+    SaveBrowserLocationActionEditorComponent,
     WidgetActionSettingsComponent,
     WidgetActionSettingsPanelComponent,
     WidgetButtonAppearanceComponent,

@@ -315,6 +315,12 @@ export class WidgetActionComponent implements ControlValueAccessor, OnInit, Vali
             this.fb.control(action ? action.mobileAction : null, [Validators.required])
           );
           break;
+        case WidgetActionType.saveBrowserLocation:
+          this.actionTypeFormGroup.addControl(
+            'saveBrowserLocation',
+            this.fb.control(action ? action.saveBrowserLocation : null, [Validators.required])
+          );
+          break;
         case WidgetActionType.openURL:
           this.actionTypeFormGroup.addControl(
             'openNewBrowserTab',
