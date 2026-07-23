@@ -41,9 +41,11 @@ import {
   MobileActionAttributeSource,
   MobileActionLocationAccuracy,
   MobileActionSaveAs,
+  MobileActionTargetEntityConfig,
   MobileActionTargetEntityType,
   MobileImageResult,
   MobileLocationResult,
+  SaveBrowserLocationDescriptor,
   Widget,
   WidgetAction,
   WidgetActionDescriptor,
@@ -61,6 +63,7 @@ import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { UtilsService } from '@core/services/utils.service';
+import { BrowserGeolocationError, browserGeolocationErrorMessageKey, BrowserGeolocationService } from '@core/services/browser-geolocation.service';
 import { defer, forkJoin, Observable, of, ReplaySubject, Subscription, throwError } from 'rxjs';
 import {
   deepClone,
@@ -97,7 +100,7 @@ import {
 } from '@core/api/widget-api.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntityType } from '@shared/models/entity-type.models';
-import { AttributeData, AttributeScope } from '@shared/models/telemetry/telemetry.models';
+import { AttributeData, AttributeScope, LatestTelemetry } from '@shared/models/telemetry/telemetry.models';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { ActivatedRoute, Router } from '@angular/router';
 import cssjs from '@core/css/css';
@@ -225,6 +228,7 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
               private entityDataService: EntityDataService,
               private alarmDataService: AlarmDataService,
               private translate: TranslateService,
+              private browserGeolocationService: BrowserGeolocationService,
               private utils: UtilsService,
               private dashboardUtils: DashboardUtilsService,
               private mobileService: MobileService,
@@ -1225,6 +1229,9 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
         const mobileAction = descriptor.mobileAction;
         this.handleMobileAction($event, mobileAction, entityId, entityName, additionalParams, entityLabel);
         break;
+      case WidgetActionType.saveBrowserLocation:
+        this.saveBrowserLocation(descriptor, entityId);
+        break;
     }
   }
 
@@ -1547,6 +1554,58 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
     });
   }
 
+  private saveBrowserLocation(descriptor: WidgetAction, currentEntityId?: EntityId): void {
+    const config: SaveBrowserLocationDescriptor = descriptor.saveBrowserLocation;
+    if (!config) {
+      return;
+    }
+    defer(() => this.browserGeolocationService.getCurrentPosition()).pipe(
+      switchMap((position) => this.resolveActionTargetEntity(config.targetEntity, currentEntityId).pipe(
+        switchMap((targetEntityId) => {
+          const coords = position.coords;
+          const data: Array<AttributeData> = [];
+          const addValue = (key: string | undefined, value: number | null | undefined) => {
+            const trimmed = (key || '').trim();
+            if (trimmed.length && isDefinedAndNotNull(value) && !Number.isNaN(value)) {
+              data.push({key: trimmed, value});
+            }
+          };
+          addValue(config.latitudeKey || 'latitude', coords.latitude);
+          addValue(config.longitudeKey || 'longitude', coords.longitude);
+          addValue(config.accuracyKey, coords.accuracy);
+          addValue(config.altitudeKey, coords.altitude);
+          addValue(config.altitudeAccuracyKey, coords.altitudeAccuracy);
+          addValue(config.headingKey, coords.heading);
+          addValue(config.speedKey, coords.speed);
+          addValue(config.timestampKey, position.timestamp);
+          if (!data.length) {
+            return of(null);
+          }
+          if (config.saveAs === MobileActionSaveAs.timeseries) {
+            return this.widgetContext.attributeService.saveEntityTimeseries(
+              targetEntityId, LatestTelemetry.LATEST_TELEMETRY, data, {ignoreErrors: true});
+          }
+          return this.widgetContext.attributeService.saveEntityAttributes(
+            targetEntityId, AttributeScope.SERVER_SCOPE, data, {ignoreErrors: true});
+        })
+      ))
+    ).subscribe({
+      next: () => {
+        this.widgetContext.showSuccessToast(
+          this.translate.instant('widget-action.browser-location.location-saved'));
+      },
+      error: (err) => {
+        if (err instanceof BrowserGeolocationError) {
+          this.widgetContext.showErrorToast(this.translate.instant(browserGeolocationErrorMessageKey(err)));
+        } else {
+          const message = err?.error?.message || err?.message || JSON.stringify(err);
+          this.widgetContext.showErrorToast(
+            this.translate.instant('widget-action.browser-location.location-save-failed', {error: message}));
+        }
+      }
+    });
+  }
+
   private buildLiveTrackingConfig(mobileAction: WidgetMobileActionDescriptor,
                                   targetEntityId: EntityId): object {
     return {
@@ -1572,7 +1631,11 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
 
   private resolveMobileActionTargetEntity(mobileAction: WidgetMobileActionDescriptor,
                                           currentEntityId?: EntityId): Observable<EntityId> {
-    const target = mobileAction.targetEntity;
+    return this.resolveActionTargetEntity(mobileAction.targetEntity, currentEntityId);
+  }
+
+  private resolveActionTargetEntity(target: MobileActionTargetEntityConfig,
+                                    currentEntityId?: EntityId): Observable<EntityId> {
     const type = target?.type || MobileActionTargetEntityType.currentEntity;
     switch (type) {
       case MobileActionTargetEntityType.currentEntity:
