@@ -617,7 +617,8 @@ export enum WidgetActionType {
   customPretty = 'customPretty',
   mobileAction = 'mobileAction',
   openURL = 'openURL',
-  placeMapItem = 'placeMapItem'
+  placeMapItem = 'placeMapItem',
+  saveBrowserLocation = 'saveBrowserLocation'
 }
 
 export enum WidgetMobileActionType {
@@ -680,6 +681,7 @@ export const widgetActionTypeTranslationMap = new Map<WidgetActionType, string>(
     [ WidgetActionType.mobileAction, 'widget-action.mobile-action' ],
     [ WidgetActionType.openURL, 'widget-action.open-URL' ],
     [ WidgetActionType.placeMapItem, 'widget-action.place-map-item' ],
+    [ WidgetActionType.saveBrowserLocation, 'widget-action.save-browser-location' ],
   ]
 );
 
@@ -861,6 +863,19 @@ export interface StartLiveLocationDescriptor extends ProcessLaunchResultDescript
   writeStatusAttributes?: boolean;
 }
 
+export interface SaveBrowserLocationDescriptor {
+  targetEntity?: MobileActionTargetEntityConfig;
+  saveAs?: MobileActionSaveAs;
+  latitudeKey?: string;
+  longitudeKey?: string;
+  accuracyKey?: string;
+  altitudeKey?: string;
+  altitudeAccuracyKey?: string;
+  headingKey?: string;
+  speedKey?: string;
+  timestampKey?: string;
+}
+
 export type WidgetMobileActionDescriptors = ProcessImageDescriptor &
                                             LaunchMapDescriptor &
                                             ScanQrCodeDescriptor &
@@ -909,6 +924,7 @@ export interface WidgetAction extends CustomActionDescriptor {
   url?: string;
   mapItemType?: MapItemType;
   mapItemTooltips?: MapItemTooltips;
+  saveBrowserLocation?: SaveBrowserLocationDescriptor;
 }
 
 export interface MapItemTooltips {
