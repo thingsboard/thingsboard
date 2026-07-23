@@ -108,7 +108,7 @@ export class SaveBrowserLocationActionEditorComponent implements ControlValueAcc
 
     this.formGroup.valueChanges.pipe(
       takeUntil(this.destroy$)
-    ).subscribe(() => this.propagateChange(this.formGroup.getRawValue()));
+    ).subscribe(() => this.propagateChange(this.formGroup.valid ? this.formGroup.getRawValue() : null));
 
     this.updateTargetEntityValidators();
   }
