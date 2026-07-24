@@ -86,7 +86,7 @@ public class EdgeGrpcClient implements EdgeRpcClient {
 
     private StreamObserver<RequestMsg> inputStream;
 
-    private static final ReentrantLock uplinkMsgLock = new ReentrantLock();
+    private final ReentrantLock connectionLock = new ReentrantLock();
 
     @Override
     public void connect(String edgeKey,
@@ -127,19 +127,38 @@ public class EdgeGrpcClient implements EdgeRpcClient {
                     .build());
         }
 
-        channel = builder.build();
-        EdgeRpcServiceGrpc.EdgeRpcServiceStub stub = EdgeRpcServiceGrpc.newStub(channel);
-        log.info("[{}] Sending a connect request to the TB!", edgeKey);
-        this.inputStream = stub.withCompression("gzip").handleMsgs(initOutputStream(edgeKey, onUplinkResponse, onEdgeUpdate, onDownlink, onError));
-        this.inputStream.onNext(RequestMsg.newBuilder()
-                .setMsgType(RequestMsgType.CONNECT_RPC_MESSAGE)
-                .setConnectRequestMsg(ConnectRequestMsg.newBuilder()
-                        .setEdgeRoutingKey(edgeKey)
-                        .setEdgeSecret(edgeSecret)
-                        .setEdgeVersion(getNewestEdgeVersion())
-                        .setMaxInboundMessageSize(maxInboundMessageSize)
-                        .build())
-                .build());
+        connectionLock.lock();
+        try {
+            channel = builder.build();
+            EdgeRpcServiceGrpc.EdgeRpcServiceStub stub = EdgeRpcServiceGrpc.newStub(channel);
+            log.info("[{}] Sending a connect request to the TB!", edgeKey);
+            this.inputStream = stub.withCompression("gzip").handleMsgs(initOutputStream(edgeKey, channel, onUplinkResponse, onEdgeUpdate, onDownlink, onError));
+            this.inputStream.onNext(RequestMsg.newBuilder()
+                    .setMsgType(RequestMsgType.CONNECT_RPC_MESSAGE)
+                    .setConnectRequestMsg(ConnectRequestMsg.newBuilder()
+                            .setEdgeRoutingKey(edgeKey)
+                            .setEdgeSecret(edgeSecret)
+                            .setEdgeVersion(getNewestEdgeVersion())
+                            .setMaxInboundMessageSize(maxInboundMessageSize)
+                            .build())
+                    .build());
+        } catch (RuntimeException e) {
+            // Release the half-built channel, otherwise every failed reconnect attempt leaks
+            // its event loops and executors, and the next attempt may not recover at all.
+            log.error("[{}] Failed to establish the connection, shutting down the channel!", edgeKey, e);
+            if (channel != null) {
+                try {
+                    channel.shutdownNow();
+                } catch (Exception shutdownEx) {
+                    log.error("[{}] Exception during shutdownNow of the failed channel", edgeKey, shutdownEx);
+                }
+            }
+            channel = null;
+            inputStream = null;
+            throw e;
+        } finally {
+            connectionLock.unlock();
+        }
     }
 
     public static EdgeVersion getNewestEdgeVersion() {
@@ -147,6 +166,7 @@ public class EdgeGrpcClient implements EdgeRpcClient {
     }
 
     private StreamObserver<ResponseMsg> initOutputStream(String edgeKey,
+                                                         ManagedChannel streamChannel,
                                                          Consumer<UplinkResponseMsg> onUplinkResponse,
                                                          Consumer<EdgeConfiguration> onEdgeUpdate,
                                                          Consumer<DownlinkMsg> onDownlink,
@@ -166,7 +186,7 @@ public class EdgeGrpcClient implements EdgeRpcClient {
                     } else {
                         log.error("[{}] Failed to establish the connection! Code: {}. Error message: {}.", edgeKey, connectResponseMsg.getResponseCode(), connectResponseMsg.getErrorMsg());
                         try {
-                            EdgeGrpcClient.this.disconnect(true);
+                            EdgeGrpcClient.this.disconnect(true, streamChannel);
                         } catch (InterruptedException e) {
                             log.error("[{}] Got interruption during disconnect!", edgeKey, e);
                         }
@@ -188,7 +208,7 @@ public class EdgeGrpcClient implements EdgeRpcClient {
             public void onError(Throwable t) {
                 log.warn("[{}] Stream was terminated due to error:", edgeKey, t);
                 try {
-                    EdgeGrpcClient.this.disconnect(true);
+                    EdgeGrpcClient.this.disconnect(true, streamChannel);
                 } catch (InterruptedException e) {
                     log.error("[{}] Got interruption during disconnect!", edgeKey, e);
                 }
@@ -204,77 +224,95 @@ public class EdgeGrpcClient implements EdgeRpcClient {
 
     @Override
     public void disconnect(boolean onError) throws InterruptedException {
-        if (!onError) {
-            try {
-                if (inputStream != null) {
-                    inputStream.onCompleted();
-                }
-            } catch (Exception e) {
-                log.error("Exception during onCompleted", e);
+        disconnect(onError, null);
+    }
+
+    private void disconnect(boolean onError, ManagedChannel expectedChannel) throws InterruptedException {
+        ManagedChannel channelToShutdown;
+        connectionLock.lock();
+        try {
+            // A terminated stream reports its error asynchronously and may lose the race with a
+            // reconnect: ignore such stale callbacks instead of tearing down the fresh channel.
+            if (expectedChannel != null && channel != expectedChannel) {
+                log.info("The channel was already replaced by a reconnect. Skipping disconnect of the stale channel.");
+                return;
             }
+            if (!onError) {
+                try {
+                    if (inputStream != null) {
+                        inputStream.onCompleted();
+                    }
+                } catch (Exception e) {
+                    log.error("Exception during onCompleted", e);
+                }
+            }
+            // Clear the references under the lock so that no send can start against a stream
+            // whose channel is shutting down - such a write leaks the compressed ByteBuf.
+            inputStream = null;
+            channelToShutdown = channel;
+            channel = null;
+        } finally {
+            connectionLock.unlock();
         }
-        if (channel != null) {
-            channel.shutdown();
+        if (channelToShutdown != null) {
+            channelToShutdown.shutdown();
             int attempt = 0;
             do {
                 try {
-                    channel.awaitTermination(timeoutSecs, TimeUnit.SECONDS);
+                    channelToShutdown.awaitTermination(timeoutSecs, TimeUnit.SECONDS);
                 } catch (Exception e) {
                     log.error("Channel await termination was interrupted", e);
                 }
                 if (attempt > 5) {
                     log.warn("We had reached maximum of termination attempts. Force closing channel");
                     try {
-                        channel.shutdownNow();
+                        channelToShutdown.shutdownNow();
                     } catch (Exception e) {
                         log.error("Exception during shutdownNow", e);
                     }
                     break;
                 }
                 attempt++;
-            } while (!channel.isTerminated());
+            } while (!channelToShutdown.isTerminated());
         }
     }
 
     @Override
     public void sendUplinkMsg(UplinkMsg msg) {
-        uplinkMsgLock.lock();
-        try {
-            this.inputStream.onNext(RequestMsg.newBuilder()
-                    .setMsgType(RequestMsgType.UPLINK_RPC_MESSAGE)
-                    .setUplinkMsg(msg)
-                    .build());
-        } finally {
-            uplinkMsgLock.unlock();
-        }
+        sendRequestMsg(RequestMsg.newBuilder()
+                .setMsgType(RequestMsgType.UPLINK_RPC_MESSAGE)
+                .setUplinkMsg(msg)
+                .build());
     }
 
     @Override
     public void sendSyncRequestMsg(boolean fullSyncRequired) {
-        uplinkMsgLock.lock();
-        try {
-            SyncRequestMsg syncRequestMsg = SyncRequestMsg.newBuilder()
-                    .setFullSync(fullSyncRequired)
-                    .build();
-            this.inputStream.onNext(RequestMsg.newBuilder()
-                    .setMsgType(RequestMsgType.SYNC_REQUEST_RPC_MESSAGE)
-                    .setSyncRequestMsg(syncRequestMsg)
-                    .build());
-        } finally {
-            uplinkMsgLock.unlock();
-        }
+        SyncRequestMsg syncRequestMsg = SyncRequestMsg.newBuilder()
+                .setFullSync(fullSyncRequired)
+                .build();
+        sendRequestMsg(RequestMsg.newBuilder()
+                .setMsgType(RequestMsgType.SYNC_REQUEST_RPC_MESSAGE)
+                .setSyncRequestMsg(syncRequestMsg)
+                .build());
     }
 
     @Override
     public void sendDownlinkResponseMsg(DownlinkResponseMsg downlinkResponseMsg) {
-        uplinkMsgLock.lock();
+        sendRequestMsg(RequestMsg.newBuilder()
+                .setMsgType(RequestMsgType.UPLINK_RPC_MESSAGE)
+                .setDownlinkResponseMsg(downlinkResponseMsg)
+                .build());
+    }
+
+    private void sendRequestMsg(RequestMsg requestMsg) {
+        connectionLock.lock();
         try {
-            this.inputStream.onNext(RequestMsg.newBuilder()
-                    .setMsgType(RequestMsgType.UPLINK_RPC_MESSAGE)
-                    .setDownlinkResponseMsg(downlinkResponseMsg)
-                    .build());
+            if (inputStream == null) {
+                throw new IllegalStateException("Edge is not connected to the cloud. The message is discarded!");
+            }
+            inputStream.onNext(requestMsg);
         } finally {
-            uplinkMsgLock.unlock();
+            connectionLock.unlock();
         }
     }
 
