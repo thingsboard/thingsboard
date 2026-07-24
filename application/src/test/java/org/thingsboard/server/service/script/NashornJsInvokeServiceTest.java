@@ -17,13 +17,17 @@ package org.thingsboard.server.service.script;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import delight.nashornsandbox.NashornSandbox;
+import delight.nashornsandbox.NashornSandboxes;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.common.util.TbStopWatch;
+import org.thingsboard.script.api.RuleNodeScriptFactory;
 import org.thingsboard.script.api.ScriptType;
 import org.thingsboard.script.api.TbScriptException;
 import org.thingsboard.script.api.js.NashornJsInvokeService;
@@ -31,6 +35,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
+import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 import java.util.ArrayList;
 import java.util.List;
@@ -220,6 +225,86 @@ class NashornJsInvokeServiceTest extends AbstractControllerTest {
         assertDoesNotThrow(() -> {
             evalScript(script);
         });
+    }
+
+    @Test
+    void whenScriptIsReleased_thenGlobalPropertyIsRemoved() throws Exception {
+        UUID scriptId = evalScript("return msg;");
+        String functionName = "invokeInternal_" + scriptId.toString().replace('-', '_');
+        assertThat(evalInEngine("this.hasOwnProperty('" + functionName + "')")).hasToString("true");
+
+        invokeService.release(scriptId).get();
+
+        // the property must be deleted, not just set to undefined: an abandoned binding keeps
+        assertThat(evalInEngine("this.hasOwnProperty('" + functionName + "')")).hasToString("false");
+    }
+
+    @Test
+    void givenIifeWrappedEval_whenInvoking_thenResultIsUnchanged() throws Exception {
+        UUID scriptId = evalScript("return {doubled: msg.temperature * 2};");
+        assertThat(invokeScript(scriptId, "{\"temperature\":21}")).contains("\"doubled\":42");
+    }
+
+    @Test
+    void givenIifeWrappedEval_thenImplicitGlobalStateIsStillSharedBetweenScripts() throws Exception {
+        UUID writer = evalScript("compatSharedState = 777; return msg;");
+        UUID reader = evalScript("return {seen: (typeof compatSharedState === 'undefined') ? null : compatSharedState};");
+        invokeScript(writer, "{}");
+        assertThat(invokeScript(reader, "{}")).contains("\"seen\":777");
+    }
+
+    @Test
+    void givenIifeWrappedEval_thenCompilationErrorUnchanged() {
+        String badScript = "var a = 1;\nvar b = 2;\nreturn msg.temperature?.value;";
+
+        String legacyScript = RuleNodeScriptFactory.generateRuleNodeScript("invokeInternal_legacy", badScript,
+                "msg", "metadata", "msgType");
+        NashornSandbox legacySandbox = NashornSandboxes.create();
+        legacySandbox.allowNoBraces(false);
+        legacySandbox.allowLoadFunctions(true);
+        legacySandbox.setMaxPreparedStatements(30);
+        int legacyErrorLine = -1;
+        try {
+            legacySandbox.eval(legacyScript);
+        } catch (ScriptException e) {
+            legacyErrorLine = e.getLineNumber();
+        }
+        assertThat(legacyErrorLine).isGreaterThan(0);
+        final int expectedLine = legacyErrorLine;
+
+        assertThatThrownBy(() -> evalScript(badScript))
+                .isInstanceOf(ExecutionException.class)
+                .cause()
+                .isInstanceOf(TbScriptException.class)
+                .asInstanceOf(type(TbScriptException.class))
+                .satisfies(ex -> {
+                    assertThat(ex.getErrorCode()).isEqualTo(TbScriptException.ErrorCode.COMPILATION);
+                    assertThat(ex.getBody()).contains(badScript);
+                    assertThat(ex.getCause()).isInstanceOf(ScriptException.class);
+                    // The IIFE wrapper shifts sandbox-reported line numbers by a constant +2
+                    // (the beautifier splits the wrapper prefix onto its own lines). Reported
+                    // lines never matched the user's source anyway (the sandbox instrumentation
+                    // already offsets them), so only the small constant shift is tolerated here.
+                    assertThat(((ScriptException) ex.getCause()).getLineNumber()).isBetween(expectedLine, expectedLine + 2);
+                });
+    }
+
+    @Test
+    void whenInvokingAfterRelease_thenFailsWithNoCompiledScriptFound() throws Exception {
+        UUID scriptId = evalScript("return msg;");
+        invokeScript(scriptId, "{}");
+        invokeService.release(scriptId).get();
+        assertThatThrownBy(() -> invokeScript(scriptId, "{}"))
+                .isInstanceOf(ExecutionException.class)
+                .hasMessageContaining("No compiled script found");
+    }
+
+    private Object evalInEngine(String expression) throws Exception {
+        Object sandbox = ReflectionTestUtils.getField(invokeService, "sandbox");
+        if (sandbox != null) {
+            return ((NashornSandbox) sandbox).eval(expression);
+        }
+        return ((ScriptEngine) ReflectionTestUtils.getField(invokeService, "engine")).eval(expression);
     }
 
     private void assertThatScriptIsBlocked(UUID scriptId) {
