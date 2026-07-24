@@ -12,6 +12,7 @@ import {
 } from '@shared/models/widget.models';
 import {
   AggregationType,
+  calculateTsOffset,
   ComparisonDuration,
   createTimewindowForComparison,
   getCurrentTime,
@@ -372,7 +373,7 @@ export class EntityDataSubscription {
           if (this.entityDataSubscriptionOptions.isPaginatedDataSubscription) {
             this.prepareSubscriptionCommands(this.dataCommand);
             if (this.entityDataSubscriptionOptions.type === widgetType.timeseries) {
-              this.subscriber.setTsOffset(this.subsTw.tsOffset);
+              this.subscriber.setTsOffsetFn(ts => calculateTsOffset(this.subsTw.timezone, ts));
             } else {
               this.subscriber.setTsOffset(this.latestTsOffset);
             }
@@ -436,7 +437,7 @@ export class EntityDataSubscription {
                 }
               }
               if (this.entityDataSubscriptionOptions.type === widgetType.timeseries) {
-                this.subscriber.setTsOffset(this.subsTw.tsOffset);
+                this.subscriber.setTsOffsetFn(ts => calculateTsOffset(this.subsTw.timezone, ts));
               } else {
                 this.subscriber.setTsOffset(this.latestTsOffset);
               }
@@ -657,7 +658,7 @@ export class EntityDataSubscription {
       this.prepareSubscriptionCommands(this.subsCommand);
       let latestTsOffsetChanged = false;
       if (this.entityDataSubscriptionOptions.type === widgetType.timeseries) {
-        this.subscriber.setTsOffset(this.subsTw.tsOffset);
+        this.subscriber.setTsOffsetFn(ts => calculateTsOffset(this.subsTw.timezone, ts));
       } else {
         latestTsOffsetChanged = this.subscriber.setTsOffset(this.latestTsOffset);
       }

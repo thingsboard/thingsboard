@@ -1417,8 +1417,10 @@ export class WidgetSubscription implements IWidgetSubscription {
         }
       }
     } else if (this.subscriptionTimewindow.fixedWindow) {
-      this.timeWindow.maxTime = this.subscriptionTimewindow.fixedWindow.endTimeMs + this.subscriptionTimewindow.tsOffset;
-      this.timeWindow.minTime = this.subscriptionTimewindow.fixedWindow.startTimeMs + this.subscriptionTimewindow.tsOffset;
+      const timezone = this.subscriptionTimewindow.timezone;
+      const fixedWindow = this.subscriptionTimewindow.fixedWindow;
+      this.timeWindow.maxTime = fixedWindow.endTimeMs + calculateTsOffset(timezone, fixedWindow.endTimeMs);
+      this.timeWindow.minTime = fixedWindow.startTimeMs + calculateTsOffset(timezone, fixedWindow.startTimeMs);
     }
   }
 
@@ -1447,8 +1449,10 @@ export class WidgetSubscription implements IWidgetSubscription {
     this.comparisonTimeWindow.interval = this.timewindowForComparison.aggregation.interval || 1000;
     this.comparisonTimeWindow.timezone = this.timewindowForComparison.timezone;
     if (this.timewindowForComparison.fixedWindow) {
-      this.comparisonTimeWindow.maxTime = this.timewindowForComparison.fixedWindow.endTimeMs + this.timewindowForComparison.tsOffset;
-      this.comparisonTimeWindow.minTime = this.timewindowForComparison.fixedWindow.startTimeMs + this.timewindowForComparison.tsOffset;
+      const timezone = this.timewindowForComparison.timezone;
+      const fixedWindow = this.timewindowForComparison.fixedWindow;
+      this.comparisonTimeWindow.maxTime = fixedWindow.endTimeMs + calculateTsOffset(timezone, fixedWindow.endTimeMs);
+      this.comparisonTimeWindow.minTime = fixedWindow.startTimeMs + calculateTsOffset(timezone, fixedWindow.startTimeMs);
     }
   }
 
