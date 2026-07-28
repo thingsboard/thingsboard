@@ -37,11 +37,8 @@ const browserGeolocationErrorMessageKeys: {[key in BrowserGeolocationErrorType]:
   [BrowserGeolocationErrorType.timeout]: 'widget-action.browser-location.error-timeout'
 };
 
-export function browserGeolocationErrorMessageKey(error: unknown): string {
-  const errorType = error instanceof BrowserGeolocationError
-    ? error.errorType
-    : BrowserGeolocationErrorType.positionUnavailable;
-  return browserGeolocationErrorMessageKeys[errorType];
+export function browserGeolocationErrorMessageKey(error: BrowserGeolocationError): string {
+  return browserGeolocationErrorMessageKeys[error.errorType];
 }
 
 function toBrowserGeolocationError(error: GeolocationPositionError): BrowserGeolocationError {

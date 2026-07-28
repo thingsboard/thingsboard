@@ -68,7 +68,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { UtilsService } from '@core/services/utils.service';
 import { BrowserGeolocationError, browserGeolocationErrorMessageKey, BrowserGeolocationService } from '@core/services/browser-geolocation.service';
-import { defer, forkJoin, Observable, of, ReplaySubject, Subscription, throwError } from 'rxjs';
+import { forkJoin, Observable, of, ReplaySubject, Subscription, throwError } from 'rxjs';
 import {
   deepClone,
   guid,
@@ -1251,16 +1251,13 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
         break;
       case WidgetMobileActionType.scanQrCode:
       case WidgetMobileActionType.getLocation:
+      case WidgetMobileActionType.stopLiveLocation:
         argsObservable = of([]);
         break;
       case WidgetMobileActionType.startLiveLocation:
-        argsObservable = defer(() =>
-          this.resolveMobileActionTargetEntity(mobileAction, entityId)).pipe(
+        argsObservable = this.resolveActionTargetEntity(mobileAction.targetEntity, entityId).pipe(
           map((targetEntityId) => [this.buildLiveTrackingConfig(mobileAction, targetEntityId)])
         );
-        break;
-      case WidgetMobileActionType.stopLiveLocation:
-        argsObservable = of([]);
         break;
       case WidgetMobileActionType.deviceProvision:
         argsObservable = of([mobileAction.provisionType]);
@@ -1525,7 +1522,7 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
   private saveMobileActionLocation(mobileAction: WidgetMobileActionDescriptor,
                                    locationResult: MobileLocationResult,
                                    currentEntityId?: EntityId): void {
-    defer(() => this.resolveMobileActionTargetEntity(mobileAction, currentEntityId)).pipe(
+    this.resolveActionTargetEntity(mobileAction.targetEntity, currentEntityId).pipe(
       switchMap((targetEntityId) => this.saveLocationKeys(targetEntityId, mobileAction.keys, {
         [LocationKey.latitude]: locationResult.latitude,
         [LocationKey.longitude]: locationResult.longitude,
@@ -1548,7 +1545,7 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
     if (!config) {
       return;
     }
-    defer(() => this.browserGeolocationService.getCurrentPosition()).pipe(
+    this.browserGeolocationService.getCurrentPosition().pipe(
       switchMap((position) => this.resolveActionTargetEntity(config.targetEntity, currentEntityId).pipe(
         switchMap((targetEntityId) => {
           const coords = position.coords;
@@ -1580,10 +1577,6 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
     });
   }
 
-  /**
-   * Key labels are resolved to their effective names here so that the mobile app
-   * never has to know the per-key defaults.
-   */
   private buildLiveTrackingConfig(mobileAction: WidgetMobileActionDescriptor,
                                   targetEntityId: EntityId): object {
     return {
@@ -1597,12 +1590,9 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
         valueType: mapping.valueType
       })),
       accuracy: mobileAction.accuracy || MobileActionLocationAccuracy.balanced,
-      distanceFilterMeters: isDefinedAndNotNull(mobileAction.distanceFilterMeters)
-        ? mobileAction.distanceFilterMeters : null,
-      intervalSeconds: isDefinedAndNotNull(mobileAction.intervalSeconds)
-        ? mobileAction.intervalSeconds : null,
-      maxDurationSeconds: isDefinedAndNotNull(mobileAction.maxDurationSeconds)
-        ? mobileAction.maxDurationSeconds : null,
+      distanceFilterMeters: mobileAction.distanceFilterMeters ?? null,
+      intervalSeconds: mobileAction.intervalSeconds ?? null,
+      maxDurationSeconds: mobileAction.maxDurationSeconds ?? null,
       trackedBy: getCurrentAuthUser(this.store)?.sub || null
     };
   }
@@ -1632,11 +1622,6 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
         targetEntityId, LatestTelemetry.LATEST_TELEMETRY, timeseries, {ignoreErrors: true}));
     }
     return saveObservables.length ? forkJoin(saveObservables) : of(null);
-  }
-
-  private resolveMobileActionTargetEntity(mobileAction: WidgetMobileActionDescriptor,
-                                          currentEntityId?: EntityId): Observable<EntityId> {
-    return this.resolveActionTargetEntity(mobileAction.targetEntity, currentEntityId);
   }
 
   private resolveActionTargetEntity(target: MobileActionTargetEntityConfig,
@@ -1703,7 +1688,6 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
     return {entityType: EntityType.USER, id: authUser.userId};
   }
 
-  /** The attribute must hold an Entity Id object — `{entityType, id}` — not a bare id string. */
   private parseTargetEntityAttributeValue(attributeKey: string, value: any): EntityId {
     let entityId = value;
     if (typeof entityId === 'string') {

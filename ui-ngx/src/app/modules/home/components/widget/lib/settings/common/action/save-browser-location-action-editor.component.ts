@@ -48,7 +48,6 @@ export class SaveBrowserLocationActionEditorComponent implements ControlValueAcc
 
   formGroup: FormGroup;
 
-  /** Everything the browser Geolocation API can report — see GeolocationCoordinates. */
   browserLocationKeys = [LocationKey.latitude, LocationKey.longitude, LocationKey.accuracy, LocationKey.altitude,
     LocationKey.altitudeAccuracy, LocationKey.speed, LocationKey.heading];
 

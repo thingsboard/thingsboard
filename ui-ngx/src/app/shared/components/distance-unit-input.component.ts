@@ -36,7 +36,6 @@ interface DistanceUnitInputModel {
   distanceUnit: RangeUnit;
 }
 
-/** Distance counterpart of {@link TimeUnitInputComponent} — the model value is always in meters. */
 @Component({
     selector: 'tb-distance-unit-input',
     templateUrl: './distance-unit-input.component.html',

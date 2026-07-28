@@ -161,7 +161,6 @@ export class LocationKeysTableComponent implements ControlValueAccessor, OnInit,
 
   private prepareKeysFormArray(value: LocationKeyMapping[] | undefined): FormArray {
     const mappings = (value || []).filter(mapping => this.availableKeys.includes(mapping?.key));
-    // Latitude and longitude are always saved — restore them if a stored config lacks them.
     mandatoryLocationKeys.filter(key => !mappings.some(mapping => mapping.key === key))
       .forEach((key, index) => mappings.splice(index, 0, locationKeyMapping(key)));
     return this.fb.array(mappings.map(mapping => this.keyControl(mapping)), [this.uniqueKeyNamesValidator]);

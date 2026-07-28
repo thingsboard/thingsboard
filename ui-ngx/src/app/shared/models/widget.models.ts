@@ -807,7 +807,6 @@ export const mobileActionAttributeSourceTranslationMap = new Map<MobileActionAtt
 
 export interface MobileActionTargetEntityConfig {
   type: MobileActionTargetEntityType;
-  /** Names the target alias when type is entityAlias, and the source alias when reading from an attribute. */
   aliasName?: string;
   attributeSource?: MobileActionAttributeSource;
   attributeKey?: string;
@@ -885,7 +884,6 @@ export const locationKeyDefaultValueTypeMap = new Map<LocationKey, LocationKeyVa
   ]
 );
 
-/** Latitude and longitude are always saved and cannot be removed from a mapping. */
 export const mandatoryLocationKeys: LocationKey[] = [LocationKey.latitude, LocationKey.longitude];
 
 export const locationKeyName = (mapping: LocationKeyMapping): string =>
@@ -897,10 +895,13 @@ export const locationKeyMapping = (key: LocationKey): LocationKeyMapping =>
 export const defaultLocationKeyMappings = (): LocationKeyMapping[] =>
   mandatoryLocationKeys.map(key => locationKeyMapping(key));
 
-export interface SaveLocationDescriptor {
-  saveToEntity?: boolean;
+export interface LocationTargetDescriptor {
   targetEntity?: MobileActionTargetEntityConfig;
   keys?: LocationKeyMapping[];
+}
+
+export interface SaveLocationDescriptor extends LocationTargetDescriptor {
+  saveToEntity?: boolean;
 }
 
 export interface GetLocationDescriptor extends SaveLocationDescriptor {
@@ -929,21 +930,15 @@ export const mobileActionLocationAccuracyHintMap = new Map<MobileActionLocationA
   ]
 );
 
-export interface StartLiveLocationDescriptor extends ProcessLaunchResultDescriptor {
-  targetEntity?: MobileActionTargetEntityConfig;
-  keys?: LocationKeyMapping[];
+export interface StartLiveLocationDescriptor extends ProcessLaunchResultDescriptor, LocationTargetDescriptor {
   accuracy?: MobileActionLocationAccuracy;
   distanceFilterMeters?: number;
   intervalSeconds?: number;
   maxDurationSeconds?: number;
 }
 
-export interface SaveBrowserLocationDescriptor {
-  targetEntity?: MobileActionTargetEntityConfig;
-  keys?: LocationKeyMapping[];
-}
+export type SaveBrowserLocationDescriptor = LocationTargetDescriptor;
 
-/** Every field has a usable default, so a newly added action is valid before it is edited. */
 export const defaultSaveBrowserLocationDescriptor = (): SaveBrowserLocationDescriptor => ({
   targetEntity: {type: MobileActionTargetEntityType.currentEntity},
   keys: defaultLocationKeyMappings()

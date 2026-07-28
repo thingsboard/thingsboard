@@ -7832,12 +7832,12 @@
         },
         "save-browser-location": "Save browser location",
         "browser-location": {
-            "location-saved": "Browser location saved",
-            "location-save-failed": "Failed to save browser location: {{error}}",
-            "error-insecure-context": "Browser location requires a secure (HTTPS) connection",
-            "error-permission-denied": "Location permission was denied",
-            "error-position-unavailable": "Current location is unavailable",
-            "error-timeout": "Timed out while getting the current location"
+          "location-saved": "Browser location saved",
+          "location-save-failed": "Failed to save browser location: {{error}}",
+          "error-insecure-context": "Browser location requires a secure (HTTPS) connection",
+          "error-permission-denied": "Location permission was denied",
+          "error-position-unavailable": "Current location is unavailable",
+          "error-timeout": "Timed out while getting the current location"
         },
         "custom-action-function": "Custom action function",
         "custom-pretty-function": "Custom action (with HTML template) function",

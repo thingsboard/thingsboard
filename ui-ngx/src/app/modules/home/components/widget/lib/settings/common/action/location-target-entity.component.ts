@@ -44,10 +44,6 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 
-/**
- * Alias filter types the entity query API accepts. `stateEntity` is resolved by the dashboard at
- * runtime and has no server-side equivalent, so querying keys with it fails.
- */
 const queryableAliasFilterTypes: AliasFilterType[] = [
   AliasFilterType.singleEntity,
   AliasFilterType.entityList,
@@ -65,7 +61,6 @@ const queryableAliasFilterTypes: AliasFilterType[] = [
   AliasFilterType.entityViewSearchQuery
 ];
 
-/** Filter types that search from a root entity, which the dashboard state may only supply later. */
 const rootedAliasFilterTypes: AliasFilterType[] = [
   AliasFilterType.relationsQuery,
   AliasFilterType.assetSearchQuery,
@@ -109,20 +104,13 @@ export class LocationTargetEntityComponent implements ControlValueAccessor, OnIn
   targetEntityTypeTranslations = mobileActionTargetEntityTypeTranslationMap;
 
   attributeSources = Object.values(MobileActionAttributeSource);
-  attributeSource = MobileActionAttributeSource;
   attributeSourceTranslations = mobileActionAttributeSourceTranslationMap;
 
-  // Client and shared scopes only exist for devices, while the target can be any entity type.
   AttributeScope = AttributeScope;
   DataKeyType = DataKeyType;
 
   filteredEntityAliasNames: Observable<string[]>;
 
-  /**
-   * Entities whose attribute keys the autocomplete offers, or null when they cannot be known at
-   * configuration time — the current entity is only resolved when the action runs, so there the
-   * key has to be typed in by hand. Kept as a field so the autocomplete sees a stable reference.
-   */
   attributeSourceEntityFilter: EntityFilter;
 
   private entityAliases: EntityAlias[] = [];
@@ -134,7 +122,6 @@ export class LocationTargetEntityComponent implements ControlValueAccessor, OnIn
               private destroyRef: DestroyRef) {
   }
 
-  /** True while the alias name field applies — either as the target itself or as the attribute source. */
   get aliasNameRequired(): boolean {
     const type: MobileActionTargetEntityType = this.targetEntityFormGroup.get('type').value;
     return type === MobileActionTargetEntityType.entityAlias ||
@@ -218,7 +205,6 @@ export class LocationTargetEntityComponent implements ControlValueAccessor, OnIn
 
   clearAliasName(): void {
     this.targetEntityFormGroup.get('aliasName').patchValue('');
-    // Re-focusing reopens the autocomplete panel with the full alias list.
     setTimeout(() => {
       this.aliasNameInput.nativeElement.blur();
       this.aliasNameInput.nativeElement.focus();

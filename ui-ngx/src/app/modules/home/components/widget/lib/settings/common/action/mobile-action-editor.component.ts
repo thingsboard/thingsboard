@@ -91,13 +91,11 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
   locationAccuracyTranslations = mobileActionLocationAccuracyTranslationMap;
   locationAccuracyHints = mobileActionLocationAccuracyHintMap;
 
-  /** A single on-demand fix only carries the position and how precise it is. */
   getLocationKeys = [LocationKey.latitude, LocationKey.longitude, LocationKey.accuracy];
 
   liveLocationKeys = [LocationKey.latitude, LocationKey.longitude, LocationKey.accuracy, LocationKey.altitude,
     LocationKey.speed, LocationKey.heading, LocationKey.gpsActive, LocationKey.gpsTrackedBy];
 
-  /** Optional live tracking limits: each is off by default and applies its value once enabled. */
   readonly liveLocationLimits = {
     distanceFilterMeters: {enabled: false, defaultValue: 10},
     intervalSeconds: {enabled: false, defaultValue: 30},
@@ -319,8 +317,8 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
         case WidgetMobileActionType.startLiveLocation:
           processLaunchResultFunction = action?.processLaunchResultFunction;
           if (changed) {
-            const defaultLaunchResultFunction = getDefaultProcessLaunchResultFunction(targetType);
-            if (defaultLaunchResultFunction !== processLaunchResultFunction) {
+            const defaultProcessLaunchResultFunction = getDefaultProcessLaunchResultFunction(targetType);
+            if (defaultProcessLaunchResultFunction !== processLaunchResultFunction) {
               processLaunchResultFunction = getDefaultProcessLaunchResultFunction(type);
             }
           }
@@ -352,8 +350,8 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
         case WidgetMobileActionType.stopLiveLocation:
           processLaunchResultFunction = action?.processLaunchResultFunction;
           if (changed) {
-            const defaultStopLaunchResultFunction = getDefaultProcessLaunchResultFunction(targetType);
-            if (defaultStopLaunchResultFunction !== processLaunchResultFunction) {
+            const defaultProcessLaunchResultFunction = getDefaultProcessLaunchResultFunction(targetType);
+            if (defaultProcessLaunchResultFunction !== processLaunchResultFunction) {
               processLaunchResultFunction = getDefaultProcessLaunchResultFunction(type);
             }
           }
