@@ -235,6 +235,7 @@ import { MqttVersionSelectComponent } from '@shared/components/mqtt-version-sele
 import { PasswordRequirementsTooltipComponent } from '@shared/components/password-requirements-tooltip.component';
 import { StringPatternAutocompleteComponent } from '@shared/components/string-pattern-autocomplete.component';
 import { TimeUnitInputComponent } from '@shared/components/time-unit-input.component';
+import { DistanceUnitInputComponent } from '@shared/components/distance-unit-input.component';
 import { DateExpirationPipe } from '@shared/pipe/date-expiration.pipe';
 import { EntityLimitExceededDialogComponent } from '@shared/components/dialog/entity-limit-exceeded-dialog.component';
 import { DynamicMatDialogModule } from '@shared/components/dialog/dynamic/dynamic-dialog.module';
@@ -473,6 +474,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     MqttVersionSelectComponent,
     PasswordRequirementsTooltipComponent,
     TimeUnitInputComponent,
+    DistanceUnitInputComponent,
     StringPatternAutocompleteComponent,
     RgbaInputComponent,
     HslaInputComponent,
@@ -748,6 +750,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     MqttVersionSelectComponent,
     PasswordRequirementsTooltipComponent,
     TimeUnitInputComponent,
+    DistanceUnitInputComponent,
     StringPatternAutocompleteComponent,
     DynamicMatDialogModule
   ]

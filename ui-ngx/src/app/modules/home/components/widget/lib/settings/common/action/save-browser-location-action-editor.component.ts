@@ -14,26 +14,16 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
+import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import {
-  ControlValueAccessor,
-  NG_VALUE_ACCESSOR,
-  UntypedFormBuilder,
-  UntypedFormGroup,
-  Validators
-} from '@angular/forms';
-import {
-  MobileActionAttributeSource,
-  mobileActionAttributeSourceTranslationMap,
-  MobileActionSaveAs,
-  mobileActionSaveAsTranslationMap,
+  defaultLocationKeyMappings,
+  LocationKey,
   MobileActionTargetEntityType,
-  mobileActionTargetEntityTypeTranslationMap,
   SaveBrowserLocationDescriptor
 } from '@shared/models/widget.models';
 import { WidgetActionCallbacks } from '@home/components/widget/action/manage-widget-actions.component.models';
-import { Observable, Subject } from 'rxjs';
-import { map, startWith, takeUntil } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-save-browser-location-action-editor',
@@ -48,7 +38,7 @@ import { map, startWith, takeUntil } from 'rxjs/operators';
   ],
   standalone: false
 })
-export class SaveBrowserLocationActionEditorComponent implements ControlValueAccessor, OnInit, OnDestroy {
+export class SaveBrowserLocationActionEditorComponent implements ControlValueAccessor, OnInit {
 
   @Input()
   disabled: boolean;
@@ -56,66 +46,26 @@ export class SaveBrowserLocationActionEditorComponent implements ControlValueAcc
   @Input()
   callbacks: WidgetActionCallbacks;
 
-  formGroup: UntypedFormGroup;
+  formGroup: FormGroup;
 
-  targetEntityTypes = Object.values(MobileActionTargetEntityType);
-  targetEntityType = MobileActionTargetEntityType;
-  targetEntityTypeTranslations = mobileActionTargetEntityTypeTranslationMap;
-  attributeSources = Object.values(MobileActionAttributeSource);
-  attributeSourceTranslations = mobileActionAttributeSourceTranslationMap;
-  saveAsOptions = Object.values(MobileActionSaveAs);
-  saveAsTranslations = mobileActionSaveAsTranslationMap;
+  /** Everything the browser Geolocation API can report — see GeolocationCoordinates. */
+  browserLocationKeys = [LocationKey.latitude, LocationKey.longitude, LocationKey.accuracy, LocationKey.altitude,
+    LocationKey.altitudeAccuracy, LocationKey.speed, LocationKey.heading];
 
-  entityAliasNames: string[] = [];
-  filteredEntityAliasNames: Observable<string[]>;
-
-  private destroy$ = new Subject<void>();
   private propagateChange = (_val: any) => {};
 
-  constructor(private fb: UntypedFormBuilder) {}
+  constructor(private fb: FormBuilder,
+              private destroyRef: DestroyRef) {}
 
   ngOnInit(): void {
     this.formGroup = this.fb.group({
-      targetEntity: this.fb.group({
-        type: [MobileActionTargetEntityType.currentEntity, []],
-        aliasName: [null, []],
-        attributeSource: [MobileActionAttributeSource.currentUser, []],
-        attributeKey: [null, []],
-        defaultEntityType: [null, []]
-      }),
-      saveAs: [MobileActionSaveAs.attributes, []],
-      latitudeKey: ['latitude', [Validators.required]],
-      longitudeKey: ['longitude', [Validators.required]],
-      accuracyKey: ['', []],
-      altitudeKey: ['', []],
-      altitudeAccuracyKey: ['', []],
-      headingKey: ['', []],
-      speedKey: ['', []],
-      timestampKey: ['', []]
+      targetEntity: [{type: MobileActionTargetEntityType.currentEntity}],
+      keys: [defaultLocationKeyMappings()]
     });
 
-    this.entityAliasNames = (this.callbacks?.fetchEntityAliases?.() ?? []).map((alias) => alias.alias);
-    const aliasNameControl = this.formGroup.get('targetEntity.aliasName');
-    this.filteredEntityAliasNames = aliasNameControl.valueChanges.pipe(
-      startWith(aliasNameControl.value ?? ''),
-      map((value: string) => (value ?? '').toLowerCase()),
-      map((search) => this.entityAliasNames.filter((name) => name.toLowerCase().includes(search)))
-    );
-
-    this.formGroup.get('targetEntity.type').valueChanges.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe(() => this.updateTargetEntityValidators());
-
     this.formGroup.valueChanges.pipe(
-      takeUntil(this.destroy$)
+      takeUntilDestroyed(this.destroyRef)
     ).subscribe(() => this.propagateChange(this.formGroup.valid ? this.formGroup.getRawValue() : null));
-
-    this.updateTargetEntityValidators();
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   registerOnChange(fn: any): void {
@@ -130,39 +80,13 @@ export class SaveBrowserLocationActionEditorComponent implements ControlValueAcc
       this.formGroup.disable({emitEvent: false});
     } else {
       this.formGroup.enable({emitEvent: false});
-      this.updateTargetEntityValidators();
     }
   }
 
   writeValue(value?: SaveBrowserLocationDescriptor): void {
     this.formGroup.patchValue({
-      targetEntity: {
-        type: value?.targetEntity?.type || MobileActionTargetEntityType.currentEntity,
-        aliasName: value?.targetEntity?.aliasName ?? null,
-        attributeSource: value?.targetEntity?.attributeSource || MobileActionAttributeSource.currentUser,
-        attributeKey: value?.targetEntity?.attributeKey ?? null,
-        defaultEntityType: value?.targetEntity?.defaultEntityType ?? null
-      },
-      saveAs: value?.saveAs || MobileActionSaveAs.attributes,
-      latitudeKey: value?.latitudeKey || 'latitude',
-      longitudeKey: value?.longitudeKey || 'longitude',
-      accuracyKey: value?.accuracyKey ?? '',
-      altitudeKey: value?.altitudeKey ?? '',
-      altitudeAccuracyKey: value?.altitudeAccuracyKey ?? '',
-      headingKey: value?.headingKey ?? '',
-      speedKey: value?.speedKey ?? '',
-      timestampKey: value?.timestampKey ?? ''
+      targetEntity: value?.targetEntity ?? {type: MobileActionTargetEntityType.currentEntity},
+      keys: value?.keys?.length ? value.keys : defaultLocationKeyMappings()
     }, {emitEvent: false});
-    this.updateTargetEntityValidators();
-  }
-
-  private updateTargetEntityValidators(): void {
-    const type: MobileActionTargetEntityType = this.formGroup.get('targetEntity.type').value;
-    const aliasName = this.formGroup.get('targetEntity.aliasName');
-    const attributeKey = this.formGroup.get('targetEntity.attributeKey');
-    aliasName.setValidators(type === MobileActionTargetEntityType.entityAlias ? [Validators.required] : []);
-    attributeKey.setValidators(type === MobileActionTargetEntityType.fromAttribute ? [Validators.required] : []);
-    aliasName.updateValueAndValidity({emitEvent: false});
-    attributeKey.updateValueAndValidity({emitEvent: false});
   }
 }

@@ -25,14 +25,12 @@ import {
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import {
   ActionConfig,
-  MobileActionAttributeSource,
-  mobileActionAttributeSourceTranslationMap,
+  defaultLocationKeyMappings,
+  LocationKey,
   MobileActionLocationAccuracy,
+  mobileActionLocationAccuracyHintMap,
   mobileActionLocationAccuracyTranslationMap,
-  MobileActionSaveAs,
-  mobileActionSaveAsTranslationMap,
   MobileActionTargetEntityType,
-  mobileActionTargetEntityTypeTranslationMap,
   ProvisionType,
   provisionTypeTranslationMap,
   WidgetActionType,
@@ -57,8 +55,7 @@ import { WidgetService } from '@core/http/widget.service';
 import { TbFunction } from '@shared/models/js-function.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { WidgetActionCallbacks } from '@home/components/widget/action/manage-widget-actions.component.models';
-import { Observable } from 'rxjs';
-import { map, startWith } from 'rxjs/operators';
+import { isDefinedAndNotNull } from '@core/utils';
 
 @Component({
     selector: 'tb-mobile-action-editor',
@@ -90,18 +87,22 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
   provisionTypes: string[] = Object.keys(ProvisionType);
   provisionTypeTranslationMap = provisionTypeTranslationMap;
 
-  targetEntityTypes = Object.values(MobileActionTargetEntityType);
-  targetEntityTypeTranslations = mobileActionTargetEntityTypeTranslationMap;
-  targetEntityType = MobileActionTargetEntityType;
-
-  attributeSources = Object.values(MobileActionAttributeSource);
-  attributeSourceTranslations = mobileActionAttributeSourceTranslationMap;
-
-  saveAsOptions = Object.values(MobileActionSaveAs);
-  saveAsTranslations = mobileActionSaveAsTranslationMap;
-
   locationAccuracies = Object.values(MobileActionLocationAccuracy);
   locationAccuracyTranslations = mobileActionLocationAccuracyTranslationMap;
+  locationAccuracyHints = mobileActionLocationAccuracyHintMap;
+
+  /** A single on-demand fix only carries the position and how precise it is. */
+  getLocationKeys = [LocationKey.latitude, LocationKey.longitude, LocationKey.accuracy];
+
+  liveLocationKeys = [LocationKey.latitude, LocationKey.longitude, LocationKey.accuracy, LocationKey.altitude,
+    LocationKey.speed, LocationKey.heading, LocationKey.gpsActive, LocationKey.gpsTrackedBy];
+
+  /** Optional live tracking limits: each is off by default and applies its value once enabled. */
+  readonly liveLocationLimits = {
+    distanceFilterMeters: {enabled: false, defaultValue: 10},
+    intervalSeconds: {enabled: false, defaultValue: 30},
+    maxDurationSeconds: {enabled: false, defaultValue: 3600}
+  };
 
   private requiredValue: boolean;
   get required(): boolean {
@@ -117,9 +118,6 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
 
   @Input()
   callbacks: WidgetActionCallbacks;
-
-  entityAliasNames: string[] = [];
-  filteredEntityAliasNames: Observable<string[]>;
 
   private propagateChange = (_v: any) => { };
 
@@ -316,20 +314,7 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
             'saveToEntity',
             this.fb.control(action?.saveToEntity || false, [])
           );
-          this.addTargetEntityControls(action);
-          this.mobileActionTypeFormGroup.addControl(
-            'saveAs',
-            this.fb.control(action?.saveAs || MobileActionSaveAs.attributes, [])
-          );
-          this.updateTargetEntityValidators(this.mobileActionTypeFormGroup.get('saveToEntity').value);
-          this.mobileActionTypeFormGroup.get('saveToEntity').valueChanges.pipe(
-            takeUntilDestroyed(this.destroyRef)
-          ).subscribe(() =>
-            this.updateTargetEntityValidators(this.mobileActionTypeFormGroup.get('saveToEntity').value));
-          this.mobileActionTypeFormGroup.get('targetEntity.type').valueChanges.pipe(
-            takeUntilDestroyed(this.destroyRef)
-          ).subscribe(() =>
-            this.updateTargetEntityValidators(this.mobileActionTypeFormGroup.get('saveToEntity').value));
+          this.addLocationTargetControls(action);
           break;
         case WidgetMobileActionType.startLiveLocation:
           processLaunchResultFunction = action?.processLaunchResultFunction;
@@ -339,39 +324,30 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
               processLaunchResultFunction = getDefaultProcessLaunchResultFunction(type);
             }
           }
-          this.addTargetEntityControls(action);
+          this.addLocationTargetControls(action);
           this.mobileActionTypeFormGroup.addControl(
             'accuracy',
             this.fb.control(action?.accuracy || MobileActionLocationAccuracy.balanced, [])
           );
           this.mobileActionTypeFormGroup.addControl(
             'distanceFilterMeters',
-            this.fb.control(action?.distanceFilterMeters, [Validators.min(0)])
+            this.fb.control(action?.distanceFilterMeters ?? null, [])
           );
           this.mobileActionTypeFormGroup.addControl(
             'intervalSeconds',
-            this.fb.control(action?.intervalSeconds, [Validators.min(1)])
+            this.fb.control(action?.intervalSeconds ?? null, [])
           );
           this.mobileActionTypeFormGroup.addControl(
-            'maxDurationMinutes',
-            this.fb.control(action?.maxDurationMinutes, [Validators.min(1)])
-          );
-          this.mobileActionTypeFormGroup.addControl(
-            'mirrorToAttributes',
-            this.fb.control(action?.mirrorToAttributes || false, [])
-          );
-          this.mobileActionTypeFormGroup.addControl(
-            'writeStatusAttributes',
-            this.fb.control(action?.writeStatusAttributes !== false, [])
+            'maxDurationSeconds',
+            this.fb.control(action?.maxDurationSeconds ?? null, [])
           );
           this.mobileActionTypeFormGroup.addControl(
             'processLaunchResultFunction',
             this.fb.control(processLaunchResultFunction, [])
           );
-          this.updateTargetEntityValidators(true);
-          this.mobileActionTypeFormGroup.get('targetEntity.type').valueChanges.pipe(
-            takeUntilDestroyed(this.destroyRef)
-          ).subscribe(() => this.updateTargetEntityValidators(true));
+          this.liveLocationLimits.distanceFilterMeters.enabled = isDefinedAndNotNull(action?.distanceFilterMeters);
+          this.liveLocationLimits.intervalSeconds.enabled = isDefinedAndNotNull(action?.intervalSeconds);
+          this.liveLocationLimits.maxDurationSeconds.enabled = isDefinedAndNotNull(action?.maxDurationSeconds);
           break;
         case WidgetMobileActionType.stopLiveLocation:
           processLaunchResultFunction = action?.processLaunchResultFunction;
@@ -411,49 +387,21 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
     });
   }
 
-  private addTargetEntityControls(action?: WidgetMobileActionDescriptor) {
-    const targetEntity = action?.targetEntity;
-    this.mobileActionTypeFormGroup.addControl(
-      'targetEntity',
-      this.fb.group({
-        type: [targetEntity?.type || MobileActionTargetEntityType.currentEntity, []],
-        aliasName: [targetEntity?.aliasName, []],
-        attributeSource: [targetEntity?.attributeSource || MobileActionAttributeSource.currentUser, []],
-        attributeKey: [targetEntity?.attributeKey, []],
-        defaultEntityType: [targetEntity?.defaultEntityType, []]
-      })
-    );
-    this.entityAliasNames = (this.callbacks?.fetchEntityAliases?.() ?? []).map((alias) => alias.alias);
-    const aliasNameControl = this.mobileActionTypeFormGroup.get('targetEntity.aliasName');
-    this.filteredEntityAliasNames = aliasNameControl.valueChanges.pipe(
-      startWith(aliasNameControl.value ?? ''),
-      map((value: string) => (value ?? '').toLowerCase()),
-      map((search) => this.entityAliasNames.filter((name) => name.toLowerCase().includes(search)))
-    );
-    this.mobileActionTypeFormGroup.addControl(
-      'latitudeKey',
-      this.fb.control(action?.latitudeKey || 'latitude', [])
-    );
-    this.mobileActionTypeFormGroup.addControl(
-      'longitudeKey',
-      this.fb.control(action?.longitudeKey || 'longitude', [])
-    );
-    this.mobileActionTypeFormGroup.addControl(
-      'includeMetadata',
-      this.fb.control(action?.includeMetadata || false, [])
-    );
+  toggleLiveLocationLimit(controlName: keyof typeof this.liveLocationLimits, enabled: boolean) {
+    const limit = this.liveLocationLimits[controlName];
+    limit.enabled = enabled;
+    this.mobileActionTypeFormGroup.get(controlName).patchValue(enabled ? limit.defaultValue : null);
   }
 
-  private updateTargetEntityValidators(targetRequired: boolean) {
-    const type: MobileActionTargetEntityType = this.mobileActionTypeFormGroup.get('targetEntity.type').value;
-    const aliasName = this.mobileActionTypeFormGroup.get('targetEntity.aliasName');
-    const attributeKey = this.mobileActionTypeFormGroup.get('targetEntity.attributeKey');
-    aliasName.setValidators(
-      targetRequired && type === MobileActionTargetEntityType.entityAlias ? [Validators.required] : []);
-    attributeKey.setValidators(
-      targetRequired && type === MobileActionTargetEntityType.fromAttribute ? [Validators.required] : []);
-    aliasName.updateValueAndValidity({emitEvent: false});
-    attributeKey.updateValueAndValidity({emitEvent: false});
+  private addLocationTargetControls(action?: WidgetMobileActionDescriptor) {
+    this.mobileActionTypeFormGroup.addControl(
+      'targetEntity',
+      this.fb.control(action?.targetEntity ?? {type: MobileActionTargetEntityType.currentEntity}, [])
+    );
+    this.mobileActionTypeFormGroup.addControl(
+      'keys',
+      this.fb.control(action?.keys?.length ? action.keys : defaultLocationKeyMappings(), [])
+    );
   }
 
   getActionConfigs() {

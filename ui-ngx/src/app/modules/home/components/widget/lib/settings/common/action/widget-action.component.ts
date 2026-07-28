@@ -28,6 +28,7 @@ import {
 } from '@angular/forms';
 import { Component, computed, ElementRef, forwardRef, input, Input, OnInit, ViewChild } from '@angular/core';
 import {
+  defaultSaveBrowserLocationDescriptor,
   MapItemType,
   mapItemTypeTranslationMap,
   WidgetAction,
@@ -318,7 +319,8 @@ export class WidgetActionComponent implements ControlValueAccessor, OnInit, Vali
         case WidgetActionType.saveBrowserLocation:
           this.actionTypeFormGroup.addControl(
             'saveBrowserLocation',
-            this.fb.control(action ? action.saveBrowserLocation : null, [Validators.required])
+            this.fb.control(action?.saveBrowserLocation ?? defaultSaveBrowserLocationDescriptor(),
+              [Validators.required])
           );
           break;
         case WidgetActionType.openURL:

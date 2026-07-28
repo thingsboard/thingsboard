@@ -1,0 +1,87 @@
+<!--
+
+    Copyright © 2016-2026 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section [formGroup]="targetEntityFormGroup" class="tb-form-panel no-padding no-border">
+  <div class="flex flex-row items-center justify-between">
+    <div class="tb-form-panel-title">{{ 'widget-action.mobile.target-entity-type' | translate }}</div>
+    <tb-toggle-select formControlName="type" selectMediaBreakpoint="xs">
+      <tb-toggle-option *ngFor="let type of targetEntityTypes" [value]="type">
+        {{ targetEntityTypeTranslations.get(type) | translate }}
+      </tb-toggle-option>
+    </tb-toggle-select>
+  </div>
+  @if (targetEntityFormGroup.get('type').value === targetEntityType.fromAttribute) {
+    <div class="tb-form-row">
+      <div class="fixed-title-width">{{ 'widget-action.mobile.target-attribute-source' | translate }}</div>
+      <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="attributeSource">
+          <mat-option *ngFor="let source of attributeSources" [value]="source">
+            {{ attributeSourceTranslations.get(source) | translate }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+  }
+  @if (aliasNameRequired) {
+    <div class="tb-form-row">
+      <div class="fixed-title-width">{{ 'widget-action.mobile.target-entity-alias-name' | translate }}</div>
+      <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+        <input matInput required formControlName="aliasName"
+               #aliasNameInput
+               [matAutocomplete]="entityAliasNameAutocomplete"
+               placeholder="{{ 'widget-action.mobile.target-entity-alias-name' | translate }}">
+        <mat-autocomplete #entityAliasNameAutocomplete="matAutocomplete" class="tb-autocomplete">
+          <mat-option *ngFor="let name of filteredEntityAliasNames | async" [value]="name">
+            {{ name }}
+          </mat-option>
+        </mat-autocomplete>
+        @if (targetEntityFormGroup.get('aliasName').value && targetEntityFormGroup.get('aliasName').enabled) {
+          <button type="button"
+                  matSuffix mat-icon-button aria-label="Clear"
+                  (click)="clearAliasName()">
+            <mat-icon class="material-icons">close</mat-icon>
+          </button>
+        } @else if (targetEntityFormGroup.get('aliasName').hasError('required')
+                    && targetEntityFormGroup.get('aliasName').touched) {
+          <mat-icon matSuffix
+                    matTooltipPosition="above"
+                    matTooltipClass="tb-error-tooltip"
+                    [matTooltip]="'widget-action.mobile.target-entity-alias-name-required' | translate"
+                    class="tb-error">
+            warning
+          </mat-icon>
+        }
+      </mat-form-field>
+    </div>
+  }
+  @if (targetEntityFormGroup.get('type').value === targetEntityType.fromAttribute) {
+    <div class="tb-form-row">
+      <div class="fixed-title-width"
+           tb-hint-tooltip-icon="{{ 'widget-action.mobile.target-attribute-value-hint' | translate }}">
+        {{ 'widget-action.mobile.target-attribute-key' | translate }}
+      </div>
+      <tb-entity-key-autocomplete class="flex-1"
+                                  formControlName="attributeKey"
+                                  [dataKeyType]="DataKeyType.attribute"
+                                  [entityFilter]="attributeSourceEntityFilter"
+                                  [keyScopeType]="AttributeScope.SERVER_SCOPE"
+                                  [enableAutocomplete]="!!attributeSourceEntityFilter"
+                                  requiredText="{{ 'widget-action.mobile.target-attribute-key-required' | translate }}">
+      </tb-entity-key-autocomplete>
+    </div>
+  }
+</section>

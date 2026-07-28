@@ -38,9 +38,13 @@ import {
 } from '@angular/core';
 import { DashboardWidget } from '@home/models/dashboard-component.models';
 import {
+  defaultLocationKeyMappings,
+  LocationKey,
+  LocationKeyMapping,
+  locationKeyName,
+  LocationKeyValueType,
   MobileActionAttributeSource,
   MobileActionLocationAccuracy,
-  MobileActionSaveAs,
   MobileActionTargetEntityConfig,
   MobileActionTargetEntityType,
   MobileImageResult,
@@ -1522,26 +1526,11 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
                                    locationResult: MobileLocationResult,
                                    currentEntityId?: EntityId): void {
     defer(() => this.resolveMobileActionTargetEntity(mobileAction, currentEntityId)).pipe(
-      switchMap((targetEntityId) => {
-        const data: Array<AttributeData> = [
-          {key: mobileAction.latitudeKey || 'latitude', value: locationResult.latitude},
-          {key: mobileAction.longitudeKey || 'longitude', value: locationResult.longitude}
-        ];
-        if (mobileAction.includeMetadata) {
-          if (isDefinedAndNotNull(locationResult.accuracy)) {
-            data.push({key: 'gpsAccuracy', value: locationResult.accuracy});
-          }
-          if (isDefinedAndNotNull(locationResult.ts)) {
-            data.push({key: 'gpsTimestamp', value: locationResult.ts});
-          }
-        }
-        if (mobileAction.saveAs === MobileActionSaveAs.timeseries) {
-          return this.widgetContext.attributeService.saveEntityTimeseries(targetEntityId, 'scope', data, {ignoreErrors: true});
-        } else {
-          return this.widgetContext.attributeService.saveEntityAttributes(targetEntityId, AttributeScope.SERVER_SCOPE, data,
-            {ignoreErrors: true});
-        }
-      })
+      switchMap((targetEntityId) => this.saveLocationKeys(targetEntityId, mobileAction.keys, {
+        [LocationKey.latitude]: locationResult.latitude,
+        [LocationKey.longitude]: locationResult.longitude,
+        [LocationKey.accuracy]: locationResult.accuracy
+      }))
     ).subscribe({
       next: () => {
         this.widgetContext.showSuccessToast(this.translate.instant('widget-action.mobile.location-saved'));
@@ -1563,30 +1552,15 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
       switchMap((position) => this.resolveActionTargetEntity(config.targetEntity, currentEntityId).pipe(
         switchMap((targetEntityId) => {
           const coords = position.coords;
-          const data: Array<AttributeData> = [];
-          const addValue = (key: string | undefined, value: number | null | undefined) => {
-            const trimmed = (key || '').trim();
-            if (trimmed.length && isDefinedAndNotNull(value) && !Number.isNaN(value)) {
-              data.push({key: trimmed, value});
-            }
-          };
-          addValue(config.latitudeKey || 'latitude', coords.latitude);
-          addValue(config.longitudeKey || 'longitude', coords.longitude);
-          addValue(config.accuracyKey, coords.accuracy);
-          addValue(config.altitudeKey, coords.altitude);
-          addValue(config.altitudeAccuracyKey, coords.altitudeAccuracy);
-          addValue(config.headingKey, coords.heading);
-          addValue(config.speedKey, coords.speed);
-          addValue(config.timestampKey, position.timestamp);
-          if (!data.length) {
-            return of(null);
-          }
-          if (config.saveAs === MobileActionSaveAs.timeseries) {
-            return this.widgetContext.attributeService.saveEntityTimeseries(
-              targetEntityId, LatestTelemetry.LATEST_TELEMETRY, data, {ignoreErrors: true});
-          }
-          return this.widgetContext.attributeService.saveEntityAttributes(
-            targetEntityId, AttributeScope.SERVER_SCOPE, data, {ignoreErrors: true});
+          return this.saveLocationKeys(targetEntityId, config.keys, {
+            [LocationKey.latitude]: coords.latitude,
+            [LocationKey.longitude]: coords.longitude,
+            [LocationKey.accuracy]: coords.accuracy,
+            [LocationKey.altitude]: coords.altitude,
+            [LocationKey.altitudeAccuracy]: coords.altitudeAccuracy,
+            [LocationKey.speed]: coords.speed,
+            [LocationKey.heading]: coords.heading
+          });
         })
       ))
     ).subscribe({
@@ -1606,6 +1580,10 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
     });
   }
 
+  /**
+   * Key labels are resolved to their effective names here so that the mobile app
+   * never has to know the per-key defaults.
+   */
   private buildLiveTrackingConfig(mobileAction: WidgetMobileActionDescriptor,
                                   targetEntityId: EntityId): object {
     return {
@@ -1613,20 +1591,47 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
         entityType: targetEntityId.entityType,
         id: targetEntityId.id
       },
-      latitudeKey: mobileAction.latitudeKey || 'latitude',
-      longitudeKey: mobileAction.longitudeKey || 'longitude',
-      includeMetadata: !!mobileAction.includeMetadata,
-      mirrorToAttributes: !!mobileAction.mirrorToAttributes,
+      keys: this.locationKeyMappings(mobileAction.keys).map((mapping) => ({
+        key: mapping.key,
+        label: locationKeyName(mapping),
+        valueType: mapping.valueType
+      })),
       accuracy: mobileAction.accuracy || MobileActionLocationAccuracy.balanced,
       distanceFilterMeters: isDefinedAndNotNull(mobileAction.distanceFilterMeters)
         ? mobileAction.distanceFilterMeters : null,
       intervalSeconds: isDefinedAndNotNull(mobileAction.intervalSeconds)
         ? mobileAction.intervalSeconds : null,
-      maxDurationMinutes: isDefinedAndNotNull(mobileAction.maxDurationMinutes)
-        ? mobileAction.maxDurationMinutes : null,
-      writeStatusAttributes: mobileAction.writeStatusAttributes !== false,
+      maxDurationSeconds: isDefinedAndNotNull(mobileAction.maxDurationSeconds)
+        ? mobileAction.maxDurationSeconds : null,
       trackedBy: getCurrentAuthUser(this.store)?.sub || null
     };
+  }
+
+  private locationKeyMappings(keys?: LocationKeyMapping[]): LocationKeyMapping[] {
+    return keys?.length ? keys : defaultLocationKeyMappings();
+  }
+
+  private saveLocationKeys(targetEntityId: EntityId, keys: LocationKeyMapping[],
+                           values: Partial<Record<LocationKey, any>>): Observable<any> {
+    const attributes: Array<AttributeData> = [];
+    const timeseries: Array<AttributeData> = [];
+    this.locationKeyMappings(keys).forEach((mapping) => {
+      const value = values[mapping.key];
+      if (isDefinedAndNotNull(value) && !Number.isNaN(value)) {
+        const data: AttributeData = {key: locationKeyName(mapping), value};
+        (mapping.valueType === LocationKeyValueType.timeseries ? timeseries : attributes).push(data);
+      }
+    });
+    const saveObservables: Array<Observable<any>> = [];
+    if (attributes.length) {
+      saveObservables.push(this.widgetContext.attributeService.saveEntityAttributes(
+        targetEntityId, AttributeScope.SERVER_SCOPE, attributes, {ignoreErrors: true}));
+    }
+    if (timeseries.length) {
+      saveObservables.push(this.widgetContext.attributeService.saveEntityTimeseries(
+        targetEntityId, LatestTelemetry.LATEST_TELEMETRY, timeseries, {ignoreErrors: true}));
+    }
+    return saveObservables.length ? forkJoin(saveObservables) : of(null);
   }
 
   private resolveMobileActionTargetEntity(mobileAction: WidgetMobileActionDescriptor,
@@ -1642,45 +1647,55 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
         if (validateEntityId(currentEntityId)) {
           return of(currentEntityId);
         }
-        return throwError(() => new Error('Widget action has no current entity'));
+        return throwError(() => new Error(this.translate.instant('widget-action.location.error-no-current-entity')));
       case MobileActionTargetEntityType.currentUser:
         return of(this.currentUserEntityId());
-      case MobileActionTargetEntityType.entityAlias: {
-        const aliasId = this.widgetContext.aliasController.getEntityAliasId(target.aliasName);
-        if (!aliasId) {
-          return throwError(() => new Error(`Entity alias '${target.aliasName}' not found in the dashboard`));
-        }
-        return this.widgetContext.aliasController.resolveSingleEntityInfo(aliasId).pipe(
-          map((entity) => {
-            if (!entity?.id || !entity?.entityType) {
-              throw new Error(`Entity alias '${target.aliasName}' did not resolve to an entity`);
-            }
-            return {entityType: entity.entityType, id: entity.id} as EntityId;
-          })
-        );
-      }
-      case MobileActionTargetEntityType.fromAttribute: {
-        let sourceEntityId: EntityId;
-        if (target.attributeSource === MobileActionAttributeSource.currentEntity) {
-          if (!validateEntityId(currentEntityId)) {
-            return throwError(() => new Error('Widget action has no current entity'));
-          }
-          sourceEntityId = currentEntityId;
-        } else {
-          sourceEntityId = this.currentUserEntityId();
-        }
-        return this.widgetContext.attributeService.getEntityAttributes(
-          sourceEntityId, AttributeScope.SERVER_SCOPE, [target.attributeKey], {ignoreErrors: true}).pipe(
+      case MobileActionTargetEntityType.entityAlias:
+        return this.resolveEntityAlias(target.aliasName);
+      case MobileActionTargetEntityType.fromAttribute:
+        return this.resolveAttributeSourceEntity(target, currentEntityId).pipe(
+          switchMap((sourceEntityId) => this.widgetContext.attributeService.getEntityAttributes(
+            sourceEntityId, AttributeScope.SERVER_SCOPE, [target.attributeKey], {ignoreErrors: true})),
           map((attributes) => {
             const attribute = attributes.find(a => a.key === target.attributeKey);
             if (!attribute || !isDefinedAndNotNull(attribute.value)) {
-              throw new Error(`Attribute '${target.attributeKey}' not found on the source entity`);
+              throw new Error(
+                this.translate.instant('widget-action.location.error-attribute-not-found', {key: target.attributeKey}));
             }
-            return this.parseTargetEntityAttributeValue(attribute.value, target.defaultEntityType);
+            return this.parseTargetEntityAttributeValue(target.attributeKey, attribute.value);
           })
         );
-      }
     }
+  }
+
+  private resolveAttributeSourceEntity(target: MobileActionTargetEntityConfig,
+                                       currentEntityId?: EntityId): Observable<EntityId> {
+    switch (target.attributeSource) {
+      case MobileActionAttributeSource.currentEntity:
+        return validateEntityId(currentEntityId) ? of(currentEntityId)
+          : throwError(() => new Error(this.translate.instant('widget-action.location.error-no-current-entity')));
+      case MobileActionAttributeSource.entityAlias:
+        return this.resolveEntityAlias(target.aliasName);
+      default:
+        return of(this.currentUserEntityId());
+    }
+  }
+
+  private resolveEntityAlias(aliasName: string): Observable<EntityId> {
+    const aliasId = this.widgetContext.aliasController.getEntityAliasId(aliasName);
+    if (!aliasId) {
+      return throwError(() => new Error(
+        this.translate.instant('widget-action.location.error-alias-not-found', {alias: aliasName})));
+    }
+    return this.widgetContext.aliasController.resolveSingleEntityInfo(aliasId).pipe(
+      map((entity) => {
+        if (!entity?.id || !entity?.entityType) {
+          throw new Error(
+            this.translate.instant('widget-action.location.error-alias-not-resolved', {alias: aliasName}));
+        }
+        return {entityType: entity.entityType, id: entity.id} as EntityId;
+      })
+    );
   }
 
   private currentUserEntityId(): EntityId {
@@ -1688,24 +1703,27 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
     return {entityType: EntityType.USER, id: authUser.userId};
   }
 
-  private parseTargetEntityAttributeValue(value: any, defaultEntityType?: EntityType): EntityId {
-    if (typeof value === 'object' && value?.id && value?.entityType) {
-      return {entityType: value.entityType, id: value.id};
-    }
-    if (typeof value === 'string') {
-      let parsed: any = null;
+  /** The attribute must hold an Entity Id object — `{entityType, id}` — not a bare id string. */
+  private parseTargetEntityAttributeValue(attributeKey: string, value: any): EntityId {
+    let entityId = value;
+    if (typeof entityId === 'string') {
       try {
-        parsed = JSON.parse(value);
-      } catch (e) {}
-      if (parsed?.id && parsed?.entityType) {
-        return {entityType: parsed.entityType, id: parsed.id};
-      }
-      if (defaultEntityType) {
-        return {entityType: defaultEntityType, id: value};
+        entityId = JSON.parse(entityId);
+      } catch (e) {
+        entityId = null;
       }
     }
-    throw new Error('Attribute value does not identify a target entity ' +
-      '(expected {entityType, id} JSON or a UUID with a configured entity type)');
+    if (!entityId || typeof entityId !== 'object') {
+      throw new Error(this.translate.instant('widget-action.location.error-attribute-not-object', {key: attributeKey}));
+    }
+    if (!entityId.entityType || !entityId.id) {
+      throw new Error(this.translate.instant('widget-action.location.error-attribute-incomplete', {key: attributeKey}));
+    }
+    if (!Object.values(EntityType).includes(entityId.entityType)) {
+      throw new Error(this.translate.instant('widget-action.location.error-attribute-unknown-entity-type',
+        {key: attributeKey, entityType: entityId.entityType}));
+    }
+    return {entityType: entityId.entityType, id: entityId.id};
   }
 
   private openDashboardStateInPopover($event: Event,
