@@ -39,6 +39,7 @@ import {
 import { DashboardWidget } from '@home/models/dashboard-component.models';
 import {
   defaultLocationKeyMappings,
+  LiveTrackingSaveInfo,
   LocationKey,
   LocationKeyMapping,
   locationKeyName,
@@ -1400,9 +1401,33 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
                       const latitude = actionResult.latitude;
                       const longitude = actionResult.longitude;
                       if (mobileAction.saveToEntity) {
-                        this.saveMobileActionLocation(mobileAction, actionResult, entityId);
-                      }
-                      if (isNotEmptyTbFunction(mobileAction.processLocationFunction)) {
+                        this.saveMobileActionLocation(mobileAction, actionResult, entityId).subscribe({
+                          next: (saveInfo) => {
+                            if (isNotEmptyTbFunction(mobileAction.processLocationFunction)) {
+                              compileTbFunction(this.http, mobileAction.processLocationFunction, 'latitude', 'longitude', '$event', 'widgetContext', 'entityId',
+                                'entityName', 'additionalParams', 'entityLabel', 'saveInfo').subscribe(
+                                {
+                                  next: (compiled) => {
+                                    try {
+                                      compiled.execute(latitude, longitude, $event, this.widgetContext,
+                                        entityId, entityName, additionalParams, entityLabel, saveInfo);
+                                    } catch (e) {
+                                      console.error(e);
+                                    }
+                                  },
+                                  error: (err) => {
+                                    console.error(err);
+                                  }
+                                }
+                              );
+                            }
+                          },
+                          error: (err) => {
+                            this.widgetContext.showErrorToast(
+                              this.translate.instant('widget-action.mobile.location-save-failed', {error: this.saveLocationErrorMessage(err)}));
+                          }
+                        });
+                      } else if (isNotEmptyTbFunction(mobileAction.processLocationFunction)) {
                         compileTbFunction(this.http, mobileAction.processLocationFunction, 'latitude', 'longitude', '$event', 'widgetContext', 'entityId',
                           'entityName', 'additionalParams', 'entityLabel').subscribe(
                           {
@@ -1427,14 +1452,20 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
                     case WidgetMobileActionType.startLiveLocation:
                     case WidgetMobileActionType.stopLiveLocation:
                       const launched = actionResult.launched;
+                      let trackingInfo: LiveTrackingSaveInfo = null;
+                      if (type === WidgetMobileActionType.startLiveLocation) {
+                        trackingInfo = this.liveTrackingInfoFromConfig(args[0]);
+                      } else if (type === WidgetMobileActionType.stopLiveLocation) {
+                        trackingInfo = actionResult.trackingInfo || null;
+                      }
                       if (isNotEmptyTbFunction(mobileAction.processLaunchResultFunction)) {
                         compileTbFunction(this.http, mobileAction.processLaunchResultFunction, 'launched', '$event', 'widgetContext', 'entityId',
-                          'entityName', 'additionalParams', 'entityLabel').subscribe(
+                          'entityName', 'additionalParams', 'entityLabel', 'trackingInfo').subscribe(
                           {
                             next: (compiled) => {
                               try {
                                 compiled.execute(launched, $event, this.widgetContext,
-                                  entityId, entityName, additionalParams, entityLabel);
+                                  entityId, entityName, additionalParams, entityLabel, trackingInfo);
                               } catch (e) {
                                 console.error(e);
                               }
@@ -1523,22 +1554,22 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
 
   private saveMobileActionLocation(mobileAction: WidgetMobileActionDescriptor,
                                    locationResult: MobileLocationResult,
-                                   currentEntityId?: EntityId): void {
-    this.resolveActionTargetEntity(mobileAction.targetEntity, currentEntityId).pipe(
-      switchMap((targetEntityId) => this.saveLocationKeys(targetEntityId, mobileAction.keys, {
-        [LocationKey.latitude]: locationResult.latitude,
-        [LocationKey.longitude]: locationResult.longitude,
-        [LocationKey.accuracy]: locationResult.accuracy
-      }))
-    ).subscribe({
-      next: () => {
-        this.widgetContext.showSuccessToast(this.translate.instant('widget-action.mobile.location-saved'));
-      },
-      error: (err) => {
-        this.widgetContext.showErrorToast(
-          this.translate.instant('widget-action.mobile.location-save-failed', {error: this.saveLocationErrorMessage(err)}));
-      }
-    });
+                                   currentEntityId?: EntityId): Observable<LiveTrackingSaveInfo> {
+    const values: Partial<Record<LocationKey, any>> = {
+      [LocationKey.latitude]: locationResult.latitude,
+      [LocationKey.longitude]: locationResult.longitude,
+      [LocationKey.accuracy]: locationResult.accuracy
+    };
+    return this.resolveActionTargetEntity(mobileAction.targetEntity, currentEntityId).pipe(
+      switchMap((targetEntityId) => this.resolveTargetEntityName(targetEntityId).pipe(
+        switchMap((targetName) => this.saveLocationKeys(targetEntityId, mobileAction.keys, values).pipe(
+          map(() => ({
+            targetName,
+            keys: this.savedLocationKeyNames(mobileAction.keys, values)
+          }))
+        ))
+      ))
+    );
   }
 
   private saveBrowserLocation(descriptor: WidgetAction, currentEntityId?: EntityId): void {
@@ -1579,12 +1610,14 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
   }
 
   private buildLiveTrackingConfig(mobileAction: WidgetMobileActionDescriptor,
-                                  targetEntityId: EntityId): object {
+                                  targetEntityId: EntityId, targetName: string | null): object {
     return {
       target: {
         entityType: targetEntityId.entityType,
         id: targetEntityId.id
       },
+      targetName,
+      dashboard: this.currentDashboardInfo(),
       keys: this.locationKeyMappings(mobileAction.keys).map((mapping) => ({
         key: mapping.key,
         label: locationKeyName(mapping),
@@ -1598,8 +1631,44 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
     };
   }
 
+  private liveTrackingInfoFromConfig(config: any): LiveTrackingSaveInfo | null {
+    if (!config) {
+      return null;
+    }
+    return {
+      targetName: config.targetName || null,
+      keys: (config.keys || []).map((key: any) => key.label)
+    };
+  }
+
+  private currentDashboardInfo(): {id: string | null; title: string | null} {
+    const dashboard = this.widgetContext.stateController?.dashboardCtrl?.dashboardCtx?.getDashboard();
+    return {
+      id: dashboard?.id?.id || null,
+      title: dashboard?.title || null
+    };
+  }
+
+  private resolveTargetEntityName(targetEntityId: EntityId): Observable<string | null> {
+    return this.entityService.getEntity(targetEntityId.entityType as EntityType, targetEntityId.id,
+      {ignoreLoading: true, ignoreErrors: true}).pipe(
+      map((entity) => entity?.name || null),
+      catchError(() => of(null))
+    );
+  }
+
   private locationKeyMappings(keys?: LocationKeyMapping[]): LocationKeyMapping[] {
     return keys?.length ? keys : defaultLocationKeyMappings();
+  }
+
+  private savedLocationKeyNames(keys: LocationKeyMapping[],
+                                values: Partial<Record<LocationKey, any>>): string[] {
+    return this.locationKeyMappings(keys)
+      .filter((mapping) => {
+        const value = values[mapping.key];
+        return isDefinedAndNotNull(value) && !Number.isNaN(value);
+      })
+      .map((mapping) => locationKeyName(mapping));
   }
 
   private saveLocationKeys(targetEntityId: EntityId, keys: LocationKeyMapping[],

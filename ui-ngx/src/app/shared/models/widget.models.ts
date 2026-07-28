@@ -711,8 +711,14 @@ export const mapItemTypeTranslationMap = new Map<MapItemType, string>(
   ]
 )
 
+export interface LiveTrackingSaveInfo {
+  targetName: string;
+  keys: string[];
+}
+
 export interface MobileLaunchResult {
   launched: boolean;
+  trackingInfo?: LiveTrackingSaveInfo;
 }
 
 export interface MobileImageResult {
