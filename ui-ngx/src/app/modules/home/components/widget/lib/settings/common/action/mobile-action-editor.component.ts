@@ -48,6 +48,9 @@ import {
   getDefaultProcessImageFunction,
   getDefaultProcessLaunchResultFunction,
   getDefaultProcessLocationFunction,
+  getDefaultProcessLocationWithSaveFunction,
+  getDefaultStartLiveLocationResultFunction,
+  getDefaultStopLiveLocationResultFunction,
   getDefaultProcessQrCodeFunction,
   getDefaultProvisionSuccessFunction
 } from '@home/components/widget/lib/settings/common/action/mobile-action-editor.models';
@@ -299,7 +302,7 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
         case WidgetMobileActionType.getLocation:
           let processLocationFunction = action?.processLocationFunction;
           if (changed) {
-            const defaultProcessLocationFunction = getDefaultProcessLocationFunction();
+            const defaultProcessLocationFunction = this.defaultProcessLocationFunction(action?.saveToEntity);
             if (defaultProcessLocationFunction !== processLocationFunction) {
               processLocationFunction = defaultProcessLocationFunction;
             }
@@ -312,14 +315,22 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
             'saveToEntity',
             this.fb.control(action?.saveToEntity || false, [])
           );
+          this.mobileActionTypeFormGroup.get('saveToEntity').valueChanges.pipe(
+            takeUntilDestroyed(this.destroyRef)
+          ).subscribe((saveToEntity: boolean) => {
+            const control = this.mobileActionTypeFormGroup.get('processLocationFunction');
+            if (!control.value || control.value === this.defaultProcessLocationFunction(!saveToEntity)) {
+              control.setValue(this.defaultProcessLocationFunction(saveToEntity));
+            }
+          });
           this.addLocationTargetControls(action);
           break;
         case WidgetMobileActionType.startLiveLocation:
           processLaunchResultFunction = action?.processLaunchResultFunction;
           if (changed) {
-            const defaultProcessLaunchResultFunction = getDefaultProcessLaunchResultFunction(targetType);
-            if (defaultProcessLaunchResultFunction !== processLaunchResultFunction) {
-              processLaunchResultFunction = getDefaultProcessLaunchResultFunction(type);
+            const defaultStartLiveLocationResultFunction = getDefaultStartLiveLocationResultFunction();
+            if (defaultStartLiveLocationResultFunction !== processLaunchResultFunction) {
+              processLaunchResultFunction = defaultStartLiveLocationResultFunction;
             }
           }
           this.addLocationTargetControls(action);
@@ -350,9 +361,9 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
         case WidgetMobileActionType.stopLiveLocation:
           processLaunchResultFunction = action?.processLaunchResultFunction;
           if (changed) {
-            const defaultProcessLaunchResultFunction = getDefaultProcessLaunchResultFunction(targetType);
-            if (defaultProcessLaunchResultFunction !== processLaunchResultFunction) {
-              processLaunchResultFunction = getDefaultProcessLaunchResultFunction(type);
+            const defaultStopLiveLocationResultFunction = getDefaultStopLiveLocationResultFunction();
+            if (defaultStopLiveLocationResultFunction !== processLaunchResultFunction) {
+              processLaunchResultFunction = defaultStopLiveLocationResultFunction;
             }
           }
           this.mobileActionTypeFormGroup.addControl(
@@ -389,6 +400,10 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
     const limit = this.liveLocationLimits[controlName];
     limit.enabled = enabled;
     this.mobileActionTypeFormGroup.get(controlName).patchValue(enabled ? limit.defaultValue : null);
+  }
+
+  private defaultProcessLocationFunction(saveToEntity?: boolean): TbFunction {
+    return saveToEntity ? getDefaultProcessLocationWithSaveFunction() : getDefaultProcessLocationFunction();
   }
 
   private addLocationTargetControls(action?: WidgetMobileActionDescriptor) {
@@ -453,7 +468,8 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
           title: 'widget-action.mobile.process-launch-result-function',
           formControlName: 'processLaunchResultFunction',
           functionName: 'processLaunchResult',
-          functionArgs: ['launched', '$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams', 'entityLabel'],
+          functionArgs: ['launched', '$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams', 'entityLabel',
+            'trackingInfo'],
           helpId: 'widget/action/mobile_process_launch_result_fn'
         });
         break;
@@ -482,7 +498,8 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
           title: 'widget-action.mobile.process-location-function',
           formControlName: 'processLocationFunction',
           functionName: 'processLocation',
-          functionArgs: ['latitude', 'longitude', '$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams', 'entityLabel'],
+          functionArgs: ['latitude', 'longitude', '$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams', 'entityLabel',
+            'saveInfo'],
           helpId: 'widget/action/mobile_process_location_fn'
         });
         break;

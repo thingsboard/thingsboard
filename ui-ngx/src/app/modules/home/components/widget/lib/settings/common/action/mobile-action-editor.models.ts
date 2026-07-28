@@ -95,6 +95,38 @@ const processLaunchResultFunctionTemplate: TbFunction =
   '    }, 100);\n' +
   '}\n';
 
+const startLiveLocationResultFunction: TbFunction =
+  '// Optional function body to process result of the start live location tracking action. \n' +
+  '// - launched - boolean value indicating if live location tracking was started.\n' +
+  '// - trackingInfo - tracking session details ({targetName, keys}) when available, otherwise undefined.\n\n' +
+  'showTrackingStartedDialog(\'Live location tracking\', launched, trackingInfo);\n' +
+  '\n' +
+  'function showTrackingStartedDialog(title, started, info) {\n' +
+  '    var message = started ? \'Live location tracking started\' : \'Live location tracking was not started\';\n' +
+  '    if (started && info && info.targetName) {\n' +
+  '        message += \'<br>Location is being saved to \' + info.targetName;\n' +
+  '    }\n' +
+  '    setTimeout(function() {\n' +
+  '        widgetContext.dialogs.alert(title, message).subscribe();\n' +
+  '    }, 100);\n' +
+  '}\n';
+
+const stopLiveLocationResultFunction: TbFunction =
+  '// Optional function body to process result of the stop live location tracking action. \n' +
+  '// - launched - boolean value indicating if live location tracking was stopped.\n' +
+  '// - trackingInfo - stopped session details ({targetName, keys}) when available, otherwise undefined.\n\n' +
+  'showTrackingStoppedDialog(\'Live location tracking\', launched, trackingInfo);\n' +
+  '\n' +
+  'function showTrackingStoppedDialog(title, stopped, info) {\n' +
+  '    var message = stopped ? \'Live location tracking stopped\' : \'Live location tracking was not stopped\';\n' +
+  '    if (stopped && info && info.targetName) {\n' +
+  '        message += \'<br>Location was saved to \' + info.targetName;\n' +
+  '    }\n' +
+  '    setTimeout(function() {\n' +
+  '        widgetContext.dialogs.alert(title, message).subscribe();\n' +
+  '    }, 100);\n' +
+  '}\n';
+
 const processQrCodeFunction: TbFunction =
   '// Function body to process result of QR code scanning. \n' +
   '// - code - scanned QR code\n' +
@@ -135,6 +167,23 @@ const processLocationFunction: TbFunction =
   'function showLocationDialog(title, latitude, longitude) {\n' +
   '    setTimeout(function() {\n' +
   '        widgetContext.dialogs.alert(title, \'Latitude: \'+latitude+\'<br>Longitude: \' + longitude).subscribe();\n' +
+  '    }, 100);\n' +
+  '}';
+
+const processLocationWithSaveFunction: TbFunction =
+  '// Function body to process current location of the phone. \n' +
+  '// - latitude - phone location latitude\n' +
+  '// - longitude - phone location longitude\n' +
+  '// - saveInfo - details of the performed save ({targetName, keys}), or null if the save failed.\n\n' +
+  'showLocationDialog(\'Location\', latitude, longitude, saveInfo);\n' +
+  '\n' +
+  'function showLocationDialog(title, latitude, longitude, saveInfo) {\n' +
+  '    var message = \'Latitude: \'+latitude+\'<br>Longitude: \' + longitude;\n' +
+  '    if (saveInfo) {\n' +
+  '        message += \'<br>Location has been saved to \' + (saveInfo.targetName || \'the target entity\');\n' +
+  '    }\n' +
+  '    setTimeout(function() {\n' +
+  '        widgetContext.dialogs.alert(title, message).subscribe();\n' +
   '    }, 100);\n' +
   '}';
 
@@ -253,19 +302,19 @@ export const getDefaultProcessLaunchResultFunction = (type: WidgetMobileActionTy
     case WidgetMobileActionType.makePhoneCall:
       title = 'Phone call';
       break;
-    case WidgetMobileActionType.startLiveLocation:
-      title = 'Start live location tracking';
-      break;
-    case WidgetMobileActionType.stopLiveLocation:
-      title = 'Stop live location tracking';
-      break;
   }
   return processLaunchResultFunctionTemplate.replace('--TITLE--', title);
 };
 
+export const getDefaultStartLiveLocationResultFunction = () => startLiveLocationResultFunction;
+
+export const getDefaultStopLiveLocationResultFunction = () => stopLiveLocationResultFunction;
+
 export const getDefaultProcessQrCodeFunction = () => processQrCodeFunction;
 
 export const getDefaultProcessLocationFunction = () => processLocationFunction;
+
+export const getDefaultProcessLocationWithSaveFunction = () => processLocationWithSaveFunction;
 
 export const getDefaultProvisionSuccessFunction = () => provisionSuccessFunction;
 
