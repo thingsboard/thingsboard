@@ -7834,6 +7834,7 @@
         "browser-location": {
           "location-saved": "Browser location saved",
           "location-save-failed": "Failed to save browser location: {{error}}",
+          "error-unsupported": "This browser does not support location detection",
           "error-insecure-context": "Browser location requires a secure (HTTPS) connection",
           "error-permission-denied": "Location permission was denied",
           "error-position-unavailable": "Current location is unavailable",

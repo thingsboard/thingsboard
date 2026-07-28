@@ -1256,7 +1256,9 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
         break;
       case WidgetMobileActionType.startLiveLocation:
         argsObservable = this.resolveActionTargetEntity(mobileAction.targetEntity, entityId).pipe(
-          map((targetEntityId) => [this.buildLiveTrackingConfig(mobileAction, targetEntityId)])
+          switchMap((targetEntityId) => this.resolveTargetEntityName(targetEntityId).pipe(
+            map((targetName) => [this.buildLiveTrackingConfig(mobileAction, targetEntityId, targetName)])
+          ))
         );
         break;
       case WidgetMobileActionType.deviceProvision:
@@ -1533,9 +1535,8 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
         this.widgetContext.showSuccessToast(this.translate.instant('widget-action.mobile.location-saved'));
       },
       error: (err) => {
-        const message = err?.error?.message || err?.message || JSON.stringify(err);
         this.widgetContext.showErrorToast(
-          this.translate.instant('widget-action.mobile.location-save-failed', {error: message}));
+          this.translate.instant('widget-action.mobile.location-save-failed', {error: this.saveLocationErrorMessage(err)}));
       }
     });
   }
@@ -1569,9 +1570,9 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
         if (err instanceof BrowserGeolocationError) {
           this.widgetContext.showErrorToast(this.translate.instant(browserGeolocationErrorMessageKey(err)));
         } else {
-          const message = err?.error?.message || err?.message || JSON.stringify(err);
           this.widgetContext.showErrorToast(
-            this.translate.instant('widget-action.browser-location.location-save-failed', {error: message}));
+            this.translate.instant('widget-action.browser-location.location-save-failed',
+              {error: this.saveLocationErrorMessage(err)}));
         }
       }
     });
@@ -1622,6 +1623,10 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
         targetEntityId, LatestTelemetry.LATEST_TELEMETRY, timeseries, {ignoreErrors: true}));
     }
     return saveObservables.length ? forkJoin(saveObservables) : of(null);
+  }
+
+  private saveLocationErrorMessage(err: any): string {
+    return err?.error?.message || err?.message || JSON.stringify(err);
   }
 
   private resolveActionTargetEntity(target: MobileActionTargetEntityConfig,

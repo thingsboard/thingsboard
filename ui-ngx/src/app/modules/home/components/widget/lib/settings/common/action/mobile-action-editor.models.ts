@@ -297,6 +297,12 @@ export const getDefaultHandleEmptyResultFunction = (type: WidgetMobileActionType
     case WidgetMobileActionType.getLocation:
       message = 'Get location action was canceled!';
       break;
+    case WidgetMobileActionType.startLiveLocation:
+      message = 'Live location tracking was not started!';
+      break;
+    case WidgetMobileActionType.stopLiveLocation:
+      message = 'Live location tracking was not stopped!';
+      break;
     case WidgetMobileActionType.takeScreenshot:
       message = 'Take screenshot action was cancelled!';
       break;
@@ -330,6 +336,12 @@ export const getDefaultHandleErrorFunction = (type: WidgetMobileActionType): TbF
       break;
     case WidgetMobileActionType.getLocation:
       title = 'Failed to get phone location';
+      break;
+    case WidgetMobileActionType.startLiveLocation:
+      title = 'Failed to start live location tracking';
+      break;
+    case WidgetMobileActionType.stopLiveLocation:
+      title = 'Failed to stop live location tracking';
       break;
     case WidgetMobileActionType.takeScreenshot:
       title = 'Failed to take screenshot';

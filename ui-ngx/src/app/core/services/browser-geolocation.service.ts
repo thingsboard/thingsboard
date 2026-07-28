@@ -18,6 +18,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
 export enum BrowserGeolocationErrorType {
+  unsupported = 'unsupported',
   insecureContext = 'insecureContext',
   permissionDenied = 'permissionDenied',
   positionUnavailable = 'positionUnavailable',
@@ -31,6 +32,7 @@ export class BrowserGeolocationError extends Error {
 }
 
 const browserGeolocationErrorMessageKeys: {[key in BrowserGeolocationErrorType]: string} = {
+  [BrowserGeolocationErrorType.unsupported]: 'widget-action.browser-location.error-unsupported',
   [BrowserGeolocationErrorType.insecureContext]: 'widget-action.browser-location.error-insecure-context',
   [BrowserGeolocationErrorType.permissionDenied]: 'widget-action.browser-location.error-permission-denied',
   [BrowserGeolocationErrorType.positionUnavailable]: 'widget-action.browser-location.error-position-unavailable',
@@ -59,8 +61,12 @@ export class BrowserGeolocationService {
 
   getCurrentPosition(): Observable<GeolocationPosition> {
     return new Observable<GeolocationPosition>((subscriber) => {
-      if (!window.isSecureContext || !navigator.geolocation) {
+      if (!window.isSecureContext) {
         subscriber.error(new BrowserGeolocationError(BrowserGeolocationErrorType.insecureContext));
+        return;
+      }
+      if (!navigator.geolocation) {
+        subscriber.error(new BrowserGeolocationError(BrowserGeolocationErrorType.unsupported));
         return;
       }
       navigator.geolocation.getCurrentPosition(

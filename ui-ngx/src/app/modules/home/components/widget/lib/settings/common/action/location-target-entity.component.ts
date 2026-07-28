@@ -161,7 +161,7 @@ export class LocationTargetEntityComponent implements ControlValueAccessor, OnIn
 
     this.targetEntityFormGroup.valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
-    ).subscribe(() => this.propagateChange(this.targetEntityFormGroup.getRawValue()));
+    ).subscribe(() => this.propagateChange(this.targetEntityConfig()));
 
     this.updateValidators();
     this.updateAttributeSourceEntityFilter();
@@ -246,5 +246,23 @@ export class LocationTargetEntityComponent implements ControlValueAccessor, OnIn
     attributeKey.setValidators(type === MobileActionTargetEntityType.fromAttribute ? [Validators.required] : []);
     aliasName.updateValueAndValidity({emitEvent: false});
     attributeKey.updateValueAndValidity({emitEvent: false});
+  }
+
+  private targetEntityConfig(): MobileActionTargetEntityConfig {
+    const value: MobileActionTargetEntityConfig = this.targetEntityFormGroup.getRawValue();
+    const config: MobileActionTargetEntityConfig = {type: value.type};
+    switch (value.type) {
+      case MobileActionTargetEntityType.entityAlias:
+        config.aliasName = value.aliasName;
+        break;
+      case MobileActionTargetEntityType.fromAttribute:
+        config.attributeSource = value.attributeSource;
+        config.attributeKey = value.attributeKey;
+        if (value.attributeSource === MobileActionAttributeSource.entityAlias) {
+          config.aliasName = value.aliasName;
+        }
+        break;
+    }
+    return config;
   }
 }
