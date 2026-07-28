@@ -18,37 +18,41 @@ import {
   AfterViewInit,
   Component,
   computed,
-  ElementRef,
+  ElementRef, inject,
   Inject,
   OnDestroy,
   OnInit,
   signal,
   ViewChild
 } from '@angular/core';
-import { skip, startWith, Subject } from 'rxjs';
-import { select, Store } from '@ngrx/store';
-import { debounceTime, distinctUntilChanged, take, takeUntil } from 'rxjs/operators';
+import {of, skip, startWith, Subject} from 'rxjs';
+import {select, Store} from '@ngrx/store';
+import {catchError, debounceTime, distinctUntilChanged, take, takeUntil} from 'rxjs/operators';
 
-import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
-import { PageComponent } from '@shared/components/page.component';
-import { AppState } from '@core/core.state';
-import { getCurrentAuthState, selectUserSettingsProperty } from '@core/auth/auth.selectors';
-import { MediaBreakpoints } from '@shared/models/constants';
+import {BreakpointObserver, BreakpointState} from '@angular/cdk/layout';
+import {PageComponent} from '@shared/components/page.component';
+import {AppState} from '@core/core.state';
+import {getCurrentAuthState, getCurrentAuthUser, selectUserSettingsProperty} from '@core/auth/auth.selectors';
+import {MediaBreakpoints} from '@shared/models/constants';
 import screenfull from 'screenfull';
-import { MatSidenav } from '@angular/material/sidenav';
-import { AuthState } from '@core/auth/auth.models';
-import { WINDOW } from '@core/services/window.service';
-import { instanceOfSearchableComponent, ISearchableComponent } from '@home/models/searchable-component.models';
-import { ActiveComponentService } from '@core/services/active-component.service';
-import { FormBuilder } from '@angular/forms';
-import { ActionPreferencesPutUserSettings } from '@core/auth/auth.actions';
-import { HomeService } from '@core/services/home.service';
+import {MatSidenav} from '@angular/material/sidenav';
+import {AuthState} from '@core/auth/auth.models';
+import {WINDOW} from '@core/services/window.service';
+import {instanceOfSearchableComponent, ISearchableComponent} from '@home/models/searchable-component.models';
+import {ActiveComponentService} from '@core/services/active-component.service';
+import {FormBuilder} from '@angular/forms';
+import {ActionPreferencesPutUserSettings} from '@core/auth/auth.actions';
+import {HomeService} from '@core/services/home.service';
+import {TenantService} from "@core/http/tenant.service";
+import {AuthUser} from "@shared/models/user.model";
+import {TenantProfileService} from "@core/http/tenant-profile.service";
+import {Tenant, TenantProfile} from "@shared/models/tenant.model";
 
 @Component({
-    selector: 'tb-home',
-    templateUrl: './home.component.html',
-    styleUrls: ['./home.component.scss'],
-    standalone: false
+  selector: 'tb-home',
+  templateUrl: './home.component.html',
+  styleUrls: ['./home.component.scss'],
+  standalone: false
 })
 export class HomeComponent extends PageComponent implements AfterViewInit, OnInit, OnDestroy {
 
@@ -64,15 +68,15 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
 
   sidenavDesktop = signal(true);
   sidenavCollapsed = signal(false);
-  menuCollapsed= computed(() => this.sidenavDesktop() && this.sidenavCollapsed());
+  menuCollapsed = computed(() => this.sidenavDesktop() && this.sidenavCollapsed());
 
   logo = 'assets/logo_title_black.svg';
-  collapsedLogo =  'assets/small_logo_title_black.svg';
+  collapsedLogo = 'assets/small_logo_title_black.svg';
 
   @ViewChild('sidenav')
   sidenav: MatSidenav;
 
-  @ViewChild('mainContent', { static: true }) mainContent: ElementRef<HTMLElement>;
+  @ViewChild('mainContent', {static: true}) mainContent: ElementRef<HTMLElement>;
 
   @ViewChild('searchInput') searchInputField: ElementRef;
 
@@ -80,9 +84,12 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
 
   searchEnabled = false;
   showSearch = false;
+  currentUser: AuthUser;
   textSearch = this.fb.control('', {nonNullable: true});
-
+  tenantService: TenantService = inject(TenantService);
+  tenantProfileService: TenantProfileService = inject(TenantProfileService);
   private destroy$ = new Subject<void>();
+  conditionTenantProfile: boolean = false
 
   constructor(protected store: Store<AppState>,
               @Inject(WINDOW) private window: Window,
@@ -93,7 +100,26 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
     super(store);
   }
 
+  getTenantCurrentUser(name: string = "tester") {
+    this.currentUser = getCurrentAuthUser(this.store);
+
+    if (this.currentUser?.tenantId) {
+      this.tenantService.getTenant(this.currentUser.tenantId, {ignoreErrors: true})
+        .pipe(takeUntil(this.destroy$), catchError(() => of([])))
+        .subscribe((tenant: Tenant) => this.checkConditionProfileTenantCurrentUser(tenant, name));
+    }
+  }
+
+  checkConditionProfileTenantCurrentUser(tenant: Tenant, name: string = "tester"): boolean {
+    this.tenantProfileService.getTenantProfile(tenant.tenantProfileId.id)
+      .pipe(takeUntil(this.destroy$), catchError(() => of([])))
+      .subscribe((tenantProfile: TenantProfile) => this.conditionTenantProfile = (name === tenantProfile.name));
+
+    return this.conditionTenantProfile
+  }
+
   ngOnInit() {
+    this.getTenantCurrentUser("tester");
 
     const isGtSm = this.breakpointObserver.isMatched(MediaBreakpoints['gt-sm']);
     this.sidenavMode = isGtSm ? 'side' : 'over';
@@ -149,7 +175,7 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
 
   toggleSidenav() {
     this.sidenavCollapsed.update(state => !state);
-    this.store.dispatch(new ActionPreferencesPutUserSettings({ menuCollapsed: this.sidenavCollapsed() }));
+    this.store.dispatch(new ActionPreferencesPutUserSettings({menuCollapsed: this.sidenavCollapsed()}));
   }
 
   toggleFullscreen() {
@@ -168,7 +194,7 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
 
   activeComponentChanged(activeComponent: any) {
     this.activeComponentService.setCurrentActiveComponent(activeComponent);
-    this.mainContent?.nativeElement?.scrollTo({ top: 0, left: 0 });
+    this.mainContent?.nativeElement?.scrollTo({top: 0, left: 0});
     if (!this.activeComponent) {
       setTimeout(() => {
         this.updateActiveComponent(activeComponent);
