@@ -249,7 +249,7 @@ export class DataAggregator {
       if (update) {
         this.aggregationMap = new AggregationMap();
         this.updateAggregatedData(data);
-      } else {
+      } else if (Object.keys(data).length || !this.aggregationMap) {
         this.aggregationMap = this.processAggregatedData(data);
       }
       if (updateIntervalScheduledTime) {

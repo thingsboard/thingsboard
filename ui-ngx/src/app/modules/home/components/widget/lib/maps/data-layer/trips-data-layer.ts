@@ -414,6 +414,7 @@ export class TbTripsDataLayer extends TbMapDataLayer<TripsDataLayerSettings, TbT
 
   private rawTripsData: FormattedData<TbMapDatasource>[][];
   private latestTripsData: FormattedData<TbMapDatasource>[];
+  private subscribedEntityIds = new Set<string>();
 
   constructor(protected map: TbMap<any>,
               inputSettings: TripsDataLayerSettings) {
@@ -431,9 +432,9 @@ export class TbTripsDataLayer extends TbMapDataLayer<TripsDataLayerSettings, TbT
   public prepareTripsData(tripsData: FormattedData<TbMapDatasource>[][], tripsLatestData: FormattedData<TbMapDatasource>[]): {minTime: number; maxTime: number} {
     let minTime = Infinity;
     let maxTime = -Infinity;
-    this.rawTripsData =
-      tripsData.filter(d => !!d.length && d[0].$datasource.mapDataIds.includes(this.mapDataId)).map(
-        item => this.clearIncorrectFirsLastDatapoint(item)).filter(arr => arr.length);
+    const filteredTripsData = tripsData.filter(d => !!d.length && d[0].$datasource.mapDataIds.includes(this.mapDataId));
+    this.subscribedEntityIds = new Set(filteredTripsData.map(item => item[0].entityId));
+    this.rawTripsData = filteredTripsData.map(item => this.clearIncorrectFirsLastDatapoint(item)).filter(arr => arr.length);
     this.latestTripsData = tripsLatestData.filter(d => d.$datasource.mapDataIds.includes(this.mapDataId));
     this.rawTripsData.forEach((dataSource) => {
       minTime = Math.min(dataSource[0].time, minTime);
@@ -457,7 +458,9 @@ export class TbTripsDataLayer extends TbMapDataLayer<TripsDataLayerSettings, TbT
       toDelete.delete(entityId);
     });
     toDelete.forEach((key) => {
-      this.removeItem(key);
+      if (!this.subscribedEntityIds.has(key)) {
+        this.removeItem(key);
+      }
     });
   }
 
