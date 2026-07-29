@@ -110,12 +110,10 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
     }
   }
 
-  checkConditionProfileTenantCurrentUser(tenant: Tenant, name: string = "tester"): boolean {
+  checkConditionProfileTenantCurrentUser(tenant: Tenant, name: string = "tester") {
     this.tenantProfileService.getTenantProfile(tenant.tenantProfileId.id)
       .pipe(takeUntil(this.destroy$), catchError(() => of([])))
       .subscribe((tenantProfile: TenantProfile) => this.conditionTenantProfile = (name === tenantProfile.name));
-
-    return this.conditionTenantProfile
   }
 
   ngOnInit() {
