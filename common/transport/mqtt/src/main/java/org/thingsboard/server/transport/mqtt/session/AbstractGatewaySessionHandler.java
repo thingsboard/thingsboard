@@ -846,8 +846,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
                 }
                 if (msgId <= 0) {
                     if (deviceSessionCtx.isSparkplug()) {
-                        // Sparkplug devices may use msgId = 0 during the initial connection or for QoS 0 messages.
-                        // We bypass the MALFORMED_PACKET check to allow these sessions to proceed.
+                        // Sparkplug devices may use msgId = 0 during the initial connection or for QoS 0 messages. We bypass the MALFORMED_PACKET check to allow these sessions to proceed.
                         log.trace("[{}] Sparkplug session: allowed msgId [{}] for device: [{}]", sessionId, msgId, deviceName);
                     } else {
                         // Standard MQTT defense: close session for invalid message IDs
