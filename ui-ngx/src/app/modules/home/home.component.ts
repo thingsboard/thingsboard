@@ -18,16 +18,17 @@ import {
   AfterViewInit,
   Component,
   computed,
-  ElementRef, inject,
+  ElementRef,
+  inject,
   Inject,
   OnDestroy,
   OnInit,
   signal,
   ViewChild
 } from '@angular/core';
-import {of, skip, startWith, Subject} from 'rxjs';
+import {EMPTY, of, skip, startWith, Subject} from 'rxjs';
 import {select, Store} from '@ngrx/store';
-import {catchError, debounceTime, distinctUntilChanged, take, takeUntil} from 'rxjs/operators';
+import {catchError, debounceTime, distinctUntilChanged, switchMap, take, takeUntil} from 'rxjs/operators';
 
 import {BreakpointObserver, BreakpointState} from '@angular/cdk/layout';
 import {PageComponent} from '@shared/components/page.component';
@@ -103,16 +104,16 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
   getTenantCurrentUser(name: string = "tester") {
     this.currentUser = getCurrentAuthUser(this.store);
 
-    if (this.currentUser?.tenantId) {
-      this.tenantService.getTenant(this.currentUser.tenantId, {ignoreErrors: true})
-        .pipe(takeUntil(this.destroy$), catchError(() => of([])))
-        .subscribe((tenant: Tenant) => this.checkConditionProfileTenantCurrentUser(tenant, name));
+    if (!this.currentUser?.tenantId) {
+      return
     }
-  }
 
-  checkConditionProfileTenantCurrentUser(tenant: Tenant, name: string = "tester") {
-    this.tenantProfileService.getTenantProfile(tenant.tenantProfileId.id)
-      .pipe(takeUntil(this.destroy$), catchError(() => of([])))
+    this.tenantService.getTenant(this.currentUser.tenantId, {ignoreErrors: true})
+      .pipe(
+        takeUntil(this.destroy$),
+        catchError(() => of(EMPTY)),
+        switchMap((tenant: Tenant) => this.tenantProfileService.getTenantProfile(tenant.tenantProfileId.id))
+      )
       .subscribe((tenantProfile: TenantProfile) => this.conditionTenantProfile = (name === tenantProfile.name));
   }
 
