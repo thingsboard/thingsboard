@@ -9841,6 +9841,7 @@
             "auto-scale": "Auto scale",
             "icon": "Icon",
             "value": "Value",
+            "date": "Date",
             "chart": "Chart",
             "value-chart-card-style": "Value chart card style"
         },

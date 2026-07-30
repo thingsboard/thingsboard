@@ -18,6 +18,7 @@ import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   ElementRef,
   Input,
   OnDestroy,
@@ -27,6 +28,7 @@ import {
   ViewChild,
   ViewEncapsulation
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { isDefinedAndNotNull, isNumeric } from '@core/utils';
 import {
@@ -34,6 +36,7 @@ import {
   backgroundStyle,
   ColorProcessor,
   ComponentStyle,
+  DateFormatProcessor,
   getDataKey,
   overlayStyle,
   resolveCssSize,
@@ -47,7 +50,7 @@ import {
 } from '@home/components/widget/lib/cards/value-chart-card-widget.models';
 import { DataKey } from '@shared/models/widget.models';
 import { getTsValueByLatestDataKey } from '@home/components/widget/lib/cards/aggregated-value-card.models';
-import { Observable } from 'rxjs';
+import { interval, Observable } from 'rxjs';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
 import { TbTimeSeriesChart } from '@home/components/widget/lib/chart/time-series-chart';
@@ -57,6 +60,7 @@ import {
   TimeSeriesChartSettings
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { DeepPartial } from '@shared/models/common';
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
 
 const layoutHeight = 56;
 const valueRelativeWidth = 0.35;
@@ -95,6 +99,11 @@ export class ValueChartCardWidgetComponent implements OnInit, AfterViewInit, OnD
   valueStyle: ComponentStyle = {};
   valueColor: ColorProcessor;
 
+  showDate = true;
+  dateFormat: DateFormatProcessor;
+  dateStyle: ComponentStyle = {};
+  dateColor: ColorProcessor;
+
   backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
   padding: string;
@@ -107,11 +116,13 @@ export class ValueChartCardWidgetComponent implements OnInit, AfterViewInit, OnD
 
   private valueFontSize: number;
   private valueFormat: ValueFormatProcessor;
+  private lastUpdateTs: number;
 
   constructor(private imagePipe: ImagePipe,
               private sanitizer: DomSanitizer,
               private renderer: Renderer2,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit(): void {
@@ -141,6 +152,24 @@ export class ValueChartCardWidgetComponent implements OnInit, AfterViewInit, OnD
     this.showValue = this.settings.showValue;
     this.valueStyle = textStyle(this.settings.valueFont);
     this.valueColor = ColorProcessor.fromSettings(this.settings.valueColor);
+
+    this.showDate = this.settings.showDate;
+    this.dateFormat = DateFormatProcessor.fromSettings(this.ctx.$injector, this.settings.dateFormat);
+    this.dateStyle = textStyle(this.settings.dateFont);
+    this.dateColor = ColorProcessor.fromSettings(this.settings.dateColor);
+
+    if (this.showDate && this.settings.dateFormat?.lastUpdateAgo) {
+      const authState = getCurrentAuthState(this.ctx.store);
+      const refreshIntervalSec = authState?.dynamicPageLinkRefreshIntervalSec || 60;
+      interval(refreshIntervalSec * 1000).pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe(() => {
+        if (this.lastUpdateTs) {
+          this.dateFormat.update(this.lastUpdateTs);
+          this.cd.detectChanges();
+        }
+      });
+    }
 
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
@@ -208,13 +237,16 @@ export class ValueChartCardWidgetComponent implements OnInit, AfterViewInit, OnD
     if (this.showValue && this.valueKey) {
       const tsValue = getTsValueByLatestDataKey(this.ctx.latestData, this.valueKey);
       let value;
+      let ts;
       if (tsValue && isDefinedAndNotNull(tsValue[1]) && isNumeric(tsValue[1])) {
+        ts = tsValue[0];
         value = tsValue[1];
         this.valueText = this.valueFormat?.format(value);
       } else {
         this.valueText = 'N/A';
       }
       this.valueColor.update(value);
+      this.updateLastUpdateTs(ts);
       this.cd.detectChanges();
       setTimeout(() => {
         this.onResize();
@@ -228,6 +260,13 @@ export class ValueChartCardWidgetComponent implements OnInit, AfterViewInit, OnD
   public onDestroy() {
     if (this.lineChart) {
       this.lineChart.destroy();
+    }
+  }
+
+  private updateLastUpdateTs(ts: number) {
+    if (ts && (!this.lastUpdateTs || ts > this.lastUpdateTs)) {
+      this.lastUpdateTs = ts;
+      this.dateFormat.update(ts);
     }
   }
 

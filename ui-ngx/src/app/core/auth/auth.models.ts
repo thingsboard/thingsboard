@@ -45,6 +45,7 @@ export interface SysParamsState {
   nullsOrderStrategy: NullsOrderStrategy;
   edqsEnabled: boolean;
   iotHubBaseUrl: string;
+  dynamicPageLinkRefreshIntervalSec: number;
 }
 
 export interface SysParams extends SysParamsState {

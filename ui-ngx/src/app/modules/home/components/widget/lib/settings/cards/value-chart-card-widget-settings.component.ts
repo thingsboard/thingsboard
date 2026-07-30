@@ -20,6 +20,7 @@ import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { formatValue } from '@core/utils';
+import { DateFormatProcessor, DateFormatSettings } from '@shared/models/widget-settings.models';
 import {
   valueCartCardLayouts,
   valueChartCardDefaultSettings,
@@ -45,6 +46,8 @@ export class ValueChartCardWidgetSettingsComponent extends WidgetSettingsCompone
 
   valuePreviewFn = this._valuePreviewFn.bind(this);
 
+  datePreviewFn = this._datePreviewFn.bind(this);
+
   constructor(protected store: Store<AppState>,
               private $injector: Injector,
               private fb: UntypedFormBuilder) {
@@ -68,17 +71,23 @@ export class ValueChartCardWidgetSettingsComponent extends WidgetSettingsCompone
       valueFont: [settings.valueFont, []],
       valueColor: [settings.valueColor, []],
 
+      showDate: [settings.showDate, []],
+      dateFormat: [settings.dateFormat, []],
+      dateFont: [settings.dateFont, []],
+      dateColor: [settings.dateColor, []],
+
       background: [settings.background, []],
       padding: [settings.padding, []]
     });
   }
 
   protected validatorTriggers(): string[] {
-    return ['showValue'];
+    return ['showValue', 'showDate'];
   }
 
   protected updateValidators(emitEvent: boolean) {
     const showValue: boolean = this.valueChartCardWidgetSettingsForm.get('showValue').value;
+    const showDate: boolean = this.valueChartCardWidgetSettingsForm.get('showDate').value;
 
     if (showValue) {
       this.valueChartCardWidgetSettingsForm.get('valueFont').enable();
@@ -88,14 +97,34 @@ export class ValueChartCardWidgetSettingsComponent extends WidgetSettingsCompone
       this.valueChartCardWidgetSettingsForm.get('valueColor').disable();
     }
 
+    if (showDate) {
+      this.valueChartCardWidgetSettingsForm.get('dateFormat').enable();
+      this.valueChartCardWidgetSettingsForm.get('dateFont').enable();
+      this.valueChartCardWidgetSettingsForm.get('dateColor').enable();
+    } else {
+      this.valueChartCardWidgetSettingsForm.get('dateFormat').disable();
+      this.valueChartCardWidgetSettingsForm.get('dateFont').disable();
+      this.valueChartCardWidgetSettingsForm.get('dateColor').disable();
+    }
+
     this.valueChartCardWidgetSettingsForm.get('valueFont').updateValueAndValidity({emitEvent});
     this.valueChartCardWidgetSettingsForm.get('valueColor').updateValueAndValidity({emitEvent});
+    this.valueChartCardWidgetSettingsForm.get('dateFormat').updateValueAndValidity({emitEvent});
+    this.valueChartCardWidgetSettingsForm.get('dateFont').updateValueAndValidity({emitEvent});
+    this.valueChartCardWidgetSettingsForm.get('dateColor').updateValueAndValidity({emitEvent});
   }
 
   private _valuePreviewFn(): string {
     const units = getSourceTbUnitSymbol(this.widgetConfig.config.units);
     const decimals: number = this.widgetConfig.config.decimals;
     return formatValue(22, decimals, units, true);
+  }
+
+  private _datePreviewFn(): string {
+    const dateFormat: DateFormatSettings = this.valueChartCardWidgetSettingsForm.get('dateFormat').value;
+    const processor = DateFormatProcessor.fromSettings(this.$injector, dateFormat);
+    processor.update(Date.now());
+    return processor.formatted;
   }
 
 }

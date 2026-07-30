@@ -19,7 +19,9 @@ import {
   BackgroundType,
   ColorSettings,
   constantColor,
-  Font
+  DateFormatSettings,
+  Font,
+  lastUpdateAgoDateFormat
 } from '@shared/models/widget-settings.models';
 
 export enum ValueChartCardLayout {
@@ -49,6 +51,10 @@ export interface ValueChartCardWidgetSettings {
   showValue: boolean;
   valueFont: Font;
   valueColor: ColorSettings;
+  showDate: boolean;
+  dateFormat: DateFormatSettings;
+  dateFont: Font;
+  dateColor: ColorSettings;
   background: BackgroundSettings;
   padding: string;
 }
@@ -66,6 +72,17 @@ export const valueChartCardDefaultSettings: ValueChartCardWidgetSettings = {
     lineHeight: '32px'
   },
   valueColor: constantColor('rgba(0, 0, 0, 0.87)'),
+  showDate: true,
+  dateFormat: lastUpdateAgoDateFormat(),
+  dateFont: {
+    family: 'Roboto',
+    size: 12,
+    sizeUnit: 'px',
+    style: 'normal',
+    weight: '400',
+    lineHeight: '16px'
+  },
+  dateColor: constantColor('rgba(0, 0, 0, 0.38)'),
   background: {
     type: BackgroundType.color,
     color: '#fff',

@@ -111,6 +111,19 @@
         </tb-color-settings>
       </div>
     </div>
+    <div class="tb-form-row column-xs">
+      <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showDate">
+        {{ 'widgets.value-chart-card.date' | translate }}
+      </mat-slide-toggle>
+      <div class="flex flex-row items-center justify-start gap-2 gt-xs:flex-1">
+        <tb-date-format-select class="flex-1" formControlName="dateFormat"></tb-date-format-select>
+        <tb-font-settings formControlName="dateFont"
+                          [previewText]="datePreviewFn">
+        </tb-font-settings>
+        <tb-color-settings formControlName="dateColor" settingsKey="{{'widgets.value-chart-card.date' | translate }}">
+        </tb-color-settings>
+      </div>
+    </div>
     <div class="tb-form-row space-between">
       <div>{{ 'widgets.value-chart-card.chart' | translate }}</div>
       <tb-color-input asBoxInput

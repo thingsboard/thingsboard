@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component } from '@angular/core';
+import { Component, Injector } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -28,7 +28,7 @@ import {
   setTimewindowConfig
 } from '@home/components/widget/config/timewindow-config-panel.component';
 import { formatValue, isUndefined } from '@core/utils';
-import { cssSizeToStrSize, getDataKey, resolveCssSize } from '@shared/models/widget-settings.models';
+import { cssSizeToStrSize, DateFormatProcessor, DateFormatSettings, getDataKey, resolveCssSize } from '@shared/models/widget-settings.models';
 import {
   valueCartCardLayouts,
   valueChartCardDefaultSettings,
@@ -64,10 +64,13 @@ export class ValueChartCardBasicConfigComponent extends BasicWidgetConfigCompone
 
   valuePreviewFn = this._valuePreviewFn.bind(this);
 
+  datePreviewFn = this._datePreviewFn.bind(this);
+
   predefinedValues = widgetTitleAutocompleteValues;
-  
+
   constructor(protected store: Store<AppState>,
               protected widgetConfigComponent: WidgetConfigComponent,
+              private $injector: Injector,
               private fb: UntypedFormBuilder) {
     super(store, widgetConfigComponent);
   }
@@ -116,6 +119,11 @@ export class ValueChartCardBasicConfigComponent extends BasicWidgetConfigCompone
 
       chartColor: [dataKey?.color, []],
 
+      showDate: [settings.showDate, []],
+      dateFormat: [settings.dateFormat, []],
+      dateFont: [settings.dateFont, []],
+      dateColor: [settings.dateColor, []],
+
       background: [settings.background, []],
 
       cardButtons: [this.getCardButtons(configData.config), []],
@@ -157,6 +165,11 @@ export class ValueChartCardBasicConfigComponent extends BasicWidgetConfigCompone
       this.updateLatestValues(dataKey, this.widgetConfig.config.datasources);
     }
 
+    this.widgetConfig.config.settings.showDate = config.showDate;
+    this.widgetConfig.config.settings.dateFormat = config.dateFormat;
+    this.widgetConfig.config.settings.dateFont = config.dateFont;
+    this.widgetConfig.config.settings.dateColor = config.dateColor;
+
     this.widgetConfig.config.settings.background = config.background;
 
     this.setCardButtons(config.cardButtons, this.widgetConfig.config);
@@ -168,13 +181,14 @@ export class ValueChartCardBasicConfigComponent extends BasicWidgetConfigCompone
   }
 
   protected validatorTriggers(): string[] {
-    return ['showTitle', 'showIcon', 'showValue'];
+    return ['showTitle', 'showIcon', 'showValue', 'showDate'];
   }
 
   protected updateValidators(emitEvent: boolean, trigger?: string) {
     const showTitle: boolean = this.valueChartCardWidgetConfigForm.get('showTitle').value;
     const showIcon: boolean = this.valueChartCardWidgetConfigForm.get('showIcon').value;
     const showValue: boolean = this.valueChartCardWidgetConfigForm.get('showValue').value;
+    const showDate: boolean = this.valueChartCardWidgetConfigForm.get('showDate').value;
 
     if (showTitle) {
       this.valueChartCardWidgetConfigForm.get('title').enable();
@@ -214,6 +228,20 @@ export class ValueChartCardBasicConfigComponent extends BasicWidgetConfigCompone
       this.valueChartCardWidgetConfigForm.get('valueFont').disable();
       this.valueChartCardWidgetConfigForm.get('valueColor').disable();
     }
+
+    if (showDate) {
+      this.valueChartCardWidgetConfigForm.get('dateFormat').enable();
+      this.valueChartCardWidgetConfigForm.get('dateFont').enable();
+      this.valueChartCardWidgetConfigForm.get('dateColor').enable();
+    } else {
+      this.valueChartCardWidgetConfigForm.get('dateFormat').disable();
+      this.valueChartCardWidgetConfigForm.get('dateFont').disable();
+      this.valueChartCardWidgetConfigForm.get('dateColor').disable();
+    }
+
+    this.valueChartCardWidgetConfigForm.get('dateFormat').updateValueAndValidity({emitEvent});
+    this.valueChartCardWidgetConfigForm.get('dateFont').updateValueAndValidity({emitEvent});
+    this.valueChartCardWidgetConfigForm.get('dateColor').updateValueAndValidity({emitEvent});
   }
 
   private updateLatestValues(sourceDataKey: DataKey, datasources?: Datasource[]) {
@@ -254,5 +282,12 @@ export class ValueChartCardBasicConfigComponent extends BasicWidgetConfigCompone
     const units: string = getSourceTbUnitSymbol(this.widgetConfig.config.units);
     const decimals: number = this.widgetConfig.config.decimals;
     return formatValue(22, decimals, units, true);
+  }
+
+  private _datePreviewFn(): string {
+    const dateFormat: DateFormatSettings = this.valueChartCardWidgetConfigForm.get('dateFormat').value;
+    const processor = DateFormatProcessor.fromSettings(this.$injector, dateFormat);
+    processor.update(Date.now());
+    return processor.formatted;
   }
 }
