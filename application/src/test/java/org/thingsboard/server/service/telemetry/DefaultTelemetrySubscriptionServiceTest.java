@@ -987,7 +987,7 @@ class DefaultTelemetrySubscriptionServiceTest {
         then(clusterService).should().pushMsgToCore(eq(expectedAttributesDeletedMsg), isNull());
     }
 
-§    @Test
+    @Test
     void shouldNotifyAttributesEdgeSyncServiceWhenEdgeSyncIsRequiredForDelete() {
         // GIVEN
         var deviceId = DeviceId.fromString("cc51e450-53e1-11ee-883e-e56b48fd2088");
