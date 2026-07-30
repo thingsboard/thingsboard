@@ -12,7 +12,7 @@ import {
   TripsDataLayerSettings
 } from '@shared/models/widget/maps/map.models';
 import { forkJoin, Observable } from 'rxjs';
-import { DataKey, FormattedData, WidgetActionType } from '@shared/models/widget.models';
+import { DataKey, DatasourceData, FormattedData, WidgetActionType } from '@shared/models/widget.models';
 import { map } from 'rxjs/operators';
 import L from 'leaflet';
 import { deepClone, isDefined, isUndefined, plainColorFromVariable } from '@core/utils';
@@ -429,13 +429,16 @@ export class TbTripsDataLayer extends TbMapDataLayer<TripsDataLayerSettings, TbT
     return this.settings.showMarker;
   }
 
-  public prepareTripsData(tripsData: FormattedData<TbMapDatasource>[][], tripsLatestData: FormattedData<TbMapDatasource>[]): {minTime: number; maxTime: number} {
+  public prepareTripsData(tripsData: FormattedData<TbMapDatasource>[][], tripsLatestData: FormattedData<TbMapDatasource>[],
+                           rawData: DatasourceData[]): {minTime: number; maxTime: number} {
     let minTime = Infinity;
     let maxTime = -Infinity;
-    const filteredTripsData = tripsData.filter(d => !!d.length && d[0].$datasource.mapDataIds.includes(this.mapDataId));
-    this.subscribedEntityIds = new Set(filteredTripsData.map(item => item[0].entityId));
+    const filteredTripsData = tripsData.filter(d => !!d.length && this.hasData(d[0]));
+    this.subscribedEntityIds = new Set(
+      rawData.filter(d => (d.datasource as TbMapDatasource).mapDataIds.includes(this.mapDataId)).map(d => d.datasource.entityId)
+    );
     this.rawTripsData = filteredTripsData.map(item => this.clearIncorrectFirsLastDatapoint(item)).filter(arr => arr.length);
-    this.latestTripsData = tripsLatestData.filter(d => d.$datasource.mapDataIds.includes(this.mapDataId));
+    this.latestTripsData = tripsLatestData.filter(d => this.hasData(d));
     this.rawTripsData.forEach((dataSource) => {
       minTime = Math.min(dataSource[0].time, minTime);
       maxTime = Math.max(dataSource[dataSource.length - 1].time, maxTime);
@@ -444,7 +447,6 @@ export class TbTripsDataLayer extends TbMapDataLayer<TripsDataLayerSettings, TbT
   }
 
   public updateTrips() {
-    const toDelete = new Set(Array.from(this.layerItems.keys()));
     this.rawTripsData.forEach(rawTripData => {
       const entityId = rawTripData[0].entityId;
       let tripItem = this.layerItems.get(entityId);
@@ -455,17 +457,16 @@ export class TbTripsDataLayer extends TbMapDataLayer<TripsDataLayerSettings, TbT
         tripItem = new TbTripDataItem(rawTripData, latestData, this.settings, this);
         this.layerItems.set(entityId, tripItem);
       }
-      toDelete.delete(entityId);
     });
-    toDelete.forEach((key) => {
-      if (!this.subscribedEntityIds.has(key)) {
-        this.removeItem(key);
+    Array.from(this.layerItems.keys()).forEach(entityId => {
+      if (!this.subscribedEntityIds.has(entityId)) {
+        this.removeItem(entityId);
       }
     });
   }
 
   public updateTripsLatestData(tripsLatestData: FormattedData<TbMapDatasource>[]) {
-    this.latestTripsData = tripsLatestData.filter(d => d.$datasource.mapDataIds.includes(this.mapDataId));
+    this.latestTripsData = tripsLatestData.filter(d => this.hasData(d));
     this.layerItems.forEach((item, entityId) => {
       const latestData = this.latestTripsData.find(d => d.entityId === entityId);
       item.updateLatestData(latestData);

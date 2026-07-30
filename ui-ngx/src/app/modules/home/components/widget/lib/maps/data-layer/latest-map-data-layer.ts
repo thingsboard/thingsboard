@@ -308,7 +308,7 @@ export abstract class TbLatestMapDataLayer<S extends MapDataLayerSettings = MapD
 
   public updateData(dsData: FormattedData<TbMapDatasource>[]) {
     this.unplacedItems.length = 0;
-    const layerData = dsData.filter(d => d.$datasource.mapDataIds.includes(this.mapDataId));
+    const layerData = dsData.filter(d => this.hasData(d));
     const toDelete = new Set(Array.from(this.layerItems.keys()));
     const updatedItems: TbLatestDataLayerItem<S,D,L>[] = [];
     layerData.forEach((data) => {

@@ -249,8 +249,10 @@ export class DataAggregator {
       if (update) {
         this.aggregationMap = new AggregationMap();
         this.updateAggregatedData(data);
-      } else if (Object.keys(data).length || !this.aggregationMap) {
+      } else if (!this.aggregationMap) {
         this.aggregationMap = this.processAggregatedData(data);
+      } else if (Object.keys(data).length) {
+        this.updateAggregatedData(data);
       }
       if (updateIntervalScheduledTime) {
         this.intervalScheduledTime = this.utils.currentPerfTime();

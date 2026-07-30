@@ -975,14 +975,14 @@ export abstract class TbMap<S extends BaseMapSettings> {
     let minTime = Infinity;
     let maxTime = -Infinity;
     for (const tripsDataLayer of this.tripDataLayers) {
-      const minMax = tripsDataLayer.prepareTripsData(tripsData, tripsLatestData);
+      const minMax = tripsDataLayer.prepareTripsData(tripsData, tripsLatestData, subscription.data);
       minTime = Math.min(minMax.minTime, minTime);
       maxTime = Math.max(minMax.maxTime, maxTime);
     }
     const prevMinTime = this.minTime;
     const prevMaxTime = this.maxTime;
-    this.minTime = minTime;
-    this.maxTime = maxTime;
+    this.minTime = Number.isFinite(minTime) ? minTime : prevMinTime;
+    this.maxTime = Number.isFinite(maxTime) ? maxTime : prevMaxTime;
     if (this.timeline) {
       this.timeLineComponent.min = this.minTime;
       this.timeLineComponent.max = this.maxTime;
