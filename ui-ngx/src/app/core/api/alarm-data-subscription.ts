@@ -54,6 +54,7 @@ export class AlarmDataSubscription {
   private alarmIdToDataIndex: {[id: string]: number};
 
   private subsTw: SubscriptionTimewindow;
+  private readonly tsOffsetFn = (ts: number) => calculateTsOffset(this.subsTw.timezone, ts);
 
   constructor(private listener: AlarmDataListener,
               private telemetryService: TelemetryWebsocketService) {
@@ -120,7 +121,7 @@ export class AlarmDataSubscription {
         this.alarmDataCommand.query.pageLink.timeWindow = this.subsTw.realtimeWindowMs;
       }
 
-      this.subscriber.setTsOffsetFn(ts => calculateTsOffset(this.subsTw.timezone, ts));
+      this.subscriber.setTsOffsetFn(this.tsOffsetFn);
       this.subscriber.subscriptionCommands.push(this.alarmDataCommand);
 
       this.subscriber.alarmData$.subscribe((alarmDataUpdate) => {
@@ -148,8 +149,8 @@ export class AlarmDataSubscription {
 
     } else if (this.datasourceType === DatasourceType.function) {
       const alarm = deepClone(simulatedAlarm);
-      alarm.createdTime += this.subsTw.tsOffset;
-      alarm.startTs += this.subsTw.tsOffset;
+      alarm.createdTime += calculateTsOffset(this.subsTw.timezone, alarm.createdTime);
+      alarm.startTs += calculateTsOffset(this.subsTw.timezone, alarm.startTs);
       const pageData: PageData<AlarmData> = {
         data: [{...alarm, entityId: '1', latest: {}}],
         hasNext: false,

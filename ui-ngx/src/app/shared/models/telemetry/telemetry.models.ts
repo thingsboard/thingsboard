@@ -715,6 +715,12 @@ export class EntityDataUpdate extends DataUpdate<EntityData> {
   }
 }
 
+const alarmDataOffsetTimeKeys = [entityFields.createdTime.keyName,
+                                  alarmFields.startTime.keyName,
+                                  alarmFields.endTime.keyName,
+                                  alarmFields.ackTime.keyName,
+                                  alarmFields.clearTime.keyName];
+
 export class AlarmDataUpdate extends DataUpdate<AlarmData> {
 
   constructor(msg: AlarmDataUpdateMsg) {
@@ -745,11 +751,7 @@ export class AlarmDataUpdate extends DataUpdate<AlarmData> {
             if (tsValue.ts) {
               tsValue.ts += tsOffset;
             }
-            if (key in [entityFields.createdTime.keyName,
-                        alarmFields.startTime.keyName,
-                        alarmFields.endTime.keyName,
-                        alarmFields.ackTime.keyName,
-                        alarmFields.clearTime.keyName] && tsValue.value) {
+            if (alarmDataOffsetTimeKeys.includes(key) && tsValue.value) {
               tsValue.value = (Number(tsValue.value) + tsOffset) + '';
             }
           }
@@ -778,11 +780,7 @@ export class AlarmDataUpdate extends DataUpdate<AlarmData> {
             if (tsValue.ts) {
               tsValue.ts += getTsOffset(tsValue.ts);
             }
-            if (key in [entityFields.createdTime.keyName,
-                        alarmFields.startTime.keyName,
-                        alarmFields.endTime.keyName,
-                        alarmFields.ackTime.keyName,
-                        alarmFields.clearTime.keyName] && tsValue.value) {
+            if (alarmDataOffsetTimeKeys.includes(key) && tsValue.value) {
               const value = Number(tsValue.value);
               tsValue.value = (value + getTsOffset(value)) + '';
             }

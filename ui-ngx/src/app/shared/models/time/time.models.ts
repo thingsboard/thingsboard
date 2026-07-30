@@ -668,16 +668,23 @@ export const historyDefaultAggInterval = (timewindow: Timewindow,
   return null;
 };
 
-export const getTimezone = (tz: string): moment_.Moment => moment.tz(tz);
-
-export const calculateTsOffset = (timezone?: string, ts: number = Date.now()): number => {
+export const calculateTsOffset = (timezone: string, ts: number): number => {
   if (timezone) {
-    const tz = moment.tz(ts, timezone);
-    const localOffset = moment(ts).utcOffset();
-    return (tz.utcOffset() - localOffset) * 60 * 1000;
+    const zone = moment.tz.zone(timezone);
+    if (!zone) {
+      return 0;
+    }
+    return (new Date(ts).getTimezoneOffset() - zone.utcOffset(ts)) * 60 * 1000;
   } else {
     return 0;
   }
+};
+
+const resolveRealTsFromDisplayTs = (displayTs: number, timezone: string): number => {
+  if (!timezone) {
+    return displayTs;
+  }
+  return moment.tz(moment(displayTs).format('YYYY-MM-DDTHH:mm:ss.SSS'), timezone).valueOf();
 };
 
 export const toUtcDate = (ts: number | string): Date => moment(ts).utcOffset(0, true).toDate();
@@ -848,7 +855,7 @@ export const createSubscriptionTimewindow = (timewindow: Timewindow, stDiff: num
       type: AggregationType.AVG
     },
     timezone: timewindow.timezone || getDefaultTimezone(),
-    tsOffset: calculateTsOffset(timewindow.timezone)
+    tsOffset: calculateTsOffset(timewindow.timezone, Date.now())
   };
   let aggTimewindow: number;
   if (stateData) {
@@ -920,8 +927,8 @@ export const createSubscriptionTimewindow = (timewindow: Timewindow, stDiff: num
     } else {
       const fixedTimewindow = timewindow.history.fixedTimewindow;
       subscriptionTimewindow.fixedWindow = {
-        startTimeMs: fixedTimewindow.startTimeMs - calculateTsOffset(timewindow.timezone, fixedTimewindow.startTimeMs),
-        endTimeMs: fixedTimewindow.endTimeMs - calculateTsOffset(timewindow.timezone, fixedTimewindow.endTimeMs)
+        startTimeMs: resolveRealTsFromDisplayTs(fixedTimewindow.startTimeMs, timewindow.timezone),
+        endTimeMs: resolveRealTsFromDisplayTs(fixedTimewindow.endTimeMs, timewindow.timezone)
       };
       aggTimewindow = subscriptionTimewindow.fixedWindow.endTimeMs - subscriptionTimewindow.fixedWindow.startTimeMs;
     }
@@ -1486,7 +1493,7 @@ export const calculateAggIntervalWithSubscriptionTimeWindow
 
 export const calculateAggIntervalWithWidgetTimeWindow
   = (widgetTimeWindow: WidgetTimewindow, timestamp: number): [number, number] =>
-  calculateInterval(widgetTimeWindow.minTime - calculateTsOffset(widgetTimeWindow.timezone, widgetTimeWindow.minTime),
+  calculateInterval(widgetTimeWindow.minTime - widgetTimeWindow.tsOffset,
     widgetTimeWindow.maxTime, widgetTimeWindow.interval, widgetTimeWindow.timezone, timestamp);
 
 export const calculateInterval = (startTime: number, endTime: number,
