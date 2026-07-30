@@ -35,6 +35,7 @@ import { WidgetContext } from '@home/models/widget-component.models';
 import { DeepPartial } from '@shared/models/common';
 import { forkJoin, Observable, of } from 'rxjs';
 import L from 'leaflet';
+import 'leaflet-gesture-handling';
 import { map, tap } from 'rxjs/operators';
 import { TbMapLayer } from '@home/components/widget/lib/maps/map-layer';
 import { TbMap } from '@home/components/widget/lib/maps/map';
@@ -53,6 +54,7 @@ export class TbGeoMap extends TbMap<GeoMapSettings> {
 
   protected createMap(): Observable<L.Map> {
     const map = L.map(this.mapElement, {
+      gestureHandling: L.Browser.mobile,
       scrollWheelZoom: this.settings.zoomActions.includes(MapZoomAction.scroll),
       doubleClickZoom: this.settings.zoomActions.includes(MapZoomAction.doubleClick),
       zoomControl: this.settings.zoomActions.includes(MapZoomAction.controlButtons),

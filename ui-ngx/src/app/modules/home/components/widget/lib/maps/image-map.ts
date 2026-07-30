@@ -34,6 +34,7 @@ import { WidgetContext } from '@home/models/widget-component.models';
 import { DeepPartial } from '@shared/models/common';
 import { Observable, of, ReplaySubject, switchMap } from 'rxjs';
 import L from 'leaflet';
+import 'leaflet-gesture-handling';
 import { TbMap } from '@home/components/widget/lib/maps/map';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { catchError } from 'rxjs/operators';
@@ -214,6 +215,7 @@ export class TbImageMap extends TbMap<ImageMapSettings> {
     if (!this.map && this.imageLayerData.aspect > 0) {
       const center = this.pointToLatLng(this.width / 2, this.height / 2);
       this.map = L.map(this.mapElement, {
+        gestureHandling: L.Browser.mobile,
         scrollWheelZoom: this.settings.zoomActions.includes(MapZoomAction.scroll),
         doubleClickZoom: this.settings.zoomActions.includes(MapZoomAction.doubleClick),
         zoomControl: this.settings.zoomActions.includes(MapZoomAction.controlButtons),

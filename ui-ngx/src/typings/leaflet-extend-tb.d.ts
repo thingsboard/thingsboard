@@ -22,6 +22,9 @@ import { MatIconRegistry } from '@angular/material/icon';
 
 // redeclare module, maintains compatibility with @types/leaflet
 declare module 'leaflet' {
+  interface MapOptions {
+    gestureHandling?: boolean;
+  }
   interface MarkerOptions {
     tbMarkerData?: FormattedData<TbMapDatasource>;
   }
