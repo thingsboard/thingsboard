@@ -7822,6 +7822,7 @@
           "value-type-attribute": "Server attribute",
           "value-type-timeseries": "Time series",
           "error-no-current-entity": "Widget action has no current entity",
+          "error-save-failed": "Unexpected server error",
           "error-alias-not-found": "Entity alias '{{alias}}' not found in the dashboard",
           "error-alias-not-resolved": "Entity alias '{{alias}}' did not resolve to an entity",
           "error-attribute-not-found": "Attribute '{{key}}' not found on the source entity",

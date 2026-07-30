@@ -143,7 +143,7 @@ import { MODULES_MAP } from '@shared/models/constants';
 import { IModulesMap } from '@modules/common/modules-map.models';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { CompiledTbFunction, compileTbFunction, isNotEmptyTbFunction } from '@shared/models/js-function.models';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { addDiagnosticChain } from '@angular/compiler-cli/src/ngtsc/diagnostics';
 
 @Component({
@@ -1695,7 +1695,20 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
   }
 
   private saveLocationErrorMessage(err: any): string {
-    return err?.error?.message || err?.message || JSON.stringify(err);
+    if (err instanceof HttpErrorResponse) {
+      // ThingsBoard returns these errors as text/plain, so the body itself is the message.
+      const body = err.error;
+      if (isNotEmptyStr(body)) {
+        return body;
+      }
+      if (isNotEmptyStr(body?.message)) {
+        return body.message;
+      }
+      // Never fall back to err.message for HTTP errors — Angular's wording leaks the request URL.
+      return this.translate.instant('widget-action.location.error-save-failed');
+    }
+    return isNotEmptyStr(err?.message) ? err.message
+      : this.translate.instant('widget-action.location.error-save-failed');
   }
 
   private resolveActionTargetEntity(target: MobileActionTargetEntityConfig,
