@@ -137,12 +137,17 @@ public abstract class BaseEdgeProcessor implements EdgeProcessor {
         return switch (action) {
             case TIMESERIES_UPDATED, ALARM_ACK, ALARM_CLEAR, ALARM_ASSIGNED, ALARM_UNASSIGNED, ADDED_COMMENT,
                  UPDATED_COMMENT, DELETED -> true;
-            default -> switch (type) {
-                case ALARM, ALARM_COMMENT, RULE_CHAIN, RULE_CHAIN_METADATA, USER, CUSTOMER, TENANT, TENANT_PROFILE,
-                     WIDGETS_BUNDLE, WIDGET_TYPE, ADMIN_SETTINGS, OTA_PACKAGE, QUEUE, RELATION, CALCULATED_FIELD, NOTIFICATION_TEMPLATE,
-                     NOTIFICATION_TARGET, NOTIFICATION_RULE -> true;
-                default -> false;
-            };
+            case ATTRIBUTES_UPDATED, ATTRIBUTES_DELETED -> type == EdgeEventType.DEVICE || doSaveIfEdgeIsOffline(type);
+            default -> doSaveIfEdgeIsOffline(type);
+        };
+    }
+
+    private boolean doSaveIfEdgeIsOffline(EdgeEventType type) {
+        return switch (type) {
+            case ALARM, ALARM_COMMENT, RULE_CHAIN, RULE_CHAIN_METADATA, USER, CUSTOMER, TENANT, TENANT_PROFILE,
+                 WIDGETS_BUNDLE, WIDGET_TYPE, ADMIN_SETTINGS, OTA_PACKAGE, QUEUE, RELATION, CALCULATED_FIELD, NOTIFICATION_TEMPLATE,
+                 NOTIFICATION_TARGET, NOTIFICATION_RULE -> true;
+            default -> false;
         };
     }
 
