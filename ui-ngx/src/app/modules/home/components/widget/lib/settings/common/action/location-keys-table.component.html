@@ -20,9 +20,11 @@
     <div class="tb-form-panel-title">
       {{ panelTitle }}
     </div>
-    <div *ngIf="keysFormArray().hasError('duplicateKeyNames')" class="tb-form-panel-hint tb-error" translate>
-      widget-action.location.duplicate-key-names
-    </div>
+    @if (keysFormArray().hasError('duplicateKeyNames')) {
+      <div class="tb-form-panel-hint tb-error" translate>
+        widget-action.location.duplicate-key-names
+      </div>
+    }
   </div>
   <div class="tb-form-table tb-location-keys">
     <div class="tb-form-table-header">
@@ -32,37 +34,43 @@
       <div class="tb-form-table-header-cell tb-actions-header"></div>
     </div>
     <div class="tb-form-table-body">
-      <div class="tb-form-table-row" *ngFor="let keyControl of keysFormArray().controls; let $index = index;">
-        <mat-form-field class="tb-inline-field tb-key-field" appearance="outline" subscriptSizing="dynamic">
-          <mat-select [formControl]="keyControl.get('key')" (selectionChange)="keyChanged(keyControl)">
-            <mat-option *ngFor="let key of keyOptions(keyControl)" [value]="key">
-              {{ locationKeyTranslations.get(key) | translate }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-        <mat-form-field class="tb-inline-field tb-label-field" appearance="outline" subscriptSizing="dynamic">
-          <input matInput [formControl]="keyControl.get('label')"
-                 [placeholder]="locationKeyDefaultLabels.get(keyControl.get('key').value)">
-        </mat-form-field>
-        <mat-form-field class="tb-inline-field tb-value-type-field" appearance="outline" subscriptSizing="dynamic">
-          <mat-select [formControl]="keyControl.get('valueType')">
-            <mat-option *ngFor="let valueType of valueTypes" [value]="valueType">
-              {{ valueTypeTranslations.get(valueType) | translate }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-        <div class="tb-form-table-row-cell-buttons">
-          <button [class.tb-hidden]="isMandatory(keyControl)"
-                  type="button"
-                  mat-icon-button
-                  [disabled]="disabled"
-                  (click)="removeKey($index)"
-                  matTooltip="{{ 'widget-action.location.remove-key' | translate }}"
-                  matTooltipPosition="above">
-            <mat-icon>delete</mat-icon>
-          </button>
+      @for (keyControl of keysFormArray().controls; track keyControl) {
+        <div class="tb-form-table-row">
+          <mat-form-field class="tb-inline-field tb-key-field" appearance="outline" subscriptSizing="dynamic">
+            <mat-select [formControl]="keyControl.get('key')" (selectionChange)="keyChanged(keyControl)">
+              @for (key of keyOptions(keyControl); track key) {
+                <mat-option [value]="key">
+                  {{ locationKeyTranslations.get(key) | translate }}
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field class="tb-inline-field tb-label-field" appearance="outline" subscriptSizing="dynamic">
+            <input matInput [formControl]="keyControl.get('label')"
+                   [placeholder]="locationKeyDefaultLabels.get(keyControl.get('key').value)">
+          </mat-form-field>
+          <mat-form-field class="tb-inline-field tb-value-type-field" appearance="outline" subscriptSizing="dynamic">
+            <mat-select [formControl]="keyControl.get('valueType')">
+              @for (valueType of valueTypes; track valueType) {
+                <mat-option [value]="valueType">
+                  {{ valueTypeTranslations.get(valueType) | translate }}
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <div class="tb-form-table-row-cell-buttons">
+            <button [class.tb-hidden]="isMandatory(keyControl)"
+                    type="button"
+                    mat-icon-button
+                    [disabled]="disabled"
+                    (click)="removeKey($index)"
+                    matTooltip="{{ 'widget-action.location.remove-key' | translate }}"
+                    matTooltipPosition="above">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
         </div>
-      </div>
+      }
     </div>
   </div>
   <div>

@@ -38,9 +38,11 @@
     </div>
     <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
       <mat-select formControlName="source">
-        <mat-option *ngFor="let source of attributeSources" [value]="source">
-          {{ attributeSourceTranslations.get(source) | translate }}
-        </mat-option>
+        @for (source of attributeSources; track source) {
+          <mat-option [value]="source">
+            {{ attributeSourceTranslations.get(source) | translate }}
+          </mat-option>
+        }
       </mat-select>
     </mat-form-field>
   </div>
@@ -53,9 +55,11 @@
                [matAutocomplete]="entityAliasNameAutocomplete"
                placeholder="{{ 'widget-action.mobile.target-entity-alias-name' | translate }}">
         <mat-autocomplete #entityAliasNameAutocomplete="matAutocomplete" class="tb-autocomplete">
-          <mat-option *ngFor="let name of filteredEntityAliasNames | async" [value]="name">
-            {{ name }}
-          </mat-option>
+          @for (name of filteredEntityAliasNames | async; track name) {
+            <mat-option [value]="name">
+              {{ name }}
+            </mat-option>
+          }
         </mat-autocomplete>
         @if (targetEntityFormGroup.get('aliasName').value && targetEntityFormGroup.get('aliasName').enabled) {
           <button type="button"

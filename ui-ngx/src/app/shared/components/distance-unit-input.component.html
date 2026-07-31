@@ -24,10 +24,14 @@
     }
     <input type="number" [min]="minValueValidator" step="1" matInput formControlName="distance"
            placeholder="{{ 'widget-config.set' | translate }}">
-    <mat-hint *ngIf="subscriptSizing === 'fixed'">{{ hintText }}</mat-hint>
-    <mat-error *ngIf="hasError">
-      {{ hasError }}
-    </mat-error>
+    @if (subscriptSizing === 'fixed') {
+      <mat-hint>{{ hintText }}</mat-hint>
+    }
+    @if (hasError) {
+      <mat-error>
+        {{ hasError }}
+      </mat-error>
+    }
   </mat-form-field>
   <mat-form-field class="h-fit flex-full"
                   [class.max-w-33%]="!sameWidthInputs"
