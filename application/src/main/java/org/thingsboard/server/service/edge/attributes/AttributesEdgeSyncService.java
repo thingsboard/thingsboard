@@ -77,9 +77,9 @@ public class AttributesEdgeSyncService {
 
     @Value("${edges.enabled:false}")
     private boolean edgesEnabled;
-    @Value("${edges.attributes_sync_pool_size:4}")
+    @Value("${edges.attributes_sync_pool_size:8}")
     private int poolSize;
-    @Value("${edges.attributes_sync_max_queue_size:10000}")
+    @Value("${edges.attributes_sync_max_queue_size:5000}")
     private int maxQueueSize;
 
     @PostConstruct

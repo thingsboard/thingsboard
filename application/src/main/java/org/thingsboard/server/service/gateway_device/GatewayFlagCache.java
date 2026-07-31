@@ -52,6 +52,12 @@ import java.time.Duration;
  * the entity service layer), and DEVICE DELETED events are broadcast to the rule engine service nodes only
  * (see the core node entity type filter in DefaultTbClusterService#broadcast), so on the dedicated core nodes
  * the entries of the deleted devices are cleaned up by the expiration only.
+ * <p>
+ * The expiration is based on the last access, not on the last write: a device that keeps receiving attribute
+ * updates keeps its flag cached, so the rate of the device lookups is proportional to the number of the devices
+ * that are new to the node or went idle, and not to the rate of the attribute updates. Expiring after write
+ * would re-resolve the flag of every actively updated device once per TTL, which on a large installation is
+ * a constant lookup load that no size of the sync pool can absorb.
  */
 @Component
 @RequiredArgsConstructor
@@ -59,9 +65,9 @@ public class GatewayFlagCache {
 
     private final DeviceService deviceService;
 
-    @Value("${cache.gateway_flag.max_size:100000}")
+    @Value("${cache.gateway_flag.max_size:500000}")
     private int maxSize;
-    @Value("${cache.gateway_flag.time_to_live_in_minutes:5}")
+    @Value("${cache.gateway_flag.time_to_live_in_minutes:30}")
     private int timeToLiveInMinutes;
 
     private Cache<DeviceId, Boolean> gatewayFlagByDeviceId;
@@ -70,7 +76,7 @@ public class GatewayFlagCache {
     public void init() {
         gatewayFlagByDeviceId = Caffeine.newBuilder()
                 .maximumSize(maxSize)
-                .expireAfterWrite(Duration.ofMinutes(timeToLiveInMinutes))
+                .expireAfterAccess(Duration.ofMinutes(timeToLiveInMinutes))
                 .build();
     }
 
