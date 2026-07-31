@@ -18,7 +18,7 @@ import { Injectable } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Store } from '@ngrx/store';
 import { TranslateService } from '@ngx-translate/core';
-import { forkJoin, from, Observable, of, throwError } from 'rxjs';
+import { EMPTY, forkJoin, from, Observable, of, throwError } from 'rxjs';
 import { catchError, map, mergeMap, switchMap, toArray } from 'rxjs/operators';
 import { AppState } from '@core/core.state';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
@@ -90,6 +90,8 @@ export class LocationService {
   }
 
   /// Saves a position the mobile app reported back for a `getLocation` action.
+  /// A failed save is reported as a toast and completes without emitting, so
+  /// callers only see the result of a save that actually happened.
   saveMobileActionLocation(ctx: WidgetContext, mobileAction: WidgetMobileActionDescriptor,
                            locationResult: MobileLocationResult,
                            currentEntityId?: EntityId): Observable<LiveTrackingSaveInfo> {
@@ -109,7 +111,12 @@ export class LocationService {
             keys: this.savedKeyNames(mobileAction.keys, values)
           };
         })
-      ))
+      )),
+      catchError((err) => {
+        ctx.showErrorToast(this.translate.instant('widget-action.mobile.location-save-failed',
+          {error: this.saveErrorMessage(err)}));
+        return EMPTY;
+      })
     );
   }
 
@@ -213,7 +220,7 @@ export class LocationService {
     };
   }
 
-  saveErrorMessage(err: any): string {
+  private saveErrorMessage(err: any): string {
     if (err instanceof HttpErrorResponse) {
       // ThingsBoard returns these errors as text/plain, so the body itself is the message.
       const body = err.error;

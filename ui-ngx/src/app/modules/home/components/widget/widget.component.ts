@@ -1383,31 +1383,24 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
                       const longitude = actionResult.longitude;
                       if (mobileAction.saveToEntity) {
                         this.locationService.saveMobileActionLocation(this.widgetContext, mobileAction,
-                          actionResult, entityId).subscribe({
-                          next: (saveInfo) => {
-                            if (isNotEmptyTbFunction(mobileAction.processLocationFunction)) {
-                              compileTbFunction(this.http, mobileAction.processLocationFunction, 'latitude', 'longitude', '$event', 'widgetContext', 'entityId',
-                                'entityName', 'additionalParams', 'entityLabel', 'saveInfo').subscribe(
-                                {
-                                  next: (compiled) => {
-                                    try {
-                                      compiled.execute(latitude, longitude, $event, this.widgetContext,
-                                        entityId, entityName, additionalParams, entityLabel, saveInfo);
-                                    } catch (e) {
-                                      console.error(e);
-                                    }
-                                  },
-                                  error: (err) => {
-                                    console.error(err);
+                          actionResult, entityId).subscribe((saveInfo) => {
+                          if (isNotEmptyTbFunction(mobileAction.processLocationFunction)) {
+                            compileTbFunction(this.http, mobileAction.processLocationFunction, 'latitude', 'longitude', '$event', 'widgetContext', 'entityId',
+                              'entityName', 'additionalParams', 'entityLabel', 'saveInfo').subscribe(
+                              {
+                                next: (compiled) => {
+                                  try {
+                                    compiled.execute(latitude, longitude, $event, this.widgetContext,
+                                      entityId, entityName, additionalParams, entityLabel, saveInfo);
+                                  } catch (e) {
+                                    console.error(e);
                                   }
+                                },
+                                error: (err) => {
+                                  console.error(err);
                                 }
-                              );
-                            }
-                          },
-                          error: (err) => {
-                            this.widgetContext.showErrorToast(
-                              this.translate.instant('widget-action.mobile.location-save-failed',
-                                {error: this.locationService.saveErrorMessage(err)}));
+                              }
+                            );
                           }
                         });
                       } else if (isNotEmptyTbFunction(mobileAction.processLocationFunction)) {
