@@ -29,7 +29,6 @@ import { EntityService } from '@core/http/entity.service';
 import { UtilsService } from '@core/services/utils.service';
 import { AliasFilterType, EntityAliases, SingleEntityFilter } from '@shared/models/alias.models';
 import { EntityInfo } from '@shared/models/entity.models';
-import { PageData } from '@shared/models/page/page-data';
 import { map, mergeMap } from 'rxjs/operators';
 import {
   createDefaultEntityDataPageLink,
@@ -260,23 +259,6 @@ export class AliasController implements IAliasController {
         } else {
           return of(aliasInfo.currentEntity);
         }
-      })
-    );
-  }
-
-  resolveEntitiesInfo(aliasId: string): Observable<PageData<EntityInfo>> {
-    return this.getAliasInfo(aliasId).pipe(
-      mergeMap((aliasInfo) => {
-        if (aliasInfo.resolveMultiple && aliasInfo.entityFilter) {
-          return this.entityService.findEntityInfosByEntityFilter(aliasInfo.entityFilter,
-            {ignoreLoading: true, ignoreErrors: true});
-        }
-        return of({
-          data: aliasInfo.currentEntity ? [aliasInfo.currentEntity] : [],
-          totalPages: 1,
-          totalElements: aliasInfo.currentEntity ? 1 : 0,
-          hasNext: false
-        });
       })
     );
   }

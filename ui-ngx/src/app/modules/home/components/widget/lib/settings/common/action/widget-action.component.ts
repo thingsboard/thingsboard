@@ -28,7 +28,6 @@ import {
 } from '@angular/forms';
 import { Component, computed, ElementRef, forwardRef, input, Input, OnInit, ViewChild } from '@angular/core';
 import {
-  defaultSaveBrowserLocationDescriptor,
   MapItemType,
   mapItemTypeTranslationMap,
   WidgetAction,
@@ -37,6 +36,7 @@ import {
   widgetActionTypeTranslationMap,
   widgetType
 } from '@shared/models/widget.models';
+import { defaultSaveBrowserLocationDescriptor } from '@shared/models/location.models';
 import { WidgetService } from '@core/http/widget.service';
 import { WidgetActionCallbacks } from '@home/components/widget/action/manage-widget-actions.component.models';
 import { map, mergeMap, share, startWith, takeUntil, tap } from 'rxjs/operators';

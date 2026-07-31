@@ -21,7 +21,7 @@ import {
   LocationKey,
   MobileActionTargetEntityType,
   SaveBrowserLocationDescriptor
-} from '@shared/models/widget.models';
+} from '@shared/models/location.models';
 import { WidgetActionCallbacks } from '@home/components/widget/action/manage-widget-actions.component.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 

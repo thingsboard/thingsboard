@@ -25,19 +25,21 @@ import {
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import {
   ActionConfig,
-  defaultLocationKeyMappings,
-  LocationKey,
-  MobileActionLocationAccuracy,
-  mobileActionLocationAccuracyHintMap,
-  mobileActionLocationAccuracyTranslationMap,
-  MobileActionTargetEntityType,
   ProvisionType,
   provisionTypeTranslationMap,
   WidgetActionType,
   WidgetMobileActionDescriptor,
   WidgetMobileActionType,
-  widgetMobileActionTypeTranslationMap,
+  widgetMobileActionTypeTranslationMap
 } from '@shared/models/widget.models';
+import {
+  defaultLocationKeyMappings,
+  LocationKey,
+  MobileActionLocationAccuracy,
+  mobileActionLocationAccuracyHintMap,
+  mobileActionLocationAccuracyTranslationMap,
+  MobileActionTargetEntityType
+} from '@shared/models/location.models';
 import { CustomActionEditorCompleter } from '@home/components/widget/lib/settings/common/action/custom-action.models';
 import {
   getDefaultGetLocationFunction,

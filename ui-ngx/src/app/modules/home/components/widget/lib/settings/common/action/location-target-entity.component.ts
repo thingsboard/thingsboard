@@ -31,7 +31,7 @@ import {
   mobileActionAttributeSourceTranslationMap,
   MobileActionTargetEntityConfig,
   MobileActionTargetEntityType
-} from '@shared/models/widget.models';
+} from '@shared/models/location.models';
 import { WidgetActionCallbacks } from '@home/components/widget/action/manage-widget-actions.component.models';
 import { Observable } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';

@@ -41,7 +41,7 @@ import {
   LocationKeyValueType,
   locationKeyValueTypeTranslationMap,
   mandatoryLocationKeys
-} from '@shared/models/widget.models';
+} from '@shared/models/location.models';
 
 @Component({
     selector: 'tb-location-keys-table',
