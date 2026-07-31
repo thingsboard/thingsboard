@@ -22,9 +22,6 @@
     @if (showValue) {
       <div class="tb-value-chart-card-value-container">
         <div class="tb-value-chart-card-value" #valueChartCardValue [style]="valueStyle" [style.color]="valueColor.color">{{ valueText }}</div>
-        @if (showDate) {
-          <div class="tb-value-chart-card-date" [style]="dateStyle" [style.color]="dateColor.color" [innerHTML]="dateFormat.formatted"></div>
-        }
       </div>
     }
     <div class="tb-value-chart-card-chart" #chartElement></div>

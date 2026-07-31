@@ -18,6 +18,7 @@ import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   ElementRef,
   Input,
   OnDestroy,
@@ -26,6 +27,7 @@ import {
   TemplateRef,
   ViewChild
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { isDefinedAndNotNull } from '@core/utils';
 import {
@@ -44,9 +46,10 @@ import {
 } from '@shared/models/widget-settings.models';
 import { valueCardDefaultSettings, ValueCardLayout, ValueCardWidgetSettings } from './value-card-widget.models';
 import { WidgetComponent } from '@home/components/widget/widget.component';
-import { Observable } from 'rxjs';
+import { interval, Observable } from 'rxjs';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
 
 const squareLayoutSize = 160;
 const horizontalLayoutHeight = 80;
@@ -103,12 +106,14 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
 
   private horizontal = false;
   private valueFormat: ValueFormatProcessor;
+  private lastUpdateTs: number;
 
   constructor(private imagePipe: ImagePipe,
               private sanitizer: DomSanitizer,
               private renderer: Renderer2,
               private widgetComponent: WidgetComponent,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit(): void {
@@ -138,6 +143,18 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
     this.dateFormat = DateFormatProcessor.fromSettings(this.ctx.$injector, this.settings.dateFormat);
     this.dateStyle = textStyle(this.settings.dateFont);
     this.dateColor = ColorProcessor.fromSettings(this.settings.dateColor);
+
+    if (this.showDate && this.settings.dateFormat?.lastUpdateAgo) {
+      const refreshIntervalSec = getCurrentAuthState(this.ctx.store)?.dynamicPageLinkRefreshIntervalSec || 60;
+      interval(refreshIntervalSec * 1000).pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe(() => {
+        if (this.lastUpdateTs) {
+          this.dateFormat.update(this.lastUpdateTs);
+          this.cd.detectChanges();
+        }
+      });
+    }
 
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
@@ -184,12 +201,19 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
     } else {
       this.valueText = 'N/A';
     }
-    this.dateFormat.update(ts);
+    this.updateLastUpdateTs(ts);
     this.iconColor.update(value);
     this.labelColor.update(value);
     this.valueColor.update(value);
     this.dateColor.update(value);
     this.cd.detectChanges();
+  }
+
+  private updateLastUpdateTs(ts: number) {
+    if (ts && (!this.lastUpdateTs || ts > this.lastUpdateTs)) {
+      this.lastUpdateTs = ts;
+      this.dateFormat.update(ts);
+    }
   }
 
   private onResize() {
