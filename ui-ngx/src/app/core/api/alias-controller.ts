@@ -263,6 +263,18 @@ export class AliasController implements IAliasController {
     );
   }
 
+  resolveEntitiesInfo(aliasId: string): Observable<Array<EntityInfo>> {
+    return this.getAliasInfo(aliasId).pipe(
+      mergeMap((aliasInfo) => {
+        if (aliasInfo.resolveMultiple && aliasInfo.entityFilter) {
+          return this.entityService.findEntityInfosByEntityFilter(aliasInfo.entityFilter,
+            {ignoreLoading: true, ignoreErrors: true});
+        }
+        return of(aliasInfo.currentEntity ? [aliasInfo.currentEntity] : []);
+      })
+    );
+  }
+
   resolveSingleEntityInfoForDeviceId(deviceId: string): Observable<EntityInfo> {
     let entityInfo = this.resolvedDevices[deviceId];
     if (entityInfo) {

@@ -621,6 +621,17 @@ export class EntityService {
     );
   }
 
+  public findEntityInfosByEntityFilter(filter: EntityFilter, config?: RequestConfig): Observable<Array<EntityInfo>> {
+    const query: EntityDataQuery = {
+      entityFilter: filter,
+      pageLink: createDefaultEntityDataPageLink(100),
+      entityFields: entityInfoFields
+    };
+    return this.findEntityDataByQuery(query, config).pipe(
+      map((data) => data.data.map((entityData) => entityDataToEntityInfo(entityData)))
+    );
+  }
+
   public getAliasFilterTypesByEntityTypes(entityTypes: Array<EntityType | AliasEntityType>): Array<AliasFilterType> {
     const authState = getCurrentAuthState(this.store);
     let allAliasFilterTypes: Array<AliasFilterType> = Object.values(AliasFilterType);

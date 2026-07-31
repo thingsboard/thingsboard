@@ -152,6 +152,7 @@ export interface IAliasController {
   getEntityAliasId(aliasName: string): string;
   getInstantAliasInfo(aliasId: string): AliasInfo;
   resolveSingleEntityInfo(aliasId: string): Observable<EntityInfo>;
+  resolveEntitiesInfo(aliasId: string): Observable<Array<EntityInfo>>;
   resolveSingleEntityInfoForDeviceId(deviceId: string): Observable<EntityInfo>;
   resolveSingleEntityInfoForTargetDevice(targetDevice: TargetDevice): Observable<EntityInfo>;
   resolveDatasources(datasources: Array<Datasource>, singleEntity?: boolean, pageSize?: number): Observable<Array<Datasource>>;

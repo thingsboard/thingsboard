@@ -146,6 +146,11 @@ import { CompiledTbFunction, compileTbFunction, isNotEmptyTbFunction } from '@sh
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { addDiagnosticChain } from '@angular/compiler-cli/src/ngtsc/diagnostics';
 
+interface LocationTargetEntity {
+  entityId: EntityId;
+  name: string | null;
+}
+
 @Component({
     selector: 'tb-widget',
     templateUrl: './widget.component.html',
@@ -1560,14 +1565,13 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
       [LocationKey.longitude]: locationResult.longitude,
       [LocationKey.accuracy]: locationResult.accuracy
     };
-    return this.resolveActionTargetEntity(mobileAction.targetEntity, currentEntityId).pipe(
-      switchMap((targetEntityId) => this.resolveTargetEntityName(targetEntityId).pipe(
-        switchMap((targetName) => this.saveLocationKeys(targetEntityId, mobileAction.keys, values).pipe(
-          map(() => ({
-            targetName,
-            keys: this.savedLocationKeyNames(mobileAction.keys, values)
-          }))
-        ))
+    return this.resolveActionTargetEntities(mobileAction.targetEntity, currentEntityId).pipe(
+      switchMap((targets) => forkJoin(targets.map((target) =>
+        this.saveLocationKeys(target.entityId, mobileAction.keys, values))).pipe(
+        map(() => ({
+          targetName: targets.map((target) => target.name).filter(Boolean).join(', ') || null,
+          keys: this.savedLocationKeyNames(mobileAction.keys, values)
+        }))
       ))
     );
   }
@@ -1578,10 +1582,10 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
       return;
     }
     this.browserGeolocationService.getCurrentPosition().pipe(
-      switchMap((position) => this.resolveActionTargetEntity(config.targetEntity, currentEntityId).pipe(
-        switchMap((targetEntityId) => {
+      switchMap((position) => this.resolveActionTargetEntities(config.targetEntity, currentEntityId).pipe(
+        switchMap((targets) => {
           const coords = position.coords;
-          return this.saveLocationKeys(targetEntityId, config.keys, {
+          const values: Partial<Record<LocationKey, any>> = {
             [LocationKey.latitude]: coords.latitude,
             [LocationKey.longitude]: coords.longitude,
             [LocationKey.accuracy]: coords.accuracy,
@@ -1589,7 +1593,8 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
             [LocationKey.altitudeAccuracy]: coords.altitudeAccuracy,
             [LocationKey.speed]: coords.speed,
             [LocationKey.heading]: coords.heading
-          });
+          };
+          return forkJoin(targets.map((target) => this.saveLocationKeys(target.entityId, config.keys, values)));
         })
       ))
     ).subscribe({
@@ -1709,6 +1714,42 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
     }
     return isNotEmptyStr(err?.message) ? err.message
       : this.translate.instant('widget-action.location.error-save-failed');
+  }
+
+  private resolveActionTargetEntities(target: MobileActionTargetEntityConfig,
+                                      currentEntityId?: EntityId): Observable<LocationTargetEntity[]> {
+    const type = target?.type || MobileActionTargetEntityType.currentEntity;
+    if (type === MobileActionTargetEntityType.entityAlias) {
+      return this.resolveEntityAliasTargets(target.aliasName);
+    }
+    return this.resolveActionTargetEntity(target, currentEntityId).pipe(
+      switchMap((entityId) => this.resolveTargetEntityName(entityId).pipe(
+        map((name) => [{entityId, name}])
+      ))
+    );
+  }
+
+  private resolveEntityAliasTargets(aliasName: string): Observable<LocationTargetEntity[]> {
+    const aliasId = this.widgetContext.aliasController.getEntityAliasId(aliasName);
+    if (!aliasId) {
+      return throwError(() => new Error(
+        this.translate.instant('widget-action.location.error-alias-not-found', {alias: aliasName})));
+    }
+    return this.widgetContext.aliasController.resolveEntitiesInfo(aliasId).pipe(
+      map((entities) => {
+        const targets = (entities || [])
+          .filter((entity) => entity?.id && entity?.entityType)
+          .map((entity) => ({
+            entityId: {entityType: entity.entityType, id: entity.id} as EntityId,
+            name: entity.name || null
+          }));
+        if (!targets.length) {
+          throw new Error(
+            this.translate.instant('widget-action.location.error-alias-not-resolved', {alias: aliasName}));
+        }
+        return targets;
+      })
+    );
   }
 
   private resolveActionTargetEntity(target: MobileActionTargetEntityConfig,
