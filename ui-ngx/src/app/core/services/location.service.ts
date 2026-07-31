@@ -18,8 +18,8 @@ import { Injectable } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Store } from '@ngrx/store';
 import { TranslateService } from '@ngx-translate/core';
-import { EMPTY, forkJoin, from, Observable, of, throwError } from 'rxjs';
-import { catchError, map, mergeMap, switchMap, toArray } from 'rxjs/operators';
+import { EMPTY, forkJoin, Observable, of, throwError } from 'rxjs';
+import { catchError, map, mergeMap, switchMap } from 'rxjs/operators';
 import { AppState } from '@core/core.state';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { EntityService } from '@core/http/entity.service';
@@ -60,22 +60,6 @@ import {
   SaveBrowserLocationDescriptor
 } from '@shared/models/location.models';
 
-export interface LocationTargetEntity {
-  entityId: EntityId;
-  name: string | null;
-}
-
-export interface LocationTargetResolution {
-  targets: LocationTargetEntity[];
-  totalTargets: number;
-}
-
-// Alias fan-out cap — savers report "saved X of Y" when the alias resolves more.
-const aliasTargetsPageSize = 100;
-
-// Bounds the request burst (up to aliasTargetsPageSize targets x 2 calls).
-const saveConcurrency = 8;
-
 /// Owns the location widget actions: resolving their target entities and
 /// writing the coordinates as attributes/time series.
 @Injectable({
@@ -100,17 +84,14 @@ export class LocationService {
       [LocationKey.longitude]: locationResult.longitude,
       [LocationKey.accuracy]: locationResult.accuracy
     };
-    return this.resolveTargets(ctx, mobileAction.targetEntity, currentEntityId).pipe(
-      switchMap((resolution) => this.saveToTargets(ctx, resolution.targets, mobileAction.keys, values).pipe(
-        map(({saved, firstError}) => {
-          if (!saved.length) {
-            throw firstError;
-          }
-          return {
-            targetName: saved.map((target) => target.name).filter(Boolean).join(', ') || null,
+    return this.resolveTargetEntity(ctx, mobileAction.targetEntity, currentEntityId).pipe(
+      switchMap((targetEntityId) => this.resolveTargetEntityName(targetEntityId).pipe(
+        switchMap((targetName) => this.saveKeys(ctx, targetEntityId, mobileAction.keys, values).pipe(
+          map(() => ({
+            targetName,
             keys: this.savedKeyNames(mobileAction.keys, values)
-          };
-        })
+          }))
+        ))
       )),
       catchError((err) => {
         ctx.showErrorToast(this.translate.instant('widget-action.mobile.location-save-failed',
@@ -127,8 +108,8 @@ export class LocationService {
       return;
     }
     this.browserGeolocationService.getCurrentPosition().pipe(
-      switchMap((position) => this.resolveTargets(ctx, config.targetEntity, currentEntityId, false).pipe(
-        switchMap((resolution) => {
+      switchMap((position) => this.resolveTargetEntity(ctx, config.targetEntity, currentEntityId).pipe(
+        switchMap((targetEntityId) => {
           const coords = position.coords;
           const values: Partial<Record<LocationKey, any>> = {
             [LocationKey.latitude]: coords.latitude,
@@ -139,35 +120,16 @@ export class LocationService {
             [LocationKey.speed]: coords.speed,
             [LocationKey.heading]: coords.heading
           };
-          return this.saveToTargets(ctx, resolution.targets, config.keys, values).pipe(
-            map(({saved, firstError}) => {
-              if (!saved.length) {
-                throw firstError;
-              }
-              return {
-                savedKeys: this.savedKeyNames(config.keys, values),
-                savedCount: saved.length,
-                totalTargets: resolution.totalTargets
-              };
-            })
+          return this.saveKeys(ctx, targetEntityId, config.keys, values).pipe(
+            map(() => this.savedKeyNames(config.keys, values))
           );
         })
       ))
     ).subscribe({
-      next: ({savedKeys, savedCount, totalTargets}) => {
-        if (savedCount < totalTargets) {
-          ctx.showWarnToast(
-            this.translate.instant('widget-action.browser-location.location-saved-partial',
-              {saved: savedCount, total: totalTargets, keys: savedKeys.join(', ')}));
-        } else if (savedCount > 1) {
-          ctx.showSuccessToast(
-            this.translate.instant('widget-action.browser-location.location-saved-keys-multi',
-              {count: savedCount, keys: savedKeys.join(', ')}));
-        } else {
-          ctx.showSuccessToast(savedKeys.length
-            ? this.translate.instant('widget-action.browser-location.location-saved-keys', {keys: savedKeys.join(', ')})
-            : this.translate.instant('widget-action.browser-location.location-saved'));
-        }
+      next: (savedKeys) => {
+        ctx.showSuccessToast(savedKeys.length
+          ? this.translate.instant('widget-action.browser-location.location-saved-keys', {keys: savedKeys.join(', ')})
+          : this.translate.instant('widget-action.browser-location.location-saved'));
       },
       error: (err) => {
         if (err instanceof BrowserGeolocationError) {
@@ -183,6 +145,9 @@ export class LocationService {
 
   /// Builds the `startLiveLocation` bridge arguments. The app saves the samples
   /// itself, so the target entity and the key labels are resolved up front.
+  /// A resolution failure is reported here and completes without emitting: the
+  /// caller's error sink only runs the action's optional error function, so an
+  /// uncaught failure would start no session and tell the user nothing.
   liveTrackingArgs(ctx: WidgetContext, mobileAction: WidgetMobileActionDescriptor,
                    currentEntityId?: EntityId): Observable<any[]> {
     return this.resolveTargetEntity(ctx, mobileAction.targetEntity, currentEntityId).pipe(
@@ -205,7 +170,12 @@ export class LocationService {
           maxDurationSeconds: mobileAction.maxDurationSeconds ?? null,
           trackedBy: getCurrentAuthUser(this.store)?.sub || null
         }])
-      ))
+      )),
+      catchError((err) => {
+        ctx.showErrorToast(this.translate.instant('widget-action.mobile.live-location-start-failed',
+          {error: this.saveErrorMessage(err)}));
+        return EMPTY;
+      })
     );
   }
 
@@ -235,41 +205,6 @@ export class LocationService {
     }
     return isNotEmptyStr(err?.message) ? err.message
       : this.translate.instant('widget-action.location.error-save-failed');
-  }
-
-  private resolveTargets(ctx: WidgetContext, target: MobileActionTargetEntityConfig, currentEntityId?: EntityId,
-                         resolveNames = true): Observable<LocationTargetResolution> {
-    const type = target?.type || MobileActionTargetEntityType.currentEntity;
-    if (type === MobileActionTargetEntityType.entityAlias) {
-      return this.resolveEntityAliasTargets(ctx, target.aliasName);
-    }
-    return this.resolveTargetEntity(ctx, target, currentEntityId).pipe(
-      switchMap((entityId) => (resolveNames ? this.resolveTargetEntityName(entityId) : of(null)).pipe(
-        map((name) => ({targets: [{entityId, name}], totalTargets: 1}))
-      ))
-    );
-  }
-
-  private resolveEntityAliasTargets(ctx: WidgetContext, aliasName: string): Observable<LocationTargetResolution> {
-    return this.aliasInfo(ctx, aliasName).pipe(
-      mergeMap((aliasInfo) => this.findAliasEntities(aliasInfo, aliasTargetsPageSize)),
-      map((page) => {
-        const targets = (page.data || [])
-          .filter((entity) => entity?.id && entity?.entityType)
-          .map((entity) => ({
-            entityId: {entityType: entity.entityType, id: entity.id} as EntityId,
-            name: entity.name || null
-          }));
-        if (!targets.length) {
-          throw new Error(
-            this.translate.instant('widget-action.location.error-alias-not-resolved', {alias: aliasName}));
-        }
-        return {
-          targets,
-          totalTargets: Math.max(page.totalElements ?? 0, targets.length)
-        };
-      })
-    );
   }
 
   private aliasInfo(ctx: WidgetContext, aliasName: string): Observable<AliasInfo> {
@@ -326,7 +261,7 @@ export class LocationService {
       case MobileActionTargetEntityType.currentUser:
         return of(this.currentUserEntityId());
       case MobileActionTargetEntityType.entityAlias:
-        return this.resolveSingleEntityAlias(ctx, target.aliasName);
+        return this.resolveEntityAlias(ctx, target.aliasName);
       case MobileActionTargetEntityType.fromAttribute:
         return this.resolveAttributeSourceEntity(ctx, target, currentEntityId).pipe(
           switchMap((sourceEntityId) => ctx.attributeService.getEntityAttributes(
@@ -350,16 +285,28 @@ export class LocationService {
         return validateEntityId(currentEntityId) ? of(currentEntityId)
           : throwError(() => new Error(this.translate.instant('widget-action.location.error-no-current-entity')));
       case MobileActionAttributeSource.entityAlias:
-        return this.resolveSingleEntityAlias(ctx, target.aliasName);
+        return this.resolveEntityAlias(ctx, target.aliasName);
       default:
         return of(this.currentUserEntityId());
     }
   }
 
-  private resolveSingleEntityAlias(ctx: WidgetContext, aliasName: string): Observable<EntityId> {
+  /// Resolves an alias to the single entity a location may be saved to. The page
+  /// asks for two entities so that an alias resolving more than one fails loudly
+  /// instead of silently writing to whichever one sorted first.
+  private resolveEntityAlias(ctx: WidgetContext, aliasName: string): Observable<EntityId> {
     return this.aliasInfo(ctx, aliasName).pipe(
-      mergeMap((aliasInfo) => this.findAliasEntities(aliasInfo, 1)),
+      mergeMap((aliasInfo) => this.findAliasEntities(aliasInfo, 2)),
       map((page) => {
+        const count = Math.max(page.totalElements ?? 0, page.data?.length ?? 0);
+        if (count === 0) {
+          throw new Error(
+            this.translate.instant('widget-action.location.error-alias-not-resolved', {alias: aliasName}));
+        }
+        if (count > 1) {
+          throw new Error(
+            this.translate.instant('widget-action.location.error-alias-multiple', {alias: aliasName, count}));
+        }
         const entity = page.data?.[0];
         if (!entity?.id || !entity?.entityType) {
           throw new Error(
@@ -424,22 +371,6 @@ export class LocationService {
         return isDefinedAndNotNull(value) && !Number.isNaN(value);
       })
       .map((mapping) => locationKeyName(mapping));
-  }
-
-  private saveToTargets(ctx: WidgetContext, targets: LocationTargetEntity[], keys: LocationKeyMapping[],
-                        values: Partial<Record<LocationKey, any>>):
-      Observable<{saved: LocationTargetEntity[]; firstError: any}> {
-    return from(targets).pipe(
-      mergeMap((target) => this.saveKeys(ctx, target.entityId, keys, values).pipe(
-        map(() => ({target, error: null})),
-        catchError((error) => of({target, error}))
-      ), saveConcurrency),
-      toArray(),
-      map((results) => ({
-        saved: results.filter((result) => !result.error).map((result) => result.target),
-        firstError: results.find((result) => result.error)?.error ?? null
-      }))
-    );
   }
 
   private saveKeys(ctx: WidgetContext, targetEntityId: EntityId, keys: LocationKeyMapping[],

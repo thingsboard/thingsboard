@@ -17,11 +17,7 @@
 -->
 <section [formGroup]="targetEntityFormGroup" class="tb-form-panel no-padding no-border">
   <div class="flex flex-row items-center justify-between">
-    @if (panelHint) {
-      <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ panelHint }}">{{ 'widget-action.mobile.target-entity-type' | translate }}</div>
-    } @else {
-      <div class="tb-form-panel-title">{{ 'widget-action.mobile.target-entity-type' | translate }}</div>
-    }
+    <div class="tb-form-panel-title">{{ 'widget-action.mobile.target-panel-title' | translate }}</div>
     <tb-toggle-select formControlName="mode" selectMediaBreakpoint="xs">
       <tb-toggle-option [value]="targetEntityMode.entity">
         {{ 'widget-action.mobile.target-mode-entity' | translate }}
@@ -34,7 +30,7 @@
   <div class="tb-form-row">
     <div class="fixed-title-width">
       {{ (isFromAttribute ? 'widget-action.mobile.target-attribute-source'
-                          : 'widget-action.mobile.target-entity-type') | translate }}
+                          : 'widget-action.mobile.target-save-to') | translate }}
     </div>
     <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
       <mat-select formControlName="source">
@@ -79,6 +75,12 @@
         }
       </mat-form-field>
     </div>
+    @if (aliasResolvesMultiple) {
+      <div class="tb-form-hint tb-primary-fill flex items-center gap-2">
+        <mat-icon>warning</mat-icon>
+        <span>{{ 'widget-action.mobile.target-alias-multiple-warning' | translate }}</span>
+      </div>
+    }
   }
   @if (isFromAttribute) {
     <div class="tb-form-row">

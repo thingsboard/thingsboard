@@ -111,9 +111,6 @@ export class LocationTargetEntityComponent implements ControlValueAccessor, OnIn
   @Input()
   callbacks: WidgetActionCallbacks;
 
-  @Input()
-  panelHint: string;
-
   targetEntityFormGroup: FormGroup;
 
   targetEntityMode = LocationTargetEntityMode;
@@ -142,6 +139,10 @@ export class LocationTargetEntityComponent implements ControlValueAccessor, OnIn
 
   get aliasNameRequired(): boolean {
     return this.targetEntityFormGroup.get('source').value === MobileActionAttributeSource.entityAlias;
+  }
+
+  get aliasResolvesMultiple(): boolean {
+    return this.aliasNameRequired && this.selectedAliasFilter()?.resolveMultiple === true;
   }
 
   ngOnInit(): void {
@@ -238,12 +239,16 @@ export class LocationTargetEntityComponent implements ControlValueAccessor, OnIn
         };
         break;
       case MobileActionAttributeSource.entityAlias:
-        this.attributeSourceEntityFilter = this.queryableAliasFilter(this.entityAliases
-          .find((alias) => alias.alias === this.targetEntityFormGroup.get('aliasName').value)?.filter);
+        this.attributeSourceEntityFilter = this.queryableAliasFilter(this.selectedAliasFilter());
         break;
       default:
         this.attributeSourceEntityFilter = null;
     }
+  }
+
+  private selectedAliasFilter(): EntityAliasFilter {
+    return this.entityAliases
+      .find((alias) => alias.alias === this.targetEntityFormGroup.get('aliasName').value)?.filter;
   }
 
   private queryableAliasFilter(filter: EntityAliasFilter): EntityFilter {
