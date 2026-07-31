@@ -162,7 +162,9 @@ export class DistanceUnitInputComponent implements ControlValueAccessor, Validat
 
   validate(): ValidationErrors | null {
     return this.distanceInputForm.disabled || this.distanceInputForm.valid ? null : {
-      distanceInput: false
+      distanceInput: {
+        valid: false
+      }
     };
   }
 
