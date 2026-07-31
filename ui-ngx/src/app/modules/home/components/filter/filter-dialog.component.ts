@@ -14,25 +14,23 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnInit, SkipSelf } from '@angular/core';
-import { ErrorStateMatcher } from '@angular/material/core';
+import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import {
-  UntypedFormBuilder,
-  UntypedFormControl,
-  UntypedFormGroup,
-  FormGroupDirective,
-  NgForm,
-  ValidatorFn,
-  Validators
-} from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
 import { UtilsService } from '@core/services/utils.service';
-import { TranslateService } from '@ngx-translate/core';
-import { Filter, Filters } from '@shared/models/query/query.models';
+import {
+  ComplexOperation,
+  complexOperationTranslationMap,
+  Filter,
+  FilterInfo,
+  Filters
+} from '@shared/models/query/query.models';
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
+import { FormControlsFrom } from '@shared/models/tenant.model';
 
 export interface FilterDialogData {
   isAdd: boolean;
@@ -41,32 +39,29 @@ export interface FilterDialogData {
 }
 
 @Component({
-    selector: 'tb-filter-dialog',
-    templateUrl: './filter-dialog.component.html',
-    providers: [{ provide: ErrorStateMatcher, useExisting: FilterDialogComponent }],
-    styleUrls: ['./filter-dialog.component.scss'],
-    standalone: false
+  selector: 'tb-filter-dialog',
+  templateUrl: './filter-dialog.component.html',
+  standalone: false
 })
-export class FilterDialogComponent extends DialogComponent<FilterDialogComponent, Filter>
-  implements OnInit, ErrorStateMatcher {
+export class FilterDialogComponent extends DialogComponent<FilterDialogComponent, Filter> {
 
   isAdd: boolean;
-  filters: Array<Filter>;
 
-  filter: Filter;
+  filterFormGroup: FormGroup<FormControlsFrom<FilterInfo>>;
 
-  filterFormGroup: UntypedFormGroup;
+  ComplexOperation = ComplexOperation;
+  complexOperationTranslationMap = complexOperationTranslationMap;
+  allowKeyFiltersOrConditions: boolean;
 
-  submitted = false;
+  private readonly filter: Filter;
+  private filters: Array<Filter>;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: FilterDialogData,
-              @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
-              public dialogRef: MatDialogRef<FilterDialogComponent, Filter>,
-              private fb: UntypedFormBuilder,
-              private utils: UtilsService,
-              public translate: TranslateService) {
+              protected dialogRef: MatDialogRef<FilterDialogComponent, Filter>,
+              private fb: FormBuilder,
+              private utils: UtilsService) {
     super(store, router, dialogRef);
     this.isAdd = data.isAdd;
     if (Array.isArray(data.filters)) {
@@ -87,16 +82,25 @@ export class FilterDialogComponent extends DialogComponent<FilterDialogComponent
     } else {
       this.filter = data.filter;
     }
+    this.allowKeyFiltersOrConditions = getCurrentAuthState(this.store).allowKeyFiltersOrConditions !== false;
 
     this.filterFormGroup = this.fb.group({
       filter: [this.filter.filter, [this.validateDuplicateFilterName(), Validators.required]],
       editable: [this.filter.editable],
-      keyFilters: [this.filter.keyFilters, Validators.required]
+      keyFilters: [this.filter.keyFilters, Validators.required],
+      keyFiltersOperation: [this.filter.keyFiltersOperation ?? ComplexOperation.AND]
     });
+    if (!this.allowKeyFiltersOrConditions) {
+      if (this.filter.keyFiltersOperation === ComplexOperation.OR) {
+        this.filterFormGroup.controls.keyFiltersOperation.setValue(ComplexOperation.AND);
+        this.filterFormGroup.markAsDirty();
+      }
+      this.filterFormGroup.controls.keyFiltersOperation.disable();
+    }
   }
 
   validateDuplicateFilterName(): ValidatorFn {
-    return (c: UntypedFormControl) => {
+    return (c: FormControl<string>) => {
       const newFilter = c.value.trim();
       const found = this.filters.find((filter) => filter.filter === newFilter);
       if (found) {
@@ -112,13 +116,11 @@ export class FilterDialogComponent extends DialogComponent<FilterDialogComponent
     };
   }
 
-  ngOnInit(): void {
-  }
-
-  isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {
-    const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
-    const customErrorState = !!(control && control.invalid && this.submitted);
-    return originalErrorState || customErrorState;
+  onEditableChange(event: MouseEvent): void {
+    event.stopPropagation();
+    const editableControl = this.filterFormGroup.controls.editable;
+    editableControl.setValue(!editableControl.value);
+    editableControl.markAsDirty();
   }
 
   cancel(): void {
@@ -126,10 +128,11 @@ export class FilterDialogComponent extends DialogComponent<FilterDialogComponent
   }
 
   save(): void {
-    this.submitted = true;
-    this.filter.filter = this.filterFormGroup.get('filter').value.trim();
-    this.filter.editable = this.filterFormGroup.get('editable').value;
-    this.filter.keyFilters = this.filterFormGroup.get('keyFilters').value;
+    const {filter, editable, keyFilters, keyFiltersOperation} = this.filterFormGroup.getRawValue();
+    this.filter.filter = filter.trim();
+    this.filter.editable = editable;
+    this.filter.keyFilters = keyFilters;
+    this.filter.keyFiltersOperation = keyFiltersOperation;
     if (this.isAdd) {
       this.filter.id = this.utils.guid();
     }

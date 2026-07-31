@@ -22,7 +22,7 @@ import org.eclipse.leshan.core.link.LinkParser;
 import org.eclipse.leshan.core.link.lwm2m.DefaultLwM2mLinkParser;
 import org.junit.Before;
 import org.mockito.Mockito;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MDeviceCredentials;
@@ -77,16 +77,16 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
 
     protected final LinkParser linkParser = new DefaultLwM2mLinkParser();
     protected String CONFIG_PROFILE_WITH_PARAMS_RPC;
-    public Set expectedObjects;
-    public Set expectedObjectIdVers;
-    public Set expectedInstances;
-    public Set expectedObjectIdVerInstances;
+    public Set<String> expectedObjects;
+    public Set<String> expectedObjectIdVers;
+    public Set<String> expectedInstances;
+    public Set<String> expectedObjectIdVerInstances;
 
     protected String objectInstanceIdVer_1;
     protected String objectIdVer_0;
     protected String objectIdVer_1;
     protected String objectIdVer_2;
-    private static final Predicate PREDICATE_3 = path -> (!((String) path).startsWith("/" + TEMPERATURE_SENSOR) && ((String) path).startsWith("/" + DEVICE));
+    private static final Predicate<String> PREDICATE_3 = path -> (!((String) path).startsWith("/" + TEMPERATURE_SENSOR) && ((String) path).startsWith("/" + DEVICE));
     protected String objectIdVer_3;
     protected String objectInstanceIdVer_3;
     protected String objectInstanceIdVer_5;
@@ -103,7 +103,7 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
 
     protected String idVer_19_0_0;
 
-    @SpyBean
+    @MockitoSpyBean
     protected LwM2mTransportServerHelper lwM2mTransportServerHelperTest;
 
     @Before

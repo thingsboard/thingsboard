@@ -199,6 +199,7 @@ export interface Dashboard extends DashboardInfo {
 
 export interface HomeDashboard extends Dashboard {
   hideDashboardToolbar: boolean;
+  isSystemDashboard?: boolean;
 }
 
 export interface HomeDashboardInfo {

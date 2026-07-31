@@ -16,21 +16,27 @@
 
 -->
 <section [formGroup]="msgCountConfigForm" class="flex flex-col">
-  <mat-form-field class="mat-block">
+  <mat-form-field class="mat-block" appearance="outline">
     <mat-label translate>rule-node-config.interval-seconds</mat-label>
     <input required type="number" min="1" step="1" matInput formControlName="interval">
-    <mat-error *ngIf="msgCountConfigForm.get('interval').hasError('required')">
-      {{ 'rule-node-config.interval-seconds-required' | translate }}
-    </mat-error>
-    <mat-error *ngIf="msgCountConfigForm.get('interval').hasError('min')">
-      {{ 'rule-node-config.min-interval-seconds-message' | translate }}
-    </mat-error>
+    @if (msgCountConfigForm.get('interval').hasError('required')) {
+      <mat-error>
+        {{ 'rule-node-config.interval-seconds-required' | translate }}
+      </mat-error>
+    }
+    @if (msgCountConfigForm.get('interval').hasError('min')) {
+      <mat-error>
+        {{ 'rule-node-config.min-interval-seconds-message' | translate }}
+      </mat-error>
+    }
   </mat-form-field>
-  <mat-form-field class="mat-block">
+  <mat-form-field class="mat-block" appearance="outline">
     <mat-label translate>rule-node-config.output-timeseries-key-prefix</mat-label>
     <input required matInput formControlName="telemetryPrefix">
-    <mat-error *ngIf="msgCountConfigForm.get('telemetryPrefix').hasError('required')">
-      {{ 'rule-node-config.output-timeseries-key-prefix-required' | translate }}
-    </mat-error>
+    @if (msgCountConfigForm.get('telemetryPrefix').hasError('required')) {
+      <mat-error>
+        {{ 'rule-node-config.output-timeseries-key-prefix-required' | translate }}
+      </mat-error>
+    }
   </mat-form-field>
 </section>

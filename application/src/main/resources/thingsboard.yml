@@ -294,7 +294,7 @@ ui:
   # Help parameters
   help:
     # Base URL for UI help assets
-    base-url: "${UI_HELP_BASE_URL:https://raw.githubusercontent.com/thingsboard/thingsboard-ui-help/release-4.3}"
+    base-url: "${UI_HELP_BASE_URL:https://raw.githubusercontent.com/thingsboard/thingsboard-ui-help/release-4.4}"
 
 # Database telemetry parameters
 # Selects the storage backend (SQL, Cassandra, or TimescaleDB) for time-series and latest telemetry data.
@@ -478,6 +478,10 @@ sql:
   # Interval in milliseconds for printing the latest statistic information about the tenant
   log_tenant_stats_interval_ms: "${SQL_LOG_TENANT_STATS_INTERVAL_MS:60000}"
   entity_data_query_nulls_order_strategy: "${SQL_ENTITY_DATA_QUERY_NULLS_ORDER_STRATEGY:default}" # Nulls ordering strategy for sql entity data query. Possible values: default, nulls_first, nulls_last. The default value is 'default', which means postgres default behavior will be applied: NULLS LAST for ASC and NULLS FIRST for DESC. The 'nulls_first' value means that NULL values will be ordered before non-NULL values regardless of the sort order. The 'nulls_last' value means that NULL values will be ordered after non-NULL values regardless of the sort order.
+  query:
+    key-filters-or-conditions:
+      # Enable/disable OR conditions between key filters in entity data queries
+      enabled: "${SQL_QUERY_KEY_FILTERS_OR_CONDITIONS_ENABLED:true}"
   postgres:
     # Specify partitioning size for timestamp key-value storage. Example: DAYS, MONTHS, YEARS, INDEFINITE.
     ts_key_value_partitioning: "${SQL_POSTGRES_TS_KV_PARTITIONING:MONTHS}"
@@ -1780,11 +1784,23 @@ queue:
       # The endpoint identification algorithm used by clients to validate server hostname. The default value is https
       ssl.algorithm: "${TB_QUEUE_KAFKA_CONFLUENT_SSL_ALGORITHM:https}"
       # The mechanism used to authenticate Schema Registry requests. SASL/PLAIN should only be used with TLS/SSL as a transport layer to ensure that clear passwords are not transmitted on the wire without encryption
+      # Set to OAUTHBEARER to authenticate via OAuth2/OIDC client-credentials (configure the oauth.* settings below)
       sasl.mechanism: "${TB_QUEUE_KAFKA_CONFLUENT_SASL_MECHANISM:PLAIN}"
       # Using JAAS Configuration for specifying multiple SASL mechanisms on a broker
       sasl.config: "${TB_QUEUE_KAFKA_CONFLUENT_SASL_JAAS_CONFIG:org.apache.kafka.common.security.plain.PlainLoginModule required username=\"CLUSTER_API_KEY\" password=\"CLUSTER_API_SECRET\";}"
       # Protocol used to communicate with brokers. Valid values are: PLAINTEXT, SSL, SASL_PLAINTEXT, SASL_SSL
       security.protocol: "${TB_QUEUE_KAFKA_CONFLUENT_SECURITY_PROTOCOL:SASL_SSL}"
+      # Optional: OAuth2 (OIDC) client-credentials settings. Applied only when sasl.mechanism is OAUTHBEARER.
+      # ThingsBoard wires Kafka's built-in OAuthBearerLoginCallbackHandler; the token is fetched and refreshed automatically.
+      oauth:
+        # Optional: OAuth2 client id
+        client-id: "${TB_QUEUE_KAFKA_CONFLUENT_OAUTH_CLIENT_ID:}"
+        # Optional: OAuth2 client secret
+        client-secret: "${TB_QUEUE_KAFKA_CONFLUENT_OAUTH_CLIENT_SECRET:}"
+        # Optional: OAuth2/OIDC token endpoint URL to request the bearer token from
+        endpoint-url: "${TB_QUEUE_KAFKA_CONFLUENT_OAUTH_ENDPOINT_URL:}"
+        # Optional: OAuth2 scope/audience requested for the token. Required by some IdPs for client-credentials (e.g. Azure AD's "api://<id>/.default")
+        scope: "${TB_QUEUE_KAFKA_CONFLUENT_OAUTH_SCOPE:}"
     # Key-value properties for Kafka consumer per specific topic, e.g. tb_ota_package is a topic name for ota, tb_rule_engine.sq is a topic name for default SequentialByOriginator queue.
     # Check TB_QUEUE_CORE_OTA_TOPIC and TB_QUEUE_RE_SQ_TOPIC params
     consumer-properties-per-topic:
@@ -2061,6 +2077,9 @@ queue:
       print-interval-ms: "${TB_QUEUE_RULE_ENGINE_STATS_PRINT_INTERVAL_MS:60000}"
       # Max length of the error message that is printed by statistics
       max-error-message-length: "${TB_QUEUE_RULE_ENGINE_MAX_ERROR_MESSAGE_LENGTH:4096}"
+    prometheus-stats:
+      # Enable/disable Prometheus statistics for individual Rule Engine message processing (records time in ms for success/failure).
+      enabled: "${TB_QUEUE_RULE_ENGINE_PROMETHEUS_STATS_ENABLED:false}"
     # After a queue is deleted (or the profile's isolation option was disabled), Rule Engine will continue reading related topics during this period before deleting the actual topics
     topic-deletion-delay: "${TB_QUEUE_RULE_ENGINE_TOPIC_DELETION_DELAY_SEC:15}"
     # Size of the thread pool that handles such operations as partition changes, config updates, queue deletion

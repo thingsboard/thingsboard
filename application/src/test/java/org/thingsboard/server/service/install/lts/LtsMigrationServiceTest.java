@@ -116,70 +116,99 @@ class LtsMigrationServiceTest {
     }
 
     @Test
-    void skipsMigrationsOutsideTargetFamilyOnCrossFamilyUpgrade() {
+    void selectsInRangeOlderFamilyBeansOnCrossFamilyUpgrade() {
         List<String> applied = new ArrayList<>();
-        // 4.2.2.3 is carried onto a 4.3 branch by the release-merge cascade but must stay dormant:
-        // a cross-family 4.2 -> 4.3 upgrade is handled entirely by the 4.3-family migrations.
+        // A cross-family 4.3 -> 4.4 offline upgrade now runs the real in-range 4.3.1.x beans (the source has
+        // not passed them) alongside the new 4.4 baseline bean -- each exactly once. No 4.4-family bean
+        // reproduces the 4.3.1.x work anymore.
         LtsMigrationService service = service(List.of(
                 migration("4.2.2.3", applied),
                 migration("4.3.1.2", applied),
-                migration("4.3.1.3", applied)));
+                migration("4.3.1.3", applied),
+                migration("4.4.0.0", applied)));
 
-        service.runDataMigrations("4.2.2.2", "4.3.1.3");
+        service.runDataMigrations("4.3.0.0", "4.4.0.0");
 
-        assertEquals(List.of("4.3.1.2", "4.3.1.3"), applied);
+        // 4.2.2.3 sits below the supported-source floor (4.3.0.0), so it is out of range and never selected.
+        assertEquals(List.of("4.3.1.2", "4.3.1.3", "4.4.0.0"), applied);
     }
 
     @Test
-    void applyMigrationsSkipsMigrationsOutsideTargetFamilyOnCrossFamilyUpgrade() {
+    void applyMigrationsRunsAndRecordsEachInRangeVersionOnCrossFamilyUpgrade() {
         List<String> applied = new ArrayList<>();
-        // The dormant 4.2.2.3 bean must not apply or record on a cross-family 4.2 -> 4.3 upgrade.
         LtsMigrationService service = service(List.of(
                 migration("4.2.2.3", applied),
                 migration("4.3.1.2", applied),
-                migration("4.3.1.3", applied)));
+                migration("4.3.1.3", applied),
+                migration("4.4.0.0", applied)));
 
-        service.applyMigrations("4.2.2.2", "4.3.1.3");
+        service.applyMigrations("4.3.0.0", "4.4.0.0");
 
-        assertEquals(List.of("4.3.1.2", "4.3.1.3"), applied);
+        assertEquals(List.of("4.3.1.2", "4.3.1.3", "4.4.0.0"), applied);
+        // The below-floor 4.2.2.3 duplicate must not apply or record.
         verify(schemaSettingsService, never()).updateSchemaVersion("4.2.2.3");
         verify(schemaSettingsService).updateSchemaVersion("4.3.1.2");
         verify(schemaSettingsService).updateSchemaVersion("4.3.1.3");
+        verify(schemaSettingsService).updateSchemaVersion("4.4.0.0");
     }
 
     @Test
-    void runSchemaMigrationsSkipsMigrationsOutsideTargetFamilyOnCrossFamilyUpgrade() throws Exception {
+    void runSchemaMigrationsRunsEachInRangeSqlOnCrossFamilyUpgrade() throws Exception {
         List<String> applied = new ArrayList<>();
         writeSql("4.2.2.3", "SELECT 1;");
         writeSql("4.3.1.2", "SELECT 2;");
         writeSql("4.3.1.3", "SELECT 3;");
+        writeSql("4.4.0.0", "SELECT 4;");
         LtsMigrationService service = service(List.of(
                 migration("4.2.2.3", applied),
                 migration("4.3.1.2", applied),
-                migration("4.3.1.3", applied)));
+                migration("4.3.1.3", applied),
+                migration("4.4.0.0", applied)));
 
-        service.runSchemaMigrations("4.2.2.2", "4.3.1.3");
+        service.runSchemaMigrations("4.3.0.0", "4.4.0.0");
 
-        // The dormant 4.2.2.3 SQL must not run; the 4.3-family SQL must.
+        // The below-floor 4.2.2.3 SQL must not run; every in-range bean's SQL must.
         verify(jdbcTemplate, never()).execute("SELECT 1;");
         verify(jdbcTemplate).execute("SELECT 2;");
         verify(jdbcTemplate).execute("SELECT 3;");
+        verify(jdbcTemplate).execute("SELECT 4;");
     }
 
     @Test
-    void isInRangeForTargetFamilyPredicate() {
+    void isInRangePredicate() {
         LtsVersion from = LtsVersion.parse("4.3.1.1");
         LtsVersion to = LtsVersion.parse("4.3.1.3");
-        // same-family in range
-        assertTrue(LtsMigrationService.isInRangeForTargetFamily(LtsVersion.parse("4.3.1.2"), from, to));
-        // older-family bean within the numeric range but wrong family
-        assertFalse(LtsMigrationService.isInRangeForTargetFamily(LtsVersion.parse("4.2.2.3"), from, to));
+        // within-family in range
+        assertTrue(LtsVersion.parse("4.3.1.2").isInRange(from, to));
         // the target itself (upper boundary, inclusive)
-        assertTrue(LtsMigrationService.isInRangeForTargetFamily(to, from, to));
+        assertTrue(to.isInRange(from, to));
         // at from (lower boundary, exclusive)
-        assertFalse(LtsMigrationService.isInRangeForTargetFamily(from, from, to));
+        assertFalse(from.isInRange(from, to));
         // below from
-        assertFalse(LtsMigrationService.isInRangeForTargetFamily(LtsVersion.parse("4.3.1.0"), from, to));
+        assertFalse(LtsVersion.parse("4.3.1.0").isInRange(from, to));
+        // above to
+        assertFalse(LtsVersion.parse("4.3.1.4").isInRange(from, to));
+
+        // Cross-family: an in-range older-family bean IS now selected (the whole point of the loosened filter),
+        // as is the target-family baseline; only a bean below `from` stays out of range.
+        LtsVersion crossFrom = LtsVersion.parse("4.3.0.0");
+        LtsVersion crossTo = LtsVersion.parse("4.4.0.0");
+        assertTrue(LtsVersion.parse("4.3.1.3").isInRange(crossFrom, crossTo));
+        assertTrue(crossTo.isInRange(crossFrom, crossTo));
+        assertFalse(LtsVersion.parse("4.2.2.3").isInRange(crossFrom, crossTo));
+    }
+
+    @Test
+    void reproductionDuplicateBeanSitsBelowSupportedSourceFloor() {
+        // Load-bearing invariant (see LtsMigrationService.select): the only reproduction-duplicate pair is
+        // 4.2.2.3 <-> 4.3.1.3 (both do the solution-template / widget-bundle work). For the loosened (from, to]
+        // filter to never select both in a single supported upgrade, the duplicate 4.2.2.3 must sit strictly
+        // below the minimum supported upgrade source. That floor is 4.3.0.0 (SUPPORTED_VERSIONS_FOR_UPGRADE).
+        LtsVersion duplicate = LtsVersion.parse("4.2.2.3");
+        LtsVersion supportedSourceFloor = LtsVersion.parse("4.3.0.0");
+        assertTrue(duplicate.compareTo(supportedSourceFloor) < 0);
+        // So on any supported cross-family upgrade (from >= floor), the duplicate is out of range.
+        assertFalse(duplicate.isInRange(supportedSourceFloor, LtsVersion.parse("4.4.0.0")));
     }
 
     @Test

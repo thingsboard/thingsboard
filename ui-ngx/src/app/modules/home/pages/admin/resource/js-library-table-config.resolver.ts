@@ -92,7 +92,7 @@ export class JsLibraryTableConfigResolver  {
     this.config.columns.push(
       new DateEntityTableColumn<ResourceInfo>('createdTime', 'common.created-time', this.datePipe, '150px'),
       new EntityTableColumn<ResourceInfo>('title', 'resource.title', '60%'),
-      new EntityTableColumn<ResourceInfo>('resourceSubType', 'javascript.javascript-type', '40%',
+      new EntityTableColumn<ResourceInfo>('resourceSubType', 'javascript.script-type', '40%',
         entity => this.translate.instant(ResourceSubTypeTranslationMap.get(entity.resourceSubType))),
       new EntityTableColumn<ResourceInfo>('tenantId', 'resource.system', '60px',
         entity => checkBoxCell(entity.tenantId.id === NULL_UUID)),
@@ -144,7 +144,7 @@ export class JsLibraryTableConfigResolver  {
   }
 
   resolve(): EntityTableConfig<Resource, PageLink, ResourceInfo> {
-    this.config.tableTitle = this.translate.instant('javascript.javascript-library');
+    this.config.tableTitle = this.translate.instant('javascript.scripts');
     this.config.componentsData = {
       resourceSubType: ''
     };

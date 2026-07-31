@@ -26,7 +26,7 @@
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
                                     [widgetType]="widgetType"
-                                    formControlName="initialState"></tb-get-value-action-settings>
+      formControlName="initialState"></tb-get-value-action-settings>
     </div>
     <div class="tb-form-row space-between">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.value-stepper.left-button-click-hint' | translate}}" translate>widgets.value-stepper.left-button-click</div>
@@ -36,7 +36,7 @@
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
                                     [widgetType]="widgetType"
-                                    formControlName="leftButtonClick"></tb-set-value-action-settings>
+      formControlName="leftButtonClick"></tb-set-value-action-settings>
     </div>
     <div class="tb-form-row space-between">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.value-stepper.right-button-click-hint' | translate}}" translate>widgets.value-stepper.right-button-click</div>
@@ -46,7 +46,7 @@
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
                                     [widgetType]="widgetType"
-                                    formControlName="rightButtonClick"></tb-set-value-action-settings>
+      formControlName="rightButtonClick"></tb-set-value-action-settings>
     </div>
     <div class="tb-form-row">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.button-state.disabled-state-hint' | translate}}" translate>widgets.button-state.disabled-state</div>
@@ -57,7 +57,7 @@
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
                                     [widgetType]="widgetType"
-                                    formControlName="disabledState"></tb-get-value-action-settings>
+      formControlName="disabledState"></tb-get-value-action-settings>
     </div>
   </div>
   <div class="tb-form-panel" formGroupName="appearance">
@@ -67,12 +67,14 @@
                                     breakpoints: {
                                       'lt-sm': 1
                                     }}"
-                           label="{{ 'widgets.button.layout' | translate }}" formControlName="type">
-      <tb-image-cards-select-option *ngFor="let type of valueStepperTypes"
-                                    [value]="type"
-                                    [image]="valueStepperTypeImageMap.get(type)">
-        {{ valueStepperTypeTranslationMap.get(type) | translate }}
-      </tb-image-cards-select-option>
+      label="{{ 'widgets.button.layout' | translate }}" formControlName="type">
+      @for (type of valueStepperTypes; track type) {
+        <tb-image-cards-select-option
+          [value]="type"
+          [image]="valueStepperTypeImageMap.get(type)">
+          {{ valueStepperTypeTranslationMap.get(type) | translate }}
+        </tb-image-cards-select-option>
+      }
     </tb-image-cards-select>
     <div class="tb-form-row">
       <mat-slide-toggle class="mat-slide" formControlName="autoScale">

@@ -46,7 +46,7 @@ public class ApiKeyAuthenticationProvider extends AbstractAuthenticationProvider
         return new ApiKeyAuthenticationToken(securityUser);
     }
 
-    private SecurityUser authenticate(String key) {
+    public SecurityUser authenticate(String key) {
         if (StringUtils.isEmpty(key)) {
             throw new BadCredentialsException("Empty API key");
         }

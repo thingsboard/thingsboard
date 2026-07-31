@@ -20,15 +20,20 @@
                 class="mat-block" [class]="additionalClasses"
                 [floatLabel]="floatLabel"
                 subscriptSizing="{{ subscriptSizing }}">
-  <mat-label *ngIf="label"> {{ label }}</mat-label>
+  @if (label) {
+    <mat-label> {{ label }}</mat-label>
+  }
   <mat-chip-grid #chipList formControlName="entityTypeList">
-    <mat-chip-row
-      *ngFor="let entityType of entityTypeList"
-      [removable]="!disabled"
-      (removed)="remove(entityType)">
-      {{entityType.name}}
-      <mat-icon matChipRemove *ngIf="!disabled">close</mat-icon>
-    </mat-chip-row>
+    @for (entityType of entityTypeList; track entityType) {
+      <mat-chip-row
+        [removable]="!disabled"
+        (removed)="remove(entityType)">
+        {{entityType.name}}
+        @if (!disabled) {
+          <mat-icon matChipRemove>close</mat-icon>
+        }
+      </mat-chip-row>
+    }
     <input matInput type="text" placeholder="{{ !disabled ? ((!entityTypeList || !entityTypeList.length) ? placeholder : secondaryPlaceholder) : '' }}"
            style="max-width: 200px;"
            #entityTypeInput
@@ -43,19 +48,25 @@
   <mat-autocomplete #entityTypeAutocomplete="matAutocomplete"
                     class="tb-autocomplete"
                     [displayWith]="displayEntityTypeFn">
-    <mat-option *ngFor="let entityType of filteredEntityTypeList | async" [value]="entityType">
-      <span [innerHTML]="entityType.name | highlight:searchText"></span>
-    </mat-option>
-    <mat-option *ngIf="!(filteredEntityTypeList | async)?.length" [value]="null">
-      <span>
+    @for (entityType of filteredEntityTypeList | async; track entityType) {
+      <mat-option [value]="entityType">
+        <span [innerHTML]="entityType.name | highlight:searchText"></span>
+      </mat-option>
+    }
+    @if (!(filteredEntityTypeList | async)?.length) {
+      <mat-option [value]="null">
+        <span>
           {{ translate.get('entity.no-entity-types-matching', {entityType: searchText}) | async }}
-      </span>
-    </mat-option>
+        </span>
+      </mat-option>
+    }
   </mat-autocomplete>
   <div matSuffix>
     <ng-content select="[matSuffix]"></ng-content>
   </div>
-  <mat-error *ngIf="entityTypeListFormGroup.get('entityTypeList').hasError('required')">
-    {{ 'entity.entity-type-list-required' | translate }}
-  </mat-error>
+  @if (entityTypeListFormGroup.get('entityTypeList').hasError('required')) {
+    <mat-error>
+      {{ 'entity.entity-type-list-required' | translate }}
+    </mat-error>
+  }
 </mat-form-field>

@@ -16,37 +16,48 @@
 
 -->
 <section [formGroup]="parentForm">
-  <mat-form-field class="mat-block flex-1">
-    <mat-label *ngIf="isDeviceSetting">{{ "device-profile.power-saving-mode" | translate }}</mat-label>
+  <mat-form-field class="mat-block flex-1" appearance="outline">
+    @if (isDeviceSetting) {
+      <mat-label>{{ "device-profile.power-saving-mode" | translate }}</mat-label>
+    }
     <mat-select formControlName="powerMode">
-      <mat-option [value]="null" *ngIf="isDeviceSetting">{{ "device-profile.power-saving-mode-type.default" | translate }}</mat-option>
-      <mat-option *ngFor="let powerMod of powerMods" [value]="powerMod">
-        {{ powerModeTranslationMap.get(powerMod) | translate}}
-      </mat-option>
+      @if (isDeviceSetting) {
+        <mat-option [value]="null">{{ "device-profile.power-saving-mode-type.default" | translate }}</mat-option>
+      }
+      @for (powerMod of powerMods; track powerMod) {
+        <mat-option [value]="powerMod">
+          {{ powerModeTranslationMap.get(powerMod) | translate}}
+        </mat-option>
+      }
     </mat-select>
   </mat-form-field>
-  <section class="mat-block flex-1" *ngIf="parentForm.get('powerMode').value === 'E_DRX'">
-    <tb-time-unit-select [labelText]="'device-profile.edrx-cycle'"
-                         [requiredText]="'device-profile.edrx-cycle-required'"
-                         [patternText]="'device-profile.edrx-cycle-pattern'"
-                         [minTime]="5120"
-                         [minText]="'device-profile.edrx-cycle-min'"
-                         formControlName="edrxCycle">
-    </tb-time-unit-select>
-    <tb-time-unit-select [labelText]="'device-profile.paging-transmission-window'"
-                         [requiredText]="'device-profile.paging-transmission-window-required'"
-                         [patternText]="'device-profile.paging-transmission-window-pattern'"
+  @if (parentForm.get('powerMode').value === 'E_DRX') {
+    <section class="mat-block flex-1">
+      <tb-time-unit-select [labelText]="'device-profile.edrx-cycle'"
+                           [requiredText]="'device-profile.edrx-cycle-required'"
+                           [patternText]="'device-profile.edrx-cycle-pattern'"
+                           [minTime]="5120"
+                           [minText]="'device-profile.edrx-cycle-min'"
+                           appearance="outline"
+                           formControlName="edrxCycle">
+      </tb-time-unit-select>
+      <tb-time-unit-select [labelText]="'device-profile.paging-transmission-window'"
+                           [requiredText]="'device-profile.paging-transmission-window-required'"
+                           [patternText]="'device-profile.paging-transmission-window-pattern'"
+                           [minTime]="1280"
+                           [minText]="'device-profile.paging-transmission-window-min'"
+                           appearance="outline"
+                           formControlName="pagingTransmissionWindow">
+      </tb-time-unit-select>
+    </section>
+  } @else if (parentForm.get('powerMode').value === 'PSM') {
+    <tb-time-unit-select [labelText]="'device-profile.psm-activity-timer'"
+                         [requiredText]="'device-profile.psm-activity-timer-required'"
+                         [patternText]="'device-profile.psm-activity-timer-pattern'"
                          [minTime]="1280"
-                         [minText]="'device-profile.paging-transmission-window-min'"
-                         formControlName="pagingTransmissionWindow">
+                         [minText]="'device-profile.psm-activity-timer-min'"
+                         appearance="outline"
+                         formControlName="psmActivityTimer">
     </tb-time-unit-select>
-  </section>
-  <tb-time-unit-select *ngIf="parentForm.get('powerMode').value === 'PSM'"
-                       [labelText]="'device-profile.psm-activity-timer'"
-                       [requiredText]="'device-profile.psm-activity-timer-required'"
-                       [patternText]="'device-profile.psm-activity-timer-pattern'"
-                       [minTime]="1280"
-                       [minText]="'device-profile.psm-activity-timer-min'"
-                       formControlName="psmActivityTimer">
-  </tb-time-unit-select>
+  }
 </section>

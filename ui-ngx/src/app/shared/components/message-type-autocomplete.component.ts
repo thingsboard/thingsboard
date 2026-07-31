@@ -24,6 +24,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { MessageType, messageTypeNames } from '@shared/models/rule-node.models';
 import { objectValues } from '@core/utils';
+import { MatFormFieldAppearance } from '@angular/material/form-field';
 
 @Component({
     selector: 'tb-message-type-autocomplete',
@@ -50,6 +51,9 @@ export class MessageTypeAutocompleteComponent implements ControlValueAccessor, O
   set required(value: boolean) {
     this.requiredValue = coerceBooleanProperty(value);
   }
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
   @Input()
   disabled: boolean;

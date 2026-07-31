@@ -27,19 +27,24 @@
       <ng-content select="[matSuffix]"></ng-content>
     </div>
     @if (inlineField) {
-      <mat-icon matSuffix
-                matTooltipPosition="above"
-                matTooltipClass="tb-error-tooltip"
-                [matTooltip]="hasError"
-                *ngIf="hasError"
-                class="tb-error">
-        warning
-      </mat-icon>
+      @if (hasError) {
+        <mat-icon matSuffix
+                  matTooltipPosition="above"
+                  matTooltipClass="tb-error-tooltip"
+                  [matTooltip]="hasError"
+                  class="tb-error">
+          warning
+        </mat-icon>
+      }
     }
-    <mat-hint *ngIf="(subscriptSizing === 'fixed') && !inlineField">{{ hintText }}</mat-hint>
-    <mat-error *ngIf="hasError && !inlineField">
-      {{ hasError }}
-    </mat-error>
+    @if ((subscriptSizing === 'fixed') && !inlineField) {
+      <mat-hint>{{ hintText }}</mat-hint>
+    }
+    @if (hasError && !inlineField) {
+      <mat-error>
+        {{ hasError }}
+      </mat-error>
+    }
   </mat-form-field>
   <mat-form-field [class.h-fit]="!inlineField"
                   [class.max-w-33%]="!inlineField && !sameWidthInputs"

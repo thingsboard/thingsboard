@@ -21,6 +21,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
 import org.thingsboard.server.common.data.query.ComplexFilterPredicate;
+import org.thingsboard.server.common.data.query.ComplexOperation;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.EntityDataSortOrder;
@@ -283,16 +284,39 @@ public class EntityKeyMapping {
     }
 
     public Stream<String> toQueries(SqlQueryContext ctx, EntityFilterType filterType) {
-        if (hasFilter()) {
-            String keyAlias = (entityKey.getType().equals(EntityKeyType.ENTITY_FIELD) && getEntityKeyColumn() != null) ? "e" : alias;
-            return keyFilters.stream().map(keyFilter ->
-                    this.buildKeyQuery(ctx, keyAlias, keyFilter, filterType));
-        } else {
+        return toQueries(ctx, filterType, false);
+    }
+
+    public Stream<String> toQueries(SqlQueryContext ctx, EntityFilterType filterType, boolean outerContext) {
+        if (!hasFilter()) {
             return Stream.empty();
         }
+        String keyAlias;
+        boolean useAliasDirectly = false;
+        if (entityKey.getType().equals(EntityKeyType.ENTITY_FIELD) && getEntityKeyColumn() != null) {
+            if (outerContext) {
+                // In the middle layer (OR relocation), entity field columns are exposed
+                // by their alias name from the inner subquery SELECT (e.g., "alias2" from
+                // "cast(e.name as varchar) as alias2"), so buildSimplePredicateQuery must
+                // use the alias directly as the field instead of appending entityKeyColumn.
+                keyAlias = alias;
+                useAliasDirectly = true;
+            } else {
+                keyAlias = "e";
+            }
+        } else {
+            keyAlias = alias;
+        }
+        final boolean aliasAsField = useAliasDirectly;
+        return keyFilters.stream().map(keyFilter ->
+                this.buildKeyQuery(ctx, keyAlias, keyFilter, filterType, aliasAsField));
     }
 
     public String toLatestJoin(SqlQueryContext ctx, EntityFilter entityFilter, EntityType entityType) {
+        return toLatestJoin(ctx, entityFilter, entityType, false);
+    }
+
+    public String toLatestJoin(SqlQueryContext ctx, EntityFilter entityFilter, EntityType entityType, boolean forceLeftJoin) {
         String entityTypeStr;
         if (entityFilter.getType().equals(EntityFilterType.RELATIONS_QUERY)) {
             entityTypeStr = "entities.entity_type";
@@ -300,20 +324,23 @@ public class EntityKeyMapping {
             entityTypeStr = "'" + entityType.name() + "'";
         }
         ctx.addStringParameter(getKeyId(), entityKey.getKey());
-        String filterQuery = toQueries(ctx, entityFilter.getType())
+        // Under OR (forceLeftJoin=true) the filter predicate is re-emitted by buildQuery at the middle
+        // layer with disjunction semantics. Inlining it in the ON clause here would duplicate the
+        // predicate with a different bound parameter name and double-filter the LEFT JOIN.
+        String filterQuery = forceLeftJoin ? "" : toQueries(ctx, entityFilter.getType())
                 .filter(StringUtils::isNotEmpty)
                 .collect(Collectors.joining(" and "));
         if (StringUtils.isNotEmpty(filterQuery)) {
             filterQuery = " AND (" + filterQuery + ")";
         }
         if (entityKey.getType().equals(EntityKeyType.TIME_SERIES)) {
-            String join = (hasFilter() && hasFilterValues(ctx)) ? "inner join" : "left join";
+            String join = (!forceLeftJoin && hasFilter() && hasFilterValues(ctx)) ? "inner join" : "left join";
             return String.format("%s ts_kv_latest %s ON %s.entity_id=entities.id AND %s.key = (select key_id from key_dictionary where key = :%s_key_id) %s",
                     join, alias, alias, alias, alias, filterQuery);
         } else {
             String query;
             if (!entityKey.getType().equals(EntityKeyType.ATTRIBUTE)) {
-                String join = (hasFilter() && hasFilterValues(ctx)) ? "inner join" : "left join";
+                String join = (!forceLeftJoin && hasFilter() && hasFilterValues(ctx)) ? "inner join" : "left join";
                 query = String.format("%s attribute_kv %s ON %s.entity_id=entities.id AND %s.attribute_key=(select key_id from key_dictionary where key = :%s_key_id) ",
                         join, alias, alias, alias, alias);
                 int scope;
@@ -326,7 +353,7 @@ public class EntityKeyMapping {
                 }
                 query = String.format("%s AND %s.attribute_type=%s %s", query, alias, scope, filterQuery);
             } else {
-                String join = (hasFilter() && hasFilterValues(ctx)) ? "join LATERAL" : "left join LATERAL";
+                String join = (!forceLeftJoin && hasFilter() && hasFilterValues(ctx)) ? "join LATERAL" : "left join LATERAL";
                 query = String.format("%s (select * from attribute_kv %s WHERE %s.entity_id=entities.id  AND %s.attribute_key=(select key_id from key_dictionary where key = :%s_key_id) %s " +
                                 "ORDER BY %s.last_update_ts DESC limit 1) as %s ON true",
                         join, alias, alias, alias, alias, filterQuery, alias, alias);
@@ -351,27 +378,47 @@ public class EntityKeyMapping {
     }
 
     public static String buildLatestJoins(SqlQueryContext ctx, EntityFilter entityFilter, EntityType entityType, List<EntityKeyMapping> latestMappings, boolean countQuery) {
+        return buildLatestJoins(ctx, entityFilter, entityType, latestMappings, countQuery, false);
+    }
+
+    public static String buildLatestJoins(SqlQueryContext ctx, EntityFilter entityFilter, EntityType entityType,
+                                           List<EntityKeyMapping> latestMappings, boolean countQuery, boolean forceLeftJoin) {
         return latestMappings.stream()
                 .filter(mapping -> !countQuery || mapping.hasFilter())
-                .map(mapping -> mapping.toLatestJoin(ctx, entityFilter, entityType))
+                .map(mapping -> mapping.toLatestJoin(ctx, entityFilter, entityType, forceLeftJoin))
                 .collect(Collectors.joining(" "));
     }
 
     public static String buildQuery(SqlQueryContext ctx, List<EntityKeyMapping> mappings, EntityFilterType filterType) {
+        return buildQuery(ctx, mappings, filterType, ComplexOperation.AND);
+    }
+
+    public static String buildQuery(SqlQueryContext ctx, List<EntityKeyMapping> mappings,
+                                     EntityFilterType filterType, ComplexOperation operation) {
+        String joiner = (operation == ComplexOperation.OR) ? " OR " : " AND ";
+        // Vacuously-true predicates (e.g. a ComplexFilterPredicate with zero nested predicates producing
+        // an empty string) are dropped here. Under AND this is safe — TRUE is the identity for AND — but
+        // under OR it silently narrows the disjunction. Callers must not emit meaningful empty predicates.
         return mappings.stream()
-                .flatMap(mapping -> mapping.toQueries(ctx, filterType))
+                .flatMap(mapping -> mapping.toQueries(ctx, filterType, operation == ComplexOperation.OR))
                 .filter(StringUtils::isNotEmpty)
-                .collect(Collectors.joining(" AND "));
+                .collect(Collectors.joining(joiner));
     }
 
     public static List<EntityKeyMapping> prepareKeyMapping(EntityType entityType, EntityDataQuery query) {
         EntityFilterType entityFilterType = query.getEntityFilter().getType();
+        ComplexOperation operation = query.getKeyFiltersOperationOrDefault();
 
         List<EntityKey> entityFields = query.getEntityFields() != null ? query.getEntityFields() : Collections.emptyList();
         List<EntityKey> latestValues = query.getLatestValues() != null ? query.getLatestValues() : Collections.emptyList();
-        Map<EntityKey, List<KeyFilter>> filters =
-                query.getKeyFilters() != null ?
-                        query.getKeyFilters().stream().collect(Collectors.groupingBy(KeyFilter::getKey)) : Collections.emptyMap();
+        Map<EntityKey, List<KeyFilter>> filters;
+        if (operation == ComplexOperation.OR) {
+            // Under OR, don't group same-key filters; handle individually below
+            filters = Collections.emptyMap();
+        } else {
+            filters = query.getKeyFilters() != null ?
+                    query.getKeyFilters().stream().collect(Collectors.groupingBy(KeyFilter::getKey)) : Collections.emptyMap();
+        }
         EntityDataSortOrder sortOrder = query.getPageLink().getSortOrder();
         EntityKey sortOrderKey = sortOrder != null ? sortOrder.getKey() : null;
         int index = 2;
@@ -428,14 +475,37 @@ public class EntityKeyMapping {
         for (EntityKeyMapping mapping : mappings) {
             mapping.setIndex(index);
             mapping.setAlias(String.format("alias%s", index));
-            mapping.setKeyFilters(filters.remove(mapping.entityKey));
+            if (operation != ComplexOperation.OR) {
+                // Under AND: assign grouped filters to matching selection mappings
+                mapping.setKeyFilters(filters.remove(mapping.entityKey));
+            }
             if (mapping.getEntityKey().getType().equals(EntityKeyType.ENTITY_FIELD)) {
                 index++;
             } else {
                 index += 2;
             }
         }
-        if (!filters.isEmpty()) {
+        if (operation == ComplexOperation.OR && query.getKeyFilters() != null) {
+            // Under OR: each KeyFilter gets its own EntityKeyMapping (no same-key grouping)
+            for (KeyFilter keyFilter : query.getKeyFilters()) {
+                EntityKeyMapping mapping = new EntityKeyMapping();
+                mapping.setIndex(index);
+                mapping.setAlias(String.format("alias%s", index));
+                mapping.setKeyFilters(Collections.singletonList(keyFilter));
+                EntityKey filterKey = keyFilter.getKey();
+                mapping.setLatest(!filterKey.getType().equals(EntityKeyType.ENTITY_FIELD));
+                mapping.setEntityKey(filterKey);
+                mapping.setEntityKeyColumn(entityType, entityFilterType);
+                mapping.setSelection(mapping.getEntityKeyColumn() == null);
+                mappings.add(mapping);
+                if (filterKey.getType().equals(EntityKeyType.ENTITY_FIELD)) {
+                    index += 1;
+                } else {
+                    index += 2;
+                }
+            }
+        } else if (!filters.isEmpty()) {
+            // Under AND: create mappings for filter-only keys not in selection
             for (EntityKey filterField : filters.keySet()) {
                 EntityKeyMapping mapping = new EntityKeyMapping();
                 mapping.setIndex(index);
@@ -464,24 +534,44 @@ public class EntityKeyMapping {
     public static List<EntityKeyMapping> prepareEntityCountKeyMapping(EntityCountQuery query) {
         EntityType entityType = resolveEntityType(query.getEntityFilter());
         EntityFilterType entityFilterType = query.getEntityFilter().getType();
+        ComplexOperation operation = query.getKeyFiltersOperationOrDefault();
 
-        Map<EntityKey, List<KeyFilter>> filters =
-                query.getKeyFilters() != null ?
-                        query.getKeyFilters().stream().collect(Collectors.groupingBy(KeyFilter::getKey)) : Collections.emptyMap();
         int index = 2;
         List<EntityKeyMapping> mappings = new ArrayList<>();
-        if (!filters.isEmpty()) {
-            for (EntityKey filterField : filters.keySet()) {
+
+        if (operation == ComplexOperation.OR && query.getKeyFilters() != null && !query.getKeyFilters().isEmpty()) {
+            // Under OR: each KeyFilter gets its own mapping (no same-key grouping)
+            for (KeyFilter keyFilter : query.getKeyFilters()) {
                 EntityKeyMapping mapping = new EntityKeyMapping();
                 mapping.setIndex(index);
                 mapping.setAlias(String.format("alias%s", index));
-                mapping.setKeyFilters(filters.get(filterField));
-                mapping.setLatest(!filterField.getType().equals(EntityKeyType.ENTITY_FIELD));
-                mapping.setEntityKey(filterField);
+                mapping.setKeyFilters(Collections.singletonList(keyFilter));
+                EntityKey filterKey = keyFilter.getKey();
+                mapping.setLatest(!filterKey.getType().equals(EntityKeyType.ENTITY_FIELD));
+                mapping.setEntityKey(filterKey);
                 mapping.setEntityKeyColumn(entityType, entityFilterType);
                 mapping.setSelection(mapping.getEntityKeyColumn() == null);
                 mappings.add(mapping);
                 index += 1;
+            }
+        } else {
+            // Under AND (or null/default): group same-key filters together
+            Map<EntityKey, List<KeyFilter>> filters =
+                    query.getKeyFilters() != null ?
+                            query.getKeyFilters().stream().collect(Collectors.groupingBy(KeyFilter::getKey)) : Collections.emptyMap();
+            if (!filters.isEmpty()) {
+                for (EntityKey filterField : filters.keySet()) {
+                    EntityKeyMapping mapping = new EntityKeyMapping();
+                    mapping.setIndex(index);
+                    mapping.setAlias(String.format("alias%s", index));
+                    mapping.setKeyFilters(filters.get(filterField));
+                    mapping.setLatest(!filterField.getType().equals(EntityKeyType.ENTITY_FIELD));
+                    mapping.setEntityKey(filterField);
+                    mapping.setEntityKeyColumn(entityType, entityFilterType);
+                    mapping.setSelection(mapping.getEntityKeyColumn() == null);
+                    mappings.add(mapping);
+                    index += 1;
+                }
             }
         }
 
@@ -529,22 +619,27 @@ public class EntityKeyMapping {
 
     private String buildKeyQuery(SqlQueryContext ctx, String alias, KeyFilter keyFilter,
                                  EntityFilterType filterType) {
-        return this.buildPredicateQuery(ctx, alias, keyFilter.getKey(), keyFilter.getPredicate(), filterType);
+        return this.buildKeyQuery(ctx, alias, keyFilter, filterType, false);
+    }
+
+    private String buildKeyQuery(SqlQueryContext ctx, String alias, KeyFilter keyFilter,
+                                 EntityFilterType filterType, boolean useAliasAsField) {
+        return this.buildPredicateQuery(ctx, alias, keyFilter.getKey(), keyFilter.getPredicate(), filterType, useAliasAsField);
     }
 
     private String buildPredicateQuery(SqlQueryContext ctx, String alias, EntityKey key,
-                                       KeyFilterPredicate predicate, EntityFilterType filterType) {
+                                       KeyFilterPredicate predicate, EntityFilterType filterType, boolean useAliasAsField) {
         if (predicate.getType().equals(FilterPredicateType.COMPLEX)) {
-            return this.buildComplexPredicateQuery(ctx, alias, key, (ComplexFilterPredicate) predicate, filterType);
+            return this.buildComplexPredicateQuery(ctx, alias, key, (ComplexFilterPredicate) predicate, filterType, useAliasAsField);
         } else {
-            return this.buildSimplePredicateQuery(ctx, alias, key, predicate, filterType);
+            return this.buildSimplePredicateQuery(ctx, alias, key, predicate, filterType, useAliasAsField);
         }
     }
 
     private String buildComplexPredicateQuery(SqlQueryContext ctx, String alias, EntityKey key,
-                                              ComplexFilterPredicate predicate, EntityFilterType filterType) {
+                                              ComplexFilterPredicate predicate, EntityFilterType filterType, boolean useAliasAsField) {
         String result = predicate.getPredicates().stream()
-                .map(keyFilterPredicate -> this.buildPredicateQuery(ctx, alias, key, keyFilterPredicate, filterType))
+                .map(keyFilterPredicate -> this.buildPredicateQuery(ctx, alias, key, keyFilterPredicate, filterType, useAliasAsField))
                 .filter(StringUtils::isNotEmpty)
                 .collect(Collectors.joining(" " + predicate.getOperation().name() + " "));
         if (!result.trim().isEmpty()) {
@@ -554,9 +649,9 @@ public class EntityKeyMapping {
     }
 
     private String buildSimplePredicateQuery(SqlQueryContext ctx, String alias, EntityKey key,
-                                             KeyFilterPredicate predicate, EntityFilterType filterType) {
+                                             KeyFilterPredicate predicate, EntityFilterType filterType, boolean useAliasAsField) {
         if (key.getType().equals(EntityKeyType.ENTITY_FIELD)) {
-            String field = (getEntityKeyColumn() != null) ? alias + "." + getEntityKeyColumn() : alias;
+            String field = useAliasAsField || getEntityKeyColumn() == null ? alias : alias + "." + getEntityKeyColumn();
             if (predicate.getType().equals(FilterPredicateType.NUMERIC)) {
                 return this.buildNumericPredicateQuery(ctx, field, (NumericFilterPredicate) predicate);
             } else if (predicate.getType().equals(FilterPredicateType.STRING)) {

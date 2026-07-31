@@ -18,6 +18,7 @@ package org.thingsboard.server.common.data;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EventId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -26,6 +27,7 @@ import org.thingsboard.server.common.data.id.TenantId;
  * @author Andrew Shvayka
  */
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Schema
 public class EventInfo extends BaseData<EventId> {
 

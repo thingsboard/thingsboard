@@ -16,10 +16,12 @@
 
 -->
 <ng-container [formGroup]="simpleCardWidgetConfigForm">
-  <tb-timewindow-config-panel *ngIf="displayTimewindowConfig"
-    [onlyHistoryTimewindow]="onlyHistoryTimewindow()"
-    formControlName="timewindowConfig">
-  </tb-timewindow-config-panel>
+  @if (displayTimewindowConfig) {
+    <tb-timewindow-config-panel
+      [onlyHistoryTimewindow]="onlyHistoryTimewindow()"
+      formControlName="timewindowConfig">
+    </tb-timewindow-config-panel>
+  }
   <tb-datasources
     [configMode]="basicMode"
     hideDataKeyLabel
@@ -32,15 +34,15 @@
     <div class="tb-form-panel-title" translate>widget-config.appearance</div>
     <div class="tb-form-row">
       <div class="fixed-title-width" translate>widgets.simple-card.label</div>
-      <tb-string-pattern-autocomplete class="flex-1" 
+      <tb-string-pattern-autocomplete class="flex-1"
                                       appearance="outline"
-                                      brackets="curly" 
+                                      brackets="curly"
                                       subscriptSizing="dynamic"
                                       predefinedValuesButton="true"
                                       [predefinedValues]="predefinedValues"
                                       placeholderText="{{ 'widget-config.set' | translate }}"
                                       formControlName="label"
-        ></tb-string-pattern-autocomplete>
+      ></tb-string-pattern-autocomplete>
     </div>
     <div class="tb-form-row space-between">
       <div translate>widgets.simple-card.label-position</div>

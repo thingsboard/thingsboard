@@ -827,7 +827,7 @@ export enum AttributeScopeResult {
   SERVER_SCOPE = 'SERVER_SCOPE'
 }
 
-export const AttributeScopeMap = new Map<AttributeScope, string>([
+export const AttributeScopeMap = new Map<AttributeScope | AttributeScopeResult, string>([
   [AttributeScope.SHARED_SCOPE, 'rule-node-config.shared-scope'],
   [AttributeScope.SERVER_SCOPE, 'rule-node-config.server-scope'],
   [AttributeScope.CLIENT_SCOPE, 'rule-node-config.client-scope']

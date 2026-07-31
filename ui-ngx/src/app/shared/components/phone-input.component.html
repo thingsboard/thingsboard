@@ -17,16 +17,24 @@
 -->
 <form [formGroup]="phoneFormGroup">
   <div class="phone-input-container">
-    <div class="flags-select-container" *ngIf="showFlagSelect">
-      <span class="flag-container" *ngIf="!isLoad">{{ flagIcon }}</span>
-      <mat-spinner diameter="20" class="flag-loader" *ngIf="isLoad"></mat-spinner>
-      <mat-select class="country-select" formControlName="country">
-        <mat-option *ngFor="let country of allCountries" [value]="country.iso2">
-          <span style="font-size: 20px;">{{country.flag}}</span>
-          <span>{{' ' + country.name + ' +' + country.dialCode }}</span>
-        </mat-option>
-      </mat-select>
-    </div>
+    @if (showFlagSelect) {
+      <div class="flags-select-container">
+        @if (!isLoad) {
+          <span class="flag-container">{{ flagIcon }}</span>
+        }
+        @if (isLoad) {
+          <mat-spinner diameter="20" class="flag-loader"></mat-spinner>
+        }
+        <mat-select class="country-select" formControlName="country">
+          @for (country of allCountries; track country) {
+            <mat-option [value]="country.iso2">
+              <span style="font-size: 20px;">{{country.flag}}</span>
+              <span>{{' ' + country.name + ' +' + country.dialCode }}</span>
+            </mat-option>
+          }
+        </mat-select>
+      </div>
+    }
     <mat-form-field class="phone-input" [appearance]="appearance" [floatLabel]="floatLabel" subscriptSizing="dynamic">
       <mat-label>{{ label }}</mat-label>
       <input
@@ -38,12 +46,16 @@
         autocomplete="off"
         [required]="required">
       <mat-hint innerHTML="{{ hint | translate: {phoneNumber: phonePlaceholder} }}"></mat-hint>
-      <mat-error *ngIf="phoneFormGroup.get('phoneNumber').hasError('required')">
-        {{ requiredErrorText }}
-      </mat-error>
-      <mat-error *ngIf="phoneFormGroup.get('phoneNumber').hasError('invalidPhoneNumber')">
-        {{ validationErrorText }}
-      </mat-error>
+      @if (phoneFormGroup.get('phoneNumber').hasError('required')) {
+        <mat-error>
+          {{ requiredErrorText }}
+        </mat-error>
+      }
+      @if (phoneFormGroup.get('phoneNumber').hasError('invalidPhoneNumber')) {
+        <mat-error>
+          {{ validationErrorText }}
+        </mat-error>
+      }
     </mat-form-field>
   </div>
 </form>

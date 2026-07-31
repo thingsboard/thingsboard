@@ -29,58 +29,63 @@
     </mat-expansion-panel-header>
     <ng-template matExpansionPanelContent class="tb-extension-panel">
       <div class="flex flex-row xs:flex-col gt-xs:gap-2">
-        <mat-form-field class="mat-block flex-1" *ngIf="!hideButtonText">
-          <mat-label translate>notification.button-text</mat-label>
-          <input matInput formControlName="text" required>
-          <mat-error
-            *ngIf="actionButtonConfigForm.get('text').hasError('required')">
-            {{ 'notification.button-text-required' | translate }}
-          </mat-error>
-          <mat-error
-            *ngIf="actionButtonConfigForm.get('text').hasError('maxlength')">
-            {{ 'notification.button-text-max-length' | translate :
+        @if (!hideButtonText) {
+          <mat-form-field class="mat-block flex-1" appearance="outline">
+            <mat-label translate>notification.button-text</mat-label>
+            <input matInput formControlName="text" required>
+            @if (actionButtonConfigForm.get('text').hasError('required')) {
+              <mat-error>{{ 'notification.button-text-required' | translate }}</mat-error>
+            }
+            @if (actionButtonConfigForm.get('text').hasError('maxlength')) {
+              <mat-error>{{ 'notification.button-text-max-length' | translate :
                 {length: actionButtonConfigForm.get('text').getError('maxlength').requiredLength}
-            }}
-          </mat-error>
-        </mat-form-field>
+                }}</mat-error>
+            }
+          </mat-form-field>
+        }
       </div>
       <div class="grid gt-sm:grid-cols-3 gt-sm:gap-4">
-        <mat-form-field class="mat-block">
+        <mat-form-field class="mat-block" appearance="outline">
           <mat-label translate>notification.action-type</mat-label>
           <mat-select formControlName="linkType">
-            <mat-option *ngFor="let actionButtonLinkType of actionButtonLinkTypes"
-                        [value]="actionButtonLinkType">
-              {{ actionButtonLinkTypeTranslateMap.get(actionButtonLinkType) | translate }}
-            </mat-option>
+            @for (actionButtonLinkType of actionButtonLinkTypes; track actionButtonLinkType) {
+              <mat-option [value]="actionButtonLinkType">
+                {{ actionButtonLinkTypeTranslateMap.get(actionButtonLinkType) | translate }}
+              </mat-option>
+            }
           </mat-select>
         </mat-form-field>
-        @if(actionButtonConfigForm.get('linkType').value === actionButtonLinkType.LINK) {
-          <mat-form-field class="gt-sm:col-span-2">
+        @if (actionButtonConfigForm.get('linkType').value === actionButtonLinkType.LINK) {
+          <mat-form-field class="gt-sm:col-span-2" appearance="outline">
             <mat-label translate>notification.link</mat-label>
             <input matInput formControlName="link" required>
-            <mat-error
-              *ngIf="actionButtonConfigForm.get('link').hasError('required')">
-              {{ 'notification.link-required' | translate }}
-            </mat-error>
-            <mat-error
-              *ngIf="actionButtonConfigForm.get('link').hasError('maxlength')">
-              {{ 'notification.link-max-length' | translate :
-              {length: actionButtonConfigForm.get('link').getError('maxlength').requiredLength}
-              }}
-            </mat-error>
+            @if (actionButtonConfigForm.get('link').hasError('required')) {
+              <mat-error>{{ 'notification.link-required' | translate }}</mat-error>
+            }
+            @if (actionButtonConfigForm.get('link').hasError('maxlength')) {
+              <mat-error>{{ 'notification.link-max-length' | translate :
+                {length: actionButtonConfigForm.get('link').getError('maxlength').requiredLength}
+                }}</mat-error>
+            }
           </mat-form-field>
         } @else {
-          <tb-dashboard-autocomplete required formControlName="dashboardId">
+          <tb-dashboard-autocomplete
+            required
+            appearance="outline"
+            formControlName="dashboardId">
           </tb-dashboard-autocomplete>
-          <tb-dashboard-state-autocomplete [dashboardId]="actionButtonConfigForm.get('dashboardId').value"
-                                           formControlName="dashboardState">
+          <tb-dashboard-state-autocomplete
+            appearance="outline"
+            [dashboardId]="actionButtonConfigForm.get('dashboardId').value"
+            formControlName="dashboardState">
           </tb-dashboard-state-autocomplete>
         }
       </div>
-      <mat-slide-toggle formControlName="setEntityIdInState" class="toggle"
-                        *ngIf="actionButtonConfigForm.get('linkType').value === actionButtonLinkType.DASHBOARD">
-        {{ 'notification.set-entity-from-notification' | translate }}
-      </mat-slide-toggle>
+      @if (actionButtonConfigForm.get('linkType').value === actionButtonLinkType.DASHBOARD) {
+        <mat-slide-toggle formControlName="setEntityIdInState" class="toggle">
+          {{ 'notification.set-entity-from-notification' | translate }}
+        </mat-slide-toggle>
+      }
     </ng-template>
   </mat-expansion-panel>
 </div>

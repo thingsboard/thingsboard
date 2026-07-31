@@ -45,12 +45,14 @@
                     formControlName="color">
     </tb-color-input>
   </div>
-  <button *ngIf="!disabled" mat-icon-button style="min-width: 40px;"
-          type="button"
-          class="tb-box-button"
-          (click)="removeAdvancedRange.emit()"
-          matTooltip="{{ 'action.remove' | translate }}"
-          matTooltipPosition="above">
-    <mat-icon>delete</mat-icon>
-  </button>
+  @if (!disabled) {
+    <button mat-icon-button style="min-width: 40px;"
+            type="button"
+            class="tb-box-button"
+            (click)="removeAdvancedRange.emit()"
+            matTooltip="{{ 'action.remove' | translate }}"
+            matTooltipPosition="above">
+      <mat-icon>delete</mat-icon>
+    </button>
+  }
 </div>

@@ -40,7 +40,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { DialogService } from '@core/services/dialog.service';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { forkJoin, merge, Observable, Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, take, takeUntil } from 'rxjs/operators';
 import { EntityId } from '@shared/models/id/entity-id';
 import {
   AttributeData,
@@ -195,6 +195,7 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
   isSysAdmin = false;
 
   private destroy$ = new Subject<void>();
+  selectAllModel: boolean = false;
 
   constructor(protected store: Store<AppState>,
               private attributeService: AttributeService,
@@ -232,6 +233,14 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
       });
     });
     this.widgetResize$.observe(this.elementRef.nativeElement);
+
+    this.dataSource.selection.changed.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(() => {
+      this.dataSource.isAllSelected().pipe(take(1)).subscribe(allSelected => {
+        this.selectAllModel = allSelected;
+      });
+    });
   }
 
   ngOnDestroy() {
@@ -246,6 +255,7 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
     this.attributeScope = attributeScope;
     this.mode = 'default';
     this.paginator.pageIndex = 0;
+    this.selectAllModel = false;
     this.updateData(true);
   }
 

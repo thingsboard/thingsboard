@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { WidgetContext } from '@home/models/widget-component.models';
+import { WidgetAction, WidgetContext } from '@home/models/widget-component.models';
 import {
   adjustTimeAxisExtentToData,
   calculateThresholdsOffset,
@@ -23,7 +23,8 @@ import {
   createTimeSeriesYAxis,
   defaultTimeSeriesChartYAxisSettings,
   generateChartData,
-  LineSeriesStepType, normalizeAxisLimit,
+  LineSeriesStepType,
+  normalizeAxisLimit,
   parseThresholdData,
   TimeSeriesChartAxis,
   TimeSeriesChartDataItem,
@@ -47,9 +48,11 @@ import {
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import {
   calculateAxisSize,
+  DataZoomEvent,
   ECharts,
   echartsModule,
   EChartsOption,
+  getAxis,
   getAxisExtent,
   getFocusedSeriesIndex,
   measureAxisNameSize
@@ -140,6 +143,13 @@ export class TbTimeSeriesChart {
 
   private hasVisualMap = false;
   private visualMapSelectedRanges: {[key: number]: boolean};
+
+  private dataZoomResetting = false;
+  private dataZoomUpdatePending = false;
+  private dataZoomDebounce: ReturnType<typeof setTimeout> | null = null;
+  private lastDataZoomStart = 0;
+  private lastDataZoomEnd = 100;
+  private timewindowChanged = false;
 
   private timeSeriesChart: ECharts;
   private timeSeriesChartOptions: EChartsOption;
@@ -265,6 +275,12 @@ export class TbTimeSeriesChart {
       if (this.highlightedDataKey) {
         this.keyEnter(this.highlightedDataKey);
       }
+      if (this.dataZoomUpdatePending) {
+        this.dataZoomUpdatePending = false;
+        this.dataZoomResetting = true;
+        this.timeSeriesChart.dispatchAction({ type: 'dataZoom', start: 0, end: 100 });
+        this.dataZoomResetting = false;
+      }
     }
   }
 
@@ -386,6 +402,10 @@ export class TbTimeSeriesChart {
   }
 
   public destroy(): void {
+    if (this.dataZoomDebounce !== null) {
+      clearTimeout(this.dataZoomDebounce);
+      this.dataZoomDebounce = null;
+    }
     if (this.shapeResize$) {
       this.shapeResize$.disconnect();
     }
@@ -415,6 +435,25 @@ export class TbTimeSeriesChart {
 
   public isDarkMode(): boolean {
     return this.darkMode;
+  }
+
+  public getWidgetActions(): WidgetAction[] {
+    if (this.settings.dataZoom && this.settings.dataZoomUpdateTimewindow) {
+      return [{
+        name: 'widgets.time-series-chart.reset-timewindow',
+        icon: 'restore',
+        onAction: () => {
+          if (this.dataZoomDebounce !== null) {
+            clearTimeout(this.dataZoomDebounce);
+            this.dataZoomDebounce = null;
+          }
+          this.timewindowChanged = false;
+          this.ctx.defaultSubscription.onResetTimewindow();
+        },
+        show: ()=> this.timewindowChanged
+      }];
+    }
+    return [];
   }
 
   private setupData(): void {
@@ -846,8 +885,39 @@ export class TbTimeSeriesChart {
     this.updateAxes(false);
 
     if (this.settings.dataZoom) {
-      this.timeSeriesChart.on('datazoom', () => {
+      this.timeSeriesChart.on('datazoom', (event: DataZoomEvent) => {
         this.updateAxes();
+        if (this.settings.dataZoomUpdateTimewindow && !this.dataZoomResetting) {
+          const evStart = event.batch?.length ? event.batch[0].start : event.start;
+          const evEnd   = event.batch?.length ? event.batch[0].end   : event.end;
+          this.lastDataZoomStart = evStart;
+          this.lastDataZoomEnd = evEnd;
+          if (this.dataZoomDebounce !== null) {
+            clearTimeout(this.dataZoomDebounce);
+          }
+          this.dataZoomDebounce = setTimeout(() => {
+            this.dataZoomDebounce = null;
+            if (this.timeSeriesChart?.isDisposed()) {
+              return;
+            }
+            if (Math.round(this.lastDataZoomStart) === 0 && Math.round(this.lastDataZoomEnd) === 100) {
+              this.ctx.defaultSubscription.onResetTimewindow();
+              this.timewindowChanged = false;
+            } else {
+              const axis = getAxis(this.timeSeriesChart, 'xAxis', 'main');
+              if (axis) {
+                const extent = axis.scale.getExtent();
+                const startMs = Math.round(extent[0]);
+                const endMs = Math.round(extent[1]);
+                if (startMs < endMs) {
+                  this.dataZoomUpdatePending = true;
+                  this.timewindowChanged = true;
+                  this.ctx.defaultSubscription.onUpdateTimewindow(startMs, endMs);
+                }
+              }
+            }
+          }, 500);
+        }
       });
     }
   }

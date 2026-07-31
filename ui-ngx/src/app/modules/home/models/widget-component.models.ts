@@ -151,7 +151,7 @@ export interface WidgetHeaderAction extends IWidgetAction {
 }
 
 export interface WidgetAction extends IWidgetAction {
-  show: boolean;
+  show: boolean | (()=> boolean);
 }
 
 export interface IDashboardWidget {

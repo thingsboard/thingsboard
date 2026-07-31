@@ -18,9 +18,10 @@
 <section class="tb-widget-settings" [formGroup]="updateLocationAttributeWidgetSettingsForm">
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.input-widgets.general-settings</legend>
-    <tb-string-pattern-autocomplete class="mat-block flex-1" 
-                                              brackets="curly" 
+    <tb-string-pattern-autocomplete class="mat-block flex-1"
+                                              brackets="curly"
                                               subscriptSizing="fixed"
+                                              appearance="outline"
                                               predefinedValuesButton="true"
                                               label="{{ 'widgets.input-widgets.widget-title' | translate }}"
                                               [predefinedValues]="predefinedValues"
@@ -31,11 +32,11 @@
       {{ 'widgets.input-widgets.show-result-message' | translate }}
     </mat-slide-toggle>
     <section class="flex flex-row xs:flex-col gt-xs:items-center gt-xs:justify-start gt-xs:gap-2">
-      <mat-form-field class="mat-block flex-1">
+      <mat-form-field class="mat-block flex-1" appearance="outline">
         <mat-label translate>widgets.input-widgets.latitude-key-name</mat-label>
         <input matInput formControlName="latKeyName">
       </mat-form-field>
-      <mat-form-field class="mat-block flex-1">
+      <mat-form-field class="mat-block flex-1" appearance="outline">
         <mat-label translate>widgets.input-widgets.longitude-key-name</mat-label>
         <input matInput formControlName="lngKeyName">
       </mat-form-field>
@@ -53,16 +54,16 @@
       {{ 'widgets.input-widgets.show-label' | translate }}
     </mat-slide-toggle>
     <section class="flex flex-row xs:flex-col gt-xs:items-center gt-xs:justify-start gt-xs:gap-2">
-      <mat-form-field class="mat-block flex-1">
+      <mat-form-field class="mat-block flex-1" appearance="outline">
         <mat-label translate>widgets.input-widgets.latitude-label</mat-label>
         <input matInput formControlName="latLabel">
       </mat-form-field>
-      <mat-form-field class="mat-block flex-1">
+      <mat-form-field class="mat-block flex-1" appearance="outline">
         <mat-label translate>widgets.input-widgets.longitude-label</mat-label>
         <input matInput formControlName="lngLabel">
       </mat-form-field>
     </section>
-    <mat-form-field class="mat-block flex-1">
+    <mat-form-field class="mat-block flex-1" appearance="outline">
       <mat-label translate>widgets.input-widgets.input-fields-alignment</mat-label>
       <mat-select formControlName="inputFieldsAlignment">
         <mat-option [value]="'column'">
@@ -81,7 +82,7 @@
         {{ 'widgets.input-widgets.longitude-field-required' | translate }}
       </mat-slide-toggle>
     </section>
-    <mat-form-field class="mat-block flex-1">
+    <mat-form-field class="mat-block flex-1" appearance="outline">
       <mat-label translate>widgets.input-widgets.required-error-message</mat-label>
       <input matInput formControlName="requiredErrorMessage">
     </mat-form-field>

@@ -78,6 +78,9 @@ public class SystemInfoController extends BaseController {
     @Value("${debug.settings.default_duration:15}")
     private int defaultDebugDurationMinutes;
 
+    @Value("${sql.query.key-filters-or-conditions.enabled:true}")
+    private boolean keyFiltersOrConditionsEnabled;
+
     @Value("${sql.entity_data_query_nulls_order_strategy:default}")
     private String nullsOrderStrategy;
 
@@ -189,6 +192,7 @@ public class SystemInfoController extends BaseController {
         systemParams.setMobileQrEnabled(Optional.ofNullable(qrCodeSettingService.findQrCodeSettings(TenantId.SYS_TENANT_ID))
                 .map(QrCodeSettings::getQrCodeConfig).map(QRCodeConfig::isShowOnHomePage)
                 .orElse(false));
+        systemParams.setAllowKeyFiltersOrConditions(keyFiltersOrConditionsEnabled);
         return systemParams;
     }
 

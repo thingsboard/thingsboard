@@ -8,15 +8,13 @@
 <br>
 <div align="center">
  
-💡 [Get started](https://thingsboard.io/docs/getting-started-guides/helloworld/)&ensp;•&ensp;🌐 [Website](https://thingsboard.io/)&ensp;•&ensp;📚 [Documentation](https://thingsboard.io/docs/)&ensp;•&ensp;📔 [Blog](https://thingsboard.io/blog/)&ensp;•&ensp;▶️ [Live demo](https://demo.thingsboard.io/signup)&ensp;•&ensp;🔗 [LinkedIn](https://www.linkedin.com/company/thingsboard/posts/?feedView=all)
+💡 [Get started](https://thingsboard.io/docs/getting-started-guides/helloworld/)&ensp;•&ensp;🌐 [Website](https://thingsboard.io/)&ensp;•&ensp;📚 [Documentation](https://thingsboard.io/docs/)&ensp;•&ensp;📔 [Blog](https://thingsboard.io/blog/)&ensp;•&ensp;🔗 [LinkedIn](https://www.linkedin.com/company/thingsboard/posts/?feedView=all)
 
 </div>
 
 ## 🚀 Installation options
 
-* Install ThingsBoard [On-premise](https://thingsboard.io/docs/user-guide/install/installation-options/?ceInstallType=onPremise)
-* Try [ThingsBoard Cloud](https://thingsboard.io/installations/)
-* or [Use our Live demo](https://demo.thingsboard.io/signup)
+Install ThingsBoard [on-premises](https://thingsboard.io/docs/user-guide/install/installation-options/?ceInstallType=onPremise) or use [ThingsBoard Cloud](https://thingsboard.io/installations/).
 
 ## 💡 Getting started with ThingsBoard
 
@@ -123,9 +121,9 @@ ThingsBoard is a scalable, user-friendly, and device-agnostic IoT platform that 
 
 [![SCADA Swimming pool](https://github.com/user-attachments/assets/68fd9e29-99f1-4c16-8c4c-476f4ccb20c0 "SCADA Swimming pool")](https://thingsboard.io/use-cases/scada/)
 
-[**Fleet tracking**](https://thingsboard.io/use-cases/fleet-tracking/)
+[**Site fleet tracking**](https://thingsboard.io/use-cases/site-fleet-tracking/)
 
-[![Fleet tracking](https://github.com/user-attachments/assets/9e8938ba-ee0c-4599-9494-d74b7de8a63d "Fleet tracking")](https://thingsboard.io/use-cases/fleet-tracking/)
+[![Site fleet tracking](https://github.com/user-attachments/assets/d6ce0766-b138-4a42-86aa-7112a543026c "Site fleet tracking")](https://thingsboard.io/use-cases/site-fleet-tracking/)
 
 [**Smart farming**](https://thingsboard.io/use-cases/smart-farming/)
 

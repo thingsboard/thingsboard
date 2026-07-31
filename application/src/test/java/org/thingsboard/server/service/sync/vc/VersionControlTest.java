@@ -477,7 +477,7 @@ public class VersionControlTest extends AbstractControllerTest {
         Dashboard importedOtherDashboard = findDashboard(otherDashboard.getName());
         Dashboard importedDashboard = findDashboard(dashboard.getName());
 
-        Map.Entry<String, JsonNode> entityAlias = importedDashboard.getConfiguration().get("entityAliases").fields().next();
+        Map.Entry<String, JsonNode> entityAlias = importedDashboard.getConfiguration().get("entityAliases").properties().iterator().next();
         assertThat(entityAlias.getKey()).isEqualTo(aliasId);
         assertThat(entityAlias.getValue().get("id").asText()).isEqualTo(aliasId);
 
@@ -942,7 +942,6 @@ public class VersionControlTest extends AbstractControllerTest {
         }
         return result.getResult().stream().collect(Collectors.toMap(EntityTypeLoadResult::getEntityType, r -> r));
     }
-
     private List<EntityVersion> listVersions() throws Exception {
         PageData<EntityVersion> versions = doGetAsyncTyped("/api/entities/vc/version?branch=" + branch + "&pageSize=100&page=0&sortProperty=timestamp&sortOrder=DESC", new TypeReference<PageData<EntityVersion>>() {});
         return versions.getData();

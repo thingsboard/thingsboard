@@ -37,6 +37,14 @@ public record LtsVersion(int major, int minor, int maintenance, int patch) imple
         return major == other.major && minor == other.minor;
     }
 
+    /**
+     * Half-open range check: {@code from < this <= to}. The lower bound is exclusive (a source already at
+     * {@code from} has applied that version) and the upper bound inclusive (the target version's own migration runs).
+     */
+    public boolean isInRange(LtsVersion from, LtsVersion to) {
+        return compareTo(from) > 0 && compareTo(to) <= 0;
+    }
+
     @Override
     public int compareTo(LtsVersion o) {
         int c = Integer.compare(major, o.major);

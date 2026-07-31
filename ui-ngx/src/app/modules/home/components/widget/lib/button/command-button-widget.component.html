@@ -26,5 +26,7 @@
     [ctx]="ctx"
     (clicked)="onClick($event)">
   </tb-widget-button>
-  <mat-progress-bar class="tb-action-widget-progress" style="height: 4px;" color="accent" mode="indeterminate" *ngIf="loading$ | async"></mat-progress-bar>
+  @if (loading$ | async) {
+    <mat-progress-bar class="tb-action-widget-progress" style="height: 4px;" color="accent" mode="indeterminate"></mat-progress-bar>
+  }
 </div>

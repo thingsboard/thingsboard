@@ -103,7 +103,7 @@ public class JpaTenantDaoTest extends AbstractJpaDaoTest {
     //@DatabaseSetup("classpath:dbunit/empty_dataset.xml")
     public void testIsExistsTenantById() {
         final UUID uuid = Uuids.timeBased();
-        final TenantId tenantId = new TenantId(uuid);
+        final TenantId tenantId = TenantId.fromUUID(uuid);
         assertThat(tenantDao.existsById(tenantId, uuid)).as("Is tenant exists before save").isFalse();
 
         final Tenant tenant = new Tenant();

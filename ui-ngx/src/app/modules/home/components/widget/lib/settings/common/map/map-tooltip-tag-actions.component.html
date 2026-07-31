@@ -19,49 +19,57 @@
   <div translate>widgets.maps.data-layer.tooltip-tag-actions</div>
   <div class="flex min-w-0 flex-1 flex-row items-center justify-end gap-4 xs:justify-between">
     <mat-chip-listbox class="min-w-0">
-      <mat-chip *ngFor="let action of actionsFormGroup.get('actions').value; let $index = index;"
-                class="tb-tag-action-chip"
-                [removable]="!disabled" (removed)="removeAction($index)">
-        <div class="flex flex-row items-center justify-start gap-1">
-          <div class="tb-chip-labels">
-            <div class="tb-chip-label tb-chip-text">
-              <strong>
-                {{ action.name }}
-              </strong>
+      @for (action of actionsFormGroup.get('actions').value; track action) {
+        <mat-chip
+          class="tb-tag-action-chip"
+          [removable]="!disabled" (removed)="removeAction($index)">
+          <div class="flex flex-row items-center justify-start gap-1">
+            <div class="tb-chip-labels">
+              <div class="tb-chip-label tb-chip-text">
+                <strong>
+                  {{ action.name }}
+                </strong>
+              </div>
             </div>
+            @if (!disabled) {
+              <button
+                #editButton
+                type="button"
+                mat-icon-button
+                class="tb-mat-24"
+                matTooltip="{{ 'widgets.maps.data-layer.edit-tooltip-tag-action' | translate }}"
+                matTooltipPosition="above"
+                (click)="editAction($event, editButton, $index)">
+                <mat-icon class="tb-mat-18">edit</mat-icon>
+              </button>
+            }
+            @if (!disabled) {
+              <button
+                matChipRemove
+                type="button"
+                mat-icon-button
+                class="tb-mat-24"
+                matTooltip="{{ 'widgets.maps.data-layer.remove-tooltip-tag-action' | translate }}"
+                matTooltipPosition="above">
+                <mat-icon class="tb-mat-18">close</mat-icon>
+              </button>
+            }
           </div>
-          <button *ngIf="!disabled"
-                  #editButton
-                  type="button"
-                  mat-icon-button
-                  class="tb-mat-24"
-                  matTooltip="{{ 'widgets.maps.data-layer.edit-tooltip-tag-action' | translate }}"
-                  matTooltipPosition="above"
-                  (click)="editAction($event, editButton, $index)">
-            <mat-icon class="tb-mat-18">edit</mat-icon>
-          </button>
-          <button *ngIf="!disabled"
-                  matChipRemove
-                  type="button"
-                  mat-icon-button
-                  class="tb-mat-24"
-                  matTooltip="{{ 'widgets.maps.data-layer.remove-tooltip-tag-action' | translate }}"
-                  matTooltipPosition="above">
-            <mat-icon class="tb-mat-18">close</mat-icon>
-          </button>
-        </div>
-      </mat-chip>
+        </mat-chip>
+      }
     </mat-chip-listbox>
-    <button *ngIf="!disabled"
-            #addButton
-            type="button"
-            mat-icon-button
-            class="tb-mat-40"
-            color="primary"
-            matTooltip="{{ 'widgets.maps.data-layer.add-tooltip-tag-action' | translate }}"
-            matTooltipPosition="above"
-            (click)="addAction($event, addButton)">
-      <mat-icon>add</mat-icon>
-    </button>
+    @if (!disabled) {
+      <button
+        #addButton
+        type="button"
+        mat-icon-button
+        class="tb-mat-40"
+        color="primary"
+        matTooltip="{{ 'widgets.maps.data-layer.add-tooltip-tag-action' | translate }}"
+        matTooltipPosition="above"
+        (click)="addAction($event, addButton)">
+        <mat-icon>add</mat-icon>
+      </button>
+    }
   </div>
 </div>

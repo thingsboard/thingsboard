@@ -17,7 +17,7 @@
 -->
 <section class="tb-widget-settings" [formGroup]="providerSettingsFormGroup">
   <tb-gallery-image-input label="{{ 'widgets.maps.image-map-background' | translate }}"
-                  formControlName="mapImageUrl">
+                          formControlName="mapImageUrl">
   </tb-gallery-image-input>
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.maps.image-map-background-from-entity-attribute</legend>
@@ -30,18 +30,22 @@
                (focusin)="onEntityAliasFocus()"
                formControlName="imageEntityAlias"
                [matAutocomplete]="entityAliasAutocomplete">
-        <button *ngIf="providerSettingsFormGroup.get('imageEntityAlias').value && !providerSettingsFormGroup.get('imageEntityAlias').disabled"
-                type="button"
-                matSuffix mat-icon-button aria-label="Clear"
-                (click)="clearEntityAlias()">
-          <mat-icon class="material-icons">close</mat-icon>
-        </button>
+        @if (providerSettingsFormGroup.get('imageEntityAlias').value && !providerSettingsFormGroup.get('imageEntityAlias').disabled) {
+          <button
+            type="button"
+            matSuffix mat-icon-button aria-label="Clear"
+            (click)="clearEntityAlias()">
+            <mat-icon class="material-icons">close</mat-icon>
+          </button>
+        }
         <mat-autocomplete
           class="tb-autocomplete"
           #entityAliasAutocomplete="matAutocomplete">
-          <mat-option *ngFor="let entityAlias of filteredEntityAliases | async" [value]="entityAlias">
-            <span [innerHTML]="entityAlias | highlight:aliasSearchText"></span>
-          </mat-option>
+          @for (entityAlias of filteredEntityAliases | async; track entityAlias) {
+            <mat-option [value]="entityAlias">
+              <span [innerHTML]="entityAlias | highlight:aliasSearchText"></span>
+            </mat-option>
+          }
         </mat-autocomplete>
       </mat-form-field>
       <mat-form-field class="flex-1">
@@ -52,18 +56,22 @@
                (focusin)="onKeyFocus()"
                formControlName="imageUrlAttribute"
                [matAutocomplete]="keyAutocomplete">
-        <button *ngIf="providerSettingsFormGroup.get('imageUrlAttribute').value && !providerSettingsFormGroup.get('imageUrlAttribute').disabled"
-                type="button"
-                matSuffix mat-icon-button aria-label="Clear"
-                (click)="clearKey()">
-          <mat-icon class="material-icons">close</mat-icon>
-        </button>
+        @if (providerSettingsFormGroup.get('imageUrlAttribute').value && !providerSettingsFormGroup.get('imageUrlAttribute').disabled) {
+          <button
+            type="button"
+            matSuffix mat-icon-button aria-label="Clear"
+            (click)="clearKey()">
+            <mat-icon class="material-icons">close</mat-icon>
+          </button>
+        }
         <mat-autocomplete
           class="tb-autocomplete"
           #keyAutocomplete="matAutocomplete">
-          <mat-option *ngFor="let key of filteredKeys | async" [value]="key">
-            <span [innerHTML]="key | highlight:keySearchText"></span>
-          </mat-option>
+          @for (key of filteredKeys | async; track key) {
+            <mat-option [value]="key">
+              <span [innerHTML]="key | highlight:keySearchText"></span>
+            </mat-option>
+          }
         </mat-autocomplete>
       </mat-form-field>
     </section>

@@ -90,9 +90,11 @@
           <mat-form-field class="mat-block">
             <mat-label translate>widgets.maps.show-tooltip-action</mat-label>
             <mat-select required formControlName="showTooltipAction">
-              <mat-option *ngFor="let action of showTooltipActions" [value]="action">
-                {{showTooltipActionTranslations.get(action) | translate}}
-              </mat-option>
+              @for (action of showTooltipActions; track action) {
+                <mat-option [value]="action">
+                  {{showTooltipActionTranslations.get(action) | translate}}
+                </mat-option>
+              }
             </mat-select>
           </mat-form-field>
           <mat-slide-toggle formControlName="autocloseTooltip" class="slide-block">
@@ -171,8 +173,8 @@
         </mat-expansion-panel-header>
         <ng-template matExpansionPanelContent>
           <tb-gallery-image-input [class.!hidden]="markersSettingsFormGroup.get('useMarkerImageFunction').value"
-                          label="{{ 'widgets.maps.custom-marker-image' | translate }}"
-                          formControlName="markerImage">
+                                  label="{{ 'widgets.maps.custom-marker-image' | translate }}"
+                                  formControlName="markerImage">
           </tb-gallery-image-input>
           <mat-form-field [class.!hidden]="markersSettingsFormGroup.get('useMarkerImageFunction').value"
                           class="mat-block">

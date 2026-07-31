@@ -626,16 +626,8 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     this.ctx.detectChanges();
   }
 
-  public trackByColumnDef(index, column: EntityColumn) {
-    return column.def;
-  }
-
   public trackByEntityId(index: number, entity: EntityData) {
     return entity.id.id;
-  }
-
-  public trackByActionCellDescriptionId(index: number, action: WidgetActionDescriptor) {
-    return action.id;
   }
 
   public headerStyle(key: EntityColumn): any {

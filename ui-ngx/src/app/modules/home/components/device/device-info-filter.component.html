@@ -15,11 +15,10 @@
     limitations under the License.
 
 -->
-<ng-container *ngIf="panelMode; else componentMode">
+@if (panelMode) {
   <ng-container *ngTemplateOutlet="deviceFilterPanel"></ng-container>
-</ng-container>
-<ng-template #componentMode>
-  <ng-container *ngIf="buttonMode; else deviceFilter">
+} @else {
+  @if (buttonMode) {
     <button color="primary"
             matTooltip="{{buttonDisplayValue}}"
             matTooltipPosition="above"
@@ -27,8 +26,33 @@
             (click)="toggleDeviceFilterPanel($event)">
       <mat-icon>filter_list</mat-icon>{{buttonDisplayValue}}
     </button>
-  </ng-container>
-</ng-template>
+  } @else {
+    <div class="tb-device-filter-config-component tb-form-panel no-padding no-border" [formGroup]="deviceInfoFilterForm">
+      <div class="tb-form-row column-xs">
+        <div class="fixed-title-width" translate>device-profile.device-profile</div>
+        <tb-device-profile-autocomplete
+          class="flex-1"
+          formControlName="deviceProfileId"
+          [inlineField]="true"
+          [displayAllOnEmpty]="true"
+          (deviceProfileChanged)="deviceProfileChanged($event)"
+          [editProfileEnabled]="false"
+          [addNewProfile]="false">
+        </tb-device-profile-autocomplete>
+      </div>
+      <div class="tb-form-row column-xs">
+        <div class="fixed-title-width" translate>device.device-state</div>
+        <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+          <mat-select formControlName="active" placeholder="{{ 'device.any' | translate }}">
+            <mat-option>{{ 'device.any' | translate }}</mat-option>
+            <mat-option [value]="true">{{ 'device.active' | translate }}</mat-option>
+            <mat-option [value]="false">{{ 'device.inactive' | translate }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </div>
+  }
+}
 <ng-template #deviceFilterPanel>
   <form class="mat-content mat-padding flex flex-col" (ngSubmit)="update()">
     <ng-container *ngTemplateOutlet="deviceFilter"></ng-container>
@@ -59,13 +83,13 @@
     <div class="tb-form-row column-xs">
       <div class="fixed-title-width" translate>device-profile.device-profile</div>
       <tb-device-profile-autocomplete
-          class="flex-1"
-          formControlName="deviceProfileId"
-          [inlineField]="true"
-          [displayAllOnEmpty]="true"
-          (deviceProfileChanged)="deviceProfileChanged($event)"
-          [editProfileEnabled]="false"
-          [addNewProfile]="false">
+        class="flex-1"
+        formControlName="deviceProfileId"
+        [inlineField]="true"
+        [displayAllOnEmpty]="true"
+        (deviceProfileChanged)="deviceProfileChanged($event)"
+        [editProfileEnabled]="false"
+        [addNewProfile]="false">
       </tb-device-profile-autocomplete>
     </div>
     <div class="tb-form-row column-xs">

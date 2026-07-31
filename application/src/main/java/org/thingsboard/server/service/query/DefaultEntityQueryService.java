@@ -221,7 +221,7 @@ public class DefaultEntityQueryService implements EntityQueryService {
     private EntityDataQuery buildEntityDataQuery(AlarmCountQuery query) {
         EntityDataPageLink edpl = new EntityDataPageLink(maxEntitiesPerAlarmSubscription, 0, null,
                 new EntityDataSortOrder(new EntityKey(EntityKeyType.ENTITY_FIELD, EntityKeyMapping.CREATED_TIME)));
-        return new EntityDataQuery(query.getEntityFilter(), edpl, null, null, query.getKeyFilters());
+        return new EntityDataQuery(query.getEntityFilter(), edpl, null, null, query.getKeyFilters(), query.getKeyFiltersOperationOrDefault());
     }
 
     private EntityDataQuery buildEntityDataQuery(AlarmDataQuery query) {
@@ -233,7 +233,7 @@ public class DefaultEntityQueryService implements EntityQueryService {
             entitiesSortOrder = sortOrder;
         }
         EntityDataPageLink edpl = new EntityDataPageLink(maxEntitiesPerAlarmSubscription, 0, null, entitiesSortOrder);
-        return new EntityDataQuery(query.getEntityFilter(), edpl, query.getEntityFields(), query.getLatestValues(), query.getKeyFilters());
+        return new EntityDataQuery(query.getEntityFilter(), edpl, query.getEntityFields(), query.getLatestValues(), query.getKeyFilters(), query.getKeyFiltersOperationOrDefault());
     }
 
     @Override

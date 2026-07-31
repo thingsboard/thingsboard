@@ -20,10 +20,12 @@
   <div>{{ message }}</div>
   <div class="error-message-title" translate>dialog.error-message-title</div>
   <div class="error-message-content"> {{ errorMessage }} </div>
-  <mat-expansion-panel *ngIf="errorDetails">
-    <mat-expansion-panel-header>{{ 'dialog.error-details-title' | translate }}</mat-expansion-panel-header>
-    <small class="error-details-content" [innerHTML]="errorDetails"></small>
-  </mat-expansion-panel>
+  @if (errorDetails) {
+    <mat-expansion-panel>
+      <mat-expansion-panel-header>{{ 'dialog.error-details-title' | translate }}</mat-expansion-panel-header>
+      <small class="error-details-content" [innerHTML]="errorDetails"></small>
+    </mat-expansion-panel>
+  }
 </div>
 <div mat-dialog-actions class="flex items-center justify-end">
   <button mat-button color="primary" [mat-dialog-close]="true" cdkFocusInitial>{{data.ok}}</button>

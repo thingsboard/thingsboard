@@ -190,6 +190,27 @@ public class LtsMigrationIntegrationTest extends AbstractControllerTest {
     }
 
     @Test
+    public void offlineCrossFamilyUpgradeRunsInRangeOlderFamilyAndBaselineSchema() {
+        // A 4.3.x -> 4.4 offline upgrade must run BOTH the in-range 4.3.1.x beans and the new 4.4.0.0 baseline
+        // bean via the loosened selector. Drop the columns/tables they own so we can prove each one re-lands.
+        jdbcTemplate.execute("ALTER TABLE rule_chain DROP COLUMN IF EXISTS notes");            // owned by lts/4.4.0.0
+        jdbcTemplate.execute("ALTER TABLE calculated_field DROP COLUMN IF EXISTS additional_info"); // owned by 4.3.1.2
+        jdbcTemplate.execute("DROP TABLE IF EXISTS iot_hub_installed_item");                   // created by 4.3.1.3
+        assertFalse(columnExists("rule_chain", "notes"));
+        assertFalse(columnExists("calculated_field", "additional_info"));
+        assertFalse(tableExists("iot_hub_installed_item"));
+
+        // Offline schema phase over the whole supported cross-family range.
+        ltsMigrationService.runSchemaMigrations("4.3.0.0", "4.4.0.0");
+
+        // 4.4.0.0 baseline DDL landed (this is what used to live in basic/schema_update.sql)...
+        assertTrue(columnExists("rule_chain", "notes"));
+        // ...and the in-range older-family 4.3.1.x beans ran too.
+        assertTrue(columnExists("calculated_field", "additional_info"));
+        assertTrue(tableExists("iot_hub_installed_item"));
+    }
+
+    @Test
     public void migrationDirectoriesAndBeansStayInSyncBothWays() {
         Path ltsDir = Paths.get(installScripts.getDataDir(), "upgrade", "lts");
         Set<String> dirVersions = listDirVersions(ltsDir);

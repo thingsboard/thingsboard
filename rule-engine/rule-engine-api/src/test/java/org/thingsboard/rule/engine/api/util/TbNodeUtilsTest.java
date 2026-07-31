@@ -306,6 +306,50 @@ public class TbNodeUtilsTest {
     }
 
     @Test
+    public void testProcessPatternWithJsonEscaping() {
+        String pattern = "{\"name\":\"${user}\",\"desc\":\"$[description]\"}";
+        TbMsgMetaData md = new TbMsgMetaData();
+        md.putValue("user", "John \"Doe\"");
+
+        ObjectNode node = JacksonUtil.newObjectNode();
+        node.put("description", "line1\nline2");
+
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(TenantId.SYS_TENANT_ID)
+                .copyMetaData(md)
+                .data(JacksonUtil.toString(node))
+                .build();
+
+        String result = TbNodeUtils.processPattern(pattern, msg, true);
+        Assertions.assertEquals("{\"name\":\"John \\\"Doe\\\"\",\"desc\":\"line1\\nline2\"}", result);
+
+        // Verify the result is valid JSON
+        Assertions.assertDoesNotThrow(() -> JacksonUtil.toJsonNode(result));
+    }
+
+    @Test
+    public void testProcessPatternWithoutJsonEscaping() {
+        String pattern = "Hello ${user}, desc: $[description]";
+        TbMsgMetaData md = new TbMsgMetaData();
+        md.putValue("user", "John \"Doe\"");
+
+        ObjectNode node = JacksonUtil.newObjectNode();
+        node.put("description", "line1\nline2");
+
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(TenantId.SYS_TENANT_ID)
+                .copyMetaData(md)
+                .data(JacksonUtil.toString(node))
+                .build();
+
+        // Without escaping, raw values are substituted as-is
+        String result = TbNodeUtils.processPattern(pattern, msg, false);
+        Assertions.assertEquals("Hello John \"Doe\", desc: line1\nline2", result);
+    }
+
+    @Test
     public void testMixedAllDataMetadataAndNormalTemplates() {
         // GIVEN
         String pattern = "fullMeta=${*}, singleMeta=${meta_key}, fullData=$[*], singleData=$[data_key]";

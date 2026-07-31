@@ -17,25 +17,35 @@
 -->
 <div class="tb-signal-strength-panel" [style.padding]="padding" [style]="backgroundStyle$ | async"
      [class.tb-signal-strength-pointer]="hasCardClickAction" (click)="cardClick($event)">
-    <div class="tb-signal-strength-overlay" [style]="overlayStyle"></div>
-    <div *ngIf="widgetComponent.dashboardWidget.showWidgetTitlePanel || showDate" class="tb-signal-strength-title-panel">
-        <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
-        <div *ngIf="showDate" [style]="dateStyle" [innerHTML]="dateFormat.formatted"></div>
+  <div class="tb-signal-strength-overlay" [style]="overlayStyle"></div>
+  @if (widgetComponent.dashboardWidget.showWidgetTitlePanel || showDate) {
+    <div class="tb-signal-strength-title-panel">
+      <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
+      @if (showDate) {
+        <div [style]="dateStyle" [innerHTML]="dateFormat.formatted"></div>
+      }
     </div>
-    <div class="tb-signal-strength-content">
-        <div #signalStrengthShape class="tb-signal-strength-shape">
-        </div>
-        <div *ngIf="showTooltip" class="tb-signal-strength-tooltip-container">
-            <div #signalStrengthTooltip [style]="tooltipStyle" class="tb-signal-strength-tooltip">
-                <div *ngIf="showTooltipValue" class="tb-signal-strength-tooltip-row">
-                    <div [style]="tooltipValueLabelStyle" translate>widgets.signal-strength.value</div>
-                    <div [style]="tooltipValueStyle">{{ tooltipValueText }}</div>
-                </div>
-                <div *ngIf="showTooltipDate" class="tb-signal-strength-tooltip-row">
-                    <div [style]="tooltipDateLabelStyle" translate>widgets.signal-strength.last-update</div>
-                    <div [style]="tooltipDateStyle" [innerHTML]="tooltipDateFormat.formatted"></div>
-                </div>
+  }
+  <div class="tb-signal-strength-content">
+    <div #signalStrengthShape class="tb-signal-strength-shape">
+    </div>
+    @if (showTooltip) {
+      <div class="tb-signal-strength-tooltip-container">
+        <div #signalStrengthTooltip [style]="tooltipStyle" class="tb-signal-strength-tooltip">
+          @if (showTooltipValue) {
+            <div class="tb-signal-strength-tooltip-row">
+              <div [style]="tooltipValueLabelStyle" translate>widgets.signal-strength.value</div>
+              <div [style]="tooltipValueStyle">{{ tooltipValueText }}</div>
             </div>
+          }
+          @if (showTooltipDate) {
+            <div class="tb-signal-strength-tooltip-row">
+              <div [style]="tooltipDateLabelStyle" translate>widgets.signal-strength.last-update</div>
+              <div [style]="tooltipDateStyle" [innerHTML]="tooltipDateFormat.formatted"></div>
+            </div>
+          }
         </div>
-    </div>
+      </div>
+    }
+  </div>
 </div>

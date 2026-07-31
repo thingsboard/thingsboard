@@ -17,15 +17,20 @@
 -->
 <mat-form-field appearance="outline" subscriptSizing="dynamic" style="width: 100%;">
   <mat-select [formControl]="dateFormatFormControl" [compareWith]="dateFormatsCompare" >
-    <mat-option *ngFor="let dateFormat of dateFormatList" [value]="dateFormat">{{ dateFormatDisplayValue(dateFormat) }}</mat-option>
+    @for (dateFormat of dateFormatList; track dateFormat) {
+      <mat-option [value]="dateFormat">{{ dateFormatDisplayValue(dateFormat) }}</mat-option>
+    }
   </mat-select>
-  <button #customFormatButton
-          *ngIf="dateFormatFormControl.value?.custom" matSuffix mat-icon-button (click)="openDateFormatSettingsPopup($event, customFormatButton)">
-    <tb-icon>edit</tb-icon>
-  </button>
-  <button #autoFormatButton
-          *ngIf="dateFormatFormControl.value?.auto && !dateFormatFormControl.value?.custom"
-          matSuffix mat-icon-button (click)="openAutoFormatSettingsPopup($event, autoFormatButton)">
-    <tb-icon>edit</tb-icon>
-  </button>
+  @if (dateFormatFormControl.value?.custom) {
+    <button #customFormatButton
+            matSuffix mat-icon-button (click)="openDateFormatSettingsPopup($event, customFormatButton)">
+      <tb-icon>edit</tb-icon>
+    </button>
+  }
+  @if (dateFormatFormControl.value?.auto && !dateFormatFormControl.value?.custom) {
+    <button #autoFormatButton
+            matSuffix mat-icon-button (click)="openAutoFormatSettingsPopup($event, autoFormatButton)">
+      <tb-icon>edit</tb-icon>
+    </button>
+  }
 </mat-form-field>

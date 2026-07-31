@@ -17,7 +17,7 @@ package org.thingsboard.server.dao.service.validator;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentScope;
@@ -27,7 +27,7 @@ import static org.mockito.Mockito.verify;
 
 @SpringBootTest(classes = ComponentDescriptorDataValidator.class)
 class ComponentDescriptorDataValidatorTest {
-    @SpyBean
+    @MockitoSpyBean
     ComponentDescriptorDataValidator validator;
 
     @Test

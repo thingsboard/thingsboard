@@ -54,8 +54,8 @@ public class MicrosoftTeamsNotificationChannel implements NotificationChannel<Mi
 
     @Setter
     private RestTemplate restTemplate = new RestTemplateBuilder()
-            .setConnectTimeout(Duration.of(15, ChronoUnit.SECONDS))
-            .setReadTimeout(Duration.of(15, ChronoUnit.SECONDS))
+            .connectTimeout(Duration.of(15, ChronoUnit.SECONDS))
+            .readTimeout(Duration.of(15, ChronoUnit.SECONDS))
             .build();
 
     @Override

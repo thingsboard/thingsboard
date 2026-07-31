@@ -37,15 +37,17 @@
     [widget]="widget"
     formControlName="circleSettings">
   </tb-circle-settings>
-  <tb-marker-clustering-settings
-    *ngIf="!routeMap"
-    [class.!hidden]="mapSettingsFormGroup.get('mapProviderSettings').value.provider === mapProvider.image"
-    formControlName="markerClusteringSettings">
-  </tb-marker-clustering-settings>
-  <tb-route-map-settings
-    *ngIf="routeMap"
-    formControlName="routeMapSettings">
-  </tb-route-map-settings>
+  @if (!routeMap) {
+    <tb-marker-clustering-settings
+      [class.!hidden]="mapSettingsFormGroup.get('mapProviderSettings').value.provider === mapProvider.image"
+      formControlName="markerClusteringSettings">
+    </tb-marker-clustering-settings>
+  }
+  @if (routeMap) {
+    <tb-route-map-settings
+      formControlName="routeMapSettings">
+    </tb-route-map-settings>
+  }
   <tb-map-editor-settings
     [class.!hidden]="!displayEditorSettings()"
     formControlName="mapEditorSettings">

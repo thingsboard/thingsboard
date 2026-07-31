@@ -14,39 +14,15 @@
  * limitations under the License.
  */
 :host {
-
-  .tb-filters-header {
-    min-height: 40px;
-    padding: 0 11px;
-    margin: 5px;
-
-    .tb-header-label {
-      font-size: 14px;
-      color: rgba(0, 0, 0, .570588);
-    }
+  .mat-mdc-header-cell.mat-column-editable,
+  .mat-mdc-cell.mat-column-editable,
+  .mat-mdc-header-cell.mat-column-actions,
+  .mat-mdc-cell.mat-column-actions {
+    width: 1%;
+    white-space: nowrap;
   }
 
-  mat-divider{
-    margin: -1px -24px;
-  }
-
-  .tb-filter {
-    padding: 0 0 0 10px;
-    margin: 5px;
-
-    .tb-editable-switch {
-      padding-left: 10px;
-
-      .editable-switch {
-        margin: 0;
-      }
-    }
-  }
-}
-
-:host ::ng-deep {
-  .mat-mdc-dialog-content {
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
+  .mat-mdc-row:last-child .mat-mdc-cell {
+    border-bottom: none;
   }
 }

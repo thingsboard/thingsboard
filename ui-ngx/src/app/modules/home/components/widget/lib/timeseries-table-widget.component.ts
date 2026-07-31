@@ -701,20 +701,8 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     this.ctx.detectChanges();
   }
 
-  public trackByColumnIndex(index, header: TimeseriesHeader) {
-    return header.index;
-  }
-
   public trackByRowTimestamp(index: number) {
     return index;
-  }
-
-  public trackByActionCellDescriptionId(index: number, action: WidgetActionDescriptor) {
-    return action.id;
-  }
-
-  public trackBySourcesIndex(index: number, source: TimeseriesTableSource) {
-    return source.datasource.entityId;
   }
 
   public rowStyle(source: TimeseriesTableSource, row: TimeseriesRow, index: number): Observable<any> {

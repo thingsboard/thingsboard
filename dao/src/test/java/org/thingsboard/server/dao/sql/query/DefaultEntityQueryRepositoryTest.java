@@ -19,7 +19,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -31,11 +31,11 @@ import static org.hamcrest.Matchers.equalTo;
 @SpringBootTest(classes = DefaultEntityQueryRepository.class)
 public class DefaultEntityQueryRepositoryTest {
 
-    @MockBean
+    @MockitoBean
     NamedParameterJdbcTemplate jdbcTemplate;
-    @MockBean
+    @MockitoBean
     TransactionTemplate transactionTemplate;
-    @MockBean
+    @MockitoBean
     DefaultQueryLogComponent queryLog;
 
     @Autowired

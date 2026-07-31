@@ -16,9 +16,11 @@
 package org.thingsboard.server.common.data.edge;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.EdgeId;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 public class EdgeInfo extends Edge {
 
     private String customerTitle;

@@ -29,6 +29,7 @@ import {
   CellActionDescriptor,
   EntityActionTableColumn,
   EntityColumn,
+  EntityColumnsType,
   EntityTableColumn,
   EntityTableConfig,
   GroupActionDescriptor,
@@ -46,7 +47,7 @@ export interface IEntitiesTableComponent {
   groupActionDescriptors: Array<GroupActionDescriptor<BaseData<HasId>>>;
   cellActionDescriptors: Array<CellActionDescriptor<BaseData<HasId>>>;
   actionColumns: Array<EntityActionTableColumn<BaseData<HasId>>>;
-  entityColumns: Array<EntityTableColumn<BaseData<HasId>>>;
+  entityColumns: EntityColumnsType;
   displayedColumns: string[];
   headerCellStyleCache: Array<any>;
   cellContentCache: Array<SafeHtml>;
@@ -92,7 +93,6 @@ export interface IEntitiesTableComponent {
   cellContent(entity: BaseData<HasId>, column: EntityColumn<BaseData<HasId>>, row: number): any;
   cellTooltip(entity: BaseData<HasId>, column: EntityColumn<BaseData<HasId>>, row: number): string;
   cellStyle(entity: BaseData<HasId>, column: EntityColumn<BaseData<HasId>>, row: number): any;
-  trackByColumnKey(index, column: EntityTableColumn<BaseData<HasId>>): string;
   trackByEntityId(index: number, entity: BaseData<HasId>): string;
   detectChanges(): void;
 }

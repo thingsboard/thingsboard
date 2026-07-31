@@ -28,17 +28,21 @@
   <div #chartContent class="tb-latest-chart-content" [class]="legendClass">
     <div #chartShape class="tb-latest-chart-shape">
     </div>
-    <div *ngIf="showLegend" #chartLegend class="tb-latest-chart-legend">
-      <div class="tb-latest-chart-legend-item" *ngFor="let legendItem of legendItems" [class]="{'pointer': !legendItem.total && legendItem.hasValue}"
-           (mouseenter)="onLegendItemEnter(legendItem)"
-           (mouseleave)="onLegendItemLeave(legendItem)"
-           (click)="toggleLegendItem(legendItem)">
-        <div class="tb-latest-chart-legend-item-label">
-          <div class="tb-latest-chart-legend-item-label-circle" [style]="{background: (!legendItem.dataKey?.hidden && legendItem.hasValue) ? legendItem.color : null}"></div>
-          <div [style]="(!legendItem.dataKey?.hidden && legendItem.hasValue) ? legendLabelStyle : disabledLegendLabelStyle">{{ legendItem.label }}</div>
-        </div>
-        <div [style]="(!legendItem.dataKey?.hidden && legendItem.hasValue) ? legendValueStyle : disabledLegendValueStyle" class="tb-latest-chart-legend-item-value">{{ legendItem.value }}</div>
+    @if (showLegend) {
+      <div #chartLegend class="tb-latest-chart-legend">
+        @for (legendItem of legendItems; track legendItem) {
+          <div class="tb-latest-chart-legend-item" [class]="{'pointer': !legendItem.total && legendItem.hasValue}"
+               (mouseenter)="onLegendItemEnter(legendItem)"
+               (mouseleave)="onLegendItemLeave(legendItem)"
+               (click)="toggleLegendItem(legendItem)">
+            <div class="tb-latest-chart-legend-item-label">
+              <div class="tb-latest-chart-legend-item-label-circle" [style]="{background: (!legendItem.dataKey?.hidden && legendItem.hasValue) ? legendItem.color : null}"></div>
+              <div [style]="(!legendItem.dataKey?.hidden && legendItem.hasValue) ? legendLabelStyle : disabledLegendLabelStyle">{{ legendItem.label }}</div>
+            </div>
+            <div [style]="(!legendItem.dataKey?.hidden && legendItem.hasValue) ? legendValueStyle : disabledLegendValueStyle" class="tb-latest-chart-legend-item-value">{{ legendItem.value }}</div>
+          </div>
+        }
       </div>
-    </div>
+    }
   </div>
 </div>

@@ -18,7 +18,7 @@ package org.thingsboard.server.common.data.alarm.rule.condition.expression.predi
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
-import org.thingsboard.server.common.data.alarm.rule.condition.expression.ComplexOperation;
+import org.thingsboard.server.common.data.query.ComplexOperation;
 
 import java.util.List;
 

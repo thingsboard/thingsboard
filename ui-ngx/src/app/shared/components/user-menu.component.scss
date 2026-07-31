@@ -13,38 +13,113 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  div.tb-user-info {
-    line-height: 1.5;
 
-    span {
-      text-transform: none;
+@import "constants";
+
+.tb-primary-toolbar, .tb-dashboard-action-panel {
+  tb-user-menu {
+    width: auto;
+    button.mat-mdc-button:not(.mat-mdc-icon-button).tb-user-menu {
+      padding: 12px 16px;
     }
-
-    span.tb-user-display-name {
-      font-size: .8rem;
-      font-weight: 300;
-      letter-spacing: .008em;
+    @media #{$mat-lt-lg} {
+      button.mat-mdc-button:not(.mat-mdc-icon-button).tb-user-menu {
+        display: none;
+      }
+      .tb-user-menu-icon {
+        display: block;
+      }
     }
-
-    span.tb-user-authority {
-      font-size: .8rem;
-      font-weight: 300;
-      letter-spacing: .005em;
-      opacity: .8;
-    }
-
-  }
-
-  .mat-icon.tb-mini-avatar {
-    width: 36px;
-    height: 36px;
-    margin: auto 8px;
-    font-size: 36px;
-    cursor: default;
   }
 }
 
+tb-user-menu {
+  width: 100%;
+  .tb-user-menu-icon {
+    display: none;
+  }
+  button.mat-mdc-button:not(.mat-mdc-icon-button).tb-user-menu {
+    width: 100%;
+    height: 100%;
+    padding: 16px;
+    display: flex;
+    flex-direction: row;
+    justify-content: start;
+    gap: 8px;
+    line-height: 1.5;
+
+    .tb-user-info {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: center;
+      opacity: 1;
+      transition: opacity $sidenav-anim-timing;
+    }
+
+    span {
+      text-transform: none;
+      text-align: start;
+    }
+
+    span.tb-user-display-name {
+      font-size: 14px;
+      line-height: 16px;
+      font-weight: 500;
+      letter-spacing: 0.25px;
+    }
+
+    span.tb-user-authority {
+      color: rgba(0, 0, 0, 0.54);
+      font-size: 12px;
+      line-height: 16px;
+      font-weight: 400;
+      letter-spacing: 0.25px;
+    }
+
+    .mat-icon.tb-mini-avatar {
+      width: 32px;
+      height: 32px;
+      font-size: 32px;
+      margin: 0;
+      transition: all $sidenav-anim-timing;
+    }
+    &.tb-collapsed {
+      min-width: 0;
+      .mat-icon.tb-mini-avatar {
+        width: 20px;
+        height: 20px;
+        font-size: 20px;
+      }
+      .tb-user-info {
+        opacity: 0;
+      }
+    }
+  }
+}
+
+.tb-popover.tb-menu.tb-user-menu-collapsed {
+  padding: 0 0 17px 0;
+}
+
 .tb-user-menu-items {
-  min-width: 256px;
+  min-width: 250px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  .tb-user-email {
+    font-size: 14px;
+    line-height: 16px;
+    font-weight: 500;
+    padding: 2px 16px;
+    color: rgba(0,0,0,0.57);
+  }
+  .mat-mdc-button {
+    &:hover {
+      background-color: rgba(0, 0, 0, .07);
+    }
+  }
+  .tb-logout {
+    border-top: 1px solid rgba(0, 0, 0, 0.12);
+  }
 }

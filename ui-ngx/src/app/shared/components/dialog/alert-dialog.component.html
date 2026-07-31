@@ -16,12 +16,11 @@
 
 -->
 <h2 mat-dialog-title>{{data.title}}</h2>
-<ng-container *ngIf="data.textMode; else htmlMode">
+@if (data.textMode) {
   <div mat-dialog-content [innerText]="data.message"></div>
-</ng-container>
-<ng-template #htmlMode>
+} @else {
   <div mat-dialog-content [innerHTML]="data.message | safe:'html'"></div>
-</ng-template>
+}
 <div mat-dialog-actions class="flex items-center justify-end">
   <button mat-button color="primary" [mat-dialog-close]="true" cdkFocusInitial>{{data.ok}}</button>
 </div>

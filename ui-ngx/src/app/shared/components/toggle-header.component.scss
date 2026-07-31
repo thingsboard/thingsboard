@@ -139,7 +139,6 @@
       }
       &.tb-invert {
         .mat-button-toggle.mat-button-toggle-appearance-standard {
-          color: rgba(255, 255, 255, 0.8);
           &.mat-button-toggle-checked {
             .mat-button-toggle-button {
               background: #FFFFFF;
@@ -257,6 +256,20 @@
         right: 0;
         bottom: 0;
         color: rgba(0, 0, 0, 0.38);
+      }
+    }
+  }
+}
+
+:host-context(.mat-primary) {
+  ::ng-deep {
+    .mat-button-toggle-group.mat-button-toggle-group-appearance-standard.tb-toggle-header {
+      &.tb-fill {
+        &.tb-invert {
+          .mat-button-toggle.mat-button-toggle-appearance-standard {
+            color: rgba(255, 255, 255, 0.8);
+          }
+        }
       }
     }
   }

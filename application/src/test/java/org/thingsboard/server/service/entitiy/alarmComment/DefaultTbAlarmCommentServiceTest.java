@@ -19,8 +19,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -65,35 +65,35 @@ import static org.mockito.Mockito.when;
 })
 public class DefaultTbAlarmCommentServiceTest {
 
-    @MockBean
+    @MockitoBean
     protected DbCallbackExecutorService dbExecutor;
-    @MockBean
+    @MockitoBean
     protected TbLogEntityActionService logEntityActionService;
-    @MockBean
+    @MockitoBean
     protected AlarmService alarmService;
-    @MockBean
+    @MockitoBean
     protected AlarmCommentService alarmCommentService;
-    @MockBean
+    @MockitoBean
     protected AlarmSubscriptionService alarmSubscriptionService;
-    @MockBean
+    @MockitoBean
     protected CustomerService customerService;
-    @MockBean
+    @MockitoBean
     protected TbClusterService tbClusterService;
-    @MockBean
+    @MockitoBean
     private AccessControlService accessControlService;
-    @MockBean
+    @MockitoBean
     private TenantService tenantService;
-    @MockBean
+    @MockitoBean
     private AssetService assetService;
-    @MockBean
+    @MockitoBean
     private DeviceService deviceService;
-    @MockBean
+    @MockitoBean
     private AssetProfileService assetProfileService;
-    @MockBean
+    @MockitoBean
     private DeviceProfileService deviceProfileService;
-    @MockBean
+    @MockitoBean
     private EntityService entityService;
-    @SpyBean
+    @MockitoSpyBean
     DefaultTbAlarmCommentService service;
 
     @Test

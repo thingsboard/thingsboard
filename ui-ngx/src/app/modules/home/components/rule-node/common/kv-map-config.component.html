@@ -18,19 +18,25 @@
 <section [formGroup]="kvListFormGroup" class="tb-form-panel stroked">
   <div class="tb-form-row no-padding no-border space-between">
     <div class="tb-form-panel-title">{{ labelText }}</div>
-    <div class="tb-form-panel-hint tb-error" translate *ngIf="kvListFormGroup.hasError('kvMapRequired')">
-      {{ requiredText }}
-    </div>
-    <div class="tb-form-panel-hint tb-error" translate *ngIf="kvListFormGroup.hasError('required')">
-      rule-node-config.map-fields-required
-    </div>
-    <div class="tb-form-panel-hint tb-error" translate *ngIf="kvListFormGroup.hasError('uniqueKeyValuePair')">
-      {{ 'rule-node-config.key-val.unique-key-value-pair-error' | translate:
-            {
-              valText: valText,
-              keyText: keyText
-            } }}
-    </div>
+    @if (kvListFormGroup.hasError('kvMapRequired')) {
+      <div class="tb-form-panel-hint tb-error" translate>
+        {{ requiredText }}
+      </div>
+    }
+    @if (kvListFormGroup.hasError('required')) {
+      <div class="tb-form-panel-hint tb-error" translate>
+        rule-node-config.map-fields-required
+      </div>
+    }
+    @if (kvListFormGroup.hasError('uniqueKeyValuePair')) {
+      <div class="tb-form-panel-hint tb-error" translate>
+        {{ 'rule-node-config.key-val.unique-key-value-pair-error' | translate:
+        {
+        valText: valText,
+        keyText: keyText
+        } }}
+      </div>
+    }
   </div>
   <div class="tb-form-panel no-border no-padding">
     <div class="tb-form-table">
@@ -40,26 +46,31 @@
         <div class="tb-form-table-header-cell actions-header"></div>
       </div>
       <div class="tb-form-table-body">
-        <div class="tb-form-table-row"
-             *ngFor="let keyValControl of keyValsFormArray().controls; let $index = index;">
-          <mat-form-field class="tb-inline-field field-space" appearance="outline" subscriptSizing="dynamic">
-            <input [placeholder]="keyText+'*'" [formControl]="keyValControl.get('key')" matInput/>
-          </mat-form-field>
-          <mat-form-field class="tb-inline-field field-space" appearance="outline" subscriptSizing="dynamic">
-            <input [placeholder]="valText+'*'" [formControl]="keyValControl.get('value')" matInput/>
-          </mat-form-field>
-          <div class="tb-form-table-row-cell-buttons">
-            <button [class.tb-hidden]="keyValsFormArray().controls.length === 1"
-                    type="button"
-                    mat-icon-button
-                    (click)="removeKeyVal($index)"
-                    [disabled]="disabled"
-                    matTooltip="{{ 'rule-node-config.key-val.remove-mapping-entry' | translate }}"
-                    matTooltipPosition="above">
-              <mat-icon>delete</mat-icon>
-            </button>
+        @for (keyValControl of keyValsFormArray().controls; track keyValControl) {
+          <div class="tb-form-table-row">
+            <mat-form-field class="tb-inline-field field-space" appearance="outline" subscriptSizing="dynamic">
+              <input [placeholder]="keyText+'*'" [formControl]="keyValControl.get('key')" matInput/>
+            </mat-form-field>
+            <mat-form-field class="tb-inline-field field-space" appearance="outline" subscriptSizing="dynamic">
+              <input [placeholder]="valText+'*'" [formControl]="keyValControl.get('value')" matInput/>
+            </mat-form-field>
+            <div class="tb-form-table-row-cell-buttons">
+              <button [class.tb-hidden]="required && keyValsFormArray().controls.length === 1"
+                      type="button"
+                      mat-icon-button
+                      (click)="removeKeyVal($index)"
+                      [disabled]="disabled"
+                      matTooltip="{{ 'rule-node-config.key-val.remove-mapping-entry' | translate }}"
+                      matTooltipPosition="above">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
           </div>
-        </div>
+        } @empty {
+          @if (emptyText) {
+            <div class="tb-prompt flex items-center justify-center">{{ emptyText }}</div>
+          }
+        }
       </div>
     </div>
   </div>
@@ -68,5 +79,7 @@
       {{ 'rule-node-config.key-val.add-mapping-entry' | translate }}
     </button>
   </div>
-  <tb-example-hint [hintText]="hintText" [popupHelpLink]="popupHelpLink" *ngIf="popupHelpLink || hintText"></tb-example-hint>
+  @if (popupHelpLink || hintText) {
+    <tb-example-hint [hintText]="hintText" [popupHelpLink]="popupHelpLink"></tb-example-hint>
+  }
 </section>

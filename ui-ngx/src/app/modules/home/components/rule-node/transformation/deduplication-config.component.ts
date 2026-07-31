@@ -31,7 +31,7 @@ export class DeduplicationConfigComponent extends RuleNodeConfigurationComponent
 
   deduplicationConfigForm: FormGroup;
   deduplicationStrategie = FetchMode;
-  deduplicationStrategies = Object.keys(this.deduplicationStrategie);
+  deduplicationStrategies = Object.values(this.deduplicationStrategie);
   deduplicationStrategiesTranslations = deduplicationStrategiesTranslations;
 
   constructor(private fb: FormBuilder) {

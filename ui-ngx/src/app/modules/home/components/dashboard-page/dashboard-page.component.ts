@@ -149,6 +149,7 @@ import {
   MoveWidgetsDialogResult
 } from '@home/components/dashboard-page/layout/move-widgets-dialog.component';
 import { HttpStatusCode } from '@angular/common/http';
+import { HomeService } from '@core/services/home.service';
 
 // @dynamic
 @Component({
@@ -198,6 +199,9 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   get hideToolbar(): boolean {
     return ((this.hideToolbarValue || this.hideToolbarSetting()) && !this.isEdit) || (this.isEditingWidget || this.isAddingWidget);
   }
+
+  @Input()
+  hideMainToolbar = true;
 
   @Input()
   syncStateWithQueryParam = true;
@@ -267,7 +271,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   dashboardLogoLink = this.getDashboardLogoLink();
 
   private dashboardLogoCache: SafeUrl;
-  private defaultDashboardLogo = 'assets/logo_title_white.svg';
+  private defaultDashboardLogo = 'assets/logo_title_black.svg';
 
   private dashboardResize$: ResizeObserver;
 
@@ -374,7 +378,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
               private viewContainerRef: ViewContainerRef,
               private cd: ChangeDetectorRef,
               public elRef: ElementRef,
-              private injector: Injector) {
+              private injector: Injector,
+              public homeService: HomeService) {
     super(store);
     if (isDefinedAndNotNull(this.embeddedValue)) {
       this.embedded = this.embeddedValue;
@@ -382,6 +387,9 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   }
 
   ngOnInit() {
+    if (this.hideMainToolbar) {
+      this.homeService.setHideMainToolbar(true);
+    }
     this.rxSubscriptions.push(this.route.data.subscribe(
       (data) => {
         let dashboardPageInitData: DashboardPageInitData;
@@ -865,6 +873,10 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   public isSystemAdmin(): boolean {
     return this.authUser.authority === Authority.SYS_ADMIN;
+  }
+
+  public canEdit(): boolean {
+    return this.isTenantAdmin() || (this.isSystemAdmin() && this.widgetEditMode);
   }
 
   public exportDashboard($event: Event) {
@@ -1743,6 +1755,10 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
         });
       });
     }
+  }
+
+  toggleSidenav() {
+    this.homeService.toggleSideBar.emit();
   }
 
   get showMainLayoutFiller(): boolean {

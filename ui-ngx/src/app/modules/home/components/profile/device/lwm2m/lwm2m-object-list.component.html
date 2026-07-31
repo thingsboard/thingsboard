@@ -15,16 +15,19 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="lwm2mListFormGroup" class="mat-block">
+<mat-form-field [formGroup]="lwm2mListFormGroup" class="mat-block" [appearance]="appearance">
   <mat-label translate>device-profile.lwm2m.object-list</mat-label>
   <mat-chip-grid #chipList formControlName="objectsList" [required]="required">
-    <mat-chip-row
-      *ngFor="let objectLwm2m of objectsList"
-      [removable]="!disabled"
-      (removed)="remove(objectLwm2m)">
-      {{objectLwm2m.name}} #{{objectLwm2m.keyId}}
-      <mat-icon matChipRemove *ngIf="!disabled">close</mat-icon>
-    </mat-chip-row>
+    @for (objectLwm2m of objectsList; track objectLwm2m) {
+      <mat-chip-row
+        [removable]="!disabled"
+        (removed)="remove(objectLwm2m)">
+        {{objectLwm2m.name}} #{{objectLwm2m.keyId}}
+        @if (!disabled) {
+          <mat-icon matChipRemove>close</mat-icon>
+        }
+      </mat-chip-row>
+    }
     <input matInput type="text"
            style="max-width: 200px;"
            #objectInput
@@ -39,22 +42,29 @@
   <mat-autocomplete #objectAutocomplete="matAutocomplete"
                     class="tb-autocomplete"
                     [displayWith]="displayObjectLwm2mFn">
-    <mat-option *ngFor="let objectLwm2m of filteredObjectsList | async" [value]="objectLwm2m">
-      <span [innerHTML]="objectLwm2m.keyId + ': ' + (objectLwm2m.name  | highlight: searchText)"></span>
-    </mat-option>
-    <mat-option *ngIf="!(filteredObjectsList | async)?.length" [value]="null">
-      <div *ngIf="!textIsNotEmpty(searchText); else searchNotEmpty">
-        <span translate>device-profile.lwm2m.no-objects-found</span>
-      </div>
-      <ng-template #searchNotEmpty>
-        <span>
+    @for (objectLwm2m of filteredObjectsList | async; track objectLwm2m) {
+      <mat-option [value]="objectLwm2m">
+        <span [innerHTML]="objectLwm2m.keyId + ': ' + (objectLwm2m.name  | highlight: searchText)"></span>
+      </mat-option>
+    }
+    @if (!(filteredObjectsList | async)?.length) {
+      <mat-option [value]="null">
+        @if (!textIsNotEmpty(searchText)) {
+          <div>
+            <span translate>device-profile.lwm2m.no-objects-found</span>
+          </div>
+        } @else {
+          <span>
             {{ 'device-profile.lwm2m.no-objects-matching' | translate:{object: (searchText | truncate: true: 6: &apos;...&apos;)} }}
-        </span>
-      </ng-template>
-    </mat-option>
+          </span>
+        }
+      </mat-option>
+    }
   </mat-autocomplete>
-  <mat-error *ngIf="lwm2mListFormGroup.get('objectsList').hasError('required')">
-    {{ 'device-profile.lwm2m.object-list-empty' | translate }}
-  </mat-error>
+  @if (lwm2mListFormGroup.get('objectsList').hasError('required')) {
+    <mat-error>
+      {{ 'device-profile.lwm2m.object-list-empty' | translate }}
+    </mat-error>
+  }
 </mat-form-field>
 

@@ -24,26 +24,31 @@
          [formControl]="entityAliasFormControl"
          (focusin)="onEntityAliasFocus()"
          [matAutocomplete]="entityAliasAutocomplete">
-  <mat-icon matSuffix
-            matTooltipPosition="above"
-            matTooltipClass="tb-error-tooltip"
-            [matTooltip]="'entity.alias-required' | translate"
-            *ngIf="required && entityAliasFormControl.hasError('required')
-                       && entityAliasFormControl.touched"
-            class="tb-error">
-    warning
-  </mat-icon>
-  <button *ngIf="entityAliasFormControl.value && !entityAliasFormControl.disabled"
-          type="button"
-          matSuffix mat-icon-button aria-label="Clear"
-          (click)="clearEntityAlias()">
-    <mat-icon class="material-icons">close</mat-icon>
-  </button>
+  @if (required && entityAliasFormControl.hasError('required')
+    && entityAliasFormControl.touched) {
+    <mat-icon matSuffix
+              matTooltipPosition="above"
+              matTooltipClass="tb-error-tooltip"
+              [matTooltip]="'entity.alias-required' | translate"
+              class="tb-error">
+      warning
+    </mat-icon>
+  }
+  @if (entityAliasFormControl.value && !entityAliasFormControl.disabled) {
+    <button
+      type="button"
+      matSuffix mat-icon-button aria-label="Clear"
+      (click)="clearEntityAlias()">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  }
   <mat-autocomplete
     class="tb-autocomplete"
     #entityAliasAutocomplete="matAutocomplete">
-    <mat-option *ngFor="let entityAlias of filteredEntityAliases | async" [value]="entityAlias">
-      <span [innerHTML]="entityAlias | highlight:aliasSearchText"></span>
-    </mat-option>
+    @for (entityAlias of filteredEntityAliases | async; track entityAlias) {
+      <mat-option [value]="entityAlias">
+        <span [innerHTML]="entityAlias | highlight:aliasSearchText"></span>
+      </mat-option>
+    }
   </mat-autocomplete>
 </mat-form-field>

@@ -22,18 +22,26 @@
              step="1" min="1" max="2147483647"
              formControlName="defaultValue"
              placeholder="{{ defaultValuePlaceholder | translate }}">
-      <mat-error *ngIf="alarmDurationPredicateValueFormGroup.get('defaultValue').hasError('required')">
-        {{ defaultValueRequiredError | translate }}
-      </mat-error>
-      <mat-error *ngIf="alarmDurationPredicateValueFormGroup.get('defaultValue').hasError('min')">
-        {{ defaultValueRangeError | translate }}
-      </mat-error>
-      <mat-error *ngIf="alarmDurationPredicateValueFormGroup.get('defaultValue').hasError('max')">
-        {{ defaultValueRangeError | translate }}
-      </mat-error>
-      <mat-error *ngIf="alarmDurationPredicateValueFormGroup.get('defaultValue').hasError('pattern')">
-        {{ defaultValuePatternError | translate }}
-      </mat-error>
+      @if (alarmDurationPredicateValueFormGroup.get('defaultValue').hasError('required')) {
+        <mat-error>
+          {{ defaultValueRequiredError | translate }}
+        </mat-error>
+      }
+      @if (alarmDurationPredicateValueFormGroup.get('defaultValue').hasError('min')) {
+        <mat-error>
+          {{ defaultValueRangeError | translate }}
+        </mat-error>
+      }
+      @if (alarmDurationPredicateValueFormGroup.get('defaultValue').hasError('max')) {
+        <mat-error>
+          {{ defaultValueRangeError | translate }}
+        </mat-error>
+      }
+      @if (alarmDurationPredicateValueFormGroup.get('defaultValue').hasError('pattern')) {
+        <mat-error>
+          {{ defaultValuePatternError | translate }}
+        </mat-error>
+      }
     </mat-form-field>
   </div>
   <div class="flex flex-1 flex-col" [class.!hidden]="!dynamicMode">
@@ -44,9 +52,11 @@
             <mat-option [value]="null">
               {{'filter.no-dynamic-value' | translate}}
             </mat-option>
-            <mat-option *ngFor="let sourceType of dynamicValueSourceTypes" [value]="sourceType">
-              {{dynamicValueSourceTypeTranslations.get(sourceType) | translate}}
-            </mat-option>
+            @for (sourceType of dynamicValueSourceTypes; track sourceType) {
+              <mat-option [value]="sourceType">
+                {{dynamicValueSourceTypeTranslations.get(sourceType) | translate}}
+              </mat-option>
+            }
           </mat-select>
         </mat-form-field>
       </div>
@@ -55,13 +65,15 @@
           <input matInput formControlName="sourceAttribute" placeholder="{{'filter.source-attribute' | translate}}">
         </mat-form-field>
       </div>
-      <div *ngIf="inheritMode"
-           class="flex flex-col"
-           style="padding-top: 6px">
-        <mat-checkbox formControlName="inherit">
-          {{ 'filter.inherit-owner' | translate}}
-        </mat-checkbox>
-      </div>
+      @if (inheritMode) {
+        <div
+          class="flex flex-col"
+          style="padding-top: 6px">
+          <mat-checkbox formControlName="inherit">
+            {{ 'filter.inherit-owner' | translate}}
+          </mat-checkbox>
+        </div>
+      }
     </div>
   </div>
   <button mat-icon-button

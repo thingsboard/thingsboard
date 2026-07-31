@@ -18,7 +18,7 @@ package org.thingsboard.server.controller;
 import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.thingsboard.server.common.data.sync.vc.RepositoryAuthMethod;
 import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
 import org.thingsboard.server.dao.service.DaoSqlTest;
@@ -35,7 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DaoSqlTest
 public class RepositorySettingsTest extends AbstractControllerTest {
 
-    @MockBean
+    @MockitoBean
     private GitVersionControlQueueService gitVersionControlQueueService;
 
     @Test

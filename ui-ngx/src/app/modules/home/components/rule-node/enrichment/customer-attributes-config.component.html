@@ -20,9 +20,11 @@
   <div class="flex flex-1 items-center justify-center">
     <div class="fetch-to-data-toggle">
       <tb-toggle-select class="fetch-to-data-toggle" formControlName="dataToFetch" appearance="fill">
-        <tb-toggle-option *ngFor="let data of fetchToData" [value]="data.value">
-          {{ data.name }}
-        </tb-toggle-option>
+        @for (data of fetchToData; track data) {
+          <tb-toggle-option [value]="data.value">
+            {{ data.name }}
+          </tb-toggle-option>
+        }
       </tb-toggle-select>
     </div>
   </div>

@@ -40,16 +40,20 @@
            #entityAliasInput
            formControlName="entityAlias"
            [matAutocomplete]="entityAliasAutocomplete">
-    <button *ngIf="valueSourceFormGroup.get('entityAlias').value && !valueSourceFormGroup.get('entityAlias').disabled"
-            type="button"
-            matSuffix mat-icon-button aria-label="Clear"
-            (click)="clearEntityAlias()">
-      <mat-icon class="material-icons">close</mat-icon>
-    </button>
+    @if (valueSourceFormGroup.get('entityAlias').value && !valueSourceFormGroup.get('entityAlias').disabled) {
+      <button
+        type="button"
+        matSuffix mat-icon-button aria-label="Clear"
+        (click)="clearEntityAlias()">
+        <mat-icon class="material-icons">close</mat-icon>
+      </button>
+    }
     <mat-autocomplete class="tb-autocomplete" #entityAliasAutocomplete="matAutocomplete">
-      <mat-option *ngFor="let entityAlias of filteredEntityAliases | async" [value]="entityAlias">
-        <span [innerHTML]="entityAlias | highlight:aliasSearchText"></span>
-      </mat-option>
+      @for (entityAlias of filteredEntityAliases | async; track entityAlias) {
+        <mat-option [value]="entityAlias">
+          <span [innerHTML]="entityAlias | highlight:aliasSearchText"></span>
+        </mat-option>
+      }
     </mat-autocomplete>
   </mat-form-field>
   <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic" [class.!hidden]="valueSourceFormGroup.get('valueSource').value !== 'entityAttribute'">
@@ -57,16 +61,20 @@
            #keyInput
            formControlName="attribute"
            [matAutocomplete]="keyAutocomplete">
-    <button *ngIf="valueSourceFormGroup.get('attribute').value && !valueSourceFormGroup.get('attribute').disabled"
-            type="button"
-            matSuffix mat-icon-button aria-label="Clear"
-            (click)="clearKey()">
-      <mat-icon class="material-icons">close</mat-icon>
-    </button>
+    @if (valueSourceFormGroup.get('attribute').value && !valueSourceFormGroup.get('attribute').disabled) {
+      <button
+        type="button"
+        matSuffix mat-icon-button aria-label="Clear"
+        (click)="clearKey()">
+        <mat-icon class="material-icons">close</mat-icon>
+      </button>
+    }
     <mat-autocomplete class="tb-autocomplete" #keyAutocomplete="matAutocomplete">
-      <mat-option *ngFor="let key of filteredKeys | async" [value]="key">
-        <span [innerHTML]="key | highlight:keySearchText"></span>
-      </mat-option>
+      @for (key of filteredKeys | async; track key) {
+        <mat-option [value]="key">
+          <span [innerHTML]="key | highlight:keySearchText"></span>
+        </mat-option>
+      }
     </mat-autocomplete>
   </mat-form-field>
 </div>

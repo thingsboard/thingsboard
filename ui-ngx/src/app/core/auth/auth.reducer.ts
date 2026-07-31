@@ -43,6 +43,7 @@ const emptyUserAuthState: AuthPayload = {
   intermediateAggregationIntervalInSecForCF: 0,
   userSettings: initialUserSettings,
   trendzSettings: initialTrendzSettings,
+  allowKeyFiltersOrConditions: true,
   nullsOrderStrategy: 'default',
   edqsEnabled: false,
   iotHubBaseUrl: ''

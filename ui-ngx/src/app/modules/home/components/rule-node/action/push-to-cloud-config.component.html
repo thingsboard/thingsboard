@@ -20,16 +20,18 @@
     <tb-example-hint [hintText]="'rule-node-config.attributes-scope-hint'">
     </tb-example-hint>
     <div class="tb-form-row no-border no-padding tb-standard-fields">
-      <mat-form-field class="flex">
+      <mat-form-field class="flex" appearance="outline">
         <mat-label>{{ 'rule-node-config.attributes-scope' | translate }}</mat-label>
         <mat-select required
                     class="tb-entity-type-select" matInput formControlName="scope">
-          <mat-option *ngFor="let scope of attributeScopes" [value]="scope">
-            {{ telemetryTypeTranslationsMap.get(scope) | translate }}
-          </mat-option>
+          @for (scope of attributeScopes; track scope) {
+            <mat-option [value]="scope">
+              {{ telemetryTypeTranslationsMap.get(scope) | translate }}
+            </mat-option>
+          }
         </mat-select>
       </mat-form-field>
-      <mat-form-field class="flex">
+      <mat-form-field class="flex" appearance="outline">
         <mat-label>{{ 'rule-node-config.attributes-scope-value' | translate }}</mat-label>
         <input type="text" matInput readonly disabled [ngModel]="pushToCloudConfigForm.get('scope').value" [ngModelOptions]="{standalone: true}">
         <button type="button"

@@ -33,7 +33,7 @@ public class TbLwM2MDtlsSessionRedisStore implements TbLwM2MDtlsSessionStore {
         try (var c = connectionFactory.getConnection()) {
             var serializedMsg = JavaSerDesUtil.encode(msg);
             if (serializedMsg != null) {
-                c.set(getKey(endpoint), serializedMsg);
+                c.stringCommands().set(getKey(endpoint), serializedMsg);
             } else {
                 throw new RuntimeException("Problem with serialization of message: " + msg);
             }
@@ -43,7 +43,7 @@ public class TbLwM2MDtlsSessionRedisStore implements TbLwM2MDtlsSessionStore {
     @Override
     public TbX509DtlsSessionInfo get(String endpoint) {
         try (var c = connectionFactory.getConnection()) {
-            var data = c.get(getKey(endpoint));
+            var data = c.stringCommands().get(getKey(endpoint));
             if (data != null) {
                 return JavaSerDesUtil.decode(data);
             } else {
@@ -55,7 +55,7 @@ public class TbLwM2MDtlsSessionRedisStore implements TbLwM2MDtlsSessionStore {
     @Override
     public void remove(String endpoint) {
         try (var c = connectionFactory.getConnection()) {
-            c.del(getKey(endpoint));
+            c.keyCommands().del(getKey(endpoint));
         }
     }
 

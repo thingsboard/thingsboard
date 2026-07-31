@@ -52,7 +52,7 @@ public class TbLwM2mRedisSecurityStore implements TbEditableSecurityStore {
         try (var connection = connectionFactory.getConnection()) {
             lock = redisLock.obtain(toLockKey(endpoint));
             lock.lock();
-            byte[] data = connection.get((SEC_EP + endpoint).getBytes());
+            byte[] data = connection.stringCommands().get((SEC_EP + endpoint).getBytes());
             if (data == null || data.length == 0) {
                 return null;
             } else {
@@ -96,11 +96,11 @@ public class TbLwM2mRedisSecurityStore implements TbEditableSecurityStore {
         try (var connection = connectionFactory.getConnection()) {
             lock = redisLock.obtain(toLockKey(identity));
             lock.lock();
-            byte[] ep = connection.hGet(PSKID_SEC.getBytes(), identity.getBytes());
+            byte[] ep = connection.hashCommands().hGet(PSKID_SEC.getBytes(), identity.getBytes());
             if (ep == null) {
                 return null;
             } else {
-                byte[] data = connection.get((SEC_EP + new String(ep)).getBytes());
+                byte[] data = connection.stringCommands().get((SEC_EP + new String(ep)).getBytes());
                 if (data == null || data.length == 0) {
                     return null;
                 } else {
@@ -128,17 +128,17 @@ public class TbLwM2mRedisSecurityStore implements TbEditableSecurityStore {
             lock = redisLock.obtain(tbSecurityInfo.getEndpoint());
             lock.lock();
             if (info != null && info.getPskIdentity() != null) {
-                byte[] oldEndpointBytes = connection.hGet(PSKID_SEC.getBytes(), info.getPskIdentity().getBytes());
+                byte[] oldEndpointBytes = connection.hashCommands().hGet(PSKID_SEC.getBytes(), info.getPskIdentity().getBytes());
                 if (oldEndpointBytes != null) {
                     String oldEndpoint = new String(oldEndpointBytes);
                     if (!oldEndpoint.equals(info.getEndpoint())) {
                         throw new NonUniqueSecurityInfoException("PSK Identity " + info.getPskIdentity() + " is already used");
                     }
-                    connection.hSet(PSKID_SEC.getBytes(), info.getPskIdentity().getBytes(), info.getEndpoint().getBytes());
+                    connection.hashCommands().hSet(PSKID_SEC.getBytes(), info.getPskIdentity().getBytes(), info.getEndpoint().getBytes());
                 }
             }
 
-            byte[] previousData = connection.getSet((SEC_EP + tbSecurityInfo.getEndpoint()).getBytes(), tbSecurityInfoSerialized);
+            byte[] previousData = connection.stringCommands().getSet((SEC_EP + tbSecurityInfo.getEndpoint()).getBytes(), tbSecurityInfoSerialized);
 
                 // for tests: redis connect NoSec (securityInfo == null)
             log.info("lwm2m redis connect. Endpoint: [{}], secMode: [{}] key: [{}], tbSecurityInfoSerialized [{}]",
@@ -147,7 +147,7 @@ public class TbLwM2mRedisSecurityStore implements TbEditableSecurityStore {
             if (previousData != null && info != null) {
                 String previousIdentity = ((TbLwM2MSecurityInfo) JavaSerDesUtil.decode(previousData)).getSecurityInfo().getPskIdentity();
                 if (previousIdentity != null && !previousIdentity.equals(info.getPskIdentity())) {
-                    connection.hDel(PSKID_SEC.getBytes(), previousIdentity.getBytes());
+                    connection.hashCommands().hDel(PSKID_SEC.getBytes(), previousIdentity.getBytes());
                 }
             }
         } finally {
@@ -163,7 +163,7 @@ public class TbLwM2mRedisSecurityStore implements TbEditableSecurityStore {
         try (var connection = connectionFactory.getConnection()) {
             lock = redisLock.obtain(endpoint);
             lock.lock();
-            byte[] data = connection.get((SEC_EP + endpoint).getBytes());
+            byte[] data = connection.stringCommands().get((SEC_EP + endpoint).getBytes());
             if (data != null && data.length > 0) {
                 return JavaSerDesUtil.decode(data);
             } else {
@@ -182,13 +182,13 @@ public class TbLwM2mRedisSecurityStore implements TbEditableSecurityStore {
         try (var connection = connectionFactory.getConnection()) {
             lock = redisLock.obtain(endpoint);
             lock.lock();
-            byte[] data = connection.get((SEC_EP + endpoint).getBytes());
+            byte[] data = connection.stringCommands().get((SEC_EP + endpoint).getBytes());
             if (data != null && data.length > 0) {
                 SecurityInfo info = ((TbLwM2MSecurityInfo) JavaSerDesUtil.decode(data)).getSecurityInfo();
                 if (info != null && info.getPskIdentity() != null) {
-                    connection.hDel(PSKID_SEC.getBytes(), info.getPskIdentity().getBytes());
+                    connection.hashCommands().hDel(PSKID_SEC.getBytes(), info.getPskIdentity().getBytes());
                 }
-                connection.del((SEC_EP + endpoint).getBytes());
+                connection.keyCommands().del((SEC_EP + endpoint).getBytes());
             }
         } finally {
             if (lock != null) {
@@ -203,7 +203,7 @@ public class TbLwM2mRedisSecurityStore implements TbEditableSecurityStore {
 
     private SecurityMode getSecurityModeByRegistration (RedisConnection connection, String endpoint) {
         try {
-            byte[] data = connection.get((REG_EP + endpoint).getBytes());
+            byte[] data = connection.stringCommands().get((REG_EP + endpoint).getBytes());
             JsonNode registrationNode = JacksonUtil.fromString(new String(data != null ? data : new byte[0]), JsonNode.class);
             String typeModeStr = registrationNode.get("transportdata").get("identity").get("type").asText();
             return "unsecure".equals(typeModeStr) ? SecurityMode.NO_SEC : null;

@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -40,6 +41,7 @@ import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.NameLabelAndCustomerDetails;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.query.ComplexOperation;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataPageLink;
@@ -90,6 +92,9 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
     private static final int MAX_ENTITY_IDS_SIZE = 1024;
     private static final Set<EntityFilterType> EXCLUDED_TYPES_FROM_OPTIMIZATION = Set.of(
             EntityFilterType.ENTITY_LIST, EntityFilterType.SINGLE_ENTITY, EntityFilterType.RELATIONS_QUERY);
+
+    @Value("${sql.query.key-filters-or-conditions.enabled:true}")
+    private boolean keyFiltersOrConditionsEnabled;
 
     @Autowired
     private EntityQueryDao entityQueryDao;
@@ -328,7 +333,7 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
         return new NameLabelAndCustomerDetails(getName(entity), getLabel(entity), getCustomerId(entity));
     }
 
-    private static void validateEntityCountQuery(EntityCountQuery query) {
+    private void validateEntityCountQuery(EntityCountQuery query) {
         if (query == null) {
             throw new IncorrectParameterException("Query must be specified.");
         } else if (query.getEntityFilter() == null) {
@@ -342,9 +347,14 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
         } else if (query.getEntityFilter().getType().equals(ENTITY_NAME)) {
             validateEntityNameQuery((EntityNameFilter) query.getEntityFilter());
         }
+        // Intentionally using the nullable getKeyFiltersOperation() (not getKeyFiltersOperationOrDefault()):
+        // a null value encodes "classic AND" and must pass this guard even when the OR feature flag is off.
+        if (!keyFiltersOrConditionsEnabled && query.getKeyFiltersOperation() == ComplexOperation.OR) {
+            throw new IncorrectParameterException("OR conditions between key filters are disabled by the system administrator.");
+        }
     }
 
-    private static void validateEntityDataQuery(EntityDataQuery query) {
+    private void validateEntityDataQuery(EntityDataQuery query) {
         validateEntityCountQuery(query);
         validateEntityDataPageLink(query.getPageLink());
     }
@@ -409,7 +419,7 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
                         .collect(Collectors.toList());
             }
         }
-        EntityDataQuery entityQuery = new EntityDataQuery(query.getEntityFilter(), query.getPageLink(), entityFields, latestValues, query.getKeyFilters());
+        EntityDataQuery entityQuery = new EntityDataQuery(query.getEntityFilter(), query.getPageLink(), entityFields, latestValues, query.getKeyFilters(), query.getKeyFiltersOperation());
         return this.entityQueryDao.findEntityDataByQuery(tenantId, customerId, entityQuery);
     }
 

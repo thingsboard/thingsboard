@@ -120,10 +120,6 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
     }
   }
 
-  trackByElement(i: number, item: any) {
-    return item;
-  }
-
   get providersForm(): UntypedFormArray {
     return this.twoFaFormGroup.get('providers') as UntypedFormArray;
   }

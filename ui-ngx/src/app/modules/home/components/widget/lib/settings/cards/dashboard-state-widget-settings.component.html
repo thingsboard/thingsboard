@@ -18,23 +18,27 @@
 <section class="tb-widget-settings flex flex-col" [formGroup]="dashboardStateWidgetSettingsForm">
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.dashboard-state.dashboard-state-settings</legend>
-    <mat-form-field class="mat-block">
+    <mat-form-field class="mat-block" appearance="outline">
       <input matInput type="text" placeholder="{{ 'widgets.dashboard-state.dashboard-state' | translate }}"
              #dashboardStateInput
              formControlName="stateId"
              [matAutocomplete]="dashboardStateAutocomplete">
-      <button *ngIf="dashboardStateWidgetSettingsForm.get('stateId').value"
-              type="button"
-              matSuffix mat-icon-button aria-label="Clear"
-              (click)="clearDashboardState()">
-        <mat-icon class="material-icons">close</mat-icon>
-      </button>
+      @if (dashboardStateWidgetSettingsForm.get('stateId').value) {
+        <button
+          type="button"
+          matSuffix mat-icon-button aria-label="Clear"
+          (click)="clearDashboardState()">
+          <mat-icon class="material-icons">close</mat-icon>
+        </button>
+      }
       <mat-autocomplete
         class="tb-autocomplete"
         #dashboardStateAutocomplete="matAutocomplete">
-        <mat-option *ngFor="let state of filteredDashboardStates | async" [value]="state">
-          <span [innerHTML]="state | highlight:dashboardStateSearchText"></span>
-        </mat-option>
+        @for (state of filteredDashboardStates | async; track state) {
+          <mat-option [value]="state">
+            <span [innerHTML]="state | highlight:dashboardStateSearchText"></span>
+          </mat-option>
+        }
       </mat-autocomplete>
     </mat-form-field>
     <mat-expansion-panel class="tb-settings">
@@ -47,12 +51,13 @@
         <mat-slide-toggle class="mat-slide" formControlName="defaultAutofillLayout">
           {{ 'widgets.dashboard-state.autofill-state-layout' | translate }}
         </mat-slide-toggle>
-        <mat-form-field class="mat-block flex-1">
+        <mat-form-field class="mat-block flex-1" appearance="outline">
           <mat-label translate>widgets.dashboard-state.default-margin</mat-label>
           <input matInput type="number" min="0" step="1" formControlName="defaultMargin">
         </mat-form-field>
         <tb-color-input
           formControlName="defaultBackgroundColor"
+          appearance="outline"
           icon="format_color_fill"
           label="{{ 'widgets.dashboard-state.default-background-color' | translate }}" openOnInput colorClearButton>
         </tb-color-input>

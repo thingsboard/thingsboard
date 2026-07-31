@@ -17,28 +17,36 @@
 -->
 @if (entity) {
   <mat-tab #transportType="matTab" label="{{ 'device-profile.transport-configuration' | translate }}">
-    <div class="mat-padding" [formGroup]="detailsForm" *ngIf="transportType.isActive">
-      <mat-form-field class="mat-block">
-        <mat-label translate>device-profile.transport-type</mat-label>
-        <mat-select formControlName="transportType" required>
-          <mat-option *ngFor="let type of deviceTransportTypes" [value]="type">
-            {{deviceTransportTypeTranslations.get(type) | translate}}
-          </mat-option>
-        </mat-select>
-        <mat-hint *ngIf="detailsForm.get('transportType').value">
-          {{deviceTransportTypeHints.get(detailsForm.get('transportType').value) | translate}}
-        </mat-hint>
-        <mat-error *ngIf="detailsForm.get('transportType').hasError('required')">
-          {{ 'device-profile.transport-type-required' | translate }}
-        </mat-error>
-      </mat-form-field>
-      <div formGroupName="profileData">
-        <tb-device-profile-transport-configuration
-          formControlName="transportConfiguration"
-          [isAdd]="isTransportTypeChanged">
-        </tb-device-profile-transport-configuration>
+    @if (transportType.isActive) {
+      <div class="mat-padding" [formGroup]="detailsForm">
+        <mat-form-field class="mat-block" appearance="outline">
+          <mat-label translate>device-profile.transport-type</mat-label>
+          <mat-select formControlName="transportType" required>
+            @for (type of deviceTransportTypes; track type) {
+              <mat-option [value]="type">
+                {{deviceTransportTypeTranslations.get(type) | translate}}
+              </mat-option>
+            }
+          </mat-select>
+          @if (detailsForm.get('transportType').value) {
+            <mat-hint>
+              {{deviceTransportTypeHints.get(detailsForm.get('transportType').value) | translate}}
+            </mat-hint>
+          }
+          @if (detailsForm.get('transportType').hasError('required')) {
+            <mat-error>
+              {{ 'device-profile.transport-type-required' | translate }}
+            </mat-error>
+          }
+        </mat-form-field>
+        <div formGroupName="profileData">
+          <tb-device-profile-transport-configuration
+            formControlName="transportConfiguration"
+            [isAdd]="isTransportTypeChanged">
+          </tb-device-profile-transport-configuration>
+        </div>
       </div>
-    </div>
+    }
   </mat-tab>
   @if (authUser.authority === authorities.TENANT_ADMIN && !isEdit) {
     <mat-tab label="{{ 'entity.type-calculated-fields' | translate }}" #calculatedFieldsTab="matTab">
@@ -58,11 +66,13 @@
           </div>
         }
         @if (alarmRulesOldVersion || isEdit) {
-          <div class="mat-padding" [formGroup]="detailsForm" *ngIf="alarmRules.isActive">
-            <div formGroupName="profileData">
-              <tb-device-profile-alarms formControlName="alarms" [deviceProfileId]="entity.id"></tb-device-profile-alarms>
+          @if (alarmRules.isActive) {
+            <div class="mat-padding" [formGroup]="detailsForm">
+              <div formGroupName="profileData">
+                <tb-device-profile-alarms formControlName="alarms" [deviceProfileId]="entity.id"></tb-device-profile-alarms>
+              </div>
             </div>
-          </div>
+          }
         } @else {
           <div class="relative h-full">
             <tb-alarm-rules-table [active]="alarmRules.isActive"
@@ -77,12 +87,14 @@
   }
 
   <mat-tab #deviceProvisioning="matTab" label="{{ 'device-profile.device-provisioning' | translate }}">
-    <div class="mat-padding" [formGroup]="detailsForm" *ngIf="deviceProvisioning.isActive">
-      <div formGroupName="profileData">
-        <tb-device-profile-provision-configuration formControlName="provisionConfiguration">
-        </tb-device-profile-provision-configuration>
+    @if (deviceProvisioning.isActive) {
+      <div class="mat-padding" [formGroup]="detailsForm">
+        <div formGroupName="profileData">
+          <tb-device-profile-provision-configuration formControlName="provisionConfiguration">
+          </tb-device-profile-provision-configuration>
+        </div>
       </div>
-    </div>
+    }
   </mat-tab>
   @if (!isEdit) {
     <mat-tab #auditLogsTab="matTab" label="{{ 'audit-log.audit-logs' | translate }}">
@@ -101,13 +113,15 @@
     </mat-tab>
   }
 }
-<mat-tab *ngIf="false"
-         label="{{'device-profile.profile-configuration' | translate }}" #deviceProfile="matTab">
-  <div class="mat-padding" [formGroup]="detailsForm">
-    <div formGroupName="profileData">
-      <tb-device-profile-configuration
-        formControlName="configuration">
-      </tb-device-profile-configuration>
+@if (false) {
+  <mat-tab
+    label="{{'device-profile.profile-configuration' | translate }}" #deviceProfile="matTab">
+    <div class="mat-padding" [formGroup]="detailsForm">
+      <div formGroupName="profileData">
+        <tb-device-profile-configuration
+          formControlName="configuration">
+        </tb-device-profile-configuration>
+      </div>
     </div>
-  </div>
-</mat-tab>
+  </mat-tab>
+}

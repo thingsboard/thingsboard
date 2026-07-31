@@ -29,7 +29,7 @@
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
                                     [widgetType]="widgetType"
-                                    formControlName="initialState"></tb-get-value-action-settings>
+      formControlName="initialState"></tb-get-value-action-settings>
     </div>
 
     <div class="tb-form-row">
@@ -60,7 +60,7 @@
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
                                     [widgetType]="widgetType"
-                                    formControlName="disabledState"></tb-get-value-action-settings>
+      formControlName="disabledState"></tb-get-value-action-settings>
     </div>
   </div>
   <div class="tb-form-panel" formGroupName="appearance">
@@ -72,12 +72,14 @@
                                     breakpoints: {
                                       'lt-sm': 1
                                     }}"
-                           label="{{ 'widgets.segmented-button.layout' | translate }}" formControlName="layout">
-      <tb-image-cards-select-option *ngFor="let layout of segmentedButtonLayouts"
-                                    [value]="layout"
-                                    [image]="segmentedButtonLayoutImageMap.get(layout)">
-        {{ segmentedButtonLayoutTranslationMap.get(layout) | translate }}
-      </tb-image-cards-select-option>
+      label="{{ 'widgets.segmented-button.layout' | translate }}" formControlName="layout">
+      @for (layout of segmentedButtonLayouts; track layout) {
+        <tb-image-cards-select-option
+          [value]="layout"
+          [image]="segmentedButtonLayoutImageMap.get(layout)">
+          {{ segmentedButtonLayoutTranslationMap.get(layout) | translate }}
+        </tb-image-cards-select-option>
+      }
     </tb-image-cards-select>
     <div class="tb-form-row">
       <mat-slide-toggle class="mat-slide" formControlName="autoScale">
@@ -216,16 +218,18 @@
             </mat-panel-title>
           </mat-expansion-panel-header>
           <ng-template matExpansionPanelContent>
-            <div class="tb-form-row space-between" *ngFor="let state of widgetButtonToggleStates">
-              <div>{{ widgetButtonToggleStatesTranslationsMap.get(state) | translate }}</div>
-              <tb-widget-button-toggle-custom-style
-                [value]="true"
-                [state]="state"
-                [appearance]="segmentedButtonWidgetSettingsForm.get('appearance').value"
-                [autoScale]="true"
-                [formControlName]="state">
-              </tb-widget-button-toggle-custom-style>
-            </div>
+            @for (state of widgetButtonToggleStates; track state) {
+              <div class="tb-form-row space-between">
+                <div>{{ widgetButtonToggleStatesTranslationsMap.get(state) | translate }}</div>
+                <tb-widget-button-toggle-custom-style
+                  [value]="true"
+                  [state]="state"
+                  [appearance]="segmentedButtonWidgetSettingsForm.get('appearance').value"
+                  [autoScale]="true"
+                  [formControlName]="state">
+                </tb-widget-button-toggle-custom-style>
+              </div>
+            }
           </ng-template>
         </mat-expansion-panel>
       </div>
@@ -257,16 +261,18 @@
             </mat-panel-title>
           </mat-expansion-panel-header>
           <ng-template matExpansionPanelContent>
-            <div class="tb-form-row space-between" *ngFor="let state of widgetButtonToggleStates">
-              <div>{{ widgetButtonToggleStatesTranslationsMap.get(state) | translate }}</div>
-              <tb-widget-button-toggle-custom-style
-                [value]="false"
-                [state]="state"
-                [appearance]="segmentedButtonWidgetSettingsForm.get('appearance').value"
-                [autoScale]="true"
-                [formControlName]="state">
-              </tb-widget-button-toggle-custom-style>
-            </div>
+            @for (state of widgetButtonToggleStates; track state) {
+              <div class="tb-form-row space-between">
+                <div>{{ widgetButtonToggleStatesTranslationsMap.get(state) | translate }}</div>
+                <tb-widget-button-toggle-custom-style
+                  [value]="false"
+                  [state]="state"
+                  [appearance]="segmentedButtonWidgetSettingsForm.get('appearance').value"
+                  [autoScale]="true"
+                  [formControlName]="state">
+                </tb-widget-button-toggle-custom-style>
+              </div>
+            }
           </ng-template>
         </mat-expansion-panel>
       </div>

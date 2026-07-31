@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.api.util;
 
+import com.fasterxml.jackson.core.io.JsonStringEncoder;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -57,8 +58,12 @@ public final class TbNodeUtils {
     }
 
     public static String processPattern(String pattern, TbMsg tbMsg) {
+        return processPattern(pattern, tbMsg, false);
+    }
+
+    public static String processPattern(String pattern, TbMsg tbMsg, boolean escapeJsonValues) {
         try {
-            String result = processPattern(pattern, tbMsg.getMetaData());
+            String result = processPattern(pattern, tbMsg.getMetaData(), escapeJsonValues);
             JsonNode json = JacksonUtil.toJsonNode(tbMsg.getData());
 
             result = result.replace(ALL_DATA_TEMPLATE, JacksonUtil.toString(json));
@@ -79,7 +84,11 @@ public final class TbNodeUtils {
                     }
 
                     if (jsonNode != null && jsonNode.isValueNode()) {
-                        result = result.replace(formatDataVarTemplate(group), jsonNode.asText());
+                        String value = jsonNode.asText();
+                        if (escapeJsonValues) {
+                            value = escapeJsonValue(value);
+                        }
+                        result = result.replace(formatDataVarTemplate(group), value);
                     }
                 }
             }
@@ -89,22 +98,31 @@ public final class TbNodeUtils {
         }
     }
 
-    private static String processPattern(String pattern, TbMsgMetaData metaData) {
+    private static String processPattern(String pattern, TbMsgMetaData metaData, boolean escapeJsonValues) {
         String replacement = metaData.isEmpty() ? "{}" : JacksonUtil.toString(metaData.getData());
         pattern = pattern.replace(ALL_METADATA_TEMPLATE, replacement);
-        return processTemplate(pattern, metaData.values());
+        return processTemplate(pattern, metaData.values(), escapeJsonValues);
+    }
+
+    private static String processPattern(String pattern, TbMsgMetaData metaData) {
+        return processPattern(pattern, metaData, false);
     }
 
     public static String processTemplate(String template, Map<String, String> data) {
+        return processTemplate(template, data, false);
+    }
+
+    private static String processTemplate(String template, Map<String, String> data, boolean escapeJsonValues) {
         String result = template;
         for (Map.Entry<String, String> kv : data.entrySet()) {
-            result = processVar(result, kv.getKey(), kv.getValue());
+            String value = escapeJsonValues ? escapeJsonValue(kv.getValue()) : kv.getValue();
+            result = result.replace(formatMetadataVarTemplate(kv.getKey()), value);
         }
         return result;
     }
 
-    private static String processVar(String pattern, String key, String val) {
-        return pattern.replace(formatMetadataVarTemplate(key), val);
+    private static String escapeJsonValue(String value) {
+        return new String(JsonStringEncoder.getInstance().quoteAsString(value));
     }
 
     static String formatDataVarTemplate(String key) {

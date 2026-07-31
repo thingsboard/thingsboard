@@ -149,10 +149,6 @@ export class IntervalOptionsConfigPanelComponent implements OnInit {
     return interval as number;
   }
 
-  trackByElement(i: number, item: any) {
-    return item;
-  }
-
   update() {
     if (this.onClose) {
       const allowedIntervals: Array<TimewindowInterval> = [];

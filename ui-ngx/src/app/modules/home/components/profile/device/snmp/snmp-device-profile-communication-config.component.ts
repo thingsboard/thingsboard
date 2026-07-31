@@ -24,7 +24,7 @@ import {
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   Validator,
-  Validators
+  Validators, FormArray, FormGroup
 } from '@angular/forms';
 import { SnmpCommunicationConfig, SnmpSpecType, SnmpSpecTypeTranslationMap } from '@shared/models/device.models';
 import { Subject } from 'rxjs';
@@ -79,8 +79,8 @@ export class SnmpDeviceProfileCommunicationConfigComponent implements OnInit, On
     this.destroy$.complete();
   }
 
-  get communicationConfigFormArray(): UntypedFormArray {
-    return this.deviceProfileCommunicationConfig.get('communicationConfig') as UntypedFormArray;
+  get communicationConfigFormArray(): FormArray<FormGroup> {
+    return this.deviceProfileCommunicationConfig.get('communicationConfig') as FormArray<FormGroup>;
   }
 
   registerOnChange(fn: any): void {

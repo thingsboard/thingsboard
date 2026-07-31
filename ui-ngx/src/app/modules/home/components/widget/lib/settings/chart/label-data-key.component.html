@@ -24,13 +24,15 @@
         </div>
       </mat-panel-title>
       <span class="flex-1"></span>
-      <button *ngIf="!disabled" mat-icon-button style="min-width: 40px;"
-              type="button"
-              (click)="removeLabelDataKey.emit()"
-              matTooltip="{{ 'action.remove' | translate }}"
-              matTooltipPosition="above">
-        <mat-icon>delete</mat-icon>
-      </button>
+      @if (!disabled) {
+        <button mat-icon-button style="min-width: 40px;"
+                type="button"
+                (click)="removeLabelDataKey.emit()"
+                matTooltip="{{ 'action.remove' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>delete</mat-icon>
+        </button>
+      }
     </div>
   </mat-expansion-panel-header>
   <ng-template matExpansionPanelContent>
@@ -41,9 +43,11 @@
           <mat-form-field class="mat-block flex-1">
             <mat-label translate>widgets.chart.key-name</mat-label>
             <input required matInput formControlName="name">
-            <mat-error *ngIf="labelDataKeyFormGroup.get('name').hasError('required')">
-              {{ 'widgets.chart.key-name-required' | translate }}
-            </mat-error>
+            @if (labelDataKeyFormGroup.get('name').hasError('required')) {
+              <mat-error>
+                {{ 'widgets.chart.key-name-required' | translate }}
+              </mat-error>
+            }
           </mat-form-field>
           <mat-form-field class="mat-block flex-1">
             <mat-label translate>widgets.chart.key-type</mat-label>

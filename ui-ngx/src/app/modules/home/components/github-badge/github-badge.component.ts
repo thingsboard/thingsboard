@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, OnDestroy } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { GitHubService } from '@core/http/git-hub.service';
 import { Store } from '@ngrx/store';
 import { selectAuthUser, selectIsAuthenticated } from '@core/auth/auth.selectors';
@@ -32,18 +32,27 @@ const SETTINGS_KEY = 'HIDE_GITHUB_STAR_BUTTON';
     styleUrl: './github-badge.component.scss',
     standalone: false
 })
-export class GithubBadgeComponent implements OnDestroy {
+export class GithubBadgeComponent implements OnInit, OnDestroy {
+
+  get hideGithubBadge(): boolean {
+    return this.hide;
+  }
 
   githubStar = 0;
 
+  private hide = false;
   private stopWatch$ = new Subject<void>();
 
   constructor(private gitHubService: GitHubService,
               private localStorageService: LocalStorageService,
-              private store: Store<AppState>,) {
-    const hide = this.localStorageService.getItem(SETTINGS_KEY) ?? false;
+              private store: Store<AppState>,
+              private cd: ChangeDetectorRef) {
+  }
 
-    if (!hide) {
+  ngOnInit() {
+    this.hide = this.localStorageService.getItem(SETTINGS_KEY) ?? false;
+
+    if (!this.hide) {
       this.store.select(selectIsAuthenticated).pipe(
         filter((data) => data),
         switchMap(() => this.store.select(selectAuthUser).pipe(take(1))),
@@ -60,21 +69,25 @@ export class GithubBadgeComponent implements OnDestroy {
         } else {
           this.githubStar = 0
         }
+        this.cd.detectChanges();
       });
     }
-  }
-
-  hideGithubStar($event: Event) {
-    $event?.stopPropagation();
-    this.localStorageService.setItem(SETTINGS_KEY, true);
-    this.githubStar = 0;
-
-    this.stopWatch$.next();
-    this.stopWatch$.complete();
   }
 
   ngOnDestroy() {
     this.stopWatch$.next();
     this.stopWatch$.complete();
   }
+
+  hideGithubStar($event: Event) {
+    $event?.stopPropagation();
+    this.localStorageService.setItem(SETTINGS_KEY, true);
+    this.hide = true;
+    this.githubStar = 0;
+
+    this.stopWatch$.next();
+    this.stopWatch$.complete();
+    this.cd.detectChanges();
+  }
+
 }

@@ -18,22 +18,26 @@
 <div class="tb-color-picker-panel">
   <tb-color-picker class="tb-color-picker" [formControl]="colorPickerControl"></tb-color-picker>
   <div class="tb-color-picker-panel-buttons">
-    <button *ngIf="colorClearButton"
-            mat-button
-            color="primary"
-            type="button"
-            (click)="clearColor()"
-            [disabled]="!colorPickerControl.value">
-      {{ 'action.clear' | translate }}
-    </button>
+    @if (colorClearButton) {
+      <button
+        mat-button
+        color="primary"
+        type="button"
+        (click)="clearColor()"
+        [disabled]="!colorPickerControl.value">
+        {{ 'action.clear' | translate }}
+      </button>
+    }
     <span class="flex-1"></span>
     <div class="flex flex-row gap-2">
-      <button *ngIf="colorCancelButton"
-              mat-button
-              type="button"
-              (click)="cancelColor()">
-        {{ 'action.cancel' | translate }}
-      </button>
+      @if (colorCancelButton) {
+        <button
+          mat-button
+          type="button"
+          (click)="cancelColor()">
+          {{ 'action.cancel' | translate }}
+        </button>
+      }
       <button mat-raised-button
               color="primary"
               type="button"

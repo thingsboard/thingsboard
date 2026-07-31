@@ -18,16 +18,18 @@
 <div class="tb-default-mobile-page-panel" [formGroup]="mobilePageFormGroup">
   <div class="tb-default-mobile-page-title-container">
     <div class="tb-default-mobile-page-title" translate>mobile.edit-page</div>
-    <button *ngIf="!disabled"
-            [disabled]="!isCleanupEnabled"
-            type="button"
-            mat-stroked-button
-            class="tb-box-button"
-            matTooltip="{{ 'mobile.reset-to-page-default' | translate }}"
-            matTooltipPosition="above"
-            (click)="cleanup()">
-      <tb-icon [color]="isCleanupEnabled ? 'primary' : null" matButtonIcon>mdi:broom</tb-icon>
-    </button>
+    @if (!disabled) {
+      <button
+        [disabled]="!isCleanupEnabled"
+        type="button"
+        mat-stroked-button
+        class="tb-box-button"
+        matTooltip="{{ 'mobile.reset-to-page-default' | translate }}"
+        matTooltipPosition="above"
+        (click)="cleanup()">
+        <tb-icon [color]="isCleanupEnabled ? 'primary' : null" matButtonIcon>mdi:broom</tb-icon>
+      </button>
+    }
   </div>
   <div class="tb-default-mobile-page-panel-content">
     <div class="tb-form-row space-between">
@@ -43,22 +45,24 @@
       <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic" floatLabel="always">
         <mat-label translate>mobile.page-name</mat-label>
         <input matInput formControlName="label" placeholder="{{ defaultItemName }}">
-        <mat-icon matSuffix
-                  matTooltipPosition="above"
-                  matTooltipClass="tb-error-tooltip"
-                  matTooltip="{{ 'mobile.page-name-cannot-contain-only-spaces' | translate }}"
-                  *ngIf="mobilePageFormGroup.get('label').hasError('pattern') && mobilePageFormGroup.get('label').touched"
-                  class="tb-error">
-          warning
-        </mat-icon>
-        <mat-icon matSuffix
-                  matTooltipPosition="above"
-                  matTooltipClass="tb-error-tooltip"
-                  matTooltip="{{ 'mobile.page-name-max-length' | translate }}"
-                  *ngIf="mobilePageFormGroup.get('label').hasError('maxlength') && mobilePageFormGroup.get('label').touched"
-                  class="tb-error">
-          warning
-        </mat-icon>
+        @if (mobilePageFormGroup.get('label').hasError('pattern') && mobilePageFormGroup.get('label').touched) {
+          <mat-icon matSuffix
+                    matTooltipPosition="above"
+                    matTooltipClass="tb-error-tooltip"
+                    matTooltip="{{ 'mobile.page-name-cannot-contain-only-spaces' | translate }}"
+                    class="tb-error">
+            warning
+          </mat-icon>
+        }
+        @if (mobilePageFormGroup.get('label').hasError('maxlength') && mobilePageFormGroup.get('label').touched) {
+          <mat-icon matSuffix
+                    matTooltipPosition="above"
+                    matTooltipClass="tb-error-tooltip"
+                    matTooltip="{{ 'mobile.page-name-max-length' | translate }}"
+                    class="tb-error">
+            warning
+          </mat-icon>
+        }
       </mat-form-field>
     </div>
   </div>

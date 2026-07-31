@@ -29,13 +29,15 @@
         </span>
       </mat-checkbox>
     </div>
-    <div class="flex flex-1 flex-row" *ngFor="let deliveryMethod of deliveryMethods">
-      <div class="flex flex-1 items-center justify-start">
-        <mat-checkbox color="primary"
-                      [checked]="getChecked(deliveryMethod)"
-                      (click)="toggleDeliviryMethod(deliveryMethod)"
-        ></mat-checkbox>
+    @for (deliveryMethod of deliveryMethods; track deliveryMethod) {
+      <div class="flex flex-1 flex-row">
+        <div class="flex flex-1 items-center justify-start">
+          <mat-checkbox color="primary"
+                        [checked]="getChecked(deliveryMethod)"
+                        (click)="toggleDeliviryMethod(deliveryMethod)"
+          ></mat-checkbox>
+        </div>
       </div>
-    </div>
+    }
   </div>
 </form>

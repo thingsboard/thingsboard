@@ -24,14 +24,16 @@
       <mat-radio-button [value]="'exclude'">{{ 'widgets.navigation.filter-type-exclude' | translate }}</mat-radio-button>
     </mat-radio-group>
   </section>
-  <mat-form-field [class.!hidden]="navigationCardsWidgetSettingsForm.get('filterType').value === 'all'" class="mat-block flex-1" floatLabel="always">
+  <mat-form-field [class.!hidden]="navigationCardsWidgetSettingsForm.get('filterType').value === 'all'" class="mat-block flex-1" floatLabel="always" appearance="outline">
     <mat-label translate>widgets.navigation.items</mat-label>
     <mat-chip-grid #filterItemsChipList>
-      <mat-chip-row *ngFor="let filterItem of navigationCardsWidgetSettingsForm.get('filter').value"
-                [removable]="true" (removed)="onFilterItemRemoved(filterItem)">
-        {{ filterItem }}
-        <mat-icon matChipRemove>cancel</mat-icon>
-      </mat-chip-row>
+      @for (filterItem of navigationCardsWidgetSettingsForm.get('filter').value; track filterItem) {
+        <mat-chip-row
+          [removable]="true" (removed)="onFilterItemRemoved(filterItem)">
+          {{ filterItem }}
+          <mat-icon matChipRemove>cancel</mat-icon>
+        </mat-chip-row>
+      }
       <input matInput type="text" placeholder="{{ 'widgets.navigation.enter-urls-to-filter' | translate }}"
              style="max-width: 200px;"
              #filterItemInput
@@ -48,9 +50,11 @@
     <mat-autocomplete #filterItemAutocomplete="matAutocomplete"
                       class="tb-autocomplete"
                       (optionSelected)="filterItemSelected($event)">
-      <mat-option *ngFor="let filterItem of filteredFilterItems | async" [value]="filterItem">
-        <span [innerHTML]="filterItem | highlight:filterItemSearchText"></span>
-      </mat-option>
+      @for (filterItem of filteredFilterItems | async; track filterItem) {
+        <mat-option [value]="filterItem">
+          <span [innerHTML]="filterItem | highlight:filterItemSearchText"></span>
+        </mat-option>
+      }
     </mat-autocomplete>
   </mat-form-field>
 </section>

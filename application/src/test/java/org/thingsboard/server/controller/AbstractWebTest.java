@@ -1379,7 +1379,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     protected NotificationTarget createNotificationTarget(UsersFilter usersFilter) {
         NotificationTarget notificationTarget = new NotificationTarget();
-        notificationTarget.setName(usersFilter.toString() + RandomStringUtils.randomNumeric(5));
+        notificationTarget.setName(usersFilter.toString() + RandomStringUtils.secure().nextNumeric(5));
         PlatformUsersNotificationTargetConfig targetConfig = new PlatformUsersNotificationTargetConfig();
         targetConfig.setUsersFilter(usersFilter);
         notificationTarget.setConfiguration(targetConfig);

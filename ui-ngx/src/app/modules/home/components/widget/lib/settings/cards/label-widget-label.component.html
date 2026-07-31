@@ -24,35 +24,39 @@
         </div>
       </mat-panel-title>
       <span class="flex-1"></span>
-      <button *ngIf="!disabled" mat-icon-button style="min-width: 40px;"
-              type="button"
-              (click)="removeLabel.emit()"
-              matTooltip="{{ 'action.remove' | translate }}"
-              matTooltipPosition="above">
-        <mat-icon>delete</mat-icon>
-      </button>
+      @if (!disabled) {
+        <button mat-icon-button style="min-width: 40px;"
+                type="button"
+                (click)="removeLabel.emit()"
+                matTooltip="{{ 'action.remove' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>delete</mat-icon>
+        </button>
+      }
     </div>
   </mat-expansion-panel-header>
   <ng-template matExpansionPanelContent>
     <div class="flex flex-col gap-2">
       <mat-divider></mat-divider>
       <section class="tb-widget-settings flex flex-col">
-        <mat-form-field style="padding-bottom: 16px;">
+        <mat-form-field style="padding-bottom: 16px;" appearance="outline">
           <mat-label translate>widgets.label-widget.label-pattern</mat-label>
           <input required matInput formControlName="pattern">
-          <mat-error *ngIf="labelWidgetLabelFormGroup.get('pattern').hasError('required')">
-            {{ 'widgets.label-widget.label-pattern-required' | translate }}
-          </mat-error>
+          @if (labelWidgetLabelFormGroup.get('pattern').hasError('required')) {
+            <mat-error>
+              {{ 'widgets.label-widget.label-pattern-required' | translate }}
+            </mat-error>
+          }
           <mat-hint [innerHTML]="'widgets.label-widget.label-pattern-hint' | translate | safe: 'html'"></mat-hint>
         </mat-form-field>
         <fieldset class="fields-group">
           <legend class="group-title" translate>widgets.label-widget.label-position</legend>
-          <section class="flex flex-row xs:flex-col gt-xs:gap-2">
-            <mat-form-field class="flex-1">
+          <section class="flex flex-row xs:flex-col gt-xs:gap-2 mt-2">
+            <mat-form-field class="flex-1" appearance="outline">
               <mat-label translate>widgets.label-widget.x-pos</mat-label>
               <input matInput type="number" min="0" max="100" formControlName="x">
             </mat-form-field>
-            <mat-form-field class="flex-1">
+            <mat-form-field class="flex-1" appearance="outline">
               <mat-label translate>widgets.label-widget.y-pos</mat-label>
               <input matInput type="number" min="0" max="100" formControlName="y">
             </mat-form-field>
@@ -60,6 +64,7 @@
         </fieldset>
         <tb-color-input
           formControlName="backgroundColor"
+          appearance="outline"
           icon="format_color_fill"
           label="{{ 'widgets.label-widget.background-color' | translate }}" openOnInput colorClearButton>
         </tb-color-input>

@@ -17,35 +17,45 @@
 -->
 <mat-form-field [appearance]="appearance" [class]="additionalClass"
                 [subscriptSizing]="subscriptSizing" style="width: 100%">
-  <mat-label *ngIf="label">{{label}}</mat-label>
+  @if (label) {
+    <mat-label>{{label}}</mat-label>
+  }
   <input matInput #nameInput [formControl]="selectionFormControl"
          [placeholder]="placeholderText"
          (focusin)="onFocus()"
          [matAutocomplete]="optionsAutocomplete">
-  <button *ngIf="selectionFormControl.value && !disabled"
-          type="button"
-          class="tb-icon-24"
-          matSuffix mat-icon-button aria-label="Clear"
-          (click)="clear()">
-    <mat-icon class="material-icons">close</mat-icon>
-  </button>
-  <mat-icon *ngIf="selectionFormControl.errors && selectionFormControl.touched && !showInlineError"
-            matIconSuffix
-            [matTooltip]="getErrorMessage"
-            matTooltipPosition="above"
-            [matTooltipClass]="tooltipClass"
-            class="material-icons tb-suffix-show-always tb-error">
-    warning
-  </mat-icon>
-  <mat-error *ngIf="selectionFormControl.errors && showInlineError">
-    {{ getErrorMessage }}
-  </mat-error>
+  @if (selectionFormControl.value && !disabled) {
+    <button
+      type="button"
+      class="tb-icon-24"
+      matSuffix mat-icon-button aria-label="Clear"
+      (click)="clear()">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  }
+  @if (selectionFormControl.errors && selectionFormControl.touched && !showInlineError) {
+    <mat-icon
+      matIconSuffix
+      [matTooltip]="getErrorMessage"
+      matTooltipPosition="above"
+      [matTooltipClass]="tooltipClass"
+      class="material-icons tb-suffix-show-always tb-error">
+      warning
+    </mat-icon>
+  }
+  @if (selectionFormControl.errors && showInlineError) {
+    <mat-error>
+      {{ getErrorMessage }}
+    </mat-error>
+  }
   <mat-autocomplete
     #optionsAutocomplete="matAutocomplete"
     class="tb-autocomplete"
     [panelWidth]="panelWidth">
-    <mat-option *ngFor="let option of filteredOptions$ | async" [value]="option">
-      <span [innerHTML]="option | highlight:searchText:true:'ig'"></span>
-    </mat-option>
+    @for (option of filteredOptions$ | async; track option) {
+      <mat-option [value]="option">
+        <span [innerHTML]="option | highlight:searchText:true:'ig'"></span>
+      </mat-option>
+    }
   </mat-autocomplete>
 </mat-form-field>

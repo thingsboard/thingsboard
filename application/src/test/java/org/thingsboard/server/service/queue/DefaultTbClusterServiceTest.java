@@ -17,11 +17,12 @@ package org.thingsboard.server.service.queue;
 
 import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.thingsboard.common.util.JacksonUtil;
@@ -56,6 +57,7 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.service.gateway_device.GatewayNotificationsService;
+import org.thingsboard.server.service.ota.OtaPackageStateService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 
@@ -67,6 +69,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -87,29 +90,44 @@ public class DefaultTbClusterServiceTest {
 
     public static final String TRANSPORT = "transport";
 
-    @MockBean
+    @MockitoBean
     protected TbDeviceProfileCache deviceProfileCache;
-    @MockBean
+    @MockitoBean
     protected TbAssetProfileCache assetProfileCache;
-    @MockBean
+    @MockitoBean
     protected GatewayNotificationsService gatewayNotificationsService;
-    @MockBean
+    @MockitoBean
     protected EdgeService edgeService;
-    @MockBean
+    @MockitoBean
     protected PartitionService partitionService;
-    @MockBean
+    @MockitoBean
     protected TbQueueProducerProvider producerProvider;
-    @MockBean
+    @MockitoBean
     protected TbRuleEngineProducerService ruleEngineProducerService;
-    @MockBean
+    @MockitoBean
     protected TbTransactionalCache<EdgeId, String> edgeCache;
-    @MockBean
+    @MockitoBean
     protected CalculatedFieldService calculatedFieldService;
 
-    @SpyBean
+    @MockitoBean
     protected TopicService topicService;
-    @SpyBean
+    @MockitoBean
+    protected OtaPackageStateService otaPackageStateService;
+    @MockitoSpyBean
     protected TbClusterService clusterService;
+
+    @Before
+    public void setUp() {
+        lenient().when(topicService.getNotificationsTopic(any(), any())).thenAnswer(invocation -> {
+            ServiceType serviceType = invocation.getArgument(0);
+            String serviceId = invocation.getArgument(1);
+            return new TopicPartitionInfo(serviceType.name().toLowerCase() + ".notifications." + serviceId, null, null, false);
+        });
+        lenient().when(topicService.getCalculatedFieldNotificationsTopic(any())).thenAnswer(invocation -> {
+            String serviceId = invocation.getArgument(0);
+            return new TopicPartitionInfo("calculated_field.notifications." + serviceId, null, null, false);
+        });
+    }
 
     @Test
     public void testOnQueueChangeSingleMonolith() {
@@ -393,7 +411,7 @@ public class DefaultTbClusterServiceTest {
     @Test
     public void testGetRuleEngineProfileForUpdatedAndDeletedDevice() {
         DeviceId deviceId = new DeviceId(UUID.randomUUID());
-        TenantId tenantId = new TenantId(UUID.randomUUID());
+        TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());
         DeviceProfileId deviceProfileId = new DeviceProfileId(UUID.randomUUID());
 
         Device device = new Device(deviceId);
@@ -413,7 +431,7 @@ public class DefaultTbClusterServiceTest {
     @Test
     public void testGetRuleEngineProfileForUpdatedAndDeletedAsset() {
         AssetId assetId = new AssetId(UUID.randomUUID());
-        TenantId tenantId = new TenantId(UUID.randomUUID());
+        TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());
         AssetProfileId assetProfileId = new AssetProfileId(UUID.randomUUID());
 
         Asset asset = new Asset(assetId);

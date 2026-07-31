@@ -24,31 +24,36 @@
   </mat-form-field>
   <mat-form-field class="tb-inline-field tb-state-source-field" appearance="outline" subscriptSizing="dynamic">
     <mat-select formControlName="sourceType">
-      <mat-option *ngFor="let type of timeSeriesStateSourceTypes" [value]="type">
-        {{ timeSeriesStateSourceTypeTranslations.get(type) | translate }}
-      </mat-option>
+      @for (type of timeSeriesStateSourceTypes; track type) {
+        <mat-option [value]="type">
+          {{ timeSeriesStateSourceTypeTranslations.get(type) | translate }}
+        </mat-option>
+      }
     </mat-select>
   </mat-form-field>
   <div class="tb-state-source-value-field">
-    <tb-value-input
-        *ngIf="stateFormGroup.get('sourceType').value === TimeSeriesChartStateSourceType.constant"
+    @if (stateFormGroup.get('sourceType').value === TimeSeriesChartStateSourceType.constant) {
+      <tb-value-input
         formControlName="sourceValue"
         class="flex-1"
         [layout]="{
                     layout: 'column',
                     breakpoints: {'gt-sm': 'row'}
                  }">
-    </tb-value-input>
-    <mat-form-field
-        *ngIf="stateFormGroup.get('sourceType').value === TimeSeriesChartStateSourceType.range"
+      </tb-value-input>
+    }
+    @if (stateFormGroup.get('sourceType').value === TimeSeriesChartStateSourceType.range) {
+      <mat-form-field
         appearance="outline" class="tb-inline-field number" subscriptSizing="dynamic">
-      <input matInput formControlName="sourceRangeFrom" type="number" placeholder="{{ 'widgets.time-series-chart.state.from' | translate }}">
-    </mat-form-field>
-    <mat-form-field
-        *ngIf="stateFormGroup.get('sourceType').value === TimeSeriesChartStateSourceType.range"
+        <input matInput formControlName="sourceRangeFrom" type="number" placeholder="{{ 'widgets.time-series-chart.state.from' | translate }}">
+      </mat-form-field>
+    }
+    @if (stateFormGroup.get('sourceType').value === TimeSeriesChartStateSourceType.range) {
+      <mat-form-field
         appearance="outline" class="tb-inline-field number" subscriptSizing="dynamic">
-      <input matInput formControlName="sourceRangeTo" type="number" placeholder="{{ 'widgets.time-series-chart.state.to' | translate }}">
-    </mat-form-field>
+        <input matInput formControlName="sourceRangeTo" type="number" placeholder="{{ 'widgets.time-series-chart.state.to' | translate }}">
+      </mat-form-field>
+    }
   </div>
   <div class="tb-form-table-row-cell-buttons">
     <button type="button"

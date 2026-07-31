@@ -21,20 +21,32 @@
     <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
   </div>
   <div #singleSwitchContent class="tb-single-switch-content" [class]="layout" [class.no-label]="!showIcon && !showLabel" [class.auto-scale]="autoScale">
-    <div *ngIf="showIcon || showLabel" #singleSwitchLabelRow class="tb-single-switch-label-row">
-      <tb-icon *ngIf="showIcon" [style]="iconStyle"
-               [style.color]="(disabled || (loading$ | async)) ? disabledColor : settings.iconColor">{{ icon }}</tb-icon>
-      <div *ngIf="showLabel" class="tb-single-switch-label" [style]="labelStyle"
-           [style.color]="(disabled || (loading$ | async)) ? disabledColor : settings.labelColor">{{ label$ | async }}</div>
-    </div>
+    @if (showIcon || showLabel) {
+      <div #singleSwitchLabelRow class="tb-single-switch-label-row">
+        @if (showIcon) {
+          <tb-icon [style]="iconStyle"
+          [style.color]="(disabled || (loading$ | async)) ? disabledColor : settings.iconColor">{{ icon }}</tb-icon>
+        }
+        @if (showLabel) {
+          <div class="tb-single-switch-label" [style]="labelStyle"
+          [style.color]="(disabled || (loading$ | async)) ? disabledColor : settings.labelColor">{{ label$ | async }}</div>
+        }
+      </div>
+    }
     <div #singleSwitchToggleRow class="tb-single-switch-slide-toggle-row">
-      <div *ngIf="showOffLabel" [style]="offLabelStyle"
-           [style.color]="(disabled || (loading$ | async)) ? disabledColor : settings.offLabelColor">{{ offLabel }}</div>
+      @if (showOffLabel) {
+        <div [style]="offLabelStyle"
+        [style.color]="(disabled || (loading$ | async)) ? disabledColor : settings.offLabelColor">{{ offLabel }}</div>
+      }
       <mat-slide-toggle class="tb-single-switch-toggle" [disabled]="disabled || (loading$ | async)" [(ngModel)]="value" (click)="!disabled && onToggleChange($event)">
       </mat-slide-toggle>
-      <div *ngIf="showOnLabel" [style]="onLabelStyle"
-           [style.color]="(disabled || (loading$ | async)) ? disabledColor : settings.onLabelColor">{{ onLabel }}</div>
+      @if (showOnLabel) {
+        <div [style]="onLabelStyle"
+        [style.color]="(disabled || (loading$ | async)) ? disabledColor : settings.onLabelColor">{{ onLabel }}</div>
+      }
     </div>
   </div>
-  <mat-progress-bar class="tb-action-widget-progress" style="height: 4px;" color="accent" mode="indeterminate" *ngIf="loading$ | async"></mat-progress-bar>
+  @if (loading$ | async) {
+    <mat-progress-bar class="tb-action-widget-progress" style="height: 4px;" color="accent" mode="indeterminate"></mat-progress-bar>
+  }
 </div>

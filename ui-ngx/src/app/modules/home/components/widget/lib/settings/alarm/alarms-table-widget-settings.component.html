@@ -101,34 +101,36 @@
         <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
           <input matInput formControlName="pageStepIncrement" type="number" min="1" step="1" required
                  placeholder="{{ 'widget-config.set' | translate }}">
-          <mat-icon matSuffix
-                    matTooltipPosition="above"
-                    matTooltipClass="tb-error-tooltip"
+          @if (alarmsTableWidgetSettingsForm.get('pageStepIncrement').invalid
+            && alarmsTableWidgetSettingsForm.get('pageStepIncrement').touched) {
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
                     [matTooltip]="(alarmsTableWidgetSettingsForm.get('pageStepIncrement').hasError('required')
                                      ? 'widgets.value-source.value-required'
                                      : 'widgets.table.page-step-increment-format-message') | translate"
-                    *ngIf="alarmsTableWidgetSettingsForm.get('pageStepIncrement').invalid
-                    && alarmsTableWidgetSettingsForm.get('pageStepIncrement').touched"
-                    class="tb-error">
-            warning
-          </mat-icon>
+              class="tb-error">
+              warning
+            </mat-icon>
+          }
         </mat-form-field>
         <mat-divider vertical class="xs:hidden"></mat-divider>
         <div class="tb-small-label" translate>widgets.table.page-step-count</div>
         <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
           <input matInput formControlName="pageStepCount" type="number" min="1" max="100" step="1" required
                  placeholder="{{ 'widget-config.set' | translate }}">
-          <mat-icon matSuffix
-                    matTooltipPosition="above"
-                    matTooltipClass="tb-error-tooltip"
+          @if (alarmsTableWidgetSettingsForm.get('pageStepCount').invalid
+            && alarmsTableWidgetSettingsForm.get('pageStepCount').touched) {
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
                     [matTooltip]="(alarmsTableWidgetSettingsForm.get('pageStepCount').hasError('required')
                                      ? 'widgets.value-source.value-required'
                                      : 'widgets.table.page-step-count-format-message') | translate"
-                    *ngIf="alarmsTableWidgetSettingsForm.get('pageStepCount').invalid
-                    && alarmsTableWidgetSettingsForm.get('pageStepCount').touched"
-                    class="tb-error">
-            warning
-          </mat-icon>
+              class="tb-error">
+              warning
+            </mat-icon>
+          }
         </mat-form-field>
       </div>
     </div>
@@ -136,9 +138,11 @@
       <div translate>widgets.table.default-page-size</div>
       <mat-form-field appearance="outline" subscriptSizing="dynamic">
         <mat-select formControlName="defaultPageSize" placeholder="{{ 'widget-config.set' | translate }}">
-          <mat-option *ngFor="let size of pageStepSizeValues" [value]="size">
-            {{ size }}
-          </mat-option>
+          @for (size of pageStepSizeValues; track size) {
+            <mat-option [value]="size">
+              {{ size }}
+            </mat-option>
+          }
         </mat-select>
       </mat-form-field>
     </div>
