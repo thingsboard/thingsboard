@@ -111,6 +111,9 @@ export class LocationTargetEntityComponent implements ControlValueAccessor, OnIn
   @Input()
   callbacks: WidgetActionCallbacks;
 
+  @Input()
+  panelHint: string;
+
   targetEntityFormGroup: FormGroup;
 
   targetEntityMode = LocationTargetEntityMode;
@@ -202,7 +205,7 @@ export class LocationTargetEntityComponent implements ControlValueAccessor, OnIn
     this.targetEntityFormGroup.patchValue({
       mode: fromAttribute ? LocationTargetEntityMode.fromAttribute : LocationTargetEntityMode.entity,
       source: fromAttribute ? (value?.attributeSource || MobileActionAttributeSource.currentUser)
-                            : sourceByDirectType.get(type),
+                            : (sourceByDirectType.get(type) ?? MobileActionAttributeSource.currentEntity),
       aliasName: value?.aliasName ?? null,
       attributeKey: value?.attributeKey ?? null
     }, {emitEvent: false});
@@ -275,7 +278,9 @@ export class LocationTargetEntityComponent implements ControlValueAccessor, OnIn
       }
       return config;
     }
-    const config: MobileActionTargetEntityConfig = {type: directTypeBySource.get(value.source)};
+    const config: MobileActionTargetEntityConfig = {
+      type: directTypeBySource.get(value.source) ?? MobileActionTargetEntityType.currentEntity
+    };
     if (value.source === MobileActionAttributeSource.entityAlias) {
       config.aliasName = value.aliasName;
     }

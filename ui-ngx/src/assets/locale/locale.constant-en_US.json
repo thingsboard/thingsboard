@@ -7763,6 +7763,7 @@
           "soft-ap": "Soft AP",
           "save-to-entity": "Save location to entity",
           "target-entity-type": "Target entity",
+          "live-location-alias-hint": "Live tracking follows a single entity. An entity alias that resolves to multiple entities uses the first one.",
           "target-mode-entity": "Entity",
           "target-current-entity": "Current datasource",
           "target-current-user": "Current user",
@@ -7834,6 +7835,8 @@
         "browser-location": {
           "location-saved": "Browser location saved",
           "location-saved-keys": "Browser location saved: {{keys}}",
+          "location-saved-keys-multi": "Browser location saved to {{count}} entities: {{keys}}",
+          "location-saved-partial": "Browser location saved to {{saved}} of {{total}} entities: {{keys}}",
           "location-save-failed": "Failed to save browser location: {{error}}",
           "error-unsupported": "This browser does not support location detection",
           "error-insecure-context": "Browser location requires a secure (HTTPS) connection",

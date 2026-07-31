@@ -17,7 +17,11 @@
 -->
 <section [formGroup]="targetEntityFormGroup" class="tb-form-panel no-padding no-border">
   <div class="flex flex-row items-center justify-between">
-    <div class="tb-form-panel-title">{{ 'widget-action.mobile.target-entity-type' | translate }}</div>
+    @if (panelHint) {
+      <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ panelHint }}">{{ 'widget-action.mobile.target-entity-type' | translate }}</div>
+    } @else {
+      <div class="tb-form-panel-title">{{ 'widget-action.mobile.target-entity-type' | translate }}</div>
+    }
     <tb-toggle-select formControlName="mode" selectMediaBreakpoint="xs">
       <tb-toggle-option [value]="targetEntityMode.entity">
         {{ 'widget-action.mobile.target-mode-entity' | translate }}

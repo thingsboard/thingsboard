@@ -621,14 +621,15 @@ export class EntityService {
     );
   }
 
-  public findEntityInfosByEntityFilter(filter: EntityFilter, config?: RequestConfig): Observable<Array<EntityInfo>> {
+  public findEntityInfosByEntityFilter(filter: EntityFilter, config?: RequestConfig): Observable<PageData<EntityInfo>> {
     const query: EntityDataQuery = {
       entityFilter: filter,
+      // Alias fan-out cap — savers report "saved X of Y" when the alias resolves more.
       pageLink: createDefaultEntityDataPageLink(100),
       entityFields: entityInfoFields
     };
     return this.findEntityDataByQuery(query, config).pipe(
-      map((data) => data.data.map((entityData) => entityDataToEntityInfo(entityData)))
+      map((data) => ({...data, data: data.data.map((entityData) => entityDataToEntityInfo(entityData))}))
     );
   }
 

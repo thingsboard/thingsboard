@@ -174,7 +174,8 @@ const processLocationWithSaveFunction: TbFunction =
   '// Function body to process current location of the phone. \n' +
   '// - latitude - phone location latitude\n' +
   '// - longitude - phone location longitude\n' +
-  '// - saveInfo - details of the performed save ({targetName, keys}), or null if the save failed.\n\n' +
+  '// - saveInfo - details of the performed save ({targetName, keys}), or null if the save failed. ' +
+  'targetName lists every entity the location was saved to, comma-separated.\n\n' +
   'showLocationDialog(\'Location\', latitude, longitude, saveInfo);\n' +
   '\n' +
   'function showLocationDialog(title, latitude, longitude, saveInfo) {\n' +

@@ -69,7 +69,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { UtilsService } from '@core/services/utils.service';
 import { BrowserGeolocationError, browserGeolocationErrorMessageKey, BrowserGeolocationService } from '@core/services/browser-geolocation.service';
-import { forkJoin, Observable, of, ReplaySubject, Subscription, throwError } from 'rxjs';
+import { forkJoin, from, Observable, of, ReplaySubject, Subscription, throwError } from 'rxjs';
 import {
   deepClone,
   guid,
@@ -115,7 +115,7 @@ import {
   modulesWithComponentsToTypes,
   ResourcesService
 } from '@core/services/resources.service';
-import { catchError, map, switchMap } from 'rxjs/operators';
+import { catchError, map, mergeMap, switchMap, toArray } from 'rxjs/operators';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { TimeService } from '@core/services/time.service';
 import { DeviceService } from '@app/core/http/device.service';
@@ -149,6 +149,11 @@ import { addDiagnosticChain } from '@angular/compiler-cli/src/ngtsc/diagnostics'
 interface LocationTargetEntity {
   entityId: EntityId;
   name: string | null;
+}
+
+interface LocationTargetResolution {
+  targets: LocationTargetEntity[];
+  totalTargets: number;
 }
 
 @Component({
@@ -1566,12 +1571,16 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
       [LocationKey.accuracy]: locationResult.accuracy
     };
     return this.resolveActionTargetEntities(mobileAction.targetEntity, currentEntityId).pipe(
-      switchMap((targets) => forkJoin(targets.map((target) =>
-        this.saveLocationKeys(target.entityId, mobileAction.keys, values))).pipe(
-        map(() => ({
-          targetName: targets.map((target) => target.name).filter(Boolean).join(', ') || null,
-          keys: this.savedLocationKeyNames(mobileAction.keys, values)
-        }))
+      switchMap((resolution) => this.saveLocationToTargets(resolution.targets, mobileAction.keys, values).pipe(
+        map(({saved, firstError}) => {
+          if (!saved.length) {
+            throw firstError;
+          }
+          return {
+            targetName: saved.map((target) => target.name).filter(Boolean).join(', ') || null,
+            keys: this.savedLocationKeyNames(mobileAction.keys, values)
+          };
+        })
       ))
     );
   }
@@ -1582,8 +1591,8 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
       return;
     }
     this.browserGeolocationService.getCurrentPosition().pipe(
-      switchMap((position) => this.resolveActionTargetEntities(config.targetEntity, currentEntityId).pipe(
-        switchMap((targets) => {
+      switchMap((position) => this.resolveActionTargetEntities(config.targetEntity, currentEntityId, false).pipe(
+        switchMap((resolution) => {
           const coords = position.coords;
           const values: Partial<Record<LocationKey, any>> = {
             [LocationKey.latitude]: coords.latitude,
@@ -1594,16 +1603,36 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
             [LocationKey.speed]: coords.speed,
             [LocationKey.heading]: coords.heading
           };
-          return forkJoin(targets.map((target) => this.saveLocationKeys(target.entityId, config.keys, values))).pipe(
-            map(() => this.savedLocationKeyNames(config.keys, values))
+          return this.saveLocationToTargets(resolution.targets, config.keys, values).pipe(
+            map(({saved, firstError}) => {
+              if (!saved.length) {
+                throw firstError;
+              }
+              return {
+                savedKeys: this.savedLocationKeyNames(config.keys, values),
+                savedCount: saved.length,
+                totalTargets: resolution.totalTargets,
+                firstError
+              };
+            })
           );
         })
       ))
     ).subscribe({
-      next: (savedKeys) => {
-        this.widgetContext.showSuccessToast(savedKeys.length
-          ? this.translate.instant('widget-action.browser-location.location-saved-keys', {keys: savedKeys.join(', ')})
-          : this.translate.instant('widget-action.browser-location.location-saved'));
+      next: ({savedKeys, savedCount, totalTargets}) => {
+        if (savedCount < totalTargets) {
+          this.widgetContext.showWarnToast(
+            this.translate.instant('widget-action.browser-location.location-saved-partial',
+              {saved: savedCount, total: totalTargets, keys: savedKeys.join(', ')}));
+        } else if (savedCount > 1) {
+          this.widgetContext.showSuccessToast(
+            this.translate.instant('widget-action.browser-location.location-saved-keys-multi',
+              {count: savedCount, keys: savedKeys.join(', ')}));
+        } else {
+          this.widgetContext.showSuccessToast(savedKeys.length
+            ? this.translate.instant('widget-action.browser-location.location-saved-keys', {keys: savedKeys.join(', ')})
+            : this.translate.instant('widget-action.browser-location.location-saved'));
+        }
       },
       error: (err) => {
         if (err instanceof BrowserGeolocationError) {
@@ -1702,6 +1731,23 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
     return saveObservables.length ? forkJoin(saveObservables) : of(null);
   }
 
+  // The concurrency cap of 8 bounds the request burst (up to 100 targets x 2 calls).
+  private saveLocationToTargets(targets: LocationTargetEntity[], keys: LocationKeyMapping[],
+                                values: Partial<Record<LocationKey, any>>):
+      Observable<{saved: LocationTargetEntity[]; firstError: any}> {
+    return from(targets).pipe(
+      mergeMap((target) => this.saveLocationKeys(target.entityId, keys, values).pipe(
+        map(() => ({target, error: null})),
+        catchError((error) => of({target, error}))
+      ), 8),
+      toArray(),
+      map((results) => ({
+        saved: results.filter((result) => !result.error).map((result) => result.target),
+        firstError: results.find((result) => result.error)?.error ?? null
+      }))
+    );
+  }
+
   private saveLocationErrorMessage(err: any): string {
     if (err instanceof HttpErrorResponse) {
       // ThingsBoard returns these errors as text/plain, so the body itself is the message.
@@ -1719,28 +1765,28 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
       : this.translate.instant('widget-action.location.error-save-failed');
   }
 
-  private resolveActionTargetEntities(target: MobileActionTargetEntityConfig,
-                                      currentEntityId?: EntityId): Observable<LocationTargetEntity[]> {
+  private resolveActionTargetEntities(target: MobileActionTargetEntityConfig, currentEntityId?: EntityId,
+                                      resolveNames = true): Observable<LocationTargetResolution> {
     const type = target?.type || MobileActionTargetEntityType.currentEntity;
     if (type === MobileActionTargetEntityType.entityAlias) {
       return this.resolveEntityAliasTargets(target.aliasName);
     }
     return this.resolveActionTargetEntity(target, currentEntityId).pipe(
-      switchMap((entityId) => this.resolveTargetEntityName(entityId).pipe(
-        map((name) => [{entityId, name}])
+      switchMap((entityId) => (resolveNames ? this.resolveTargetEntityName(entityId) : of(null)).pipe(
+        map((name) => ({targets: [{entityId, name}], totalTargets: 1}))
       ))
     );
   }
 
-  private resolveEntityAliasTargets(aliasName: string): Observable<LocationTargetEntity[]> {
+  private resolveEntityAliasTargets(aliasName: string): Observable<LocationTargetResolution> {
     const aliasId = this.widgetContext.aliasController.getEntityAliasId(aliasName);
     if (!aliasId) {
       return throwError(() => new Error(
         this.translate.instant('widget-action.location.error-alias-not-found', {alias: aliasName})));
     }
     return this.widgetContext.aliasController.resolveEntitiesInfo(aliasId).pipe(
-      map((entities) => {
-        const targets = (entities || [])
+      map((page) => {
+        const targets = (page.data || [])
           .filter((entity) => entity?.id && entity?.entityType)
           .map((entity) => ({
             entityId: {entityType: entity.entityType, id: entity.id} as EntityId,
@@ -1750,7 +1796,10 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
           throw new Error(
             this.translate.instant('widget-action.location.error-alias-not-resolved', {alias: aliasName}));
         }
-        return targets;
+        return {
+          targets,
+          totalTargets: Math.max(page.totalElements ?? 0, targets.length)
+        };
       })
     );
   }
