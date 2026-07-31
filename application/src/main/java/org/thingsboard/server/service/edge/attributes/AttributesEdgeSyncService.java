@@ -30,6 +30,8 @@ import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.stats.DefaultCounter;
+import org.thingsboard.server.common.stats.StatsFactory;
 
 import java.util.EnumMap;
 import java.util.List;
@@ -70,10 +72,14 @@ import java.util.function.Consumer;
 @RequiredArgsConstructor
 public class AttributesEdgeSyncService {
 
+    private static final String STATS_NAME = "edge.attributes.sync";
+
     private final List<AttributesEdgeSyncStrategy> strategies;
+    private final StatsFactory statsFactory;
 
     private final Map<EntityType, AttributesEdgeSyncStrategy> strategyByEntityType = new EnumMap<>(EntityType.class);
     private ExecutorService[] executors;
+    private DefaultCounter discardedCounter;
 
     @Value("${edges.enabled:false}")
     private boolean edgesEnabled;
@@ -85,6 +91,7 @@ public class AttributesEdgeSyncService {
     @PostConstruct
     public void init() {
         strategies.forEach(s -> strategyByEntityType.put(s.getEntityType(), s));
+        discardedCounter = statsFactory.createDefaultCounter(STATS_NAME, "result", "discarded");
         if (edgesEnabled) {
             // single-thread workers selected by the entity id, so that the events of the same entity
             // are delivered to the edge in the order they were saved (e.g. save and delete of the same attribute)
@@ -178,6 +185,7 @@ public class AttributesEdgeSyncService {
             try {
                 executor.execute(command);
             } catch (RejectedExecutionException e) {
+                discardedCounter.increment();
                 log.warn("[{}] Attributes edge sync queue is full, discarding the event", entityId);
             }
         };

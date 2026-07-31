@@ -32,6 +32,8 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
+import org.thingsboard.server.common.stats.DefaultCounter;
+import org.thingsboard.server.common.stats.DefaultStatsFactory;
 
 import java.util.List;
 import java.util.UUID;
@@ -63,7 +65,9 @@ class AttributesEdgeSyncServiceTest {
     @BeforeEach
     void setup() {
         lenient().when(deviceSyncStrategy.getEntityType()).thenReturn(EntityType.DEVICE);
-        service = new AttributesEdgeSyncService(List.of(deviceSyncStrategy));
+        var statsFactory = new DefaultStatsFactory();
+        ReflectionTestUtils.setField(statsFactory, "metricsEnabled", false);
+        service = new AttributesEdgeSyncService(List.of(deviceSyncStrategy), statsFactory);
         // init() with edges disabled only builds the strategy registry; enable edges and inject a direct executor afterwards
         service.init();
         ReflectionTestUtils.setField(service, "edgesEnabled", true);
@@ -163,6 +167,11 @@ class AttributesEdgeSyncServiceTest {
         service.onAttributesUpdate(request, immediateFuture(null));
 
         then(deviceSyncStrategy).should(never()).onAttributesUpdate(any());
+        assertThat(discardedCounter()).isEqualTo(1);
+    }
+
+    int discardedCounter() {
+        return ((DefaultCounter) ReflectionTestUtils.getField(service, "discardedCounter")).get();
     }
 
     @Test
