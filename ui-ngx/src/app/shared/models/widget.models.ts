@@ -896,7 +896,7 @@ export const locationKeyName = (mapping: LocationKeyMapping): string =>
   isNotEmptyStr(mapping?.label?.trim()) ? mapping.label.trim() : locationKeyDefaultLabelMap.get(mapping?.key);
 
 export const locationKeyMapping = (key: LocationKey): LocationKeyMapping =>
-  ({key, valueType: locationKeyDefaultValueTypeMap.get(key)});
+  ({key, label: locationKeyDefaultLabelMap.get(key), valueType: locationKeyDefaultValueTypeMap.get(key)});
 
 export const defaultLocationKeyMappings = (): LocationKeyMapping[] =>
   mandatoryLocationKeys.map(key => locationKeyMapping(key));

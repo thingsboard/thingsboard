@@ -29,6 +29,7 @@ import {
   Validators
 } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { isNotEmptyStr } from '@core/utils';
 import {
   LocationKey,
   locationKeyDefaultLabelMap,
@@ -156,6 +157,7 @@ export class LocationKeysTableComponent implements ControlValueAccessor, OnInit,
 
   keyChanged(keyControl: AbstractControl): void {
     const key: LocationKey = keyControl.get('key').value;
+    keyControl.get('label').patchValue(locationKeyDefaultLabelMap.get(key));
     keyControl.get('valueType').patchValue(locationKeyDefaultValueTypeMap.get(key));
   }
 
@@ -169,7 +171,7 @@ export class LocationKeysTableComponent implements ControlValueAccessor, OnInit,
   private keyControl(mapping: LocationKeyMapping): FormGroup {
     return this.fb.group({
       key: [mapping.key, [Validators.required]],
-      label: [mapping.label ?? ''],
+      label: [isNotEmptyStr(mapping.label) ? mapping.label : locationKeyDefaultLabelMap.get(mapping.key)],
       valueType: [mapping.valueType ?? locationKeyDefaultValueTypeMap.get(mapping.key), [Validators.required]]
     });
   }
