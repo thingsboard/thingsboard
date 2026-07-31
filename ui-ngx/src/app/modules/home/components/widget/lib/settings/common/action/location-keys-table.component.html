@@ -17,7 +17,7 @@
 -->
 <section [formGroup]="keysFormGroup" class="tb-form-panel stroked">
   <div class="tb-form-row no-padding no-border space-between">
-    <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ 'widget-action.location.keys-hint' | translate }}">
+    <div class="tb-form-panel-title">
       {{ panelTitle }}
     </div>
     <div *ngIf="keysFormArray().hasError('duplicateKeyNames')" class="tb-form-panel-hint tb-error" translate>
