@@ -1594,13 +1594,16 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
             [LocationKey.speed]: coords.speed,
             [LocationKey.heading]: coords.heading
           };
-          return forkJoin(targets.map((target) => this.saveLocationKeys(target.entityId, config.keys, values)));
+          return forkJoin(targets.map((target) => this.saveLocationKeys(target.entityId, config.keys, values))).pipe(
+            map(() => this.savedLocationKeyNames(config.keys, values))
+          );
         })
       ))
     ).subscribe({
-      next: () => {
-        this.widgetContext.showSuccessToast(
-          this.translate.instant('widget-action.browser-location.location-saved'));
+      next: (savedKeys) => {
+        this.widgetContext.showSuccessToast(savedKeys.length
+          ? this.translate.instant('widget-action.browser-location.location-saved-keys', {keys: savedKeys.join(', ')})
+          : this.translate.instant('widget-action.browser-location.location-saved'));
       },
       error: (err) => {
         if (err instanceof BrowserGeolocationError) {

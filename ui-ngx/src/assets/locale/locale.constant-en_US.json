@@ -7833,6 +7833,7 @@
         "save-browser-location": "Save browser location",
         "browser-location": {
           "location-saved": "Browser location saved",
+          "location-saved-keys": "Browser location saved: {{keys}}",
           "location-save-failed": "Failed to save browser location: {{error}}",
           "error-unsupported": "This browser does not support location detection",
           "error-insecure-context": "Browser location requires a secure (HTTPS) connection",
