@@ -36,12 +36,17 @@ import org.thingsboard.server.common.data.kv.StringDataEntry;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.RejectedExecutionException;
 
+import static com.google.common.util.concurrent.Futures.immediateFailedFuture;
+import static com.google.common.util.concurrent.Futures.immediateFuture;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
@@ -115,7 +120,7 @@ class AttributesEdgeSyncServiceTest {
     void shouldDispatchUpdateToStrategy() {
         var request = saveRequest(null, AttributesSaveRequest.Strategy.PROCESS_ALL);
 
-        service.onAttributesUpdate(request);
+        service.onAttributesUpdate(request, immediateFuture(null));
 
         then(deviceSyncStrategy).should().onAttributesUpdate(request);
     }
@@ -124,9 +129,40 @@ class AttributesEdgeSyncServiceTest {
     void shouldDispatchDeleteToStrategy() {
         var request = deleteRequest(null);
 
-        service.onAttributesDelete(request);
+        service.onAttributesDelete(request, immediateFuture(null));
 
         then(deviceSyncStrategy).should().onAttributesDelete(request);
+    }
+
+    @Test
+    void shouldNotDispatchUpdateWhenAttributesWereNotPersisted() {
+        var request = saveRequest(null, AttributesSaveRequest.Strategy.PROCESS_ALL);
+
+        service.onAttributesUpdate(request, immediateFailedFuture(new RuntimeException("failed to save")));
+
+        then(deviceSyncStrategy).should(never()).onAttributesUpdate(any());
+    }
+
+    @Test
+    void shouldNotDispatchDeleteWhenAttributesWereNotRemoved() {
+        var request = deleteRequest(null);
+
+        service.onAttributesDelete(request, immediateFailedFuture(new RuntimeException("failed to remove")));
+
+        then(deviceSyncStrategy).should(never()).onAttributesDelete(any());
+    }
+
+    @Test
+    void shouldDiscardEventWhenWorkerQueueIsFull() {
+        var rejectingExecutor = mock(ExecutorService.class);
+        willThrow(new RejectedExecutionException("queue is full")).given(rejectingExecutor).execute(any());
+        ReflectionTestUtils.setField(service, "executors", new ExecutorService[]{rejectingExecutor});
+        var request = saveRequest(null, AttributesSaveRequest.Strategy.PROCESS_ALL);
+
+        // the rejection must be swallowed - it must not propagate to the attributes save path
+        service.onAttributesUpdate(request, immediateFuture(null));
+
+        then(deviceSyncStrategy).should(never()).onAttributesUpdate(any());
     }
 
     @Test
@@ -138,7 +174,7 @@ class AttributesEdgeSyncServiceTest {
                 .keys(List.of("key"))
                 .build();
 
-        service.onAttributesDelete(request);
+        service.onAttributesDelete(request, immediateFuture(null));
 
         then(deviceSyncStrategy).should(never()).onAttributesDelete(any());
     }

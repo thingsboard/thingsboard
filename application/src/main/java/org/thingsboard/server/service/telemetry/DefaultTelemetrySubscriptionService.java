@@ -230,7 +230,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         }
 
         if (attributesEdgeSyncService.isEdgeSyncRequired(request)) {
-            addMainCallback(resultFuture, success -> attributesEdgeSyncService.onAttributesUpdate(request));
+            attributesEdgeSyncService.onAttributesUpdate(request, resultFuture);
         }
 
         if (strategy.sendWsUpdate()) {
@@ -296,7 +296,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         }
 
         if (attributesEdgeSyncService.isEdgeSyncRequired(request)) {
-            addMainCallback(deleteFuture, success -> attributesEdgeSyncService.onAttributesDelete(request));
+            attributesEdgeSyncService.onAttributesDelete(request, deleteFuture);
         }
 
         addWsCallback(deleteFuture, success -> onAttributesDelete(tenantId, entityId, request.getScope().name(), request.getKeys()));

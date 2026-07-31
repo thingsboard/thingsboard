@@ -754,7 +754,7 @@ class DefaultTelemetrySubscriptionServiceTest {
         telemetryService.saveAttributes(request);
 
         // THEN
-        then(attributesEdgeSyncService).should().onAttributesUpdate(request);
+        then(attributesEdgeSyncService).should().onAttributesUpdate(eq(request), any());
     }
 
     @Test
@@ -777,7 +777,7 @@ class DefaultTelemetrySubscriptionServiceTest {
         telemetryService.saveAttributes(request);
 
         // THEN
-        then(attributesEdgeSyncService).should(never()).onAttributesUpdate(any());
+        then(attributesEdgeSyncService).should(never()).onAttributesUpdate(any(), any());
     }
 
     @Test
@@ -1008,7 +1008,7 @@ class DefaultTelemetrySubscriptionServiceTest {
         telemetryService.deleteAttributes(request);
 
         // THEN
-        then(attributesEdgeSyncService).should().onAttributesDelete(request);
+        then(attributesEdgeSyncService).should().onAttributesDelete(eq(request), any());
     }
 
     @Test
@@ -1032,7 +1032,7 @@ class DefaultTelemetrySubscriptionServiceTest {
         telemetryService.deleteAttributes(request);
 
         // THEN
-        then(attributesEdgeSyncService).should(never()).onAttributesDelete(any());
+        then(attributesEdgeSyncService).should(never()).onAttributesDelete(any(), any());
     }
 
     @ParameterizedTest

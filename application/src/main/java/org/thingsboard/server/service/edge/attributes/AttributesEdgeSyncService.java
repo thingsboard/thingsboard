@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.service.edge.attributes;
 
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +34,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -51,7 +55,15 @@ import java.util.function.Consumer;
  * </ul>
  * The checks are lightweight and executed synchronously on the attributes save path. The actual synchronization
  * is executed on dedicated single-thread workers selected by the entity id - to avoid blocking the telemetry
- * callback threads and to preserve the per-entity order of the events.
+ * callback threads and to preserve the per-entity order of the events. The sync task is submitted by the callback
+ * of the attributes save itself, so no shared pool sits between the save and the worker and can reorder the events;
+ * everything downstream of the worker preserves the order as well - the edge notification queue is partitioned
+ * by the entity id and the edge events are delivered by seq id.
+ * <p>
+ * The order is therefore the order in which the writes completed, not the order in which they were issued.
+ * For a caller that issues the updates sequentially these are the same, because the save is acknowledged only
+ * after its future completes. Truly concurrent updates of the same attribute have no defined order on the cloud
+ * either, so such conflicts are resolved on the edge by the update ts (see BaseTelemetryProcessor#filterAttributesByTs).
  */
 @Slf4j
 @Service
@@ -109,13 +121,23 @@ public class AttributesEdgeSyncService {
         return syncStrategy != null && syncStrategy.isEdgeSyncRequired(request);
     }
 
-    public void onAttributesUpdate(AttributesSaveRequest request) {
-        onAttributesEvent(request.getEntityId(),
+    /**
+     * Syncs the update to the edges once the attributes are persisted.
+     * Must be called only if {@link #isEdgeSyncRequired(AttributesSaveRequest)} returned true - the general rules
+     * are not re-evaluated here.
+     */
+    public void onAttributesUpdate(AttributesSaveRequest request, ListenableFuture<?> saveFuture) {
+        onAttributesEvent(request.getEntityId(), saveFuture,
                 syncStrategy -> syncStrategy.onAttributesUpdate(request));
     }
 
-    public void onAttributesDelete(AttributesDeleteRequest request) {
-        onAttributesEvent(request.getEntityId(),
+    /**
+     * Syncs the delete to the edges once the attributes are removed.
+     * Must be called only if {@link #isEdgeSyncRequired(AttributesDeleteRequest)} returned true - the general rules
+     * are not re-evaluated here.
+     */
+    public void onAttributesDelete(AttributesDeleteRequest request, ListenableFuture<?> deleteFuture) {
+        onAttributesEvent(request.getEntityId(), deleteFuture,
                 syncStrategy -> syncStrategy.onAttributesDelete(request));
     }
 
@@ -123,26 +145,42 @@ public class AttributesEdgeSyncService {
         return edgesEnabled && !DataConstants.EDGE_MSG_SOURCE.equals(msgSource);
     }
 
-    private void onAttributesEvent(EntityId entityId, Consumer<AttributesEdgeSyncStrategy> action) {
+    private void onAttributesEvent(EntityId entityId, ListenableFuture<?> resultFuture, Consumer<AttributesEdgeSyncStrategy> action) {
         AttributesEdgeSyncStrategy syncStrategy = strategyByEntityType.get(entityId.getEntityType());
         if (syncStrategy == null || executors == null) {
             return;
         }
-        try {
-            executorByEntityId(entityId).execute(() -> {
+        Futures.addCallback(resultFuture, new FutureCallback<Object>() {
+            @Override
+            public void onSuccess(Object result) {
                 try {
                     action.accept(syncStrategy);
                 } catch (Exception e) {
                     log.error("[{}] Failed to sync attributes event to edge", entityId, e);
                 }
-            });
-        } catch (RejectedExecutionException e) {
-            log.warn("[{}] Attributes edge sync queue is full, discarding the event", entityId);
-        }
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                // attributes were not persisted - nothing to sync
+            }
+        }, executorByEntityId(entityId));
     }
 
-    private ExecutorService executorByEntityId(EntityId entityId) {
-        return executors[Math.floorMod(entityId.hashCode(), executors.length)];
+    /**
+     * The worker of the entity, wrapped to discard the event on overflow instead of letting the rejection surface
+     * as an unhandled listener failure: the callback is dispatched when the write completes, long after it was
+     * registered, so the overflow of the bounded queue can not be handled by the caller.
+     */
+    private Executor executorByEntityId(EntityId entityId) {
+        ExecutorService executor = executors[Math.floorMod(entityId.hashCode(), executors.length)];
+        return command -> {
+            try {
+                executor.execute(command);
+            } catch (RejectedExecutionException e) {
+                log.warn("[{}] Attributes edge sync queue is full, discarding the event", entityId);
+            }
+        };
     }
 
 }
