@@ -788,15 +788,6 @@ export enum MobileActionTargetEntityType {
   fromAttribute = 'FROM_ATTRIBUTE'
 }
 
-export const mobileActionTargetEntityTypeTranslationMap = new Map<MobileActionTargetEntityType, string>(
-  [
-    [ MobileActionTargetEntityType.currentEntity, 'widget-action.mobile.target-current-entity' ],
-    [ MobileActionTargetEntityType.currentUser, 'widget-action.mobile.target-current-user' ],
-    [ MobileActionTargetEntityType.entityAlias, 'widget-action.mobile.target-entity-alias' ],
-    [ MobileActionTargetEntityType.fromAttribute, 'widget-action.mobile.target-from-attribute' ]
-  ]
-);
-
 export enum MobileActionAttributeSource {
   currentEntity = 'CURRENT_ENTITY',
   currentUser = 'CURRENT_USER',

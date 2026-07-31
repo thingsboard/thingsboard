@@ -18,24 +18,28 @@
 <section [formGroup]="targetEntityFormGroup" class="tb-form-panel no-padding no-border">
   <div class="flex flex-row items-center justify-between">
     <div class="tb-form-panel-title">{{ 'widget-action.mobile.target-entity-type' | translate }}</div>
-    <tb-toggle-select formControlName="type" selectMediaBreakpoint="xs">
-      <tb-toggle-option *ngFor="let type of targetEntityTypes" [value]="type">
-        {{ targetEntityTypeTranslations.get(type) | translate }}
+    <tb-toggle-select formControlName="mode" selectMediaBreakpoint="xs">
+      <tb-toggle-option [value]="targetEntityMode.entity">
+        {{ 'widget-action.mobile.target-mode-entity' | translate }}
+      </tb-toggle-option>
+      <tb-toggle-option [value]="targetEntityMode.fromAttribute">
+        {{ 'widget-action.mobile.target-from-attribute' | translate }}
       </tb-toggle-option>
     </tb-toggle-select>
   </div>
-  @if (targetEntityFormGroup.get('type').value === targetEntityType.fromAttribute) {
-    <div class="tb-form-row">
-      <div class="fixed-title-width">{{ 'widget-action.mobile.target-attribute-source' | translate }}</div>
-      <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
-        <mat-select formControlName="attributeSource">
-          <mat-option *ngFor="let source of attributeSources" [value]="source">
-            {{ attributeSourceTranslations.get(source) | translate }}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
+  <div class="tb-form-row">
+    <div class="fixed-title-width">
+      {{ (isFromAttribute ? 'widget-action.mobile.target-attribute-source'
+                          : 'widget-action.mobile.target-entity-type') | translate }}
     </div>
-  }
+    <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+      <mat-select formControlName="source">
+        <mat-option *ngFor="let source of attributeSources" [value]="source">
+          {{ attributeSourceTranslations.get(source) | translate }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
   @if (aliasNameRequired) {
     <div class="tb-form-row">
       <div class="fixed-title-width">{{ 'widget-action.mobile.target-entity-alias-name' | translate }}</div>
@@ -68,7 +72,7 @@
       </mat-form-field>
     </div>
   }
-  @if (targetEntityFormGroup.get('type').value === targetEntityType.fromAttribute) {
+  @if (isFromAttribute) {
     <div class="tb-form-row">
       <div class="fixed-title-width"
            tb-hint-tooltip-icon="{{ 'widget-action.mobile.target-attribute-value-hint' | translate }}">
