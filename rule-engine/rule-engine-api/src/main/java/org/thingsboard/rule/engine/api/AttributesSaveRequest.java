@@ -50,6 +50,7 @@ public class AttributesSaveRequest implements CalculatedFieldSystemAwareRequest 
     private final List<CalculatedFieldId> previousCalculatedFieldIds;
     private final UUID tbMsgId;
     private final TbMsgType tbMsgType;
+    private final String msgSource;
     private final FutureCallback<Void> callback;
 
     public record Strategy(boolean saveAttributes, boolean sendWsUpdate, boolean processCalculatedFields) {
@@ -76,6 +77,7 @@ public class AttributesSaveRequest implements CalculatedFieldSystemAwareRequest 
         private List<CalculatedFieldId> previousCalculatedFieldIds;
         private UUID tbMsgId;
         private TbMsgType tbMsgType;
+        private String msgSource;
         private FutureCallback<Void> callback;
 
         Builder() {}
@@ -143,6 +145,11 @@ public class AttributesSaveRequest implements CalculatedFieldSystemAwareRequest 
             return this;
         }
 
+        public Builder msgSource(String msgSource) {
+            this.msgSource = msgSource;
+            return this;
+        }
+
         public Builder callback(FutureCallback<Void> callback) {
             this.callback = callback;
             return this;
@@ -165,7 +172,7 @@ public class AttributesSaveRequest implements CalculatedFieldSystemAwareRequest 
         public AttributesSaveRequest build() {
             return new AttributesSaveRequest(
                     tenantId, entityId, scope, entries, notifyDevice, requireNonNullElse(strategy, Strategy.PROCESS_ALL),
-                    previousCalculatedFieldIds, tbMsgId, tbMsgType, requireNonNullElse(callback, NoOpFutureCallback.instance())
+                    previousCalculatedFieldIds, tbMsgId, tbMsgType, msgSource, requireNonNullElse(callback, NoOpFutureCallback.instance())
             );
         }
 

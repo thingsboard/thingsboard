@@ -71,6 +71,7 @@ import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.cf.CalculatedFieldQueueService;
+import org.thingsboard.server.service.edge.attributes.AttributesEdgeSyncService;
 import org.thingsboard.server.service.entitiy.entityview.TbEntityViewService;
 import org.thingsboard.server.service.subscription.SubscriptionManagerService;
 
@@ -142,12 +143,14 @@ class DefaultTelemetrySubscriptionServiceTest {
     CalculatedFieldQueueService calculatedFieldQueueService;
     @Mock
     DeviceStateManager deviceStateManager;
+    @Mock
+    AttributesEdgeSyncService attributesEdgeSyncService;
 
     DefaultTelemetrySubscriptionService telemetryService;
 
     @BeforeEach
     void setup() {
-        telemetryService = new DefaultTelemetrySubscriptionService(attrService, tsService, tbEntityViewService, apiUsageClient, apiUsageStateService, calculatedFieldQueueService, deviceStateManager);
+        telemetryService = new DefaultTelemetrySubscriptionService(attrService, tsService, tbEntityViewService, apiUsageClient, apiUsageStateService, calculatedFieldQueueService, deviceStateManager, attributesEdgeSyncService);
         ReflectionTestUtils.setField(telemetryService, "clusterService", clusterService);
         ReflectionTestUtils.setField(telemetryService, "partitionService", partitionService);
         ReflectionTestUtils.setField(telemetryService, "subscriptionManagerService", Optional.of(subscriptionManagerService));
@@ -728,6 +731,52 @@ class DefaultTelemetrySubscriptionServiceTest {
     }
 
     @Test
+    void shouldNotifyAttributesEdgeSyncServiceWhenEdgeSyncIsRequiredForSave() {
+        // GIVEN
+        var deviceId = DeviceId.fromString("cc51e450-53e1-11ee-883e-e56b48fd2088");
+        var request = AttributesSaveRequest.builder()
+                .tenantId(tenantId)
+                .entityId(deviceId)
+                .scope(AttributeScope.SHARED_SCOPE)
+                .entry(new BaseAttributeKvEntry(123L, new StringDataEntry("Modbus", "{}")))
+                .strategy(new AttributesSaveRequest.Strategy(true, false, false))
+                .build();
+
+        given(attributesEdgeSyncService.isEdgeSyncRequired(request)).willReturn(true);
+        given(attrService.save(tenantId, deviceId, request.getScope(), request.getEntries()))
+                .willReturn(immediateFuture(AttributesSaveResult.of(listOfNNumbers(request.getEntries().size()))));
+
+        // WHEN
+        telemetryService.saveAttributes(request);
+
+        // THEN
+        then(attributesEdgeSyncService).should().onAttributesUpdate(eq(request), any());
+    }
+
+    @Test
+    void shouldNotNotifyAttributesEdgeSyncServiceWhenEdgeSyncIsNotRequiredForSave() {
+        // GIVEN
+        var deviceId = DeviceId.fromString("cc51e450-53e1-11ee-883e-e56b48fd2088");
+        var request = AttributesSaveRequest.builder()
+                .tenantId(tenantId)
+                .entityId(deviceId)
+                .scope(AttributeScope.CLIENT_SCOPE)
+                .entry(new BaseAttributeKvEntry(123L, new StringDataEntry("clientKey", "value")))
+                .strategy(new AttributesSaveRequest.Strategy(true, false, false))
+                .build();
+
+        given(attributesEdgeSyncService.isEdgeSyncRequired(request)).willReturn(false);
+        given(attrService.save(tenantId, deviceId, request.getScope(), request.getEntries()))
+                .willReturn(immediateFuture(AttributesSaveResult.of(listOfNNumbers(request.getEntries().size()))));
+
+        // WHEN
+        telemetryService.saveAttributes(request);
+
+        // THEN
+        then(attributesEdgeSyncService).should(never()).onAttributesUpdate(any(), any());
+    }
+
+    @Test
     void shouldNotNotifyDeviceStateManagerWhenDeviceInactivityTimeoutSaveWasSkipped() {
         // GIVEN
         var deviceId = DeviceId.fromString("cc51e450-53e1-11ee-883e-e56b48fd2088");
@@ -932,6 +981,54 @@ class DefaultTelemetrySubscriptionServiceTest {
         var expectedAttributesDeletedMsg = DeviceAttributesEventNotificationMsg.onDelete(tenantId, deviceId, "SHARED_SCOPE", List.of("attributeKeyToDelete1", "attributeKeyToDelete2"));
 
         then(clusterService).should().pushMsgToCore(eq(expectedAttributesDeletedMsg), isNull());
+    }
+
+    @Test
+    void shouldNotifyAttributesEdgeSyncServiceWhenEdgeSyncIsRequiredForDelete() {
+        // GIVEN
+        var deviceId = DeviceId.fromString("cc51e450-53e1-11ee-883e-e56b48fd2088");
+        List<String> keys = List.of("Modbus");
+
+        var request = AttributesDeleteRequest.builder()
+                .tenantId(tenantId)
+                .entityId(deviceId)
+                .scope(AttributeScope.SHARED_SCOPE)
+                .keys(keys)
+                .notifyDevice(false)
+                .build();
+
+        given(attributesEdgeSyncService.isEdgeSyncRequired(request)).willReturn(true);
+        given(attrService.removeAll(tenantId, deviceId, request.getScope(), keys)).willReturn(immediateFuture(keys));
+
+        // WHEN
+        telemetryService.deleteAttributes(request);
+
+        // THEN
+        then(attributesEdgeSyncService).should().onAttributesDelete(eq(request), any());
+    }
+
+    @Test
+    void shouldNotNotifyAttributesEdgeSyncServiceWhenEdgeSyncIsNotRequiredForDelete() {
+        // GIVEN
+        var deviceId = DeviceId.fromString("cc51e450-53e1-11ee-883e-e56b48fd2088");
+        List<String> keys = List.of("clientKey");
+
+        var request = AttributesDeleteRequest.builder()
+                .tenantId(tenantId)
+                .entityId(deviceId)
+                .scope(AttributeScope.CLIENT_SCOPE)
+                .keys(keys)
+                .notifyDevice(false)
+                .build();
+
+        given(attributesEdgeSyncService.isEdgeSyncRequired(request)).willReturn(false);
+        given(attrService.removeAll(tenantId, deviceId, request.getScope(), keys)).willReturn(immediateFuture(keys));
+
+        // WHEN
+        telemetryService.deleteAttributes(request);
+
+        // THEN
+        then(attributesEdgeSyncService).should(never()).onAttributesDelete(any(), any());
     }
 
     @ParameterizedTest
