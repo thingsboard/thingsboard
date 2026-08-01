@@ -1,15 +1,15 @@
-# ThingsBoard - optymalny compose dla developmentu
+# ThingsBoard - dev stack ThingsBoard dla Windows 10 + Docker Desktop
 #
 # Uruchamia JEDNYM poleceniem: infrastrukture (Postgres + Cassandra + Kafka KRaft + Valkey),
-# backend Java 25 w trybie hot-reload (mvn spring-boot:run) oraz Angular dev server.
+# backend Java 25 z auto-kompilacja zrodel oraz Angular 20 dev server.
+# Na Windows nie instalujesz ani Javy, ani Mavena, ani Node - wszystko jest w kontenerach.
 #
-# Uzycie (z katalogu repo ThingsBoard):
-#   ./dev/up.sh              # profil hybrid (Postgres + Cassandra + Kafka + Valkey)
-#   ./dev/up.sh minimal      # profil minimal (Postgres + Kafka + Valkey) - najszybszy start
+#   powershell -ExecutionPolicy Bypass -File dev\up.ps1
+#   dev\dev.cmd up
 #
-# Wszystkie ciezkie katalogi (dane baz, ~/.m2, node_modules, .angular/cache) leza w
-# WOLUMENACH NAZWANYCH, nie w bind-mountach. Na Windows/macOS bind-mount na te katalogi
-# jest glownym powodem wolnych rebuildow.
+# Ciezkie katalogi (dane baz, ~/.m2, node_modules, .angular/cache) leza w WOLUMENACH
+# NAZWANYCH, nie w bind-mountach - bind-mount tych katalogow na Windows to glowny
+# powod wolnych rebuildow.
 
 name: tb-dev
 
@@ -36,12 +36,12 @@ services:
   postgres:
     image: postgres:16
     restart: unless-stopped
-    profiles: ["minimal", "hybrid"]
+    profiles: [ "minimal", "hybrid" ]
     environment:
       POSTGRES_DB: thingsboard
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      # dev-only: mniej fsync = znacznie szybszy install schematu i testy
-      POSTGRES_INITDB_ARGS: "--data-checksums=off"
+      POSTGRES_INITDB_ARGS: "--data-checksums"
+    # dev-only: mniej fsync = znacznie szybszy install schematu i migracje
     command: >
       postgres -c fsync=off -c synchronous_commit=off -c full_page_writes=off
                -c shared_buffers=256MB -c max_connections=200
@@ -50,18 +50,17 @@ services:
     volumes:
       - pg-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d thingsboard"]
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d thingsboard" ]
       interval: 3s
       timeout: 3s
       retries: 30
       start_period: 5s
-
+  
   cassandra:
     image: cassandra:5.0
     restart: unless-stopped
-    profiles: ["hybrid"]
+    profiles: [ "hybrid" ]
     environment:
-      # dev-only: mniejszy heap i pojedynczy token range = szybszy bootstrap
       MAX_HEAP_SIZE: "1G"
       HEAP_NEWSIZE: "256M"
       CASSANDRA_NUM_TOKENS: "1"
@@ -71,17 +70,17 @@ services:
     volumes:
       - cassandra-data:/var/lib/cassandra
     healthcheck:
-      test: ["CMD-SHELL", "cqlsh -e 'describe keyspaces' >/dev/null 2>&1"]
+      test: [ "CMD-SHELL", "cqlsh -e 'describe keyspaces' >/dev/null 2>&1" ]
       interval: 5s
       timeout: 10s
       retries: 60
       start_period: 30s
-
+  
   kafka:
     # KRaft: brak Zookeepera -> o kilkanascie sekund szybszy start stacku
     image: bitnamilegacy/kafka:4.0
     restart: unless-stopped
-    profiles: ["minimal", "hybrid"]
+    profiles: [ "minimal", "hybrid" ]
     environment:
       KAFKA_CFG_NODE_ID: "0"
       KAFKA_CFG_PROCESS_ROLES: "broker,controller"
@@ -103,16 +102,16 @@ services:
     volumes:
       - kafka-data:/bitnami/kafka
     healthcheck:
-      test: ["CMD-SHELL", "kafka-broker-api-versions.sh --bootstrap-server localhost:9092 >/dev/null 2>&1"]
+      test: [ "CMD-SHELL", "kafka-broker-api-versions.sh --bootstrap-server localhost:9092 >/dev/null 2>&1" ]
       interval: 3s
       timeout: 5s
       retries: 40
       start_period: 10s
-
+  
   valkey:
     image: bitnamilegacy/valkey:8.0
     restart: unless-stopped
-    profiles: ["minimal", "hybrid"]
+    profiles: [ "minimal", "hybrid" ]
     environment:
       ALLOW_EMPTY_PASSWORD: "yes"
     ports:
@@ -120,43 +119,44 @@ services:
     volumes:
       - valkey-data:/bitnami/valkey/data
     healthcheck:
-      test: ["CMD-SHELL", "valkey-cli ping | grep -q PONG"]
+      test: [ "CMD-SHELL", "valkey-cli ping | grep -q PONG" ]
       interval: 3s
       timeout: 3s
       retries: 20
-
+  
   # --------------------------------------------------- jednorazowy install schematu
-  # Uzywa OFICJALNEGO obrazu tylko do zalozenia schematu/demo danych.
-  # Dzieki temu dev-node nie traci czasu na install przy kazdym starcie.
+  # Uzywa OFICJALNEGO obrazu tylko do zalozenia schematu i danych demo,
+  # dzieki czemu dev-node nie traci na to czasu przy kazdym starcie.
   tb-install:
     image: "${DOCKER_REPO:-thingsboard}/${TB_NODE_DOCKER_NAME:-tb-node}:${TB_VERSION:-4.3.0}"
-    profiles: ["install"]
+    profiles: [ "install" ]
     environment:
       <<: *tb-node-env
       DATABASE_TS_TYPE: "${DATABASE_TS_TYPE:-cassandra}"
       CASSANDRA_URL: "cassandra:9042"
       INSTALL_TB: "true"
       LOAD_DEMO: "${LOAD_DEMO:-true}"
-    entrypoint: ["/bin/sh", "-c", "/usr/share/thingsboard/bin/install/install.sh --loadDemo"]
+    entrypoint: [ "/bin/sh", "-c", "/usr/share/thingsboard/bin/install/install.sh --loadDemo" ]
     restart: "no"
     depends_on:
       postgres:
         condition: service_healthy
-
-
-  # ----------------------------------------------------------------- backend (hot-reload)
+  
+  # -------------------------------------------- backend (auto-kompilacja zrodel)
   tb-node-dev:
     build:
-      context: ..
-      dockerfile: dev/Dockerfile.tb-node.dev
-    profiles: ["minimal", "hybrid"]
+      context: ../..
+      dockerfile: docker-dev/dev/Dockerfile.tb-node.dev
+    profiles: [ "minimal", "hybrid" ]
     environment:
       <<: *tb-node-env
-      DATABASE_TS_TYPE: "${DATABASE_TS_TYPE:-cassandra}"
+      DATABASE_TS_TYPE: "${DATABASE_TS_TYPE:-sql}"
       CASSANDRA_URL: "cassandra:9042"
       INSTALL_TB: "false"
-      # dev JVM: szybki start zamiast maksymalnej przepustowosci
-      JAVA_TOOL_OPTIONS: >-
+      # dev JVM: szybki start zamiast maksymalnej przepustowosci.
+      # Flagi trafiaja do JVM aplikacji (nie do JVM Mavena) - inaczej port 5005
+      # probowalyby zajac dwa procesy naraz.
+      TB_JVM_ARGS: >-
         -XX:TieredStopAtLevel=1
         -XX:+UseSerialGC
         -Xss512k
@@ -166,9 +166,12 @@ services:
         -Dspring.devtools.restart.enabled=true
         -Dspring.devtools.restart.poll-interval=400ms
         -Dspring.devtools.restart.quiet-period=200ms
-        -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
       MAVEN_OPTS: "-Xmx2g -XX:TieredStopAtLevel=1"
       TB_DEV_OFFLINE: "${TB_DEV_OFFLINE:-true}"
+      TB_DEV_WATCH: "${TB_DEV_WATCH:-true}"
+      TB_DEV_RELOAD: "${TB_DEV_RELOAD:-auto}"
+      TB_DEV_WATCH_POLL: "${TB_DEV_WATCH_POLL:-true}"
+      TB_DEV_WATCH_POLL_INTERVAL: "${TB_DEV_WATCH_POLL_INTERVAL:-2}"
     ports:
       - "${TB_HTTP_PORT:-8080}:8080"
       - "${TB_DEBUG_PORT:-5005}:5005"
@@ -176,7 +179,7 @@ services:
       - "5683:5683/udp"
     volumes:
       # bind-mount TYLKO na zrodla
-      - ../:/src:cached
+      - ../..:/src:cached
       # cache w wolumenach nazwanych - klucz do szybkich rebuildow
       - m2-repo:/root/.m2
       - java-cds:/cds
@@ -189,41 +192,41 @@ services:
       valkey:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/api/noauth/oauth2Clients -o /dev/null || curl -fsS http://localhost:8080/login -o /dev/null"]
+      test: [ "CMD-SHELL", "curl -fsS http://localhost:8080/login -o /dev/null || curl -fsS http://localhost:8080/api/noauth/oauth2Clients -o /dev/null" ]
       interval: 5s
       timeout: 5s
-      retries: 120
-      start_period: 20s
-
+      retries: 200
+      start_period: 60s
+  
   # ----------------------------------------------------------------- frontend (Angular 20)
   tb-ui-dev:
     build:
-      context: ..
-      dockerfile: dev/Dockerfile.ui.dev
-    profiles: ["minimal", "hybrid"]
+      context: ../..
+      dockerfile: docker-dev/dev/Dockerfile.ui.dev
+    profiles: [ "minimal", "hybrid" ]
     environment:
       TB_BACKEND_HOST: "tb-node-dev"
       TB_BACKEND_PORT: "8080"
-      # 4 GB zamiast 8 GB: mniejszy heap = szybszy start GC i mniejszy narzut
+      # 4 GB zamiast 8 GB: mniejszy heap = szybszy start i mniejszy narzut GC
       NODE_OPTIONS: "--max-old-space-size=4096"
-      # polling wlaczaj tylko gdy zrodla leza na Windows/macOS bind-mouncie
-      NG_POLL: "${NG_POLL:-false}"
+      NG_POLL: "${NG_POLL:-true}"
+      NG_POLL_INTERVAL: "${NG_POLL_INTERVAL:-1500}"
       NG_CONFIGURATION: "${NG_CONFIGURATION:-fast}"
     ports:
       - "${UI_PORT:-4200}:4200"
     volumes:
-      - ../ui-ngx:/app:cached
+      - ../../ui-ngx:/app:cached
       # KRYTYCZNE: node_modules i cache Angulara poza bind-mountem
       - ui-node-modules:/app/node_modules
       - ui-angular-cache:/app/.angular
     depends_on:
       tb-node-dev:
         condition: service_started
-
+  
   # ----------------------------------------------------------------- opcjonalne
   tb-js-executor:
     image: "${DOCKER_REPO:-thingsboard}/${JS_EXECUTOR_DOCKER_NAME:-tb-js-executor}:${TB_VERSION:-4.3.0}"
-    profiles: ["js"]
+    profiles: [ "js" ]
     environment:
       REMOTE_JS_EVAL_REQUEST_TOPIC: js_eval.requests
       TB_QUEUE_TYPE: kafka

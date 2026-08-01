@@ -185,7 +185,7 @@
                             "extractLicenses": false,
                             "budgets": [],
                             "sourceMap": {
-                                "scripts": true,
+                                "scripts": false,
                                 "styles": false,
                                 "vendor": false
                             },
@@ -210,9 +210,7 @@
                     "configurations": {
                         "fast": {
                             "buildTarget": "thingsboard:build:fast",
-                            "prebundle": {
-                                "exclude": []
-                            }
+                            "prebundle": true
                         },
                         "production": {
                             "buildTarget": "thingsboard:build:production"

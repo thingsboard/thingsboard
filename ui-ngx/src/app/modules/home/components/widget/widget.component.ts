@@ -127,7 +127,6 @@ import { IModulesMap } from '@modules/common/modules-map.models';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { CompiledTbFunction, compileTbFunction, isNotEmptyTbFunction } from '@shared/models/js-function.models';
 import { HttpClient } from '@angular/common/http';
-import { addDiagnosticChain } from '@angular/compiler-cli/src/ngtsc/diagnostics';
 
 @Component({
     selector: 'tb-widget',

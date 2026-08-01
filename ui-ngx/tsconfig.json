@@ -13,7 +13,7 @@
     "importHelpers": true,
     "target": "ES2022",
     "module": "es2020",
-    "emitDecoratorMetadata": true,
+    "emitDecoratorMetadata": false,
     "resolveJsonModule": true,
     "typeRoots": [
       "node_modules/@types",
