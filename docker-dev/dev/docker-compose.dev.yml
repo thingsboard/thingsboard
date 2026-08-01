@@ -1,0 +1,250 @@
+# ThingsBoard - dev stack ThingsBoard dla Windows 10 + Docker Desktop
+#
+# Uruchamia JEDNYM poleceniem: infrastrukture (Postgres + Cassandra + Kafka KRaft + Valkey),
+# backend Java 25 z auto-kompilacja zrodel oraz Angular 20 dev server.
+# Na Windows nie instalujesz ani Javy, ani Mavena, ani Node - wszystko jest w kontenerach.
+#
+#   powershell -ExecutionPolicy Bypass -File dev\up.ps1
+#   dev\dev.cmd up
+#
+# Ciezkie katalogi (dane baz, ~/.m2, node_modules, .angular/cache) leza w WOLUMENACH
+# NAZWANYCH, nie w bind-mountach - bind-mount tych katalogow na Windows to glowny
+# powod wolnych rebuildow.
+
+name: tb-dev
+
+x-tb-node-env: &tb-node-env
+  # jeden node = brak Zookeepera i brak zdalnych transportow -> szybszy start
+  ZOOKEEPER_ENABLED: "false"
+  TRANSPORT_TYPE: "local"
+  JS_EVALUATOR: "local"
+  METRICS_ENABLED: "false"
+  HTTP_LOG_CONTROLLER_ERROR_STACK_TRACE: "true"
+  # baza
+  SPRING_DRIVER_CLASS_NAME: "org.postgresql.Driver"
+  SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/thingsboard"
+  SPRING_DATASOURCE_USERNAME: "postgres"
+  SPRING_DATASOURCE_PASSWORD: "${POSTGRES_PASSWORD:-postgres}"
+  # kolejka i cache
+  TB_QUEUE_TYPE: "kafka"
+  TB_KAFKA_SERVERS: "kafka:9092"
+  CACHE_TYPE: "redis"
+  REDIS_HOST: "valkey"
+
+services:
+  # ----------------------------------------------------------------- infra
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    profiles: [ "minimal", "hybrid" ]
+    environment:
+      POSTGRES_DB: thingsboard
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_INITDB_ARGS: "--data-checksums"
+    # dev-only: mniej fsync = znacznie szybszy install schematu i migracje
+    command: >
+      postgres -c fsync=off -c synchronous_commit=off -c full_page_writes=off
+               -c shared_buffers=256MB -c max_connections=200
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d thingsboard" ]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+      start_period: 5s
+  
+  cassandra:
+    image: cassandra:5.0
+    restart: unless-stopped
+    profiles: [ "hybrid" ]
+    environment:
+      MAX_HEAP_SIZE: "1G"
+      HEAP_NEWSIZE: "256M"
+      CASSANDRA_NUM_TOKENS: "1"
+      JVM_OPTS: "-Dcassandra.skip_wait_for_gossip_to_settle=0 -Dcassandra.initial_token=0"
+    ports:
+      - "${CASSANDRA_PORT:-9042}:9042"
+    volumes:
+      - cassandra-data:/var/lib/cassandra
+    healthcheck:
+      test: [ "CMD-SHELL", "cqlsh -e 'describe keyspaces' >/dev/null 2>&1" ]
+      interval: 5s
+      timeout: 10s
+      retries: 60
+      start_period: 30s
+  
+  kafka:
+    # KRaft: brak Zookeepera -> o kilkanascie sekund szybszy start stacku
+    image: bitnamilegacy/kafka:4.0
+    restart: unless-stopped
+    profiles: [ "minimal", "hybrid" ]
+    environment:
+      KAFKA_CFG_NODE_ID: "0"
+      KAFKA_CFG_PROCESS_ROLES: "broker,controller"
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: "0@kafka:9093"
+      KAFKA_CFG_LISTENERS: "PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094"
+      KAFKA_CFG_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092,EXTERNAL://localhost:${KAFKA_PORT:-9094}"
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT"
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_CFG_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
+      KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
+      KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
+      KAFKA_CFG_TRANSACTION_STATE_LOG_MIN_ISR: "1"
+      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_CFG_NUM_PARTITIONS: "1"
+      KAFKA_CFG_LOG_FLUSH_INTERVAL_MESSAGES: "10000"
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+    ports:
+      - "${KAFKA_PORT:-9094}:9094"
+    volumes:
+      - kafka-data:/bitnami/kafka
+    healthcheck:
+      test: [ "CMD-SHELL", "kafka-broker-api-versions.sh --bootstrap-server localhost:9092 >/dev/null 2>&1" ]
+      interval: 3s
+      timeout: 5s
+      retries: 40
+      start_period: 10s
+  
+  valkey:
+    image: bitnamilegacy/valkey:8.0
+    restart: unless-stopped
+    profiles: [ "minimal", "hybrid" ]
+    environment:
+      ALLOW_EMPTY_PASSWORD: "yes"
+    ports:
+      - "${VALKEY_PORT:-6379}:6379"
+    volumes:
+      - valkey-data:/bitnami/valkey/data
+    healthcheck:
+      test: [ "CMD-SHELL", "valkey-cli ping | grep -q PONG" ]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  
+  # --------------------------------------------------- jednorazowy install schematu
+  # Uzywa OFICJALNEGO obrazu tylko do zalozenia schematu i danych demo,
+  # dzieki czemu dev-node nie traci na to czasu przy kazdym starcie.
+  tb-install:
+    image: "${DOCKER_REPO:-thingsboard}/${TB_NODE_DOCKER_NAME:-tb-node}:${TB_VERSION:-4.3.0}"
+    profiles: [ "install" ]
+    environment:
+      <<: *tb-node-env
+      DATABASE_TS_TYPE: "${DATABASE_TS_TYPE:-cassandra}"
+      CASSANDRA_URL: "cassandra:9042"
+      INSTALL_TB: "true"
+      LOAD_DEMO: "${LOAD_DEMO:-true}"
+    entrypoint: [ "/bin/sh", "-c", "/usr/share/thingsboard/bin/install/install.sh --loadDemo" ]
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+  
+  # -------------------------------------------- backend (auto-kompilacja zrodel)
+  tb-node-dev:
+    build:
+      context: ../..
+      dockerfile: docker-dev/dev/Dockerfile.tb-node.dev
+    profiles: [ "minimal", "hybrid" ]
+    environment:
+      <<: *tb-node-env
+      DATABASE_TS_TYPE: "${DATABASE_TS_TYPE:-sql}"
+      CASSANDRA_URL: "cassandra:9042"
+      INSTALL_TB: "false"
+      # dev JVM: szybki start zamiast maksymalnej przepustowosci.
+      # Flagi trafiaja do JVM aplikacji (nie do JVM Mavena) - inaczej port 5005
+      # probowalyby zajac dwa procesy naraz.
+      TB_JVM_ARGS: >-
+        -XX:TieredStopAtLevel=1
+        -XX:+UseSerialGC
+        -Xss512k
+        -Xmx2g
+        -XX:SharedArchiveFile=/cds/tb-node.jsa
+        -XX:+AutoCreateSharedArchive
+        -Dspring.devtools.restart.enabled=true
+        -Dspring.devtools.restart.poll-interval=400ms
+        -Dspring.devtools.restart.quiet-period=200ms
+      MAVEN_OPTS: "-Xmx2g -XX:TieredStopAtLevel=1"
+      TB_DEV_OFFLINE: "${TB_DEV_OFFLINE:-true}"
+      TB_DEV_WATCH: "${TB_DEV_WATCH:-true}"
+      TB_DEV_RELOAD: "${TB_DEV_RELOAD:-auto}"
+      TB_DEV_WATCH_POLL: "${TB_DEV_WATCH_POLL:-true}"
+      TB_DEV_WATCH_POLL_INTERVAL: "${TB_DEV_WATCH_POLL_INTERVAL:-2}"
+    ports:
+      - "${TB_HTTP_PORT:-8080}:8080"
+      - "${TB_DEBUG_PORT:-5005}:5005"
+      - "1883:1883"
+      - "5683:5683/udp"
+    volumes:
+      # bind-mount TYLKO na zrodla
+      - ../..:/src:cached
+      # cache w wolumenach nazwanych - klucz do szybkich rebuildow
+      - m2-repo:/root/.m2
+      - java-cds:/cds
+      - target-cache:/src/application/target
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -fsS http://localhost:8080/login -o /dev/null || curl -fsS http://localhost:8080/api/noauth/oauth2Clients -o /dev/null" ]
+      interval: 5s
+      timeout: 5s
+      retries: 200
+      start_period: 60s
+  
+  # ----------------------------------------------------------------- frontend (Angular 20)
+  tb-ui-dev:
+    build:
+      context: ../..
+      dockerfile: docker-dev/dev/Dockerfile.ui.dev
+    profiles: [ "minimal", "hybrid" ]
+    environment:
+      TB_BACKEND_HOST: "tb-node-dev"
+      TB_BACKEND_PORT: "8080"
+      # 4 GB zamiast 8 GB: mniejszy heap = szybszy start i mniejszy narzut GC
+      NODE_OPTIONS: "--max-old-space-size=4096"
+      NG_POLL: "${NG_POLL:-true}"
+      NG_POLL_INTERVAL: "${NG_POLL_INTERVAL:-1500}"
+      NG_CONFIGURATION: "${NG_CONFIGURATION:-fast}"
+    ports:
+      - "${UI_PORT:-4200}:4200"
+    volumes:
+      - ../../ui-ngx:/app:cached
+      # KRYTYCZNE: node_modules i cache Angulara poza bind-mountem
+      - ui-node-modules:/app/node_modules
+      - ui-angular-cache:/app/.angular
+    depends_on:
+      tb-node-dev:
+        condition: service_started
+  
+  # ----------------------------------------------------------------- opcjonalne
+  tb-js-executor:
+    image: "${DOCKER_REPO:-thingsboard}/${JS_EXECUTOR_DOCKER_NAME:-tb-js-executor}:${TB_VERSION:-4.3.0}"
+    profiles: [ "js" ]
+    environment:
+      REMOTE_JS_EVAL_REQUEST_TOPIC: js_eval.requests
+      TB_QUEUE_TYPE: kafka
+      TB_KAFKA_SERVERS: kafka:9092
+      LOGGER_LEVEL: info
+      DOCKER_MODE: "true"
+      NODE_OPTIONS: "--max-old-space-size=200"
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+volumes:
+  pg-data:
+  cassandra-data:
+  kafka-data:
+  valkey-data:
+  m2-repo:
+  java-cds:
+  target-cache:
+  ui-node-modules:
+  ui-angular-cache:
