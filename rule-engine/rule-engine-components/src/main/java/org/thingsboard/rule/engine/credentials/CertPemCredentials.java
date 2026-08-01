@@ -67,7 +67,7 @@ public class CertPemCredentials implements ClientCredentials {
             }
             return builder.build();
         } catch (Exception e) {
-            log.error("[{}:{}] Creating TLS factory failed!", caCert, cert, e);
+            log.error("Creating TLS factory failed!", e);
             throw new RuntimeException("Creating TLS factory failed!", e);
         }
     }
