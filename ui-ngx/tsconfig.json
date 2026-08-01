@@ -64,9 +64,8 @@
     "useDefineForClassFields": false
   },
   "angularCompilerOptions": {
-    "enableI18nLegacyMessageIdFormat": false,
-    "strictInjectionParameters": true,
-    "strictInputAccessModifiers": true,
-    "strictTemplates": false
+      "incremental": true,
+      "tsBuildInfoFile": "../.angular/cache/tsconfig.app.tsbuildinfo",
+      "skipLibCheck": true
   }
 }
