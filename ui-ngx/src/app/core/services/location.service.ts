@@ -16,6 +16,7 @@
 
 import { Injectable } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
+import { DomSanitizer } from '@angular/platform-browser';
 import { Store } from '@ngrx/store';
 import { TranslateService } from '@ngx-translate/core';
 import { forkJoin, Observable, of, throwError } from 'rxjs';
@@ -30,7 +31,7 @@ import {
 } from '@core/services/browser-geolocation.service';
 import { AliasInfo } from '@core/api/widget-api.models';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { isDefinedAndNotNull, isNotEmptyStr, validateEntityId } from '@core/utils';
+import { isDefinedAndNotNull, isNotEmptyStr, parseHttpErrorMessage, validateEntityId } from '@core/utils';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntityType } from '@shared/models/entity-type.models';
 import { EntityInfo } from '@shared/models/entity.models';
@@ -69,6 +70,7 @@ export class LocationService {
 
   constructor(private store: Store<AppState>,
               private translate: TranslateService,
+              private sanitizer: DomSanitizer,
               private entityService: EntityService,
               private browserGeolocationService: BrowserGeolocationService) {
   }
@@ -184,16 +186,8 @@ export class LocationService {
 
   private saveErrorMessage(err: any): string {
     if (err instanceof HttpErrorResponse) {
-      // ThingsBoard returns these errors as text/plain, so the body itself is the message.
-      const body = err.error;
-      if (isNotEmptyStr(body)) {
-        return body;
-      }
-      if (isNotEmptyStr(body?.message)) {
-        return body.message;
-      }
-      // Never fall back to err.message for HTTP errors — Angular's wording leaks the request URL.
-      return this.translate.instant('widget-action.location.error-save-failed');
+      // Same wording the global HTTP interceptor shows for these errors elsewhere.
+      return parseHttpErrorMessage(err, this.translate, undefined, this.sanitizer).message;
     }
     return isNotEmptyStr(err?.message) ? err.message
       : this.translate.instant('widget-action.location.error-save-failed');
