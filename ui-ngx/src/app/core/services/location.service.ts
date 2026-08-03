@@ -18,7 +18,7 @@ import { Injectable } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Store } from '@ngrx/store';
 import { TranslateService } from '@ngx-translate/core';
-import { EMPTY, forkJoin, Observable, of, throwError } from 'rxjs';
+import { forkJoin, Observable, of, throwError } from 'rxjs';
 import { catchError, map, mergeMap, switchMap } from 'rxjs/operators';
 import { AppState } from '@core/core.state';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
@@ -74,8 +74,8 @@ export class LocationService {
   }
 
   /// Saves a position the mobile app reported back for a `getLocation` action.
-  /// A failed save is reported as a toast and completes without emitting, so
-  /// callers only see the result of a save that actually happened.
+  /// Emits the save details on success; a failed save propagates as an error
+  /// with a human-readable message, to be routed to the action's error handling.
   saveMobileActionLocation(ctx: WidgetContext, mobileAction: WidgetMobileActionDescriptor,
                            locationResult: MobileLocationResult,
                            currentEntityId?: EntityId): Observable<LiveTrackingSaveInfo> {
@@ -93,11 +93,7 @@ export class LocationService {
           }))
         ))
       )),
-      catchError((err) => {
-        ctx.showErrorToast(this.translate.instant('widget-action.mobile.location-save-failed',
-          {error: this.saveErrorMessage(err)}));
-        return EMPTY;
-      })
+      catchError((err) => throwError(() => new Error(this.saveErrorMessage(err))))
     );
   }
 
@@ -145,9 +141,9 @@ export class LocationService {
 
   /// Builds the `startLiveLocation` bridge arguments. The app saves the samples
   /// itself, so the target entity and the key labels are resolved up front.
-  /// A resolution failure is reported here and completes without emitting: the
-  /// caller's error sink only runs the action's optional error function, so an
-  /// uncaught failure would start no session and tell the user nothing.
+  /// A resolution failure propagates as an error with a human-readable message
+  /// and surfaces through the action's handle error function, like any other
+  /// mobile action argument failure.
   liveTrackingArgs(ctx: WidgetContext, mobileAction: WidgetMobileActionDescriptor,
                    currentEntityId?: EntityId): Observable<any[]> {
     return this.resolveTargetEntity(ctx, mobileAction.targetEntity, currentEntityId).pipe(
@@ -171,11 +167,7 @@ export class LocationService {
           trackedBy: getCurrentAuthUser(this.store)?.sub || null
         }])
       )),
-      catchError((err) => {
-        ctx.showErrorToast(this.translate.instant('widget-action.mobile.live-location-start-failed',
-          {error: this.saveErrorMessage(err)}));
-        return EMPTY;
-      })
+      catchError((err) => throwError(() => new Error(this.saveErrorMessage(err))))
     );
   }
 

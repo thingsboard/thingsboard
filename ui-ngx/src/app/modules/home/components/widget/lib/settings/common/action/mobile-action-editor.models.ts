@@ -174,15 +174,13 @@ const processLocationWithSaveFunction: TbFunction =
   '// Function body to process current location of the phone. \n' +
   '// - latitude - phone location latitude\n' +
   '// - longitude - phone location longitude\n' +
-  '// - saveInfo - details of the performed save ({targetName, keys}), or null if the save failed. ' +
-  'targetName lists every entity the location was saved to, comma-separated.\n\n' +
+  '// - saveInfo - details of the performed save ({targetName, keys}). The function runs only after\n' +
+  '//   a successful save; a failed save is passed to the handle error function instead.\n\n' +
   'showLocationDialog(\'Location\', latitude, longitude, saveInfo);\n' +
   '\n' +
   'function showLocationDialog(title, latitude, longitude, saveInfo) {\n' +
   '    var message = \'Latitude: \'+latitude+\'<br>Longitude: \' + longitude;\n' +
-  '    if (saveInfo) {\n' +
-  '        message += \'<br>Location has been saved to \' + (saveInfo.targetName || \'the target entity\');\n' +
-  '    }\n' +
+  '    message += \'<br>Location has been saved to \' + (saveInfo.targetName || \'the target entity\');\n' +
   '    setTimeout(function() {\n' +
   '        widgetContext.dialogs.alert(title, message).subscribe();\n' +
   '    }, 100);\n' +

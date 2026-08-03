@@ -7816,7 +7816,6 @@
           "target-attribute-key-required": "Server attribute key is required",
           "target-attribute-value-hint": "The attribute must hold an Entity Id object with both fields, for example {\"entityType\": \"DEVICE\", \"id\": \"784f394c-42b6-435a-983c-b7beff2784f9\"}. A plain id string is not accepted.",
           "location-save-failed": "Failed to save location: {{error}}",
-          "live-location-start-failed": "Failed to start live location tracking: {{error}}",
           "start-live-location": "Start live location tracking",
           "stop-live-location": "Stop live location tracking",
           "accuracy": "Accuracy",
