@@ -75,12 +75,6 @@
         }
       </mat-form-field>
     </div>
-    @if (aliasResolvesMultiple) {
-      <div class="tb-form-hint tb-primary-fill flex items-center gap-2">
-        <mat-icon>warning</mat-icon>
-        <span>{{ 'widget-action.mobile.target-alias-multiple-warning' | translate }}</span>
-      </div>
-    }
   }
   @if (isFromAttribute) {
     <div class="tb-form-row">

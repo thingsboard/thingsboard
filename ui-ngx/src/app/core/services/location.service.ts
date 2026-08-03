@@ -20,26 +20,15 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { Store } from '@ngrx/store';
 import { TranslateService } from '@ngx-translate/core';
 import { forkJoin, Observable, of, throwError } from 'rxjs';
-import { catchError, map, mergeMap, switchMap } from 'rxjs/operators';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { AppState } from '@core/core.state';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { EntityService } from '@core/http/entity.service';
-import { AliasInfo } from '@core/api/widget-api.models';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { isDefinedAndNotNull, isNotEmptyStr, parseHttpErrorMessage, validateEntityId } from '@core/utils';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntityType } from '@shared/models/entity-type.models';
-import { EntityInfo } from '@shared/models/entity.models';
-import { PageData } from '@shared/models/page/page-data';
-import { Direction } from '@shared/models/page/sort-order';
 import { AttributeData, AttributeScope, LatestTelemetry } from '@shared/models/telemetry/telemetry.models';
-import {
-  entityDataToEntityInfo,
-  EntityDataQuery,
-  EntityFilter,
-  entityInfoFields,
-  EntityKeyType
-} from '@shared/models/query/query.models';
 import { WidgetMobileActionDescriptor } from '@shared/models/widget.models';
 import {
   BrowserGeolocationErrorType,
@@ -206,46 +195,6 @@ export class LocationService {
       : this.translate.instant('widget-action.location.error-save-failed');
   }
 
-  private aliasInfo(ctx: WidgetContext, aliasName: string): Observable<AliasInfo> {
-    const aliasId = ctx.aliasController.getEntityAliasId(aliasName);
-    if (!aliasId) {
-      return throwError(() => new Error(
-        this.translate.instant('widget-action.location.error-alias-not-found', {alias: aliasName})));
-    }
-    return ctx.aliasController.getAliasInfo(aliasId);
-  }
-
-  private findAliasEntities(aliasInfo: AliasInfo, pageSize: number): Observable<PageData<EntityInfo>> {
-    if (!aliasInfo.resolveMultiple || !aliasInfo.entityFilter) {
-      const currentEntity = aliasInfo.resolveMultiple ? null : aliasInfo.currentEntity;
-      return of({
-        data: currentEntity ? [currentEntity] : [],
-        totalPages: 1,
-        totalElements: currentEntity ? 1 : 0,
-        hasNext: false
-      });
-    }
-    return this.findEntityInfos(aliasInfo.entityFilter, pageSize);
-  }
-
-  private findEntityInfos(entityFilter: EntityFilter, pageSize: number): Observable<PageData<EntityInfo>> {
-    const query: EntityDataQuery = {
-      entityFilter,
-      pageLink: {
-        pageSize,
-        page: 0,
-        sortOrder: {
-          key: {type: EntityKeyType.ENTITY_FIELD, key: 'name'},
-          direction: Direction.ASC
-        }
-      },
-      entityFields: entityInfoFields
-    };
-    return this.entityService.findEntityDataByQuery(query, {ignoreLoading: true, ignoreErrors: true}).pipe(
-      map((data) => ({...data, data: data.data.map((entityData) => entityDataToEntityInfo(entityData))}))
-    );
-  }
-
   private resolveTargetEntity(ctx: WidgetContext, target: MobileActionTargetEntityConfig,
                               currentEntityId?: EntityId): Observable<EntityId> {
     const type = target?.type || MobileActionAttributeSource.CURRENT_ENTITY;
@@ -292,19 +241,13 @@ export class LocationService {
   }
 
   private resolveEntityAlias(ctx: WidgetContext, aliasName: string): Observable<EntityId> {
-    return this.aliasInfo(ctx, aliasName).pipe(
-      mergeMap((aliasInfo) => this.findAliasEntities(aliasInfo, 2)),
-      map((page) => {
-        const count = Math.max(page.totalElements ?? 0, page.data?.length ?? 0);
-        if (count === 0) {
-          throw new Error(
-            this.translate.instant('widget-action.location.error-alias-not-resolved', {alias: aliasName}));
-        }
-        if (count > 1) {
-          throw new Error(
-            this.translate.instant('widget-action.location.error-alias-multiple', {alias: aliasName, count}));
-        }
-        const entity = page.data?.[0];
+    const aliasId = ctx.aliasController.getEntityAliasId(aliasName);
+    if (!aliasId) {
+      return throwError(() => new Error(
+        this.translate.instant('widget-action.location.error-alias-not-found', {alias: aliasName})));
+    }
+    return ctx.aliasController.resolveSingleEntityInfo(aliasId).pipe(
+      map((entity) => {
         if (!entity?.id || !entity?.entityType) {
           throw new Error(
             this.translate.instant('widget-action.location.error-alias-not-resolved', {alias: aliasName}));

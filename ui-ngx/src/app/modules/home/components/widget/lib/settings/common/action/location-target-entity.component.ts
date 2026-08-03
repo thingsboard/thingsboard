@@ -104,10 +104,6 @@ export class LocationTargetEntityComponent implements ControlValueAccessor, OnIn
     return this.targetEntityFormGroup.get('source').value === MobileActionAttributeSource.ENTITY_ALIAS;
   }
 
-  get aliasResolvesMultiple(): boolean {
-    return this.aliasNameRequired && this.selectedAliasFilter()?.resolveMultiple === true;
-  }
-
   ngOnInit(): void {
     this.targetEntityFormGroup = this.fb.group({
       mode: [LocationTargetEntityMode.ENTITY],
