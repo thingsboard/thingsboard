@@ -104,11 +104,16 @@ const startLiveLocationResultFunction: TbFunction =
   'function showTrackingStartedDialog(title, started, info) {\n' +
   '    var message = started ? \'Live location tracking started\' : \'Live location tracking was not started\';\n' +
   '    if (started && info && info.targetName) {\n' +
-  '        message += \'<br>Location is being saved to \' + info.targetName;\n' +
+  '        // The dialog renders HTML, so the entity name must be escaped.\n' +
+  '        message += \'<br>Location is being saved to \' + escapeHtml(info.targetName);\n' +
   '    }\n' +
   '    setTimeout(function() {\n' +
   '        widgetContext.dialogs.alert(title, message).subscribe();\n' +
   '    }, 100);\n' +
+  '}\n' +
+  '\n' +
+  'function escapeHtml(value) {\n' +
+  '    return String(value).replace(/[&<>"\']/g, function(c) { return \'&#\' + c.charCodeAt(0) + \';\'; });\n' +
   '}\n';
 
 const stopLiveLocationResultFunction: TbFunction =
@@ -120,11 +125,16 @@ const stopLiveLocationResultFunction: TbFunction =
   'function showTrackingStoppedDialog(title, stopped, info) {\n' +
   '    var message = stopped ? \'Live location tracking stopped\' : \'Live location tracking was not stopped\';\n' +
   '    if (stopped && info && info.targetName) {\n' +
-  '        message += \'<br>Location was saved to \' + info.targetName;\n' +
+  '        // The dialog renders HTML, so the entity name must be escaped.\n' +
+  '        message += \'<br>Location was saved to \' + escapeHtml(info.targetName);\n' +
   '    }\n' +
   '    setTimeout(function() {\n' +
   '        widgetContext.dialogs.alert(title, message).subscribe();\n' +
   '    }, 100);\n' +
+  '}\n' +
+  '\n' +
+  'function escapeHtml(value) {\n' +
+  '    return String(value).replace(/[&<>"\']/g, function(c) { return \'&#\' + c.charCodeAt(0) + \';\'; });\n' +
   '}\n';
 
 const processQrCodeFunction: TbFunction =
@@ -180,10 +190,15 @@ const processLocationWithSaveFunction: TbFunction =
   '\n' +
   'function showLocationDialog(title, latitude, longitude, saveInfo) {\n' +
   '    var message = \'Latitude: \'+latitude+\'<br>Longitude: \' + longitude;\n' +
-  '    message += \'<br>Location has been saved to \' + (saveInfo.targetName || \'the target entity\');\n' +
+  '    // The dialog renders HTML, so the entity name must be escaped.\n' +
+  '    message += \'<br>Location has been saved to \' + escapeHtml(saveInfo.targetName || \'the target entity\');\n' +
   '    setTimeout(function() {\n' +
   '        widgetContext.dialogs.alert(title, message).subscribe();\n' +
   '    }, 100);\n' +
+  '}\n' +
+  '\n' +
+  'function escapeHtml(value) {\n' +
+  '    return String(value).replace(/[&<>"\']/g, function(c) { return \'&#\' + c.charCodeAt(0) + \';\'; });\n' +
   '}';
 
 const provisionSuccessFunction: TbFunction =
