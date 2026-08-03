@@ -256,7 +256,7 @@ export class LocationService {
         }
         return throwError(() => new Error(this.translate.instant('widget-action.location.error-no-current-entity')));
       case MobileActionAttributeSource.CURRENT_USER:
-        return of(this.currentUserEntityId());
+        return this.currentUserEntityId();
       case MobileActionAttributeSource.ENTITY_ALIAS:
         return this.resolveEntityAlias(ctx, target.aliasName);
       case MobileActionTargetIndirection.FROM_ATTRIBUTE:
@@ -272,6 +272,9 @@ export class LocationService {
             return this.parseTargetEntityAttributeValue(target.attributeKey, attribute.value);
           })
         );
+      default:
+        return throwError(() => new Error(
+          this.translate.instant('widget-action.location.error-unknown-target-type', {type})));
     }
   }
 
@@ -284,7 +287,7 @@ export class LocationService {
       case MobileActionAttributeSource.ENTITY_ALIAS:
         return this.resolveEntityAlias(ctx, target.aliasName);
       default:
-        return of(this.currentUserEntityId());
+        return this.currentUserEntityId();
     }
   }
 
@@ -319,9 +322,12 @@ export class LocationService {
     );
   }
 
-  private currentUserEntityId(): EntityId {
-    const authUser = getCurrentAuthUser(this.store);
-    return {entityType: EntityType.USER, id: authUser.userId};
+  private currentUserEntityId(): Observable<EntityId> {
+    const userId = getCurrentAuthUser(this.store)?.userId;
+    if (!userId) {
+      return throwError(() => new Error(this.translate.instant('widget-action.location.error-no-current-user')));
+    }
+    return of({entityType: EntityType.USER, id: userId});
   }
 
   private currentDashboardInfo(ctx: WidgetContext): {id: string | null; title: string | null} {

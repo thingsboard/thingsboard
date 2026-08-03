@@ -21,7 +21,7 @@ import { TbFunction } from '@shared/models/js-function.models';
 import { ProcessLaunchResultDescriptor } from '@shared/models/widget.models';
 
 export interface LiveTrackingSaveInfo {
-  targetName: string;
+  targetName: string | null;
   keys: string[];
 }
 
