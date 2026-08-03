@@ -225,6 +225,16 @@ export enum BrowserGeolocationErrorType {
   timeout = 'timeout'
 }
 
+export const browserGeolocationErrorTranslationMap = new Map<BrowserGeolocationErrorType, string>(
+  [
+    [ BrowserGeolocationErrorType.unsupported, 'widget-action.browser-location.error-unsupported' ],
+    [ BrowserGeolocationErrorType.insecureContext, 'widget-action.browser-location.error-insecure-context' ],
+    [ BrowserGeolocationErrorType.permissionDenied, 'widget-action.browser-location.error-permission-denied' ],
+    [ BrowserGeolocationErrorType.positionUnavailable, 'widget-action.browser-location.error-position-unavailable' ],
+    [ BrowserGeolocationErrorType.timeout, 'widget-action.browser-location.error-timeout' ]
+  ]
+);
+
 export type SaveBrowserLocationDescriptor = LocationTargetDescriptor;
 
 export const defaultSaveBrowserLocationDescriptor = (): SaveBrowserLocationDescriptor => ({

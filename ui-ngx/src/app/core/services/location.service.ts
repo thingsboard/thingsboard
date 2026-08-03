@@ -24,11 +24,6 @@ import { catchError, map, mergeMap, switchMap } from 'rxjs/operators';
 import { AppState } from '@core/core.state';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { EntityService } from '@core/http/entity.service';
-import {
-  BrowserGeolocationError,
-  browserGeolocationErrorMessageKey,
-  BrowserGeolocationService
-} from '@core/services/browser-geolocation.service';
 import { AliasInfo } from '@core/api/widget-api.models';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { isDefinedAndNotNull, isNotEmptyStr, parseHttpErrorMessage, validateEntityId } from '@core/utils';
@@ -47,6 +42,8 @@ import {
 } from '@shared/models/query/query.models';
 import { WidgetMobileActionDescriptor } from '@shared/models/widget.models';
 import {
+  BrowserGeolocationErrorType,
+  browserGeolocationErrorTranslationMap,
   defaultLocationKeyMappings,
   LiveTrackingConfig,
   LiveTrackingSaveInfo,
@@ -70,8 +67,7 @@ export class LocationService {
   constructor(private store: Store<AppState>,
               private translate: TranslateService,
               private sanitizer: DomSanitizer,
-              private entityService: EntityService,
-              private browserGeolocationService: BrowserGeolocationService) {
+              private entityService: EntityService) {
   }
 
   saveMobileActionLocation(ctx: WidgetContext, mobileAction: WidgetMobileActionDescriptor,
@@ -99,7 +95,7 @@ export class LocationService {
     if (!config) {
       return;
     }
-    this.browserGeolocationService.getCurrentPosition().pipe(
+    this.getCurrentPosition().pipe(
       switchMap((position) => this.resolveTargetEntity(ctx, config.targetEntity, currentEntityId).pipe(
         switchMap((targetEntityId) => {
           const coords = position.coords;
@@ -124,13 +120,11 @@ export class LocationService {
           : this.translate.instant('widget-action.browser-location.location-saved'));
       },
       error: (err) => {
-        if (err instanceof BrowserGeolocationError) {
-          ctx.showErrorToast(this.translate.instant(browserGeolocationErrorMessageKey(err)));
-        } else {
-          ctx.showErrorToast(
-            this.translate.instant('widget-action.browser-location.location-save-failed',
-              {error: this.saveErrorMessage(err)}));
-        }
+        const geolocationErrorKey = browserGeolocationErrorTranslationMap.get(err?.message as BrowserGeolocationErrorType);
+        ctx.showErrorToast(geolocationErrorKey
+          ? this.translate.instant(geolocationErrorKey)
+          : this.translate.instant('widget-action.browser-location.location-save-failed',
+            {error: this.saveErrorMessage(err)}));
       }
     });
   }
@@ -170,6 +164,38 @@ export class LocationService {
       targetName: config.targetName || null,
       keys: (config.keys || []).map((key) => key.label)
     };
+  }
+
+  private getCurrentPosition(): Observable<GeolocationPosition> {
+    return new Observable<GeolocationPosition>((subscriber) => {
+      if (!window.isSecureContext) {
+        subscriber.error(new Error(BrowserGeolocationErrorType.insecureContext));
+        return;
+      }
+      if (!navigator.geolocation) {
+        subscriber.error(new Error(BrowserGeolocationErrorType.unsupported));
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          subscriber.next(position);
+          subscriber.complete();
+        },
+        (error) => {
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              subscriber.error(new Error(BrowserGeolocationErrorType.permissionDenied));
+              break;
+            case error.TIMEOUT:
+              subscriber.error(new Error(BrowserGeolocationErrorType.timeout));
+              break;
+            default:
+              subscriber.error(new Error(BrowserGeolocationErrorType.positionUnavailable));
+          }
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    });
   }
 
   private saveErrorMessage(err: any): string {
