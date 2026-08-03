@@ -19,7 +19,7 @@ import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from 
 import {
   defaultLocationKeyMappings,
   LocationKey,
-  MobileActionTargetEntityType,
+  MobileActionAttributeSource,
   SaveBrowserLocationDescriptor
 } from '@shared/models/location.models';
 import { WidgetActionCallbacks } from '@home/components/widget/action/manage-widget-actions.component.models';
@@ -48,8 +48,8 @@ export class SaveBrowserLocationActionEditorComponent implements ControlValueAcc
 
   formGroup: FormGroup;
 
-  browserLocationKeys = [LocationKey.latitude, LocationKey.longitude, LocationKey.accuracy, LocationKey.altitude,
-    LocationKey.altitudeAccuracy, LocationKey.speed, LocationKey.heading];
+  browserLocationKeys = [LocationKey.LATITUDE, LocationKey.LONGITUDE, LocationKey.ACCURACY, LocationKey.ALTITUDE,
+    LocationKey.ALTITUDE_ACCURACY, LocationKey.SPEED, LocationKey.HEADING];
 
   private propagateChange = (_val: any) => {};
 
@@ -58,7 +58,7 @@ export class SaveBrowserLocationActionEditorComponent implements ControlValueAcc
 
   ngOnInit(): void {
     this.formGroup = this.fb.group({
-      targetEntity: [{type: MobileActionTargetEntityType.currentEntity}],
+      targetEntity: [{type: MobileActionAttributeSource.CURRENT_ENTITY}],
       keys: [defaultLocationKeyMappings()]
     });
 
@@ -84,7 +84,7 @@ export class SaveBrowserLocationActionEditorComponent implements ControlValueAcc
 
   writeValue(value?: SaveBrowserLocationDescriptor): void {
     this.formGroup.patchValue({
-      targetEntity: value?.targetEntity ?? {type: MobileActionTargetEntityType.currentEntity},
+      targetEntity: value?.targetEntity ?? {type: MobileActionAttributeSource.CURRENT_ENTITY},
       keys: value?.keys?.length ? value.keys : defaultLocationKeyMappings()
     }, {emitEvent: false});
   }

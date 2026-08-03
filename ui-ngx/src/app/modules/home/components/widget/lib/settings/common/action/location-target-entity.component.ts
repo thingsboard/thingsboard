@@ -27,10 +27,13 @@ import {
 } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
+  LocationTargetEntityMode,
   MobileActionAttributeSource,
   mobileActionAttributeSourceTranslationMap,
   MobileActionTargetEntityConfig,
-  MobileActionTargetEntityType
+  MobileActionTargetIndirection,
+  queryableAliasFilterTypes,
+  rootedAliasFilterTypes
 } from '@shared/models/location.models';
 import { WidgetActionCallbacks } from '@home/components/widget/action/manage-widget-actions.component.models';
 import { Observable } from 'rxjs';
@@ -42,46 +45,6 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
-
-const queryableAliasFilterTypes: AliasFilterType[] = [
-  AliasFilterType.singleEntity,
-  AliasFilterType.entityList,
-  AliasFilterType.entityName,
-  AliasFilterType.entityType,
-  AliasFilterType.assetType,
-  AliasFilterType.deviceType,
-  AliasFilterType.edgeType,
-  AliasFilterType.entityViewType,
-  AliasFilterType.apiUsageState,
-  AliasFilterType.relationsQuery,
-  AliasFilterType.assetSearchQuery,
-  AliasFilterType.deviceSearchQuery,
-  AliasFilterType.edgeSearchQuery,
-  AliasFilterType.entityViewSearchQuery
-];
-
-const rootedAliasFilterTypes: AliasFilterType[] = [
-  AliasFilterType.relationsQuery,
-  AliasFilterType.assetSearchQuery,
-  AliasFilterType.deviceSearchQuery,
-  AliasFilterType.edgeSearchQuery,
-  AliasFilterType.entityViewSearchQuery
-];
-
-export enum LocationTargetEntityMode {
-  entity = 'ENTITY',
-  fromAttribute = 'FROM_ATTRIBUTE'
-}
-
-const directTypeBySource = new Map<MobileActionAttributeSource, MobileActionTargetEntityType>([
-  [MobileActionAttributeSource.currentEntity, MobileActionTargetEntityType.currentEntity],
-  [MobileActionAttributeSource.currentUser, MobileActionTargetEntityType.currentUser],
-  [MobileActionAttributeSource.entityAlias, MobileActionTargetEntityType.entityAlias]
-]);
-
-const sourceByDirectType = new Map<MobileActionTargetEntityType, MobileActionAttributeSource>(
-  Array.from(directTypeBySource, ([source, type]) => [type, source])
-);
 
 @Component({
     selector: 'tb-location-target-entity',
@@ -134,11 +97,11 @@ export class LocationTargetEntityComponent implements ControlValueAccessor, OnIn
   }
 
   get isFromAttribute(): boolean {
-    return this.targetEntityFormGroup.get('mode').value === LocationTargetEntityMode.fromAttribute;
+    return this.targetEntityFormGroup.get('mode').value === LocationTargetEntityMode.FROM_ATTRIBUTE;
   }
 
   get aliasNameRequired(): boolean {
-    return this.targetEntityFormGroup.get('source').value === MobileActionAttributeSource.entityAlias;
+    return this.targetEntityFormGroup.get('source').value === MobileActionAttributeSource.ENTITY_ALIAS;
   }
 
   get aliasResolvesMultiple(): boolean {
@@ -147,8 +110,8 @@ export class LocationTargetEntityComponent implements ControlValueAccessor, OnIn
 
   ngOnInit(): void {
     this.targetEntityFormGroup = this.fb.group({
-      mode: [LocationTargetEntityMode.entity],
-      source: [MobileActionAttributeSource.currentEntity],
+      mode: [LocationTargetEntityMode.ENTITY],
+      source: [MobileActionAttributeSource.CURRENT_ENTITY],
       aliasName: [null],
       attributeKey: [null]
     });
@@ -201,12 +164,12 @@ export class LocationTargetEntityComponent implements ControlValueAccessor, OnIn
   }
 
   writeValue(value: MobileActionTargetEntityConfig | undefined): void {
-    const type = value?.type || MobileActionTargetEntityType.currentEntity;
-    const fromAttribute = type === MobileActionTargetEntityType.fromAttribute;
+    const type = value?.type || MobileActionAttributeSource.CURRENT_ENTITY;
+    const fromAttribute = type === MobileActionTargetIndirection.FROM_ATTRIBUTE;
     this.targetEntityFormGroup.patchValue({
-      mode: fromAttribute ? LocationTargetEntityMode.fromAttribute : LocationTargetEntityMode.entity,
-      source: fromAttribute ? (value?.attributeSource || MobileActionAttributeSource.currentUser)
-                            : (sourceByDirectType.get(type) ?? MobileActionAttributeSource.currentEntity),
+      mode: fromAttribute ? LocationTargetEntityMode.FROM_ATTRIBUTE : LocationTargetEntityMode.ENTITY,
+      source: fromAttribute ? (value?.attributeSource || MobileActionAttributeSource.CURRENT_USER)
+                            : type,
       aliasName: value?.aliasName ?? null,
       attributeKey: value?.attributeKey ?? null
     }, {emitEvent: false});
@@ -232,13 +195,13 @@ export class LocationTargetEntityComponent implements ControlValueAccessor, OnIn
 
   private updateAttributeSourceEntityFilter(): void {
     switch (this.targetEntityFormGroup.get('source').value) {
-      case MobileActionAttributeSource.currentUser:
+      case MobileActionAttributeSource.CURRENT_USER:
         this.attributeSourceEntityFilter = {
           type: AliasFilterType.singleEntity,
           singleEntity: {entityType: EntityType.USER, id: getCurrentAuthUser(this.store)?.userId}
         };
         break;
-      case MobileActionAttributeSource.entityAlias:
+      case MobileActionAttributeSource.ENTITY_ALIAS:
         this.attributeSourceEntityFilter = this.queryableAliasFilter(this.selectedAliasFilter());
         break;
       default:
@@ -272,21 +235,21 @@ export class LocationTargetEntityComponent implements ControlValueAccessor, OnIn
 
   private targetEntityConfig(): MobileActionTargetEntityConfig {
     const value = this.targetEntityFormGroup.getRawValue();
-    if (value.mode === LocationTargetEntityMode.fromAttribute) {
+    if (value.mode === LocationTargetEntityMode.FROM_ATTRIBUTE) {
       const config: MobileActionTargetEntityConfig = {
-        type: MobileActionTargetEntityType.fromAttribute,
+        type: MobileActionTargetIndirection.FROM_ATTRIBUTE,
         attributeSource: value.source,
         attributeKey: value.attributeKey
       };
-      if (value.source === MobileActionAttributeSource.entityAlias) {
+      if (value.source === MobileActionAttributeSource.ENTITY_ALIAS) {
         config.aliasName = value.aliasName;
       }
       return config;
     }
     const config: MobileActionTargetEntityConfig = {
-      type: directTypeBySource.get(value.source) ?? MobileActionTargetEntityType.currentEntity
+      type: value.source
     };
-    if (value.source === MobileActionAttributeSource.entityAlias) {
+    if (value.source === MobileActionAttributeSource.ENTITY_ALIAS) {
       config.aliasName = value.aliasName;
     }
     return config;

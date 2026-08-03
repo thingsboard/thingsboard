@@ -38,7 +38,7 @@ import {
   MobileActionLocationAccuracy,
   mobileActionLocationAccuracyHintMap,
   mobileActionLocationAccuracyTranslationMap,
-  MobileActionTargetEntityType
+  MobileActionAttributeSource
 } from '@shared/models/location.models';
 import { CustomActionEditorCompleter } from '@home/components/widget/lib/settings/common/action/custom-action.models';
 import {
@@ -96,10 +96,10 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
   locationAccuracyTranslations = mobileActionLocationAccuracyTranslationMap;
   locationAccuracyHints = mobileActionLocationAccuracyHintMap;
 
-  getLocationKeys = [LocationKey.latitude, LocationKey.longitude, LocationKey.accuracy];
+  getLocationKeys = [LocationKey.LATITUDE, LocationKey.LONGITUDE, LocationKey.ACCURACY];
 
-  liveLocationKeys = [LocationKey.latitude, LocationKey.longitude, LocationKey.accuracy, LocationKey.altitude,
-    LocationKey.speed, LocationKey.heading, LocationKey.gpsActive, LocationKey.gpsTrackedBy];
+  liveLocationKeys = [LocationKey.LATITUDE, LocationKey.LONGITUDE, LocationKey.ACCURACY, LocationKey.ALTITUDE,
+    LocationKey.SPEED, LocationKey.HEADING, LocationKey.GPS_ACTIVE, LocationKey.GPS_TRACKED_BY];
 
   readonly liveLocationLimits = {
     distanceFilterMeters: {enabled: false, defaultValue: 10},
@@ -338,7 +338,7 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
           this.addLocationTargetControls(action);
           this.mobileActionTypeFormGroup.addControl(
             'accuracy',
-            this.fb.control(action?.accuracy || MobileActionLocationAccuracy.balanced, [])
+            this.fb.control(action?.accuracy || MobileActionLocationAccuracy.BALANCED, [])
           );
           this.mobileActionTypeFormGroup.addControl(
             'distanceFilterMeters',
@@ -411,7 +411,7 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
   private addLocationTargetControls(action?: WidgetMobileActionDescriptor) {
     this.mobileActionTypeFormGroup.addControl(
       'targetEntity',
-      this.fb.control(action?.targetEntity ?? {type: MobileActionTargetEntityType.currentEntity}, [])
+      this.fb.control(action?.targetEntity ?? {type: MobileActionAttributeSource.CURRENT_ENTITY}, [])
     );
     this.mobileActionTypeFormGroup.addControl(
       'keys',

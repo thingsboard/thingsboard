@@ -19,10 +19,10 @@
   <div class="flex flex-row items-center justify-between">
     <div class="tb-form-panel-title">{{ 'widget-action.mobile.target-panel-title' | translate }}</div>
     <tb-toggle-select formControlName="mode" selectMediaBreakpoint="xs">
-      <tb-toggle-option [value]="targetEntityMode.entity">
+      <tb-toggle-option [value]="targetEntityMode.ENTITY">
         {{ 'widget-action.mobile.target-mode-entity' | translate }}
       </tb-toggle-option>
-      <tb-toggle-option [value]="targetEntityMode.fromAttribute">
+      <tb-toggle-option [value]="targetEntityMode.FROM_ATTRIBUTE">
         {{ 'widget-action.mobile.target-from-attribute' | translate }}
       </tb-toggle-option>
     </tb-toggle-select>

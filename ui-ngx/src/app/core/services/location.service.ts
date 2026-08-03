@@ -56,7 +56,7 @@ import {
   MobileActionAttributeSource,
   MobileActionLocationAccuracy,
   MobileActionTargetEntityConfig,
-  MobileActionTargetEntityType,
+  MobileActionTargetIndirection,
   MobileLocationResult,
   SaveBrowserLocationDescriptor
 } from '@shared/models/location.models';
@@ -82,9 +82,9 @@ export class LocationService {
                            locationResult: MobileLocationResult,
                            currentEntityId?: EntityId): Observable<LiveTrackingSaveInfo> {
     const values: Partial<Record<LocationKey, any>> = {
-      [LocationKey.latitude]: locationResult.latitude,
-      [LocationKey.longitude]: locationResult.longitude,
-      [LocationKey.accuracy]: locationResult.accuracy
+      [LocationKey.LATITUDE]: locationResult.latitude,
+      [LocationKey.LONGITUDE]: locationResult.longitude,
+      [LocationKey.ACCURACY]: locationResult.accuracy
     };
     return this.resolveTargetEntity(ctx, mobileAction.targetEntity, currentEntityId).pipe(
       switchMap((targetEntityId) => this.resolveTargetEntityName(targetEntityId).pipe(
@@ -110,13 +110,13 @@ export class LocationService {
         switchMap((targetEntityId) => {
           const coords = position.coords;
           const values: Partial<Record<LocationKey, any>> = {
-            [LocationKey.latitude]: coords.latitude,
-            [LocationKey.longitude]: coords.longitude,
-            [LocationKey.accuracy]: coords.accuracy,
-            [LocationKey.altitude]: coords.altitude,
-            [LocationKey.altitudeAccuracy]: coords.altitudeAccuracy,
-            [LocationKey.speed]: coords.speed,
-            [LocationKey.heading]: coords.heading
+            [LocationKey.LATITUDE]: coords.latitude,
+            [LocationKey.LONGITUDE]: coords.longitude,
+            [LocationKey.ACCURACY]: coords.accuracy,
+            [LocationKey.ALTITUDE]: coords.altitude,
+            [LocationKey.ALTITUDE_ACCURACY]: coords.altitudeAccuracy,
+            [LocationKey.SPEED]: coords.speed,
+            [LocationKey.HEADING]: coords.heading
           };
           return this.saveKeys(ctx, targetEntityId, config.keys, values).pipe(
             map(() => this.savedKeyNames(config.keys, values))
@@ -162,7 +162,7 @@ export class LocationService {
             label: locationKeyName(mapping),
             valueType: mapping.valueType
           })),
-          accuracy: mobileAction.accuracy || MobileActionLocationAccuracy.balanced,
+          accuracy: mobileAction.accuracy || MobileActionLocationAccuracy.BALANCED,
           distanceFilterMeters: mobileAction.distanceFilterMeters ?? null,
           intervalSeconds: mobileAction.intervalSeconds ?? null,
           maxDurationSeconds: mobileAction.maxDurationSeconds ?? null,
@@ -237,18 +237,18 @@ export class LocationService {
 
   private resolveTargetEntity(ctx: WidgetContext, target: MobileActionTargetEntityConfig,
                               currentEntityId?: EntityId): Observable<EntityId> {
-    const type = target?.type || MobileActionTargetEntityType.currentEntity;
+    const type = target?.type || MobileActionAttributeSource.CURRENT_ENTITY;
     switch (type) {
-      case MobileActionTargetEntityType.currentEntity:
+      case MobileActionAttributeSource.CURRENT_ENTITY:
         if (validateEntityId(currentEntityId)) {
           return of(currentEntityId);
         }
         return throwError(() => new Error(this.translate.instant('widget-action.location.error-no-current-entity')));
-      case MobileActionTargetEntityType.currentUser:
+      case MobileActionAttributeSource.CURRENT_USER:
         return of(this.currentUserEntityId());
-      case MobileActionTargetEntityType.entityAlias:
+      case MobileActionAttributeSource.ENTITY_ALIAS:
         return this.resolveEntityAlias(ctx, target.aliasName);
-      case MobileActionTargetEntityType.fromAttribute:
+      case MobileActionTargetIndirection.FROM_ATTRIBUTE:
         return this.resolveAttributeSourceEntity(ctx, target, currentEntityId).pipe(
           switchMap((sourceEntityId) => ctx.attributeService.getEntityAttributes(
             sourceEntityId, AttributeScope.SERVER_SCOPE, [target.attributeKey], {ignoreErrors: true})),
@@ -267,10 +267,10 @@ export class LocationService {
   private resolveAttributeSourceEntity(ctx: WidgetContext, target: MobileActionTargetEntityConfig,
                                        currentEntityId?: EntityId): Observable<EntityId> {
     switch (target.attributeSource) {
-      case MobileActionAttributeSource.currentEntity:
+      case MobileActionAttributeSource.CURRENT_ENTITY:
         return validateEntityId(currentEntityId) ? of(currentEntityId)
           : throwError(() => new Error(this.translate.instant('widget-action.location.error-no-current-entity')));
-      case MobileActionAttributeSource.entityAlias:
+      case MobileActionAttributeSource.ENTITY_ALIAS:
         return this.resolveEntityAlias(ctx, target.aliasName);
       default:
         return of(this.currentUserEntityId());
@@ -367,7 +367,7 @@ export class LocationService {
       const value = values[mapping.key];
       if (isDefinedAndNotNull(value) && !Number.isNaN(value)) {
         const data: AttributeData = {key: locationKeyName(mapping), value};
-        (mapping.valueType === LocationKeyValueType.timeseries ? timeseries : attributes).push(data);
+        (mapping.valueType === LocationKeyValueType.TIMESERIES ? timeseries : attributes).push(data);
       }
     });
     const saveObservables: Array<Observable<any>> = [];

@@ -15,6 +15,7 @@
 ///
 
 import { isNotEmptyStr } from '@core/utils';
+import { AliasFilterType } from '@shared/models/alias.models';
 import { TbFunction } from '@shared/models/js-function.models';
 import { ProcessLaunchResultDescriptor } from '@shared/models/widget.models';
 
@@ -30,24 +31,25 @@ export interface MobileLocationResult {
   ts?: number;
 }
 
-export enum MobileActionTargetEntityType {
-  currentEntity = 'CURRENT_ENTITY',
-  currentUser = 'CURRENT_USER',
-  entityAlias = 'ENTITY_ALIAS',
-  fromAttribute = 'FROM_ATTRIBUTE'
+export enum MobileActionAttributeSource {
+  CURRENT_ENTITY = 'CURRENT_ENTITY',
+  CURRENT_USER = 'CURRENT_USER',
+  ENTITY_ALIAS = 'ENTITY_ALIAS'
 }
 
-export enum MobileActionAttributeSource {
-  currentEntity = 'CURRENT_ENTITY',
-  currentUser = 'CURRENT_USER',
-  entityAlias = 'ENTITY_ALIAS'
+export enum MobileActionTargetIndirection {
+  FROM_ATTRIBUTE = 'FROM_ATTRIBUTE'
 }
+
+// Combines the types, but does not merge the values into a single object —
+// value references go through the member enums.
+export type MobileActionTargetEntityType = MobileActionAttributeSource | MobileActionTargetIndirection;
 
 export const mobileActionAttributeSourceTranslationMap = new Map<MobileActionAttributeSource, string>(
   [
-    [ MobileActionAttributeSource.currentEntity, 'widget-action.mobile.target-current-entity' ],
-    [ MobileActionAttributeSource.currentUser, 'widget-action.mobile.target-current-user' ],
-    [ MobileActionAttributeSource.entityAlias, 'widget-action.mobile.target-entity-alias' ]
+    [ MobileActionAttributeSource.CURRENT_ENTITY, 'widget-action.mobile.target-current-entity' ],
+    [ MobileActionAttributeSource.CURRENT_USER, 'widget-action.mobile.target-current-user' ],
+    [ MobileActionAttributeSource.ENTITY_ALIAS, 'widget-action.mobile.target-entity-alias' ]
   ]
 );
 
@@ -58,41 +60,58 @@ export interface MobileActionTargetEntityConfig {
   attributeKey?: string;
 }
 
+// stateEntity resolves only against a live dashboard state, so it cannot back a direct entity query.
+export const queryableAliasFilterTypes: AliasFilterType[] =
+  Object.values(AliasFilterType).filter((type) => type !== AliasFilterType.stateEntity);
+
+export const rootedAliasFilterTypes: AliasFilterType[] = [
+  AliasFilterType.relationsQuery,
+  AliasFilterType.assetSearchQuery,
+  AliasFilterType.deviceSearchQuery,
+  AliasFilterType.edgeSearchQuery,
+  AliasFilterType.entityViewSearchQuery
+];
+
+export enum LocationTargetEntityMode {
+  ENTITY = 'ENTITY',
+  FROM_ATTRIBUTE = 'FROM_ATTRIBUTE'
+}
+
 export enum LocationKey {
-  latitude = 'LATITUDE',
-  longitude = 'LONGITUDE',
-  accuracy = 'ACCURACY',
-  altitude = 'ALTITUDE',
-  altitudeAccuracy = 'ALTITUDE_ACCURACY',
-  speed = 'SPEED',
-  heading = 'HEADING',
-  gpsActive = 'GPS_ACTIVE',
-  gpsTrackedBy = 'GPS_TRACKED_BY'
+  LATITUDE = 'LATITUDE',
+  LONGITUDE = 'LONGITUDE',
+  ACCURACY = 'ACCURACY',
+  ALTITUDE = 'ALTITUDE',
+  ALTITUDE_ACCURACY = 'ALTITUDE_ACCURACY',
+  SPEED = 'SPEED',
+  HEADING = 'HEADING',
+  GPS_ACTIVE = 'GPS_ACTIVE',
+  GPS_TRACKED_BY = 'GPS_TRACKED_BY'
 }
 
 export const locationKeyTranslationMap = new Map<LocationKey, string>(
   [
-    [ LocationKey.latitude, 'widget-action.location.key-latitude' ],
-    [ LocationKey.longitude, 'widget-action.location.key-longitude' ],
-    [ LocationKey.accuracy, 'widget-action.location.key-accuracy' ],
-    [ LocationKey.altitude, 'widget-action.location.key-altitude' ],
-    [ LocationKey.altitudeAccuracy, 'widget-action.location.key-altitude-accuracy' ],
-    [ LocationKey.speed, 'widget-action.location.key-speed' ],
-    [ LocationKey.heading, 'widget-action.location.key-heading' ],
-    [ LocationKey.gpsActive, 'widget-action.location.key-gps-active' ],
-    [ LocationKey.gpsTrackedBy, 'widget-action.location.key-gps-tracked-by' ]
+    [ LocationKey.LATITUDE, 'widget-action.location.key-latitude' ],
+    [ LocationKey.LONGITUDE, 'widget-action.location.key-longitude' ],
+    [ LocationKey.ACCURACY, 'widget-action.location.key-accuracy' ],
+    [ LocationKey.ALTITUDE, 'widget-action.location.key-altitude' ],
+    [ LocationKey.ALTITUDE_ACCURACY, 'widget-action.location.key-altitude-accuracy' ],
+    [ LocationKey.SPEED, 'widget-action.location.key-speed' ],
+    [ LocationKey.HEADING, 'widget-action.location.key-heading' ],
+    [ LocationKey.GPS_ACTIVE, 'widget-action.location.key-gps-active' ],
+    [ LocationKey.GPS_TRACKED_BY, 'widget-action.location.key-gps-tracked-by' ]
   ]
 );
 
 export enum LocationKeyValueType {
-  attribute = 'ATTRIBUTE',
-  timeseries = 'TIMESERIES'
+  ATTRIBUTE = 'ATTRIBUTE',
+  TIMESERIES = 'TIMESERIES'
 }
 
 export const locationKeyValueTypeTranslationMap = new Map<LocationKeyValueType, string>(
   [
-    [ LocationKeyValueType.attribute, 'widget-action.location.value-type-attribute' ],
-    [ LocationKeyValueType.timeseries, 'widget-action.location.value-type-timeseries' ]
+    [ LocationKeyValueType.ATTRIBUTE, 'widget-action.location.value-type-attribute' ],
+    [ LocationKeyValueType.TIMESERIES, 'widget-action.location.value-type-timeseries' ]
   ]
 );
 
@@ -104,33 +123,33 @@ export interface LocationKeyMapping {
 
 export const locationKeyDefaultLabelMap = new Map<LocationKey, string>(
   [
-    [ LocationKey.latitude, 'latitude' ],
-    [ LocationKey.longitude, 'longitude' ],
-    [ LocationKey.accuracy, 'gpsAccuracy' ],
-    [ LocationKey.altitude, 'gpsAltitude' ],
-    [ LocationKey.altitudeAccuracy, 'gpsAltitudeAccuracy' ],
-    [ LocationKey.speed, 'gpsSpeed' ],
-    [ LocationKey.heading, 'gpsHeading' ],
-    [ LocationKey.gpsActive, 'gpsActive' ],
-    [ LocationKey.gpsTrackedBy, 'gpsTrackedBy' ]
+    [ LocationKey.LATITUDE, 'latitude' ],
+    [ LocationKey.LONGITUDE, 'longitude' ],
+    [ LocationKey.ACCURACY, 'gpsAccuracy' ],
+    [ LocationKey.ALTITUDE, 'gpsAltitude' ],
+    [ LocationKey.ALTITUDE_ACCURACY, 'gpsAltitudeAccuracy' ],
+    [ LocationKey.SPEED, 'gpsSpeed' ],
+    [ LocationKey.HEADING, 'gpsHeading' ],
+    [ LocationKey.GPS_ACTIVE, 'gpsActive' ],
+    [ LocationKey.GPS_TRACKED_BY, 'gpsTrackedBy' ]
   ]
 );
 
 export const locationKeyDefaultValueTypeMap = new Map<LocationKey, LocationKeyValueType>(
   [
-    [ LocationKey.latitude, LocationKeyValueType.attribute ],
-    [ LocationKey.longitude, LocationKeyValueType.attribute ],
-    [ LocationKey.accuracy, LocationKeyValueType.timeseries ],
-    [ LocationKey.altitude, LocationKeyValueType.timeseries ],
-    [ LocationKey.altitudeAccuracy, LocationKeyValueType.timeseries ],
-    [ LocationKey.speed, LocationKeyValueType.timeseries ],
-    [ LocationKey.heading, LocationKeyValueType.timeseries ],
-    [ LocationKey.gpsActive, LocationKeyValueType.attribute ],
-    [ LocationKey.gpsTrackedBy, LocationKeyValueType.attribute ]
+    [ LocationKey.LATITUDE, LocationKeyValueType.ATTRIBUTE ],
+    [ LocationKey.LONGITUDE, LocationKeyValueType.ATTRIBUTE ],
+    [ LocationKey.ACCURACY, LocationKeyValueType.TIMESERIES ],
+    [ LocationKey.ALTITUDE, LocationKeyValueType.TIMESERIES ],
+    [ LocationKey.ALTITUDE_ACCURACY, LocationKeyValueType.TIMESERIES ],
+    [ LocationKey.SPEED, LocationKeyValueType.TIMESERIES ],
+    [ LocationKey.HEADING, LocationKeyValueType.TIMESERIES ],
+    [ LocationKey.GPS_ACTIVE, LocationKeyValueType.ATTRIBUTE ],
+    [ LocationKey.GPS_TRACKED_BY, LocationKeyValueType.ATTRIBUTE ]
   ]
 );
 
-export const mandatoryLocationKeys: LocationKey[] = [LocationKey.latitude, LocationKey.longitude];
+export const mandatoryLocationKeys: LocationKey[] = [LocationKey.LATITUDE, LocationKey.LONGITUDE];
 
 export const locationKeyName = (mapping: LocationKeyMapping): string =>
   isNotEmptyStr(mapping?.label?.trim()) ? mapping.label.trim() : locationKeyDefaultLabelMap.get(mapping?.key);
@@ -155,24 +174,24 @@ export interface GetLocationDescriptor extends SaveLocationDescriptor {
 }
 
 export enum MobileActionLocationAccuracy {
-  high = 'HIGH',
-  balanced = 'BALANCED',
-  low = 'LOW'
+  HIGH = 'HIGH',
+  BALANCED = 'BALANCED',
+  LOW = 'LOW'
 }
 
 export const mobileActionLocationAccuracyTranslationMap = new Map<MobileActionLocationAccuracy, string>(
   [
-    [ MobileActionLocationAccuracy.high, 'widget-action.mobile.accuracy-high' ],
-    [ MobileActionLocationAccuracy.balanced, 'widget-action.mobile.accuracy-balanced' ],
-    [ MobileActionLocationAccuracy.low, 'widget-action.mobile.accuracy-low' ]
+    [ MobileActionLocationAccuracy.HIGH, 'widget-action.mobile.accuracy-high' ],
+    [ MobileActionLocationAccuracy.BALANCED, 'widget-action.mobile.accuracy-balanced' ],
+    [ MobileActionLocationAccuracy.LOW, 'widget-action.mobile.accuracy-low' ]
   ]
 );
 
 export const mobileActionLocationAccuracyHintMap = new Map<MobileActionLocationAccuracy, string>(
   [
-    [ MobileActionLocationAccuracy.high, 'widget-action.mobile.accuracy-high-hint' ],
-    [ MobileActionLocationAccuracy.balanced, 'widget-action.mobile.accuracy-balanced-hint' ],
-    [ MobileActionLocationAccuracy.low, 'widget-action.mobile.accuracy-low-hint' ]
+    [ MobileActionLocationAccuracy.HIGH, 'widget-action.mobile.accuracy-high-hint' ],
+    [ MobileActionLocationAccuracy.BALANCED, 'widget-action.mobile.accuracy-balanced-hint' ],
+    [ MobileActionLocationAccuracy.LOW, 'widget-action.mobile.accuracy-low-hint' ]
   ]
 );
 
@@ -186,6 +205,6 @@ export interface StartLiveLocationDescriptor extends ProcessLaunchResultDescript
 export type SaveBrowserLocationDescriptor = LocationTargetDescriptor;
 
 export const defaultSaveBrowserLocationDescriptor = (): SaveBrowserLocationDescriptor => ({
-  targetEntity: {type: MobileActionTargetEntityType.currentEntity},
+  targetEntity: {type: MobileActionAttributeSource.CURRENT_ENTITY},
   keys: defaultLocationKeyMappings()
 });
