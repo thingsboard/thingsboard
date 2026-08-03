@@ -1,58 +1,101 @@
-## Co już jest w Twoim repo (gałąź UserTenants)
+# Cel
 
-Sprawdziłem repo — katalog `dev/` już zawiera pełny stack: `docker-compose.dev.yml`
-(Postgres + Cassandra + Kafka KRaft + Valkey + backend + Angular), `Dockerfile.tb-node.dev`,
-`Dockerfile.ui.dev`, oba entrypointy, `up.sh`, `rebuild-backend.sh`, `.env.dev`,
-oraz `ui-ngx/proxy.conf.dev.js` i `ui-ngx/angular.dev.patch.md`.
+Jedno polecenie `docker compose up` na Windows lub Ubuntu stawia:
+- Postgres 18 z zainstalowanym schematem ThingsBoard + demo danymi (raz, przy pustym wolumenie),
+- backend ThingsBoard (`application`) **budowany z Twojego repo** — możesz zmieniać kod Javy, dodawać nowe kontrolery/API, dopisywać zależności do `pom.xml`,
+- po rebuildzie kontener sam się restartuje i widzisz zmiany na `localhost:8080/api/...`,
+- Mailtrap jako SMTP,
+- CORS + WebSocket otwarte, żeby Angular z `localhost:4200` (Windows/Ubuntu/WSL) gadał bezpośrednio z `localhost:8080` bez proxy.
 
-Czego w nim brakuje dokładnie do tego, o co prosisz:
+Angular **nie** wchodzi do Dockera.
 
-1. **Skrypty są w bashu** (`up.sh`, `rebuild-backend.sh`) — na czystym Windows 10 bez WSL/Git Bash nie odpalisz ich klikiem.
-2. **Zmiana w kontrolerze nie kompiluje się sama.** Dziś trzeba ręcznie uruchomić `rebuild-backend.sh`. Spring DevTools restartuje kontekst dopiero, gdy ktoś przebuduje pliki `.class`. Ty chcesz: zapisz plik → Ctrl+F5 → widzisz zmianę.
-3. **`angular.dev.patch.md` to diff do zastosowania ręcznie** — jeśli nie jest wklejony do `angular.json`, konfiguracja `fast` nie istnieje i kontener UI wywala się przy starcie.
+# Struktura plików do dodania (w repo thingsboard, katalog `docker-dev/`)
 
-## Co zrobię
+```text
+docker-dev/
+  docker-compose.yml         # postgres + tb-init + tb-backend + builder
+  Dockerfile.builder         # maven + jdk, cache ~/.m2, tryb watch
+  Dockerfile.backend         # runtime jdk, uruchamia zbudowany jar
+  entrypoint-backend.sh      # czeka na jar, uruchamia z JAVA_OPTS + debug 5005
+  watch-build.sh             # inotify/mvn -o package przy zmianie w src/**
+  conf/
+    thingsboard.env          # DB, mailtrap, CORS, logi, cache
+    logback.xml              # poziomy logów dev
+  init/
+    install.sh               # INSTALL_TB=true LOAD_DEMO=true, tylko gdy brak flagi
+  Makefile / dev.ps1         # skróty: up, rebuild, logs, psql, reset-db
+  README.md                  # instrukcja Windows + Ubuntu
+```
 
-Wygeneruję komplet plików w tym projekcie Lovable, w katalogu `docker-dev/`, gotowych do skopiowania 1:1 do repo ThingsBoard. Nowe i zmienione pliki:
+# Jak to działa
 
-### 1. Auto-kompilacja backendu (sedno sprawy)
+## 1. Postgres
+- `postgres:18`, port `5432:5432` (wystawiony na host, żeby móc podłączyć DBeaver/psql),
+- healthcheck `pg_isready`, wolumen `tb-postgres-data`,
+- `POSTGRES_DB=thingsboard`, hasło z `.env`.
 
-Nowy `dev/tb-node-watch.sh` uruchamiany jako drugi proces w kontenerze `tb-node-dev`:
+## 2. Instalacja schematu + demo (kontener `tb-init`)
+- uruchamia obraz backendu z `INSTALL_TB=true` i `LOAD_DEMO=true`,
+- odpala się tylko raz: `install.sh` sprawdza obecność pliku-znacznika w wolumenie `tb-data` (`/data/.tb-installed`); jeśli jest — kończy natychmiast,
+- `depends_on: postgres (service_healthy)`, a backend ma `depends_on: tb-init (service_completed_successfully)`,
+- po instalacji dostępny domyślny login demo (`tenant@thingsboard.org` / `tenant`, `sysadmin@thingsboard.org` / `sysadmin`),
+- `make reset-db` usuwa wolumeny i wymusza pełną reinstalację.
 
-- pilnuje `**/src/main/java` we wszystkich modułach przez `inotifywait` (Linux w kontenerze) z fallbackiem na polling co 2 s, gdy pliki leżą na dysku Windows,
-- po zapisie pliku uruchamia **tylko** `mvn -o -q compile -pl <moduł zmieniony> -am -DskipTests -Dpkg.skip=true`,
-- świeże `.class` lądują w `target/classes`, który Spring DevTools obserwuje → restart kontekstu w 3–8 s,
-- w logach: `[watch] zmiana: XController.java → kompiluję application … gotowe (4.1 s)`.
+## 3. Builder (Maven ze źródeł)
+- `Dockerfile.builder`: JDK 17 + Maven, wolumen `m2-cache:/root/.m2` żeby drugi build był szybki,
+- montuje całe repo read-write, artefakt wypada do współdzielonego wolumenu `tb-build/application.jar`,
+- dwa tryby:
+  - `docker compose run --rm builder` — jednorazowy `mvn -T 1C -DskipTests install`,
+  - `builder` jako serwis w trybie watch (`watch-build.sh`): obserwuje `**/src/main/**` i po zmianie robi inkrementalny `mvn -o -pl application -am -DskipTests package`, potem podmienia jar,
+- pierwszy pełny build monorepo to realnie 20–40 min; kolejne (tylko `application` + zmienione moduły) to 1–3 min.
 
-Efekt: zapisujesz kontroler w IDE na Windows, nic nie klikasz, Ctrl+F5 w przeglądarce pokazuje nową odpowiedź API. Zero Javy i Mavena na Windows — wszystko dzieje się w kontenerze.
+## 4. Backend
+- `Dockerfile.backend`: sam JRE/JDK + `entrypoint-backend.sh`,
+- uruchamia `java $JAVA_OPTS -jar /build/application.jar`,
+- porty: `8080` (HTTP/REST/WS), `7070` (edge), `1883`/`8883` (MQTT), `5683-5688/udp` (CoAP), `5005` (remote debug dla IntelliJ),
+- `restart: always` + watcher restartu: gdy timestamp jara się zmieni, proces jest zabijany i entrypoint startuje nową wersję → efekt „zmieniłem Javę, po chwili widzę nowe API”,
+- logi `json-file`, max 100 MB × 10.
 
-`Dockerfile.tb-node.dev` dostanie `inotify-tools`, a entrypoint wystartuje watcher w tle obok `spring-boot:run`.
+## 5. Konfiguracja przez zmienne środowiskowe (`conf/thingsboard.env`)
+- DB: `SPRING_DATASOURCE_URL/USERNAME/PASSWORD`,
+- Mail (Mailtrap, wartości z Twojego snippetu → zmienne TB):
+  - `MAIL_SMTP_HOST=sandbox.smtp.mailtrap.io`, `MAIL_SMTP_PORT=2525`,
+  - `MAIL_SMTP_AUTH=true`, `MAIL_SMTP_STARTTLS_ENABLE=true`, `MAIL_SSL_ENABLE=false`,
+  - `MAIL_USERNAME`/`MAIL_PASSWORD` czytane z `.env` (nie commitujemy hasła),
+  - `MAIL_FROM=no-reply@localhost`,
+- CORS dev: `HTTP_CORS_ALLOWED_ORIGINS=*` (lub lista `http://localhost:4200,http://127.0.0.1:4200`) + dozwolone metody/nagłówki i `Authorization`; WS na `ws://localhost:8080/api/ws` bez dodatkowego proxy,
+- Swagger/OpenAPI włączony na `localhost:8080/swagger-ui.html`, żeby od razu widzieć nowe endpointy,
+- cache/queue w trybie in-memory (bez Kafki/Redisa) — minimalna konfiguracja dev.
 
-### 2. Sterowanie z Windows bez basha
+## 6. Podpięcie Angulara (lokalnie, poza Dockerem)
+- w `ui-ngx` uruchamiasz `npm start` na `localhost:4200`,
+- `environment.dev.ts` / zmienna proxy wskazuje `http://localhost:8080`,
+- README opisze oba warianty: bez proxy (dzięki otwartemu CORS) i z `proxy.conf.js` jako fallback, gdyby przeglądarka blokowała WS.
 
-- `dev/up.ps1` — odpowiednik `up.sh` w PowerShell: profile `minimal` / `hybrid`, jednorazowy install schematu i danych demo, potem `up -d --build`.
-- `dev/dev.cmd` — jednoklikowy skrót: `dev.cmd up`, `dev.cmd logs`, `dev.cmd restart-backend`, `dev.cmd rebuild-ui`, `dev.cmd down`, `dev.cmd reset`.
-- `dev/rebuild-backend.ps1` — awaryjny pełny rebuild modułu, gdy watcher nie wystarczy (zmiana w `pom.xml`, nowa zależność, zmiana sygnatury beana).
+# Twój codzienny workflow
 
-### 3. Frontend całkowicie z Dockera (koniec z `yarn start:fast`)
+```text
+docker compose up -d              # postgres + install demo + backend
+docker compose up builder         # tryb watch (osobny terminal)
+# edytujesz Javę / dodajesz dependency do pom.xml
+# builder przebudowuje -> backend restartuje
+curl localhost:8080/api/...       # widzisz nową wersję
+```
 
-- `ui-ngx/angular.json` — dopiszę konfigurację `fast` prosto do pliku, zamiast zostawiać ją jako patch do ręcznego wklejenia. Dodam też fallback w entrypoincie: jeśli konfiguracja `fast` nie istnieje, kontener użyje `development` zamiast się wysypać.
-- entrypoint UI przełączę z `npm ci` na **yarn** (repo ma `yarn.lock`, nie `package-lock.json` — dziś każdy start robi pełny `npm install` zamiast czytać z cache).
-- domyślnie `NG_POLL=true` w `.env.dev`, bo Twoje repo leży na dysku Windows i inotify przez bind-mount nie działa — bez tego HMR Angulara nie zauważy zmian.
-- `node_modules` i `.angular/cache` zostają w wolumenach nazwanych (już tak jest — to jest właśnie to, co daje rebuild 1–2 s).
+- nowa paczka w `pom.xml` → watcher wykrywa zmianę pom i robi `mvn -pl application -am` (przy nowej zależności zdejmuje tryb offline, żeby ją dociągnąć),
+- `make logs` / `docker compose logs -f thingsboard`,
+- `make reset-db` gdy chcesz świeże demo dane.
 
-### 4. Instrukcja
+# Szczegóły techniczne / założenia
 
-`dev/README-dev.md` przepiszę pod Windows 10: wymagania (tylko Docker Desktop), pierwsze uruchomienie, codzienna pętla pracy, co robić przy zmianie `pom.xml` / `package.json`, tabela portów, troubleshooting (port zajęty, wolny rebuild, Defender, VirtioFS, pamięć w Docker Desktop).
+- Wersje: JDK 17, Maven 3.9, Postgres 18, ThingsBoard z Twojego brancha `master`.
+- Kolejki i cache: in-memory (`TB_QUEUE_TYPE=in-memory`, caffeine) — świadomie bez Kafki/Redisa dla szybkości devu; README wskaże, jak dołożyć Kafkę, gdy będzie potrzebna.
+- Windows: potrzebny Docker Desktop z WSL2; README ostrzeże, że repo powinno leżeć w systemie plików WSL (`\\wsl$`), inaczej Maven i inotify są bardzo wolne. Dla Windows dodaję `dev.ps1` jako odpowiednik `Makefile`.
+- Sekrety (hasło Mailtrap, hasło DB) trafiają do `docker-dev/.env` na podstawie `.env.example`; `.env` dopisany do `.gitignore`.
+- Pełny pierwszy build jest długi — README poda też opcję „szybki start”: wystartować backend z oficjalnego obrazu i przełączyć na własny jar po zakończeniu builda.
 
-## Szczegóły techniczne
+# Czego ten plan nie robi
 
-- Backend: obraz `maven:3.9-eclipse-temurin-25`, `mvn spring-boot:run` w module `application`, DevTools + JDWP na 5005 (możesz podpiąć debugger z IntelliJ na Windows bez instalowania JDK — IDE potrzebuje tylko SDK do podpowiedzi).
-- Repozytorium `~/.m2`, `target` modułu `application`, archiwum AppCDS i `node_modules` w wolumenach nazwanych — bind-mount tych katalogów na Windows to główna przyczyna wolnych buildów.
-- Frontend proxy: `proxy.conf.dev.js` kieruje `/api`, `/ws` na `tb-node-dev:8080`, więc na `localhost:4200` masz komplet.
-- Pierwsze `up` jest długie (pełny build Maven + `yarn install` + install schematu). Kolejne starty: kilkadziesiąt sekund.
-- Nie zmieniam kodu aplikacji ThingsBoard — tylko warstwę dev, `angular.json` i pliki w `dev/`.
-
-## Czego to nie zrobi
-
-Rebuild w 1 s dla zmiany sygnatury klasy albo nowej zależności w `pom.xml` nie jest osiągalny — wtedy leci pełniejszy `mvn install` modułu (kilkadziesiąt sekund). Zwykła zmiana ciała metody w kontrolerze: 3–8 s do restartu kontekstu.
+- nie buduje ani nie serwuje Angulara w Dockerze,
+- nie stawia klastra (jeden węzeł tb, bez Kafki/Zookeepera/Redisa),
+- nie jest konfiguracją produkcyjną (otwarty CORS, debug port, hasła w `.env` — tylko dev).
