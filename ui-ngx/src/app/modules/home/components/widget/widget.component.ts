@@ -1385,47 +1385,17 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
                         this.locationService.saveMobileActionLocation(this.widgetContext, mobileAction,
                           actionResult, entityId).subscribe({
                           next: (saveInfo) => {
-                            if (isNotEmptyTbFunction(mobileAction.processLocationFunction)) {
-                              compileTbFunction(this.http, mobileAction.processLocationFunction, 'latitude', 'longitude', '$event', 'widgetContext', 'entityId',
-                                'entityName', 'additionalParams', 'entityLabel', 'saveInfo').subscribe(
-                                {
-                                  next: (compiled) => {
-                                    try {
-                                      compiled.execute(latitude, longitude, $event, this.widgetContext,
-                                        entityId, entityName, additionalParams, entityLabel, saveInfo);
-                                    } catch (e) {
-                                      console.error(e);
-                                    }
-                                  },
-                                  error: (err) => {
-                                    console.error(err);
-                                  }
-                                }
-                              );
-                            }
+                            this.executeProcessLocationFunction(mobileAction, latitude, longitude, $event,
+                              entityId, entityName, additionalParams, entityLabel, saveInfo);
                           },
                           error: (err) => {
                             this.handleWidgetMobileActionError(this.translate.instant('widget-action.mobile.location-save-failed',
                               {error: err?.message}), $event, mobileAction, entityId, entityName, additionalParams, entityLabel);
                           }
                         });
-                      } else if (isNotEmptyTbFunction(mobileAction.processLocationFunction)) {
-                        compileTbFunction(this.http, mobileAction.processLocationFunction, 'latitude', 'longitude', '$event', 'widgetContext', 'entityId',
-                          'entityName', 'additionalParams', 'entityLabel').subscribe(
-                          {
-                            next: (compiled) => {
-                              try {
-                                compiled.execute(latitude, longitude, $event, this.widgetContext,
-                                  entityId, entityName, additionalParams, entityLabel);
-                              } catch (e) {
-                                console.error(e);
-                              }
-                            },
-                            error: (err) => {
-                              console.error(err);
-                            }
-                          }
-                        );
+                      } else {
+                        this.executeProcessLocationFunction(mobileAction, latitude, longitude, $event,
+                          entityId, entityName, additionalParams, entityLabel);
                       }
                       break;
                     case WidgetMobileActionType.mapDirection:
@@ -1511,6 +1481,34 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
           this.handleWidgetMobileActionError(errorMessage, $event, mobileAction, entityId, entityName, additionalParams, entityLabel);
         }
       });
+  }
+
+  private executeProcessLocationFunction(mobileAction: WidgetMobileActionDescriptor, latitude: number, longitude: number,
+                                         $event: Event, entityId?: EntityId, entityName?: string, additionalParams?: any,
+                                         entityLabel?: string, saveInfo?: LiveTrackingSaveInfo) {
+    if (!isNotEmptyTbFunction(mobileAction.processLocationFunction)) {
+      return;
+    }
+    const argNames = ['latitude', 'longitude', '$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams', 'entityLabel'];
+    const args: any[] = [latitude, longitude, $event, this.widgetContext, entityId, entityName, additionalParams, entityLabel];
+    if (mobileAction.saveToEntity) {
+      argNames.push('saveInfo');
+      args.push(saveInfo);
+    }
+    compileTbFunction(this.http, mobileAction.processLocationFunction, ...argNames).subscribe(
+      {
+        next: (compiled) => {
+          try {
+            compiled.execute(...args);
+          } catch (e) {
+            console.error(e);
+          }
+        },
+        error: (err) => {
+          console.error(err);
+        }
+      }
+    );
   }
 
   private handleWidgetMobileActionError(error: string, $event: Event, mobileAction: WidgetMobileActionDescriptor,

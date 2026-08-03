@@ -48,6 +48,7 @@ import {
 import { WidgetMobileActionDescriptor } from '@shared/models/widget.models';
 import {
   defaultLocationKeyMappings,
+  LiveTrackingConfig,
   LiveTrackingSaveInfo,
   LocationKey,
   LocationKeyMapping,
@@ -61,8 +62,6 @@ import {
   SaveBrowserLocationDescriptor
 } from '@shared/models/location.models';
 
-/// Owns the location widget actions: resolving their target entities and
-/// writing the coordinates as attributes/time series.
 @Injectable({
   providedIn: 'root'
 })
@@ -75,9 +74,6 @@ export class LocationService {
               private browserGeolocationService: BrowserGeolocationService) {
   }
 
-  /// Saves a position the mobile app reported back for a `getLocation` action.
-  /// Emits the save details on success; a failed save propagates as an error
-  /// with a human-readable message, to be routed to the action's error handling.
   saveMobileActionLocation(ctx: WidgetContext, mobileAction: WidgetMobileActionDescriptor,
                            locationResult: MobileLocationResult,
                            currentEntityId?: EntityId): Observable<LiveTrackingSaveInfo> {
@@ -99,8 +95,6 @@ export class LocationService {
     );
   }
 
-  /// Runs the whole `saveBrowserLocation` action: reads the browser position,
-  /// saves it and reports the outcome through the widget context toasts.
   saveBrowserLocation(ctx: WidgetContext, config: SaveBrowserLocationDescriptor, currentEntityId?: EntityId): void {
     if (!config) {
       return;
@@ -141,16 +135,11 @@ export class LocationService {
     });
   }
 
-  /// Builds the `startLiveLocation` bridge arguments. The app saves the samples
-  /// itself, so the target entity and the key labels are resolved up front.
-  /// A resolution failure propagates as an error with a human-readable message
-  /// and surfaces through the action's handle error function, like any other
-  /// mobile action argument failure.
   liveTrackingArgs(ctx: WidgetContext, mobileAction: WidgetMobileActionDescriptor,
-                   currentEntityId?: EntityId): Observable<any[]> {
+                   currentEntityId?: EntityId): Observable<[LiveTrackingConfig]> {
     return this.resolveTargetEntity(ctx, mobileAction.targetEntity, currentEntityId).pipe(
       switchMap((targetEntityId) => this.resolveTargetEntityName(targetEntityId).pipe(
-        map((targetName) => [{
+        map((targetName): [LiveTrackingConfig] => [{
           target: {
             entityType: targetEntityId.entityType,
             id: targetEntityId.id
@@ -173,20 +162,18 @@ export class LocationService {
     );
   }
 
-  /// Mirrors the started session back to the action's launch result callback.
-  liveTrackingInfo(config: any): LiveTrackingSaveInfo | null {
+  liveTrackingInfo(config: LiveTrackingConfig): LiveTrackingSaveInfo | null {
     if (!config) {
       return null;
     }
     return {
       targetName: config.targetName || null,
-      keys: (config.keys || []).map((key: any) => key.label)
+      keys: (config.keys || []).map((key) => key.label)
     };
   }
 
   private saveErrorMessage(err: any): string {
     if (err instanceof HttpErrorResponse) {
-      // Same wording the global HTTP interceptor shows for these errors elsewhere.
       return parseHttpErrorMessage(err, this.translate, undefined, this.sanitizer).message;
     }
     return isNotEmptyStr(err?.message) ? err.message
@@ -202,8 +189,6 @@ export class LocationService {
     return ctx.aliasController.getAliasInfo(aliasId);
   }
 
-  /// Aliases resolving a single entity keep the one the dashboard already picked;
-  /// the rest are queried by their filter, ordered by name so the page is stable.
   private findAliasEntities(aliasInfo: AliasInfo, pageSize: number): Observable<PageData<EntityInfo>> {
     if (!aliasInfo.resolveMultiple || !aliasInfo.entityFilter) {
       const currentEntity = aliasInfo.resolveMultiple ? null : aliasInfo.currentEntity;
@@ -277,9 +262,6 @@ export class LocationService {
     }
   }
 
-  /// Resolves an alias to the single entity a location may be saved to. The page
-  /// asks for two entities so that an alias resolving more than one fails loudly
-  /// instead of silently writing to whichever one sorted first.
   private resolveEntityAlias(ctx: WidgetContext, aliasName: string): Observable<EntityId> {
     return this.aliasInfo(ctx, aliasName).pipe(
       mergeMap((aliasInfo) => this.findAliasEntities(aliasInfo, 2)),

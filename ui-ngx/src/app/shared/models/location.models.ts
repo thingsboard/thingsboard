@@ -16,6 +16,7 @@
 
 import { isNotEmptyStr } from '@core/utils';
 import { AliasFilterType } from '@shared/models/alias.models';
+import { EntityId } from '@shared/models/id/entity-id';
 import { TbFunction } from '@shared/models/js-function.models';
 import { ProcessLaunchResultDescriptor } from '@shared/models/widget.models';
 
@@ -28,7 +29,6 @@ export interface MobileLocationResult {
   latitude: number;
   longitude: number;
   accuracy?: number;
-  ts?: number;
 }
 
 export enum MobileActionAttributeSource {
@@ -41,8 +41,6 @@ export enum MobileActionTargetIndirection {
   FROM_ATTRIBUTE = 'FROM_ATTRIBUTE'
 }
 
-// Combines the types, but does not merge the values into a single object —
-// value references go through the member enums.
 export type MobileActionTargetEntityType = MobileActionAttributeSource | MobileActionTargetIndirection;
 
 export const mobileActionAttributeSourceTranslationMap = new Map<MobileActionAttributeSource, string>(
@@ -60,7 +58,6 @@ export interface MobileActionTargetEntityConfig {
   attributeKey?: string;
 }
 
-// stateEntity resolves only against a live dashboard state, so it cannot back a direct entity query.
 export const queryableAliasFilterTypes: AliasFilterType[] =
   Object.values(AliasFilterType).filter((type) => type !== AliasFilterType.stateEntity);
 
@@ -200,6 +197,24 @@ export interface StartLiveLocationDescriptor extends ProcessLaunchResultDescript
   distanceFilterMeters?: number;
   intervalSeconds?: number;
   maxDurationSeconds?: number;
+}
+
+export interface LiveTrackingKey {
+  key: LocationKey;
+  label: string;
+  valueType: LocationKeyValueType;
+}
+
+export interface LiveTrackingConfig {
+  target: EntityId;
+  targetName: string | null;
+  dashboard: {id: string | null; title: string | null};
+  keys: LiveTrackingKey[];
+  accuracy: MobileActionLocationAccuracy;
+  distanceFilterMeters: number | null;
+  intervalSeconds: number | null;
+  maxDurationSeconds: number | null;
+  trackedBy: string | null;
 }
 
 export type SaveBrowserLocationDescriptor = LocationTargetDescriptor;
