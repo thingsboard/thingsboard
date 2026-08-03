@@ -37,7 +37,9 @@ import org.thingsboard.server.service.state.DefaultDeviceStateService;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Pushes attribute updates of gateway devices to the edges the gateway is assigned to.
@@ -90,13 +92,18 @@ public class GatewayAttributesEdgeSyncStrategy implements AttributesEdgeSyncStra
             return;
         }
         List<AttributeKvEntry> entries = filterGatewayAttributes(request.getScope(), request.getEntries(), AttributeKvEntry::getKey);
-        Map<String, Object> body = new HashMap<>();
-        body.put("kv", toJson(entries));
-        body.put("ts", entries.stream().mapToLong(AttributeKvEntry::getLastUpdateTs).max().orElseGet(System::currentTimeMillis));
-        body.put(DataConstants.SCOPE, request.getScope().name());
-        log.debug("[{}][{}] Pushing gateway attributes update to edge, scope [{}], body [{}]", tenantId, deviceId, request.getScope(), body);
-        clusterService.sendNotificationMsgToEdge(tenantId, null, deviceId, JacksonUtil.toString(body),
-                EdgeEventType.DEVICE, EdgeEventActionType.ATTRIBUTES_UPDATED, null);
+        // the body carries a single ts for all of its keys, so entries are grouped by their own update ts, oldest first
+        entries.stream()
+                .collect(Collectors.groupingBy(AttributeKvEntry::getLastUpdateTs, TreeMap::new, Collectors.toList()))
+                .forEach((ts, sameTsEntries) -> {
+                    Map<String, Object> body = new HashMap<>();
+                    body.put("kv", toJson(sameTsEntries));
+                    body.put("ts", ts);
+                    body.put(DataConstants.SCOPE, request.getScope().name());
+                    log.debug("[{}][{}] Pushing gateway attributes update to edge, scope [{}], body [{}]", tenantId, deviceId, request.getScope(), body);
+                    clusterService.sendNotificationMsgToEdge(tenantId, null, deviceId, JacksonUtil.toString(body),
+                            EdgeEventType.DEVICE, EdgeEventActionType.ATTRIBUTES_UPDATED, null);
+                });
     }
 
     @Override

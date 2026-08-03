@@ -47,6 +47,7 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.times;
 
 @ExtendWith(MockitoExtension.class)
 class GatewayAttributesEdgeSyncStrategyTest {
@@ -122,7 +123,7 @@ class GatewayAttributesEdgeSyncStrategyTest {
                 .scope(AttributeScope.SHARED_SCOPE)
                 .entries(List.of(
                         new BaseAttributeKvEntry(new StringDataEntry("Modbus", "{\"name\":\"Modbus\"}"), 100L),
-                        new BaseAttributeKvEntry(new LongDataEntry("RemoteLoggingLevel", 42L), 200L)
+                        new BaseAttributeKvEntry(new LongDataEntry("RemoteLoggingLevel", 42L), 100L)
                 ))
                 .build();
         strategy.onAttributesUpdate(request);
@@ -133,9 +134,40 @@ class GatewayAttributesEdgeSyncStrategyTest {
 
         JsonNode body = JacksonUtil.toJsonNode(bodyCaptor.getValue());
         assertThat(body.get("scope").asText()).isEqualTo("SHARED_SCOPE");
-        assertThat(body.get("ts").asLong()).isEqualTo(200L);
+        assertThat(body.get("ts").asLong()).isEqualTo(100L);
         assertThat(body.get("kv").get("Modbus").asText()).isEqualTo("{\"name\":\"Modbus\"}");
         assertThat(body.get("kv").get("RemoteLoggingLevel").asLong()).isEqualTo(42L);
+    }
+
+    @Test
+    void shouldSendSeparateNotificationPerUpdateTsSoThatKeysKeepTheirOwnTs() {
+        given(gatewayFlagCache.isGateway(tenantId, deviceId)).willReturn(true);
+
+        AttributesSaveRequest request = AttributesSaveRequest.builder()
+                .tenantId(tenantId)
+                .entityId(deviceId)
+                .scope(AttributeScope.SHARED_SCOPE)
+                .entries(List.of(
+                        new BaseAttributeKvEntry(new StringDataEntry("Modbus", "{\"name\":\"Modbus\"}"), 100L),
+                        new BaseAttributeKvEntry(new LongDataEntry("RemoteLoggingLevel", 42L), 200L)
+                ))
+                .build();
+        strategy.onAttributesUpdate(request);
+
+        ArgumentCaptor<String> bodyCaptor = ArgumentCaptor.forClass(String.class);
+        then(clusterService).should(times(2)).sendNotificationMsgToEdge(eq(tenantId), isNull(), eq(deviceId), bodyCaptor.capture(),
+                eq(EdgeEventType.DEVICE), eq(EdgeEventActionType.ATTRIBUTES_UPDATED), isNull());
+
+        // the oldest group is sent first, and no key is stamped with another key's ts
+        JsonNode older = JacksonUtil.toJsonNode(bodyCaptor.getAllValues().get(0));
+        assertThat(older.get("ts").asLong()).isEqualTo(100L);
+        assertThat(older.get("kv").get("Modbus").asText()).isEqualTo("{\"name\":\"Modbus\"}");
+        assertThat(older.get("kv").has("RemoteLoggingLevel")).isFalse();
+
+        JsonNode newer = JacksonUtil.toJsonNode(bodyCaptor.getAllValues().get(1));
+        assertThat(newer.get("ts").asLong()).isEqualTo(200L);
+        assertThat(newer.get("kv").get("RemoteLoggingLevel").asLong()).isEqualTo(42L);
+        assertThat(newer.get("kv").has("Modbus")).isFalse();
     }
 
     @Test
