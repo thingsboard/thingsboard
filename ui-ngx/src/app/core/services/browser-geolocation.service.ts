@@ -16,14 +16,7 @@
 
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-
-export enum BrowserGeolocationErrorType {
-  unsupported = 'unsupported',
-  insecureContext = 'insecureContext',
-  permissionDenied = 'permissionDenied',
-  positionUnavailable = 'positionUnavailable',
-  timeout = 'timeout'
-}
+import { BrowserGeolocationErrorType } from '@shared/models/location.models';
 
 export class BrowserGeolocationError extends Error {
   constructor(public readonly errorType: BrowserGeolocationErrorType) {

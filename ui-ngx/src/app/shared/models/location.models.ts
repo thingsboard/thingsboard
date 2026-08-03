@@ -217,6 +217,14 @@ export interface LiveTrackingConfig {
   trackedBy: string | null;
 }
 
+export enum BrowserGeolocationErrorType {
+  unsupported = 'unsupported',
+  insecureContext = 'insecureContext',
+  permissionDenied = 'permissionDenied',
+  positionUnavailable = 'positionUnavailable',
+  timeout = 'timeout'
+}
+
 export type SaveBrowserLocationDescriptor = LocationTargetDescriptor;
 
 export const defaultSaveBrowserLocationDescriptor = (): SaveBrowserLocationDescriptor => ({
