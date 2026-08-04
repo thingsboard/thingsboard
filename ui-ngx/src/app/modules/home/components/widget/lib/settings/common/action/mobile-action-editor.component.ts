@@ -34,7 +34,8 @@ import {
 } from '@shared/models/widget.models';
 import {
   defaultLocationKeyMappings,
-  LocationKey,
+  getLocationKeys,
+  liveLocationKeys,
   MobileActionLocationAccuracy,
   mobileActionLocationAccuracyHintMap,
   mobileActionLocationAccuracyTranslationMap,
@@ -95,13 +96,9 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
   locationAccuracies = Object.values(MobileActionLocationAccuracy);
   locationAccuracyTranslations = mobileActionLocationAccuracyTranslationMap;
   locationAccuracyHints = mobileActionLocationAccuracyHintMap;
-
-  getLocationKeys = [LocationKey.LATITUDE, LocationKey.LONGITUDE, LocationKey.ACCURACY];
-
-  liveLocationKeys = [LocationKey.LATITUDE, LocationKey.LONGITUDE, LocationKey.ACCURACY, LocationKey.ALTITUDE,
-    LocationKey.SPEED, LocationKey.HEADING, LocationKey.GPS_ACTIVE, LocationKey.GPS_TRACKED_BY];
-
-  readonly liveLocationLimits = {
+  getLocationKeys = getLocationKeys;
+  liveLocationKeys = liveLocationKeys;
+  protected readonly liveLocationLimits = {
     distanceFilterMeters: {enabled: false, defaultValue: 10},
     intervalSeconds: {enabled: false, defaultValue: 30},
     maxDurationSeconds: {enabled: false, defaultValue: 3600}

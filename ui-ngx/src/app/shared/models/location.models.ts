@@ -148,6 +148,14 @@ export const locationKeyDefaultValueTypeMap = new Map<LocationKey, LocationKeyVa
 
 export const mandatoryLocationKeys: LocationKey[] = [LocationKey.LATITUDE, LocationKey.LONGITUDE];
 
+export const getLocationKeys: LocationKey[] = [...mandatoryLocationKeys, LocationKey.ACCURACY];
+
+export const liveLocationKeys: LocationKey[] = [...getLocationKeys, LocationKey.ALTITUDE,
+  LocationKey.SPEED, LocationKey.HEADING, LocationKey.GPS_ACTIVE, LocationKey.GPS_TRACKED_BY];
+
+export const browserLocationKeys: LocationKey[] = [...getLocationKeys, LocationKey.ALTITUDE,
+  LocationKey.ALTITUDE_ACCURACY, LocationKey.SPEED, LocationKey.HEADING];
+
 export const locationKeyName = (mapping: LocationKeyMapping): string =>
   isNotEmptyStr(mapping?.label?.trim()) ? mapping.label.trim() : locationKeyDefaultLabelMap.get(mapping?.key);
 
