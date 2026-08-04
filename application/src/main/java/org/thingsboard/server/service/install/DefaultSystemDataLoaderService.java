@@ -364,6 +364,8 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         customerC.setTenantId(demoTenant.getId());
         customerC.setTitle("Customer C");
         customerC = customerService.saveCustomer(customerC);
+        createUser(Authority.CUSTOMER_USER, demoTenant.getId(), customerA.getId(), "mlekolak@thingsboard.org",
+                CUSTOMER_CRED);
         createUser(Authority.CUSTOMER_USER, demoTenant.getId(), customerA.getId(), "customer@thingsboard.org", CUSTOMER_CRED);
         createUser(Authority.CUSTOMER_USER, demoTenant.getId(), customerA.getId(), "customerA@thingsboard.org", CUSTOMER_CRED);
         createUser(Authority.CUSTOMER_USER, demoTenant.getId(), customerB.getId(), "customerB@thingsboard.org", CUSTOMER_CRED);

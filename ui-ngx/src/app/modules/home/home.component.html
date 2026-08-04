@@ -15,6 +15,7 @@
     limitations under the License.
 
 -->
+<script src="home.component.ts"></script>
 <mat-sidenav-container [class.tb-desktop]="sidenavDesktop()"
                        [class.tb-collapsed]="sidenavCollapsed()">
   <mat-sidenav #sidenav class="tb-site-sidenav mat-elevation-z2"
@@ -46,7 +47,7 @@
         <tb-side-menu [collapsed]="menuCollapsed()"></tb-side-menu>
         @if(conditionTenantProfile){
           <p>Ten tekst będzie widoczny dla wszystkich którzy mają przypisany profile tenant jako "tester"</p>
-        }
+        }jytj
       </div>
       <tb-user-menu [collapsed]="menuCollapsed()" (menuClicked)="sidenavClicked()"></tb-user-menu>
     </mat-toolbar>

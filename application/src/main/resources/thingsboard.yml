@@ -254,6 +254,10 @@ security:
 # Mail settings parameters
 # Configures mail service OAuth2 token refresh and per-tenant sending rate limits.
 mail:
+  smtp:
+    protocol: smtp
+    host: localhost
+    port: 1025
   oauth2:
     # Interval for checking refresh token expiration in seconds(by default, 1 day).
     refreshTokenCheckingInterval: "${REFRESH_TOKEN_EXPIRATION_CHECKING_INTERVAL:86400}"
@@ -823,6 +827,8 @@ spring.data.redis.repositories.enabled: false # Disable this because it is not r
 # Configures standalone, cluster, or sentinel Redis connection, SSL, and connection pool settings used for caching.
 redis:
   # standalone or cluster or sentinel
+  host: localhost
+  port: 6379
   connection:
     # Redis deployment type: Standalone (single Redis node deployment) OR Cluster
     type: "${REDIS_CONNECTION_TYPE:standalone}"
@@ -969,11 +975,11 @@ spring:
     # Database driver for Spring JPA - org.postgresql.Driver
     driverClassName: "${SPRING_DRIVER_CLASS_NAME:org.postgresql.Driver}"
     # Database connection URL
-    url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/thingsboard}"
+    url: jdbc:postgresql://localhost:5432/thingsboard
     # Database user name
-    username: "${SPRING_DATASOURCE_USERNAME:postgres}"
+    username: postgres
     # Database user password
-    password: "${SPRING_DATASOURCE_PASSWORD:postgres}"
+    password: postgres
     hikari:
       # This property controls the amount of time that a connection can be out of the pool before a message is logged indicating a possible connection leak. A value of 0 means leak detection is disabled
       leakDetectionThreshold: "${SPRING_DATASOURCE_HIKARI_LEAK_DETECTION_THRESHOLD:0}"
