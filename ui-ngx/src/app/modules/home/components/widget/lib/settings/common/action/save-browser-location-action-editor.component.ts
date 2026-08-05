@@ -17,8 +17,8 @@
 import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import {
-  browserLocationKeys,
   defaultLocationKeyMappings,
+  getLocationKeys,
   MobileActionAttributeSource,
   SaveBrowserLocationDescriptor
 } from '@shared/models/location.models';
@@ -48,7 +48,7 @@ export class SaveBrowserLocationActionEditorComponent implements ControlValueAcc
 
   formGroup: FormGroup;
 
-  browserLocationKeys = browserLocationKeys;
+  getLocationKeys = getLocationKeys;
 
   private propagateChange = (_val: any) => {};
 

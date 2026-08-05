@@ -79,7 +79,6 @@ export enum LocationKey {
   LONGITUDE = 'LONGITUDE',
   ACCURACY = 'ACCURACY',
   ALTITUDE = 'ALTITUDE',
-  ALTITUDE_ACCURACY = 'ALTITUDE_ACCURACY',
   SPEED = 'SPEED',
   HEADING = 'HEADING',
   GPS_ACTIVE = 'GPS_ACTIVE',
@@ -92,7 +91,6 @@ export const locationKeyTranslationMap = new Map<LocationKey, string>(
     [ LocationKey.LONGITUDE, 'widget-action.location.key-longitude' ],
     [ LocationKey.ACCURACY, 'widget-action.location.key-accuracy' ],
     [ LocationKey.ALTITUDE, 'widget-action.location.key-altitude' ],
-    [ LocationKey.ALTITUDE_ACCURACY, 'widget-action.location.key-altitude-accuracy' ],
     [ LocationKey.SPEED, 'widget-action.location.key-speed' ],
     [ LocationKey.HEADING, 'widget-action.location.key-heading' ],
     [ LocationKey.GPS_ACTIVE, 'widget-action.location.key-gps-active' ],
@@ -124,7 +122,6 @@ export const locationKeyDefaultLabelMap = new Map<LocationKey, string>(
     [ LocationKey.LONGITUDE, 'longitude' ],
     [ LocationKey.ACCURACY, 'gpsAccuracy' ],
     [ LocationKey.ALTITUDE, 'gpsAltitude' ],
-    [ LocationKey.ALTITUDE_ACCURACY, 'gpsAltitudeAccuracy' ],
     [ LocationKey.SPEED, 'gpsSpeed' ],
     [ LocationKey.HEADING, 'gpsHeading' ],
     [ LocationKey.GPS_ACTIVE, 'gpsActive' ],
@@ -138,7 +135,6 @@ export const locationKeyDefaultValueTypeMap = new Map<LocationKey, LocationKeyVa
     [ LocationKey.LONGITUDE, LocationKeyValueType.ATTRIBUTE ],
     [ LocationKey.ACCURACY, LocationKeyValueType.TIMESERIES ],
     [ LocationKey.ALTITUDE, LocationKeyValueType.TIMESERIES ],
-    [ LocationKey.ALTITUDE_ACCURACY, LocationKeyValueType.TIMESERIES ],
     [ LocationKey.SPEED, LocationKeyValueType.TIMESERIES ],
     [ LocationKey.HEADING, LocationKeyValueType.TIMESERIES ],
     [ LocationKey.GPS_ACTIVE, LocationKeyValueType.ATTRIBUTE ],
@@ -152,9 +148,6 @@ export const getLocationKeys: LocationKey[] = [...mandatoryLocationKeys, Locatio
 
 export const liveLocationKeys: LocationKey[] = [...getLocationKeys, LocationKey.ALTITUDE,
   LocationKey.SPEED, LocationKey.HEADING, LocationKey.GPS_ACTIVE, LocationKey.GPS_TRACKED_BY];
-
-export const browserLocationKeys: LocationKey[] = [...getLocationKeys, LocationKey.ALTITUDE,
-  LocationKey.ALTITUDE_ACCURACY, LocationKey.SPEED, LocationKey.HEADING];
 
 export const locationKeyName = (mapping: LocationKeyMapping): string =>
   isNotEmptyStr(mapping?.label?.trim()) ? mapping.label.trim() : locationKeyDefaultLabelMap.get(mapping?.key);

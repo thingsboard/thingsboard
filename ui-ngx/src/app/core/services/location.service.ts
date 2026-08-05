@@ -62,11 +62,7 @@ export class LocationService {
   saveMobileActionLocation(ctx: WidgetContext, mobileAction: WidgetMobileActionDescriptor,
                            locationResult: MobileLocationResult,
                            currentEntityId?: EntityId): Observable<LiveTrackingSaveInfo> {
-    const values: Partial<Record<LocationKey, any>> = {
-      [LocationKey.LATITUDE]: locationResult.latitude,
-      [LocationKey.LONGITUDE]: locationResult.longitude,
-      [LocationKey.ACCURACY]: locationResult.accuracy
-    };
+    const values = this.locationValues(locationResult.latitude, locationResult.longitude, locationResult.accuracy);
     return this.resolveTargetEntity(ctx, mobileAction.targetEntity, currentEntityId).pipe(
       switchMap((targetEntityId) => this.resolveTargetEntityName(targetEntityId).pipe(
         switchMap((targetName) => this.saveKeys(ctx, targetEntityId, mobileAction.keys, values).pipe(
@@ -88,25 +84,13 @@ export class LocationService {
       switchMap((position) => this.resolveTargetEntity(ctx, config.targetEntity, currentEntityId).pipe(
         switchMap((targetEntityId) => {
           const coords = position.coords;
-          const values: Partial<Record<LocationKey, any>> = {
-            [LocationKey.LATITUDE]: coords.latitude,
-            [LocationKey.LONGITUDE]: coords.longitude,
-            [LocationKey.ACCURACY]: coords.accuracy,
-            [LocationKey.ALTITUDE]: coords.altitude,
-            [LocationKey.ALTITUDE_ACCURACY]: coords.altitudeAccuracy,
-            [LocationKey.SPEED]: coords.speed,
-            [LocationKey.HEADING]: coords.heading
-          };
-          return this.saveKeys(ctx, targetEntityId, config.keys, values).pipe(
-            map(() => this.savedKeyNames(config.keys, values))
-          );
+          const values = this.locationValues(coords.latitude, coords.longitude, coords.accuracy);
+          return this.saveKeys(ctx, targetEntityId, config.keys, values);
         })
       ))
     ).subscribe({
-      next: (savedKeys) => {
-        ctx.showSuccessToast(savedKeys.length
-          ? this.translate.instant('widget-action.browser-location.location-saved-keys', {keys: savedKeys.join(', ')})
-          : this.translate.instant('widget-action.browser-location.location-saved'));
+      next: () => {
+        ctx.showSuccessToast(this.translate.instant('widget-action.browser-location.location-saved'));
       },
       error: (err) => {
         const geolocationErrorKey = browserGeolocationErrorTranslationMap.get(err?.message as BrowserGeolocationErrorType);
@@ -307,13 +291,23 @@ export class LocationService {
     return keys?.length ? keys : defaultLocationKeyMappings();
   }
 
+  private hasLocationValue(values: Partial<Record<LocationKey, any>>, key: LocationKey): boolean {
+    const value = values[key];
+    return isDefinedAndNotNull(value) && !Number.isNaN(value);
+  }
+
   private savedKeyNames(keys: LocationKeyMapping[], values: Partial<Record<LocationKey, any>>): string[] {
     return this.keyMappings(keys)
-      .filter((mapping) => {
-        const value = values[mapping.key];
-        return isDefinedAndNotNull(value) && !Number.isNaN(value);
-      })
+      .filter((mapping) => this.hasLocationValue(values, mapping.key))
       .map((mapping) => locationKeyName(mapping));
+  }
+
+  private locationValues(latitude: number, longitude: number, accuracy?: number): Partial<Record<LocationKey, any>> {
+    return {
+      [LocationKey.LATITUDE]: latitude,
+      [LocationKey.LONGITUDE]: longitude,
+      [LocationKey.ACCURACY]: accuracy
+    };
   }
 
   private saveKeys(ctx: WidgetContext, targetEntityId: EntityId, keys: LocationKeyMapping[],
@@ -321,9 +315,8 @@ export class LocationService {
     const attributes: Array<AttributeData> = [];
     const timeseries: Array<AttributeData> = [];
     this.keyMappings(keys).forEach((mapping) => {
-      const value = values[mapping.key];
-      if (isDefinedAndNotNull(value) && !Number.isNaN(value)) {
-        const data: AttributeData = {key: locationKeyName(mapping), value};
+      if (this.hasLocationValue(values, mapping.key)) {
+        const data: AttributeData = {key: locationKeyName(mapping), value: values[mapping.key]};
         (mapping.valueType === LocationKeyValueType.TIMESERIES ? timeseries : attributes).push(data);
       }
     });

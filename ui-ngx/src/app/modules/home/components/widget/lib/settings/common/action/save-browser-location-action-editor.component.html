@@ -19,7 +19,7 @@
   <tb-location-target-entity [callbacks]="callbacks" formControlName="targetEntity">
   </tb-location-target-entity>
   <tb-location-keys-table panelTitle="{{ 'widget-action.location.saved-keys' | translate }}"
-                          [availableKeys]="browserLocationKeys"
+                          [availableKeys]="getLocationKeys"
                           formControlName="keys">
   </tb-location-keys-table>
 </div>
