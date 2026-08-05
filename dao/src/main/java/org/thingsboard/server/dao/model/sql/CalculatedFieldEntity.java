@@ -19,12 +19,15 @@ import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.cf.ComputeOn;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
@@ -37,6 +40,7 @@ import org.thingsboard.server.dao.util.mapping.JsonConverter;
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.CALCULATED_FIELD_ADDITIONAL_INFO;
+import static org.thingsboard.server.dao.model.ModelConstants.CALCULATED_FIELD_COMPUTE_ON;
 import static org.thingsboard.server.dao.model.ModelConstants.CALCULATED_FIELD_CONFIGURATION;
 import static org.thingsboard.server.dao.model.ModelConstants.CALCULATED_FIELD_CONFIGURATION_VERSION;
 import static org.thingsboard.server.dao.model.ModelConstants.CALCULATED_FIELD_ENTITY_ID;
@@ -69,6 +73,10 @@ public class CalculatedFieldEntity extends BaseVersionedEntity<CalculatedField> 
     @Column(name = CALCULATED_FIELD_NAME)
     private String name;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = CALCULATED_FIELD_COMPUTE_ON)
+    private ComputeOn computeOn;
+
     @Column(name = CALCULATED_FIELD_CONFIGURATION_VERSION)
     private int configurationVersion;
 
@@ -96,6 +104,7 @@ public class CalculatedFieldEntity extends BaseVersionedEntity<CalculatedField> 
         this.entityId = calculatedField.getEntityId().getId();
         this.type = calculatedField.getType().name();
         this.name = calculatedField.getName();
+        this.computeOn = calculatedField.getComputeOn();
         this.configurationVersion = calculatedField.getConfigurationVersion();
         this.configuration = JacksonUtil.valueToTree(calculatedField.getConfiguration());
         this.version = calculatedField.getVersion();
@@ -111,6 +120,7 @@ public class CalculatedFieldEntity extends BaseVersionedEntity<CalculatedField> 
         calculatedField.setEntityId(EntityIdFactory.getByTypeAndUuid(entityType, entityId));
         calculatedField.setType(CalculatedFieldType.valueOf(type));
         calculatedField.setName(name);
+        calculatedField.setComputeOn(computeOn);
         calculatedField.setConfigurationVersion(configurationVersion);
         calculatedField.setConfiguration(JacksonUtil.treeToValue(configuration, CalculatedFieldConfiguration.class));
         calculatedField.setVersion(version);

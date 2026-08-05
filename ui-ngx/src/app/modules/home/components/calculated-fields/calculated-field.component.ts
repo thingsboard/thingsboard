@@ -27,12 +27,15 @@ import {
   calculatedFieldsEntityTypeList,
   CalculatedFieldType,
   calculatedFieldTypes,
-  CalculatedFieldTypeTranslations
+  CalculatedFieldTypeTranslations,
+  computeOnValues,
+  ComputeOnTranslations,
+  defaultComputeOn
 } from '@shared/models/calculated-field.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { BaseData } from '@shared/models/base-data';
 import { Observable } from 'rxjs';
-import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { getCurrentAuthState, getCurrentAuthUser } from '@core/auth/auth.selectors';
 import {
   CalculatedFieldsTableConfig,
   CalculatedFieldsTableEntity
@@ -67,6 +70,9 @@ export class CalculatedFieldComponent extends EntityComponent<CalculatedFieldsTa
   readonly CalculatedFieldType = CalculatedFieldType;
   readonly fieldTypes = calculatedFieldTypes;
   readonly CalculatedFieldTypeTranslations = CalculatedFieldTypeTranslations;
+  readonly computeOnValues = computeOnValues;
+  readonly ComputeOnTranslations = ComputeOnTranslations;
+  readonly edgesSupportEnabled = getCurrentAuthState(this.store).edgesSupportEnabled;
 
   private cfFormService = inject(CalculatedFieldFormService);
   private destroyRef = inject(DestroyRef);
@@ -120,11 +126,11 @@ export class CalculatedFieldComponent extends EntityComponent<CalculatedFieldsTa
   }
 
   updateForm(entity: CalculatedFieldInfo) {
-    const { configuration = {} as CalculatedFieldConfiguration, type = CalculatedFieldType.SIMPLE, debugSettings = { failuresEnabled: true, allEnabled: true }, entityId = this.entityId, ...value } = entity ?? {};
+    const { configuration = {} as CalculatedFieldConfiguration, type = CalculatedFieldType.SIMPLE, debugSettings = { failuresEnabled: true, allEnabled: true }, entityId = this.entityId, computeOn, ...value } = entity ?? {};
     const preparedConfig = this.cfFormService.prepareConfig(configuration);
     this.entityForm.patchValue({ type }, {emitEvent: false, onlySelf: true});
     setTimeout(() => {
-      this.entityForm.patchValue({ configuration: preparedConfig, debugSettings, entityId, ...value }, {emitEvent: false});
+      this.entityForm.patchValue({ configuration: preparedConfig, debugSettings, entityId, computeOn: computeOn ?? defaultComputeOn, ...value }, {emitEvent: false});
       this.entityForm.get('type').updateValueAndValidity();
     });
   }

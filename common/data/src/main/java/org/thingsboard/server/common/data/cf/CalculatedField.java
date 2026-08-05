@@ -75,6 +75,12 @@ public class CalculatedField extends BaseData<CalculatedFieldId> implements HasN
     @Length(fieldName = "name")
     @Schema(description = "User defined name of the calculated field.")
     private String name;
+    @Schema(description = """
+            Defines which side of an edge deployment computes this calculated field. \
+            'CLOUD' (default) - computed on the cloud; edges do not compute it. \
+            'EDGE' - computed on the edge, and the cloud stores the edge result without recomputing it.""",
+            example = "CLOUD")
+    private ComputeOn computeOn;
     @Deprecated
     @Schema(description = "Enable/disable debug. ", example = "false", deprecated = true)
     private boolean debugMode;
@@ -103,6 +109,7 @@ public class CalculatedField extends BaseData<CalculatedFieldId> implements HasN
         this.entityId = calculatedField.entityId;
         this.type = calculatedField.type;
         this.name = calculatedField.name;
+        this.computeOn = calculatedField.computeOn;
         this.debugMode = calculatedField.debugMode;
         this.debugSettings = calculatedField.debugSettings;
         this.configurationVersion = calculatedField.configurationVersion;
@@ -143,6 +150,7 @@ public class CalculatedField extends BaseData<CalculatedFieldId> implements HasN
                 .append(", entityId=").append(entityId)
                 .append(", type='").append(type)
                 .append(", name='").append(name)
+                .append(", computeOn=").append(computeOn)
                 .append(", configurationVersion=").append(configurationVersion)
                 .append(", configuration=").append(configuration)
                 .append(", additionalInfo=").append(additionalInfo)

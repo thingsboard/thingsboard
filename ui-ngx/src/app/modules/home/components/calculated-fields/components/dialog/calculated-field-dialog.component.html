@@ -85,6 +85,29 @@
             }
           </mat-select>
         </mat-form-field>
+        @if (edgesSupportEnabled) {
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ 'calculated-fields.compute-on.label' | translate }}</mat-label>
+            <mat-select formControlName="computeOn">
+              <mat-select-trigger>
+                {{ ComputeOnTranslations.has(fieldFormGroup.get('computeOn').value)
+                    ? (ComputeOnTranslations.get(fieldFormGroup.get('computeOn').value).name | translate)
+                    : fieldFormGroup.get('computeOn').value }}
+              </mat-select-trigger>
+              @for (computeOn of computeOnValues; track computeOn) {
+                <mat-option [value]="computeOn" class="py-1">
+                  <span matListItemTitle>
+                    {{ ComputeOnTranslations.get(computeOn).name | translate }}
+                  </span>
+                  <br>
+                  <small matListItemMeta style="color: inherit">
+                    {{ ComputeOnTranslations.get(computeOn).hint | translate }}
+                  </small>
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        }
       </div>
       @switch (fieldFormGroup.get('type').value) {
         @case (CalculatedFieldType.GEOFENCING) {

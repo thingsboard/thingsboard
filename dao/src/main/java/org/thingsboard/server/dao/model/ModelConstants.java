@@ -727,6 +727,7 @@ public class ModelConstants {
     public static final String CALCULATED_FIELD_ENTITY_ID = ENTITY_ID_COLUMN;
     public static final String CALCULATED_FIELD_TYPE = "type";
     public static final String CALCULATED_FIELD_NAME = "name";
+    public static final String CALCULATED_FIELD_COMPUTE_ON = "compute_on";
     public static final String CALCULATED_FIELD_CONFIGURATION_VERSION = "configuration_version";
     public static final String CALCULATED_FIELD_CONFIGURATION = "configuration";
     public static final String CALCULATED_FIELD_VERSION = "version";

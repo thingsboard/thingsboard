@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.cf.ComputeOn;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.AttributesOutput;
@@ -94,6 +95,25 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
         assertThat(updatedCalculatedField.getName()).isEqualTo(savedCalculatedField.getName());
         assertThat(updatedCalculatedField.getAdditionalInfo()).isEqualTo(savedCalculatedField.getAdditionalInfo());
         assertThat(updatedCalculatedField.getVersion()).isEqualTo(savedCalculatedField.getVersion() + 1);
+    }
+
+    @Test
+    public void testSaveCalculatedFieldComputeOn() {
+        Device device = createTestDevice();
+        CalculatedField calculatedField = getCalculatedField(device.getId(), device.getId());
+
+        CalculatedField savedCalculatedField = calculatedFieldService.save(calculatedField);
+        assertThat(savedCalculatedField.getComputeOn()).isNull();
+        assertThat(calculatedFieldService.findById(tenantId, savedCalculatedField.getId()).getComputeOn()).isNull();
+
+        savedCalculatedField.setComputeOn(ComputeOn.CLOUD);
+        savedCalculatedField = calculatedFieldService.save(savedCalculatedField);
+        assertThat(savedCalculatedField.getComputeOn()).isEqualTo(ComputeOn.CLOUD);
+        assertThat(calculatedFieldService.findById(tenantId, savedCalculatedField.getId()).getComputeOn()).isEqualTo(ComputeOn.CLOUD);
+
+        savedCalculatedField.setComputeOn(null);
+        savedCalculatedField = calculatedFieldService.save(savedCalculatedField);
+        assertThat(calculatedFieldService.findById(tenantId, savedCalculatedField.getId()).getComputeOn()).isNull();
     }
 
     @Test
