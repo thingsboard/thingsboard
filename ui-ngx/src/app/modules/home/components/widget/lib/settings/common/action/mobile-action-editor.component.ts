@@ -337,25 +337,13 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
             'accuracy',
             this.fb.control(action?.accuracy || MobileActionLocationAccuracy.BALANCED, [])
           );
-          this.mobileActionTypeFormGroup.addControl(
-            'distanceFilterMeters',
-            this.fb.control(action?.distanceFilterMeters ?? null, [])
-          );
-          this.mobileActionTypeFormGroup.addControl(
-            'intervalSeconds',
-            this.fb.control(action?.intervalSeconds ?? null, [])
-          );
-          this.mobileActionTypeFormGroup.addControl(
-            'maxDurationSeconds',
-            this.fb.control(action?.maxDurationSeconds ?? null, [])
-          );
+          this.addLiveLocationLimitControl('distanceFilterMeters', action?.distanceFilterMeters);
+          this.addLiveLocationLimitControl('intervalSeconds', action?.intervalSeconds);
+          this.addLiveLocationLimitControl('maxDurationSeconds', action?.maxDurationSeconds);
           this.mobileActionTypeFormGroup.addControl(
             'processLaunchResultFunction',
             this.fb.control(processLaunchResultFunction, [])
           );
-          this.liveLocationLimits.distanceFilterMeters.enabled = isDefinedAndNotNull(action?.distanceFilterMeters);
-          this.liveLocationLimits.intervalSeconds.enabled = isDefinedAndNotNull(action?.intervalSeconds);
-          this.liveLocationLimits.maxDurationSeconds.enabled = isDefinedAndNotNull(action?.maxDurationSeconds);
           break;
         case WidgetMobileActionType.stopLiveLocation:
           processLaunchResultFunction = action?.processLaunchResultFunction;
@@ -398,7 +386,22 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
   toggleLiveLocationLimit(controlName: keyof typeof this.liveLocationLimits, enabled: boolean) {
     const limit = this.liveLocationLimits[controlName];
     limit.enabled = enabled;
-    this.mobileActionTypeFormGroup.get(controlName).patchValue(enabled ? limit.defaultValue : null);
+    const control = this.mobileActionTypeFormGroup.get(controlName);
+    if (enabled) {
+      control.enable({emitEvent: false});
+      control.patchValue(limit.defaultValue);
+    } else {
+      control.patchValue(null, {emitEvent: false});
+      control.disable();
+    }
+  }
+
+  private addLiveLocationLimitControl(controlName: keyof typeof this.liveLocationLimits, value: number | undefined) {
+    this.mobileActionTypeFormGroup.addControl(
+      controlName,
+      this.fb.control({value: value ?? null, disabled: !isDefinedAndNotNull(value)}, [])
+    );
+    this.liveLocationLimits[controlName].enabled = isDefinedAndNotNull(value);
   }
 
   private defaultProcessLocationFunction(saveToEntity?: boolean): TbFunction {
