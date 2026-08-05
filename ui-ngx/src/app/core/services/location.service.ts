@@ -47,6 +47,7 @@ import {
   MobileLocationResult,
   SaveBrowserLocationDescriptor
 } from '@shared/models/location.models';
+import { MobileService } from '@core/services/mobile.service';
 
 @Injectable({
   providedIn: 'root'
@@ -56,6 +57,7 @@ export class LocationService {
   constructor(private store: Store<AppState>,
               private translate: TranslateService,
               private sanitizer: DomSanitizer,
+              private mobileService: MobileService,
               private entityService: EntityService) {
   }
 
@@ -103,7 +105,12 @@ export class LocationService {
   }
 
   liveTrackingArgs(ctx: WidgetContext, mobileAction: WidgetMobileActionDescriptor,
-                   currentEntityId?: EntityId): Observable<[LiveTrackingConfig]> {
+                   currentEntityId?: EntityId): Observable<[LiveTrackingConfig] | []> {
+    // Outside the mobile app, skip config resolution: it may fail (e.g. an unresolvable alias)
+    // and surface an error dialog before the dispatcher reaches its non-mobile fallback toast.
+    if (!this.mobileService.isMobileApp()) {
+      return of([]);
+    }
     return this.resolveTargetEntity(ctx, mobileAction.targetEntity, currentEntityId).pipe(
       switchMap((targetEntityId) => this.resolveTargetEntityName(targetEntityId).pipe(
         map((targetName): [LiveTrackingConfig] => [{
