@@ -55,7 +55,6 @@ import { TbUnit } from '@shared/models/unit.models';
 import { ImageResourceInfo } from '@shared/models/resource.models';
 import {
   GetLocationDescriptor,
-  LiveTrackingSaveInfo,
   MobileLocationResult,
   SaveBrowserLocationDescriptor,
   StartLiveLocationDescriptor
@@ -722,7 +721,6 @@ export const mapItemTypeTranslationMap = new Map<MapItemType, string>(
 
 export interface MobileLaunchResult {
   launched: boolean;
-  trackingInfo?: LiveTrackingSaveInfo;
 }
 
 export interface MobileImageResult {

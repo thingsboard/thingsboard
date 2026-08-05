@@ -1407,8 +1407,6 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
                       let trackingInfo: LiveTrackingSaveInfo = null;
                       if (type === WidgetMobileActionType.startLiveLocation) {
                         trackingInfo = this.locationService.liveTrackingInfo(args[0]);
-                      } else if (type === WidgetMobileActionType.stopLiveLocation) {
-                        trackingInfo = actionResult.trackingInfo || null;
                       }
                       if (isNotEmptyTbFunction(mobileAction.processLaunchResultFunction)) {
                         compileTbFunction(this.http, mobileAction.processLaunchResultFunction, 'launched', '$event', 'widgetContext', 'entityId',

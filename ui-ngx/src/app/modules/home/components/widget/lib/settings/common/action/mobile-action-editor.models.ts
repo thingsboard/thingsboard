@@ -118,23 +118,14 @@ const startLiveLocationResultFunction: TbFunction =
 
 const stopLiveLocationResultFunction: TbFunction =
   '// Optional function body to process result of the stop live location tracking action. \n' +
-  '// - launched - boolean value indicating if live location tracking was stopped.\n' +
-  '// - trackingInfo - stopped session details ({targetName, keys}) when available, otherwise undefined.\n\n' +
-  'showTrackingStoppedDialog(\'Live location tracking\', launched, trackingInfo);\n' +
+  '// - launched - boolean value indicating if live location tracking was stopped.\n\n' +
+  'showTrackingStoppedDialog(\'Live location tracking\', launched);\n' +
   '\n' +
-  'function showTrackingStoppedDialog(title, stopped, info) {\n' +
+  'function showTrackingStoppedDialog(title, stopped) {\n' +
   '    var message = stopped ? \'Live location tracking stopped\' : \'Live location tracking was not stopped\';\n' +
-  '    if (stopped && info && info.targetName) {\n' +
-  '        // The dialog renders HTML, so the entity name must be escaped.\n' +
-  '        message += \'<br>Location was saved to \' + escapeHtml(info.targetName);\n' +
-  '    }\n' +
   '    setTimeout(function() {\n' +
   '        widgetContext.dialogs.alert(title, message).subscribe();\n' +
   '    }, 100);\n' +
-  '}\n' +
-  '\n' +
-  'function escapeHtml(value) {\n' +
-  '    return String(value).replace(/[&<>"\']/g, function(c) { return \'&#\' + c.charCodeAt(0) + \';\'; });\n' +
   '}\n';
 
 const processQrCodeFunction: TbFunction =

@@ -465,13 +465,21 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
         });
         break;
       case this.mobileActionType.startLiveLocation:
-      case this.mobileActionType.stopLiveLocation:
         this.actionConfig.push({
           title: 'widget-action.mobile.process-launch-result-function',
           formControlName: 'processLaunchResultFunction',
           functionName: 'processLaunchResult',
           functionArgs: ['launched', '$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams', 'entityLabel',
             'trackingInfo'],
+          helpId: 'widget/action/mobile_process_launch_result_fn'
+        });
+        break;
+      case this.mobileActionType.stopLiveLocation:
+        this.actionConfig.push({
+          title: 'widget-action.mobile.process-launch-result-function',
+          formControlName: 'processLaunchResultFunction',
+          functionName: 'processLaunchResult',
+          functionArgs: ['launched', '$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams', 'entityLabel'],
           helpId: 'widget/action/mobile_process_launch_result_fn'
         });
         break;
