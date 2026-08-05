@@ -9133,6 +9133,7 @@
                 "zoom-scroll": "Scroll",
                 "zoom-double-click": "Double click",
                 "zoom-control-buttons": "Control buttons",
+                "use-gesture-handling": "Use gesture handling (two fingers on mobile, Ctrl/⌘ + scroll on desktop)",
                 "scale": "Scale",
                 "scale-metric": "Metric",
                 "scale-imperial": "Imperial",

@@ -117,6 +117,11 @@
         }
       </mat-chip-listbox>
     </div>
+    <div class="tb-form-row">
+      <mat-slide-toggle class="mat-slide" formControlName="useGestureHandling">
+        {{ 'widgets.maps.control.use-gesture-handling' | translate }}
+      </mat-slide-toggle>
+    </div>
     <div class="tb-form-row space-between column-lt-md">
       <div translate>widgets.maps.control.scale</div>
       <mat-chip-listbox multiple formControlName="scales">

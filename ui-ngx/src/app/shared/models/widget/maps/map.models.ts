@@ -876,6 +876,7 @@ export interface BaseMapSettings {
   additionalDataSources: AdditionalMapDataSourceSettings[];
   controlsPosition: MapControlsPosition;
   zoomActions: MapZoomAction[];
+  useGestureHandling: boolean;
   scales: MapScale[];
   dragModeButton: boolean;
   fitMapBounds: boolean;
@@ -901,6 +902,7 @@ export const defaultBaseMapSettings: BaseMapSettings = {
   additionalDataSources: [],
   controlsPosition: MapControlsPosition.topleft,
   zoomActions: [MapZoomAction.scroll, MapZoomAction.doubleClick, MapZoomAction.controlButtons],
+  useGestureHandling: false,
   scales: [],
   dragModeButton: false,
   fitMapBounds: true,

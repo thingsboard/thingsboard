@@ -150,6 +150,7 @@ export class MapSettingsComponent implements OnInit, ControlValueAccessor, Valid
       additionalDataSources: [null, []],
       controlsPosition: [null, []],
       zoomActions: [null, []],
+      useGestureHandling: [null, []],
       scales: [null, []],
       dragModeButton: [null, []],
       fitMapBounds: [null, []],
