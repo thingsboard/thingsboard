@@ -68,10 +68,7 @@ export class LocationService {
     return this.resolveTargetEntity(ctx, mobileAction.targetEntity, currentEntityId).pipe(
       switchMap((targetEntityId) => this.resolveTargetEntityName(targetEntityId).pipe(
         switchMap((targetName) => this.saveKeys(ctx, targetEntityId, mobileAction.keys, values).pipe(
-          map(() => ({
-            targetName,
-            keys: this.savedKeyNames(mobileAction.keys, values)
-          }))
+          map(() => ({targetName}))
         ))
       )),
       catchError((err) => throwError(() => new Error(this.saveErrorMessage(err))))
@@ -141,8 +138,7 @@ export class LocationService {
       return null;
     }
     return {
-      targetName: config.targetName || null,
-      keys: (config.keys || []).map((key) => key.label)
+      targetName: config.targetName || null
     };
   }
 
@@ -301,12 +297,6 @@ export class LocationService {
   private hasLocationValue(values: Partial<Record<LocationKey, any>>, key: LocationKey): boolean {
     const value = values[key];
     return isDefinedAndNotNull(value) && !Number.isNaN(value);
-  }
-
-  private savedKeyNames(keys: LocationKeyMapping[], values: Partial<Record<LocationKey, any>>): string[] {
-    return this.keyMappings(keys)
-      .filter((mapping) => this.hasLocationValue(values, mapping.key))
-      .map((mapping) => locationKeyName(mapping));
   }
 
   private locationValues(latitude: number, longitude: number, accuracy?: number): Partial<Record<LocationKey, any>> {

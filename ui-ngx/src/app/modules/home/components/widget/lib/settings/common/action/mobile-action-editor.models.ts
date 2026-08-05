@@ -98,7 +98,7 @@ const processLaunchResultFunctionTemplate: TbFunction =
 const startLiveLocationResultFunction: TbFunction =
   '// Optional function body to process result of the start live location tracking action. \n' +
   '// - launched - boolean value indicating if live location tracking was started.\n' +
-  '// - trackingInfo - tracking session details ({targetName, keys}) when available, otherwise undefined.\n\n' +
+  '// - trackingInfo - tracking session details ({targetName}) when available, otherwise undefined.\n\n' +
   'showTrackingStartedDialog(\'Live location tracking\', launched, trackingInfo);\n' +
   '\n' +
   'function showTrackingStartedDialog(title, started, info) {\n' +
@@ -175,7 +175,7 @@ const processLocationWithSaveFunction: TbFunction =
   '// Function body to process current location of the phone. \n' +
   '// - latitude - phone location latitude\n' +
   '// - longitude - phone location longitude\n' +
-  '// - saveInfo - details of the performed save ({targetName, keys}). The function runs only after\n' +
+  '// - saveInfo - details of the performed save ({targetName}). The function runs only after\n' +
   '//   a successful save; a failed save is passed to the handle error function instead.\n\n' +
   'showLocationDialog(\'Location\', latitude, longitude, saveInfo);\n' +
   '\n' +

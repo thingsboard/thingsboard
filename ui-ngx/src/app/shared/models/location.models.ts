@@ -22,7 +22,6 @@ import { ProcessLaunchResultDescriptor } from '@shared/models/widget.models';
 
 export interface LiveTrackingSaveInfo {
   targetName: string | null;
-  keys: string[];
 }
 
 export interface MobileLocationResult {
