@@ -15,8 +15,13 @@
  */
 package org.thingsboard.server.common.data.device.profile.lwm2m;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 
+@Schema(description = "Observation strategy for telemetry. " +
+        "SINGLE (0): one resource equals one single observe request. " +
+        "COMPOSITE_ALL (1): all resources in one composite observe request. " +
+        "COMPOSITE_BY_OBJECT (2): grouped composite observe requests by object.")
 public enum TelemetryObserveStrategy {
 
     SINGLE("One resource equals one single observe request", 0),
@@ -52,8 +57,4 @@ public enum TelemetryObserveStrategy {
         throw new IllegalArgumentException("Unknown TelemetryObserveStrategy id: " + id);
     }
 
-    @Override
-    public String toString() {
-        return name() + " (" + id + "): " + description;
-    }
 }
