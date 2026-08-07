@@ -39,6 +39,8 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.AttributesSaveResult;
+import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
+import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.notification.rule.trigger.DeviceActivityTrigger;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -60,6 +62,7 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -1120,6 +1123,49 @@ class DefaultDeviceStateServiceTest {
                             request.getEntries().get(0).getValue().equals(true)
             ));
         });
+    }
+
+    // After a partition rebalance a node may hold a device with a stale in-memory lastActivityTime while the true
+    // owner keeps it alive. Such a node must NOT persist active=false: it must re-check the authoritative persisted
+    // lastActivityTime and skip the inactivity report.
+    @Test
+    void givenStaleLocalClockButFreshPersistedActivity_whenUpdateInactivityStateIfExpired_thenDoesNotPersistInactive() {
+        // GIVEN persist-to-telemetry mode
+        ReflectionTestUtils.setField(service, "persistToTelemetry", true);
+        lenient().when(telemetrySubscriptionService.saveTimeseriesInternal(any())).thenReturn(Futures.immediateFuture(null));
+
+        long now = 10_000_000L;
+        long timeout = 100_000L;
+
+        // in-memory state is STALE: last activity long ago, so locally the device looks inactive
+        var state = DeviceState.builder()
+                .active(true)
+                .lastActivityTime(now - 10 * timeout)
+                .lastInactivityAlarmTime(0L)
+                .inactivityTimeout(timeout)
+                .build();
+        var stateData = DeviceStateData.builder()
+                .tenantId(tenantId).deviceId(deviceId).deviceCreationTime(0L)
+                .metaData(new TbMsgMetaData()).state(state).build();
+
+        given(partitionService.resolve(ServiceType.TB_CORE, tenantId, deviceId)).willReturn(tpi);
+
+        // the authoritative persisted lastActivityTime is FRESH (the true owner is keeping the device alive)
+        long freshLastActivityTime = now - 1;
+        lenient().when(tsService.findLatest(TenantId.SYS_TENANT_ID, deviceId, LAST_ACTIVITY_TIME))
+                .thenReturn(Futures.immediateFuture(Optional.of(
+                        new BasicTsKvEntry(freshLastActivityTime, new LongDataEntry(LAST_ACTIVITY_TIME, freshLastActivityTime)))));
+
+        // WHEN
+        service.updateInactivityStateIfExpired(now, deviceId, stateData);
+
+        // THEN the device is NOT persisted as inactive...
+        then(telemetrySubscriptionService).should(never()).saveTimeseriesInternal(argThat(request ->
+                request.getEntries().get(0).getKey().equals(ACTIVITY_STATE)
+                        && request.getEntries().get(0).getValue().equals(false)));
+        // ...and the stale local clock is reconciled from the source of truth
+        assertThat(state.getLastActivityTime()).isEqualTo(freshLastActivityTime);
+        assertThat(state.isActive()).isTrue();
     }
 
     private void mockSuccessfulSaveAttributes() {
