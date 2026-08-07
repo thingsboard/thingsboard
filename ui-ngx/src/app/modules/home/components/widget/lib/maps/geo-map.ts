@@ -35,7 +35,6 @@ import { WidgetContext } from '@home/models/widget-component.models';
 import { DeepPartial } from '@shared/models/common';
 import { forkJoin, Observable, of } from 'rxjs';
 import L from 'leaflet';
-import 'leaflet-gesture-handling';
 import { map, tap } from 'rxjs/operators';
 import { TbMapLayer } from '@home/components/widget/lib/maps/map-layer';
 import { TbMap } from '@home/components/widget/lib/maps/map';
@@ -55,14 +54,7 @@ export class TbGeoMap extends TbMap<GeoMapSettings> {
   protected createMap(): Observable<L.Map> {
     const map = L.map(this.mapElement, {
       gestureHandling: this.settings.useGestureHandling,
-      gestureHandlingOptions: {
-        duration: 2000,
-        text: {
-          touch: this.ctx.translate.instant('widgets.maps.control.gesture-handling-touch'),
-          scroll: this.ctx.translate.instant('widgets.maps.control.gesture-handling-scroll'),
-          scrollMac: this.ctx.translate.instant('widgets.maps.control.gesture-handling-scroll-mac'),
-        }
-      },
+      gestureHandlingOptions: this.gestureHandlingOptions,
       scrollWheelZoom: this.settings.zoomActions.includes(MapZoomAction.scroll),
       doubleClickZoom: this.settings.zoomActions.includes(MapZoomAction.doubleClick),
       zoomControl: this.settings.zoomActions.includes(MapZoomAction.controlButtons),
