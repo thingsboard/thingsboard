@@ -559,6 +559,18 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                     && (state.getLastInactivityAlarmTime() == 0L || state.getLastInactivityAlarmTime() <= state.getLastActivityTime())
                     && stateData.getDeviceCreationTime() + state.getInactivityTimeout() <= ts) {
                 if (partitionService.resolve(ServiceType.TB_CORE, stateData.getTenantId(), deviceId).isMyPartition()) {
+                    // Guard against stale-clock inactivity writes. After a partition rebalance a node may still hold
+                    // a device whose activity is now handled by another (owning) node; its local lastActivityTime is
+                    // then frozen and would wrongly flip the shared 'active' flag to false. Re-read the authoritative
+                    // persisted lastActivityTime; if it shows the device is still active, reconcile the local state
+                    // and skip the inactivity report.
+                    long persistedLastActivityTime = getPersistedLastActivityTime(deviceId);
+                    if (persistedLastActivityTime > state.getLastActivityTime()) {
+                        state.setLastActivityTime(persistedLastActivityTime);
+                        if (isActive(ts, state)) {
+                            return;
+                        }
+                    }
                     reportInactivity(ts, stateData);
                 } else {
                     cleanupEntity(deviceId);
@@ -567,6 +579,23 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         } else {
             log.debug("[{}] Device that belongs to other server is detected and removed.", deviceId);
             cleanupEntity(deviceId);
+        }
+    }
+
+    // Reads the authoritative persisted lastActivityTime (source of truth) so a node with a stale in-memory
+    // clock cannot mark a still-active device inactive. Returns 0 on failure to preserve default behavior.
+    long getPersistedLastActivityTime(DeviceId deviceId) {
+        try {
+            if (persistToTelemetry) {
+                Optional<TsKvEntry> entry = tsService.findLatest(TenantId.SYS_TENANT_ID, deviceId, LAST_ACTIVITY_TIME).get();
+                return entry.flatMap(KvEntry::getLongValue).orElse(0L);
+            } else {
+                Optional<AttributeKvEntry> entry = attributesService.find(TenantId.SYS_TENANT_ID, deviceId, AttributeScope.SERVER_SCOPE, LAST_ACTIVITY_TIME).get();
+                return entry.flatMap(KvEntry::getLongValue).orElse(0L);
+            }
+        } catch (Exception e) {
+            log.warn("[{}] Failed to re-read persisted lastActivityTime; proceeding with local state.", deviceId, e);
+            return 0L;
         }
     }
 
