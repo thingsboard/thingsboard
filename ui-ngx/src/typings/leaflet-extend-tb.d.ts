@@ -24,6 +24,7 @@ import { MatIconRegistry } from '@angular/material/icon';
 declare module 'leaflet' {
   interface MapOptions {
     gestureHandling?: boolean;
+    gestureHandlingOptions?: { duration?: number; text?: { touch?: string; scroll?: string; scrollMac?: string } };
   }
   interface MarkerOptions {
     tbMarkerData?: FormattedData<TbMapDatasource>;
