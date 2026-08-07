@@ -5424,6 +5424,7 @@
                 "community-string": "SNMP community string"
             },
             "isgateway": "Is Gateway",
+            "overwrite-activity-time": "Overwrite activity time for connected device",
             "activity-time-from-gateway-device": "Activity time from gateway device",
             "description": "Description",
             "edge-license-key": "License Key",

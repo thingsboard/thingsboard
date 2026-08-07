@@ -77,7 +77,8 @@ export class TableColumnsAssignmentComponent implements OnInit, ControlValueAcce
           { value: ImportEntityColumnType.sharedAttribute },
           { value: ImportEntityColumnType.serverAttribute },
           { value: ImportEntityColumnType.timeseries },
-          { value: ImportEntityColumnType.isGateway }
+          { value: ImportEntityColumnType.isGateway },
+          { value: ImportEntityColumnType.overwriteActivityTime }
         );
         this.columnDeviceCredentials.push(
           { value: ImportEntityColumnType.accessToken },
