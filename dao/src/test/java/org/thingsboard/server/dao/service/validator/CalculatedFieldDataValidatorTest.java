@@ -37,11 +37,11 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.relation.EntityRelation;
-import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.cf.CalculatedFieldDao;
 import org.thingsboard.server.dao.edge.EdgeSynchronizationManager;
-import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.usagerecord.DefaultApiLimitService;
 import org.thingsboard.server.exception.DataValidationException;
 
@@ -51,6 +51,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 
 @SpringBootTest(classes = CalculatedFieldDataValidator.class)
@@ -67,7 +69,7 @@ public class CalculatedFieldDataValidatorTest {
     @MockitoBean
     private DefaultApiLimitService apiLimitService;
     @MockitoBean
-    private RelationService relationService;
+    private EdgeService edgeService;
     @MockitoBean
     private EdgeSynchronizationManager edgeSynchronizationManager;
     @MockitoSpyBean
@@ -153,14 +155,14 @@ public class CalculatedFieldDataValidatorTest {
 
     private void givenNotAssignedToEdge(EntityId entityId) {
         given(edgeSynchronizationManager.getEdgeId()).willReturn(new ThreadLocal<>());
-        given(relationService.findByToAndType(TENANT_ID, entityId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE))
-                .willReturn(List.of());
+        given(edgeService.findRelatedEdgeIdsByEntityId(eq(TENANT_ID), eq(entityId), any(PageLink.class)))
+                .willReturn(PageData.emptyPageData());
     }
 
     private void givenAssignedToEdge(EntityId entityId) {
         given(edgeSynchronizationManager.getEdgeId()).willReturn(new ThreadLocal<>());
-        given(relationService.findByToAndType(TENANT_ID, entityId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE))
-                .willReturn(List.of(new EntityRelation(EDGE_ID, entityId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE)));
+        given(edgeService.findRelatedEdgeIdsByEntityId(eq(TENANT_ID), eq(entityId), any(PageLink.class)))
+                .willReturn(new PageData<>(List.of(EDGE_ID), 1, 1, false));
     }
 
     private CalculatedField edgeOnlyCf(EntityId entityId) {

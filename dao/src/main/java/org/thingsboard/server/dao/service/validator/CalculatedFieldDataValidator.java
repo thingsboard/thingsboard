@@ -28,12 +28,11 @@ import org.thingsboard.server.common.data.cf.configuration.aggregation.RelatedEn
 import org.thingsboard.server.common.data.cf.configuration.aggregation.single.EntityAggregationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.relation.EntityRelation;
-import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.cf.CalculatedFieldDao;
+import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.edge.EdgeSynchronizationManager;
-import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.usagerecord.ApiLimitService;
@@ -52,7 +51,7 @@ public class CalculatedFieldDataValidator extends DataValidator<CalculatedField>
     private ApiLimitService apiLimitService;
 
     @Autowired
-    private RelationService relationService;
+    private EdgeService edgeService;
 
     @Autowired
     private EdgeSynchronizationManager edgeSynchronizationManager;
@@ -169,7 +168,7 @@ public class CalculatedFieldDataValidator extends DataValidator<CalculatedField>
         if (EntityType.DEVICE != entityId.getEntityType() && EntityType.ASSET != entityId.getEntityType()) {
             return;
         }
-        if (relationService.findByToAndType(tenantId, entityId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE).isEmpty()) {
+        if (edgeService.findRelatedEdgeIdsByEntityId(tenantId, entityId, new PageLink(1)).getData().isEmpty()) {
             throw new DataValidationException("Calculated field computed on the edge requires "
                     + entityId.getEntityType().name().toLowerCase() + " to be assigned to an edge!");
         }
