@@ -70,6 +70,7 @@ export enum ImportEntityColumnType {
   snmpVersion = 'SNMP_VERSION',
   snmpCommunityString = 'SNMP_COMMUNITY_STRING',
   isGateway = 'IS_GATEWAY',
+  overwriteActivityTime = 'OVERWRITE_ACTIVITY_TIME',
   description = 'DESCRIPTION',
   routingKey = 'ROUTING_KEY',
   secret = 'SECRET'
@@ -105,6 +106,7 @@ export const importEntityColumnTypeTranslations = new Map<ImportEntityColumnType
     [ImportEntityColumnType.snmpVersion, 'import.column-type.snmp.version'],
     [ImportEntityColumnType.snmpCommunityString, 'import.column-type.snmp.community-string'],
     [ImportEntityColumnType.isGateway, 'import.column-type.isgateway'],
+    [ImportEntityColumnType.overwriteActivityTime, 'import.column-type.overwrite-activity-time'],
     [ImportEntityColumnType.description, 'import.column-type.description'],
     [ImportEntityColumnType.routingKey, 'import.column-type.routing-key'],
     [ImportEntityColumnType.secret, 'import.column-type.secret']
