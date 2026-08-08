@@ -74,6 +74,7 @@ public class TenantProfileController extends BaseController {
 
     @ApiOperation(value = "Get Tenant Profile (getTenantProfileById)",
             notes = "Fetch the Tenant Profile object based on the provided Tenant Profile Id. " + SYSTEM_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @GetMapping(value = "/tenantProfile/{tenantProfileId}")
     public TenantProfile getTenantProfileById(
             @Parameter(description = TENANT_PROFILE_ID_PARAM_DESCRIPTION)

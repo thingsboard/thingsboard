@@ -48,6 +48,7 @@ import {TenantService} from "@core/http/tenant.service";
 import {AuthUser} from "@shared/models/user.model";
 import {TenantProfileService} from "@core/http/tenant-profile.service";
 import {Tenant, TenantProfile} from "@shared/models/tenant.model";
+import {EntityInfoData} from "@shared/models/entity.models";
 
 @Component({
   selector: 'tb-home',
@@ -112,9 +113,9 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
       .pipe(
         takeUntil(this.destroy$),
         catchError(() => of(EMPTY)),
-        switchMap((tenant: Tenant) => this.tenantProfileService.getTenantProfile(tenant.tenantProfileId.id))
+        switchMap((tenant: Tenant) => this.tenantProfileService.getTenantProfileInfo(tenant.tenantProfileId.id))
       )
-      .subscribe((tenantProfile: TenantProfile) => this.conditionTenantProfile = (name === tenantProfile.name));
+      .subscribe((tenantProfile: EntityInfoData) => this.conditionTenantProfile = (name === tenantProfile.name));
   }
 
   ngOnInit() {
