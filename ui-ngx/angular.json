@@ -242,6 +242,11 @@
     "cli": {
         "packageManager": "yarn",
         "analytics": false,
+        "cache": {
+            "enabled": true,
+            "path": ".angular/cache",
+            "environment": "all"
+        },
         "schematicCollections": [
             "@angular-eslint/schematics"
         ]
