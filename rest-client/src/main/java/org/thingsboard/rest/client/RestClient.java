@@ -236,7 +236,7 @@ public class RestClient implements Closeable {
     public RestClient(RestTemplate restTemplate, String baseURL, String accessToken) {
         this.restTemplate = restTemplate;
         this.loginRestTemplate = new RestTemplate(restTemplate.getRequestFactory());
-        this.baseURL = baseURL;
+        this.baseURL = org.springframework.util.StringUtils.trimTrailingCharacter(baseURL, '/');
         this.restTemplate.getInterceptors().add((request, bytes, execution) -> {
             HttpRequest wrapper = new HttpRequestWrapper(request);
             if (accessToken == null) {
@@ -1342,6 +1342,10 @@ public class RestClient implements Closeable {
                 throw exception;
             }
         }
+    }
+
+    public JsonNode getDevicePublishTelemetryCommands(DeviceId deviceId) {
+        return restTemplate.getForEntity(baseURL + "/api/device-connectivity/{deviceId}", JsonNode.class, deviceId.getId()).getBody();
     }
 
     public DeviceCredentials saveDeviceCredentials(DeviceCredentials deviceCredentials) {
