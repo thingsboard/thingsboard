@@ -19,7 +19,18 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 
+@Schema(
+        discriminatorProperty = "securityConfigClientMode",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "NO_SEC", schema = NoSecClientCredential.class),
+                @DiscriminatorMapping(value = "PSK", schema = PSKClientCredential.class),
+                @DiscriminatorMapping(value = "RPK", schema = RPKClientCredential.class),
+                @DiscriminatorMapping(value = "X509", schema = X509ClientCredential.class)
+        }
+)
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         property = "securityConfigClientMode")
