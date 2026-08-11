@@ -27,6 +27,8 @@ import { DialogService } from '@core/services/dialog.service';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityId } from '@shared/models/id/entity-id';
 import { IotHubActionsService } from './iot-hub-actions.service';
+import { IotHubBuiltInService } from './iot-hub-built-in.service';
+import { isBuiltInItem } from './iot-hub-utils';
 
 export interface IotHubAddItemDialogData {
   itemType: ItemType;
@@ -59,7 +61,8 @@ export class TbIotHubAddItemDialogComponent extends DialogComponent<TbIotHubAddI
     private translate: TranslateService,
     private iotHubApiService: IotHubApiService,
     private dialogService: DialogService,
-    private iotHubActions: IotHubActionsService
+    private iotHubActions: IotHubActionsService,
+    private iotHubBuiltInService: IotHubBuiltInService
   ) {
     super(store, router, dialogRef);
     this.itemType = data.itemType;
@@ -73,6 +76,25 @@ export class TbIotHubAddItemDialogComponent extends DialogComponent<TbIotHubAddI
   }
 
   onAddItem(item: MpItemVersionView): void {
+    if (isBuiltInItem(item)) {
+      // Built-in content is already part of the platform — open the local copy instead of
+      // installing a duplicate, and install only if that copy no longer exists.
+      this.iotHubBuiltInService.openLocalComponent(item).subscribe(opened => {
+        if (opened) {
+          return;
+        }
+        this.iotHubActions.confirmInstallMissingBuiltIn(item).subscribe(confirmed => {
+          if (confirmed) {
+            this.doAddItem(item);
+          }
+        });
+      });
+      return;
+    }
+    this.doAddItem(item);
+  }
+
+  private doAddItem(item: MpItemVersionView): void {
     if (this.itemType === ItemType.DEVICE) {
       this.installDeviceItem(item);
       return;

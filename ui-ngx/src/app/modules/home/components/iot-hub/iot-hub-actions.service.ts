@@ -17,6 +17,7 @@
 import { Injectable } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable, of, EMPTY } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from '@core/services/dialog.service';
 import { MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
@@ -30,6 +31,8 @@ import { TbIotHubUpdateDialogComponent, IotHubUpdateDialogData } from './iot-hub
 import { TbIotHubDeleteDialogComponent, IotHubDeleteDialogData } from './iot-hub-delete-dialog.component';
 import { TbDeviceInstallDialogComponent, DeviceInstallDialogData } from './device-install-dialog/device-install-dialog.component';
 import { TbIotHubInstalledItemsDialogComponent, IotHubInstalledItemsDialogData } from './iot-hub-installed-items-dialog.component';
+import { IotHubBuiltInService } from './iot-hub-built-in.service';
+import { isBuiltInItem } from './iot-hub-utils';
 
 @Injectable()
 export class IotHubActionsService {
@@ -37,7 +40,8 @@ export class IotHubActionsService {
   constructor(
     private dialog: MatDialog,
     private dialogService: DialogService,
-    private translate: TranslateService
+    private translate: TranslateService,
+    private builtInService: IotHubBuiltInService
   ) {}
 
   openItemDetail(item: MpItemVersionView, installedItem?: IotHubInstalledItem, installedItemsCount?: number,
@@ -72,7 +76,41 @@ export class IotHubActionsService {
     }).afterClosed();
   }
 
+  /**
+   * Runs the primary action of an item: built-in content is opened locally (never installed),
+   * device packages are connected, everything else goes through the install dialog.
+   */
   installItem(item: MpItemVersionView): Observable<string> {
+    if (isBuiltInItem(item)) {
+      return this.openOrInstallBuiltIn(item);
+    }
+    return this.runInstall(item);
+  }
+
+  /**
+   * Asks whether to install a built-in item whose local copy is gone — the component the Hub entry
+   * mirrors was deleted from this instance, so installing is the only way to get it back.
+   */
+  confirmInstallMissingBuiltIn(item: MpItemVersionView): Observable<boolean> {
+    return this.dialogService.confirm(
+      this.translate.instant('iot-hub.built-in-missing-title'),
+      this.translate.instant('iot-hub.built-in-missing-text', { name: item?.name }),
+      this.translate.instant('action.cancel'),
+      this.translate.instant('iot-hub.install')
+    );
+  }
+
+  private openOrInstallBuiltIn(item: MpItemVersionView): Observable<string> {
+    return this.builtInService.openLocalComponent(item).pipe(
+      switchMap(opened => opened
+        ? EMPTY
+        : this.confirmInstallMissingBuiltIn(item).pipe(
+            switchMap(confirmed => confirmed ? this.runInstall(item) : EMPTY)
+          ))
+    );
+  }
+
+  private runInstall(item: MpItemVersionView): Observable<string> {
     if (item.type === ItemType.ALARM_RULE) {
       this.dialogService.alert(
         this.translate.instant('iot-hub.alarm-rule-install-update-required'),
@@ -122,6 +160,9 @@ export class IotHubActionsService {
   }
 
   installDevice(item: MpItemVersionView): Observable<string> {
+    if (isBuiltInItem(item)) {
+      return this.openOrInstallBuiltIn(item);
+    }
     return this.openDeviceInstallDialog(item);
   }
 
