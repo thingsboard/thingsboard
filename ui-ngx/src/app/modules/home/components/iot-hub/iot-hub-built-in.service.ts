@@ -15,6 +15,7 @@
 ///
 
 import { Injectable } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { from, Observable, of } from 'rxjs';
 import { catchError, concatMap, first, map, switchMap } from 'rxjs/operators';
@@ -24,6 +25,24 @@ import { ItemType } from '@shared/models/iot-hub/iot-hub-item.models';
 import { isValidWidgetFullFqn, WidgetType, WidgetTypeInfo } from '@shared/models/widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { getEntityDetailsPageURL, isNotEmptyStr } from '@core/utils';
+
+/**
+ * Result of looking up the local component a built-in Hub item mirrors. `failed` separates
+ * "the lookup itself did not answer" (network error, 5xx, no read permission) from "the component
+ * is not here": only the latter may be offered as an install, otherwise a transient error would
+ * hand the tenant a duplicate of a component that is still in place.
+ */
+export interface IotHubLocalLookup<T> {
+  value: T | null;
+  failed: boolean;
+}
+
+/**
+ * Outcome of trying to open the local component of a built-in item. 'cancelled' means the component
+ * is there but the router did not go — typically a route guard blocked it (unsaved changes) — so
+ * there is nothing to install and nothing to report.
+ */
+export type IotHubOpenLocalOutcome = 'opened' | 'cancelled' | 'missing' | 'failed';
 
 /**
  * Handles IoT Hub items marked `builtIn` — content that already ships inside ThingsBoard.
@@ -42,68 +61,91 @@ export class IotHubBuiltInService {
 
   /**
    * Resolves the platform's own widget type mirroring a built-in Hub item, matched by fqn.
-   * Emits null when nothing matches locally (older platform version, widget deleted by a sysadmin).
+   * Emits a null value when nothing matches locally (older platform version, widget deleted by a
+   * sysadmin), and `failed: true` when the lookup could not answer at all.
    *
    * There is no API to test a batch of fqns at once — `GET /api/widgetType?fqn=` is per fqn and
    * carries the full descriptor, and `/api/widgetTypeFqns` is scoped to a bundle the Hub payload
    * does not name — so this must stay a per-item check triggered by a click, never a prefetch
    * across a catalogue page.
    */
-  resolveLocalWidgetType(item: MpItemVersionView): Observable<WidgetType | null> {
+  resolveLocalWidgetType(item: MpItemVersionView): Observable<IotHubLocalLookup<WidgetType>> {
+    const noMatch: IotHubLocalLookup<WidgetType> = { value: null, failed: false };
     const fqn = item?.dataDescriptor?.fqn;
     if (!isNotEmptyStr(fqn)) {
-      return of(null);
+      return of(noMatch);
     }
     // Hub items carry a bare fqn; platform widget types are addressed by a scoped full fqn.
     // Built-in content is system scoped, the tenant scope covers a previously installed copy.
     const fullFqns = isValidWidgetFullFqn(fqn) ? [fqn] : [`system.${fqn}`, `tenant.${fqn}`];
     return from(fullFqns).pipe(
       concatMap(fullFqn => this.widgetService.getWidgetType(fullFqn, { ignoreErrors: true, ignoreLoading: true }).pipe(
-        catchError(() => of(null))
+        map(widgetType => this.lookupResult(widgetType)),
+        catchError((err: HttpErrorResponse) => of(this.lookupFailure<WidgetType>(err)))
       )),
-      first(widgetType => !!widgetType?.id?.id, null)
+      // Stop at the first match, and at the first hard failure too: with existence unknown, the
+      // remaining candidate cannot turn a failure into a trustworthy "not here".
+      first(lookup => !!lookup.value?.id?.id || lookup.failed, noMatch)
     );
   }
 
   /** Same match as `resolveLocalWidgetType`, resolved to the info projection widget pickers need. */
-  resolveLocalWidgetTypeInfo(item: MpItemVersionView): Observable<WidgetTypeInfo | null> {
+  resolveLocalWidgetTypeInfo(item: MpItemVersionView): Observable<IotHubLocalLookup<WidgetTypeInfo>> {
     return this.resolveLocalWidgetType(item).pipe(
-      switchMap(widgetType => widgetType
-        ? this.widgetService.getWidgetTypeInfoById(widgetType.id.id, { ignoreErrors: true, ignoreLoading: true }).pipe(
-            catchError(() => of(null))
+      switchMap(lookup => lookup.value
+        ? this.widgetService.getWidgetTypeInfoById(lookup.value.id.id, { ignoreErrors: true, ignoreLoading: true }).pipe(
+            map(widgetTypeInfo => this.lookupResult(widgetTypeInfo)),
+            catchError((err: HttpErrorResponse) => of(this.lookupFailure<WidgetTypeInfo>(err)))
           )
-        : of(null))
+        : of({ value: null, failed: lookup.failed }))
     );
   }
 
   /**
-   * Navigates to the local component a built-in item mirrors. Emits false when there is nothing
-   * to open — the platform version predates the component, or a sysadmin deleted it — leaving the
-   * caller to decide what to offer instead. The check is deliberately lazy: see the note above
-   * `resolveLocalWidgetType`, there is no bulk fqn lookup to prefetch a whole catalogue page with.
+   * Navigates to the local component a built-in item mirrors. Emits 'missing' when there is nothing
+   * to open — the platform version predates the component, or a sysadmin deleted it — and 'failed'
+   * when the lookup could not answer, leaving the caller to decide what to offer in each case. The
+   * check is deliberately lazy: see the note above `resolveLocalWidgetType`, there is no bulk fqn
+   * lookup to prefetch a whole catalogue page with.
    */
-  openLocalComponent(item: MpItemVersionView): Observable<boolean> {
+  openLocalComponent(item: MpItemVersionView): Observable<IotHubOpenLocalOutcome> {
     return this.resolveLocalComponentUrl(item).pipe(
-      map(url => {
-        if (!url) {
-          return false;
+      switchMap(lookup => {
+        if (!lookup.value) {
+          return of<IotHubOpenLocalOutcome>(lookup.failed ? 'failed' : 'missing');
         }
-        void this.router.navigateByUrl(url);
-        return true;
+        // The navigation itself can still be refused — a ConfirmOnExitGuard on the page the user is
+        // leaving, a failing resolver — and reporting it as opened would leave them with the Hub
+        // dialog closed (it closes on NavigationStart) and nothing opened in its place.
+        return from(this.router.navigateByUrl(lookup.value)).pipe(
+          map((navigated): IotHubOpenLocalOutcome => navigated ? 'opened' : 'cancelled'),
+          catchError(() => of<IotHubOpenLocalOutcome>('cancelled'))
+        );
       })
     );
   }
 
-  private resolveLocalComponentUrl(item: MpItemVersionView): Observable<string | null> {
+  private resolveLocalComponentUrl(item: MpItemVersionView): Observable<IotHubLocalLookup<string>> {
     // Only widgets (including SCADA symbol widgets) ship inside the platform today. Other item
-    // types have no local counterpart to match by fqn, so they fall through to the message above.
+    // types have no local counterpart to match by fqn, so they count as missing.
     if (item?.type !== ItemType.WIDGET) {
-      return of(null);
+      return of({ value: null, failed: false });
     }
     return this.resolveLocalWidgetType(item).pipe(
-      map(widgetType => widgetType
-        ? getEntityDetailsPageURL(widgetType.id.id, EntityType.WIDGET_TYPE) || null
-        : null)
+      map(lookup => ({
+        value: lookup.value ? getEntityDetailsPageURL(lookup.value.id.id, EntityType.WIDGET_TYPE) || null : null,
+        failed: lookup.failed
+      }))
     );
+  }
+
+  private lookupResult<T>(value: T | null): IotHubLocalLookup<T> {
+    return { value: value ?? null, failed: false };
+  }
+
+  // A 404 is an answer — the component is not here. Anything else (network error, 5xx, 403) leaves
+  // existence unknown, and must never be presented to the user as deleted content.
+  private lookupFailure<T>(err: HttpErrorResponse): IotHubLocalLookup<T> {
+    return { value: null, failed: err?.status !== 404 };
   }
 }

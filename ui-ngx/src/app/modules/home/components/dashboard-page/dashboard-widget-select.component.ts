@@ -765,9 +765,14 @@ export class DashboardWidgetSelectComponent {
   }
 
   private selectBuiltInWidget(item: MpItemVersionView): void {
-    this.iotHubBuiltInService.resolveLocalWidgetTypeInfo(item).subscribe(widgetTypeInfo => {
-      if (widgetTypeInfo) {
-        this.widgetSelected.emit(this.toWidgetInfo(widgetTypeInfo));
+    this.iotHubBuiltInService.resolveLocalWidgetTypeInfo(item).subscribe(lookup => {
+      if (lookup.value) {
+        this.widgetSelected.emit(this.toWidgetInfo(lookup.value));
+        return;
+      }
+      if (lookup.failed) {
+        // Existence is unknown — installing now could duplicate a widget that is still there.
+        this.iotHubActions.showBuiltInLookupFailed(item);
         return;
       }
       // The local copy is gone (e.g. deleted by a sysadmin) — installing is the only way back.

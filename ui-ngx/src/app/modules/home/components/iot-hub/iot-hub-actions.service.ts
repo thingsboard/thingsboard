@@ -88,6 +88,29 @@ export class IotHubActionsService {
   }
 
   /**
+   * Opens the local copy of a built-in item, and emits true only when the caller should fall back to
+   * its own install flow — i.e. the component really is absent and the user asked to install it.
+   * A lookup that could not answer emits false: existence is unknown, so offering an install would
+   * risk the duplicate this whole flow exists to avoid.
+   */
+  openBuiltInOrConfirmInstall(item: MpItemVersionView): Observable<boolean> {
+    return this.builtInService.openLocalComponent(item).pipe(
+      switchMap(outcome => {
+        switch (outcome) {
+          case 'missing':
+            return this.confirmInstallMissingBuiltIn(item);
+          case 'failed':
+            this.showBuiltInLookupFailed(item);
+            return of(false);
+          default:
+            // 'opened' or 'cancelled' — the component is in place either way, so never install.
+            return of(false);
+        }
+      })
+    );
+  }
+
+  /**
    * Asks whether to install a built-in item whose local copy is gone — the component the Hub entry
    * mirrors was deleted from this instance, so installing is the only way to get it back.
    */
@@ -100,15 +123,19 @@ export class IotHubActionsService {
     );
   }
 
+  /** Reports that the local copy could not be checked — nothing was opened and nothing installed. */
+  showBuiltInLookupFailed(item: MpItemVersionView): void {
+    this.dialogService.alert(
+      this.translate.instant('iot-hub.built-in-lookup-failed-title'),
+      this.translate.instant('iot-hub.built-in-lookup-failed-text', { name: item?.name })
+    );
+  }
+
   private openOrInstallBuiltIn(item: MpItemVersionView): Observable<string> {
-    return this.builtInService.openLocalComponent(item).pipe(
-      switchMap(opened => opened
-        ? EMPTY
-        : this.confirmInstallMissingBuiltIn(item).pipe(
-            // The confirmation above is the only one the user gets: install starts immediately,
-            // and opening the component is a separate click once it is back in the library.
-            switchMap(confirmed => confirmed ? this.runInstall(item, true) : EMPTY)
-          ))
+    return this.openBuiltInOrConfirmInstall(item).pipe(
+      // The confirmation inside is the only one the user gets: install starts immediately,
+      // and opening the component is a separate click once it is back in the library.
+      switchMap(install => install ? this.runInstall(item, true) : EMPTY)
     );
   }
 
