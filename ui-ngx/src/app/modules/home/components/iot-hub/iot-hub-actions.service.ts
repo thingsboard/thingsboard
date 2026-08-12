@@ -105,12 +105,14 @@ export class IotHubActionsService {
       switchMap(opened => opened
         ? EMPTY
         : this.confirmInstallMissingBuiltIn(item).pipe(
-            switchMap(confirmed => confirmed ? this.runInstall(item) : EMPTY)
+            // The confirmation above is the only one the user gets: install starts immediately,
+            // and opening the component is a separate click once it is back in the library.
+            switchMap(confirmed => confirmed ? this.runInstall(item, true) : EMPTY)
           ))
     );
   }
 
-  private runInstall(item: MpItemVersionView): Observable<string> {
+  private runInstall(item: MpItemVersionView, skipConfirm = false): Observable<string> {
     if (item.type === ItemType.ALARM_RULE) {
       this.dialogService.alert(
         this.translate.instant('iot-hub.alarm-rule-install-update-required'),
@@ -125,7 +127,7 @@ export class IotHubActionsService {
       panelClass: ['tb-dialog'],
       disableClose: true,
       autoFocus: false,
-      data: { item } as IotHubInstallDialogData
+      data: { item, skipConfirm } as IotHubInstallDialogData
     }).afterClosed();
   }
 

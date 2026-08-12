@@ -3837,6 +3837,7 @@
         "connect": "Connect",
         "connect-device": "Connect device",
         "installing": "Installing...",
+        "installing-title": "Installing '{{name}}'",
         "installed": "Installed",
         "install-success": "{{name}} installed successfully",
         "install-success-title": "Installation Successful",
