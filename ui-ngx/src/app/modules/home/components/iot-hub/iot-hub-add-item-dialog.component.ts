@@ -77,8 +77,8 @@ export class TbIotHubAddItemDialogComponent extends DialogComponent<TbIotHubAddI
     if (isBuiltInItem(item)) {
       // Built-in content is already part of the platform — open the local copy instead of
       // installing a duplicate, and install only if that copy no longer exists.
-      this.iotHubActions.openBuiltInOrConfirmInstall(item).subscribe(install => {
-        if (install) {
+      this.iotHubActions.openBuiltInOrConfirmInstall(item).subscribe(action => {
+        if (action === 'install-requested') {
           this.doAddItem(item);
         }
       });

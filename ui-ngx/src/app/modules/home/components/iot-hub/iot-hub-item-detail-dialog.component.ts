@@ -29,9 +29,7 @@ import { SolutionInstallDialogComponent } from '@home/components/iot-hub/solutio
 import { SolutionTemplateInstalledItemDescriptor } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
 import {
-  iotHubActionModeAddLabels,
-  iotHubActionModeDetailLabels,
-  IotHubItemActionMode,
+  iotHubItemActionLabel,
   iotHubItemActionMode,
   isBuiltInItem
 } from '@home/components/iot-hub/iot-hub-utils';
@@ -86,31 +84,20 @@ export class TbIotHubItemDetailDialogComponent extends DialogComponent<TbIotHubI
     this.preview = data.preview === true;
     this.installedItem = data.installedItem;
     this.installedItemsCount = data.installedItemsCount || 0;
-    this.versionLabel = this.builtIn
+    this.versionLabel = isBuiltInItem(this.item)
       ? `v ${this.item.version} | ${this.translate.instant('iot-hub.built-in')}`
       : `v ${this.item.version}`;
     this.buildCarouselImages();
     this.loadReadme();
   }
 
-  /** Built-in content already ships with the platform — see `isBuiltInItem`. */
-  private get builtIn(): boolean {
-    return isBuiltInItem(this.item);
-  }
-
   // The counter and the separator that would otherwise dangle next to it share this boolean.
   get showInstallCount(): boolean {
-    return !this.builtIn;
-  }
-
-  private get actionMode(): IotHubItemActionMode {
-    return iotHubItemActionMode(this.item);
+    return !isBuiltInItem(this.item);
   }
 
   get actionLabel(): string {
-    return this.mode === 'add'
-      ? iotHubActionModeAddLabels[this.actionMode]
-      : iotHubActionModeDetailLabels[this.actionMode];
+    return iotHubItemActionLabel(this.item, this.mode === 'add' ? 'add' : 'detail');
   }
 
   isCompactLayout(): boolean {
@@ -201,7 +188,7 @@ export class TbIotHubItemDetailDialogComponent extends DialogComponent<TbIotHubI
 
   /** Runs whatever the item's action mode calls for: open the local copy, connect, or install. */
   runPrimaryAction(): void {
-    if (this.actionMode === 'connect') {
+    if (iotHubItemActionMode(this.item) === 'connect') {
       this.installDevice();
     } else {
       this.install();

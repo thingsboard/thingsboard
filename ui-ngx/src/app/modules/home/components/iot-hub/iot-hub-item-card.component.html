@@ -17,8 +17,7 @@
 -->
 @if (isCompactLayout()) {
   <!-- Compact card (CF / RC) — Design: horizontal row, icon | content | button -->
-  <div class="tb-iot-hub-card-compact" role="button" tabindex="0" [class.tb-iot-hub-built-in]="builtIn"
-       (click)="onCardClick()" (keyup.enter)="onCardClick()">
+  <div class="tb-iot-hub-card-compact" role="button" tabindex="0" (click)="onCardClick()" (keyup.enter)="onCardClick()">
     <div class="tb-iot-hub-compact-icon" [style.background]="item.color || '#4caf50'">
       <tb-icon>{{ getPlaceholderIcon() }}</tb-icon>
     </div>
@@ -84,8 +83,7 @@
   </div>
 } @else {
   <!-- Big card (Widget / Dashboard / Solution Template) -->
-  <div class="tb-iot-hub-item-card" role="button" tabindex="0" [class.tb-iot-hub-built-in]="builtIn"
-       (click)="onCardClick()" (keyup.enter)="onCardClick()">
+  <div class="tb-iot-hub-item-card" role="button" tabindex="0" (click)="onCardClick()" (keyup.enter)="onCardClick()">
     <div class="tb-iot-hub-card-preview">
       @if (getPreviewUrl(); as previewUrl) {
         <img [src]="previewUrl" alt="" class="tb-iot-hub-preview-image">

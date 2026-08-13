@@ -17,7 +17,7 @@
 import { Injectable } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable, of, EMPTY } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { map, switchMap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from '@core/services/dialog.service';
 import { MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
@@ -33,6 +33,13 @@ import { TbDeviceInstallDialogComponent, DeviceInstallDialogData } from './devic
 import { TbIotHubInstalledItemsDialogComponent, IotHubInstalledItemsDialogData } from './iot-hub-installed-items-dialog.component';
 import { IotHubBuiltInService } from './iot-hub-built-in.service';
 import { isBuiltInItem } from './iot-hub-utils';
+
+/**
+ * What `openBuiltInOrConfirmInstall` did with a built-in item: 'handled' means nothing is left to do
+ * (the local copy was opened, or the user was told why it could not be), while 'install-requested'
+ * means the component really is absent and the user asked for it to be installed.
+ */
+export type IotHubBuiltInAction = 'handled' | 'install-requested';
 
 @Injectable()
 export class IotHubActionsService {
@@ -87,24 +94,21 @@ export class IotHubActionsService {
     return this.runInstall(item);
   }
 
-  /**
-   * Opens the local copy of a built-in item, and emits true only when the caller should fall back to
-   * its own install flow — i.e. the component really is absent and the user asked to install it.
-   * A lookup that could not answer emits false: existence is unknown, so offering an install would
-   * risk the duplicate this whole flow exists to avoid.
-   */
-  openBuiltInOrConfirmInstall(item: MpItemVersionView): Observable<boolean> {
+  /** Opens the local copy of a built-in item, or asks to install it when it really is absent. */
+  openBuiltInOrConfirmInstall(item: MpItemVersionView): Observable<IotHubBuiltInAction> {
     return this.builtInService.openLocalComponent(item).pipe(
       switchMap(outcome => {
         switch (outcome) {
           case 'missing':
-            return this.confirmInstallMissingBuiltIn(item);
+            return this.confirmInstallMissingBuiltIn(item).pipe(
+              map((confirmed): IotHubBuiltInAction => confirmed ? 'install-requested' : 'handled')
+            );
           case 'failed':
             this.showBuiltInLookupFailed(item);
-            return of(false);
+            return of<IotHubBuiltInAction>('handled');
           default:
             // 'opened' or 'cancelled' — the component is in place either way, so never install.
-            return of(false);
+            return of<IotHubBuiltInAction>('handled');
         }
       })
     );
@@ -135,7 +139,7 @@ export class IotHubActionsService {
     return this.openBuiltInOrConfirmInstall(item).pipe(
       // The confirmation inside is the only one the user gets: install starts immediately,
       // and opening the component is a separate click once it is back in the library.
-      switchMap(install => install ? this.runInstall(item, true) : EMPTY)
+      switchMap(action => action === 'install-requested' ? this.runInstall(item, true) : EMPTY)
     );
   }
 
@@ -148,7 +152,7 @@ export class IotHubActionsService {
       return EMPTY;
     }
     if (item.type === ItemType.DEVICE) {
-      return this.installDevice(item);
+      return this.openDeviceInstallDialog(item);
     }
     return this.dialog.open(TbIotHubInstallDialogComponent, {
       panelClass: ['tb-dialog'],
@@ -188,10 +192,9 @@ export class IotHubActionsService {
     }).afterClosed();
   }
 
+  // Reached only for items whose action mode is 'connect', i.e. never for built-in content:
+  // that decision is made once, at the public entry points above.
   installDevice(item: MpItemVersionView): Observable<string> {
-    if (isBuiltInItem(item)) {
-      return this.openOrInstallBuiltIn(item);
-    }
     return this.openDeviceInstallDialog(item);
   }
 

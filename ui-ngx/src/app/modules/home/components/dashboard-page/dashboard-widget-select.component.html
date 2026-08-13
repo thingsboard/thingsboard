@@ -371,7 +371,6 @@
 
   <ng-template #iotHubWidgetCardTpl let-item let-showInstalledBadge="showInstalledBadge">
     <mat-card class="tb-widget-preview-card tb-iot-hub-widget-card flex flex-col gap-2" appearance="raised"
-              [class.tb-iot-hub-built-in]="isIotHubWidgetBuiltIn(item)"
               (click)="onIotHubWidgetClicked($event, item)">
       <div class="title-container">
         <div title="{{item.name}}" class="widget-title">

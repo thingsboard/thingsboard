@@ -20,13 +20,7 @@ import { getItemTypeIcon, ItemType } from '@shared/models/iot-hub/iot-hub-item.m
 import { IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { TranslateService } from '@ngx-translate/core';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
-import {
-  iotHubActionModeAddLabels,
-  iotHubActionModeLabels,
-  IotHubItemActionMode,
-  iotHubItemActionMode,
-  isBuiltInItem
-} from '@home/components/iot-hub/iot-hub-utils';
+import { iotHubItemActionLabel, isBuiltInItem } from '@home/components/iot-hub/iot-hub-utils';
 
 @Component({
   selector: 'tb-iot-hub-item-card',
@@ -56,29 +50,14 @@ export class TbIotHubItemCardComponent {
     private iotHubApiService: IotHubApiService
   ) {}
 
-  /**
-   * Built-in content already ships with the platform. A single flag on the card root drives
-   * every difference (CTA verb, hidden install counter), so any rendering path that reuses
-   * this component — initial render, scroll grid, search-as-you-type — stays in sync.
-   */
-  get builtIn(): boolean {
-    return isBuiltInItem(this.item);
-  }
-
-  // Install counters mean nothing for content the tenant already has, so the counter and its
-  // leading separator are both derived from this one boolean.
+  // Install counters mean nothing for content the tenant already has, so the counter and the
+  // separator that would dangle next to it are both derived from this one boolean.
   get showInstallCount(): boolean {
-    return !this.builtIn;
-  }
-
-  private get actionMode(): IotHubItemActionMode {
-    return iotHubItemActionMode(this.item);
+    return !isBuiltInItem(this.item);
   }
 
   get actionLabel(): string {
-    return this.mode === 'add'
-      ? iotHubActionModeAddLabels[this.actionMode]
-      : iotHubActionModeLabels[this.actionMode];
+    return iotHubItemActionLabel(this.item, this.mode === 'add' ? 'add' : 'card');
   }
 
   isCompactLayout(): boolean {

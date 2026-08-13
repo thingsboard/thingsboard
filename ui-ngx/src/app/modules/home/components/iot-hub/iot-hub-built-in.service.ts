@@ -61,8 +61,6 @@ export class IotHubBuiltInService {
 
   /**
    * Resolves the platform's own widget type mirroring a built-in Hub item, matched by fqn.
-   * Emits a null value when nothing matches locally (older platform version, widget deleted by a
-   * sysadmin), and `failed: true` when the lookup could not answer at all.
    *
    * There is no API to test a batch of fqns at once — `GET /api/widgetType?fqn=` is per fqn and
    * carries the full descriptor, and `/api/widgetTypeFqns` is scoped to a bundle the Hub payload
@@ -73,10 +71,13 @@ export class IotHubBuiltInService {
     const noMatch: IotHubLocalLookup<WidgetType> = { value: null, failed: false };
     const fqn = item?.dataDescriptor?.fqn;
     if (!isNotEmptyStr(fqn)) {
-      return of(noMatch);
+      // Without a match key nothing was asked of the server, so existence is unknown rather than
+      // disproven — reporting it as absent would offer an install for a component that is in place.
+      return of({ value: null, failed: true });
     }
     // Hub items carry a bare fqn; platform widget types are addressed by a scoped full fqn.
-    // Built-in content is system scoped, the tenant scope covers a previously installed copy.
+    // Built-in content is system scoped; the tenant scope covers a copy installed into this tenant,
+    // which matters while the installed-items list a caller filters by is still stale.
     const fullFqns = isValidWidgetFullFqn(fqn) ? [fqn] : [`system.${fqn}`, `tenant.${fqn}`];
     return from(fullFqns).pipe(
       concatMap(fullFqn => this.widgetService.getWidgetType(fullFqn, { ignoreErrors: true, ignoreLoading: true }).pipe(
@@ -89,7 +90,7 @@ export class IotHubBuiltInService {
     );
   }
 
-  /** Same match as `resolveLocalWidgetType`, resolved to the info projection widget pickers need. */
+  /** Same match, resolved to the info projection widget pickers need (image, description, type). */
   resolveLocalWidgetTypeInfo(item: MpItemVersionView): Observable<IotHubLocalLookup<WidgetTypeInfo>> {
     return this.resolveLocalWidgetType(item).pipe(
       switchMap(lookup => lookup.value
@@ -101,13 +102,7 @@ export class IotHubBuiltInService {
     );
   }
 
-  /**
-   * Navigates to the local component a built-in item mirrors. Emits 'missing' when there is nothing
-   * to open — the platform version predates the component, or a sysadmin deleted it — and 'failed'
-   * when the lookup could not answer, leaving the caller to decide what to offer in each case. The
-   * check is deliberately lazy: see the note above `resolveLocalWidgetType`, there is no bulk fqn
-   * lookup to prefetch a whole catalogue page with.
-   */
+  /** Navigates to the local component a built-in item mirrors, reporting why it could not. */
   openLocalComponent(item: MpItemVersionView): Observable<IotHubOpenLocalOutcome> {
     return this.resolveLocalComponentUrl(item).pipe(
       switchMap(lookup => {

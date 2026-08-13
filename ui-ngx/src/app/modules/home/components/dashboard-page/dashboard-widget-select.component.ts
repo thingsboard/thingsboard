@@ -508,9 +508,10 @@ export class DashboardWidgetSelectComponent {
       this.selectBuiltInWidget(item);
       return;
     }
+    // Built-in items never reach the dialog (they return above), so anything added from it installs.
     this.iotHubActions.openItemDetail(item, undefined, undefined, 'add').subscribe(result => {
       if (result?.action === 'add') {
-        this.addIotHubWidget(result.item);
+        this.installAndAddWidget(result.item);
       }
     });
   }
@@ -753,15 +754,6 @@ export class DashboardWidgetSelectComponent {
       this.iotHubWidgetsFilter = this.searchSubject.value + '|' + Date.now();
     }
     this.cd.markForCheck();
-  }
-
-  private addIotHubWidget(item: MpItemVersionView): void {
-    if (isBuiltInItem(item)) {
-      // Never install built-in content — it would duplicate a widget the tenant already has.
-      this.selectBuiltInWidget(item);
-      return;
-    }
-    this.installAndAddWidget(item);
   }
 
   private selectBuiltInWidget(item: MpItemVersionView): void {
