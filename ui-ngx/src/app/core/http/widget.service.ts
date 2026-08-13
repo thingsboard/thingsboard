@@ -188,7 +188,7 @@ export class WidgetService {
   }
 
   public getWidgetType(fullFqn: string, config?: RequestConfig): Observable<WidgetType> {
-    return this.http.get<WidgetType>(`/api/widgetType?fqn=${fullFqn}`,
+    return this.http.get<WidgetType>(`/api/widgetType?fqn=${encodeURIComponent(fullFqn)}`,
       defaultHttpOptionsFromConfig(config));
   }
 

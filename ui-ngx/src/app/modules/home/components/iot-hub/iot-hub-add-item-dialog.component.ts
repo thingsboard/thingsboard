@@ -27,6 +27,7 @@ import { DialogService } from '@core/services/dialog.service';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityId } from '@shared/models/id/entity-id';
 import { IotHubActionsService } from './iot-hub-actions.service';
+import { isBuiltInItem } from './iot-hub-utils';
 import {
   IotHubSelectCfEntityDialogData,
   TbIotHubSelectCfEntityDialogComponent
@@ -78,6 +79,20 @@ export class TbIotHubAddItemDialogComponent extends DialogComponent<TbIotHubAddI
   }
 
   onAddItem(item: MpItemVersionView): void {
+    if (isBuiltInItem(item)) {
+      // Built-in content is already part of the platform — open the local copy instead of
+      // installing a duplicate, and install only if that copy no longer exists.
+      this.iotHubActions.openBuiltInOrConfirmInstall(item).subscribe(action => {
+        if (action === 'install-requested') {
+          this.doAddItem(item);
+        }
+      });
+      return;
+    }
+    this.doAddItem(item);
+  }
+
+  private doAddItem(item: MpItemVersionView): void {
     if (this.itemType === ItemType.DEVICE) {
       this.installDeviceItem(item);
       return;
