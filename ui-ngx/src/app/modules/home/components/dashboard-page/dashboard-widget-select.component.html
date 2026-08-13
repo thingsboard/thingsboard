@@ -370,7 +370,8 @@
   </ng-template>
 
   <ng-template #iotHubWidgetCardTpl let-item let-showInstalledBadge="showInstalledBadge">
-    <mat-card class="tb-widget-preview-card tb-iot-hub-widget-card flex flex-col gap-2" appearance="raised" (click)="onIotHubWidgetClicked($event, item)">
+    <mat-card class="tb-widget-preview-card tb-iot-hub-widget-card flex flex-col gap-2" appearance="raised"
+              (click)="onIotHubWidgetClicked($event, item)">
       <div class="title-container">
         <div title="{{item.name}}" class="widget-title">
           {{item.name}}
@@ -405,10 +406,12 @@
             {{ 'iot-hub.installed' | translate }}
           </span>
         }
-        <span class="tb-iot-hub-widget-installs">
-          <mat-icon>file_download</mat-icon>
-          {{ item.totalInstallCount | shortNumber }}
-        </span>
+        @if (!isIotHubWidgetBuiltIn(item)) {
+          <span class="tb-iot-hub-widget-installs">
+            <mat-icon>file_download</mat-icon>
+            {{ item.totalInstallCount | shortNumber }}
+          </span>
+        }
       </div>
     </mat-card>
   </ng-template>
