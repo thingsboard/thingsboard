@@ -37,17 +37,21 @@
                 [class.clickable]="mode !== 'add'"
                 (click)="mode !== 'add' && onCreatorClick($event)"
                 (keyup.enter)="mode !== 'add' && onCreatorClick($event)">{{ item.creatorDisplayName }}</span>
-          <span class="tb-iot-hub-compact-dot">&middot;</span>
+          @if (showInstallCount) {
+            <span class="tb-iot-hub-compact-dot">&middot;</span>
+          }
         }
-        <tb-icon class="tb-iot-hub-compact-download-icon">download</tb-icon>
-        <span class="tb-iot-hub-compact-count">{{ item.totalInstallCount | shortNumber }}</span>
+        @if (showInstallCount) {
+          <tb-icon class="tb-iot-hub-compact-download-icon">download</tb-icon>
+          <span class="tb-iot-hub-compact-count">{{ item.totalInstallCount | shortNumber }}</span>
+        }
       </div>
     </div>
     @if (mode === 'add') {
       @if (isInstalled()) {
         <span class="tb-iot-hub-card-installed-chip"><tb-icon>check</tb-icon>{{ 'iot-hub.installed' | translate }}</span>
       } @else {
-        <button class="tb-iot-hub-card-install-btn" (click)="onAddClick($event)">{{ 'action.add' | translate }}</button>
+        <button class="tb-iot-hub-card-install-btn" (click)="onAddClick($event)">{{ actionLabel | translate }}</button>
       }
     } @else if (isInstalled()) {
       @if (isSameVersion()) {
@@ -74,7 +78,7 @@
         </button>
       }
     } @else {
-      <button class="tb-iot-hub-card-install-btn" (click)="onInstallClick($event)">{{ (item.type === ItemType.DEVICE ? 'iot-hub.connect' : 'iot-hub.install') | translate }}</button>
+      <button class="tb-iot-hub-card-install-btn" (click)="onInstallClick($event)">{{ actionLabel | translate }}</button>
     }
   </div>
 } @else {
@@ -105,18 +109,22 @@
                 [class.clickable]="mode !== 'add'"
                 (click)="mode !== 'add' && onCreatorClick($event)"
                 (keyup.enter)="mode !== 'add' && onCreatorClick($event)">{{ item.creatorDisplayName }}</span>
-          <span class="tb-iot-hub-card-dot">&middot;</span>
+          @if (showInstallCount) {
+            <span class="tb-iot-hub-card-dot">&middot;</span>
+          }
         }
-        <span class="tb-iot-hub-card-stat">
-          <tb-icon>download</tb-icon>
-          {{ item.totalInstallCount | shortNumber }}
-        </span>
+        @if (showInstallCount) {
+          <span class="tb-iot-hub-card-stat">
+            <tb-icon>download</tb-icon>
+            {{ item.totalInstallCount | shortNumber }}
+          </span>
+        }
         <span class="tb-iot-hub-card-stats">
           @if (mode === 'add') {
             @if (isInstalled()) {
               <span class="tb-iot-hub-card-installed-chip"><tb-icon>check</tb-icon>{{ 'iot-hub.installed' | translate }}</span>
             } @else {
-              <button class="tb-iot-hub-card-install-btn" (click)="onAddClick($event)">{{ 'action.add' | translate }}</button>
+              <button class="tb-iot-hub-card-install-btn" (click)="onAddClick($event)">{{ actionLabel | translate }}</button>
             }
           } @else if (isInstalled()) {
             @if (isSameVersion()) {
@@ -143,7 +151,7 @@
               </button>
             }
           } @else {
-            <button class="tb-iot-hub-card-install-btn" (click)="onInstallClick($event)">{{ (item.type === ItemType.DEVICE ? 'iot-hub.connect' : 'iot-hub.install') | translate }}</button>
+            <button class="tb-iot-hub-card-install-btn" (click)="onInstallClick($event)">{{ actionLabel | translate }}</button>
           }
         </span>
       </div>
