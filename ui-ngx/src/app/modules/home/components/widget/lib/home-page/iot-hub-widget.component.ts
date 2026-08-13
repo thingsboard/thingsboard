@@ -22,7 +22,7 @@ import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
-import { resolveIotHubItemImageUrl } from '@home/components/iot-hub/iot-hub-utils';
+import { isBuiltInItem, resolveIotHubItemImageUrl } from '@home/components/iot-hub/iot-hub-utils';
 import { MpItemVersionQuery, MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
 import { ItemType } from '@shared/models/iot-hub/iot-hub-item.models';
 import { IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
@@ -81,6 +81,11 @@ export class IotHubWidgetComponent extends PageComponent implements OnInit {
 
   isInstalled(item: MpItemVersionView): boolean {
     return item.type === ItemType.SOLUTION_TEMPLATE && !!this.findInstalledSolutionTemplate(item);
+  }
+
+  // Install counters track nothing actionable for content that already ships with the platform.
+  showInstallCount(item: MpItemVersionView): boolean {
+    return !isBuiltInItem(item);
   }
 
   private findInstalledSolutionTemplate(item: MpItemVersionView): IotHubInstalledItem | undefined {

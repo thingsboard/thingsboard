@@ -30,15 +30,17 @@
           <tb-icon class="dlg-subtitle-icon">{{ getTypeIcon() }}</tb-icon>
           <span>{{ typeTranslations.get(item.type) | translate }}</span>
         </span>
-        <span class="dlg-dot"></span>
-        <span class="dlg-subtitle-group">
-          <tb-icon class="dlg-subtitle-icon">download</tb-icon>
-          <span>{{ item.totalInstallCount | shortNumber }} {{ 'iot-hub.installs' | translate }}</span>
-        </span>
+        @if (showInstallCount) {
+          <span class="dlg-dot"></span>
+          <span class="dlg-subtitle-group">
+            <tb-icon class="dlg-subtitle-icon">download</tb-icon>
+            <span>{{ item.totalInstallCount | shortNumber }} {{ 'iot-hub.installs' | translate }}</span>
+          </span>
+        }
         <span class="dlg-dot"></span>
         <span class="dlg-subtitle-group">
           <mat-icon class="dlg-subtitle-icon">update</mat-icon>
-          <span>v {{ item.version }}</span>
+          <span>{{ versionLabel }}</span>
         </span>
         @if (preview) {
           <span class="dlg-dot"></span>
@@ -318,19 +320,13 @@
     <button mat-button (click)="close()">{{ 'action.close' | translate }}</button>
     @if (mode === 'add' && !isInstalled()) {
       <button mat-flat-button color="primary" (click)="addItem()">
-        {{ 'action.add' | translate }}
+        {{ actionLabel | translate }}
       </button>
     }
     @if (!isInstalled() && mode !== 'add') {
-      @if (item.type === ItemType.DEVICE) {
-        <button mat-flat-button color="primary" (click)="installDevice()">
-          {{ 'iot-hub.connect-device' | translate }}
-        </button>
-      } @else {
-        <button mat-flat-button color="primary" (click)="install()">
-          {{ 'iot-hub.install' | translate }}
-        </button>
-      }
+      <button mat-flat-button color="primary" (click)="runPrimaryAction()">
+        {{ actionLabel | translate }}
+      </button>
     }
     @if (isInstalled() && mode !== 'add') {
       <button mat-flat-button color="primary" (click)="openEntityDetails()">

@@ -60,6 +60,13 @@ interface PendingOverwrite {
 
 export interface IotHubInstallDialogData {
   item: MpItemVersionView;
+  /**
+   * Starts installing right away instead of opening on the confirm step. Set by callers that
+   * already asked the user — e.g. a built-in item whose local copy was deleted — so the user is
+   * not asked to confirm the same install twice. Ignored when the item needs input first
+   * (entity selection, rule chain options).
+   */
+  skipConfirm?: boolean;
 }
 
 export type InstallState =
@@ -145,6 +152,10 @@ export class TbIotHubInstallDialogComponent extends DialogComponent<TbIotHubInst
     this.state = this.computeInitialState();
     if (this.item.type === ItemType.RULE_CHAIN) {
       this.initRuleChainForm();
+    }
+    if (data.skipConfirm && this.state === 'confirm') {
+      this.state = 'installing';
+      this.install();
     }
   }
 
