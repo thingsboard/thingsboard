@@ -1131,6 +1131,17 @@ export abstract class TbMap<S extends BaseMapSettings> {
 
   protected abstract fitBounds(bounds: L.LatLngBounds): void;
 
+  protected get gestureHandlingOptions() {
+    return {
+      duration: 2000,
+      text: {
+        touch: this.ctx.translate.instant('widgets.maps.control.gesture-handling-touch'),
+        scroll: this.ctx.translate.instant('widgets.maps.control.gesture-handling-scroll'),
+        scrollMac: this.ctx.translate.instant('widgets.maps.control.gesture-handling-scroll-mac'),
+      }
+    };
+  }
+
   protected doSetupControls(): Observable<any> {
     return of(null);
   }

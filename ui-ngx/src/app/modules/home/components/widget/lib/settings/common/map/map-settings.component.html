@@ -117,6 +117,15 @@
         }
       </mat-chip-listbox>
     </div>
+    @if (mapSettingsFormGroup.get('zoomActions').value?.includes(MapZoomAction.scroll)) {
+      <div class="tb-form-row space-between column-xs">
+        <div tb-hint-tooltip-icon="{{ 'widgets.maps.control.gesture-handling-hint' | translate }}" translate>widgets.maps.control.gesture-handling</div>
+        <tb-toggle-select formControlName="useGestureHandling">
+          <tb-toggle-option [value]="false">{{ 'widgets.maps.control.gesture-handling-default' | translate }}</tb-toggle-option>
+          <tb-toggle-option [value]="true">{{ 'widgets.maps.control.gesture-handling-cooperative' | translate }}</tb-toggle-option>
+        </tb-toggle-select>
+      </div>
+    }
     <div class="tb-form-row space-between column-lt-md">
       <div translate>widgets.maps.control.scale</div>
       <mat-chip-listbox multiple formControlName="scales">

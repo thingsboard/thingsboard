@@ -37,6 +37,7 @@ import {
   MapSetting,
   MapType,
   mapZoomActions,
+  MapZoomAction,
   mapZoomActionTranslationMap
 } from '@shared/models/widget/maps/map.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -86,6 +87,8 @@ export class MapSettingsComponent implements OnInit, ControlValueAccessor, Valid
   mapScaleTranslationMap = mapScaleTranslationMap;
 
   MapType = MapType;
+
+  MapZoomAction = MapZoomAction;
 
   @Input()
   @coerceBoolean()
@@ -150,6 +153,7 @@ export class MapSettingsComponent implements OnInit, ControlValueAccessor, Valid
       additionalDataSources: [null, []],
       controlsPosition: [null, []],
       zoomActions: [null, []],
+      useGestureHandling: [null, []],
       scales: [null, []],
       dragModeButton: [null, []],
       fitMapBounds: [null, []],
@@ -302,6 +306,9 @@ export class MapSettingsComponent implements OnInit, ControlValueAccessor, Valid
 
   private updateModel() {
     this.modelValue = this.mapSettingsFormGroup.getRawValue();
+    if (!this.modelValue.zoomActions?.includes(MapZoomAction.scroll)) {
+      this.modelValue.useGestureHandling = false;
+    }
     this.propagateChange(this.modelValue);
   }
 

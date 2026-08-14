@@ -17,6 +17,7 @@
 import L, { TB } from 'leaflet';
 import { guid, isDefinedAndNotNull, isNotEmptyStr } from '@core/utils';
 import 'leaflet-providers';
+import { GestureHandling } from 'leaflet-gesture-handling';
 import { Map as MapLibreGLMap, LngLat as MapLibreGLLngLat } from 'maplibre-gl';
 import '@geoman-io/leaflet-geoman-free';
 import 'leaflet.markercluster';
@@ -27,6 +28,8 @@ import { of } from 'rxjs';
 import { WEBGL_ERROR_EVENT } from '@shared/models/widget/maps/map.models';
 
 L.MarkerCluster = L.MarkerCluster.mergeOptions({ pmIgnore: true });
+
+L.Map.addInitHook('addHandler', 'gestureHandling', GestureHandling);
 
 L.Map.addInitHook(function () {
   this._patterns = {};

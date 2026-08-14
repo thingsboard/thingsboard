@@ -214,6 +214,8 @@ export class TbImageMap extends TbMap<ImageMapSettings> {
     if (!this.map && this.imageLayerData.aspect > 0) {
       const center = this.pointToLatLng(this.width / 2, this.height / 2);
       this.map = L.map(this.mapElement, {
+        gestureHandling: this.settings.useGestureHandling,
+        gestureHandlingOptions: this.gestureHandlingOptions,
         scrollWheelZoom: this.settings.zoomActions.includes(MapZoomAction.scroll),
         doubleClickZoom: this.settings.zoomActions.includes(MapZoomAction.doubleClick),
         zoomControl: this.settings.zoomActions.includes(MapZoomAction.controlButtons),
