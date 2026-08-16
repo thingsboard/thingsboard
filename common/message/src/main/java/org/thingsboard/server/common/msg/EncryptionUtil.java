@@ -15,15 +15,25 @@
  */
 package org.thingsboard.server.common.msg;
 
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.bouncycastle.crypto.digests.SHA3Digest;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.encoders.Hex;
+
+import java.security.MessageDigest;
+import java.security.Security;
 
 /**
  * @author Valerii Sosliuk
  */
 @Slf4j
 public class EncryptionUtil {
+
+    static {
+        if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
+            Security.addProvider(new BouncyCastleProvider());
+        }
+    }
 
     private EncryptionUtil() {
     }
@@ -58,16 +68,16 @@ public class EncryptionUtil {
     }
 
 
+    // Goes through the standard JCA MessageDigest SPI (as SslUtil/PemSslCredentials already do for their
+    // BC-backed operations) instead of instantiating BC's internal SHA3Digest class directly, so any
+    // JCA-registered provider offering "SHA3-256" (e.g. a FIPS provider) can serve this call.
+    @SneakyThrows
     public static String getSha3Hash(String data) {
         String trimmedData = certTrimNewLines(data);
         byte[] dataBytes = trimmedData.getBytes();
-        SHA3Digest md = new SHA3Digest(256);
-        md.reset();
-        md.update(dataBytes, 0, dataBytes.length);
-        byte[] hashedBytes = new byte[256 / 8];
-        md.doFinal(hashedBytes, 0);
-        String sha3Hash = Hex.toHexString(hashedBytes);
-        return sha3Hash;
+        MessageDigest md = MessageDigest.getInstance("SHA3-256", BouncyCastleProvider.PROVIDER_NAME);
+        byte[] hashedBytes = md.digest(dataBytes);
+        return Hex.toHexString(hashedBytes);
     }
 
     public static String getSha3Hash(String delim, String... tokens) {

@@ -39,7 +39,9 @@ public class AzureIotHubSasCredentials extends CertPemCredentials {
     @Override
     public SslContext initSslContext() {
         try {
-            Security.addProvider(new BouncyCastleProvider());
+            if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
+                Security.addProvider(new BouncyCastleProvider());
+            }
             if (caCert == null || caCert.isEmpty()) {
                 caCert = AzureIotHubUtil.getDefaultCaCert();
             }
