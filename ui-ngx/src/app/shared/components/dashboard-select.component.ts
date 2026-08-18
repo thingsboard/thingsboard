@@ -30,6 +30,7 @@ import {
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Observable, of } from 'rxjs';
 import { PageLink } from '@shared/models/page/page-link';
+import { Direction } from '@shared/models/page/sort-order';
 import { map, share } from 'rxjs/operators';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { DashboardInfo } from '@app/shared/models/dashboard.models';
@@ -113,7 +114,7 @@ export class DashboardSelectComponent implements ControlValueAccessor, OnInit {
 
   ngOnInit() {
 
-    const pageLink = new PageLink(100);
+    const pageLink = new PageLink(100, 0, null, {property: 'title', direction: Direction.ASC});
 
     this.dashboards$ = this.getDashboards(pageLink).pipe(
       map((pageData) => pageData.data),
