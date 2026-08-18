@@ -21,6 +21,8 @@ public class MonitoredServiceKey {
     public static final String LOGIN = "Login";
     public static final String WS_CONNECT = "WS Connect";
     public static final String WS_SUBSCRIBE = "WS Subscribe";
+    public static final String WS = "WS";
     public static final String EDQS = "*EDQS*";
+    public static final String OTLP_EXPORT = "OTLP Export";
 
 }

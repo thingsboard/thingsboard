@@ -41,8 +41,8 @@ public abstract class TransportHealthChecker<C extends TransportMonitoringConfig
     }
 
     @Override
-    protected String createTestPayload(String testValue) {
-        return JacksonUtil.newObjectNode().set(TEST_TELEMETRY_KEY, new TextNode(testValue)).toString();
+    protected String createTestPayload(String testValue, String telemetryKey) {
+        return JacksonUtil.newObjectNode().set(telemetryKey, new TextNode(testValue)).toString();
     }
 
     @Override

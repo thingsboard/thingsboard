@@ -17,6 +17,10 @@
 monitoring:
   # Monitored server domain
   domain: "${DOMAIN:localhost}"
+  # Opaque identifier attached as a "label" tag on probe metrics (see monitoring.metrics.otlp),
+  # letting external systems group/route metrics without having to resolve it themselves
+  # (e.g. by looking up which cluster/customer a probing pod's IP belongs to)
+  label: '${LABEL:}'
   rest:
     # Base REST API url, https://DOMAIN by default
     base_url: '${REST_BASE_URL:https://${monitoring.domain}}'
@@ -118,6 +122,26 @@ monitoring:
 
   calculated_fields:
     enabled: "${CALCULATED_FIELDS_MONITORING_ENABLED:true}"
+
+  metrics:
+    # probe_success is tagged kind="probe" (full end-to-end check) or kind="accepted" (transport-only
+    # fallback, used only while login/WS is down - absent for LwM2M, which has no such fallback).
+    # During a login/WS outage, kind="probe" for transports goes ABSENT, not 0 - a consumer must
+    # treat missing data as down, and fall back to kind="accepted" for a weaker "transport is up" signal.
+    # The fallback also drives the same Slack/incident alerting as the full check, regardless of
+    # whether OTLP/Prometheus export below is enabled - only the metric depends on that.
+    otlp:
+      # Push probe_success/probe_duration_ms via OTLP/HTTP to an OTel Collector
+      enabled: '${METRICS_OTLP_ENABLED:false}'
+      endpoint: '${METRICS_OTLP_ENDPOINT:http://localhost:4318/v1/metrics}'
+      step_ms: '${METRICS_OTLP_STEP_MS:60000}'
+      # Alert (Slack/incident, same mechanism as transport/login checks) when a push to the
+      # OTel Collector fails - independent of otlp.enabled itself, and never written to metrics
+      alerting_enabled: '${METRICS_OTLP_ALERTING_ENABLED:false}'
+    prometheus:
+      # Expose a pull-based /metrics endpoint via a lightweight JDK HttpServer (no servlet container)
+      enabled: '${METRICS_PROMETHEUS_ENABLED:false}'
+      port: '${METRICS_PROMETHEUS_PORT:9100}'
 
   notifications:
     message_prefix: '${NOTIFICATION_MESSAGE_PREFIX:}'

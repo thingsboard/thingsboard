@@ -123,6 +123,29 @@
             <artifactId>logback-classic</artifactId>
         </dependency>
         <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-otlp</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+            <!-- opentelemetry-proto (pulled in transitively by micrometer-registry-otlp) requires this
+                 protobuf-java version at runtime; overrides the root pom's 3.25.5 pin (kept there for pubsub)
+                 for this module only. protobuf-java-util is pinned to the same version right below so the
+                 whole protobuf family stays consistent on this module's classpath (a mixed-version protobuf
+                 runtime causes the exact same class of failure this pin fixes). -->
+            <version>4.28.3</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java-util</artifactId>
+            <version>4.28.3</version>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>

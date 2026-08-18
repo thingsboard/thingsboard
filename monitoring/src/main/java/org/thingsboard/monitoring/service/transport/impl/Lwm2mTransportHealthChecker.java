@@ -52,7 +52,16 @@ public class Lwm2mTransportHealthChecker extends TransportHealthChecker<Lwm2mTra
     }
 
     @Override
-    protected String createTestPayload(String testValue) {
+    protected void checkAccepted() {
+        // send() never waits for a server ack (just fires a local Leshan event), so this can't
+        // produce a meaningful signal for LwM2M - no-op rather than always reporting "success".
+    }
+
+    @Override
+    protected String createTestPayload(String testValue, String telemetryKey) {
+        // LwM2M payload is the raw value itself (no JSON envelope), so there's no telemetry key
+        // to embed here; checkAccepted() is a no-op for LwM2M (see above), so in practice this is
+        // only ever invoked by check() with TEST_TELEMETRY_KEY.
         return testValue;
     }
 
