@@ -12,7 +12,7 @@ import {
   TripsDataLayerSettings
 } from '@shared/models/widget/maps/map.models';
 import { forkJoin, Observable } from 'rxjs';
-import { DataKey, DatasourceData, FormattedData, WidgetActionType } from '@shared/models/widget.models';
+import { DataKey, FormattedData, WidgetActionType } from '@shared/models/widget.models';
 import { map } from 'rxjs/operators';
 import L from 'leaflet';
 import { deepClone, isDefined, isUndefined, plainColorFromVariable } from '@core/utils';
@@ -415,6 +415,7 @@ export class TbTripsDataLayer extends TbMapDataLayer<TripsDataLayerSettings, TbT
   private rawTripsData: FormattedData<TbMapDatasource>[][];
   private latestTripsData: FormattedData<TbMapDatasource>[];
   private subscribedEntityIds = new Set<string>();
+  private lastDataEntityIds = new Set<string>();
 
   constructor(protected map: TbMap<any>,
               inputSettings: TripsDataLayerSettings) {
@@ -430,12 +431,12 @@ export class TbTripsDataLayer extends TbMapDataLayer<TripsDataLayerSettings, TbT
   }
 
   public prepareTripsData(tripsData: FormattedData<TbMapDatasource>[][], tripsLatestData: FormattedData<TbMapDatasource>[],
-                           rawData: DatasourceData[]): {minTime: number; maxTime: number} {
+                           datasources: TbMapDatasource[]): {minTime: number; maxTime: number} {
     let minTime = Infinity;
     let maxTime = -Infinity;
     const filteredTripsData = tripsData.filter(d => !!d.length && this.hasData(d[0]));
     this.subscribedEntityIds = new Set(
-      rawData.filter(d => (d.datasource as TbMapDatasource).mapDataIds.includes(this.mapDataId)).map(d => d.datasource.entityId)
+      datasources.filter(d => this.belongsToLayer(d)).map(d => d.entityId)
     );
     this.rawTripsData = filteredTripsData.map(item => this.clearIncorrectFirsLastDatapoint(item)).filter(arr => arr.length);
     this.latestTripsData = tripsLatestData.filter(d => this.hasData(d));
@@ -447,8 +448,10 @@ export class TbTripsDataLayer extends TbMapDataLayer<TripsDataLayerSettings, TbT
   }
 
   public updateTrips() {
+    const currentDataEntityIds = new Set<string>();
     this.rawTripsData.forEach(rawTripData => {
       const entityId = rawTripData[0].entityId;
+      currentDataEntityIds.add(entityId);
       let tripItem = this.layerItems.get(entityId);
       if (tripItem) {
         tripItem.update(rawTripData);
@@ -458,11 +461,15 @@ export class TbTripsDataLayer extends TbMapDataLayer<TripsDataLayerSettings, TbT
         this.layerItems.set(entityId, tripItem);
       }
     });
+    // an entity missing data for a single update is tolerated (avoids marker flicker on a momentarily empty payload);
+    // it is only dropped once it also has no data in the previous update, or is no longer subscribed at all.
     Array.from(this.layerItems.keys()).forEach(entityId => {
-      if (!this.subscribedEntityIds.has(entityId)) {
+      if (!currentDataEntityIds.has(entityId) &&
+        (!this.subscribedEntityIds.has(entityId) || !this.lastDataEntityIds.has(entityId))) {
         this.removeItem(entityId);
       }
     });
+    this.lastDataEntityIds = currentDataEntityIds;
   }
 
   public updateTripsLatestData(tripsLatestData: FormattedData<TbMapDatasource>[]) {

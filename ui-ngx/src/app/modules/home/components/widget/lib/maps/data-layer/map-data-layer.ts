@@ -275,7 +275,11 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings = MapDataLay
   }
 
   public hasData(data: FormattedData<TbMapDatasource>): boolean {
-    return data.$datasource.mapDataIds.includes(this.mapDataId);
+    return this.belongsToLayer(data.$datasource);
+  }
+
+  public belongsToLayer(datasource: TbMapDatasource): boolean {
+    return datasource.mapDataIds.includes(this.mapDataId);
   }
 
   protected createDataLayerContainer(): L.FeatureGroup {

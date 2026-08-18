@@ -242,17 +242,17 @@ export class DataAggregator {
         this.dataReceived = true;
         this.calculateStartEndTs();
       }
-      if (this.resetPending) {
+      if (this.resetPending && !update) {
         this.resetPending = false;
         updateIntervalScheduledTime = false;
       }
       if (update) {
-        this.aggregationMap = new AggregationMap();
+        if (!this.aggregationMap) {
+          this.aggregationMap = new AggregationMap();
+        }
         this.updateAggregatedData(data);
-      } else if (!this.aggregationMap) {
+      } else {
         this.aggregationMap = this.processAggregatedData(data);
-      } else if (Object.keys(data).length) {
-        this.updateAggregatedData(data);
       }
       if (updateIntervalScheduledTime) {
         this.intervalScheduledTime = this.utils.currentPerfTime();
