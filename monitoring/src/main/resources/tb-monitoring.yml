@@ -21,19 +21,30 @@ monitoring:
     # Base REST API url, https://DOMAIN by default
     base_url: '${REST_BASE_URL:https://${monitoring.domain}}'
     # LOGIN (default) - username/password, exercises the real /api/auth/login endpoint.
-    # API_KEY - a static, non-expiring API key (see monitoring.rest.api_key) - use this if the
-    # monitored deployment enforces password expiration, which would otherwise force-reset this
-    # account's password and produce a false "login is down" alarm with no per-user exemption.
+    # API_KEY - a static API key (see monitoring.rest.api_key) - use this if the monitored
+    # deployment enforces password expiration, which would otherwise force-reset this account's
+    # password and produce a false "login is down" alarm with no per-user exemption. If your key
+    # has an expiration date, also set api_key_description below to get expiry warnings - without
+    # it, that check is silently disabled.
     auth_mode: '${REST_AUTH_MODE:LOGIN}'
     # Authentication username (auth_mode: LOGIN only)
     username: '${REST_AUTH_USERNAME:tenant@thingsboard.org}'
     # Authentication password (auth_mode: LOGIN only)
     password: '${REST_AUTH_PASSWORD:tenant}'
-    # API key (auth_mode: API_KEY only) - create one via POST /api/apiKey for this account.
+    # API key (auth_mode: API_KEY only) - create one via POST /api/apiKey for this account (see api_key_description below for expiry warnings).
     # Note: in API_KEY mode, the "login" check only proves the API key itself is still valid
     # (via a lightweight authenticated call) - it no longer exercises the real
     # /api/auth/login endpoint, so it does not verify credential validation or JWT issuance.
     api_key: '${REST_AUTH_API_KEY:}'
+    # API key description to match when looking up its expiration (auth_mode: API_KEY only).
+    # Optional - if not set, expiry monitoring for the key is silently disabled (a WARN is
+    # logged, no notifications are ever sent). Must exactly match the description you gave the
+    # key when creating it via POST /api/apiKey.
+    api_key_description: '${REST_AUTH_API_KEY_DESCRIPTION:}'
+    # Days before expiration to start sending a daily warning notification (auth_mode: API_KEY
+    # only, requires api_key_description to be set). The warning repeats every day once within
+    # this threshold until the key is rotated or the process restarts.
+    api_key_expiry_warning_days: '${REST_AUTH_API_KEY_EXPIRY_WARNING_DAYS:7}'
     # REST request timeout in milliseconds
     request_timeout_ms: '${REST_REQUEST_TIMEOUT_MS:5000}'
   ws:
