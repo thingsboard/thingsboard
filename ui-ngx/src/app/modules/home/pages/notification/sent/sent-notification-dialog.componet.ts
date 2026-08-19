@@ -47,6 +47,8 @@ import { AuthUser } from '@shared/models/user.model';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
+import { EditorOptions } from 'hugerte';
+import { defaultHugeRteOptions, HUGERTE_BODY_ID } from '@shared/models/hugerte/hugerte.models';
 
 export interface RequestNotificationDialogData {
   request?: NotificationRequest;
@@ -78,9 +80,7 @@ export class SentNotificationDialogComponent extends
 
   showRefresh = false;
 
-  tinyMceOptions: Record<string, any> = {
-    base_url: '/assets/hugerte',
-    suffix: '.min',
+  hugeRteOptions: Partial<EditorOptions> = defaultHugeRteOptions({
     plugins: ['autoresize'],
     menubar: false,
     toolbar: false,
@@ -88,18 +88,16 @@ export class SentNotificationDialogComponent extends
     resize: false,
     readonly: true,
     height: 400,
-    autofocus: false,
-    branding: false,
     setup: (ed) => {
       ed.on('PreInit', () => {
         const document = $(ed.iframeElement.contentDocument);
-        const body = $('#hugerte', document);
+        const body = $(`#${HUGERTE_BODY_ID}`, document);
         body.attr({contenteditable: false});
         body.css('pointerEvents', 'none');
         body.css('userSelect', 'none');
       })
     }
-  };
+  });
 
   private authUser: AuthUser = getCurrentAuthUser(this.store);
 

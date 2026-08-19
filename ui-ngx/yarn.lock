@@ -1619,7 +1619,7 @@
   resolved "https://registry.yarnpkg.com/@hugerte/framework-integration-shared/-/framework-integration-shared-1.2.0.tgz#75f04e4249bbb2c314d1f7a962b9c2f5fed7db80"
   integrity sha512-ogcvVO0dFcb/HQAY7itj8xnmeMcHZmtMaOj9uC34ZYopnvj12TGWnfRQwbt8jZMlmoZk2z1TTLmJgvQBuH013A==
 
-"@hugerte/hugerte-angular@^1.1.1":
+"@hugerte/hugerte-angular@~1.1.1":
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/@hugerte/hugerte-angular/-/hugerte-angular-1.1.1.tgz#08b2c963d66d7a754e8cd4884b9111ca166781e7"
   integrity sha512-ubh6ZG3+dU6g3BkS2ZHx0FO46nti6N2CpN2gG/URFtF+pau/V59N94E7w7+8VeoPjqsFRpjB6zefRGNUoTJLOA==
@@ -6811,7 +6811,7 @@ https-proxy-agent@7.0.6, https-proxy-agent@^7.0.1:
     agent-base "^7.1.2"
     debug "4"
 
-hugerte@^1.0.12:
+hugerte@~1.0.12:
   version "1.0.12"
   resolved "https://registry.yarnpkg.com/hugerte/-/hugerte-1.0.12.tgz#84337116bd7e76c39e851a51d5dc0214af9882b8"
   integrity sha512-/JDCdJy1C83a7+RjlfWx6EjRvxqmmHFA5Pzcq8Y0ngdBESiC+2xa4ogsqnRPeadF04Cs95YfTd1SKquDdksjRw==
@@ -7601,7 +7601,7 @@ less-loader@12.3.0:
   resolved "https://registry.yarnpkg.com/less-loader/-/less-loader-12.3.0.tgz#d4a00361568be86a97da3df4f16954b0d4c15340"
   integrity sha512-0M6+uYulvYIWs52y0LqN4+QM9TqWAohYSNTo4htE8Z7Cn3G/qQMEmktfHmyJT23k+20kU9zHH2wrfFXkxNLtVw==
 
-less@4.4.0, less@4.9.0:
+less@4.4.0, less@>=4.9.0:
   version "4.9.0"
   resolved "https://registry.yarnpkg.com/less/-/less-4.9.0.tgz#df49f940f89a1d158c315609735d3ca12da3e740"
   integrity sha512-umRhrCH7fCi8Uj2RcwKjJdvUORTjeWqkdKx0LbcZvjIwsAVsnIAGcxHaqowPeBFBjQuWOeC/bve0AlpFzF/+SQ==

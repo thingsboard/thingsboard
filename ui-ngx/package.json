@@ -9,7 +9,7 @@
     "build:types": "node generate-types.js",
     "build:icon-metadata": "node generate-icon-metadata.js",
     "lint": "ng lint",
-    "prepare": "patch-package"
+    "prepare": "patch-package --error-on-fail"
   },
   "private": true,
   "dependencies": {
@@ -27,6 +27,7 @@
     "@flowjs/flow.js": "^2.14.1",
     "@flowjs/ngx-flow": "20.0.2",
     "@geoman-io/leaflet-geoman-free": "2.19.3",
+    "@hugerte/hugerte-angular": "~1.1.1",
     "@iplab/ngx-color-picker": "^20.0.0",
     "@mat-datetimepicker/core": "~16.0.1",
     "@mdi/svg": "^7.4.47",
@@ -37,7 +38,6 @@
     "@ngx-translate/core": "^17.0.0",
     "@svgdotjs/svg.filter.js": "^3.0.9",
     "@svgdotjs/svg.js": "3.2.4",
-    "@hugerte/hugerte-angular": "^1.1.1",
     "@svgdotjs/svg.panzoom.js": "^2.1.2",
     "ace-builds": "1.43.6",
     "ace-diff": "^3.3.0",
@@ -51,7 +51,7 @@
     "flot.curvedlines": "https://github.com/MichaelZinsmaier/CurvedLines.git#master",
     "font-awesome": "^4.7.0",
     "html2canvas": "^1.4.1",
-    "hugerte": "^1.0.12",
+    "hugerte": "~1.0.12",
     "jquery": "^3.7.1",
     "jquery.terminal": "^2.45.2",
     "js-beautify": "1.15.4",
@@ -139,7 +139,8 @@
   "resolutions": {
     "@babel/core": "7.29.7",
     "esbuild": "0.28.1",
-    "less": "4.9.0",
+    "rollup": "4.59.0",
+    "less": ">=4.9.0",
     "js-beautify/**/minimatch": "^9.0.7"
   }
 }
