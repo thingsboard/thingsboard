@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
@@ -243,8 +244,9 @@ public abstract class EdgeGrpcSession implements Closeable {
     public void onConfigurationUpdate(Edge edge) {
         log.debug("[{}] onConfigurationUpdate [{}]", sessionId, edge);
         this.tenantId = edge.getTenantId();
+        CustomerId stateCustomerId = this.edge != null ? this.edge.getCustomerId() : null;
         this.edge = edge;
-        if (!this.edge.getCustomerId().equals(edge.getCustomerId())) {
+        if (stateCustomerId != null && !stateCustomerId.equals(edge.getCustomerId())) {
             // do not send edge configuration message on customer update
             // message send by separate flow from assign_to or unassing_from customer
             return;
