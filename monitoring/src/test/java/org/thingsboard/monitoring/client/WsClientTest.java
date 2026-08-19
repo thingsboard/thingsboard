@@ -45,11 +45,7 @@ public class WsClientTest {
         client.authenticate(TbClient.AuthMode.API_KEY, "my-api-key");
 
         String json = captureSentJson(client);
-        // wire-level assertions: the unused field must be omitted entirely, not just null-valued
-        // (some deployed server versions predate the apiKey field and reject the whole message
-        // under FAIL_ON_UNKNOWN_PROPERTIES if it's present at all, even as an explicit null -
-        // round-tripping through CmdsWrapper alone can't catch that, since "apiKey":null and an
-        // omitted apiKey key deserialize to the same Java object).
+        // must be omitted, not null-valued - some servers reject "apiKey":null outright
         assertThat(json).contains("\"apiKey\"");
         assertThat(json).doesNotContain("\"token\"");
 
@@ -67,7 +63,6 @@ public class WsClientTest {
         client.authenticate(TbClient.AuthMode.LOGIN, "jwt-token");
 
         String json = captureSentJson(client);
-        // wire-level assertions: see comment in authenticate_apiKeyMode_sendsAuthCmdWithApiKeySet
         assertThat(json).contains("\"token\"");
         assertThat(json).doesNotContain("\"apiKey\"");
 

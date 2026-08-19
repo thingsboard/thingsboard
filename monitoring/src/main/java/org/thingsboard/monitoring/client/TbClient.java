@@ -71,9 +71,7 @@ public class TbClient extends RestClient {
         return authMode;
     }
 
-    // for LOGIN, performs the real username/password login and returns the resulting JWT.
-    // for API_KEY, there is no login step - proves the key still works via a lightweight
-    // authenticated call instead, and returns the static key itself (nothing else to return).
+    // API_KEY has no login step - proves the key works via getUser() and returns it as-is
     public String logIn() {
         if (authMode == AuthMode.API_KEY) {
             Optional<User> user = getUser();

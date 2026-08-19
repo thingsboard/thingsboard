@@ -60,9 +60,7 @@ public class WsClient extends WebSocketClient implements AutoCloseable {
 
     private final long requestTimeoutMs;
 
-    // captured from onClose(), so a later send()/subscribe failure (e.g. WebsocketNotConnectedException)
-    // can report *why* the socket went away instead of just that it's no longer connected -
-    // most commonly, the server rejecting the auth message we send right after connecting
+    // captured from onClose() so a later subscribe failure can report why the socket went away
     private volatile boolean closed;
     private volatile int closeCode;
     private volatile String closeReason;
@@ -159,9 +157,7 @@ public class WsClient extends WebSocketClient implements AutoCloseable {
         return this;
     }
 
-    // sends the auth command as the connection's first message - required before any other
-    // command on the GENERAL WS endpoint, since it never authenticates via the ?token= query
-    // param the way the deprecated /api/ws/plugins/telemetry endpoint did
+    // must be the connection's first message - the GENERAL endpoint has no ?token= query param
     public WsClient authenticate(TbClient.AuthMode authMode, String tokenOrApiKey) {
         AuthCmd authCmd = new AuthCmd();
         if (authMode == TbClient.AuthMode.API_KEY) {
@@ -203,9 +199,7 @@ public class WsClient extends WebSocketClient implements AutoCloseable {
         throw new IllegalStateException("No WS reply arrived within " + requestTimeoutMs + " ms" + closeInfo());
     }
 
-    // surfaces the captured onClose() code/reason (if the socket has since closed) so a failure
-    // here isn't reported as an opaque WebsocketNotConnectedException/timeout with no indication
-    // that the server rejected our auth message (e.g. an invalid/expired token or api key)
+    // surfaces the close reason instead of an opaque WebsocketNotConnectedException/timeout
     private String closeInfo() {
         if (!closed) {
             return "";

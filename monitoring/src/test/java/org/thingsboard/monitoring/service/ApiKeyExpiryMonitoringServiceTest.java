@@ -67,9 +67,14 @@ public class ApiKeyExpiryMonitoringServiceTest {
     }
 
     private ApiKeyInfo apiKeyInfo(String description, long expirationTime) {
+        return apiKeyInfo(description, expirationTime, true);
+    }
+
+    private ApiKeyInfo apiKeyInfo(String description, long expirationTime, boolean enabled) {
         ApiKeyInfo info = new ApiKeyInfo();
         info.setDescription(description);
         info.setExpirationTime(expirationTime);
+        info.setEnabled(enabled);
         return info;
     }
 
@@ -162,6 +167,47 @@ public class ApiKeyExpiryMonitoringServiceTest {
         String notificationText = notificationCaptor.getValue().getText();
         assertTrue(notificationText.contains("EXPIRED"), "Notification should contain 'EXPIRED' for an already-expired key");
         assertFalse(notificationText.contains("expires in 0 day"), "Notification should not contain 'expires in 0 day' for expired key");
+    }
+
+    @Test
+    public void allMatchesDisabled_noNotificationNoException() {
+        long soon = System.currentTimeMillis() + Duration.ofDays(3).toMillis();
+        doReturn(new PageData<>(List.of(apiKeyInfo("tb-monitoring key", soon, false)), 1, 1, false))
+                .when(tbClient).getUserApiKeys(eq(userId), any());
+
+        service.checkApiKeyExpiry();
+
+        verify(notificationService, never()).sendNotification(any());
+    }
+
+    @Test
+    public void disabledAndEnabledMatch_prefersEnabledOne() {
+        long soon = System.currentTimeMillis() + Duration.ofDays(3).toMillis();
+        long farFuture = System.currentTimeMillis() + Duration.ofDays(30).toMillis();
+        doReturn(new PageData<>(List.of(
+                apiKeyInfo("tb-monitoring key", soon, false),
+                apiKeyInfo("tb-monitoring key", farFuture, true)
+        ), 1, 1, false)).when(tbClient).getUserApiKeys(eq(userId), any());
+
+        service.checkApiKeyExpiry();
+
+        verify(notificationService, never()).sendNotification(any());
+    }
+
+    @Test
+    public void multipleEnabledMatches_picksOneAndStillFunctions() {
+        // the far-future key is listed first - if the service picked the second (soon-expiring)
+        // one instead, this would incorrectly send a notification
+        long farFuture = System.currentTimeMillis() + Duration.ofDays(30).toMillis();
+        long soon = System.currentTimeMillis() + Duration.ofDays(3).toMillis();
+        doReturn(new PageData<>(List.of(
+                apiKeyInfo("tb-monitoring key", farFuture, true),
+                apiKeyInfo("tb-monitoring key", soon, true)
+        ), 1, 1, false)).when(tbClient).getUserApiKeys(eq(userId), any());
+
+        service.checkApiKeyExpiry();
+
+        verify(notificationService, never()).sendNotification(any());
     }
 
 }

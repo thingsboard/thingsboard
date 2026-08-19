@@ -18,11 +18,7 @@ package org.thingsboard.monitoring.data.cmd;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 
-// NON_NULL: only the field for the active auth mode (token or apiKey) is serialized. Some
-// deployed ThingsBoard server versions predate the apiKey field on their server-side AuthCmd
-// and reject the whole WS auth message (FAIL_ON_UNKNOWN_PROPERTIES) if it's present at all,
-// even as an explicit null - confirmed against a live 4.3.1.3 cluster during manual e2e
-// verification, where LOGIN mode failed until this was added.
+// NON_NULL: some server versions reject the whole message if the inactive field is present as null
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Data
 public class AuthCmd {

@@ -39,7 +39,8 @@ monitoring:
     # API key description to match when looking up its expiration (auth_mode: API_KEY only).
     # Optional - if not set, expiry monitoring for the key is silently disabled (a WARN is
     # logged, no notifications are ever sent). Must exactly match the description you gave the
-    # key when creating it via POST /api/apiKey.
+    # key when creating it via POST /api/apiKey - keep it unique among this account's keys,
+    # e.g. when rotating, delete or rename the old key rather than reusing its description.
     api_key_description: '${REST_AUTH_API_KEY_DESCRIPTION:}'
     # Days before expiration to start sending a daily warning notification (auth_mode: API_KEY
     # only, requires api_key_description to be set). The warning repeats every day once within
