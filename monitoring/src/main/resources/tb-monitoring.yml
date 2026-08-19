@@ -29,12 +29,19 @@ monitoring:
     username: '${REST_AUTH_USERNAME:tenant@thingsboard.org}'
     # Authentication password (auth_mode: LOGIN only)
     password: '${REST_AUTH_PASSWORD:tenant}'
-    # API key (auth_mode: API_KEY only) - create one via POST /api/apiKey for this account
+    # API key (auth_mode: API_KEY only) - create one via POST /api/apiKey for this account.
+    # Note: in API_KEY mode, the "login" check only proves the API key itself is still valid
+    # (via a lightweight authenticated call) - it no longer exercises the real
+    # /api/auth/login endpoint, so it does not verify credential validation or JWT issuance.
     api_key: '${REST_AUTH_API_KEY:}'
     # REST request timeout in milliseconds
     request_timeout_ms: '${REST_REQUEST_TIMEOUT_MS:5000}'
   ws:
-    # WebSocket url, wss://DOMAIN by default
+    # WebSocket url, wss://DOMAIN by default.
+    # Requires the monitored ThingsBoard server to be version ~3.6.2 or later: this client
+    # exclusively uses the /api/ws GENERAL WebSocket endpoint (message-based AuthCmd auth)
+    # introduced in that version, with no fallback to the older, deprecated
+    # /api/ws/plugins/telemetry?token= endpoint.
     base_url: '${WS_BASE_URL:wss://${monitoring.domain}}'
     # WebSocket request timeout
     request_timeout_ms: '${WS_REQUEST_TIMEOUT_MS:3000}'

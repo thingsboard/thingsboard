@@ -15,10 +15,16 @@
  */
 package org.thingsboard.monitoring.data.cmd;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 
 import java.util.List;
 
+// hand-rolled mirror of application's org.thingsboard.server.service.ws.WsCommandsWrapper
+// NON_NULL for the same reason as AuthCmd: keeps the auth-only message from sending "cmds":null
+// and the subscribe message from sending "authCmd":null, matching the shape that already caused
+// a real server-compatibility bug once (see AuthCmd).
+@JsonInclude(JsonInclude.Include.NON_NULL)
 @Data
 public class CmdsWrapper {
 

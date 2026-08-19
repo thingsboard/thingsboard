@@ -16,6 +16,8 @@
 package org.thingsboard.monitoring.client;
 
 import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Component;
@@ -25,6 +27,7 @@ import org.thingsboard.server.common.data.User;
 import java.time.Duration;
 import java.util.Optional;
 
+@Slf4j
 @Component
 public class TbClient extends RestClient {
 
@@ -50,10 +53,17 @@ public class TbClient extends RestClient {
                 authMode == AuthMode.API_KEY ? apiKey : null);
         this.authMode = authMode;
         this.apiKey = apiKey;
+        if (authMode == AuthMode.API_KEY && StringUtils.isBlank(apiKey)) {
+            throw new IllegalStateException("monitoring.rest.api_key must be set when monitoring.rest.auth_mode is API_KEY");
+        }
+        log.info("Starting TbClient with auth mode: {}", authMode);
     }
 
     @PostConstruct
     private void init() {
+        if (authMode == AuthMode.LOGIN && (StringUtils.isBlank(username) || StringUtils.isBlank(password))) {
+            throw new IllegalStateException("monitoring.rest.username and monitoring.rest.password must be set when monitoring.rest.auth_mode is LOGIN");
+        }
         logIn();
     }
 

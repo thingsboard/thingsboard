@@ -18,6 +18,7 @@ package org.thingsboard.monitoring.data.cmd;
 import lombok.Data;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 
+// hand-rolled mirror of application's org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataCmd
 @Data
 public class EntityDataCmd {
 

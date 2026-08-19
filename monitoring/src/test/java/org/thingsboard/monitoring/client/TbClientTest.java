@@ -16,12 +16,17 @@
 package org.thingsboard.monitoring.client;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.client.HttpClientErrorException;
 import org.thingsboard.server.common.data.User;
 
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -56,11 +61,44 @@ public class TbClientTest {
     }
 
     @Test
-    public void apiKeyMode_getUserThrows_logInPropagates() {
+    public void apiKeyMode_getUserReturnsEmpty_logInThrows() {
         TbClient client = spy(new TbClient("http://localhost:8080", 5000, TbClient.AuthMode.API_KEY, "my-api-key"));
         doReturn(Optional.empty()).when(client).getUser();
 
-        org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class, client::logIn);
+        assertThrows(IllegalStateException.class, client::logIn);
+    }
+
+    @Test
+    public void apiKeyMode_getUserThrowsHttpError_logInPropagates() {
+        TbClient client = spy(new TbClient("http://localhost:8080", 5000, TbClient.AuthMode.API_KEY, "my-api-key"));
+        HttpClientErrorException httpError = HttpClientErrorException.create(HttpStatus.UNAUTHORIZED, "Unauthorized", null, null, null);
+        doThrow(httpError).when(client).getUser();
+
+        assertThatThrownBy(client::logIn).isSameAs(httpError);
+    }
+
+    @Test
+    public void apiKeyMode_blankApiKey_constructorThrows() {
+        assertThrows(IllegalStateException.class,
+                () -> new TbClient("http://localhost:8080", 5000, TbClient.AuthMode.API_KEY, ""));
+    }
+
+    @Test
+    public void loginMode_blankUsername_initThrows() {
+        TbClient client = new TbClient("http://localhost:8080", 5000, TbClient.AuthMode.LOGIN, "unused-key");
+        org.springframework.test.util.ReflectionTestUtils.setField(client, "username", "");
+        org.springframework.test.util.ReflectionTestUtils.setField(client, "password", "tenant");
+
+        assertThrows(IllegalStateException.class, () -> org.springframework.test.util.ReflectionTestUtils.invokeMethod(client, "init"));
+    }
+
+    @Test
+    public void loginMode_blankPassword_initThrows() {
+        TbClient client = new TbClient("http://localhost:8080", 5000, TbClient.AuthMode.LOGIN, "unused-key");
+        org.springframework.test.util.ReflectionTestUtils.setField(client, "username", "tenant@thingsboard.org");
+        org.springframework.test.util.ReflectionTestUtils.setField(client, "password", "");
+
+        assertThrows(IllegalStateException.class, () -> org.springframework.test.util.ReflectionTestUtils.invokeMethod(client, "init"));
     }
 
 }

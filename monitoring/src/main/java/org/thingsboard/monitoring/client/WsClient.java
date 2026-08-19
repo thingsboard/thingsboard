@@ -60,6 +60,13 @@ public class WsClient extends WebSocketClient implements AutoCloseable {
 
     private final long requestTimeoutMs;
 
+    // captured from onClose(), so a later send()/subscribe failure (e.g. WebsocketNotConnectedException)
+    // can report *why* the socket went away instead of just that it's no longer connected -
+    // most commonly, the server rejecting the auth message we send right after connecting
+    private volatile boolean closed;
+    private volatile int closeCode;
+    private volatile String closeReason;
+
     public WsClient(URI serverUri, long requestTimeoutMs) {
         super(serverUri);
         this.requestTimeoutMs = requestTimeoutMs;
@@ -91,8 +98,11 @@ public class WsClient extends WebSocketClient implements AutoCloseable {
     }
 
     @Override
-    public void onClose(int i, String s, boolean b) {
-        log.debug("WebSocket client is closed");
+    public void onClose(int code, String reason, boolean remote) {
+        this.closed = true;
+        this.closeCode = code;
+        this.closeReason = reason;
+        log.debug("WebSocket client is closed (code={}, reason={}, remote={})", code, reason, remote);
     }
 
     @Override
@@ -141,7 +151,11 @@ public class WsClient extends WebSocketClient implements AutoCloseable {
         CmdsWrapper wrapper = new CmdsWrapper();
         wrapper.setCmds(List.of(cmd));
 
-        send(JacksonUtil.toString(wrapper));
+        try {
+            send(JacksonUtil.toString(wrapper));
+        } catch (RuntimeException e) {
+            throw new IllegalStateException("Failed to send WS subscribe command" + closeInfo(), e);
+        }
         return this;
     }
 
@@ -186,7 +200,17 @@ public class WsClient extends WebSocketClient implements AutoCloseable {
             log.debug("Failed to await reply", e);
         }
         log.trace("No reply arrived within {} ms", requestTimeoutMs);
-        throw new IllegalStateException("No WS reply arrived within " + requestTimeoutMs + " ms");
+        throw new IllegalStateException("No WS reply arrived within " + requestTimeoutMs + " ms" + closeInfo());
+    }
+
+    // surfaces the captured onClose() code/reason (if the socket has since closed) so a failure
+    // here isn't reported as an opaque WebsocketNotConnectedException/timeout with no indication
+    // that the server rejected our auth message (e.g. an invalid/expired token or api key)
+    private String closeInfo() {
+        if (!closed) {
+            return "";
+        }
+        return " - WebSocket closed before subscribe could complete (code=" + closeCode + ", reason=" + closeReason + ")";
     }
 
     private List<JsonNode> getLastMsgs() {
