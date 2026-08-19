@@ -37,7 +37,7 @@ import { Subject } from 'rxjs';
 import { deepClone, isDefinedAndNotNull } from '@core/utils';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { TranslateService } from '@ngx-translate/core';
-import { EditorOptions } from 'tinymce';
+import { EditorOptions } from 'hugerte';
 
 @Component({
     selector: 'tb-template-configuration',
@@ -84,7 +84,7 @@ export class NotificationTemplateConfigurationComponent implements OnDestroy, Co
   readonly NotificationTemplateTypeTranslateMap = NotificationTemplateTypeTranslateMap;
 
   tinyMceOptions: Partial<EditorOptions> = {
-    base_url: '/assets/tinymce',
+    base_url: '/assets/hugerte',
     suffix: '.min',
     plugins: ['link', 'table', 'image', 'lists', 'code', 'fullscreen'],
     menubar: 'edit insert tools view format table',
@@ -95,10 +95,9 @@ export class NotificationTemplateConfigurationComponent implements OnDestroy, Co
     height: 400,
     autofocus: false,
     branding: false,
-    promotion: false,
     setup: (editor) => {
       editor.on('PostRender', function() {
-        const container = document.querySelector('.tox.tox-tinymce-aux');
+        const container = document.querySelector('.tox.tox-hugerte-aux');
         const styleSheet = document.createElement('style');
         styleSheet.innerText = `
           .tox-tiered-menu .tox-menu {

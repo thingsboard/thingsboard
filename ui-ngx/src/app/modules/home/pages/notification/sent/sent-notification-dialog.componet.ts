@@ -79,7 +79,7 @@ export class SentNotificationDialogComponent extends
   showRefresh = false;
 
   tinyMceOptions: Record<string, any> = {
-    base_url: '/assets/tinymce',
+    base_url: '/assets/hugerte',
     suffix: '.min',
     plugins: ['autoresize'],
     menubar: false,
@@ -90,11 +90,10 @@ export class SentNotificationDialogComponent extends
     height: 400,
     autofocus: false,
     branding: false,
-    promotion: false,
     setup: (ed) => {
       ed.on('PreInit', () => {
         const document = $(ed.iframeElement.contentDocument);
-        const body = $('#tinymce', document);
+        const body = $('#hugerte', document);
         body.attr({contenteditable: false});
         body.css('pointerEvents', 'none');
         body.css('userSelect', 'none');

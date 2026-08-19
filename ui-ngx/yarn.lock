@@ -1614,6 +1614,19 @@
   resolved "https://registry.yarnpkg.com/@hono/node-server/-/node-server-1.19.11.tgz#dc419f0826dd2504e9fc86ad289d5636a0444e2f"
   integrity sha512-dr8/3zEaB+p0D2n/IUrlPF1HZm586qgJNXK1a9fhg/PzdtkK7Ksd5l312tJX2yBuALqDYBlG20QEbayqPyxn+g==
 
+"@hugerte/framework-integration-shared@^1.0.1":
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/@hugerte/framework-integration-shared/-/framework-integration-shared-1.2.0.tgz#75f04e4249bbb2c314d1f7a962b9c2f5fed7db80"
+  integrity sha512-ogcvVO0dFcb/HQAY7itj8xnmeMcHZmtMaOj9uC34ZYopnvj12TGWnfRQwbt8jZMlmoZk2z1TTLmJgvQBuH013A==
+
+"@hugerte/hugerte-angular@^1.1.1":
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/@hugerte/hugerte-angular/-/hugerte-angular-1.1.1.tgz#08b2c963d66d7a754e8cd4884b9111ca166781e7"
+  integrity sha512-ubh6ZG3+dU6g3BkS2ZHx0FO46nti6N2CpN2gG/URFtF+pau/V59N94E7w7+8VeoPjqsFRpjB6zefRGNUoTJLOA==
+  dependencies:
+    "@hugerte/framework-integration-shared" "^1.0.1"
+    tslib "^2.3.0"
+
 "@humanfs/core@^0.19.1":
   version "0.19.1"
   resolved "https://registry.yarnpkg.com/@humanfs/core/-/core-0.19.1.tgz#17c55ca7d426733fe3c561906b8173c336b40a77"
@@ -2823,14 +2836,6 @@
   integrity sha512-0Nzo2TRlTebW3pzfAPtHx8Ye7Y3kuMEkK7hwVJi0SgQUB/vstjg7fvCJxB++EqsuDEetP0/SC+4CpLMVm6Lh2g==
   dependencies:
     "@svgdotjs/svg.js" "^3.0.16"
-
-"@tinymce/tinymce-angular@^8.0.1":
-  version "8.0.1"
-  resolved "https://registry.yarnpkg.com/@tinymce/tinymce-angular/-/tinymce-angular-8.0.1.tgz#a17b4a5bef87d563e63dc442ffeb4b82d2137da3"
-  integrity sha512-m0/ne5nL00YeZ7wCyhBVwKUbvS8fQZ+S+T5pinqTIqTUKpcfIC2+BIKqzUpS+niiRCowFoZl5eVlI5zdFN9/0A==
-  dependencies:
-    tinymce "^7.0.0 || ^6.0.0 || ^5.5.0"
-    tslib "^2.3.0"
 
 "@tsconfig/node10@^1.0.7":
   version "1.0.11"
@@ -6689,6 +6694,11 @@ https-proxy-agent@7.0.6, https-proxy-agent@^7.0.1:
     agent-base "^7.1.2"
     debug "4"
 
+hugerte@^1.0.12:
+  version "1.0.12"
+  resolved "https://registry.yarnpkg.com/hugerte/-/hugerte-1.0.12.tgz#84337116bd7e76c39e851a51d5dc0214af9882b8"
+  integrity sha512-/JDCdJy1C83a7+RjlfWx6EjRvxqmmHFA5Pzcq8Y0ngdBESiC+2xa4ogsqnRPeadF04Cs95YfTd1SKquDdksjRw==
+
 hyperdyperid@^1.2.0:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/hyperdyperid/-/hyperdyperid-1.2.0.tgz#59668d323ada92228d2a869d3e474d5a33b69e6b"
@@ -8059,7 +8069,7 @@ mz@^2.7.0:
     object-assign "^4.0.1"
     thenify-all "^1.0.0"
 
-nanoid@^3.3.11, nanoid@^3.3.16:
+nanoid@^3.3.16:
   version "3.3.18"
   resolved "https://registry.yarnpkg.com/nanoid/-/nanoid-3.3.18.tgz#f66a2de1199ffde0fcf21c8a5f13106b1c081913"
   integrity sha512-DTg4MJbGMWkfi6VZFdNt2/caMbQy4Ou+Op/hJQvGEWcnVfoA1QA+xzRKAzw9jD6+GVOOeYr/mIcuDSdug6F6+w==
@@ -10198,11 +10208,6 @@ tinyglobby@^0.2.11, tinyglobby@^0.2.12, tinyglobby@^0.2.15:
   dependencies:
     fdir "^6.5.0"
     picomatch "^4.0.3"
-
-tinymce@6.8.6, "tinymce@^7.0.0 || ^6.0.0 || ^5.5.0", tinymce@~6.8.6:
-  version "6.8.6"
-  resolved "https://registry.yarnpkg.com/tinymce/-/tinymce-6.8.6.tgz#799e4f03eeb4399399dfdeb12ba17b3b91887adf"
-  integrity sha512-++XYEs8lKWvZxDCjrr8Baiw7KiikraZ5JkLMg6EdnUVNKJui0IsrAADj5MsyUeFkcEryfn2jd3p09H7REvewyg==
 
 tinyqueue@^2.0.0:
   version "2.0.3"

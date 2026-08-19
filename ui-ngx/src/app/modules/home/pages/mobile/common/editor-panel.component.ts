@@ -17,7 +17,7 @@
 import { Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { FormBuilder, FormControl } from '@angular/forms';
 import { TbPopoverComponent } from '@shared/components/popover.component';
-import { EditorOptions } from 'tinymce';
+import { EditorOptions } from 'hugerte';
 
 @Component({
     selector: 'tb-release-notes-panel',
@@ -46,7 +46,7 @@ export class EditorPanelComponent implements OnInit {
   editorControl: FormControl<string>;
 
   tinyMceOptions: Partial<EditorOptions> = {
-    base_url: '/assets/tinymce',
+    base_url: '/assets/hugerte',
     suffix: '.min',
     plugins: ['link', 'table', 'image', 'lists', 'fullscreen'],
     menubar: 'edit insert view format',
@@ -56,11 +56,10 @@ export class EditorPanelComponent implements OnInit {
     height: 400,
     autofocus: false,
     branding: false,
-    promotion: false,
     resize: false,
     setup: (editor) => {
       editor.on('PostRender', function() {
-        const container = document.querySelector('.tox.tox-tinymce-aux');
+        const container = document.querySelector('.tox.tox-hugerte-aux');
         const styleSheet = document.createElement('style');
         styleSheet.innerText = `
           .tox-tiered-menu .tox-menu {

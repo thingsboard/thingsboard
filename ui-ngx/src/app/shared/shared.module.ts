@@ -64,7 +64,7 @@ import { ShareButtonDirective } from 'ngx-sharebuttons';
 import { HotkeyModule } from 'angular2-hotkeys';
 import { ColorPickerModule } from '@iplab/ngx-color-picker';
 import { NgxHmCarouselComponent, NgxHmCarouselDynamicDirective, NgxHmCarouselItemDirective } from 'ngx-hm-carousel';
-import { EditorModule, TINYMCE_SCRIPT_SRC } from '@tinymce/tinymce-angular';
+import { EditorModule, HUGERTE_SCRIPT_SRC } from '@hugerte/hugerte-angular';
 import { UserMenuComponent } from '@shared/components/user-menu.component';
 import { TruncateWithTooltipDirective } from '@shared/directives/truncate-with-tooltip.directive';
 import { ContextMenuDirective } from '@shared/directives/context-menu.directive';
@@ -258,8 +258,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
       useValue: Flow
     },
     {
-      provide: TINYMCE_SCRIPT_SRC,
-      useValue: 'assets/tinymce/tinymce.min.js'
+      provide: HUGERTE_SCRIPT_SRC,
+      useValue: 'assets/hugerte/hugerte.min.js'
     },
     {
       provide: MAT_DATE_LOCALE,
