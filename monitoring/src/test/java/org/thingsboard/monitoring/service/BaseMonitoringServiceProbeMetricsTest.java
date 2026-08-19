@@ -164,6 +164,7 @@ public class BaseMonitoringServiceProbeMetricsTest {
         service.runChecks();
 
         verify(probeMetricsRecorder, never()).removeAcceptedProbe(any());
+        verify(probeMetricsRecorder, never()).removeStaleAcceptedProbe(any());
     }
 
     @Test
@@ -215,6 +216,7 @@ public class BaseMonitoringServiceProbeMetricsTest {
         service.runChecks();
 
         verify(probeMetricsRecorder, never()).removeAcceptedProbe(any());
+        verify(probeMetricsRecorder, never()).removeStaleAcceptedProbe(any());
     }
 
     @Test
@@ -259,6 +261,7 @@ public class BaseMonitoringServiceProbeMetricsTest {
         service.runChecks();
 
         verify(probeMetricsRecorder, never()).removeAcceptedProbe(any());
+        verify(probeMetricsRecorder, never()).removeStaleAcceptedProbe(any());
     }
 
     @Test
