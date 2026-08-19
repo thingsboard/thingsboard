@@ -24,5 +24,6 @@ public class EntityDataCmd {
     private int cmdId;
     private EntityDataQuery query;
     private LatestValueCmd latestCmd;
+    private final String type = "ENTITY_DATA";
 
 }

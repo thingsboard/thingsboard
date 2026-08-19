@@ -17,12 +17,11 @@ package org.thingsboard.monitoring.data.cmd;
 
 import lombok.Data;
 
-import java.util.List;
-
 @Data
-public class CmdsWrapper {
+public class AuthCmd {
 
-    private AuthCmd authCmd;
-    private List<EntityDataCmd> cmds;
+    private int cmdId;
+    private String token;
+    private String apiKey;
 
 }

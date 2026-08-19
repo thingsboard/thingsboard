@@ -39,8 +39,8 @@ public class WsClientFactory {
     @Value("${monitoring.ws.request_timeout_ms}")
     private int requestTimeoutMs;
 
-    public WsClient createClient(String accessToken) throws Exception {
-        URI uri = new URI(baseUrl + "/api/ws/plugins/telemetry?token=" + accessToken);
+    public WsClient createClient(TbClient.AuthMode authMode, String tokenOrApiKey) throws Exception {
+        URI uri = new URI(baseUrl + "/api/ws");
         stopWatch.start();
         WsClient wsClient = new WsClient(uri, requestTimeoutMs);
         if (baseUrl.startsWith("wss")) {
@@ -52,6 +52,7 @@ public class WsClientFactory {
         if (!connected) {
             throw new IllegalStateException("Failed to establish WS session");
         }
+        wsClient.authenticate(authMode, tokenOrApiKey);
         monitoringReporter.reportLatency(Latencies.WS_CONNECT, stopWatch.getTime());
         return wsClient;
     }

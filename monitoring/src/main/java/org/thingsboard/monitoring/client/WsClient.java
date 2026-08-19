@@ -22,6 +22,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.monitoring.data.cmd.AuthCmd;
 import org.thingsboard.monitoring.data.cmd.CmdsWrapper;
 import org.thingsboard.monitoring.data.cmd.EntityDataCmd;
 import org.thingsboard.monitoring.data.cmd.EntityDataUpdate;
@@ -138,7 +139,24 @@ public class WsClient extends WebSocketClient implements AutoCloseable {
         cmd.setLatestCmd(latestCmd);
 
         CmdsWrapper wrapper = new CmdsWrapper();
-        wrapper.setEntityDataCmds(List.of(cmd));
+        wrapper.setCmds(List.of(cmd));
+
+        send(JacksonUtil.toString(wrapper));
+        return this;
+    }
+
+    // sends the auth command as the connection's first message - required before any other
+    // command on the GENERAL WS endpoint, since it never authenticates via the ?token= query
+    // param the way the deprecated /api/ws/plugins/telemetry endpoint did
+    public WsClient authenticate(TbClient.AuthMode authMode, String tokenOrApiKey) {
+        AuthCmd authCmd = new AuthCmd();
+        if (authMode == TbClient.AuthMode.API_KEY) {
+            authCmd.setApiKey(tokenOrApiKey);
+        } else {
+            authCmd.setToken(tokenOrApiKey);
+        }
+        CmdsWrapper wrapper = new CmdsWrapper();
+        wrapper.setAuthCmd(authCmd);
         send(JacksonUtil.toString(wrapper));
         return this;
     }

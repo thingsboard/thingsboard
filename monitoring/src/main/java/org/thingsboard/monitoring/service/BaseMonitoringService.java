@@ -131,7 +131,7 @@ public abstract class BaseMonitoringService<C extends MonitoringConfig<T>, T ext
 
             WsClient wsClient;
             try {
-                wsClient = wsClientFactory.createClient(accessToken);
+                wsClient = wsClientFactory.createClient(tbClient.getAuthMode(), accessToken);
                 reporter.serviceIsOk(MonitoredServiceKey.WS_CONNECT);
             } catch (Exception e) {
                 reporter.serviceFailure(MonitoredServiceKey.WS_CONNECT, e);
