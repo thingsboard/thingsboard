@@ -123,6 +123,7 @@ public abstract class BaseMonitoringService<C extends MonitoringConfig<T>, T ext
         int checkedCount = 0;
         try {
             log.info("Starting {}", getName());
+            probeMetricsRecorder.startCycle();
             probeMetricsRecorder.recordHeartbeat();
 
             String accessToken;
@@ -139,7 +140,7 @@ public abstract class BaseMonitoringService<C extends MonitoringConfig<T>, T ext
                 reporter.serviceFailure(MonitoredServiceKey.LOGIN, e);
                 // WS and transport checks never ran this cycle - clear their gauges instead of
                 // leaving last cycle's value stale, then fall back to the WS-independent signal
-                probeMetricsRecorder.removeProbe(MonitoredServiceKey.WS);
+                probeMetricsRecorder.removeStaleProbe(MonitoredServiceKey.WS);
                 clearTransportProbeMetrics();
                 checkTransportsAccepted();
                 return;
@@ -324,7 +325,7 @@ public abstract class BaseMonitoringService<C extends MonitoringConfig<T>, T ext
     }
 
     private void clearTransportProbeMetrics(BaseHealthChecker<C, T> healthChecker) {
-        probeMetricsRecorder.removeProbe(healthChecker.getCachedInfo());
+        probeMetricsRecorder.removeStaleProbe(healthChecker.getCachedInfo());
         healthChecker.getAssociates().values().forEach(this::clearTransportProbeMetrics);
     }
 
@@ -337,7 +338,7 @@ public abstract class BaseMonitoringService<C extends MonitoringConfig<T>, T ext
     }
 
     private void clearAcceptedProbeMetrics(BaseHealthChecker<C, T> healthChecker) {
-        probeMetricsRecorder.removeAcceptedProbe(healthChecker.getCachedInfo());
+        probeMetricsRecorder.removeStaleAcceptedProbe(healthChecker.getCachedInfo());
         healthChecker.getAssociates().values().forEach(this::clearAcceptedProbeMetrics);
     }
 

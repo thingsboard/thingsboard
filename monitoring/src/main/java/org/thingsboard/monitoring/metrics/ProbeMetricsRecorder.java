@@ -58,6 +58,9 @@ public class ProbeMetricsRecorder {
     private final Set<Tags> warnedCollisions = ConcurrentHashMap.newKeySet();
     // action gauges recorded per probe, so removeProbe can clean them up without knowing them upfront
     private final Map<Tags, Set<String>> actionsByBaseTags = new ConcurrentHashMap<>();
+    // tags that already got fresh data this cycle - so a colliding sibling's removeProbe/removeAcceptedProbe
+    // (e.g. crashing right after this one succeeded) can't wipe what was just correctly recorded
+    private final Set<Tags> freshThisCycle = ConcurrentHashMap.newKeySet();
 
     public ProbeMetricsRecorder(MeterRegistry meterRegistry,
                                  @Value("${monitoring.metrics.otlp.enabled:false}") boolean otlpEnabled,
@@ -76,10 +79,16 @@ public class ProbeMetricsRecorder {
                 Function.identity()) : null;
     }
 
+    // resets which Tags have fresh data this cycle - called once at the start of each runChecks()
+    public void startCycle() {
+        freshThisCycle.clear();
+    }
+
     public void recordProbe(Object serviceKey, boolean success) {
         withTags(serviceKey, "record", tags -> {
             warnIfLabelCollision(serviceKey, tags);
             setGauge(PROBE_SUCCESS_METRIC, tags, success ? 1d : 0d);
+            freshThisCycle.add(tags);
         });
     }
 
@@ -96,15 +105,33 @@ public class ProbeMetricsRecorder {
             return;
         }
         try {
-            setGauge(PROBE_SUCCESS_METRIC, acceptedTags(transportInfo), success ? 1d : 0d);
+            Tags tags = acceptedTags(transportInfo);
+            setGauge(PROBE_SUCCESS_METRIC, tags, success ? 1d : 0d);
+            freshThisCycle.add(tags);
         } catch (Exception e) {
             log.warn("Failed to record accepted probe metric for [{}]", serviceKey, e);
         }
     }
 
-    // for a probe no longer checked this cycle - without this its gauge keeps its last value
+    // permanent removal (e.g. decommissioning a domain-IP associate) - always removes the gauge,
+    // even if its tags got fresh data this cycle, since the target is gone for good either way
     public void removeProbe(Object serviceKey) {
+        removeProbe(serviceKey, false);
+    }
+
+    // for a probe no longer checked THIS cycle only - skips removal if its tags already have fresh
+    // data this cycle (from a colliding sibling target sharing the same resolved tags), so that a
+    // crashing sibling's stale-clearing can't wipe another target's just-recorded gauge
+    public void removeStaleProbe(Object serviceKey) {
+        removeProbe(serviceKey, true);
+    }
+
+    private void removeProbe(Object serviceKey, boolean skipIfFresh) {
         withTags(serviceKey, "remove", tags -> {
+            if (skipIfFresh && freshThisCycle.contains(tags)) {
+                log.debug("Skipping removal of probe metric for [{}] - tags {} already have fresh data this cycle from a colliding target", serviceKey, tags);
+                return;
+            }
             removeGauge(PROBE_SUCCESS_METRIC, tags);
             Set<String> actions = actionsByBaseTags.remove(tags);
             if (actions != null) {
@@ -112,6 +139,7 @@ public class ProbeMetricsRecorder {
             }
             tagsOwners.remove(tags);
             warnedCollisions.remove(tags);
+            freshThisCycle.remove(tags); // a permanent removal must not leave a stale fresh-flag behind
         });
         if (serviceKey instanceof TransportInfo transportInfo) {
             // otherwise this cache leaks the same way the gauges just did
@@ -119,13 +147,29 @@ public class ProbeMetricsRecorder {
         }
     }
 
-    // doesn't evict acceptedTagsCache - this runs every healthy cycle, which would defeat the cache
+    // permanent removal - see removeProbe(Object) for why this never skips
     public void removeAcceptedProbe(Object serviceKey) {
+        removeAcceptedProbe(serviceKey, false);
+    }
+
+    // for an accepted-fallback probe no longer checked THIS cycle only - see removeStaleProbe(Object)
+    public void removeStaleAcceptedProbe(Object serviceKey) {
+        removeAcceptedProbe(serviceKey, true);
+    }
+
+    // doesn't evict acceptedTagsCache - this runs every healthy cycle, which would defeat the cache
+    private void removeAcceptedProbe(Object serviceKey, boolean skipIfFresh) {
         if (!enabled || !(serviceKey instanceof TransportInfo transportInfo)) {
             return;
         }
         try {
-            removeGauge(PROBE_SUCCESS_METRIC, acceptedTags(transportInfo));
+            Tags tags = acceptedTags(transportInfo);
+            if (skipIfFresh && freshThisCycle.contains(tags)) {
+                log.debug("Skipping removal of accepted probe metric for [{}] - tags {} already have fresh data this cycle from a colliding target", transportInfo, tags);
+                return;
+            }
+            removeGauge(PROBE_SUCCESS_METRIC, tags);
+            freshThisCycle.remove(tags);
         } catch (Exception e) {
             log.warn("Failed to remove accepted probe metric for [{}]", transportInfo, e);
         }

@@ -184,7 +184,7 @@ public class ProbeMetricsRecorderTest {
     }
 
     @Test
-    public void removeProbe_alsoRemovesStageDurationGauges() {
+    public void removeStaleProbe_alsoRemovesStageDurationGauges() {
         ProbeMetricsRecorder recorder = recorder(true);
         TransportInfo target = transportInfo(TransportType.MQTT, "tcp://acme.example.com:1883");
         recorder.recordProbe(target, true);
@@ -192,7 +192,8 @@ public class ProbeMetricsRecorderTest {
         recorder.recordActionDuration(target, "ws_update", 700);
         assertThat(registry.getMeters()).hasSize(3); // success + 2 stages
 
-        recorder.removeProbe(target);
+        recorder.startCycle(); // next cycle - this target's fresh-this-cycle protection no longer applies
+        recorder.removeStaleProbe(target);
 
         assertThat(registry.getMeters()).isEmpty();
     }
@@ -218,6 +219,9 @@ public class ProbeMetricsRecorderTest {
 
     @Test
     public void removeProbe_removesGaugeForRetiredTarget() {
+        // decommissioning (e.g. reconcileAssociates dropping a domain-IP associate) uses the plain,
+        // unguarded removeProbe - it must remove the gauge unconditionally, even if the target's tags
+        // got fresh data THIS SAME cycle (e.g. a successful check() just before being decommissioned)
         ProbeMetricsRecorder recorder = recorder(true);
         TransportInfo retired = transportInfo(TransportType.MQTT, "tcp://acme.example.com:1883");
         recorder.recordProbe(retired, true);
@@ -230,11 +234,12 @@ public class ProbeMetricsRecorderTest {
     }
 
     @Test
-    public void removeProbe_thenRecordProbeAgain_reregistersGaugeCleanly() {
+    public void removeStaleProbe_thenRecordProbeAgain_reregistersGaugeCleanly() {
         ProbeMetricsRecorder recorder = recorder(true);
         TransportInfo target = transportInfo(TransportType.MQTT, "tcp://acme.example.com:1883");
         recorder.recordProbe(target, true);
-        recorder.removeProbe(target);
+        recorder.startCycle(); // next cycle - this target's fresh-this-cycle protection no longer applies
+        recorder.removeStaleProbe(target);
 
         recorder.recordProbe(target, false);
 
@@ -273,7 +278,9 @@ public class ProbeMetricsRecorderTest {
     public void removeProbe_withFreshButEqualTransportInfo_stillRemovesGauge() {
         // recordProbe/removeProbe are called with independently-constructed TransportInfo instances in
         // production (BaseHealthChecker's cached field vs. a fresh BaseHealthChecker.getInfo() call) -
-        // only their type+baseUrl need to match, not object identity
+        // only their type+baseUrl need to match, not object identity. This is the decommissioning path
+        // (reconcileAssociates uses getCachedInfo()), so it's unguarded and must remove unconditionally,
+        // even though the tags are still fresh from the recordProbe call moments earlier this cycle.
         ProbeMetricsRecorder recorder = recorder(true);
         recorder.recordProbe(transportInfo(TransportType.MQTT, "tcp://acme.example.com:1883"), true);
 
@@ -297,6 +304,51 @@ public class ProbeMetricsRecorderTest {
 
         assertThat(registry.get("probe_success").tags("check", "mqtt").gauge().value()).isEqualTo(0d);
         assertThat(registry.getMeters()).hasSize(1); // still one series, not two - the collision is real
+    }
+
+    @Test
+    public void removeStaleProbe_ofCollidingSibling_doesNotWipeFreshDataRecordedThisCycle() {
+        // A and B collide onto identical tags (same type+baseUrl, differing only by queue). If A
+        // succeeds and records fresh data this cycle, and B's own removeStaleProbe fires afterward
+        // (e.g. because B crashed and checkedCount-based clearing targets it), A's fresh data must
+        // survive - otherwise a crashing sibling silently wipes a healthy target's just-recorded gauge.
+        ProbeMetricsRecorder recorder = recorder(true);
+        TransportInfo a = transportInfo(TransportType.MQTT, "tcp://acme.example.com:1883", "QueueA");
+        TransportInfo b = transportInfo(TransportType.MQTT, "tcp://acme.example.com:1883", "QueueB");
+
+        recorder.recordProbe(a, true);
+        recorder.removeStaleProbe(b);
+
+        assertThat(registry.get("probe_success").tags("check", "mqtt").gauge().value()).isEqualTo(1d);
+        assertThat(registry.getMeters()).hasSize(1);
+    }
+
+    @Test
+    public void removeStaleAcceptedProbe_ofCollidingSibling_doesNotWipeFreshDataRecordedThisCycle() {
+        // same collision protection, for the accepted-fallback series
+        ProbeMetricsRecorder recorder = recorder(true);
+        TransportInfo a = transportInfo(TransportType.MQTT, "tcp://acme.example.com:1883", "QueueA");
+        TransportInfo b = transportInfo(TransportType.MQTT, "tcp://acme.example.com:1883", "QueueB");
+
+        recorder.recordAcceptedProbe(a, true);
+        recorder.removeStaleAcceptedProbe(b);
+
+        assertThat(registry.get("probe_success").tags("check", "mqtt", "kind", "accepted").gauge().value()).isEqualTo(1d);
+        assertThat(registry.getMeters()).hasSize(1);
+    }
+
+    @Test
+    public void removeStaleProbe_withoutPriorRecordThisCycle_stillRemovesGauge() {
+        // normal, non-colliding stale removal - freshThisCycle is empty (either nothing was recorded,
+        // or startCycle() reset it), so removal must proceed exactly as before this fix
+        ProbeMetricsRecorder recorder = recorder(true);
+        TransportInfo target = transportInfo(TransportType.MQTT, "tcp://acme.example.com:1883");
+        recorder.recordProbe(target, true);
+        recorder.startCycle();
+
+        recorder.removeStaleProbe(target);
+
+        assertThat(registry.getMeters()).isEmpty();
     }
 
     @Test
@@ -400,29 +452,31 @@ public class ProbeMetricsRecorderTest {
     }
 
     @Test
-    public void removeProbe_noLongerRemovesAcceptedGauge() {
-        // removeProbe() no longer touches kind="accepted" - only removeAcceptedProbe() does
+    public void removeStaleProbe_noLongerRemovesAcceptedGauge() {
+        // removeStaleProbe() no longer touches kind="accepted" - only the accepted variants do
         ProbeMetricsRecorder recorder = recorder(true);
         TransportInfo target = transportInfo(TransportType.MQTT, "tcp://acme.example.com:1883");
         recorder.recordProbe(target, true);
         recorder.recordAcceptedProbe(target, true);
         assertThat(registry.getMeters()).hasSize(2);
 
-        recorder.removeProbe(target);
+        recorder.startCycle(); // next cycle - this target's fresh-this-cycle protection no longer applies
+        recorder.removeStaleProbe(target);
 
         assertThat(registry.getMeters()).hasSize(1);
         assertThat(registry.get("probe_success").tags("kind", "accepted").gauge().value()).isEqualTo(1d);
     }
 
     @Test
-    public void removeAcceptedProbe_removesOnlyAcceptedGauge_leavesProbeGaugeUntouched() {
+    public void removeStaleAcceptedProbe_removesOnlyAcceptedGauge_leavesProbeGaugeUntouched() {
         ProbeMetricsRecorder recorder = recorder(true);
         TransportInfo target = transportInfo(TransportType.MQTT, "tcp://acme.example.com:1883");
         recorder.recordProbe(target, true);
         recorder.recordAcceptedProbe(target, true);
         assertThat(registry.getMeters()).hasSize(2);
 
-        recorder.removeAcceptedProbe(target);
+        recorder.startCycle(); // next cycle - this target's fresh-this-cycle protection no longer applies
+        recorder.removeStaleAcceptedProbe(target);
 
         assertThat(registry.getMeters()).hasSize(1);
         assertThat(registry.get("probe_success").tags("kind", "probe").gauge().value()).isEqualTo(1d);

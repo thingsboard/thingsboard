@@ -142,6 +142,9 @@ monitoring:
       # Expose a pull-based /metrics endpoint via a lightweight JDK HttpServer (no servlet container)
       enabled: '${METRICS_PROMETHEUS_ENABLED:false}'
       port: '${METRICS_PROMETHEUS_PORT:9100}'
+      # Interface to bind the /metrics HTTP server to - 0.0.0.0 (default) for all interfaces, or e.g.
+      # 127.0.0.1 to restrict access to a local reverse proxy, since this endpoint has no built-in authentication
+      bind_address: '${METRICS_PROMETHEUS_BIND_ADDRESS:0.0.0.0}'
 
   notifications:
     message_prefix: '${NOTIFICATION_MESSAGE_PREFIX:}'

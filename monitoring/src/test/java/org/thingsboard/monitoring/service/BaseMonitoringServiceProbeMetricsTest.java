@@ -121,7 +121,7 @@ public class BaseMonitoringServiceProbeMetricsTest {
 
         service.runChecks();
 
-        verify(probeMetricsRecorder).removeProbe(eq(MonitoredServiceKey.WS));
+        verify(probeMetricsRecorder).removeStaleProbe(eq(MonitoredServiceKey.WS));
     }
 
     @Test
@@ -144,7 +144,7 @@ public class BaseMonitoringServiceProbeMetricsTest {
 
         // scoped to the transport healthChecker's own info - distinct from the WS-key removal from Fix A,
         // which is asserted separately by loginFailure_removesWsProbeMetric
-        verify(probeMetricsRecorder, times(1)).removeProbe(transportInfo);
+        verify(probeMetricsRecorder, times(1)).removeStaleProbe(transportInfo);
     }
 
     @Test
@@ -194,7 +194,7 @@ public class BaseMonitoringServiceProbeMetricsTest {
 
         service.runChecks();
 
-        verify(probeMetricsRecorder, times(1)).removeProbe(any());
+        verify(probeMetricsRecorder, times(1)).removeStaleProbe(any());
     }
 
     @Test
@@ -236,7 +236,7 @@ public class BaseMonitoringServiceProbeMetricsTest {
 
         service.runChecks();
 
-        verify(probeMetricsRecorder, times(1)).removeProbe(any());
+        verify(probeMetricsRecorder, times(1)).removeStaleProbe(any());
     }
 
     @Test
@@ -270,6 +270,7 @@ public class BaseMonitoringServiceProbeMetricsTest {
         service.runChecks();
 
         verify(probeMetricsRecorder, never()).removeProbe(any());
+        verify(probeMetricsRecorder, never()).removeStaleProbe(any());
     }
 
     @Test
@@ -293,7 +294,7 @@ public class BaseMonitoringServiceProbeMetricsTest {
 
         service.runChecks();
 
-        verify(probeMetricsRecorder, times(1)).removeAcceptedProbe(any());
+        verify(probeMetricsRecorder, times(1)).removeStaleAcceptedProbe(any());
     }
 
     @Test
@@ -311,7 +312,7 @@ public class BaseMonitoringServiceProbeMetricsTest {
 
         service.runChecks();
 
-        verify(probeMetricsRecorder, times(1)).removeAcceptedProbe(associateInfo);
+        verify(probeMetricsRecorder, times(1)).removeStaleAcceptedProbe(associateInfo);
     }
 
     @Test
@@ -325,7 +326,7 @@ public class BaseMonitoringServiceProbeMetricsTest {
 
         service.runChecks();
 
-        verify(probeMetricsRecorder, times(1)).removeAcceptedProbe(any());
+        verify(probeMetricsRecorder, times(1)).removeStaleAcceptedProbe(any());
     }
 
     @Test
@@ -337,7 +338,7 @@ public class BaseMonitoringServiceProbeMetricsTest {
 
         service.runChecks();
 
-        verify(probeMetricsRecorder, times(1)).removeAcceptedProbe(any());
+        verify(probeMetricsRecorder, times(1)).removeStaleAcceptedProbe(any());
     }
 
     @Test
@@ -361,6 +362,7 @@ public class BaseMonitoringServiceProbeMetricsTest {
         assertDoesNotThrow(() -> service.runChecks());
 
         verify(probeMetricsRecorder, never()).removeProbe(firstInfo);
+        verify(probeMetricsRecorder, never()).removeStaleProbe(firstInfo);
     }
 
     @Test
@@ -388,8 +390,52 @@ public class BaseMonitoringServiceProbeMetricsTest {
 
         assertDoesNotThrow(() -> service.runChecks());
 
-        verify(probeMetricsRecorder, never()).removeProbe(firstInfo);
-        verify(probeMetricsRecorder, times(1)).removeProbe(secondInfo);
+        verify(probeMetricsRecorder, never()).removeStaleProbe(firstInfo);
+        verify(probeMetricsRecorder, times(1)).removeStaleProbe(secondInfo);
+    }
+
+    @Test
+    public void reconcileAssociates_decommissionedAssociate_removesItsMetricsUnconditionally() throws Exception {
+        // reconcileAssociates() must call the plain (unguarded) removeProbe/removeAcceptedProbe, not
+        // the stale-clearing removeStaleProbe/removeStaleAcceptedProbe variants: a decommissioned
+        // associate can have completed its own check() (via the real BaseHealthChecker, covered
+        // separately by BaseHealthCheckerProbeMetricsTest) and recorded fresh data earlier this very
+        // cycle - its metric must still be removed for good, not silently kept alive by the
+        // same-cycle freshness guard that removeStaleProbe/removeStaleAcceptedProbe apply.
+        TransportMonitoringTarget target = new TransportMonitoringTarget();
+        target.setCheckDomainIps(true);
+        target.setBaseUrl("tcp://127.0.0.1:1883"); // IP literal - deterministic, no real DNS lookup
+        target.setDevice(new org.thingsboard.monitoring.config.transport.DeviceConfig()); // avoids an
+        // unrelated NPE in the pre-existing stopHealthChecker(healthChecker) call (out of scope here)
+        when(healthChecker.getTarget()).thenReturn(target);
+
+        BaseHealthChecker<TransportMonitoringConfig, TransportMonitoringTarget> current =
+                mock(BaseHealthChecker.class);
+        BaseHealthChecker<TransportMonitoringConfig, TransportMonitoringTarget> decommissioned =
+                mock(BaseHealthChecker.class);
+        Object decommissionedInfo = new Object();
+        when(decommissioned.getCachedInfo()).thenReturn(decommissionedInfo);
+
+        java.util.Map<String, BaseHealthChecker<TransportMonitoringConfig, TransportMonitoringTarget>> associates =
+                new java.util.HashMap<>();
+        associates.put("tcp://127.0.0.1:1883", current); // still resolves - untouched by reconciliation
+        associates.put("old-decommissioned-ip", decommissioned); // no longer resolves - must be removed
+        when(healthChecker.getAssociates()).thenReturn(associates);
+
+        when(tbClient.logIn()).thenReturn("token");
+        when(wsClientFactory.createClient("token")).thenReturn(wsClient);
+        when(wsClient.waitForReply()).thenReturn(null);
+
+        service.runChecks();
+
+        verify(probeMetricsRecorder).removeProbe(eq(decommissionedInfo));
+        verify(probeMetricsRecorder).removeAcceptedProbe(eq(decommissionedInfo));
+        // removeStaleAcceptedProbe(decommissionedInfo) legitimately also fires here, from the
+        // unconditional per-cycle accepted-fallback sweep over all associates (see
+        // successfulRun_removesAcceptedProbeForAssociatesToo) - unrelated to decommissioning, so it's
+        // not asserted against here. removeStaleProbe never applies to an associate on a successful
+        // run though, so that one is safe to assert against.
+        verify(probeMetricsRecorder, never()).removeStaleProbe(eq(decommissionedInfo));
     }
 
     @Test
@@ -410,6 +456,17 @@ public class BaseMonitoringServiceProbeMetricsTest {
         service.runChecks();
 
         verify(probeMetricsRecorder, times(1)).recordHeartbeat();
+    }
+
+    @Test
+    public void runChecks_alwaysStartsCycleOnceBeforeAnyRecordOrRemoveCall() throws Exception {
+        // startCycle() resets the collision-protection bookkeeping - it must run before any
+        // recordProbe/removeProbe call this cycle, on every outcome, not just the successful path
+        when(tbClient.logIn()).thenThrow(new RuntimeException("login failed"));
+
+        service.runChecks();
+
+        verify(probeMetricsRecorder, times(1)).startCycle();
     }
 
 

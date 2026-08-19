@@ -41,12 +41,15 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Configuration
 @Slf4j
 public class ProbeMetricsRegistryConfig {
 
     private HttpServer prometheusServer;
+    private ExecutorService prometheusExecutor;
 
     @Bean
     public MeterRegistry probeMeterRegistry(
@@ -56,15 +59,23 @@ public class ProbeMetricsRegistryConfig {
             @Value("${monitoring.metrics.otlp.alerting_enabled:false}") boolean otlpAlertingEnabled,
             @Value("${monitoring.metrics.prometheus.enabled:false}") boolean prometheusEnabled,
             @Value("${monitoring.metrics.prometheus.port:9100}") int prometheusPort,
+            @Value("${monitoring.metrics.prometheus.bind_address:0.0.0.0}") String prometheusBindAddress,
             MonitoringReporter reporter) throws IOException {
         CompositeMeterRegistry composite = new CompositeMeterRegistry();
-        if (otlpEnabled) {
-            composite.add(createOtlpRegistry(otlpEndpoint, otlpStepMs, otlpAlertingEnabled, reporter));
-            log.info("Probe metrics: OTLP export enabled, pushing to {}", otlpEndpoint);
-        }
-        if (prometheusEnabled) {
-            composite.add(createPrometheusRegistry(prometheusPort));
-            log.info("Probe metrics: Prometheus scrape endpoint enabled on port {}", prometheusPort);
+        try {
+            if (otlpEnabled) {
+                composite.add(createOtlpRegistry(otlpEndpoint, otlpStepMs, otlpAlertingEnabled, reporter));
+                log.info("Probe metrics: OTLP export enabled, pushing to {}", otlpEndpoint);
+            }
+            if (prometheusEnabled) {
+                composite.add(createPrometheusRegistry(prometheusPort, prometheusBindAddress));
+                log.info("Probe metrics: Prometheus scrape endpoint enabled on port {}", prometheusPort);
+            }
+        } catch (Exception e) {
+            // an already-started OTLP registry's internal publish thread would otherwise leak and
+            // block JVM exit, defeating the intended "fail loud" crash on Prometheus bind failure
+            composite.close();
+            throw e;
         }
         return composite;
     }
@@ -114,9 +125,13 @@ public class ProbeMetricsRegistryConfig {
         };
     }
 
-    private PrometheusMeterRegistry createPrometheusRegistry(int port) throws IOException {
+    private PrometheusMeterRegistry createPrometheusRegistry(int port, String bindAddress) throws IOException {
+        // JDK HttpServer has no default request/response timeout - without these, a single slow/stalled
+        // client connection can hang the (otherwise single-threaded) server forever
+        System.setProperty("sun.net.httpserver.maxReqTime", "30");
+        System.setProperty("sun.net.httpserver.maxRspTime", "30");
         PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
-        prometheusServer = HttpServer.create(new InetSocketAddress(port), 0);
+        prometheusServer = HttpServer.create(new InetSocketAddress(bindAddress, port), 0);
         prometheusServer.createContext("/metrics", exchange -> {
             byte[] response = registry.scrape().getBytes(StandardCharsets.UTF_8);
             exchange.getResponseHeaders().set("Content-Type", "text/plain; version=0.0.4; charset=utf-8");
@@ -125,7 +140,8 @@ public class ProbeMetricsRegistryConfig {
                 os.write(response);
             }
         });
-        prometheusServer.setExecutor(null);
+        prometheusExecutor = Executors.newFixedThreadPool(4);
+        prometheusServer.setExecutor(prometheusExecutor);
         prometheusServer.start();
         return registry;
     }
@@ -134,6 +150,10 @@ public class ProbeMetricsRegistryConfig {
     public void shutdown() {
         if (prometheusServer != null) {
             prometheusServer.stop(0);
+        }
+        if (prometheusExecutor != null) {
+            // HttpServer.stop() doesn't shut down a caller-supplied executor - we own its lifecycle
+            prometheusExecutor.shutdownNow();
         }
     }
 

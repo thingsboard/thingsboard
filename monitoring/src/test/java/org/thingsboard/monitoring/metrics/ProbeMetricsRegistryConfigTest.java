@@ -65,7 +65,7 @@ public class ProbeMetricsRegistryConfigTest {
     @Test
     public void whenBothDisabled_registryHasNoChildren() throws IOException {
         registry = config.probeMeterRegistry(false, "http://localhost:4318/v1/metrics", 60000, false,
-                false, 19100, reporter);
+                false, 19100, "0.0.0.0", reporter);
         assertThat(registry).isInstanceOf(CompositeMeterRegistry.class);
         assertThat(((CompositeMeterRegistry) registry).getRegistries()).isEmpty();
     }
@@ -73,7 +73,7 @@ public class ProbeMetricsRegistryConfigTest {
     @Test
     public void whenOtlpEnabled_compositeContainsOtlpRegistry() throws IOException {
         registry = config.probeMeterRegistry(true, "http://localhost:4318/v1/metrics", 60000, false,
-                false, 19101, reporter);
+                false, 19101, "0.0.0.0", reporter);
         assertThat(((CompositeMeterRegistry) registry).getRegistries())
                 .hasOnlyElementsOfType(OtlpMeterRegistry.class);
     }
@@ -81,7 +81,7 @@ public class ProbeMetricsRegistryConfigTest {
     @Test
     public void whenPrometheusEnabled_metricsEndpointServesScrapeOutput() throws Exception {
         registry = config.probeMeterRegistry(false, "http://localhost:4318/v1/metrics", 60000, false,
-                true, 19102, reporter);
+                true, 19102, "0.0.0.0", reporter);
         assertThat(((CompositeMeterRegistry) registry).getRegistries())
                 .hasOnlyElementsOfType(PrometheusMeterRegistry.class);
 
@@ -96,10 +96,25 @@ public class ProbeMetricsRegistryConfigTest {
     }
 
     @Test
+    public void whenBindAddressConfigured_metricsEndpointStillServesOnThatAddress() throws Exception {
+        registry = config.probeMeterRegistry(false, "http://localhost:4318/v1/metrics", 60000, false,
+                true, 19107, "127.0.0.1", reporter);
+
+        registry.counter("test_probe_metrics_registry_counter").increment();
+
+        HttpResponse<String> response = HttpClient.newHttpClient().send(
+                HttpRequest.newBuilder(URI.create("http://127.0.0.1:19107/metrics")).GET().build(),
+                HttpResponse.BodyHandlers.ofString());
+
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.body()).contains("test_probe_metrics_registry_counter");
+    }
+
+    @Test
     public void otlpAlertingDisabled_pushFailure_neverReportsToReporter() throws IOException {
         // port 1 is not listening - the push is guaranteed to fail
         registry = config.probeMeterRegistry(true, "http://localhost:1/v1/metrics", 60000, false,
-                false, 19103, reporter);
+                false, 19103, "0.0.0.0", reporter);
         registry.counter("test_counter").increment(); // publish() has nothing to send otherwise
 
         ReflectionTestUtils.invokeMethod(otlpRegistryOf(registry), "publish");
@@ -110,7 +125,7 @@ public class ProbeMetricsRegistryConfigTest {
     @Test
     public void otlpAlertingEnabled_pushFailure_reportsServiceFailure() throws IOException {
         registry = config.probeMeterRegistry(true, "http://localhost:1/v1/metrics", 60000, true,
-                false, 19104, reporter);
+                false, 19104, "0.0.0.0", reporter);
         registry.counter("test_counter").increment(); // publish() has nothing to send otherwise
 
         ReflectionTestUtils.invokeMethod(otlpRegistryOf(registry), "publish");
@@ -128,7 +143,7 @@ public class ProbeMetricsRegistryConfigTest {
         fakeCollector.start();
 
         registry = config.probeMeterRegistry(true, "http://localhost:19205/v1/metrics", 60000, true,
-                false, 19106, reporter);
+                false, 19106, "0.0.0.0", reporter);
         registry.counter("test_counter").increment(); // publish() has nothing to send otherwise
 
         ReflectionTestUtils.invokeMethod(otlpRegistryOf(registry), "publish");
