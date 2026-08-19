@@ -139,6 +139,7 @@
   "resolutions": {
     "@babel/core": "7.29.7",
     "esbuild": "0.28.1",
+    "less": "4.9.0",
     "js-beautify/**/minimatch": "^9.0.7"
   }
 }
