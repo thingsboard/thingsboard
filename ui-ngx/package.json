@@ -144,6 +144,7 @@
     "vite": "7.3.5",
     "rollup": "4.59.0",
     "piscina": "5.2.0",
+    "postcss": "8.5.23",
     "@angular-devkit/build-angular/http-proxy-middleware": "3.0.7",
     "jquery.terminal/**/form-data": ">=4.0.4",
     "js-beautify/**/minimatch": "^9.0.7"
