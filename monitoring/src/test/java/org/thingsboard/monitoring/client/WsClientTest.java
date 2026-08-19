@@ -44,7 +44,16 @@ public class WsClientTest {
 
         client.authenticate(TbClient.AuthMode.API_KEY, "my-api-key");
 
-        CmdsWrapper wrapper = captureSentWrapper(client);
+        String json = captureSentJson(client);
+        // wire-level assertions: the unused field must be omitted entirely, not just null-valued
+        // (some deployed server versions predate the apiKey field and reject the whole message
+        // under FAIL_ON_UNKNOWN_PROPERTIES if it's present at all, even as an explicit null -
+        // round-tripping through CmdsWrapper alone can't catch that, since "apiKey":null and an
+        // omitted apiKey key deserialize to the same Java object).
+        assertThat(json).contains("\"apiKey\"");
+        assertThat(json).doesNotContain("\"token\"");
+
+        CmdsWrapper wrapper = JacksonUtil.fromString(json, CmdsWrapper.class);
         assertThat(wrapper.getAuthCmd()).isNotNull();
         assertThat(wrapper.getAuthCmd().getApiKey()).isEqualTo("my-api-key");
         assertThat(wrapper.getAuthCmd().getToken()).isNull();
@@ -57,7 +66,12 @@ public class WsClientTest {
 
         client.authenticate(TbClient.AuthMode.LOGIN, "jwt-token");
 
-        CmdsWrapper wrapper = captureSentWrapper(client);
+        String json = captureSentJson(client);
+        // wire-level assertions: see comment in authenticate_apiKeyMode_sendsAuthCmdWithApiKeySet
+        assertThat(json).contains("\"token\"");
+        assertThat(json).doesNotContain("\"apiKey\"");
+
+        CmdsWrapper wrapper = JacksonUtil.fromString(json, CmdsWrapper.class);
         assertThat(wrapper.getAuthCmd()).isNotNull();
         assertThat(wrapper.getAuthCmd().getToken()).isEqualTo("jwt-token");
         assertThat(wrapper.getAuthCmd().getApiKey()).isNull();
@@ -83,10 +97,10 @@ public class WsClientTest {
         assertThat(wrapper.getCmds().get(0).getLatestCmd().getKeys()).hasSize(1);
     }
 
-    private CmdsWrapper captureSentWrapper(WsClient client) {
+    private String captureSentJson(WsClient client) {
         ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(client).send(captor.capture());
-        return JacksonUtil.fromString(captor.getValue(), CmdsWrapper.class);
+        return captor.getValue();
     }
 
 }
