@@ -116,6 +116,35 @@ public class ProbeLabelResolverTest {
     }
 
     @Test
+    public void resolveHostPort_bareIpv6Authority_keepsWholeAddressAndUsesDefaultPort() {
+        // no brackets -> getHost() is null, getAuthority() is the bare literal - don't mangle it
+        assertThat(ProbeLabelResolver.resolveHostPort(URI.create("tcp://2001:db8::1:1883"), 1883))
+                .isEqualTo("2001:db8::1:1883:1883");
+    }
+
+    @Test
+    public void resolveHostPort_bracketedIpv6WithPort_resolvedDirectlyByUri_notByFallback() {
+        assertThat(ProbeLabelResolver.resolveHostPort(URI.create("tcp://[2001:db8::1]:1883"), 1883))
+                .isEqualTo("[2001:db8::1]:1883");
+    }
+
+    @Test
+    public void resolveTransportLabels_nullBaseUrl_returnsNullInsteadOfThrowing() {
+        // URI.create(null) throws NullPointerException, not IllegalArgumentException
+        ProbeLabelResolver.ProbeLabels labels =
+                ProbeLabelResolver.resolveTransportLabels(TransportType.MQTT, null);
+        assertThat(labels).isNull();
+    }
+
+    @Test
+    public void resolveTransportLabels_malformedBaseUrl_returnsNullInsteadOfThrowing() {
+        // unescaped space makes URI.create() throw - must not propagate
+        ProbeLabelResolver.ProbeLabels labels =
+                ProbeLabelResolver.resolveTransportLabels(TransportType.MQTT, "tcp://tb mqtt:1883");
+        assertThat(labels).isNull();
+    }
+
+    @Test
     public void resolveLoginEndpoint_appliesLoginPathOnValidUrl() {
         String endpoint = ProbeLabelResolver.resolveLoginEndpoint("https://acme.example.com");
         assertThat(endpoint).isEqualTo("acme.example.com:443/api/auth/login");

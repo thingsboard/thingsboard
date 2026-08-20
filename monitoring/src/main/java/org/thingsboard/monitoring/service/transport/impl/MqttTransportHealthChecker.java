@@ -71,6 +71,15 @@ public class MqttTransportHealthChecker extends TransportHealthChecker<MqttTrans
     }
 
     @Override
+    protected void sendAcceptedTestPayload(String payload) throws Exception {
+        // force QoS 1 - at QoS 0 publish() never confirms broker receipt, defeating this fallback's purpose
+        MqttMessage message = new MqttMessage();
+        message.setPayload(payload.getBytes());
+        message.setQos(1);
+        mqttClient.publish(DEVICE_TELEMETRY_TOPIC, message);
+    }
+
+    @Override
     protected void destroyClient() throws Exception {
         if (mqttClient != null) {
             mqttClient.disconnect();

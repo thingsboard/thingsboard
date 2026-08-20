@@ -33,6 +33,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -180,22 +181,23 @@ public class BaseHealthCheckerProbeMetricsTest {
     }
 
     @Test
-    public void checkAccepted_neverReportsAnythingWhenSendSucceeds() {
-        // must never call serviceIsOk here - it shares check()'s service key, so an "ok" from this
-        // fallback alone could resolve/reset a real, still-open incident that only check() should clear
+    public void checkAccepted_reportsServiceIsOkUnderAcceptedKeyWhenSendSucceeds() {
+        // reports under its own "(accepted)" key, not info directly - so this weaker signal can
+        // recover on its own without ever resolving/reopening the real end-to-end check's incident
         checker.checkAccepted();
 
-        verify(reporter, never()).serviceIsOk(any());
+        verify(reporter).serviceIsOk(argThat(key -> key.toString().equals(INFO + " (accepted)")));
         verify(reporter, never()).serviceFailure(any(), any());
     }
 
     @Test
-    public void checkAccepted_reportsServiceFailureWhenSendThrows() {
+    public void checkAccepted_reportsServiceFailureUnderAcceptedKeyWhenSendThrows() {
         checker.failOnSend = true;
 
         checker.checkAccepted();
 
-        verify(reporter).serviceFailure(eq(INFO), any());
+        verify(reporter).serviceFailure(argThat(key -> key.toString().equals(INFO + " (accepted)")), any());
+        verify(reporter, never()).serviceFailure(eq(INFO), any());
         verify(reporter, never()).serviceIsOk(any());
     }
 
@@ -239,7 +241,8 @@ public class BaseHealthCheckerProbeMetricsTest {
         checker.checkAccepted();
 
         verify(probeMetricsRecorder, times(2)).recordAcceptedProbe(eq(INFO), eq(true));
-        verify(reporter, never()).serviceIsOk(any());
+        // checker and its associate each report serviceIsOk under their own "(accepted)" key
+        verify(reporter, times(2)).serviceIsOk(any());
     }
 
     private static class StubConfig implements MonitoringConfig<StubTarget> {

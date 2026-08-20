@@ -130,6 +130,7 @@ public class ProbeMetricsRecorder {
             if (tags == null) {
                 return;
             }
+            warnIfLabelCollision(serviceKey, tags);
             setGauge(PROBE_SUCCESS_METRIC, tags, success ? 1d : 0d);
             freshThisCycle.add(tags);
         } catch (Exception e) {
@@ -153,8 +154,9 @@ public class ProbeMetricsRecorder {
             if (actions != null) {
                 actions.forEach(action -> removeGauge(PROBE_DURATION_METRIC, tags.and("action", action)));
             }
-            tagsOwners.remove(tags);
-            warnedCollisions.remove(tags);
+            if (removal == Removal.PERMANENT) {
+                clearCollisionState(tags);
+            }
             freshThisCycle.remove(tags); // a permanent removal must not leave a stale fresh-flag behind
         });
         // only on permanent removal - a stale removal runs every unhealthy cycle and would defeat the cache
@@ -173,17 +175,22 @@ public class ProbeMetricsRecorder {
         }
         try {
             Tags tags = acceptedTags(transportInfo);
-            if (tags == null) {
-                return;
+            if (tags != null) {
+                if (removal == Removal.STALE_THIS_CYCLE && freshThisCycle.contains(tags)) {
+                    log.debug("Skipping removal of accepted probe metric for [{}] - tags {} already have fresh data this cycle from a colliding target", transportInfo, tags);
+                } else {
+                    removeGauge(PROBE_SUCCESS_METRIC, tags);
+                    freshThisCycle.remove(tags);
+                    if (removal == Removal.PERMANENT) {
+                        clearCollisionState(tags);
+                    }
+                }
             }
-            if (removal == Removal.STALE_THIS_CYCLE && freshThisCycle.contains(tags)) {
-                log.debug("Skipping removal of accepted probe metric for [{}] - tags {} already have fresh data this cycle from a colliding target", transportInfo, tags);
-                return;
-            }
-            removeGauge(PROBE_SUCCESS_METRIC, tags);
-            freshThisCycle.remove(tags);
+            // only on permanent removal - a stale removal runs every healthy cycle and would defeat
+            // the cache. Evicted unconditionally, even when tags resolved to null above, otherwise a
+            // decommissioned unresolvable target leaks its Optional.empty() entry here forever.
             if (removal == Removal.PERMANENT) {
-                acceptedTagsCache.remove(TransportTagKey.of(transportInfo)); // stale path would defeat the cache
+                acceptedTagsCache.remove(TransportTagKey.of(transportInfo));
             }
         } catch (Exception e) {
             log.warn("Failed to remove accepted probe metric for [{}]", transportInfo, e);
@@ -200,6 +207,11 @@ public class ProbeMetricsRecorder {
         } catch (Exception e) {
             log.warn("Failed to record monitoring heartbeat metric", e);
         }
+    }
+
+    private void clearCollisionState(Tags tags) {
+        tagsOwners.remove(tags);
+        warnedCollisions.remove(tags);
     }
 
     private void warnIfLabelCollision(Object serviceKey, Tags tags) {

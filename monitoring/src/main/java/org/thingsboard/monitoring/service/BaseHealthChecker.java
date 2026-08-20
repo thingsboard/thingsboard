@@ -28,6 +28,7 @@ import org.thingsboard.monitoring.config.MonitoringTarget;
 import org.thingsboard.monitoring.data.Latencies;
 import org.thingsboard.monitoring.data.MonitoredServiceKey;
 import org.thingsboard.monitoring.data.ServiceFailureException;
+import org.thingsboard.monitoring.data.notification.ShortNameProvider;
 import org.thingsboard.monitoring.metrics.ProbeMetricsRecorder;
 import org.thingsboard.monitoring.util.TbStopWatch;
 
@@ -128,18 +129,37 @@ public abstract class BaseHealthChecker<C extends MonitoringConfig, T extends Mo
         probeMetricsRecorder.removeActionDuration(info, ProbeMetricsRecorder.ACTION_WS_UPDATE);
     }
 
+    // separate identity from info, so this fallback's alerts/recoveries never touch check()'s own
+    // failuresCounter (and vice versa) - mirrors the metrics side's separate kind="accepted" tag
+    private record AcceptedProbeKey(Object delegate) implements ShortNameProvider {
+        @Override
+        public String getShortName() {
+            String base = delegate instanceof ShortNameProvider provider ? provider.getShortName() : String.valueOf(delegate);
+            return base + " (accepted)";
+        }
+
+        @Override
+        public String toString() {
+            return delegate + " (accepted)";
+        }
+    }
+
     // unlike check(), doesn't wait for WS/core confirmation - not final since LwM2M overrides it as
-    // a no-op. Never calls reporter.serviceIsOk: sharing check()'s key could wrongly resolve a real incident.
+    // a no-op. Reports under AcceptedProbeKey rather than info, so this weaker signal can alert and
+    // recover on its own without ever resolving (or reopening) the real end-to-end check's incident.
     protected void checkAccepted() {
+        Object acceptedKey = new AcceptedProbeKey(info);
         boolean success;
         try {
             initClient();
-            sendTestPayload(createTestPayload(UUID.randomUUID().toString(), ACCEPTED_TEST_TELEMETRY_KEY));
-            log.info("[{}] (accepted) is OK", info); // plain log, not reporter.serviceIsOk - see above
+            sendAcceptedTestPayload(createTestPayload(UUID.randomUUID().toString(), ACCEPTED_TEST_TELEMETRY_KEY));
             success = true;
         } catch (Throwable e) {
-            reporter.serviceFailure(info, e);
+            reporter.serviceFailure(acceptedKey, e);
             success = false;
+        }
+        if (success) {
+            reporter.serviceIsOk(acceptedKey);
         }
         probeMetricsRecorder.recordAcceptedProbe(info, success);
         associates.values().forEach(healthChecker -> healthChecker.checkAccepted());
@@ -181,6 +201,11 @@ public abstract class BaseHealthChecker<C extends MonitoringConfig, T extends Mo
     protected abstract String createTestPayload(String testValue, String telemetryKey);
 
     protected abstract void sendTestPayload(String payload) throws Exception;
+
+    // overridable so a transport whose regular send doesn't guarantee delivery confirmation (e.g. MQTT at QoS 0) can force one here
+    protected void sendAcceptedTestPayload(String payload) throws Exception {
+        sendTestPayload(payload);
+    }
 
     @PreDestroy
     protected abstract void destroyClient() throws Exception;

@@ -24,6 +24,7 @@ import org.thingsboard.monitoring.config.transport.TransportMonitoringTarget;
 import org.thingsboard.monitoring.config.transport.TransportType;
 import org.thingsboard.monitoring.data.MonitoredServiceKey;
 
+import java.util.Map;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -631,6 +632,94 @@ public class ProbeMetricsRecorderTest {
         recorder.recordProbe(target, true);
 
         assertThat(registry.getMeters()).isEmpty();
+    }
+
+    @Test
+    public void recordAcceptedProbe_warnsOnLabelCollision() {
+        // recordAcceptedProbe must run the same collision check recordProbe does - two targets
+        // colliding on kind="accepted" tags silently overwriting each other is just as bad as the
+        // kind="probe" case
+        ProbeMetricsRecorder recorder = recorder(true);
+        TransportInfo first = transportInfo(TransportType.MQTT, "tcp://acme.example.com:1883", "QueueA");
+        TransportInfo second = transportInfo(TransportType.MQTT, "tcp://acme.example.com:1883", "QueueB");
+        Set<?> warnedCollisions = (Set<?>) ReflectionTestUtils.getField(recorder, "warnedCollisions");
+
+        recorder.recordAcceptedProbe(first, true);
+        assertThat(warnedCollisions).isEmpty();
+
+        recorder.recordAcceptedProbe(second, false);
+
+        assertThat(warnedCollisions).hasSize(1);
+        assertThat(registry.get("probe_success").tags("kind", "accepted").gauge().value()).isEqualTo(0d);
+        assertThat(registry.getMeters()).hasSize(1); // still one series, not two - the collision is real
+    }
+
+    @Test
+    public void removeProbe_staleThisCycle_doesNotClearWarnedCollisions() {
+        // a login/WS outage triggers STALE_THIS_CYCLE clearing every unhealthy cycle - that must not
+        // forget an already-warned collision, otherwise the same collision re-warns on every recovery
+        ProbeMetricsRecorder recorder = recorder(true);
+        TransportInfo first = transportInfo(TransportType.MQTT, "tcp://acme.example.com:1883", "QueueA");
+        TransportInfo second = transportInfo(TransportType.MQTT, "tcp://acme.example.com:1883", "QueueB");
+        recorder.recordProbe(first, true);
+        recorder.recordProbe(second, false);
+        Set<?> warnedCollisions = (Set<?>) ReflectionTestUtils.getField(recorder, "warnedCollisions");
+        assertThat(warnedCollisions).hasSize(1);
+
+        recorder.startCycle();
+        recorder.removeProbe(second, ProbeMetricsRecorder.Removal.STALE_THIS_CYCLE);
+
+        assertThat(warnedCollisions).hasSize(1); // stale removal must leave the dedup entry alone
+    }
+
+    @Test
+    public void removeProbe_permanent_clearsWarnedCollisions() {
+        // decommissioning one of the colliding targets for good should let the collision warn again
+        // if a new target later collides on the same tags
+        ProbeMetricsRecorder recorder = recorder(true);
+        TransportInfo first = transportInfo(TransportType.MQTT, "tcp://acme.example.com:1883", "QueueA");
+        TransportInfo second = transportInfo(TransportType.MQTT, "tcp://acme.example.com:1883", "QueueB");
+        recorder.recordProbe(first, true);
+        recorder.recordProbe(second, false);
+        Set<?> warnedCollisions = (Set<?>) ReflectionTestUtils.getField(recorder, "warnedCollisions");
+        assertThat(warnedCollisions).hasSize(1);
+
+        recorder.removeProbe(second, ProbeMetricsRecorder.Removal.PERMANENT);
+
+        assertThat(warnedCollisions).isEmpty();
+    }
+
+    @Test
+    public void removeAcceptedProbe_staleThisCycle_doesNotEvictAcceptedTagsCacheForUnresolvableTarget() {
+        // mirrors schemelessTransportBaseUrl_staleRemoval_doesNotEvictWarnedUnresolvable, for the
+        // accepted-fallback's own negative-resolution cache
+        ProbeMetricsRecorder recorder = recorder(true);
+        TransportInfo target = transportInfo(TransportType.MQTT, "acme.example.com:1883");
+        Map<?, ?> acceptedTagsCache = (Map<?, ?>) ReflectionTestUtils.getField(recorder, "acceptedTagsCache");
+
+        recorder.recordAcceptedProbe(target, true);
+        assertThat(acceptedTagsCache).hasSize(1);
+
+        recorder.startCycle();
+        recorder.removeAcceptedProbe(target, ProbeMetricsRecorder.Removal.STALE_THIS_CYCLE);
+
+        assertThat(acceptedTagsCache).hasSize(1); // stale removal must not defeat the negative cache
+    }
+
+    @Test
+    public void removeAcceptedProbe_permanent_evictsAcceptedTagsCacheForUnresolvableTarget() {
+        // a decommissioned target whose baseUrl never resolved must not leak its Optional.empty()
+        // entry in acceptedTagsCache forever - the tags==null early exit must not skip this eviction
+        ProbeMetricsRecorder recorder = recorder(true);
+        TransportInfo target = transportInfo(TransportType.MQTT, "acme.example.com:1883");
+        Map<?, ?> acceptedTagsCache = (Map<?, ?>) ReflectionTestUtils.getField(recorder, "acceptedTagsCache");
+
+        recorder.recordAcceptedProbe(target, true);
+        assertThat(acceptedTagsCache).hasSize(1);
+
+        recorder.removeAcceptedProbe(target, ProbeMetricsRecorder.Removal.PERMANENT);
+
+        assertThat(acceptedTagsCache).isEmpty();
     }
 
 }

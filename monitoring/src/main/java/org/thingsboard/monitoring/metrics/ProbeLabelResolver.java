@@ -45,7 +45,12 @@ public final class ProbeLabelResolver {
     // is a stateless utility, so warning-dedup across repeated calls for the same target is the
     // caller's (ProbeMetricsRecorder's) responsibility, not this class's
     public static ProbeLabels resolveTransportLabels(TransportType type, String baseUrl) {
-        URI uri = URI.create(baseUrl);
+        URI uri;
+        try {
+            uri = URI.create(baseUrl);
+        } catch (IllegalArgumentException | NullPointerException e) {
+            return null; // malformed or null baseUrl - treated the same as unresolvable below
+        }
         String checkType = resolveCheckType(type, uri);
         String endpoint = resolveEndpoint(uri, checkType);
         if (endpoint == null) {
@@ -119,16 +124,21 @@ public final class ProbeLabelResolver {
                 return null;
             }
             String hostPort = authority.contains("@") ? authority.substring(authority.lastIndexOf('@') + 1) : authority;
-            int colonIdx = hostPort.lastIndexOf(':');
-            if (colonIdx != -1) {
-                host = hostPort.substring(0, colonIdx);
-                try {
-                    port = Integer.parseInt(hostPort.substring(colonIdx + 1));
-                } catch (NumberFormatException e) {
-                    port = -1;
-                }
-            } else {
+            if (hostPort.indexOf(':') != hostPort.lastIndexOf(':')) {
+                // multiple colons = bare IPv6 literal, not host:port - don't mangle it by splitting
                 host = hostPort;
+            } else {
+                int colonIdx = hostPort.lastIndexOf(':');
+                if (colonIdx != -1) {
+                    host = hostPort.substring(0, colonIdx);
+                    try {
+                        port = Integer.parseInt(hostPort.substring(colonIdx + 1));
+                    } catch (NumberFormatException e) {
+                        port = -1;
+                    }
+                } else {
+                    host = hostPort;
+                }
             }
         }
         return host + ":" + (port != -1 ? port : defaultPort);
