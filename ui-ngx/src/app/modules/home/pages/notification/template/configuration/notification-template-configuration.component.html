@@ -194,7 +194,7 @@
                      [class.tb-error]="(interacted || templateConfigurationForm.get('EMAIL.body').touched) && templateConfigurationForm.get('EMAIL.body').hasError('required')"
                      translate>notification.message
           </mat-label>
-          <editor [init]="tinyMceOptions" formControlName="body"></editor>
+          <editor [init]="hugeRteOptions" formControlName="body"></editor>
           @if ((interacted || templateConfigurationForm.get('EMAIL.body').touched) && templateConfigurationForm.get('EMAIL.body').hasError('required')) {
             <mat-error class="tb-mat-error">{{ 'notification.message-required' | translate }}</mat-error>
           }
