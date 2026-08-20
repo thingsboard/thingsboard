@@ -41,19 +41,40 @@ public final class ProbeLabelResolver {
     public record ProbeLabels(String check, String endpoint) {
     }
 
+    // returns null (rather than logging) when the endpoint can't be resolved (missing scheme?) - this
+    // is a stateless utility, so warning-dedup across repeated calls for the same target is the
+    // caller's (ProbeMetricsRecorder's) responsibility, not this class's
     public static ProbeLabels resolveTransportLabels(TransportType type, String baseUrl) {
         URI uri = URI.create(baseUrl);
         String checkType = resolveCheckType(type, uri);
         String endpoint = resolveEndpoint(uri, checkType);
+        if (endpoint == null) {
+            return null;
+        }
         return new ProbeLabels(checkType, endpoint);
     }
 
-    public static String tryResolveEndpoint(String configKey, String baseUrl, String probeName,
-                                             Function<String, String> postProcess) {
+    public static String resolveLoginEndpoint(String restBaseUrl) {
+        return tryResolve("monitoring.rest.base_url", restBaseUrl, "login", endpoint -> endpoint + LOGIN_PATH);
+    }
+
+    public static String resolveWsEndpoint(String wsBaseUrl) {
+        return tryResolve("monitoring.ws.base_url", wsBaseUrl, "ws", Function.identity());
+    }
+
+    private static String tryResolve(String configKey, String baseUrl, String probeName,
+                                      Function<String, String> postProcess) {
         try {
             URI uri = URI.create(baseUrl);
             boolean secureScheme = "https".equalsIgnoreCase(uri.getScheme()) || "wss".equalsIgnoreCase(uri.getScheme());
-            return postProcess.apply(resolveHostPort(uri, secureScheme ? 443 : 80));
+            String hostPort = resolveHostPort(uri, secureScheme ? 443 : 80);
+            if (hostPort == null) {
+                // schemeless/opaque URL - just as much a misconfiguration as an unparseable one
+                log.warn("Failed to resolve endpoint from {} [{}] - \"{}\" probe telemetry will not be recorded",
+                        configKey, baseUrl, probeName);
+                return null;
+            }
+            return postProcess.apply(hostPort);
         } catch (Exception e) {
             // an invalid base URL must not fail app startup - caller treats null as "skip this probe"
             log.warn("Failed to resolve endpoint from {} [{}] - \"{}\" probe telemetry will not be recorded",
@@ -84,19 +105,22 @@ public final class ProbeLabelResolver {
         int port = uri.getPort();
         if (host == null) {
             String authority = uri.getAuthority();
-            if (authority != null) {
-                String hostPort = authority.contains("@") ? authority.substring(authority.lastIndexOf('@') + 1) : authority;
-                int colonIdx = hostPort.lastIndexOf(':');
-                if (colonIdx != -1) {
-                    host = hostPort.substring(0, colonIdx);
-                    try {
-                        port = Integer.parseInt(hostPort.substring(colonIdx + 1));
-                    } catch (NumberFormatException e) {
-                        port = -1;
-                    }
-                } else {
-                    host = hostPort;
+            if (authority == null) {
+                // schemeless URLs (e.g. "acme.example.com:1883") parse as opaque, with neither a host
+                // nor an authority at all - nothing to fall back to, so let the caller skip the probe
+                return null;
+            }
+            String hostPort = authority.contains("@") ? authority.substring(authority.lastIndexOf('@') + 1) : authority;
+            int colonIdx = hostPort.lastIndexOf(':');
+            if (colonIdx != -1) {
+                host = hostPort.substring(0, colonIdx);
+                try {
+                    port = Integer.parseInt(hostPort.substring(colonIdx + 1));
+                } catch (NumberFormatException e) {
+                    port = -1;
                 }
+            } else {
+                host = hostPort;
             }
         }
         return host + ":" + (port != -1 ? port : defaultPort);

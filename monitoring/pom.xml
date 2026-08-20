@@ -137,7 +137,10 @@
                  protobuf-java version at runtime; overrides the root pom's 3.25.5 pin (kept there for pubsub)
                  for this module only. protobuf-java-util is pinned to the same version right below so the
                  whole protobuf family stays consistent on this module's classpath (a mixed-version protobuf
-                 runtime causes the exact same class of failure this pin fixes). -->
+                 runtime causes the exact same class of failure this pin fixes). Verified tb-monitoring's own
+                 code never references common/data's 3.x-era DynamicProtoUtils/ProtoTransportPayloadConfiguration
+                 (grep), and `mvn dependency:tree` on this module resolves a single protobuf-java version
+                 (4.28.3) everywhere, so there's no mixed-version runtime risk on this module's classpath. -->
             <version>4.28.3</version>
         </dependency>
         <dependency>

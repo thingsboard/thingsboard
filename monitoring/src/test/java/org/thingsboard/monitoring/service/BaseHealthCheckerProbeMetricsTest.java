@@ -107,6 +107,18 @@ public class BaseHealthCheckerProbeMetricsTest {
     }
 
     @Test
+    public void failedSendTestPayload_removesRequestAndWsUpdateStageDurations() {
+        // the specific probe that didn't respond must lose its probe_duration_ms gauge this cycle,
+        // and ws_update never even ran this cycle - its last value is stale too
+        checker.failOnSend = true;
+
+        checker.check(wsClient);
+
+        verify(probeMetricsRecorder).removeActionDuration(eq(INFO), eq("request"));
+        verify(probeMetricsRecorder).removeActionDuration(eq(INFO), eq("ws_update"));
+    }
+
+    @Test
     public void failedWsUpdate_recordsFailure() {
         when(wsClient.waitForUpdates(100L)).thenReturn(null);
         when(wsClient.getLatest(any())).thenReturn(Map.of()); // no matching telemetry -> ServiceFailureException
@@ -125,6 +137,30 @@ public class BaseHealthCheckerProbeMetricsTest {
 
         verify(probeMetricsRecorder).recordActionDuration(eq(INFO), eq("request"), anyLong());
         verify(probeMetricsRecorder, never()).recordActionDuration(eq(INFO), eq("ws_update"), anyLong());
+    }
+
+    @Test
+    public void failedWsUpdate_removesWsUpdateStageDurationButNeverTheRequestOne() {
+        // the request already succeeded this cycle - only the ws_update stage's duration must go away
+        when(wsClient.waitForUpdates(100L)).thenReturn(null);
+        when(wsClient.getLatest(any())).thenReturn(Map.of()); // no matching telemetry -> ServiceFailureException
+
+        checker.check(wsClient);
+
+        verify(probeMetricsRecorder).removeActionDuration(eq(INFO), eq("ws_update"));
+        verify(probeMetricsRecorder, never()).removeActionDuration(eq(INFO), eq("request"));
+    }
+
+    @Test
+    public void failedWsUpdate_withPlainRuntimeException_stillRemovesWsUpdateStageDuration() {
+        // e.g. WsClient.getLastMsgs()'s "WS error from server: ..." or a JSON-parsing failure - not a
+        // ServiceFailureException, but the ws_update duration gauge must still not go stale
+        when(wsClient.waitForUpdates(100L)).thenReturn(null);
+        when(wsClient.getLatest(any())).thenThrow(new RuntimeException("WS error from server: boom"));
+
+        checker.check(wsClient);
+
+        verify(probeMetricsRecorder).removeActionDuration(eq(INFO), eq("ws_update"));
     }
 
     @Test

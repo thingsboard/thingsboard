@@ -138,26 +138,28 @@ public abstract class BaseMonitoringService<C extends MonitoringConfig<T>, T ext
                 loginSuccess = true;
             } catch (Exception e) {
                 reporter.serviceFailure(MonitoredServiceKey.LOGIN, e);
+                probeMetricsRecorder.removeActionDuration(MonitoredServiceKey.LOGIN, "request");
                 // WS and transport checks never ran this cycle - clear their gauges instead of
                 // leaving last cycle's value stale, then fall back to the WS-independent signal
                 probeMetricsRecorder.removeStaleProbe(MonitoredServiceKey.WS);
-                clearTransportProbeMetrics();
+                clearAllTransportProbeMetrics();
                 checkTransportsAccepted();
                 return;
             } finally {
                 probeMetricsRecorder.recordProbe(MonitoredServiceKey.LOGIN, loginSuccess);
             }
 
-            long wsStartNanos = System.nanoTime();
             WsClient wsClient;
             try {
                 wsClient = wsClientFactory.createClient(accessToken);
-                probeMetricsRecorder.recordActionDuration(MonitoredServiceKey.WS, "connect", (System.nanoTime() - wsStartNanos) / 1_000_000);
                 reporter.serviceIsOk(MonitoredServiceKey.WS_CONNECT);
             } catch (Exception e) {
                 reporter.serviceFailure(MonitoredServiceKey.WS_CONNECT, e);
+                probeMetricsRecorder.removeActionDuration(MonitoredServiceKey.WS, "connect");
+                // subscribe never runs this cycle either - its last value is now stale too
+                probeMetricsRecorder.removeActionDuration(MonitoredServiceKey.WS, "subscribe");
                 probeMetricsRecorder.recordProbe(MonitoredServiceKey.WS, false);
-                clearTransportProbeMetrics();
+                clearAllTransportProbeMetrics();
                 checkTransportsAccepted();
                 return;
             }
@@ -173,8 +175,9 @@ public abstract class BaseMonitoringService<C extends MonitoringConfig<T>, T ext
                     probeMetricsRecorder.recordProbe(MonitoredServiceKey.WS, true);
                 } catch (Exception e) {
                     reporter.serviceFailure(MonitoredServiceKey.WS_SUBSCRIBE, e);
+                    probeMetricsRecorder.removeActionDuration(MonitoredServiceKey.WS, "subscribe");
                     probeMetricsRecorder.recordProbe(MonitoredServiceKey.WS, false);
-                    clearTransportProbeMetrics();
+                    clearAllTransportProbeMetrics();
                     checkTransportsAccepted();
                     return;
                 }
@@ -207,11 +210,11 @@ public abstract class BaseMonitoringService<C extends MonitoringConfig<T>, T ext
             reporter.serviceFailure(e.getServiceKey(), e);
             // clear only the healthCheckers this cycle didn't get to - the ones before checkedCount
             // already have fresh data this cycle and must not be wiped
-            clearTransportProbeMetrics(checkedCount);
-            clearAcceptedProbeMetrics(checkedCount);
+            clearUncheckedTransportProbeMetrics(checkedCount);
+            clearUncheckedAcceptedProbeMetrics(checkedCount);
         } catch (Throwable error) {
-            clearTransportProbeMetrics(checkedCount);
-            clearAcceptedProbeMetrics(checkedCount);
+            clearUncheckedTransportProbeMetrics(checkedCount);
+            clearUncheckedAcceptedProbeMetrics(checkedCount);
             try {
                 reporter.serviceFailure(MonitoredServiceKey.GENERAL, error);
             } catch (Throwable reportError) {
@@ -222,7 +225,7 @@ public abstract class BaseMonitoringService<C extends MonitoringConfig<T>, T ext
 
     private void check(BaseHealthChecker<C, T> healthChecker, WsClient wsClient) throws Exception {
         healthChecker.check(wsClient);
-        clearAcceptedProbeMetrics(healthChecker);
+        clearAcceptedProbeMetricsFor(healthChecker);
 
         T target = healthChecker.getTarget();
         if (target.isCheckDomainIps()) {
@@ -251,10 +254,11 @@ public abstract class BaseMonitoringService<C extends MonitoringConfig<T>, T ext
         }
         for (String url : prevAssociatedUrls) {
             if (!associatedUrls.contains(url)) {
+                BaseHealthChecker<C, T> retiredAssociate = associates.get(url);
                 // remove the metric before stopHealthChecker(), which can throw and skip everything after it
-                probeMetricsRecorder.removeProbe(associates.get(url).getCachedInfo());
-                probeMetricsRecorder.removeAcceptedProbe(associates.get(url).getCachedInfo());
-                stopHealthChecker(healthChecker);
+                probeMetricsRecorder.removeProbe(retiredAssociate.getCachedInfo());
+                probeMetricsRecorder.removeAcceptedProbe(retiredAssociate.getCachedInfo());
+                stopHealthChecker(retiredAssociate);
                 associates.remove(url);
                 changed = true;
             }
@@ -316,30 +320,26 @@ public abstract class BaseMonitoringService<C extends MonitoringConfig<T>, T ext
         return checkCalculatedFields ? List.of(TEST_TELEMETRY_KEY, TEST_CF_TELEMETRY_KEY) : List.of(TEST_TELEMETRY_KEY);
     }
 
-    private void clearTransportProbeMetrics() {
-        clearTransportProbeMetrics(0);
+    private void clearAllTransportProbeMetrics() {
+        clearUncheckedTransportProbeMetrics(0);
     }
 
-    private void clearTransportProbeMetrics(int fromIndex) {
-        healthCheckers.subList(fromIndex, healthCheckers.size()).forEach(this::clearTransportProbeMetrics);
+    private void clearUncheckedTransportProbeMetrics(int fromIndex) {
+        healthCheckers.subList(fromIndex, healthCheckers.size()).forEach(this::clearTransportProbeMetricsFor);
     }
 
-    private void clearTransportProbeMetrics(BaseHealthChecker<C, T> healthChecker) {
+    private void clearTransportProbeMetricsFor(BaseHealthChecker<C, T> healthChecker) {
         probeMetricsRecorder.removeStaleProbe(healthChecker.getCachedInfo());
-        healthChecker.getAssociates().values().forEach(this::clearTransportProbeMetrics);
+        healthChecker.getAssociates().values().forEach(this::clearTransportProbeMetricsFor);
     }
 
-    private void clearAcceptedProbeMetrics() {
-        clearAcceptedProbeMetrics(0);
+    private void clearUncheckedAcceptedProbeMetrics(int fromIndex) {
+        healthCheckers.subList(fromIndex, healthCheckers.size()).forEach(this::clearAcceptedProbeMetricsFor);
     }
 
-    private void clearAcceptedProbeMetrics(int fromIndex) {
-        healthCheckers.subList(fromIndex, healthCheckers.size()).forEach(this::clearAcceptedProbeMetrics);
-    }
-
-    private void clearAcceptedProbeMetrics(BaseHealthChecker<C, T> healthChecker) {
+    private void clearAcceptedProbeMetricsFor(BaseHealthChecker<C, T> healthChecker) {
         probeMetricsRecorder.removeStaleAcceptedProbe(healthChecker.getCachedInfo());
-        healthChecker.getAssociates().values().forEach(this::clearAcceptedProbeMetrics);
+        healthChecker.getAssociates().values().forEach(this::clearAcceptedProbeMetricsFor);
     }
 
     // always runs, regardless of OTLP/Prometheus export - the fallback alert must work on every deployment

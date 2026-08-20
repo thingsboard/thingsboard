@@ -39,8 +39,11 @@ public class ProbeMetricsRecorderTest {
         registry = new SimpleMeterRegistry();
     }
 
-    private ProbeMetricsRecorder recorder(boolean enabled) {
-        return new ProbeMetricsRecorder(registry, enabled, false, "acme.example.com",
+    private ProbeMetricsRecorder recorder(boolean otlpEnabled) {
+        // named locals, not adjacent positional literals, so a future constructor param reorder can't
+        // silently transpose otlpEnabled/prometheusEnabled here without a compile error
+        boolean prometheusEnabled = false;
+        return new ProbeMetricsRecorder(registry, otlpEnabled, prometheusEnabled, "acme.example.com",
                 "https://acme.example.com", "wss://acme.example.com", "acme-cluster-1");
     }
 
@@ -181,6 +184,23 @@ public class ProbeMetricsRecorderTest {
         ProbeMetricsRecorder recorder = recorder(false);
         recorder.recordActionDuration(MonitoredServiceKey.LOGIN, "request", 8);
         assertThat(registry.getMeters()).isEmpty();
+    }
+
+    @Test
+    public void removeActionDuration_removesOnlyTheTargetedAction_leavesSuccessAndOtherActionDurationUntouched() {
+        ProbeMetricsRecorder recorder = recorder(true);
+        TransportInfo target = transportInfo(TransportType.MQTT, "tcp://acme.example.com:1883");
+        recorder.recordProbe(target, true);
+        recorder.recordActionDuration(target, "request", 8);
+        recorder.recordActionDuration(target, "ws_update", 700);
+        assertThat(registry.getMeters()).hasSize(3); // success + 2 stages
+
+        recorder.removeActionDuration(target, "request");
+
+        assertThat(registry.find("probe_duration_ms").tags("action", "request").gauge()).isNull();
+        assertThat(registry.get("probe_duration_ms").tags("action", "ws_update").gauge().value()).isEqualTo(700d);
+        assertThat(registry.get("probe_success").tags("check", "mqtt").gauge().value()).isEqualTo(1d);
+        assertThat(registry.getMeters()).hasSize(2);
     }
 
     @Test
@@ -353,7 +373,9 @@ public class ProbeMetricsRecorderTest {
 
     @Test
     public void disabled_invalidWsBaseUrl_doesNotThrowAtConstruction() {
-        ProbeMetricsRecorder recorder = new ProbeMetricsRecorder(registry, false, false, "acme.example.com",
+        boolean otlpEnabled = false;
+        boolean prometheusEnabled = false;
+        ProbeMetricsRecorder recorder = new ProbeMetricsRecorder(registry, otlpEnabled, prometheusEnabled, "acme.example.com",
                 "https://acme.example.com", "not a valid uri", "acme-cluster-1");
         recorder.recordProbe(MonitoredServiceKey.WS, true);
         assertThat(registry.getMeters()).isEmpty();
@@ -362,7 +384,9 @@ public class ProbeMetricsRecorderTest {
     @Test
     public void enabled_invalidWsBaseUrl_doesNotThrowAtConstruction_wsProbeSkipped() {
         // otlpEnabled=true so this recorder is "enabled" and would normally resolve wsEndpoint eagerly
-        ProbeMetricsRecorder recorder = new ProbeMetricsRecorder(registry, true, false, "acme.example.com",
+        boolean otlpEnabled = true;
+        boolean prometheusEnabled = false;
+        ProbeMetricsRecorder recorder = new ProbeMetricsRecorder(registry, otlpEnabled, prometheusEnabled, "acme.example.com",
                 "https://acme.example.com", "not a valid uri", "acme-cluster-1");
 
         recorder.recordProbe(MonitoredServiceKey.WS, true);
@@ -372,7 +396,9 @@ public class ProbeMetricsRecorderTest {
 
     @Test
     public void enabled_invalidRestBaseUrl_doesNotThrowAtConstruction_loginProbeSkipped() {
-        ProbeMetricsRecorder recorder = new ProbeMetricsRecorder(registry, true, false, "acme.example.com",
+        boolean otlpEnabled = true;
+        boolean prometheusEnabled = false;
+        ProbeMetricsRecorder recorder = new ProbeMetricsRecorder(registry, otlpEnabled, prometheusEnabled, "acme.example.com",
                 "not a valid uri", "wss://acme.example.com", "acme-cluster-1");
 
         recorder.recordProbe(MonitoredServiceKey.LOGIN, true);
@@ -394,7 +420,9 @@ public class ProbeMetricsRecorderTest {
     public void emptyLabel_stillProducesEmptyStringTag() {
         // as-is behavior, same as the other optional tags in this class - an unset env var
         // becomes an empty string tag rather than omitting the label tag entirely
-        ProbeMetricsRecorder recorder = new ProbeMetricsRecorder(registry, true, false, "acme.example.com",
+        boolean otlpEnabled = true;
+        boolean prometheusEnabled = false;
+        ProbeMetricsRecorder recorder = new ProbeMetricsRecorder(registry, otlpEnabled, prometheusEnabled, "acme.example.com",
                 "https://acme.example.com", "wss://acme.example.com", "");
         recorder.recordProbe(transportInfo(TransportType.MQTT, "tcp://acme.example.com:1883"), true);
 
@@ -405,7 +433,9 @@ public class ProbeMetricsRecorderTest {
     public void removeAcceptedProbe_whenNothingWasRecorded_skipsRegistryScan() {
         // runs every healthy cycle now - must not scan the whole registry when there's nothing to remove
         SimpleMeterRegistry spyRegistry = spy(new SimpleMeterRegistry());
-        ProbeMetricsRecorder recorder = new ProbeMetricsRecorder(spyRegistry, true, false, "acme.example.com",
+        boolean otlpEnabled = true;
+        boolean prometheusEnabled = false;
+        ProbeMetricsRecorder recorder = new ProbeMetricsRecorder(spyRegistry, otlpEnabled, prometheusEnabled, "acme.example.com",
                 "https://acme.example.com", "wss://acme.example.com", "acme-cluster-1");
 
         recorder.removeAcceptedProbe(transportInfo(TransportType.MQTT, "tcp://acme.example.com:1883"));
@@ -512,6 +542,37 @@ public class ProbeMetricsRecorderTest {
         ProbeMetricsRecorder recorder = recorder(false);
 
         recorder.recordHeartbeat();
+
+        assertThat(registry.getMeters()).isEmpty();
+    }
+
+    @Test
+    public void schemelessTransportBaseUrl_recordingMethodsDoNotThrowAndRegisterNoMeters() {
+        // "acme.example.com:1883" without a scheme parses as opaque - neither a host nor an authority -
+        // so resolveTransportLabels returns null; every recording method must treat that as "skip this
+        // probe" rather than throwing or registering a "null:1883"-style gauge
+        ProbeMetricsRecorder recorder = recorder(true);
+        TransportInfo target = transportInfo(TransportType.MQTT, "acme.example.com:1883");
+
+        recorder.recordProbe(target, true);
+        recorder.recordActionDuration(target, "request", 8);
+        recorder.recordAcceptedProbe(target, true);
+        recorder.removeAcceptedProbe(target);
+
+        assertThat(registry.getMeters()).isEmpty();
+    }
+
+    @Test
+    public void schemelessTransportBaseUrl_secondCallForSameTarget_alsoDoesNotThrow() {
+        // computeIfAbsent doesn't cache a null resolution result, so resolveTransportLabels (and the
+        // dedup-guarded warning) is re-invoked on every call for this target - this just confirms that
+        // repeated re-invocation stays side-effect-free (no log-capturing utility exists in this module
+        // to assert the warning itself is only emitted once)
+        ProbeMetricsRecorder recorder = recorder(true);
+        TransportInfo target = transportInfo(TransportType.MQTT, "acme.example.com:1883");
+
+        recorder.recordProbe(target, true);
+        recorder.recordProbe(target, true);
 
         assertThat(registry.getMeters()).isEmpty();
     }

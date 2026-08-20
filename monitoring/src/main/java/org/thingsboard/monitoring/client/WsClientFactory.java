@@ -22,6 +22,8 @@ import org.apache.http.ssl.TrustStrategy;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.thingsboard.monitoring.data.Latencies;
+import org.thingsboard.monitoring.data.MonitoredServiceKey;
+import org.thingsboard.monitoring.metrics.ProbeMetricsRecorder;
 import org.thingsboard.monitoring.service.MonitoringReporter;
 import org.thingsboard.monitoring.util.TbStopWatch;
 
@@ -33,6 +35,7 @@ import java.util.concurrent.TimeUnit;
 public class WsClientFactory {
 
     private final MonitoringReporter monitoringReporter;
+    private final ProbeMetricsRecorder probeMetricsRecorder;
     private final TbStopWatch stopWatch;
     @Value("${monitoring.ws.base_url}")
     private String baseUrl;
@@ -52,7 +55,11 @@ public class WsClientFactory {
         if (!connected) {
             throw new IllegalStateException("Failed to establish WS session");
         }
-        monitoringReporter.reportLatency(Latencies.WS_CONNECT, stopWatch.getTime());
+        // TbStopWatch.getTime() stops/resets internally, so it can only be called once here -
+        // reuse the same value for both the latency report and the probe metric
+        long connectLatencyNanos = stopWatch.getTime();
+        monitoringReporter.reportLatency(Latencies.WS_CONNECT, connectLatencyNanos);
+        probeMetricsRecorder.recordActionDuration(MonitoredServiceKey.WS, "connect", connectLatencyNanos / 1_000_000);
         return wsClient;
     }
 

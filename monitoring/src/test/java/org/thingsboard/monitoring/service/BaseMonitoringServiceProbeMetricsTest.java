@@ -93,7 +93,12 @@ public class BaseMonitoringServiceProbeMetricsTest {
     }
 
     @Test
-    public void successfulLoginAndWs_recordsRequestConnectAndSubscribeStageDurations() throws Exception {
+    public void successfulLoginAndWs_recordsRequestAndSubscribeStageDurations() throws Exception {
+        // WS "connect" duration is no longer recorded here - it moved into WsClientFactory.createClient()
+        // itself (see WsClientFactory), reusing the same measurement it already takes for reportLatency
+        // instead of BaseMonitoringService measuring the same operation a second time with a raw
+        // System.nanoTime() pair. wsClientFactory is a full mock in this test, so that call is never
+        // exercised here; it's a 3-line, inspectable change in WsClientFactory itself.
         when(tbClient.logIn()).thenReturn("token");
         when(wsClientFactory.createClient("token")).thenReturn(wsClient);
         when(wsClient.waitForReply()).thenReturn(null);
@@ -101,8 +106,19 @@ public class BaseMonitoringServiceProbeMetricsTest {
         service.runChecks();
 
         verify(probeMetricsRecorder).recordActionDuration(eq(MonitoredServiceKey.LOGIN), eq("request"), anyLong());
-        verify(probeMetricsRecorder).recordActionDuration(eq(MonitoredServiceKey.WS), eq("connect"), anyLong());
         verify(probeMetricsRecorder).recordActionDuration(eq(MonitoredServiceKey.WS), eq("subscribe"), anyLong());
+    }
+
+    @Test
+    public void successfulLoginAndWs_neverRecordsWsConnectStageDurationDirectly() throws Exception {
+        // guards against the redundant System.nanoTime() measurement creeping back into BaseMonitoringService
+        when(tbClient.logIn()).thenReturn("token");
+        when(wsClientFactory.createClient("token")).thenReturn(wsClient);
+        when(wsClient.waitForReply()).thenReturn(null);
+
+        service.runChecks();
+
+        verify(probeMetricsRecorder, never()).recordActionDuration(eq(MonitoredServiceKey.WS), eq("connect"), anyLong());
     }
 
     @Test
@@ -131,6 +147,15 @@ public class BaseMonitoringServiceProbeMetricsTest {
         service.runChecks();
 
         verify(probeMetricsRecorder, never()).recordActionDuration(eq(MonitoredServiceKey.LOGIN), eq("request"), anyLong());
+    }
+
+    @Test
+    public void loginFailure_removesLoginRequestStageDuration() throws Exception {
+        when(tbClient.logIn()).thenThrow(new RuntimeException("login failed"));
+
+        service.runChecks();
+
+        verify(probeMetricsRecorder).removeActionDuration(eq(MonitoredServiceKey.LOGIN), eq("request"));
     }
 
     @Test
@@ -189,6 +214,18 @@ public class BaseMonitoringServiceProbeMetricsTest {
     }
 
     @Test
+    public void wsConnectFailure_removesConnectAndSubscribeStageDurations() throws Exception {
+        // subscribe never even ran this cycle - its last value is stale too
+        when(tbClient.logIn()).thenReturn("token");
+        when(wsClientFactory.createClient("token")).thenThrow(new RuntimeException("connect failed"));
+
+        service.runChecks();
+
+        verify(probeMetricsRecorder).removeActionDuration(eq(MonitoredServiceKey.WS), eq("connect"));
+        verify(probeMetricsRecorder).removeActionDuration(eq(MonitoredServiceKey.WS), eq("subscribe"));
+    }
+
+    @Test
     public void wsConnectFailure_clearsTransportProbeMetrics() throws Exception {
         when(tbClient.logIn()).thenReturn("token");
         when(wsClientFactory.createClient("token")).thenThrow(new RuntimeException("connect failed"));
@@ -228,6 +265,19 @@ public class BaseMonitoringServiceProbeMetricsTest {
         service.runChecks();
 
         verify(probeMetricsRecorder).recordProbe(eq(MonitoredServiceKey.WS), eq(false));
+    }
+
+    @Test
+    public void wsSubscribeFailure_removesSubscribeStageDurationButNeverConnect() throws Exception {
+        // connect already succeeded this cycle (it's how we got here) - only "subscribe" must go away
+        when(tbClient.logIn()).thenReturn("token");
+        when(wsClientFactory.createClient("token")).thenReturn(wsClient);
+        when(wsClient.waitForReply()).thenThrow(new IllegalStateException("no reply"));
+
+        service.runChecks();
+
+        verify(probeMetricsRecorder).removeActionDuration(eq(MonitoredServiceKey.WS), eq("subscribe"));
+        verify(probeMetricsRecorder, never()).removeActionDuration(eq(MonitoredServiceKey.WS), eq("connect"));
     }
 
     @Test
@@ -418,6 +468,12 @@ public class BaseMonitoringServiceProbeMetricsTest {
                 mock(BaseHealthChecker.class);
         Object decommissionedInfo = new Object();
         when(decommissioned.getCachedInfo()).thenReturn(decommissionedInfo);
+        // stopHealthChecker() reads getTarget().getDeviceId() on whichever checker it's given - now that
+        // it's fixed to stop the retired ASSOCIATE (not the parent healthChecker), that's decommissioned's
+        // own target, so it needs the same device stub healthChecker's target got above.
+        TransportMonitoringTarget decommissionedTarget = new TransportMonitoringTarget();
+        decommissionedTarget.setDevice(new org.thingsboard.monitoring.config.transport.DeviceConfig());
+        when(decommissioned.getTarget()).thenReturn(decommissionedTarget);
 
         java.util.Map<String, BaseHealthChecker<TransportMonitoringConfig, TransportMonitoringTarget>> associates =
                 new java.util.HashMap<>();
@@ -439,6 +495,11 @@ public class BaseMonitoringServiceProbeMetricsTest {
         // not asserted against here. removeStaleProbe never applies to an associate on a successful
         // run though, so that one is safe to assert against.
         verify(probeMetricsRecorder, never()).removeStaleProbe(eq(decommissionedInfo));
+        // the fix under test: stopHealthChecker()-equivalent behavior (destroyClient()) must be invoked
+        // on the retired ASSOCIATE, never on the parent healthChecker or the still-current associate
+        verify(decommissioned).destroyClient();
+        verify(current, never()).destroyClient();
+        verify(healthChecker, never()).destroyClient();
     }
 
     @Test

@@ -124,19 +124,22 @@ monitoring:
     enabled: "${CALCULATED_FIELDS_MONITORING_ENABLED:true}"
 
   metrics:
-    # probe_success is tagged kind="probe" (full end-to-end check) or kind="accepted" (transport-only
-    # fallback, used only while login/WS is down - absent for LwM2M, which has no such fallback).
-    # During a login/WS outage, kind="probe" for transports goes ABSENT, not 0 - a consumer must
-    # treat missing data as down, and fall back to kind="accepted" for a weaker "transport is up" signal.
-    # The fallback also drives the same Slack/incident alerting as the full check, regardless of
-    # whether OTLP/Prometheus export below is enabled - only the metric depends on that.
+    # probe_success: kind="probe" (full check) or "accepted" (transport-only fallback while login/WS
+    # down). A transport's own check failing sets 0; it only goes ABSENT if login/WS died upstream
+    # and it was never reached this cycle. check="ws" is 0 if WS itself failed, ABSENT if login
+    # failed first - alert on "absent OR 0" for ws.
+    # probe_duration_ms{action}: disappears (not stale) once its stage stops running/passing.
+    # tb_monitoring_last_run_timestamp_seconds: heartbeat: alert on time() - metric > N to catch a dead
+    # prober, which probe_success can't (it only reports targets actually checked).
     otlp:
       # Push probe_success/probe_duration_ms via OTLP/HTTP to an OTel Collector
       enabled: '${METRICS_OTLP_ENABLED:false}'
       endpoint: '${METRICS_OTLP_ENDPOINT:http://localhost:4318/v1/metrics}'
-      step_ms: '${METRICS_OTLP_STEP_MS:60000}'
+      # Keep <= monitoring.monitoring_rate_ms or short outages can be missed by OTLP entirely
+      step_ms: '${METRICS_OTLP_STEP_MS:10000}'
       # Alert (Slack/incident, same mechanism as transport/login checks) when a push to the
-      # OTel Collector fails - independent of otlp.enabled itself, and never written to metrics
+      # OTel Collector fails - toggled separately from probe metrics alerting, but has no effect
+      # unless otlp.enabled is also true
       alerting_enabled: '${METRICS_OTLP_ALERTING_ENABLED:false}'
     prometheus:
       # Expose a pull-based /metrics endpoint via a lightweight JDK HttpServer (no servlet container)

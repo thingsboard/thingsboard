@@ -30,7 +30,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 @Component
 @Slf4j
@@ -56,6 +55,9 @@ public class ProbeMetricsRecorder {
     // the collision is logged instead of one gauge silently overwriting the other
     private final Map<Tags, Object> tagsOwners = new ConcurrentHashMap<>();
     private final Set<Tags> warnedCollisions = ConcurrentHashMap.newKeySet();
+    // dedupes the "can't resolve this transport's endpoint" warning so a permanently-misconfigured
+    // target logs it once instead of every probe cycle forever (computeIfAbsent doesn't cache nulls)
+    private final Set<TransportTagKey> warnedUnresolvable = ConcurrentHashMap.newKeySet();
     // action gauges recorded per probe, so removeProbe can clean them up without knowing them upfront
     private final Map<Tags, Set<String>> actionsByBaseTags = new ConcurrentHashMap<>();
     // tags that already got fresh data this cycle - so a colliding sibling's removeProbe/removeAcceptedProbe
@@ -73,10 +75,8 @@ public class ProbeMetricsRecorder {
         this.enabled = otlpEnabled || prometheusEnabled;
         this.domain = domain;
         this.label = label;
-        this.loginEndpoint = this.enabled ? ProbeLabelResolver.tryResolveEndpoint("monitoring.rest.base_url", restBaseUrl, "login",
-                endpoint -> endpoint + ProbeLabelResolver.LOGIN_PATH) : null;
-        this.wsEndpoint = this.enabled ? ProbeLabelResolver.tryResolveEndpoint("monitoring.ws.base_url", wsBaseUrl, "ws",
-                Function.identity()) : null;
+        this.loginEndpoint = this.enabled ? ProbeLabelResolver.resolveLoginEndpoint(restBaseUrl) : null;
+        this.wsEndpoint = this.enabled ? ProbeLabelResolver.resolveWsEndpoint(wsBaseUrl) : null;
     }
 
     // resets which Tags have fresh data this cycle - called once at the start of each runChecks()
@@ -99,6 +99,18 @@ public class ProbeMetricsRecorder {
         });
     }
 
+    // removes just this one action's duration gauge (the specific probe that didn't respond),
+    // without touching probe_success or any other action recorded for this target
+    public void removeActionDuration(Object serviceKey, String action) {
+        withTags(serviceKey, "remove action duration", tags -> {
+            removeGauge(PROBE_DURATION_METRIC, tags.and("action", action));
+            Set<String> actions = actionsByBaseTags.get(tags);
+            if (actions != null) {
+                actions.remove(action);
+            }
+        });
+    }
+
     // true once the transport itself acknowledges a message, independent of the login/WS session
     public void recordAcceptedProbe(Object serviceKey, boolean success) {
         if (!enabled || !(serviceKey instanceof TransportInfo transportInfo)) {
@@ -106,6 +118,9 @@ public class ProbeMetricsRecorder {
         }
         try {
             Tags tags = acceptedTags(transportInfo);
+            if (tags == null) {
+                return;
+            }
             setGauge(PROBE_SUCCESS_METRIC, tags, success ? 1d : 0d);
             freshThisCycle.add(tags);
         } catch (Exception e) {
@@ -157,19 +172,28 @@ public class ProbeMetricsRecorder {
         removeAcceptedProbe(serviceKey, true);
     }
 
-    // doesn't evict acceptedTagsCache - this runs every healthy cycle, which would defeat the cache
+    // only evicts acceptedTagsCache on permanent removal (see below) - the stale path runs every
+    // healthy cycle, which would defeat the cache
     private void removeAcceptedProbe(Object serviceKey, boolean skipIfFresh) {
         if (!enabled || !(serviceKey instanceof TransportInfo transportInfo)) {
             return;
         }
         try {
             Tags tags = acceptedTags(transportInfo);
+            if (tags == null) {
+                return;
+            }
             if (skipIfFresh && freshThisCycle.contains(tags)) {
                 log.debug("Skipping removal of accepted probe metric for [{}] - tags {} already have fresh data this cycle from a colliding target", transportInfo, tags);
                 return;
             }
             removeGauge(PROBE_SUCCESS_METRIC, tags);
             freshThisCycle.remove(tags);
+            if (!skipIfFresh) {
+                // permanent removal (decommissioning) - safe to evict here, unlike the stale path which
+                // runs every healthy cycle and would otherwise defeat the cache
+                acceptedTagsCache.remove(TransportTagKey.of(transportInfo));
+            }
         } catch (Exception e) {
             log.warn("Failed to remove accepted probe metric for [{}]", transportInfo, e);
         }
@@ -202,7 +226,7 @@ public class ProbeMetricsRecorder {
         try {
             Tags tags = resolveTags(serviceKey);
             if (tags == null) {
-                return; // GENERAL, EDQS, or anything outside the documented label taxonomy
+                return; // GENERAL, EDQS, an unresolvable transport endpoint, or anything outside the documented label taxonomy
             }
             body.accept(tags);
         } catch (Exception e) {
@@ -233,6 +257,12 @@ public class ProbeMetricsRecorder {
     private Tags cachedTags(Map<TransportTagKey, Tags> cache, TransportInfo info, String kind) {
         return cache.computeIfAbsent(TransportTagKey.of(info), key -> {
             ProbeLabelResolver.ProbeLabels labels = ProbeLabelResolver.resolveTransportLabels(key.type(), key.baseUrl());
+            if (labels == null) {
+                if (warnedUnresolvable.add(key)) {
+                    log.warn("Failed to resolve host:port from transport base URL \"{}\" (missing scheme?) - its probe metrics will not be recorded", key.baseUrl());
+                }
+                return null;
+            }
             return baseTags(labels.check(), labels.endpoint(), kind);
         });
     }

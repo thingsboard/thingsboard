@@ -95,6 +95,9 @@ public abstract class BaseHealthChecker<C extends MonitoringConfig, T extends Mo
                 probeMetricsRecorder.recordActionDuration(info, "request", requestLatencyNanos / 1_000_000);
                 log.trace("[{}] Sent test payload ({})", info, testPayload);
             } catch (Throwable e) {
+                probeMetricsRecorder.removeActionDuration(info, "request");
+                // ws_update never runs this cycle either - its last value is now stale too
+                probeMetricsRecorder.removeActionDuration(info, "ws_update");
                 throw new ServiceFailureException(info, e);
             }
 
@@ -135,29 +138,34 @@ public abstract class BaseHealthChecker<C extends MonitoringConfig, T extends Mo
     }
 
     private void checkWsUpdates(WsClient wsClient, String testValue) {
-        stopWatch.start();
-        wsClient.waitForUpdates(resultCheckTimeoutMs);
-        log.trace("[{}] Waited for WS update. Last WS msgs: {}", info, wsClient.lastMsgs);
-        Map<String, String> latest = wsClient.getLatest(target.getDeviceId());
-        if (latest.isEmpty()) {
-            throw new ServiceFailureException(info, "No WS update arrived within " + resultCheckTimeoutMs + " ms");
-        }
-        String actualValue = latest.get(TEST_TELEMETRY_KEY);
-        if (!testValue.equals(actualValue)) {
-            throw new ServiceFailureException(info, "Was expecting value " + testValue + " but got " + actualValue);
-        }
-        if (isCfMonitoringEnabled()) {
-            String cfTestValue = testValue + "-cf";
-            String actualCfValue = latest.get(TEST_CF_TELEMETRY_KEY);
-            if (actualCfValue == null) {
-                throw new ServiceFailureException(info, "No calculated field value arrived");
-            } else if (!cfTestValue.equals(actualCfValue)) {
-                throw new ServiceFailureException(info, "Was expecting calculated field value " + cfTestValue + " but got " + actualCfValue);
+        try {
+            stopWatch.start();
+            wsClient.waitForUpdates(resultCheckTimeoutMs);
+            log.trace("[{}] Waited for WS update. Last WS msgs: {}", info, wsClient.lastMsgs);
+            Map<String, String> latest = wsClient.getLatest(target.getDeviceId());
+            if (latest.isEmpty()) {
+                throw new ServiceFailureException(info, "No WS update arrived within " + resultCheckTimeoutMs + " ms");
             }
+            String actualValue = latest.get(TEST_TELEMETRY_KEY);
+            if (!testValue.equals(actualValue)) {
+                throw new ServiceFailureException(info, "Was expecting value " + testValue + " but got " + actualValue);
+            }
+            if (isCfMonitoringEnabled()) {
+                String cfTestValue = testValue + "-cf";
+                String actualCfValue = latest.get(TEST_CF_TELEMETRY_KEY);
+                if (actualCfValue == null) {
+                    throw new ServiceFailureException(info, "No calculated field value arrived");
+                } else if (!cfTestValue.equals(actualCfValue)) {
+                    throw new ServiceFailureException(info, "Was expecting calculated field value " + cfTestValue + " but got " + actualCfValue);
+                }
+            }
+            long wsUpdateLatencyNanos = stopWatch.getTime();
+            reporter.reportLatency(Latencies.wsUpdate(getKey()), wsUpdateLatencyNanos);
+            probeMetricsRecorder.recordActionDuration(info, "ws_update", wsUpdateLatencyNanos / 1_000_000);
+        } catch (Throwable e) {
+            probeMetricsRecorder.removeActionDuration(info, "ws_update");
+            throw e;
         }
-        long wsUpdateLatencyNanos = stopWatch.getTime();
-        reporter.reportLatency(Latencies.wsUpdate(getKey()), wsUpdateLatencyNanos);
-        probeMetricsRecorder.recordActionDuration(info, "ws_update", wsUpdateLatencyNanos / 1_000_000);
     }
 
     protected abstract void initClient() throws Exception;

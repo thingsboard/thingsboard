@@ -85,23 +85,56 @@ public class ProbeLabelResolverTest {
     }
 
     @Test
-    public void tryResolveEndpoint_appliesPostProcessOnValidUrl() {
-        String endpoint = ProbeLabelResolver.tryResolveEndpoint("some.config.key", "https://acme.example.com",
-                "login", s -> s + ProbeLabelResolver.LOGIN_PATH);
+    public void userInfoInAuthority_isStrippedFromResolvedHost() {
+        // exercises the authority.contains("@") branch in resolveHostPort - underscored host still
+        // makes URI.getHost() return null, so the fallback must strip "user:pass@" before parsing
+        ProbeLabelResolver.ProbeLabels labels =
+                ProbeLabelResolver.resolveTransportLabels(TransportType.MQTT, "mqtt://user:pass@tb_mqtt:1883");
+        assertThat(labels.endpoint()).isEqualTo("tb_mqtt:1883");
+    }
+
+    @Test
+    public void schemelessBaseUrl_resolveTransportLabels_returnsNullInsteadOfNullHostLabel() {
+        // "acme.example.com:1883" without a scheme parses as an opaque URI with neither a host nor an
+        // authority - must not silently produce a "null:1883" endpoint label
+        ProbeLabelResolver.ProbeLabels labels =
+                ProbeLabelResolver.resolveTransportLabels(TransportType.MQTT, "acme.example.com:1883");
+        assertThat(labels).isNull();
+    }
+
+    @Test
+    public void resolveHostPort_opaqueUriWithNoAuthority_returnsNull() {
+        assertThat(ProbeLabelResolver.resolveHostPort(URI.create("acme.example.com:1883"), 1883)).isNull();
+    }
+
+    @Test
+    public void resolveLoginEndpoint_appliesLoginPathOnValidUrl() {
+        String endpoint = ProbeLabelResolver.resolveLoginEndpoint("https://acme.example.com");
         assertThat(endpoint).isEqualTo("acme.example.com:443/api/auth/login");
     }
 
     @Test
-    public void tryResolveEndpoint_wsScheme_defaultsToPort443ForWss() {
-        String endpoint = ProbeLabelResolver.tryResolveEndpoint("monitoring.ws.base_url", "wss://acme.example.com",
-                "ws", java.util.function.Function.identity());
+    public void resolveLoginEndpoint_invalidUrl_returnsNullInsteadOfThrowing() {
+        String endpoint = ProbeLabelResolver.resolveLoginEndpoint("not a valid uri");
+        assertThat(endpoint).isNull();
+    }
+
+    @Test
+    public void resolveWsEndpoint_wssScheme_defaultsToPort443() {
+        String endpoint = ProbeLabelResolver.resolveWsEndpoint("wss://acme.example.com");
         assertThat(endpoint).isEqualTo("acme.example.com:443");
     }
 
     @Test
-    public void tryResolveEndpoint_invalidUrl_returnsNullInsteadOfThrowing() {
-        String endpoint = ProbeLabelResolver.tryResolveEndpoint("some.config.key", "not a valid uri",
-                "login", java.util.function.Function.identity());
+    public void resolveWsEndpoint_plainWsScheme_defaultsToPort80() {
+        // the non-secure-scheme branch of tryResolve - previously only exercised via https/wss inputs
+        String endpoint = ProbeLabelResolver.resolveWsEndpoint("ws://acme.example.com");
+        assertThat(endpoint).isEqualTo("acme.example.com:80");
+    }
+
+    @Test
+    public void resolveWsEndpoint_invalidUrl_returnsNullInsteadOfThrowing() {
+        String endpoint = ProbeLabelResolver.resolveWsEndpoint("not a valid uri");
         assertThat(endpoint).isNull();
     }
 
@@ -109,6 +142,15 @@ public class ProbeLabelResolverTest {
     public void resolveHostPort_usesDefaultPortWhenUriHasNone() {
         assertThat(ProbeLabelResolver.resolveHostPort(URI.create("http://acme.example.com"), 8080))
                 .isEqualTo("acme.example.com:8080");
+    }
+
+    @Test
+    public void resolveLoginEndpoint_schemelessBaseUrl_returnsNullInsteadOfNullLoginLabel() {
+        // "acme.example.com:8080" without a scheme parses as an opaque URI with neither a host nor an
+        // authority - resolveHostPort returns null, which tryResolve must not concatenate LOGIN_PATH
+        // onto (that would silently produce the literal "null/api/auth/login")
+        String endpoint = ProbeLabelResolver.resolveLoginEndpoint("acme.example.com:8080");
+        assertThat(endpoint).isNull();
     }
 
 }
