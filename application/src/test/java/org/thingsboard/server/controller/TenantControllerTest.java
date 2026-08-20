@@ -27,7 +27,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.ResultActions;
 import org.thingsboard.common.util.ThingsBoardExecutors;
@@ -110,11 +110,11 @@ public class TenantControllerTest extends AbstractControllerTest {
 
     ListeningExecutorService executor;
 
-    @SpyBean
+    @MockitoSpyBean
     private PartitionService partitionService;
-    @SpyBean
+    @MockitoSpyBean
     private ActorSystemContext actorContext;
-    @SpyBean
+    @MockitoSpyBean
     private TbQueueAdmin queueAdmin;
 
     @Before

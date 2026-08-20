@@ -22,7 +22,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.common.util.JacksonUtil;
@@ -54,7 +54,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "usage.stats.report.interval=1",
 })
 public class DefaultSmsServiceTest extends AbstractControllerTest {
-    @SpyBean
+    @MockitoSpyBean
     private DefaultSmsService defaultSmsService;
     @Autowired
     private AdminSettingsService adminSettingsService;

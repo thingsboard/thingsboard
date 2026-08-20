@@ -22,7 +22,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
@@ -71,7 +71,7 @@ public class MqttGatewayRateLimitsTest extends AbstractControllerTest {
     private Device gateway;
     private String gatewayAccessToken;
 
-    @SpyBean
+    @MockitoSpyBean
     private NotificationRuleProcessor notificationRuleProcessor;
 
     @Before

@@ -63,7 +63,7 @@ public class TypeCastUtil {
     }
 
     private static boolean isNumber(String value) {
-        return NumberUtils.isNumber(value.replace(',', '.'));
+        return NumberUtils.isCreatable(value.replace(',', '.'));
     }
 
     private static boolean isSimpleDouble(String valueAsString) {

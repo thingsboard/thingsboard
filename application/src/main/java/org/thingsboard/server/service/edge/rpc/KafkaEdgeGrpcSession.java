@@ -156,6 +156,7 @@ public class KafkaEdgeGrpcSession extends EdgeGrpcSession {
 
     @Override
     public boolean destroy() {
+        stopCurrentSendDownlinkMsgsTask(true);
         try {
             if (consumer != null) {
                 log.info("[{}][{}] Stopping edge event consumer...", tenantId, edge != null ? edge.getId() : null);
@@ -180,9 +181,13 @@ public class KafkaEdgeGrpcSession extends EdgeGrpcSession {
 
     private void awaitConsumerTermination() {
         try {
-            consumerExecutor.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS);
+            if (!consumerExecutor.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS)) {
+                // without this the thread is leaked for the whole remaining delivery-retry window (or forever, if the future is never completed).
+                consumerExecutor.shutdownNow();
+            }
         } catch (InterruptedException ie) {
             log.warn("[{}][{}] Interrupted while awaiting consumer executor termination", tenantId, edge.getId());
+            Thread.currentThread().interrupt();
         }
     }
 

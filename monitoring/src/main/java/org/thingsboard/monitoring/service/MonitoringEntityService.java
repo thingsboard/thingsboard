@@ -162,7 +162,7 @@ public class MonitoringEntityService {
         device.setName(deviceName);
 
         DeviceCredentials credentials = new DeviceCredentials();
-        credentials.setCredentialsId(RandomStringUtils.randomAlphabetic(20));
+        credentials.setCredentialsId(RandomStringUtils.secure().nextAlphabetic(20));
         DeviceData deviceData = new DeviceData();
         deviceData.setConfiguration(new DefaultDeviceConfiguration());
 

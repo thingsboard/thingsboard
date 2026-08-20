@@ -219,7 +219,7 @@ public class TbGetTelemetryNodeTest extends AbstractRuleNodeUpgradeTest {
         node.onMsg(ctxMock, msg);
 
         // THEN
-        ArgumentCaptor<List<ReadTsKvQuery>> actualReadTsKvQueryList = ArgumentCaptor.forClass(List.class);
+        ArgumentCaptor<List<ReadTsKvQuery>> actualReadTsKvQueryList = ArgumentCaptor.captor();
         then(timeseriesServiceMock).should().findAll(eq(TENANT_ID), eq(DEVICE_ID), actualReadTsKvQueryList.capture());
         ReadTsKvQuery actualReadTsKvQuery = actualReadTsKvQueryList.getValue().get(0);
         assertThat(actualReadTsKvQuery.getStartTs()).isEqualTo(startTs);
@@ -246,7 +246,7 @@ public class TbGetTelemetryNodeTest extends AbstractRuleNodeUpgradeTest {
         node.onMsg(ctxMock, msg);
 
         // THEN
-        ArgumentCaptor<List<ReadTsKvQuery>> actualReadTsKvQueryList = ArgumentCaptor.forClass(List.class);
+        ArgumentCaptor<List<ReadTsKvQuery>> actualReadTsKvQueryList = ArgumentCaptor.captor();
         then(timeseriesServiceMock).should().findAll(eq(TENANT_ID), eq(DEVICE_ID), actualReadTsKvQueryList.capture());
         ReadTsKvQuery actualReadTsKvQuery = actualReadTsKvQueryList.getValue().get(0);
         assertThat(actualReadTsKvQuery.getStartTs()).isEqualTo(ts - TimeUnit.MINUTES.toMillis(config.getStartInterval()));
@@ -275,7 +275,7 @@ public class TbGetTelemetryNodeTest extends AbstractRuleNodeUpgradeTest {
         node.onMsg(ctxMock, msg);
 
         // THEN
-        ArgumentCaptor<List<ReadTsKvQuery>> actualReadTsKvQueryList = ArgumentCaptor.forClass(List.class);
+        ArgumentCaptor<List<ReadTsKvQuery>> actualReadTsKvQueryList = ArgumentCaptor.captor();
         then(timeseriesServiceMock).should().findAll(eq(TENANT_ID), eq(DEVICE_ID), actualReadTsKvQueryList.capture());
         List<String> actualKeys = actualReadTsKvQueryList.getValue().stream().map(TsKvQuery::getKey).toList();
         assertThat(actualKeys).containsExactlyInAnyOrder("temperature", "humidity", "pressure");
@@ -305,7 +305,7 @@ public class TbGetTelemetryNodeTest extends AbstractRuleNodeUpgradeTest {
         node.onMsg(ctxMock, msg);
 
         // THEN
-        ArgumentCaptor<List<ReadTsKvQuery>> actualReadTsKvQueryList = ArgumentCaptor.forClass(List.class);
+        ArgumentCaptor<List<ReadTsKvQuery>> actualReadTsKvQueryList = ArgumentCaptor.captor();
         then(timeseriesServiceMock).should().findAll(eq(TENANT_ID), eq(DEVICE_ID), actualReadTsKvQueryList.capture());
         ReadTsKvQuery actualReadTsKvQuery = actualReadTsKvQueryList.getValue().get(0);
         aggregationStepVerifier.accept(actualReadTsKvQuery);
@@ -340,7 +340,7 @@ public class TbGetTelemetryNodeTest extends AbstractRuleNodeUpgradeTest {
         node.onMsg(ctxMock, msg);
 
         // THEN
-        ArgumentCaptor<List<ReadTsKvQuery>> actualReadTsKvQueryList = ArgumentCaptor.forClass(List.class);
+        ArgumentCaptor<List<ReadTsKvQuery>> actualReadTsKvQueryList = ArgumentCaptor.captor();
         then(timeseriesServiceMock).should().findAll(eq(TENANT_ID), eq(DEVICE_ID), actualReadTsKvQueryList.capture());
         ReadTsKvQuery actualReadTsKvQuery = actualReadTsKvQueryList.getValue().get(0);
         limitInQueryVerifier.accept(actualReadTsKvQuery);
@@ -385,7 +385,7 @@ public class TbGetTelemetryNodeTest extends AbstractRuleNodeUpgradeTest {
         node.onMsg(ctxMock, msg);
 
         // THEN
-        ArgumentCaptor<List<ReadTsKvQuery>> actualReadTsKvQueryList = ArgumentCaptor.forClass(List.class);
+        ArgumentCaptor<List<ReadTsKvQuery>> actualReadTsKvQueryList = ArgumentCaptor.captor();
         then(timeseriesServiceMock).should().findAll(eq(TENANT_ID), eq(DEVICE_ID), actualReadTsKvQueryList.capture());
         ReadTsKvQuery actualReadTsKvQuery = actualReadTsKvQueryList.getValue().get(0);
         orderInQueryVerifier.accept(actualReadTsKvQuery);

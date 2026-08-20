@@ -16,6 +16,7 @@
 package org.thingsboard.rule.engine.action;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.script.ScriptLanguage;
@@ -25,6 +26,7 @@ import java.util.Collections;
 import java.util.List;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 public class TbCreateAlarmNodeConfiguration extends TbAbstractAlarmNodeConfiguration implements NodeConfiguration<TbCreateAlarmNodeConfiguration> {
 
     @NoXss
