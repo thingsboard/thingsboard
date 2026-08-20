@@ -71,26 +71,42 @@ public class ProbeMetricsRegistryConfigTest {
         return server.getAddress().getPort();
     }
 
+    // named locals for otlpAlertingEnabled/prometheusEnabled, not adjacent positional literals, so a
+    // future ProbeMetricsRegistryConfig.probeMeterRegistry param reorder can't silently transpose
+    // them here without a compile error
+    private MeterRegistry probeMeterRegistry(boolean otlpEnabled, String otlpEndpoint, long otlpStepMs,
+                                              boolean otlpAlertingEnabled, boolean prometheusEnabled,
+                                              int prometheusPort, String prometheusBindAddress) throws IOException {
+        return config.probeMeterRegistry(otlpEnabled, otlpEndpoint, otlpStepMs, otlpAlertingEnabled,
+                prometheusEnabled, prometheusPort, prometheusBindAddress, reporter);
+    }
+
     @Test
     public void whenBothDisabled_registryHasNoChildren() throws IOException {
-        registry = config.probeMeterRegistry(false, "http://localhost:4318/v1/metrics", 60000, false,
-                false, 0, "0.0.0.0", reporter);
+        boolean otlpAlertingEnabled = false;
+        boolean prometheusEnabled = false;
+        registry = probeMeterRegistry(false, "http://localhost:4318/v1/metrics", 60000, otlpAlertingEnabled,
+                prometheusEnabled, 0, "0.0.0.0");
         assertThat(registry).isInstanceOf(CompositeMeterRegistry.class);
         assertThat(((CompositeMeterRegistry) registry).getRegistries()).isEmpty();
     }
 
     @Test
     public void whenOtlpEnabled_compositeContainsOtlpRegistry() throws IOException {
-        registry = config.probeMeterRegistry(true, "http://localhost:4318/v1/metrics", 60000, false,
-                false, 0, "0.0.0.0", reporter);
+        boolean otlpAlertingEnabled = false;
+        boolean prometheusEnabled = false;
+        registry = probeMeterRegistry(true, "http://localhost:4318/v1/metrics", 60000, otlpAlertingEnabled,
+                prometheusEnabled, 0, "0.0.0.0");
         assertThat(((CompositeMeterRegistry) registry).getRegistries())
                 .hasOnlyElementsOfType(OtlpMeterRegistry.class);
     }
 
     @Test
     public void whenBothEnabled_compositeContainsBothOtlpAndPrometheusRegistries() throws IOException {
-        registry = config.probeMeterRegistry(true, "http://localhost:4318/v1/metrics", 60000, false,
-                true, 0, "0.0.0.0", reporter);
+        boolean otlpAlertingEnabled = false;
+        boolean prometheusEnabled = true;
+        registry = probeMeterRegistry(true, "http://localhost:4318/v1/metrics", 60000, otlpAlertingEnabled,
+                prometheusEnabled, 0, "0.0.0.0");
 
         assertThat(((CompositeMeterRegistry) registry).getRegistries())
                 .hasSize(2)
@@ -100,8 +116,10 @@ public class ProbeMetricsRegistryConfigTest {
 
     @Test
     public void whenPrometheusEnabled_metricsEndpointServesScrapeOutput() throws Exception {
-        registry = config.probeMeterRegistry(false, "http://localhost:4318/v1/metrics", 60000, false,
-                true, 0, "0.0.0.0", reporter);
+        boolean otlpAlertingEnabled = false;
+        boolean prometheusEnabled = true;
+        registry = probeMeterRegistry(false, "http://localhost:4318/v1/metrics", 60000, otlpAlertingEnabled,
+                prometheusEnabled, 0, "0.0.0.0");
         assertThat(((CompositeMeterRegistry) registry).getRegistries())
                 .hasOnlyElementsOfType(PrometheusMeterRegistry.class);
 
@@ -117,8 +135,10 @@ public class ProbeMetricsRegistryConfigTest {
 
     @Test
     public void whenBindAddressConfigured_metricsEndpointStillServesOnThatAddress() throws Exception {
-        registry = config.probeMeterRegistry(false, "http://localhost:4318/v1/metrics", 60000, false,
-                true, 0, "127.0.0.1", reporter);
+        boolean otlpAlertingEnabled = false;
+        boolean prometheusEnabled = true;
+        registry = probeMeterRegistry(false, "http://localhost:4318/v1/metrics", 60000, otlpAlertingEnabled,
+                prometheusEnabled, 0, "127.0.0.1");
 
         registry.counter("test_probe_metrics_registry_counter").increment();
 
@@ -138,8 +158,10 @@ public class ProbeMetricsRegistryConfigTest {
         portHolder.start();
         try {
             int heldPort = portHolder.getAddress().getPort();
-            assertThatThrownBy(() -> config.probeMeterRegistry(true, "http://localhost:4318/v1/metrics", 60000, false,
-                    true, heldPort, "0.0.0.0", reporter))
+            boolean otlpAlertingEnabled = false;
+            boolean prometheusEnabled = true;
+            assertThatThrownBy(() -> probeMeterRegistry(true, "http://localhost:4318/v1/metrics", 60000, otlpAlertingEnabled,
+                    prometheusEnabled, heldPort, "0.0.0.0"))
                     .isInstanceOf(IOException.class);
         } finally {
             portHolder.stop(0);
@@ -149,8 +171,10 @@ public class ProbeMetricsRegistryConfigTest {
     @Test
     public void otlpAlertingDisabled_pushFailure_neverReportsToReporter() throws IOException {
         // port 1 is not listening - the push is guaranteed to fail
-        registry = config.probeMeterRegistry(true, "http://localhost:1/v1/metrics", 60000, false,
-                false, 0, "0.0.0.0", reporter);
+        boolean otlpAlertingEnabled = false;
+        boolean prometheusEnabled = false;
+        registry = probeMeterRegistry(true, "http://localhost:1/v1/metrics", 60000, otlpAlertingEnabled,
+                prometheusEnabled, 0, "0.0.0.0");
         registry.counter("test_counter").increment(); // publish() has nothing to send otherwise
 
         ReflectionTestUtils.invokeMethod(otlpRegistryOf(registry), "publish");
@@ -160,8 +184,10 @@ public class ProbeMetricsRegistryConfigTest {
 
     @Test
     public void otlpAlertingEnabled_pushFailure_reportsServiceFailure() throws IOException {
-        registry = config.probeMeterRegistry(true, "http://localhost:1/v1/metrics", 60000, true,
-                false, 0, "0.0.0.0", reporter);
+        boolean otlpAlertingEnabled = true;
+        boolean prometheusEnabled = false;
+        registry = probeMeterRegistry(true, "http://localhost:1/v1/metrics", 60000, otlpAlertingEnabled,
+                prometheusEnabled, 0, "0.0.0.0");
         registry.counter("test_counter").increment(); // publish() has nothing to send otherwise
 
         ReflectionTestUtils.invokeMethod(otlpRegistryOf(registry), "publish");
@@ -179,8 +205,10 @@ public class ProbeMetricsRegistryConfigTest {
         fakeCollector.start();
         int fakeCollectorPort = fakeCollector.getAddress().getPort();
 
-        registry = config.probeMeterRegistry(true, "http://localhost:" + fakeCollectorPort + "/v1/metrics", 60000, true,
-                false, 0, "0.0.0.0", reporter);
+        boolean otlpAlertingEnabled = true;
+        boolean prometheusEnabled = false;
+        registry = probeMeterRegistry(true, "http://localhost:" + fakeCollectorPort + "/v1/metrics", 60000, otlpAlertingEnabled,
+                prometheusEnabled, 0, "0.0.0.0");
         registry.counter("test_counter").increment(); // publish() has nothing to send otherwise
 
         ReflectionTestUtils.invokeMethod(otlpRegistryOf(registry), "publish");

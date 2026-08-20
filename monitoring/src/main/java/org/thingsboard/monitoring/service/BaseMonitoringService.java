@@ -141,7 +141,7 @@ public abstract class BaseMonitoringService<C extends MonitoringConfig<T>, T ext
                 probeMetricsRecorder.removeActionDuration(MonitoredServiceKey.LOGIN, ProbeMetricsRecorder.ACTION_REQUEST);
                 // WS and transport checks never ran this cycle - clear their gauges instead of
                 // leaving last cycle's value stale, then fall back to the WS-independent signal
-                probeMetricsRecorder.removeStaleProbe(MonitoredServiceKey.WS);
+                probeMetricsRecorder.removeProbe(MonitoredServiceKey.WS, ProbeMetricsRecorder.Removal.STALE_THIS_CYCLE);
                 clearAllTransportProbeMetrics();
                 checkTransportsAccepted();
                 return;
@@ -256,8 +256,8 @@ public abstract class BaseMonitoringService<C extends MonitoringConfig<T>, T ext
             if (!associatedUrls.contains(url)) {
                 BaseHealthChecker<C, T> retiredAssociate = associates.get(url);
                 // remove the metric before stopHealthChecker(), which can throw and skip everything after it
-                probeMetricsRecorder.removeProbe(retiredAssociate.getCachedInfo());
-                probeMetricsRecorder.removeAcceptedProbe(retiredAssociate.getCachedInfo());
+                probeMetricsRecorder.removeProbe(retiredAssociate.getCachedInfo(), ProbeMetricsRecorder.Removal.PERMANENT);
+                probeMetricsRecorder.removeAcceptedProbe(retiredAssociate.getCachedInfo(), ProbeMetricsRecorder.Removal.PERMANENT);
                 stopHealthChecker(retiredAssociate);
                 associates.remove(url);
                 changed = true;
@@ -329,7 +329,7 @@ public abstract class BaseMonitoringService<C extends MonitoringConfig<T>, T ext
     }
 
     private void clearTransportProbeMetricsFor(BaseHealthChecker<C, T> healthChecker) {
-        probeMetricsRecorder.removeStaleProbe(healthChecker.getCachedInfo());
+        probeMetricsRecorder.removeProbe(healthChecker.getCachedInfo(), ProbeMetricsRecorder.Removal.STALE_THIS_CYCLE);
         healthChecker.getAssociates().values().forEach(this::clearTransportProbeMetricsFor);
     }
 
@@ -338,15 +338,11 @@ public abstract class BaseMonitoringService<C extends MonitoringConfig<T>, T ext
     }
 
     private void clearAcceptedProbeMetricsFor(BaseHealthChecker<C, T> healthChecker) {
-        probeMetricsRecorder.removeStaleAcceptedProbe(healthChecker.getCachedInfo());
+        probeMetricsRecorder.removeAcceptedProbe(healthChecker.getCachedInfo(), ProbeMetricsRecorder.Removal.STALE_THIS_CYCLE);
         healthChecker.getAssociates().values().forEach(this::clearAcceptedProbeMetricsFor);
     }
 
-    // always runs, regardless of OTLP/Prometheus export - the fallback alert must work on every deployment.
-    // Deliberately serial: each target already bounds its own attempt via its transport's
-    // request_timeout_ms, and parallelizing would violate ProbeMetricsRecorder's single-threaded-
-    // cycle assumption (see its freshThisCycle field) - acceptable given typical deployments
-    // monitor a handful of targets, not hundreds.
+    // always runs regardless of OTLP/Prometheus export; deliberately serial (see freshThisCycle)
     private void checkTransportsAccepted() {
         healthCheckers.forEach(healthChecker -> healthChecker.checkAccepted());
     }

@@ -89,9 +89,7 @@ public abstract class BaseHealthChecker<C extends MonitoringConfig, T extends Mo
                 testValue = UUID.randomUUID().toString();
                 testPayload = createTestPayload(testValue, TEST_TELEMETRY_KEY);
             } catch (Throwable e) {
-                // neither action has recorded anything yet this cycle - clear both, same as the
-                // inner try below, so a failure here doesn't leave last cycle's durations stale
-                clearOwnActionDurations();
+                clearOwnActionDurations(); // neither action recorded this cycle yet
                 throw new ServiceFailureException(info, e);
             }
             try {
@@ -125,23 +123,19 @@ public abstract class BaseHealthChecker<C extends MonitoringConfig, T extends Mo
         });
     }
 
-    // clears both this probe's action durations - used wherever a failure means neither "request"
-    // nor "ws_update" got refreshed this cycle, whether or not either was ever attempted
     private void clearOwnActionDurations() {
         probeMetricsRecorder.removeActionDuration(info, ProbeMetricsRecorder.ACTION_REQUEST);
         probeMetricsRecorder.removeActionDuration(info, ProbeMetricsRecorder.ACTION_WS_UPDATE);
     }
 
-    // unlike check(), doesn't wait for WS/core confirmation - true once the transport itself
-    // acknowledges the message, so a transport-only outage still alerts while login/WS is down.
-    // Not final: LwM2M overrides this as a no-op since its send() has no such acknowledgment.
-    // Never reports serviceIsOk: this shares check()'s service key, and an "ok" from this fallback
-    // alone could resolve/reset a real, still-open incident that only the full check() should clear.
+    // unlike check(), doesn't wait for WS/core confirmation - not final since LwM2M overrides it as
+    // a no-op. Never calls reporter.serviceIsOk: sharing check()'s key could wrongly resolve a real incident.
     protected void checkAccepted() {
         boolean success;
         try {
             initClient();
             sendTestPayload(createTestPayload(UUID.randomUUID().toString(), ACCEPTED_TEST_TELEMETRY_KEY));
+            log.info("[{}] (accepted) is OK", info); // plain log, not reporter.serviceIsOk - see above
             success = true;
         } catch (Throwable e) {
             reporter.serviceFailure(info, e);

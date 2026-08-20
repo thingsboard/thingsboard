@@ -148,6 +148,8 @@ monitoring:
       # Interface to bind the /metrics HTTP server to - 0.0.0.0 (default) for all interfaces, or e.g.
       # 127.0.0.1 to restrict access to a local reverse proxy, since this endpoint has no built-in authentication
       bind_address: '${METRICS_PROMETHEUS_BIND_ADDRESS:0.0.0.0}'
+      # Read directly from the env (not Spring), since it's applied before Spring itself starts up:
+      # METRICS_PROMETHEUS_HTTP_TIMEOUT_S - request/response timeout in seconds, default 30
 
   notifications:
     message_prefix: '${NOTIFICATION_MESSAGE_PREFIX:}'

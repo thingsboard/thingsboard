@@ -42,8 +42,7 @@ public class ProbeMetricsRecorder {
     private static final String KIND_PROBE = "probe";
     private static final String KIND_ACCEPTED = "accepted";
 
-    // action names shared with BaseHealthChecker/BaseMonitoringService/WsClientFactory, so a
-    // recordActionDuration call and its matching removeActionDuration can't drift via a typo
+    // shared with BaseHealthChecker/BaseMonitoringService/WsClientFactory to avoid literal drift
     public static final String ACTION_REQUEST = "request";
     public static final String ACTION_WS_UPDATE = "ws_update";
     public static final String ACTION_CONNECT = "connect";
@@ -57,24 +56,18 @@ public class ProbeMetricsRecorder {
     private final String wsEndpoint;
 
     private final Map<GaugeKey, AtomicReference<Double>> gaugeValues = new ConcurrentHashMap<>();
-    // Optional-valued so an unresolvable target's negative result is cached too (a plain
-    // computeIfAbsent never stores a null return, so it would otherwise re-resolve every call)
+    // Optional-valued so an unresolvable target's negative result is cached too, not re-resolved every call
     private final Map<TransportTagKey, Optional<Tags>> transportTagsCache = new ConcurrentHashMap<>();
     private final Map<TransportTagKey, Optional<Tags>> acceptedTagsCache = new ConcurrentHashMap<>();
-    // detects two probes resolving to identical labels (e.g. same host:port, different queue) so
-    // the collision is logged instead of one gauge silently overwriting the other
+    // detects two probes resolving to identical labels, so it's logged instead of silently overwritten
     private final Map<Tags, Object> tagsOwners = new ConcurrentHashMap<>();
     private final Set<Tags> warnedCollisions = ConcurrentHashMap.newKeySet();
-    // dedupes the "can't resolve this transport's endpoint" warning so a permanently-misconfigured
-    // target logs it once instead of every probe cycle forever (computeIfAbsent doesn't cache nulls)
+    // dedupes the "can't resolve endpoint" warning so a misconfigured target logs it once, not every cycle
     private final Set<TransportTagKey> warnedUnresolvable = ConcurrentHashMap.newKeySet();
     // action gauges recorded per probe, so removeProbe can clean them up without knowing them upfront
     private final Map<Tags, Set<String>> actionsByBaseTags = new ConcurrentHashMap<>();
-    // tags that already got fresh data this cycle - so a colliding sibling's removeProbe/removeAcceptedProbe
-    // (e.g. crashing right after this one succeeded) can't wipe what was just correctly recorded.
-    // Safe only because every BaseMonitoringService's runChecks() cycle runs on one shared
-    // single-threaded executor (see ThingsboardMonitoringApplication) - a second thread/pool
-    // touching this set concurrently would break the protection with no compile-time signal.
+    // tags with fresh data this cycle - protects a colliding sibling from wiping a just-recorded gauge;
+    // relies on runChecks() cycles never overlapping (single-threaded executor)
     private final Set<Tags> freshThisCycle = ConcurrentHashMap.newKeySet();
 
     public ProbeMetricsRecorder(MeterRegistry meterRegistry,
@@ -112,10 +105,7 @@ public class ProbeMetricsRecorder {
         });
     }
 
-    // removes just this one action's duration gauge (the specific probe that didn't respond),
-    // without touching probe_success or any other action recorded for this target. Skips removal
-    // if these tags already have fresh data this cycle (from a colliding sibling target that
-    // recorded successfully first) - same protection removeStaleProbe already gives probe_success.
+    // removes just this action's duration gauge; skips if a colliding sibling already has fresh data
     public void removeActionDuration(Object serviceKey, String action) {
         withTags(serviceKey, "remove action duration", tags -> {
             if (freshThisCycle.contains(tags)) {
@@ -147,22 +137,14 @@ public class ProbeMetricsRecorder {
         }
     }
 
-    // permanent removal (e.g. decommissioning a domain-IP associate) - always removes the gauge,
-    // even if its tags got fresh data this cycle, since the target is gone for good either way
-    public void removeProbe(Object serviceKey) {
-        removeProbe(serviceKey, false);
+    // PERMANENT always removes (decommissioning); STALE_THIS_CYCLE skips if a colliding sibling is fresh
+    public enum Removal {
+        PERMANENT, STALE_THIS_CYCLE
     }
 
-    // for a probe no longer checked THIS cycle only - skips removal if its tags already have fresh
-    // data this cycle (from a colliding sibling target sharing the same resolved tags), so that a
-    // crashing sibling's stale-clearing can't wipe another target's just-recorded gauge
-    public void removeStaleProbe(Object serviceKey) {
-        removeProbe(serviceKey, true);
-    }
-
-    private void removeProbe(Object serviceKey, boolean skipIfFresh) {
+    public void removeProbe(Object serviceKey, Removal removal) {
         withTags(serviceKey, "remove", tags -> {
-            if (skipIfFresh && freshThisCycle.contains(tags)) {
+            if (removal == Removal.STALE_THIS_CYCLE && freshThisCycle.contains(tags)) {
                 log.debug("Skipping removal of probe metric for [{}] - tags {} already have fresh data this cycle from a colliding target", serviceKey, tags);
                 return;
             }
@@ -175,11 +157,8 @@ public class ProbeMetricsRecorder {
             warnedCollisions.remove(tags);
             freshThisCycle.remove(tags); // a permanent removal must not leave a stale fresh-flag behind
         });
-        // only on permanent removal - a stale (per-cycle) removal runs every unhealthy cycle (e.g.
-        // for the whole duration of a login/WS outage), so evicting here would defeat the cache and,
-        // for warnedUnresolvable, make an unresolvable target's warning re-fire every such cycle
-        // instead of once - exactly what that dedup set exists to prevent
-        if (!skipIfFresh && serviceKey instanceof TransportInfo transportInfo) {
+        // only on permanent removal - a stale removal runs every unhealthy cycle and would defeat the cache
+        if (removal == Removal.PERMANENT && serviceKey instanceof TransportInfo transportInfo) {
             // otherwise these caches leak the same way the gauges just did
             TransportTagKey key = TransportTagKey.of(transportInfo);
             transportTagsCache.remove(key);
@@ -187,19 +166,8 @@ public class ProbeMetricsRecorder {
         }
     }
 
-    // permanent removal - see removeProbe(Object) for why this never skips
-    public void removeAcceptedProbe(Object serviceKey) {
-        removeAcceptedProbe(serviceKey, false);
-    }
-
-    // for an accepted-fallback probe no longer checked THIS cycle only - see removeStaleProbe(Object)
-    public void removeStaleAcceptedProbe(Object serviceKey) {
-        removeAcceptedProbe(serviceKey, true);
-    }
-
-    // only evicts acceptedTagsCache on permanent removal (see below) - the stale path runs every
-    // healthy cycle, which would defeat the cache
-    private void removeAcceptedProbe(Object serviceKey, boolean skipIfFresh) {
+    // see removeProbe(Object, Removal) for what PERMANENT vs STALE_THIS_CYCLE mean here
+    public void removeAcceptedProbe(Object serviceKey, Removal removal) {
         if (!enabled || !(serviceKey instanceof TransportInfo transportInfo)) {
             return;
         }
@@ -208,16 +176,14 @@ public class ProbeMetricsRecorder {
             if (tags == null) {
                 return;
             }
-            if (skipIfFresh && freshThisCycle.contains(tags)) {
+            if (removal == Removal.STALE_THIS_CYCLE && freshThisCycle.contains(tags)) {
                 log.debug("Skipping removal of accepted probe metric for [{}] - tags {} already have fresh data this cycle from a colliding target", transportInfo, tags);
                 return;
             }
             removeGauge(PROBE_SUCCESS_METRIC, tags);
             freshThisCycle.remove(tags);
-            if (!skipIfFresh) {
-                // permanent removal (decommissioning) - safe to evict here, unlike the stale path which
-                // runs every healthy cycle and would otherwise defeat the cache
-                acceptedTagsCache.remove(TransportTagKey.of(transportInfo));
+            if (removal == Removal.PERMANENT) {
+                acceptedTagsCache.remove(TransportTagKey.of(transportInfo)); // stale path would defeat the cache
             }
         } catch (Exception e) {
             log.warn("Failed to remove accepted probe metric for [{}]", transportInfo, e);

@@ -224,7 +224,7 @@ public class ProbeMetricsRecorderTest {
     }
 
     @Test
-    public void removeStaleProbe_alsoRemovesStageDurationGauges() {
+    public void removeProbe_staleThisCycle_alsoRemovesStageDurationGauges() {
         ProbeMetricsRecorder recorder = recorder(true);
         TransportInfo target = transportInfo(TransportType.MQTT, "tcp://acme.example.com:1883");
         recorder.recordProbe(target, true);
@@ -233,7 +233,7 @@ public class ProbeMetricsRecorderTest {
         assertThat(registry.getMeters()).hasSize(3); // success + 2 stages
 
         recorder.startCycle(); // next cycle - this target's fresh-this-cycle protection no longer applies
-        recorder.removeStaleProbe(target);
+        recorder.removeProbe(target, ProbeMetricsRecorder.Removal.STALE_THIS_CYCLE);
 
         assertThat(registry.getMeters()).isEmpty();
     }
@@ -245,7 +245,7 @@ public class ProbeMetricsRecorderTest {
         ProbeMetricsRecorder recorder = recorder(true);
         TransportInfo target = transportInfo(TransportType.MQTT, "tcp://acme.example.com:1883");
         recorder.recordActionDuration(target, "request", 8);
-        recorder.removeProbe(target);
+        recorder.removeProbe(target, ProbeMetricsRecorder.Removal.PERMANENT);
 
         recorder.recordActionDuration(target, "request", 12);
 
@@ -253,33 +253,33 @@ public class ProbeMetricsRecorderTest {
                 .tags("check", "mqtt", "action", "request").gauge().value()).isEqualTo(12d);
         assertThat(registry.getMeters()).hasSize(1);
 
-        recorder.removeProbe(target);
+        recorder.removeProbe(target, ProbeMetricsRecorder.Removal.PERMANENT);
         assertThat(registry.getMeters()).isEmpty();
     }
 
     @Test
     public void removeProbe_removesGaugeForRetiredTarget() {
-        // decommissioning (e.g. reconcileAssociates dropping a domain-IP associate) uses the plain,
-        // unguarded removeProbe - it must remove the gauge unconditionally, even if the target's tags
-        // got fresh data THIS SAME cycle (e.g. a successful check() just before being decommissioned)
+        // decommissioning (e.g. reconcileAssociates dropping a domain-IP associate) uses PERMANENT -
+        // it must remove the gauge unconditionally, even if the target's tags got fresh data THIS
+        // SAME cycle (e.g. a successful check() just before being decommissioned)
         ProbeMetricsRecorder recorder = recorder(true);
         TransportInfo retired = transportInfo(TransportType.MQTT, "tcp://acme.example.com:1883");
         recorder.recordProbe(retired, true);
         assertThat(registry.getMeters()).hasSize(1);
 
-        recorder.removeProbe(retired);
+        recorder.removeProbe(retired, ProbeMetricsRecorder.Removal.PERMANENT);
 
         assertThat(registry.find("probe_success").tags("check", "mqtt").gauge()).isNull();
         assertThat(registry.getMeters()).isEmpty();
     }
 
     @Test
-    public void removeStaleProbe_thenRecordProbeAgain_reregistersGaugeCleanly() {
+    public void removeProbe_staleThisCycle_thenRecordProbeAgain_reregistersGaugeCleanly() {
         ProbeMetricsRecorder recorder = recorder(true);
         TransportInfo target = transportInfo(TransportType.MQTT, "tcp://acme.example.com:1883");
         recorder.recordProbe(target, true);
         recorder.startCycle(); // next cycle - this target's fresh-this-cycle protection no longer applies
-        recorder.removeStaleProbe(target);
+        recorder.removeProbe(target, ProbeMetricsRecorder.Removal.STALE_THIS_CYCLE);
 
         recorder.recordProbe(target, false);
 
@@ -290,7 +290,7 @@ public class ProbeMetricsRecorderTest {
     @Test
     public void removeProbe_whenDisabled_isNoOp() {
         ProbeMetricsRecorder recorder = recorder(false);
-        recorder.removeProbe(MonitoredServiceKey.LOGIN);
+        recorder.removeProbe(MonitoredServiceKey.LOGIN, ProbeMetricsRecorder.Removal.PERMANENT);
         assertThat(registry.getMeters()).isEmpty();
     }
 
@@ -324,7 +324,7 @@ public class ProbeMetricsRecorderTest {
         ProbeMetricsRecorder recorder = recorder(true);
         recorder.recordProbe(transportInfo(TransportType.MQTT, "tcp://acme.example.com:1883"), true);
 
-        recorder.removeProbe(transportInfo(TransportType.MQTT, "tcp://acme.example.com:1883"));
+        recorder.removeProbe(transportInfo(TransportType.MQTT, "tcp://acme.example.com:1883"), ProbeMetricsRecorder.Removal.PERMANENT);
 
         assertThat(registry.getMeters()).isEmpty();
     }
@@ -347,38 +347,39 @@ public class ProbeMetricsRecorderTest {
     }
 
     @Test
-    public void removeStaleProbe_ofCollidingSibling_doesNotWipeFreshDataRecordedThisCycle() {
+    public void removeProbe_staleThisCycle_ofCollidingSibling_doesNotWipeFreshDataRecordedThisCycle() {
         // A and B collide onto identical tags (same type+baseUrl, differing only by queue). If A
-        // succeeds and records fresh data this cycle, and B's own removeStaleProbe fires afterward
-        // (e.g. because B crashed and checkedCount-based clearing targets it), A's fresh data must
-        // survive - otherwise a crashing sibling silently wipes a healthy target's just-recorded gauge.
+        // succeeds and records fresh data this cycle, and B's own STALE_THIS_CYCLE removal fires
+        // afterward (e.g. because B crashed and checkedCount-based clearing targets it), A's fresh
+        // data must survive - otherwise a crashing sibling silently wipes a healthy target's
+        // just-recorded gauge.
         ProbeMetricsRecorder recorder = recorder(true);
         TransportInfo a = transportInfo(TransportType.MQTT, "tcp://acme.example.com:1883", "QueueA");
         TransportInfo b = transportInfo(TransportType.MQTT, "tcp://acme.example.com:1883", "QueueB");
 
         recorder.recordProbe(a, true);
-        recorder.removeStaleProbe(b);
+        recorder.removeProbe(b, ProbeMetricsRecorder.Removal.STALE_THIS_CYCLE);
 
         assertThat(registry.get("probe_success").tags("check", "mqtt").gauge().value()).isEqualTo(1d);
         assertThat(registry.getMeters()).hasSize(1);
     }
 
     @Test
-    public void removeStaleAcceptedProbe_ofCollidingSibling_doesNotWipeFreshDataRecordedThisCycle() {
+    public void removeAcceptedProbe_staleThisCycle_ofCollidingSibling_doesNotWipeFreshDataRecordedThisCycle() {
         // same collision protection, for the accepted-fallback series
         ProbeMetricsRecorder recorder = recorder(true);
         TransportInfo a = transportInfo(TransportType.MQTT, "tcp://acme.example.com:1883", "QueueA");
         TransportInfo b = transportInfo(TransportType.MQTT, "tcp://acme.example.com:1883", "QueueB");
 
         recorder.recordAcceptedProbe(a, true);
-        recorder.removeStaleAcceptedProbe(b);
+        recorder.removeAcceptedProbe(b, ProbeMetricsRecorder.Removal.STALE_THIS_CYCLE);
 
         assertThat(registry.get("probe_success").tags("check", "mqtt", "kind", "accepted").gauge().value()).isEqualTo(1d);
         assertThat(registry.getMeters()).hasSize(1);
     }
 
     @Test
-    public void removeStaleProbe_withoutPriorRecordThisCycle_stillRemovesGauge() {
+    public void removeProbe_staleThisCycle_withoutPriorRecordThisCycle_stillRemovesGauge() {
         // normal, non-colliding stale removal - freshThisCycle is empty (either nothing was recorded,
         // or startCycle() reset it), so removal must proceed exactly as before this fix
         ProbeMetricsRecorder recorder = recorder(true);
@@ -386,7 +387,7 @@ public class ProbeMetricsRecorderTest {
         recorder.recordProbe(target, true);
         recorder.startCycle();
 
-        recorder.removeStaleProbe(target);
+        recorder.removeProbe(target, ProbeMetricsRecorder.Removal.STALE_THIS_CYCLE);
 
         assertThat(registry.getMeters()).isEmpty();
     }
@@ -458,7 +459,7 @@ public class ProbeMetricsRecorderTest {
         ProbeMetricsRecorder recorder = new ProbeMetricsRecorder(spyRegistry, otlpEnabled, prometheusEnabled, "acme.example.com",
                 "https://acme.example.com", "wss://acme.example.com", "acme-cluster-1");
 
-        recorder.removeAcceptedProbe(transportInfo(TransportType.MQTT, "tcp://acme.example.com:1883"));
+        recorder.removeAcceptedProbe(transportInfo(TransportType.MQTT, "tcp://acme.example.com:1883"), ProbeMetricsRecorder.Removal.PERMANENT);
 
         verify(spyRegistry, never()).find(anyString());
     }
@@ -502,8 +503,8 @@ public class ProbeMetricsRecorderTest {
     }
 
     @Test
-    public void removeStaleProbe_noLongerRemovesAcceptedGauge() {
-        // removeStaleProbe() no longer touches kind="accepted" - only the accepted variants do
+    public void removeProbe_staleThisCycle_noLongerRemovesAcceptedGauge() {
+        // removeProbe(STALE_THIS_CYCLE) no longer touches kind="accepted" - only the accepted variants do
         ProbeMetricsRecorder recorder = recorder(true);
         TransportInfo target = transportInfo(TransportType.MQTT, "tcp://acme.example.com:1883");
         recorder.recordProbe(target, true);
@@ -511,14 +512,14 @@ public class ProbeMetricsRecorderTest {
         assertThat(registry.getMeters()).hasSize(2);
 
         recorder.startCycle(); // next cycle - this target's fresh-this-cycle protection no longer applies
-        recorder.removeStaleProbe(target);
+        recorder.removeProbe(target, ProbeMetricsRecorder.Removal.STALE_THIS_CYCLE);
 
         assertThat(registry.getMeters()).hasSize(1);
         assertThat(registry.get("probe_success").tags("kind", "accepted").gauge().value()).isEqualTo(1d);
     }
 
     @Test
-    public void removeStaleAcceptedProbe_removesOnlyAcceptedGauge_leavesProbeGaugeUntouched() {
+    public void removeAcceptedProbe_staleThisCycle_removesOnlyAcceptedGauge_leavesProbeGaugeUntouched() {
         ProbeMetricsRecorder recorder = recorder(true);
         TransportInfo target = transportInfo(TransportType.MQTT, "tcp://acme.example.com:1883");
         recorder.recordProbe(target, true);
@@ -526,7 +527,7 @@ public class ProbeMetricsRecorderTest {
         assertThat(registry.getMeters()).hasSize(2);
 
         recorder.startCycle(); // next cycle - this target's fresh-this-cycle protection no longer applies
-        recorder.removeStaleAcceptedProbe(target);
+        recorder.removeAcceptedProbe(target, ProbeMetricsRecorder.Removal.STALE_THIS_CYCLE);
 
         assertThat(registry.getMeters()).hasSize(1);
         assertThat(registry.get("probe_success").tags("kind", "probe").gauge().value()).isEqualTo(1d);
@@ -535,14 +536,14 @@ public class ProbeMetricsRecorderTest {
     @Test
     public void removeAcceptedProbe_whenDisabled_isNoOp() {
         ProbeMetricsRecorder recorder = recorder(false);
-        recorder.removeAcceptedProbe(transportInfo(TransportType.MQTT, "tcp://acme.example.com:1883"));
+        recorder.removeAcceptedProbe(transportInfo(TransportType.MQTT, "tcp://acme.example.com:1883"), ProbeMetricsRecorder.Removal.PERMANENT);
         assertThat(registry.getMeters()).isEmpty();
     }
 
     @Test
     public void removeAcceptedProbe_ignoresNonTransportServiceKeys() {
         ProbeMetricsRecorder recorder = recorder(true);
-        recorder.removeAcceptedProbe(MonitoredServiceKey.LOGIN);
+        recorder.removeAcceptedProbe(MonitoredServiceKey.LOGIN, ProbeMetricsRecorder.Removal.PERMANENT);
         assertThat(registry.getMeters()).isEmpty();
     }
 
@@ -577,7 +578,7 @@ public class ProbeMetricsRecorderTest {
         recorder.recordProbe(target, true);
         recorder.recordActionDuration(target, "request", 8);
         recorder.recordAcceptedProbe(target, true);
-        recorder.removeAcceptedProbe(target);
+        recorder.removeAcceptedProbe(target, ProbeMetricsRecorder.Removal.PERMANENT);
 
         assertThat(registry.getMeters()).isEmpty();
     }
@@ -598,9 +599,9 @@ public class ProbeMetricsRecorderTest {
 
     @Test
     public void schemelessTransportBaseUrl_staleRemoval_doesNotEvictWarnedUnresolvable() {
-        // removeStaleProbe (per-cycle clearing, e.g. every cycle of a login/WS outage) must not
-        // evict warnedUnresolvable - only permanent removal (decommissioning) should, otherwise an
-        // unresolvable target's warning would re-fire every such cycle instead of logging once
+        // STALE_THIS_CYCLE removal (per-cycle clearing, e.g. every cycle of a login/WS outage) must
+        // not evict warnedUnresolvable - only PERMANENT removal (decommissioning) should, otherwise
+        // an unresolvable target's warning would re-fire every such cycle instead of logging once
         ProbeMetricsRecorder recorder = recorder(true);
         TransportInfo target = transportInfo(TransportType.MQTT, "acme.example.com:1883");
         Set<?> warnedUnresolvable = (Set<?>) ReflectionTestUtils.getField(recorder, "warnedUnresolvable");
@@ -609,16 +610,16 @@ public class ProbeMetricsRecorderTest {
         assertThat(warnedUnresolvable).hasSize(1);
 
         recorder.startCycle();
-        recorder.removeStaleProbe(target);
+        recorder.removeProbe(target, ProbeMetricsRecorder.Removal.STALE_THIS_CYCLE);
         assertThat(warnedUnresolvable).hasSize(1); // stale removal must leave the dedup entry alone
 
-        recorder.removeProbe(target);
+        recorder.removeProbe(target, ProbeMetricsRecorder.Removal.PERMANENT);
         assertThat(warnedUnresolvable).isEmpty(); // permanent removal does evict it
     }
 
     @Test
     public void schemelessTransportBaseUrl_removedThenReAdded_warnsAgain() {
-        // removeProbe evicts warnedUnresolvable for the retired target, so a target decommissioned
+        // PERMANENT removal evicts warnedUnresolvable for the retired target, so a target decommissioned
         // and later re-added with the same bad URL gets a fresh warning instead of permanent silence.
         // No log-capturing utility exists here, so this only confirms re-adding stays side-effect-free
         // (the actual re-warning is covered by inspection of removeProbe's warnedUnresolvable.remove).
@@ -626,7 +627,7 @@ public class ProbeMetricsRecorderTest {
         TransportInfo target = transportInfo(TransportType.MQTT, "acme.example.com:1883");
 
         recorder.recordProbe(target, true);
-        recorder.removeProbe(target);
+        recorder.removeProbe(target, ProbeMetricsRecorder.Removal.PERMANENT);
         recorder.recordProbe(target, true);
 
         assertThat(registry.getMeters()).isEmpty();

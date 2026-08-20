@@ -48,20 +48,15 @@ import java.util.concurrent.Executors;
 @Slf4j
 public class ProbeMetricsRegistryConfig {
 
-    // small fixed pool for the /metrics scrape endpoint - PrometheusMeterRegistry.scrape() is
-    // thread-safe, so a few concurrent scrapers are safe; this also makes scraping genuinely
-    // concurrent instead of serialized, unlike the previous setExecutor(null) default
+    // small fixed pool for the /metrics scrape endpoint - PrometheusMeterRegistry.scrape() is thread-safe
     private static final int PROMETHEUS_SCRAPE_THREAD_POOL_SIZE = 4;
 
     static {
-        // JDK HttpServer has no default request/response timeout - without these, a single slow/stalled
-        // client connection can hang the (otherwise single-threaded) server forever. Set in a static
-        // initializer so this runs at class-load time, before this class's own bean method (or
-        // anything else in the JVM) can construct an HttpServer: sun.net.httpserver.ServerConfig
-        // reads these properties only once, in its own static initializer triggered by the first
-        // HttpServer use anywhere in the process - setting them any later risks a silent no-op.
-        System.setProperty("sun.net.httpserver.maxReqTime", "30");
-        System.setProperty("sun.net.httpserver.maxRspTime", "30");
+        // sun.net.httpserver.ServerConfig reads these once, on the JVM's first HttpServer use - must be
+        // set before that (a static initializer, not @Value, since Spring isn't up yet at that point)
+        String timeoutS = System.getenv().getOrDefault("METRICS_PROMETHEUS_HTTP_TIMEOUT_S", "30");
+        System.setProperty("sun.net.httpserver.maxReqTime", timeoutS);
+        System.setProperty("sun.net.httpserver.maxRspTime", timeoutS);
     }
 
     private HttpServer prometheusServer;
