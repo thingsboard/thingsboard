@@ -48,7 +48,8 @@ import java.util.concurrent.Executors;
 @Slf4j
 public class ProbeMetricsRegistryConfig {
 
-    // small fixed pool for the /metrics scrape endpoint - PrometheusMeterRegistry.scrape() is thread-safe
+    // 4 concurrent scrapers is plenty for a single Prometheus target polling this endpoint - was
+    // effectively 1 (setExecutor(null)) before; scrape() is thread-safe so raising it is safe
     private static final int PROMETHEUS_SCRAPE_THREAD_POOL_SIZE = 4;
 
     static {
