@@ -46,6 +46,10 @@ monitoring:
     # only, requires api_key_description to be set). The warning repeats every day once within
     # this threshold until the key is rotated or the process restarts.
     api_key_expiry_warning_days: '${REST_AUTH_API_KEY_EXPIRY_WARNING_DAYS:7}'
+    # Delay before the first expiry check, in milliseconds (auth_mode: API_KEY only)
+    api_key_expiry_check_initial_delay_ms: '${REST_AUTH_API_KEY_EXPIRY_CHECK_INITIAL_DELAY_MS:60000}'
+    # Interval between expiry checks, in milliseconds (auth_mode: API_KEY only)
+    api_key_expiry_check_interval_ms: '${REST_AUTH_API_KEY_EXPIRY_CHECK_INTERVAL_MS:86400000}'
     # REST request timeout in milliseconds
     request_timeout_ms: '${REST_REQUEST_TIMEOUT_MS:5000}'
   ws:

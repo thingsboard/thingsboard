@@ -128,7 +128,11 @@ public class WsClient extends WebSocketClient implements AutoCloseable {
         } finally {
             updateLock.unlock();
         }
-        super.send(text);
+        try {
+            super.send(text);
+        } catch (RuntimeException e) {
+            throw new IllegalStateException("Failed to send WS message" + closeInfo(), e);
+        }
     }
 
     public WsClient subscribeForTelemetry(List<UUID> devices, List<String> keys) {
@@ -149,11 +153,7 @@ public class WsClient extends WebSocketClient implements AutoCloseable {
         CmdsWrapper wrapper = new CmdsWrapper();
         wrapper.setCmds(List.of(cmd));
 
-        try {
-            send(JacksonUtil.toString(wrapper));
-        } catch (RuntimeException e) {
-            throw new IllegalStateException("Failed to send WS subscribe command" + closeInfo(), e);
-        }
+        send(JacksonUtil.toString(wrapper));
         return this;
     }
 
@@ -204,7 +204,7 @@ public class WsClient extends WebSocketClient implements AutoCloseable {
         if (!closed) {
             return "";
         }
-        return " - WebSocket closed before subscribe could complete (code=" + closeCode + ", reason=" + closeReason + ")";
+        return " - WebSocket closed (code=" + closeCode + ", reason=" + closeReason + ")";
     }
 
     private List<JsonNode> getLastMsgs() {

@@ -118,20 +118,22 @@ public abstract class BaseMonitoringService<C extends MonitoringConfig<T>, T ext
         try {
             log.info("Starting {}", getName());
 
-            String accessToken;
+            boolean apiKeyMode = tbClient.getAuthMode() == TbClient.AuthMode.API_KEY;
+            String loginServiceKey = apiKeyMode ? MonitoredServiceKey.API_KEY_CHECK : MonitoredServiceKey.LOGIN;
+            String wsCredential;
             try {
                 stopWatch.start();
-                accessToken = tbClient.logIn();
-                reporter.reportLatency(Latencies.LOG_IN, stopWatch.getTime());
-                reporter.serviceIsOk(MonitoredServiceKey.LOGIN);
+                wsCredential = tbClient.getWsCredential();
+                reporter.reportLatency(apiKeyMode ? Latencies.API_KEY_CHECK : Latencies.LOG_IN, stopWatch.getTime());
+                reporter.serviceIsOk(loginServiceKey);
             } catch (Exception e) {
-                reporter.serviceFailure(MonitoredServiceKey.LOGIN, e);
+                reporter.serviceFailure(loginServiceKey, e);
                 return;
             }
 
             WsClient wsClient;
             try {
-                wsClient = wsClientFactory.createClient(tbClient.getAuthMode(), accessToken);
+                wsClient = wsClientFactory.createClient(wsCredential);
                 reporter.serviceIsOk(MonitoredServiceKey.WS_CONNECT);
             } catch (Exception e) {
                 reporter.serviceFailure(MonitoredServiceKey.WS_CONNECT, e);

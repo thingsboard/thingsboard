@@ -22,9 +22,12 @@ import org.thingsboard.server.common.data.query.EntityDataQuery;
 @Data
 public class EntityDataCmd {
 
+    // must match the server's @JsonSubTypes discriminator for this command - not compile-checked against it
+    public static final String TYPE = "ENTITY_DATA";
+
     private int cmdId;
     private EntityDataQuery query;
     private LatestValueCmd latestCmd;
-    private final String type = "ENTITY_DATA";
+    private final String type = TYPE;
 
 }

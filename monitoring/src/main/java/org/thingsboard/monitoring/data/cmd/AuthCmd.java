@@ -18,7 +18,7 @@ package org.thingsboard.monitoring.data.cmd;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 
-// NON_NULL: some server versions reject the whole message if the inactive field is present as null
+// NON_NULL: don't send the field we're not using (token vs apiKey) - not a known server requirement, just good hygiene for an outbound command
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Data
 public class AuthCmd {

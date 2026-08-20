@@ -17,8 +17,12 @@ package org.thingsboard.monitoring.service;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.client.HttpClientErrorException;
 import org.thingsboard.monitoring.client.TbClient;
+import org.thingsboard.monitoring.data.notification.Notification;
 import org.thingsboard.monitoring.notification.NotificationService;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.UserId;
@@ -31,8 +35,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
@@ -41,10 +44,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import org.mockito.ArgumentCaptor;
-import org.thingsboard.monitoring.data.notification.Notification;
 
-public class ApiKeyExpiryMonitoringServiceTest {
+class ApiKeyExpiryMonitoringServiceTest {
 
     private TbClient tbClient;
     private NotificationService notificationService;
@@ -52,7 +53,7 @@ public class ApiKeyExpiryMonitoringServiceTest {
     private UserId userId;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         tbClient = mock(TbClient.class);
         notificationService = mock(NotificationService.class);
         service = new ApiKeyExpiryMonitoringService(tbClient, notificationService);
@@ -78,8 +79,18 @@ public class ApiKeyExpiryMonitoringServiceTest {
         return info;
     }
 
+    private void givenApiKeys(ApiKeyInfo... keys) {
+        doReturn(new PageData<>(List.of(keys), 1, 1, false)).when(tbClient).getUserApiKeys(eq(userId), any());
+    }
+
+    private String sentNotificationText() {
+        ArgumentCaptor<Notification> notificationCaptor = ArgumentCaptor.forClass(Notification.class);
+        verify(notificationService).sendNotification(notificationCaptor.capture());
+        return notificationCaptor.getValue().getText();
+    }
+
     @Test
-    public void loginMode_noRestCallsMade() {
+    void loginMode_noRestCallsMade() {
         doReturn(TbClient.AuthMode.LOGIN).when(tbClient).getAuthMode();
 
         service.checkApiKeyExpiry();
@@ -90,7 +101,7 @@ public class ApiKeyExpiryMonitoringServiceTest {
     }
 
     @Test
-    public void blankDescription_noRestCallsMade() {
+    void blankDescription_noRestCallsMade() {
         ReflectionTestUtils.setField(service, "apiKeyDescription", "");
 
         service.checkApiKeyExpiry();
@@ -101,9 +112,18 @@ public class ApiKeyExpiryMonitoringServiceTest {
     }
 
     @Test
-    public void noMatchingKey_noNotificationNoException() {
-        doReturn(new PageData<>(List.of(apiKeyInfo("some other key", 0)), 1, 1, false))
-                .when(tbClient).getUserApiKeys(eq(userId), any());
+    void userLookupReturnsEmpty_noNotificationNoException() {
+        doReturn(Optional.empty()).when(tbClient).getUser();
+
+        service.checkApiKeyExpiry();
+
+        verify(tbClient, never()).getUserApiKeys(any(), any());
+        verify(notificationService, never()).sendNotification(any());
+    }
+
+    @Test
+    void noMatchingKey_noNotificationNoException() {
+        givenApiKeys(apiKeyInfo("some other key", 0));
 
         service.checkApiKeyExpiry();
 
@@ -111,22 +131,20 @@ public class ApiKeyExpiryMonitoringServiceTest {
     }
 
     @Test
-    public void neverExpiringKey_noNotification_andSecondCallSkipsRestLookup() {
-        doReturn(new PageData<>(List.of(apiKeyInfo("tb-monitoring key", 0)), 1, 1, false))
-                .when(tbClient).getUserApiKeys(eq(userId), any());
+    void neverExpiringKey_noNotification_reCheckedEveryCall() {
+        givenApiKeys(apiKeyInfo("tb-monitoring key", 0));
 
         service.checkApiKeyExpiry();
         service.checkApiKeyExpiry();
 
         verify(notificationService, never()).sendNotification(any());
-        verify(tbClient, times(1)).getUserApiKeys(any(), any());
+        verify(tbClient, times(2)).getUserApiKeys(any(), any());
     }
 
     @Test
-    public void daysLeftAboveThreshold_noNotification() {
+    void daysLeftAboveThreshold_noNotification() {
         long farFuture = System.currentTimeMillis() + Duration.ofDays(30).toMillis();
-        doReturn(new PageData<>(List.of(apiKeyInfo("tb-monitoring key", farFuture)), 1, 1, false))
-                .when(tbClient).getUserApiKeys(eq(userId), any());
+        givenApiKeys(apiKeyInfo("tb-monitoring key", farFuture));
 
         service.checkApiKeyExpiry();
 
@@ -134,10 +152,43 @@ public class ApiKeyExpiryMonitoringServiceTest {
     }
 
     @Test
-    public void daysLeftAtOrBelowThreshold_notifiesEveryCall_noDeduplication() {
+    void daysLeftExactlyAtThreshold_notifies() {
+        // just under warningDays*1day so real-clock jitter between setup and the service's own
+        // "now" can only round this UP to warningDays via ceilDiv, never down past it
+        long expirationTime = System.currentTimeMillis() + Duration.ofDays(7).toMillis() - Duration.ofSeconds(5).toMillis();
+        givenApiKeys(apiKeyInfo("tb-monitoring key", expirationTime));
+
+        service.checkApiKeyExpiry();
+
+        assertThat(sentNotificationText()).contains("expires in 7 days");
+    }
+
+    @Test
+    void daysLeftJustAboveThreshold_noNotification() {
+        long expirationTime = System.currentTimeMillis() + Duration.ofDays(7).toMillis() + Duration.ofMinutes(1).toMillis();
+        givenApiKeys(apiKeyInfo("tb-monitoring key", expirationTime));
+
+        service.checkApiKeyExpiry();
+
+        verify(notificationService, never()).sendNotification(any());
+    }
+
+    @Test
+    void lessThanADayLeft_sendsUrgentWithinADayNotification_notMisleading1DayMessage() {
+        long fiveMinutesLeft = System.currentTimeMillis() + Duration.ofMinutes(5).toMillis();
+        givenApiKeys(apiKeyInfo("tb-monitoring key", fiveMinutesLeft));
+
+        service.checkApiKeyExpiry();
+
+        assertThat(sentNotificationText())
+                .contains("expires within a day")
+                .doesNotContain("expires in 1 day");
+    }
+
+    @Test
+    void daysLeftAtOrBelowThreshold_notifiesEveryCall_noDeduplication() {
         long soon = System.currentTimeMillis() + Duration.ofDays(3).toMillis();
-        doReturn(new PageData<>(List.of(apiKeyInfo("tb-monitoring key", soon)), 1, 1, false))
-                .when(tbClient).getUserApiKeys(eq(userId), any());
+        givenApiKeys(apiKeyInfo("tb-monitoring key", soon));
 
         service.checkApiKeyExpiry();
         service.checkApiKeyExpiry();
@@ -146,7 +197,7 @@ public class ApiKeyExpiryMonitoringServiceTest {
     }
 
     @Test
-    public void restCallThrows_caughtNoPropagationNoNotification() {
+    void restCallThrows_caughtNoPropagationNoNotification() {
         doThrow(new RuntimeException("network error")).when(tbClient).getUserApiKeys(eq(userId), any());
 
         service.checkApiKeyExpiry();
@@ -155,25 +206,43 @@ public class ApiKeyExpiryMonitoringServiceTest {
     }
 
     @Test
-    public void alreadyExpiredKey_sendsNotificationWithExpiredFlag() {
+    void alreadyExpiredKey_sendsNotificationWithExpiredFlag() {
         long sixHoursAgo = System.currentTimeMillis() - Duration.ofHours(6).toMillis();
-        doReturn(new PageData<>(List.of(apiKeyInfo("tb-monitoring key", sixHoursAgo)), 1, 1, false))
+        givenApiKeys(apiKeyInfo("tb-monitoring key", sixHoursAgo));
+
+        service.checkApiKeyExpiry();
+
+        String notificationText = sentNotificationText();
+        assertThat(notificationText).contains("EXPIRED");
+        assertThat(notificationText).doesNotContain("expires in 0 day");
+    }
+
+    @Test
+    void unauthorizedFromGetUser_sendsExpiredNotification() {
+        // the only way real-world expiry is ever observed: the server rejects the very key that
+        // authenticates this call, before apiKeyInfo.isExpired() is ever reached
+        doThrow(HttpClientErrorException.create(HttpStatus.UNAUTHORIZED, "Unauthorized", null, null, null))
+                .when(tbClient).getUser();
+
+        service.checkApiKeyExpiry();
+
+        assertThat(sentNotificationText()).contains("EXPIRED");
+    }
+
+    @Test
+    void unauthorizedFromGetUserApiKeys_sendsExpiredNotification() {
+        doThrow(HttpClientErrorException.create(HttpStatus.UNAUTHORIZED, "Unauthorized", null, null, null))
                 .when(tbClient).getUserApiKeys(eq(userId), any());
 
         service.checkApiKeyExpiry();
 
-        ArgumentCaptor<Notification> notificationCaptor = ArgumentCaptor.forClass(Notification.class);
-        verify(notificationService).sendNotification(notificationCaptor.capture());
-        String notificationText = notificationCaptor.getValue().getText();
-        assertTrue(notificationText.contains("EXPIRED"), "Notification should contain 'EXPIRED' for an already-expired key");
-        assertFalse(notificationText.contains("expires in 0 day"), "Notification should not contain 'expires in 0 day' for expired key");
+        assertThat(sentNotificationText()).contains("EXPIRED");
     }
 
     @Test
-    public void allMatchesDisabled_noNotificationNoException() {
+    void allMatchesDisabled_noNotificationNoException() {
         long soon = System.currentTimeMillis() + Duration.ofDays(3).toMillis();
-        doReturn(new PageData<>(List.of(apiKeyInfo("tb-monitoring key", soon, false)), 1, 1, false))
-                .when(tbClient).getUserApiKeys(eq(userId), any());
+        givenApiKeys(apiKeyInfo("tb-monitoring key", soon, false));
 
         service.checkApiKeyExpiry();
 
@@ -181,13 +250,13 @@ public class ApiKeyExpiryMonitoringServiceTest {
     }
 
     @Test
-    public void disabledAndEnabledMatch_prefersEnabledOne() {
+    void disabledAndEnabledMatch_prefersEnabledOne() {
         long soon = System.currentTimeMillis() + Duration.ofDays(3).toMillis();
         long farFuture = System.currentTimeMillis() + Duration.ofDays(30).toMillis();
-        doReturn(new PageData<>(List.of(
+        givenApiKeys(
                 apiKeyInfo("tb-monitoring key", soon, false),
                 apiKeyInfo("tb-monitoring key", farFuture, true)
-        ), 1, 1, false)).when(tbClient).getUserApiKeys(eq(userId), any());
+        );
 
         service.checkApiKeyExpiry();
 
@@ -195,19 +264,37 @@ public class ApiKeyExpiryMonitoringServiceTest {
     }
 
     @Test
-    public void multipleEnabledMatches_picksOneAndStillFunctions() {
-        // the far-future key is listed first - if the service picked the second (soon-expiring)
-        // one instead, this would incorrectly send a notification
+    void multipleEnabledMatches_picksTheOneClosestToExpiringRegardlessOfListOrder() {
+        // far-future key listed first - the service must still pick the soon-expiring one
+        // (deterministically the closest to expiring), not just the first in the list
         long farFuture = System.currentTimeMillis() + Duration.ofDays(30).toMillis();
         long soon = System.currentTimeMillis() + Duration.ofDays(3).toMillis();
-        doReturn(new PageData<>(List.of(
+        givenApiKeys(
                 apiKeyInfo("tb-monitoring key", farFuture, true),
                 apiKeyInfo("tb-monitoring key", soon, true)
-        ), 1, 1, false)).when(tbClient).getUserApiKeys(eq(userId), any());
+        );
 
         service.checkApiKeyExpiry();
 
-        verify(notificationService, never()).sendNotification(any());
+        assertThat(sentNotificationText())
+                .as("Should warn about the soon-expiring key, not the far-future one")
+                .contains("expires in 3 days");
+    }
+
+    @Test
+    void neverExpiringMatchAmongDuplicates_treatedAsFarthestAway() {
+        // never-expiring key listed first - must not be picked over a soon-expiring duplicate
+        long soon = System.currentTimeMillis() + Duration.ofDays(3).toMillis();
+        givenApiKeys(
+                apiKeyInfo("tb-monitoring key", 0, true),
+                apiKeyInfo("tb-monitoring key", soon, true)
+        );
+
+        service.checkApiKeyExpiry();
+
+        assertThat(sentNotificationText())
+                .as("Should warn about the soon-expiring key, not the never-expiring one")
+                .contains("expires in 3 days");
     }
 
 }

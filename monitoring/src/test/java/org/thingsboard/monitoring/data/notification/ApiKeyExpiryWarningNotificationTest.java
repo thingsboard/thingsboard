@@ -23,20 +23,42 @@ class ApiKeyExpiryWarningNotificationTest {
 
     @Test
     void expiredFalse_generatesWarningMessageWithDaysCount() {
-        ApiKeyExpiryWarningNotification notification = new ApiKeyExpiryWarningNotification("my-api-key", 5, false);
+        ApiKeyExpiryWarningNotification notification = ApiKeyExpiryWarningNotification.expiringIn("my-api-key", 5);
 
         String text = notification.getText();
 
         assertThat(text)
-                .contains("expires in 5 day(s)")
+                .contains("expires in 5 days")
                 .contains("my-api-key")
                 .contains(":warning:")
                 .doesNotContain("EXPIRED");
     }
 
     @Test
+    void expiredFalse_oneDayLeft_usesSingularDay() {
+        ApiKeyExpiryWarningNotification notification = ApiKeyExpiryWarningNotification.expiringIn("my-api-key", 1);
+
+        assertThat(notification.getText())
+                .contains("expires in 1 day")
+                .doesNotContain("1 days");
+    }
+
+    @Test
+    void expiringWithinADay_generatesUrgentMessageWithoutMisleadingDayCount() {
+        ApiKeyExpiryWarningNotification notification = ApiKeyExpiryWarningNotification.expiringWithinADay("my-api-key");
+
+        String text = notification.getText();
+
+        assertThat(text)
+                .contains("expires within a day")
+                .contains("my-api-key")
+                .contains(":rotating_light:")
+                .doesNotContain("expires in");
+    }
+
+    @Test
     void expiredTrue_generatesExpiredMessageWithoutDayCount() {
-        ApiKeyExpiryWarningNotification notification = new ApiKeyExpiryWarningNotification("my-api-key", 0, true);
+        ApiKeyExpiryWarningNotification notification = ApiKeyExpiryWarningNotification.expired("my-api-key");
 
         String text = notification.getText();
 
@@ -44,7 +66,7 @@ class ApiKeyExpiryWarningNotificationTest {
                 .contains("EXPIRED")
                 .contains("my-api-key")
                 .contains(":rotating_light:")
-                .doesNotContain("day(s)");
+                .doesNotContain("expires in");
     }
 
 }

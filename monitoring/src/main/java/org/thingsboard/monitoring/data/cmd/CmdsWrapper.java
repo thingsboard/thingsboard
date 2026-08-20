@@ -21,7 +21,7 @@ import lombok.Data;
 import java.util.List;
 
 // mirrors application's org.thingsboard.server.service.ws.WsCommandsWrapper
-// NON_NULL: same server-compatibility reason as AuthCmd - do not remove
+// NON_NULL: same reasoning as AuthCmd - omit whichever of authCmd/cmds isn't in use
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Data
 public class CmdsWrapper {

@@ -15,21 +15,40 @@
  */
 package org.thingsboard.monitoring.data.notification;
 
-import lombok.RequiredArgsConstructor;
-
-@RequiredArgsConstructor
 public class ApiKeyExpiryWarningNotification implements Notification {
+
+    private enum Urgency {EXPIRED, WITHIN_A_DAY, DAYS_LEFT}
 
     private final String apiKeyDescription;
     private final long daysLeft;
-    private final boolean expired;
+    private final Urgency urgency;
+
+    private ApiKeyExpiryWarningNotification(String apiKeyDescription, long daysLeft, Urgency urgency) {
+        this.apiKeyDescription = apiKeyDescription;
+        this.daysLeft = daysLeft;
+        this.urgency = urgency;
+    }
+
+    public static ApiKeyExpiryWarningNotification expired(String apiKeyDescription) {
+        return new ApiKeyExpiryWarningNotification(apiKeyDescription, 0, Urgency.EXPIRED);
+    }
+
+    public static ApiKeyExpiryWarningNotification expiringWithinADay(String apiKeyDescription) {
+        return new ApiKeyExpiryWarningNotification(apiKeyDescription, 0, Urgency.WITHIN_A_DAY);
+    }
+
+    public static ApiKeyExpiryWarningNotification expiringIn(String apiKeyDescription, long daysLeft) {
+        return new ApiKeyExpiryWarningNotification(apiKeyDescription, daysLeft, Urgency.DAYS_LEFT);
+    }
 
     @Override
     public String getText() {
-        if (expired) {
-            return String.format(":rotating_light: API key '%s' has EXPIRED - rotate it now to restore monitoring", apiKeyDescription);
-        }
-        return String.format(":warning: API key '%s' expires in %d day(s) - rotate it soon to avoid a monitoring outage", apiKeyDescription, daysLeft);
+        return switch (urgency) {
+            case EXPIRED -> String.format(":rotating_light: API key '%s' is no longer valid (EXPIRED or revoked) - rotate it now to restore monitoring", apiKeyDescription);
+            case WITHIN_A_DAY -> String.format(":rotating_light: API key '%s' expires within a day - rotate it now to avoid a monitoring outage", apiKeyDescription);
+            case DAYS_LEFT -> String.format(":warning: API key '%s' expires in %d %s - rotate it soon to avoid a monitoring outage",
+                    apiKeyDescription, daysLeft, daysLeft == 1 ? "day" : "days");
+        };
     }
 
     @Override
