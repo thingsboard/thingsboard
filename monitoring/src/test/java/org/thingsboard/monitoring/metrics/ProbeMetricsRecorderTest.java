@@ -18,10 +18,13 @@ package org.thingsboard.monitoring.metrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.monitoring.config.transport.TransportInfo;
 import org.thingsboard.monitoring.config.transport.TransportMonitoringTarget;
 import org.thingsboard.monitoring.config.transport.TransportType;
 import org.thingsboard.monitoring.data.MonitoredServiceKey;
+
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
@@ -591,6 +594,26 @@ public class ProbeMetricsRecorderTest {
         recorder.recordProbe(target, true);
 
         assertThat(registry.getMeters()).isEmpty();
+    }
+
+    @Test
+    public void schemelessTransportBaseUrl_staleRemoval_doesNotEvictWarnedUnresolvable() {
+        // removeStaleProbe (per-cycle clearing, e.g. every cycle of a login/WS outage) must not
+        // evict warnedUnresolvable - only permanent removal (decommissioning) should, otherwise an
+        // unresolvable target's warning would re-fire every such cycle instead of logging once
+        ProbeMetricsRecorder recorder = recorder(true);
+        TransportInfo target = transportInfo(TransportType.MQTT, "acme.example.com:1883");
+        Set<?> warnedUnresolvable = (Set<?>) ReflectionTestUtils.getField(recorder, "warnedUnresolvable");
+
+        recorder.recordProbe(target, true);
+        assertThat(warnedUnresolvable).hasSize(1);
+
+        recorder.startCycle();
+        recorder.removeStaleProbe(target);
+        assertThat(warnedUnresolvable).hasSize(1); // stale removal must leave the dedup entry alone
+
+        recorder.removeProbe(target);
+        assertThat(warnedUnresolvable).isEmpty(); // permanent removal does evict it
     }
 
     @Test

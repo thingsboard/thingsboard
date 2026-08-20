@@ -527,13 +527,18 @@ public class BaseMonitoringServiceProbeMetricsTest {
     @Test
     public void runChecks_startsCycleBeforeAnyRecordOrRemoveCall() throws Exception {
         // startCycle() resets the collision-protection bookkeeping - it must run before any
-        // recordProbe/removeProbe call this cycle, on every outcome, not just the successful path
+        // recordProbe/removeProbe call this cycle, on every outcome, not just the successful path.
+        // Checked against removeActionDuration(LOGIN, request) specifically because it's the
+        // EARLIEST probeMetricsRecorder call in this failure path - recordProbe(LOGIN, false) runs
+        // last (in the finally block), so verifying against it alone wouldn't catch startCycle()
+        // being moved to anywhere before that point.
         when(tbClient.logIn()).thenThrow(new RuntimeException("login failed"));
 
         service.runChecks();
 
         InOrder inOrder = inOrder(probeMetricsRecorder);
         inOrder.verify(probeMetricsRecorder).startCycle();
+        inOrder.verify(probeMetricsRecorder).removeActionDuration(MonitoredServiceKey.LOGIN, ProbeMetricsRecorder.ACTION_REQUEST);
         inOrder.verify(probeMetricsRecorder).recordProbe(MonitoredServiceKey.LOGIN, false);
     }
 

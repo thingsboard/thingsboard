@@ -175,7 +175,11 @@ public class ProbeMetricsRecorder {
             warnedCollisions.remove(tags);
             freshThisCycle.remove(tags); // a permanent removal must not leave a stale fresh-flag behind
         });
-        if (serviceKey instanceof TransportInfo transportInfo) {
+        // only on permanent removal - a stale (per-cycle) removal runs every unhealthy cycle (e.g.
+        // for the whole duration of a login/WS outage), so evicting here would defeat the cache and,
+        // for warnedUnresolvable, make an unresolvable target's warning re-fire every such cycle
+        // instead of once - exactly what that dedup set exists to prevent
+        if (!skipIfFresh && serviceKey instanceof TransportInfo transportInfo) {
             // otherwise these caches leak the same way the gauges just did
             TransportTagKey key = TransportTagKey.of(transportInfo);
             transportTagsCache.remove(key);
