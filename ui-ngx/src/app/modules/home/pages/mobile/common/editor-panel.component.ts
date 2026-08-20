@@ -17,7 +17,8 @@
 import { Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { FormBuilder, FormControl } from '@angular/forms';
 import { TbPopoverComponent } from '@shared/components/popover.component';
-import { EditorOptions } from 'tinymce';
+import { EditorOptions } from 'hugerte';
+import { defaultHugeRteOptions } from '@shared/models/hugerte/hugerte.models';
 
 @Component({
     selector: 'tb-release-notes-panel',
@@ -45,53 +46,15 @@ export class EditorPanelComponent implements OnInit {
 
   editorControl: FormControl<string>;
 
-  tinyMceOptions: Partial<EditorOptions> = {
-    base_url: '/assets/tinymce',
-    suffix: '.min',
+  hugeRteOptions: Partial<EditorOptions> = defaultHugeRteOptions({
     plugins: ['link', 'table', 'image', 'lists', 'fullscreen'],
     menubar: 'edit insert view format',
     toolbar: ['fontfamily fontsize | bold italic underline strikethrough forecolor backcolor',
       'alignleft aligncenter alignright alignjustify | bullist | link table image | fullscreen'],
     toolbar_mode: 'sliding',
     height: 400,
-    autofocus: false,
-    branding: false,
-    promotion: false,
-    resize: false,
-    setup: (editor) => {
-      editor.on('PostRender', function() {
-        const container = document.querySelector('.tox.tox-tinymce-aux');
-        const styleSheet = document.createElement('style');
-        styleSheet.innerText = `
-          .tox-tiered-menu .tox-menu {
-            width: fit-content;
-            max-width: min(80%, 440px);
-            @media screen and (max-width: 510px) {
-              max-width: calc(100% - 64px);
-            }
-            media screen and (min-width: 511px) and (max-width: 548px) {
-              max-width: calc(100% - 84px);
-            }
-            media screen and (min-width: 549px) and (max-width: 599px) {
-              max-width: calc(100% - 104px);
-            }
-          }
-          .tox-tiered-menu .tox-menu .tox-collection__item-label {
-            word-break: normal;
-          }
-          @media screen and (max-width: 890px) {
-            .tox-tiered-menu > .tox-collection--list:not(:first-child) {
-              left: auto !important;
-              right: 0 !important;
-            }
-          }
-        `;
-        container.prepend(styleSheet);
-      });
-    },
-    relative_urls: false,
-    urlconverter_callback: (url) => url
-  };
+    resize: false
+  });
 
   constructor(private fb: FormBuilder) {
   }
@@ -100,9 +63,9 @@ export class EditorPanelComponent implements OnInit {
     this.editorControl = this.fb.control(this.content);
     if (this.disabled) {
       this.editorControl.disable({emitEvent: false});
-      this.tinyMceOptions.toolbar = false;
-      this.tinyMceOptions.menubar = false;
-      this.tinyMceOptions.statusbar = false;
+      this.hugeRteOptions.toolbar = false;
+      this.hugeRteOptions.menubar = false;
+      this.hugeRteOptions.statusbar = false;
     }
   }
 
