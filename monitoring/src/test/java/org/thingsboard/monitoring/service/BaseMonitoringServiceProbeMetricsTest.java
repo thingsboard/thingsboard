@@ -17,6 +17,7 @@ package org.thingsboard.monitoring.service;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.InOrder;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.monitoring.client.TbClient;
 import org.thingsboard.monitoring.client.WsClient;
@@ -35,6 +36,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -523,14 +525,16 @@ public class BaseMonitoringServiceProbeMetricsTest {
     }
 
     @Test
-    public void runChecks_alwaysStartsCycleOnceBeforeAnyRecordOrRemoveCall() throws Exception {
+    public void runChecks_startsCycleBeforeAnyRecordOrRemoveCall() throws Exception {
         // startCycle() resets the collision-protection bookkeeping - it must run before any
         // recordProbe/removeProbe call this cycle, on every outcome, not just the successful path
         when(tbClient.logIn()).thenThrow(new RuntimeException("login failed"));
 
         service.runChecks();
 
-        verify(probeMetricsRecorder, times(1)).startCycle();
+        InOrder inOrder = inOrder(probeMetricsRecorder);
+        inOrder.verify(probeMetricsRecorder).startCycle();
+        inOrder.verify(probeMetricsRecorder).recordProbe(MonitoredServiceKey.LOGIN, false);
     }
 
 

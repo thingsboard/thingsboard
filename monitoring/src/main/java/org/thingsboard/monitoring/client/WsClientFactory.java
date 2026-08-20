@@ -59,7 +59,7 @@ public class WsClientFactory {
         // reuse the same value for both the latency report and the probe metric
         long connectLatencyNanos = stopWatch.getTime();
         monitoringReporter.reportLatency(Latencies.WS_CONNECT, connectLatencyNanos);
-        probeMetricsRecorder.recordActionDuration(MonitoredServiceKey.WS, "connect", connectLatencyNanos / 1_000_000);
+        probeMetricsRecorder.recordActionDuration(MonitoredServiceKey.WS, ProbeMetricsRecorder.ACTION_CONNECT, connectLatencyNanos / 1_000_000);
         return wsClient;
     }
 

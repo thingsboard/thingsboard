@@ -70,16 +70,24 @@ public final class ProbeLabelResolver {
             String hostPort = resolveHostPort(uri, secureScheme ? 443 : 80);
             if (hostPort == null) {
                 // schemeless/opaque URL - just as much a misconfiguration as an unparseable one
-                log.warn("Failed to resolve endpoint from {} [{}] - \"{}\" probe telemetry will not be recorded",
-                        configKey, baseUrl, probeName);
+                warnUnresolvable(configKey, baseUrl, probeName, null);
                 return null;
             }
             return postProcess.apply(hostPort);
         } catch (Exception e) {
             // an invalid base URL must not fail app startup - caller treats null as "skip this probe"
-            log.warn("Failed to resolve endpoint from {} [{}] - \"{}\" probe telemetry will not be recorded",
-                    configKey, baseUrl, probeName, e);
+            warnUnresolvable(configKey, baseUrl, probeName, e);
             return null;
+        }
+    }
+
+    private static void warnUnresolvable(String configKey, String baseUrl, String probeName, Exception cause) {
+        if (cause != null) {
+            log.warn("Failed to resolve endpoint from {} [{}] - \"{}\" probe telemetry will not be recorded",
+                    configKey, baseUrl, probeName, cause);
+        } else {
+            log.warn("Failed to resolve endpoint from {} [{}] - \"{}\" probe telemetry will not be recorded",
+                    configKey, baseUrl, probeName);
         }
     }
 

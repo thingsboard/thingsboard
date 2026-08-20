@@ -103,6 +103,14 @@ public class ProbeLabelResolverTest {
     }
 
     @Test
+    public void resolveHostPort_nonNumericPortInAuthority_fallsBackToDefaultPort() {
+        // exercises the catch (NumberFormatException) branch - a colon is present in the fallback-
+        // parsed authority, but what follows it isn't a valid port number
+        assertThat(ProbeLabelResolver.resolveHostPort(URI.create("mqtt://tb_mqtt:notaport"), 1883))
+                .isEqualTo("tb_mqtt:1883");
+    }
+
+    @Test
     public void resolveHostPort_opaqueUriWithNoAuthority_returnsNull() {
         assertThat(ProbeLabelResolver.resolveHostPort(URI.create("acme.example.com:1883"), 1883)).isNull();
     }

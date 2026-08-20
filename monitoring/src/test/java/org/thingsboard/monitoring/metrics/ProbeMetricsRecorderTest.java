@@ -195,12 +195,29 @@ public class ProbeMetricsRecorderTest {
         recorder.recordActionDuration(target, "ws_update", 700);
         assertThat(registry.getMeters()).hasSize(3); // success + 2 stages
 
+        recorder.startCycle(); // next cycle - this target's fresh-this-cycle protection no longer applies
         recorder.removeActionDuration(target, "request");
 
         assertThat(registry.find("probe_duration_ms").tags("action", "request").gauge()).isNull();
         assertThat(registry.get("probe_duration_ms").tags("action", "ws_update").gauge().value()).isEqualTo(700d);
         assertThat(registry.get("probe_success").tags("check", "mqtt").gauge().value()).isEqualTo(1d);
         assertThat(registry.getMeters()).hasSize(2);
+    }
+
+    @Test
+    public void removeActionDuration_ofCollidingSibling_doesNotWipeFreshDurationRecordedThisCycle() {
+        // A and B collide onto identical tags (same type+baseUrl, differing only by queue). If A
+        // succeeds and records a fresh "request" duration this cycle, and B's own removeActionDuration
+        // fires afterward (B's sendTestPayload threw), A's just-recorded duration must survive.
+        ProbeMetricsRecorder recorder = recorder(true);
+        TransportInfo a = transportInfo(TransportType.MQTT, "tcp://acme.example.com:1883", "QueueA");
+        TransportInfo b = transportInfo(TransportType.MQTT, "tcp://acme.example.com:1883", "QueueB");
+
+        recorder.recordProbe(a, true);
+        recorder.recordActionDuration(a, "request", 8);
+        recorder.removeActionDuration(b, "request");
+
+        assertThat(registry.get("probe_duration_ms").tags("action", "request").gauge().value()).isEqualTo(8d);
     }
 
     @Test
@@ -564,14 +581,29 @@ public class ProbeMetricsRecorderTest {
 
     @Test
     public void schemelessTransportBaseUrl_secondCallForSameTarget_alsoDoesNotThrow() {
-        // computeIfAbsent doesn't cache a null resolution result, so resolveTransportLabels (and the
-        // dedup-guarded warning) is re-invoked on every call for this target - this just confirms that
-        // repeated re-invocation stays side-effect-free (no log-capturing utility exists in this module
-        // to assert the warning itself is only emitted once)
+        // the negative resolution is cached (an Optional.empty(), not a bare null computeIfAbsent
+        // would skip caching), so resolveTransportLabels only actually runs once for this target -
+        // this confirms the cached path stays side-effect-free on every later call too
         ProbeMetricsRecorder recorder = recorder(true);
         TransportInfo target = transportInfo(TransportType.MQTT, "acme.example.com:1883");
 
         recorder.recordProbe(target, true);
+        recorder.recordProbe(target, true);
+
+        assertThat(registry.getMeters()).isEmpty();
+    }
+
+    @Test
+    public void schemelessTransportBaseUrl_removedThenReAdded_warnsAgain() {
+        // removeProbe evicts warnedUnresolvable for the retired target, so a target decommissioned
+        // and later re-added with the same bad URL gets a fresh warning instead of permanent silence.
+        // No log-capturing utility exists here, so this only confirms re-adding stays side-effect-free
+        // (the actual re-warning is covered by inspection of removeProbe's warnedUnresolvable.remove).
+        ProbeMetricsRecorder recorder = recorder(true);
+        TransportInfo target = transportInfo(TransportType.MQTT, "acme.example.com:1883");
+
+        recorder.recordProbe(target, true);
+        recorder.removeProbe(target);
         recorder.recordProbe(target, true);
 
         assertThat(registry.getMeters()).isEmpty();

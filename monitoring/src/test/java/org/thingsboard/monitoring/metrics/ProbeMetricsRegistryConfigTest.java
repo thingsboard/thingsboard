@@ -34,6 +34,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -127,6 +128,22 @@ public class ProbeMetricsRegistryConfigTest {
 
         assertThat(response.statusCode()).isEqualTo(200);
         assertThat(response.body()).contains("test_probe_metrics_registry_counter");
+    }
+
+    @Test
+    public void otlpEnabled_prometheusBindFails_propagatesExceptionInsteadOfSilentlyDegrading() throws IOException {
+        // grab a port so the Prometheus HttpServer bind is guaranteed to fail, exercising the
+        // partial-failure cleanup path (composite.close() on the already-added OTLP registry)
+        HttpServer portHolder = HttpServer.create(new InetSocketAddress(0), 0);
+        portHolder.start();
+        try {
+            int heldPort = portHolder.getAddress().getPort();
+            assertThatThrownBy(() -> config.probeMeterRegistry(true, "http://localhost:4318/v1/metrics", 60000, false,
+                    true, heldPort, "0.0.0.0", reporter))
+                    .isInstanceOf(IOException.class);
+        } finally {
+            portHolder.stop(0);
+        }
     }
 
     @Test

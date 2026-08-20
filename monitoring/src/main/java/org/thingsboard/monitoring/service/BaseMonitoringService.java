@@ -133,12 +133,12 @@ public abstract class BaseMonitoringService<C extends MonitoringConfig<T>, T ext
                 accessToken = tbClient.logIn();
                 long loginLatencyNanos = stopWatch.getTime();
                 reporter.reportLatency(Latencies.LOG_IN, loginLatencyNanos);
-                probeMetricsRecorder.recordActionDuration(MonitoredServiceKey.LOGIN, "request", loginLatencyNanos / 1_000_000);
+                probeMetricsRecorder.recordActionDuration(MonitoredServiceKey.LOGIN, ProbeMetricsRecorder.ACTION_REQUEST, loginLatencyNanos / 1_000_000);
                 reporter.serviceIsOk(MonitoredServiceKey.LOGIN);
                 loginSuccess = true;
             } catch (Exception e) {
                 reporter.serviceFailure(MonitoredServiceKey.LOGIN, e);
-                probeMetricsRecorder.removeActionDuration(MonitoredServiceKey.LOGIN, "request");
+                probeMetricsRecorder.removeActionDuration(MonitoredServiceKey.LOGIN, ProbeMetricsRecorder.ACTION_REQUEST);
                 // WS and transport checks never ran this cycle - clear their gauges instead of
                 // leaving last cycle's value stale, then fall back to the WS-independent signal
                 probeMetricsRecorder.removeStaleProbe(MonitoredServiceKey.WS);
@@ -155,9 +155,9 @@ public abstract class BaseMonitoringService<C extends MonitoringConfig<T>, T ext
                 reporter.serviceIsOk(MonitoredServiceKey.WS_CONNECT);
             } catch (Exception e) {
                 reporter.serviceFailure(MonitoredServiceKey.WS_CONNECT, e);
-                probeMetricsRecorder.removeActionDuration(MonitoredServiceKey.WS, "connect");
+                probeMetricsRecorder.removeActionDuration(MonitoredServiceKey.WS, ProbeMetricsRecorder.ACTION_CONNECT);
                 // subscribe never runs this cycle either - its last value is now stale too
-                probeMetricsRecorder.removeActionDuration(MonitoredServiceKey.WS, "subscribe");
+                probeMetricsRecorder.removeActionDuration(MonitoredServiceKey.WS, ProbeMetricsRecorder.ACTION_SUBSCRIBE);
                 probeMetricsRecorder.recordProbe(MonitoredServiceKey.WS, false);
                 clearAllTransportProbeMetrics();
                 checkTransportsAccepted();
@@ -170,12 +170,12 @@ public abstract class BaseMonitoringService<C extends MonitoringConfig<T>, T ext
                     ws.subscribeForTelemetry(devices, getTestTelemetryKeys()).waitForReply();
                     long subscribeLatencyNanos = stopWatch.getTime();
                     reporter.reportLatency(Latencies.WS_SUBSCRIBE, subscribeLatencyNanos);
-                    probeMetricsRecorder.recordActionDuration(MonitoredServiceKey.WS, "subscribe", subscribeLatencyNanos / 1_000_000);
+                    probeMetricsRecorder.recordActionDuration(MonitoredServiceKey.WS, ProbeMetricsRecorder.ACTION_SUBSCRIBE, subscribeLatencyNanos / 1_000_000);
                     reporter.serviceIsOk(MonitoredServiceKey.WS_SUBSCRIBE);
                     probeMetricsRecorder.recordProbe(MonitoredServiceKey.WS, true);
                 } catch (Exception e) {
                     reporter.serviceFailure(MonitoredServiceKey.WS_SUBSCRIBE, e);
-                    probeMetricsRecorder.removeActionDuration(MonitoredServiceKey.WS, "subscribe");
+                    probeMetricsRecorder.removeActionDuration(MonitoredServiceKey.WS, ProbeMetricsRecorder.ACTION_SUBSCRIBE);
                     probeMetricsRecorder.recordProbe(MonitoredServiceKey.WS, false);
                     clearAllTransportProbeMetrics();
                     checkTransportsAccepted();
@@ -342,7 +342,11 @@ public abstract class BaseMonitoringService<C extends MonitoringConfig<T>, T ext
         healthChecker.getAssociates().values().forEach(this::clearAcceptedProbeMetricsFor);
     }
 
-    // always runs, regardless of OTLP/Prometheus export - the fallback alert must work on every deployment
+    // always runs, regardless of OTLP/Prometheus export - the fallback alert must work on every deployment.
+    // Deliberately serial: each target already bounds its own attempt via its transport's
+    // request_timeout_ms, and parallelizing would violate ProbeMetricsRecorder's single-threaded-
+    // cycle assumption (see its freshThisCycle field) - acceptable given typical deployments
+    // monitor a handful of targets, not hundreds.
     private void checkTransportsAccepted() {
         healthCheckers.forEach(healthChecker -> healthChecker.checkAccepted());
     }

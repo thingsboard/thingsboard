@@ -180,12 +180,12 @@ public class BaseHealthCheckerProbeMetricsTest {
     }
 
     @Test
-    public void checkAccepted_reportsServiceIsOkWhenSendSucceeds() {
-        // alerting must work here too, not just the metric - it's the only signal available
-        // for this transport while login/WS (and so the full check()) is down
+    public void checkAccepted_neverReportsAnythingWhenSendSucceeds() {
+        // must never call serviceIsOk here - it shares check()'s service key, so an "ok" from this
+        // fallback alone could resolve/reset a real, still-open incident that only check() should clear
         checker.checkAccepted();
 
-        verify(reporter).serviceIsOk(eq(INFO));
+        verify(reporter, never()).serviceIsOk(any());
         verify(reporter, never()).serviceFailure(any(), any());
     }
 
@@ -239,7 +239,7 @@ public class BaseHealthCheckerProbeMetricsTest {
         checker.checkAccepted();
 
         verify(probeMetricsRecorder, times(2)).recordAcceptedProbe(eq(INFO), eq(true));
-        verify(reporter, times(2)).serviceIsOk(eq(INFO));
+        verify(reporter, never()).serviceIsOk(any());
     }
 
     private static class StubConfig implements MonitoringConfig<StubTarget> {

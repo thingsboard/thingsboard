@@ -26,6 +26,7 @@ import org.thingsboard.monitoring.config.transport.TransportType;
 import org.thingsboard.monitoring.data.MonitoredServiceKey;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
@@ -41,6 +42,13 @@ public class ProbeMetricsRecorder {
     private static final String KIND_PROBE = "probe";
     private static final String KIND_ACCEPTED = "accepted";
 
+    // action names shared with BaseHealthChecker/BaseMonitoringService/WsClientFactory, so a
+    // recordActionDuration call and its matching removeActionDuration can't drift via a typo
+    public static final String ACTION_REQUEST = "request";
+    public static final String ACTION_WS_UPDATE = "ws_update";
+    public static final String ACTION_CONNECT = "connect";
+    public static final String ACTION_SUBSCRIBE = "subscribe";
+
     private final MeterRegistry meterRegistry;
     private final boolean enabled;
     private final String domain;
@@ -49,8 +57,10 @@ public class ProbeMetricsRecorder {
     private final String wsEndpoint;
 
     private final Map<GaugeKey, AtomicReference<Double>> gaugeValues = new ConcurrentHashMap<>();
-    private final Map<TransportTagKey, Tags> transportTagsCache = new ConcurrentHashMap<>();
-    private final Map<TransportTagKey, Tags> acceptedTagsCache = new ConcurrentHashMap<>();
+    // Optional-valued so an unresolvable target's negative result is cached too (a plain
+    // computeIfAbsent never stores a null return, so it would otherwise re-resolve every call)
+    private final Map<TransportTagKey, Optional<Tags>> transportTagsCache = new ConcurrentHashMap<>();
+    private final Map<TransportTagKey, Optional<Tags>> acceptedTagsCache = new ConcurrentHashMap<>();
     // detects two probes resolving to identical labels (e.g. same host:port, different queue) so
     // the collision is logged instead of one gauge silently overwriting the other
     private final Map<Tags, Object> tagsOwners = new ConcurrentHashMap<>();
@@ -61,7 +71,10 @@ public class ProbeMetricsRecorder {
     // action gauges recorded per probe, so removeProbe can clean them up without knowing them upfront
     private final Map<Tags, Set<String>> actionsByBaseTags = new ConcurrentHashMap<>();
     // tags that already got fresh data this cycle - so a colliding sibling's removeProbe/removeAcceptedProbe
-    // (e.g. crashing right after this one succeeded) can't wipe what was just correctly recorded
+    // (e.g. crashing right after this one succeeded) can't wipe what was just correctly recorded.
+    // Safe only because every BaseMonitoringService's runChecks() cycle runs on one shared
+    // single-threaded executor (see ThingsboardMonitoringApplication) - a second thread/pool
+    // touching this set concurrently would break the protection with no compile-time signal.
     private final Set<Tags> freshThisCycle = ConcurrentHashMap.newKeySet();
 
     public ProbeMetricsRecorder(MeterRegistry meterRegistry,
@@ -100,9 +113,15 @@ public class ProbeMetricsRecorder {
     }
 
     // removes just this one action's duration gauge (the specific probe that didn't respond),
-    // without touching probe_success or any other action recorded for this target
+    // without touching probe_success or any other action recorded for this target. Skips removal
+    // if these tags already have fresh data this cycle (from a colliding sibling target that
+    // recorded successfully first) - same protection removeStaleProbe already gives probe_success.
     public void removeActionDuration(Object serviceKey, String action) {
         withTags(serviceKey, "remove action duration", tags -> {
+            if (freshThisCycle.contains(tags)) {
+                log.debug("Skipping removal of action duration for [{}] action {} - tags {} already have fresh data this cycle from a colliding target", serviceKey, action, tags);
+                return;
+            }
             removeGauge(PROBE_DURATION_METRIC, tags.and("action", action));
             Set<String> actions = actionsByBaseTags.get(tags);
             if (actions != null) {
@@ -157,8 +176,10 @@ public class ProbeMetricsRecorder {
             freshThisCycle.remove(tags); // a permanent removal must not leave a stale fresh-flag behind
         });
         if (serviceKey instanceof TransportInfo transportInfo) {
-            // otherwise this cache leaks the same way the gauges just did
-            transportTagsCache.remove(TransportTagKey.of(transportInfo));
+            // otherwise these caches leak the same way the gauges just did
+            TransportTagKey key = TransportTagKey.of(transportInfo);
+            transportTagsCache.remove(key);
+            warnedUnresolvable.remove(key);
         }
     }
 
@@ -254,17 +275,17 @@ public class ProbeMetricsRecorder {
     }
 
     // keyed on type+baseUrl, not the whole TransportInfo (its equals/hashCode reach mutable state)
-    private Tags cachedTags(Map<TransportTagKey, Tags> cache, TransportInfo info, String kind) {
+    private Tags cachedTags(Map<TransportTagKey, Optional<Tags>> cache, TransportInfo info, String kind) {
         return cache.computeIfAbsent(TransportTagKey.of(info), key -> {
             ProbeLabelResolver.ProbeLabels labels = ProbeLabelResolver.resolveTransportLabels(key.type(), key.baseUrl());
             if (labels == null) {
                 if (warnedUnresolvable.add(key)) {
                     log.warn("Failed to resolve host:port from transport base URL \"{}\" (missing scheme?) - its probe metrics will not be recorded", key.baseUrl());
                 }
-                return null;
+                return Optional.empty();
             }
-            return baseTags(labels.check(), labels.endpoint(), kind);
-        });
+            return Optional.of(baseTags(labels.check(), labels.endpoint(), kind));
+        }).orElse(null);
     }
 
     private Tags baseTags(String check, String endpoint, String kind) {

@@ -48,6 +48,22 @@ import java.util.concurrent.Executors;
 @Slf4j
 public class ProbeMetricsRegistryConfig {
 
+    // small fixed pool for the /metrics scrape endpoint - PrometheusMeterRegistry.scrape() is
+    // thread-safe, so a few concurrent scrapers are safe; this also makes scraping genuinely
+    // concurrent instead of serialized, unlike the previous setExecutor(null) default
+    private static final int PROMETHEUS_SCRAPE_THREAD_POOL_SIZE = 4;
+
+    static {
+        // JDK HttpServer has no default request/response timeout - without these, a single slow/stalled
+        // client connection can hang the (otherwise single-threaded) server forever. Set in a static
+        // initializer so this runs at class-load time, before this class's own bean method (or
+        // anything else in the JVM) can construct an HttpServer: sun.net.httpserver.ServerConfig
+        // reads these properties only once, in its own static initializer triggered by the first
+        // HttpServer use anywhere in the process - setting them any later risks a silent no-op.
+        System.setProperty("sun.net.httpserver.maxReqTime", "30");
+        System.setProperty("sun.net.httpserver.maxRspTime", "30");
+    }
+
     private HttpServer prometheusServer;
     private ExecutorService prometheusExecutor;
 
@@ -126,10 +142,6 @@ public class ProbeMetricsRegistryConfig {
     }
 
     private PrometheusMeterRegistry createPrometheusRegistry(int port, String bindAddress) throws IOException {
-        // JDK HttpServer has no default request/response timeout - without these, a single slow/stalled
-        // client connection can hang the (otherwise single-threaded) server forever
-        System.setProperty("sun.net.httpserver.maxReqTime", "30");
-        System.setProperty("sun.net.httpserver.maxRspTime", "30");
         PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
         prometheusServer = HttpServer.create(new InetSocketAddress(bindAddress, port), 0);
         prometheusServer.createContext("/metrics", exchange -> {
@@ -140,7 +152,7 @@ public class ProbeMetricsRegistryConfig {
                 os.write(response);
             }
         });
-        prometheusExecutor = Executors.newFixedThreadPool(4);
+        prometheusExecutor = Executors.newFixedThreadPool(PROMETHEUS_SCRAPE_THREAD_POOL_SIZE);
         prometheusServer.setExecutor(prometheusExecutor);
         prometheusServer.start();
         return registry;
