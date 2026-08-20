@@ -168,7 +168,7 @@ public class AdminControllerTest extends AbstractControllerTest {
         assertThat(jwtSettings).isEqualTo(defaultJwtSettings);
 
         jwtSettings.setTokenSigningKey(Base64.getEncoder().encodeToString(
-                RandomStringUtils.randomAlphanumeric(512 / Byte.SIZE).getBytes(StandardCharsets.UTF_8)));
+                RandomStringUtils.secure().nextAlphanumeric(512 / Byte.SIZE).getBytes(StandardCharsets.UTF_8)));
 
         doPost("/api/admin/jwtSettings", jwtSettings).andExpect(status().isOk());
 

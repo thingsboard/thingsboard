@@ -28,6 +28,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { SolutionInstallDialogComponent } from '@home/components/iot-hub/solution-install-dialog.component';
 import { SolutionTemplateInstalledItemDescriptor } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
+import {
+  iotHubItemActionLabel,
+  iotHubItemActionMode,
+  isBuiltInItem
+} from '@home/components/iot-hub/iot-hub-utils';
 
 export type IotHubItemDetailDialogMode = 'default' | 'add';
 
@@ -59,6 +64,8 @@ export class TbIotHubItemDetailDialogComponent extends DialogComponent<TbIotHubI
   installedItemsCount = 0;
   carouselImages: string[] = [];
   carouselIndex = 0;
+  // Built-in marker rides on the version line rather than as a standalone badge.
+  versionLabel: string;
 
   constructor(
     protected store: Store<AppState>,
@@ -77,8 +84,20 @@ export class TbIotHubItemDetailDialogComponent extends DialogComponent<TbIotHubI
     this.preview = data.preview === true;
     this.installedItem = data.installedItem;
     this.installedItemsCount = data.installedItemsCount || 0;
+    this.versionLabel = isBuiltInItem(this.item)
+      ? `v ${this.item.version} | ${this.translate.instant('iot-hub.built-in')}`
+      : `v ${this.item.version}`;
     this.buildCarouselImages();
     this.loadReadme();
+  }
+
+  // The counter and the separator that would otherwise dangle next to it share this boolean.
+  get showInstallCount(): boolean {
+    return !isBuiltInItem(this.item);
+  }
+
+  get actionLabel(): string {
+    return iotHubItemActionLabel(this.item, this.mode === 'add' ? 'add' : 'detail');
   }
 
   isCompactLayout(): boolean {
@@ -167,6 +186,19 @@ export class TbIotHubItemDetailDialogComponent extends DialogComponent<TbIotHubI
       && this.installedItem.itemVersionId !== this.item.id;
   }
 
+  /** Runs whatever the item's action mode calls for: open the local copy, connect, or install. */
+  runPrimaryAction(): void {
+    if (iotHubItemActionMode(this.item) === 'connect') {
+      this.installDevice();
+    } else {
+      this.install();
+    }
+  }
+
+  /**
+   * For a built-in item this opens the local copy (the dialog closes itself on navigation) and only
+   * installs if that copy no longer exists — `IotHubActionsService.installItem` owns that decision.
+   */
   install(): void {
     this.iotHubActions.installItem(this.item).subscribe(result => {
       if (result === 'installed') {

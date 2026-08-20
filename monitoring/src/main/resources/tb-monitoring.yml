@@ -121,11 +121,24 @@ monitoring:
 
   notifications:
     message_prefix: '${NOTIFICATION_MESSAGE_PREFIX:}'
+    # Incident grouping (threads alerts into incidents, auto-resolves after timeout).
+    # Requires a channel that supports it — currently only Slack API (bot_token + channel_id).
+    incident:
+      # Enable incident grouping
+      enabled: '${INCIDENT_ENABLED:false}'
+      # Incident resolution timeout in seconds
+      resolution_timeout_s: '${INCIDENT_RESOLUTION_TIMEOUT_S:90}'
+      # Tag @channel in incident messages
+      tag_channel: '${INCIDENT_TAG_CHANNEL:false}'
     slack:
       # Enable notifying via Slack
       enabled: '${SLACK_NOTIFICATION_CHANNEL_ENABLED:false}'
       # Slack webhook url
       webhook_url: '${SLACK_WEBHOOK_URL:}'
+      # Slack Bot OAuth token (xoxb-...) for API-based messaging with incident support, requires chat:write:bot scope
+      bot_token: '${SLACK_BOT_TOKEN:}'
+      # Slack channel ID (e.g. C01234ABCDE) - required when incident feature is enabled
+      channel_id: '${SLACK_CHANNEL_ID:}'
 
   latency:
     # Enable latencies reporting

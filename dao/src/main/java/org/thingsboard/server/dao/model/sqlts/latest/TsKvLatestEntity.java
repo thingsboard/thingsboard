@@ -26,6 +26,7 @@ import jakarta.persistence.SqlResultSetMapping;
 import jakarta.persistence.SqlResultSetMappings;
 import jakarta.persistence.Table;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.model.sql.AbstractTsKvEntity;
 import org.thingsboard.server.dao.sqlts.latest.SearchTsKvLatestRepository;
@@ -35,6 +36,7 @@ import java.util.UUID;
 import static org.thingsboard.server.dao.model.ModelConstants.VERSION_COLUMN;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = "ts_kv_latest")
 @IdClass(TsKvLatestCompositeKey.class)

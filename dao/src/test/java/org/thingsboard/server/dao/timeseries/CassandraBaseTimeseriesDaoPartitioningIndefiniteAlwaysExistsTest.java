@@ -22,7 +22,7 @@ import org.mockito.Answers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.thingsboard.server.dao.cassandra.CassandraCluster;
@@ -52,13 +52,13 @@ public class CassandraBaseTimeseriesDaoPartitioningIndefiniteAlwaysExistsTest {
     @Autowired
     CassandraBaseTimeseriesDao tsDao;
 
-    @MockBean(answer = Answers.RETURNS_MOCKS)
+    @MockitoBean(answers = Answers.RETURNS_MOCKS)
     @Qualifier("CassandraCluster")
     CassandraCluster cassandraCluster;
 
-    @MockBean
+    @MockitoBean
     CassandraBufferedRateReadExecutor cassandraBufferedRateReadExecutor;
-    @MockBean
+    @MockitoBean
     CassandraBufferedRateWriteExecutor cassandraBufferedRateWriteExecutor;
 
     @Test

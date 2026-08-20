@@ -24,4 +24,9 @@ public class InfoNotification implements Notification {
     public String getText() {
         return message;
     }
+
+    @Override
+    public boolean isIncident() {
+        return false;
+    }
 }
