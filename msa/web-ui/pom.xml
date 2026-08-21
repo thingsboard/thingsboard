@@ -33,10 +33,10 @@
         <pkg.linux.dist>${project.build.directory}/package/linux</pkg.linux.dist>
         <pkg.win.dist>${project.build.directory}/package/windows</pkg.win.dist>
         <!-- The Windows ZIP bundles the native launcher that `yarn run pkg` produces, so there is
-             nothing to assemble when the yarn build is skipped. skip.yarn is referenced directly
+             nothing to assemble when the UI build is skipped. skip.ui.build is referenced directly
              (not through a profile) so that it is honoured both when it comes from the command
              line and when it comes from a pom property. -->
-        <pkg.skip.zip>${skip.yarn}</pkg.skip.zip>
+        <pkg.skip.zip>${skip.ui.build}</pkg.skip.zip>
         <docker.push-arm-amd-image.phase>pre-integration-test</docker.push-arm-amd-image.phase>
     </properties>
 
@@ -65,6 +65,9 @@
                 <configuration>
                     <installDirectory>target</installDirectory>
                     <workingDirectory>${basedir}</workingDirectory>
+                    <!-- Declared at plugin level so that it covers every execution of this plugin,
+                         including the ones contributed by the profiles below. -->
+                    <skip>${skip.ui.build}</skip>
                 </configuration>
                 <executions>
                     <execution>

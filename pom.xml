@@ -28,6 +28,13 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <main.dir>${basedir}</main.dir>
+        <!-- Set to true to skip only the UI builds: the Angular application in ui-ngx and the
+             `yarn run pkg` launcher of msa/web-ui. It deliberately does NOT
+             cover msa/js-executor, whose yarn install and sandbox tests keep running.
+             frontend-maven-plugin reads skip.yarn itself, so that property cannot be narrowed to a
+             subset of the modules; this one can, and it defaults to skip.yarn so that
+             -Dskip.yarn=true still skips every yarn invocation in the project exactly as before. -->
+        <skip.ui.build>${skip.yarn}</skip.ui.build>
         <pkg.process-resources.phase>none</pkg.process-resources.phase>
         <pkg.package.phase>none</pkg.package.phase>
         <!-- Use -Dpkg.skip=true to skip all packaging at once (bootjar + deb + rpm + zip).

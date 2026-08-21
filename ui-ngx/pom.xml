@@ -37,6 +37,9 @@
                 <configuration>
                     <installDirectory>target</installDirectory>
                     <workingDirectory>${basedir}</workingDirectory>
+                    <!-- Declared at plugin level so that it covers every execution of this plugin,
+                         including the ones contributed by the profiles below. -->
+                    <skip>${skip.ui.build}</skip>
                 </configuration>
                 <executions>
                     <execution>
