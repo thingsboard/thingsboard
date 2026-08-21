@@ -32,6 +32,11 @@
         <pkg.package.phase>package</pkg.package.phase>
         <pkg.linux.dist>${project.build.directory}/package/linux</pkg.linux.dist>
         <pkg.win.dist>${project.build.directory}/package/windows</pkg.win.dist>
+        <!-- The Windows ZIP bundles the native launcher that `yarn run pkg` produces, so there is
+             nothing to assemble when the yarn build is skipped. skip.yarn is referenced directly
+             (not through a profile) so that it is honoured both when it comes from the command
+             line and when it comes from a pom property. -->
+        <pkg.skip.zip>${skip.yarn}</pkg.skip.zip>
         <docker.push-arm-amd-image.phase>pre-integration-test</docker.push-arm-amd-image.phase>
     </properties>
 

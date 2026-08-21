@@ -30,6 +30,18 @@
         <pkg.package.phase>package</pkg.package.phase>
         <pkg.linux.dist>${project.build.directory}/package/linux</pkg.linux.dist>
         <pkg.win.dist>${project.build.directory}/package/windows</pkg.win.dist>
+        <!-- The Windows ZIP bundles the native launcher that `yarn run pkg` produces, so there is
+             nothing to assemble when the yarn build is skipped. skip.yarn is referenced directly
+             (not through a profile) so that it is honoured both when it comes from the command
+             line and when it comes from a pom property. -->
+        <pkg.skip.zip>${skip.yarn}</pkg.skip.zip>
+        <!-- The `yarn test` execution has to be skipped when tests are skipped and also when the
+             yarn build as a whole is skipped: with `yarn install` skipped there is no node_modules
+             to run the tests from. Maven has no boolean OR, so skip.yarn is used as the default
+             here (honoured both from the command line and from a pom property) and the
+             skip-yarn-test profile below folds in maven.test.skip, which is only ever passed on
+             the command line. -->
+        <yarn.test.skip>${skip.yarn}</yarn.test.skip>
         <docker.push-arm-amd-image.phase>pre-integration-test</docker.push-arm-amd-image.phase>
     </properties>
 
@@ -112,7 +124,7 @@
                         </goals>
                         <phase>test</phase>
                         <configuration>
-                            <skip>${maven.test.skip}</skip>
+                            <skip>${yarn.test.skip}</skip>
                             <arguments>--mutex network run test</arguments>
                         </configuration>
                     </execution>
@@ -206,6 +218,18 @@
         </plugins>
     </build>
     <profiles>
+        <profile>
+            <id>skip-yarn-test</id>
+            <activation>
+                <property>
+                    <name>maven.test.skip</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <properties>
+                <yarn.test.skip>true</yarn.test.skip>
+            </properties>
+        </profile>
         <profile>
             <id>yarn-start</id>
             <activation>
