@@ -80,6 +80,7 @@ export class MailTemplatesComponent extends PageComponent implements OnInit, Has
       this.hugeRteOptions.toolbar = 'fontfamily fontsize | bold italic strikethrough forecolor backcolor ' +
         '| link table image | alignleft aligncenter alignright alignjustify ' +
         '| numlist bullist outdent indent | blocks | removeformat code | fullscreen';
+      this.hugeRteOptions.table_resize_bars = false;
     }
     this.mailTemplatesSettings = this.route.snapshot.data.mailTemplatesSettings;
     this.mailTemplateTypes = Object.keys(MailTemplate).filter(type => Object.keys(this.mailTemplatesSettings).includes(type));
