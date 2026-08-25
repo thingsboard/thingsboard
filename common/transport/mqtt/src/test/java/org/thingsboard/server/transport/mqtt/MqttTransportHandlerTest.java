@@ -18,8 +18,10 @@ package org.thingsboard.server.transport.mqtt;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.mqtt.MqttConnAckMessage;
 import io.netty.handler.codec.mqtt.MqttConnectMessage;
 import io.netty.handler.codec.mqtt.MqttConnectPayload;
+import io.netty.handler.codec.mqtt.MqttConnectReturnCode;
 import io.netty.handler.codec.mqtt.MqttConnectVariableHeader;
 import io.netty.handler.codec.mqtt.MqttFixedHeader;
 import io.netty.handler.codec.mqtt.MqttMessageType;
@@ -32,9 +34,11 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.stubbing.Answer;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -44,11 +48,18 @@ import org.thingsboard.server.common.data.device.profile.JsonTransportPayloadCon
 import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.transport.TransportService;
+import org.thingsboard.server.common.transport.TransportServiceCallback;
+import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.mqtt.adaptors.JsonMqttAdaptor;
 
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.net.ssl.SSLSession;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -66,8 +77,12 @@ import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.BDDMockito.willDoNothing;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -250,6 +265,75 @@ public class MqttTransportHandlerTest {
         expectedMd.putValue(DataConstants.MQTT_TOPIC, message.variableHeader().topicName());
 
         verify(transportService, times(1)).process(any(), (TransportProtos.PostTelemetryMsg) any(), eq(expectedMd), any());
+    }
+
+    @Test
+    public void givenOneWayTlsAndUnknownCredentials_whenProcessConnect_thenRefinesReturnCodeAndProbesPeerCertOnce() throws Exception {
+        //given
+        SSLSession sslSession = givenTlsSession();
+        given(sslSession.getPeerCertificates()).willThrow(new SSLPeerUnverifiedException("peer not authenticated"));
+        willAnswer(unknownCredentials()).given(transportService)
+                .process(eq(DeviceTransportType.MQTT), any(TransportProtos.ValidateBasicMqttCredRequestMsg.class), any());
+
+        //when
+        handler.processConnect(ctx, getMqttV5ConnectMessage());
+
+        //then
+        assertThat(getConnAckReturnCode(), is(MqttConnectReturnCode.CONNECTION_REFUSED_BAD_USERNAME_OR_PASSWORD));
+        verify(sslSession, times(1)).getPeerCertificates();
+    }
+
+    @Test
+    public void givenTwoWayTlsAndUnknownCertificate_whenProcessConnect_thenKeepsGenericReturnCode() throws Exception {
+        //given
+        X509Certificate cert = mock(X509Certificate.class);
+        given(cert.getEncoded()).willReturn("cert".getBytes(StandardCharsets.UTF_8));
+        given(givenTlsSession().getPeerCertificates()).willReturn(new Certificate[]{cert});
+        given(context.isSkipValidityCheckForClientCert()).willReturn(true);
+        willAnswer(unknownCredentials()).given(transportService)
+                .process(eq(DeviceTransportType.MQTT), any(TransportProtos.ValidateDeviceX509CertRequestMsg.class), any());
+
+        //when
+        handler.processConnect(ctx, getMqttV5ConnectMessage());
+
+        //then
+        assertThat(getConnAckReturnCode(), is(MqttConnectReturnCode.CONNECTION_REFUSED_NOT_AUTHORIZED_5));
+    }
+
+    SSLSession givenTlsSession() {
+        SSLEngine sslEngine = mock(SSLEngine.class);
+        SSLSession sslSession = mock(SSLSession.class);
+        given(sslHandler.engine()).willReturn(sslEngine);
+        given(sslEngine.getSession()).willReturn(sslSession);
+        return sslSession;
+    }
+
+    Answer<Void> unknownCredentials() {
+        return invocation -> {
+            TransportServiceCallback<ValidateDeviceCredentialsResponse> callback = invocation.getArgument(2);
+            callback.onSuccess(ValidateDeviceCredentialsResponse.builder().build());
+            return null;
+        };
+    }
+
+    // MQTT 5 is required: ReturnCodeResolver collapses BAD_USERNAME_OR_PASSWORD and NOT_AUTHORIZED_5 into
+    // a single NOT_AUTHORIZED code for older clients, which would make the two cases indistinguishable.
+    MqttConnectMessage getMqttV5ConnectMessage() {
+        MqttFixedHeader mqttFixedHeader = new MqttFixedHeader(MqttMessageType.CONNECT, true, MqttQoS.AT_LEAST_ONCE, false, 123);
+        MqttConnectVariableHeader variableHeader = new MqttConnectVariableHeader("MQTT", 5, true, true, true, 1, true, false, 60);
+        MqttConnectPayload payload = new MqttConnectPayload("clientId", "topic", "message".getBytes(StandardCharsets.UTF_8), "username", "password".getBytes(StandardCharsets.UTF_8));
+        return new MqttConnectMessage(mqttFixedHeader, variableHeader, payload);
+    }
+
+    MqttConnectReturnCode getConnAckReturnCode() {
+        ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
+        verify(ctx, atLeastOnce()).writeAndFlush(captor.capture());
+        return captor.getAllValues().stream()
+                .filter(MqttConnAckMessage.class::isInstance)
+                .map(MqttConnAckMessage.class::cast)
+                .findFirst()
+                .map(connAck -> connAck.variableHeader().connectReturnCode())
+                .orElseThrow(() -> new AssertionError("No CONNACK message was written to the channel"));
     }
 
 }

@@ -157,6 +157,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     volatile InetSocketAddress address;
     volatile GatewaySessionHandler gatewaySessionHandler;
     volatile SparkplugNodeSessionHandler sparkplugSessionHandler;
+    private volatile boolean clientCertPresented;
 
     private final ConcurrentHashMap<String, String> otaPackSessions;
     private final ConcurrentHashMap<String, Integer> chunkSizes;
@@ -1055,6 +1056,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         } else {
             X509Certificate cert;
             if (sslHandler != null && (cert = getX509Certificate()) != null) {
+                clientCertPresented = true;
                 processX509CertConnect(ctx, cert, msg);
             } else {
                 processAuthTokenConnect(ctx, msg);
@@ -1127,8 +1129,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 return (X509Certificate) certChain[0];
             }
         } catch (SSLPeerUnverifiedException e) {
-            log.warn(e.getMessage());
-            return null;
+            log.debug("[{}][{}] Client certificate is not available: {}", address, sessionId, e.getMessage());
         }
         return null;
     }
@@ -1326,7 +1327,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         if (!msg.hasDeviceInfo()) {
             context.onAuthFailure(address);
             MqttConnectReturnCode returnCode = MqttConnectReturnCode.CONNECTION_REFUSED_NOT_AUTHORIZED_5;
-            if (sslHandler == null || getX509Certificate() == null) {
+            if (!clientCertPresented) {
                 String username = connectMessage.payload().userName();
                 byte[] passwordBytes = connectMessage.payload().passwordInBytes();
                 String clientId = connectMessage.payload().clientIdentifier();
