@@ -110,6 +110,14 @@ public class BaseRpcService implements RpcService {
     }
 
     @Override
+    public PageData<Rpc> findInFlightForReload(TenantId tenantId, DeviceId deviceId, PageLink pageLink) {
+        log.trace("Executing findInFlightForReload, tenantId [{}], deviceId [{}], pageLink [{}]", tenantId, deviceId, pageLink);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validatePageLink(pageLink);
+        return rpcDao.findInFlightForReload(tenantId, deviceId, pageLink);
+    }
+
+    @Override
     public PageData<Rpc> findAllByDeviceId(TenantId tenantId, DeviceId deviceId, PageLink pageLink) {
         log.trace("Executing findAllByDeviceIdAndStatus, tenantId [{}], deviceId [{}], pageLink [{}]", tenantId, deviceId, pageLink);
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);

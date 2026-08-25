@@ -32,6 +32,8 @@ public interface RpcDao extends Dao<Rpc> {
 
     PageData<Rpc> findAllByDeviceIdAndStatus(TenantId tenantId, DeviceId deviceId, RpcStatus rpcStatus, PageLink pageLink);
 
+    PageData<Rpc> findInFlightForReload(TenantId tenantId, DeviceId deviceId, PageLink pageLink);
+
     PageData<Rpc> findAllRpcByTenantId(TenantId tenantId, PageLink pageLink);
 
     int deleteOutdatedRpcByTenantIdBatch(TenantId tenantId, Long expirationTime, int batchSize);

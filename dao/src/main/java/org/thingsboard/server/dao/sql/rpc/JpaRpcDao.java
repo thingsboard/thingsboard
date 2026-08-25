@@ -121,6 +121,11 @@ public class JpaRpcDao extends JpaAbstractDao<RpcEntity, Rpc> implements RpcDao,
     }
 
     @Override
+    public PageData<Rpc> findInFlightForReload(TenantId tenantId, DeviceId deviceId, PageLink pageLink) {
+        return DaoUtil.toPageData(rpcRepository.findInFlightForReload(tenantId.getId(), deviceId.getId(), DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
     public PageData<Rpc> findAllRpcByTenantId(TenantId tenantId, PageLink pageLink) {
         return DaoUtil.toPageData(rpcRepository.findAllByTenantId(tenantId.getId(), DaoUtil.toPageable(pageLink)));
     }

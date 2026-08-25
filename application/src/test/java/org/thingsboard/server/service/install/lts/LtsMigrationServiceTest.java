@@ -74,6 +74,15 @@ class LtsMigrationServiceTest {
         };
     }
 
+    /** Records apply() and applyAfterCommit() calls (distinctly tagged) into a single shared ordered list. */
+    private LtsMigration migrationWithAfterCommit(String version, List<String> sequence) {
+        return new LtsMigration() {
+            @Override public String getVersion() { return version; }
+            @Override public void apply() { sequence.add("apply(" + version + ")"); }
+            @Override public void applyAfterCommit() { sequence.add("applyAfterCommit(" + version + ")"); }
+        };
+    }
+
     private LtsMigrationService service(List<LtsMigration> migrations) {
         return new LtsMigrationService(jdbcTemplate, installScripts, schemaSettingsService, txManager, migrations);
     }
@@ -89,7 +98,7 @@ class LtsMigrationServiceTest {
                 migration("4.2.2.2", applied),
                 migration("4.2.2.3", applied)));
 
-        service.applyMigrations("4.2.2.2", "4.2.2.3");
+        service.applyMigrations("4.2.2.2", "4.2.2.3", () -> {});
 
         // only 4.2.2.3 is in (4.2.2.2, 4.2.2.3]
         assertEquals(List.of("4.2.2.3"), applied);
@@ -106,7 +115,7 @@ class LtsMigrationServiceTest {
         LtsMigrationService service = service(List.of(
                 migration("4.2.2.3", applied), migration("4.2.2.4", applied)));
 
-        service.applyMigrations("4.2.2.2", "4.2.2.4");
+        service.applyMigrations("4.2.2.2", "4.2.2.4", () -> {});
 
         assertEquals(List.of("4.2.2.3", "4.2.2.4"), applied);
         verify(jdbcTemplate).execute("SELECT 1;");
@@ -139,7 +148,7 @@ class LtsMigrationServiceTest {
                 migration("4.3.1.2", applied),
                 migration("4.3.1.3", applied)));
 
-        service.applyMigrations("4.2.2.2", "4.3.1.3");
+        service.applyMigrations("4.2.2.2", "4.3.1.3", () -> {});
 
         assertEquals(List.of("4.3.1.2", "4.3.1.3"), applied);
         verify(schemaSettingsService, never()).updateSchemaVersion("4.2.2.3");
@@ -188,7 +197,7 @@ class LtsMigrationServiceTest {
         writeSql("4.2.2.3", "SELECT 1;");
         LtsMigrationService service = service(List.of(migration("4.2.2.3", applied)));
 
-        service.applyMigrations("4.2.2.3", "4.2.2.3");
+        service.applyMigrations("4.2.2.3", "4.2.2.3", () -> {});
 
         assertEquals(List.of(), applied);
         verify(jdbcTemplate, never()).execute(anyString());
@@ -222,11 +231,24 @@ class LtsMigrationServiceTest {
     }
 
     @Test
+    void runDataMigrationsAppliesAndAppliesAfterCommitButNeverRunsSqlOrRecords() throws Exception {
+        List<String> sequence = new ArrayList<>();
+        writeSql("4.2.2.3", "SELECT 1;");
+        LtsMigrationService service = service(List.of(migrationWithAfterCommit("4.2.2.3", sequence)));
+
+        service.runDataMigrations("4.2.2.2", "4.2.2.3");
+
+        assertEquals(List.of("apply(4.2.2.3)", "applyAfterCommit(4.2.2.3)"), sequence);
+        verify(jdbcTemplate, never()).execute(anyString());
+        verify(schemaSettingsService, never()).updateSchemaVersion(anyString());
+    }
+
+    @Test
     void migrationWithoutSqlFileStillAppliesAndRecords() {
         List<String> applied = new ArrayList<>();
         LtsMigrationService service = service(List.of(migration("4.2.2.3", applied)));
 
-        service.applyMigrations("4.2.2.2", "4.2.2.3");
+        service.applyMigrations("4.2.2.2", "4.2.2.3", () -> {});
 
         assertEquals(List.of("4.2.2.3"), applied);
         verify(jdbcTemplate, never()).execute(anyString());
@@ -244,5 +266,35 @@ class LtsMigrationServiceTest {
     void failsLoudOnUnparseableVersion() {
         List<String> applied = new ArrayList<>();
         assertThrows(IllegalArgumentException.class, () -> service(List.of(migration("nope", applied))));
+    }
+
+    @Test
+    void applyMigrationsRunsAllApplyThenAfterSchemaPhaseThenAllApplyAfterCommit() {
+        List<String> sequence = new ArrayList<>();
+        LtsMigrationService service = service(List.of(
+                migrationWithAfterCommit("4.2.2.3", sequence),
+                migrationWithAfterCommit("4.2.2.4", sequence)));
+        Runnable afterSchemaPhase = () -> sequence.add("afterSchemaPhase");
+
+        service.applyMigrations("4.2.2.2", "4.2.2.4", afterSchemaPhase);
+
+        assertEquals(List.of(
+                "apply(4.2.2.3)", "apply(4.2.2.4)",
+                "afterSchemaPhase",
+                "applyAfterCommit(4.2.2.3)", "applyAfterCommit(4.2.2.4)"), sequence);
+    }
+
+    @Test
+    void applyMigrationsDoesNotRecordVersionWhenApplyAfterCommitFails() {
+        LtsMigration failing = new LtsMigration() {
+            @Override public String getVersion() { return "4.2.2.3"; }
+            @Override public void applyAfterCommit() { throw new RuntimeException("backfill failed"); }
+        };
+        LtsMigrationService service = service(List.of(failing));
+
+        assertThrows(RuntimeException.class,
+                () -> service.applyMigrations("4.2.2.2", "4.2.2.3", () -> {}));
+
+        verify(schemaSettingsService, never()).updateSchemaVersion(anyString());
     }
 }

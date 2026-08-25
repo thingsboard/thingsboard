@@ -106,10 +106,10 @@ public class SystemPatchApplier {
         try {
             String dbVersion = schemaSettingsService.getDbSchemaVersion();
             String packageVersion = schemaSettingsService.getPackageSchemaVersion();
-            ltsMigrationService.applyMigrations(dbVersion, packageVersion);
-
-            updateSqlViews();
-            log.info("Updated sql database views");
+            ltsMigrationService.applyMigrations(dbVersion, packageVersion, () -> {
+                updateSqlViews();
+                log.info("Updated sql database views");
+            });
 
             WidgetTypeStats widgetStats = updateWidgetTypes();
             log.info("System widget types: {} created, {} updated", widgetStats.created(), widgetStats.updated());

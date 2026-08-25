@@ -31,7 +31,6 @@ import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rpc.Rpc;
-import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.rpc.RpcService;
@@ -87,7 +86,7 @@ public class TbRpcService {
                     if (Boolean.TRUE.equals(persisted)) {
                         notifyRuleEngine(tenantId, rpc);
                     } else {
-                        log.debug("[{}][{}][{}] Skipping rule engine notification for status [{}] - RPC row no longer exists",
+                        log.debug("[{}][{}][{}] Skipping rule engine notification for status [{}] - RPC row is not updatable (already terminal or removed)",
                                 tenantId, rpc.getDeviceId(), rpc.getId(), rpc.getStatus());
                     }
                 },
@@ -119,8 +118,8 @@ public class TbRpcService {
         tbClusterService.pushMsgToRuleEngine(tenantId, rpc.getDeviceId(), msg, null);
     }
 
-    public PageData<Rpc> findAllByDeviceIdAndStatus(TenantId tenantId, DeviceId deviceId, RpcStatus rpcStatus, PageLink pageLink) {
-        return rpcService.findAllByDeviceIdAndStatus(tenantId, deviceId, rpcStatus, pageLink);
+    public PageData<Rpc> findInFlightForReload(TenantId tenantId, DeviceId deviceId, PageLink pageLink) {
+        return rpcService.findInFlightForReload(tenantId, deviceId, pageLink);
     }
 
 }
