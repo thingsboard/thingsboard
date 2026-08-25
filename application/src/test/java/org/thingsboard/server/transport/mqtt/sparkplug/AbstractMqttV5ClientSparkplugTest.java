@@ -288,6 +288,33 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
         return listKeys;
     }
 
+    protected List<String> connectionWithNBirthMetricNameAndAlias(MetricDataType metricDataType, String metricKey, Object metricValue, Long alias) throws Exception {
+        List<String> listKeys = new ArrayList<>();
+        SparkplugBProto.Payload.Builder payloadBirthNode = SparkplugBProto.Payload.newBuilder()
+                .setTimestamp(calendar.getTimeInMillis());
+        long ts = calendar.getTimeInMillis() - PUBLISH_TS_DELTA_MS;
+        long valueBdSec = getBdSeqNum();
+        payloadBirthNode.addMetrics(createMetric(valueBdSec, ts, keysBdSeq, Int64, -1L));
+        listKeys.add(SparkplugMessageType.NBIRTH.name() + " " + keysBdSeq);
+        payloadBirthNode.addMetrics(createMetric(false, ts, keyNodeRebirth, MetricDataType.Boolean, -1L));
+        listKeys.add(keyNodeRebirth);
+
+        payloadBirthNode.addMetrics(createMetric(metricValue, ts, metricKey, metricDataType, alias));
+
+        listKeys.add(metricKey);
+
+        if (client.isConnected()) {
+            client.publish(TOPIC_ROOT_SPB_V_1_0 + "/" + groupId + "/" + SparkplugMessageType.NBIRTH.name() + "/" + edgeNode,
+                    payloadBirthNode.build().toByteArray(), 0, false);
+        }
+        return listKeys;
+    }
+
+    protected void createdAddMetricValueWithAliasTsKv(SparkplugBProto.Payload.Builder dataPayload, Object value, MetricDataType metricDataType,
+                                                      long ts) throws ThingsboardException {
+        dataPayload.addMetrics(createMetric(value, ts, null, metricDataType, 4L));
+    }
+
     protected void createdAddMetricValuePrimitiveTsKv(List<TsKvEntry> listTsKvEntry, List<String> listKeys,
                                                       SparkplugBProto.Payload.Builder dataPayload, long ts) throws ThingsboardException {
 
