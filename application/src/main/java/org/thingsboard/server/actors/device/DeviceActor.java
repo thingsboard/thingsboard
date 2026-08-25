@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponseActorMsg;
 import org.thingsboard.server.common.msg.rpc.RemoveRpcActorMsg;
+import org.thingsboard.server.common.msg.rpc.RpcPersistResultActorMsg;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequestActorMsg;
 import org.thingsboard.server.common.msg.rule.engine.DeviceAttributesEventNotificationMsg;
 import org.thingsboard.server.common.msg.rule.engine.DeviceEdgeUpdateMsg;
@@ -75,6 +76,9 @@ public class DeviceActor extends ContextAwareActor {
                 break;
             case DEVICE_RPC_REQUEST_TO_DEVICE_ACTOR_MSG:
                 processor.processRpcRequest(ctx, (ToDeviceRpcRequestActorMsg) msg);
+                break;
+            case DEVICE_RPC_PERSIST_RESULT_TO_DEVICE_ACTOR_MSG:
+                processor.processRpcPersistResult((RpcPersistResultActorMsg) msg);
                 break;
             case DEVICE_RPC_RESPONSE_TO_DEVICE_ACTOR_MSG:
                 processor.processRpcResponsesFromEdge((FromDeviceRpcResponseActorMsg) msg);

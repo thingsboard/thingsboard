@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rpc.Rpc;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.msg.rpc.RpcPersistResult;
 import org.thingsboard.server.dao.rpc.RpcService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
@@ -40,6 +41,7 @@ import java.util.UUID;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 
 @TbCoreComponent
 @Service
@@ -48,32 +50,65 @@ public class TbRpcService {
     private final RpcService rpcService;
     private final TbClusterService tbClusterService;
 
-    private final ExecutorService[] callbackExecutors;
+    // Striped by rpcId so one command's lifecycle events keep their order (RPC_QUEUED before RPC_DELIVERED).
+    private final ExecutorService[] ruleEngineCallbackExecutors;
+    // Separate from the stripes above so rule engine publishing is never on the command-delivery path: a stall
+    // there would otherwise hold up device sends. Needs no striping - the actor fixed delivery order already.
+    private final ExecutorService deviceActorCallbackExecutor;
 
     public TbRpcService(RpcService rpcService, TbClusterService tbClusterService,
-                        @Value("${sql.rpc.callback_threads:3}") int callbackThreads) {
-        if (callbackThreads < 1) {
-            throw new IllegalArgumentException("sql.rpc.callback_threads must be >= 1, but was " + callbackThreads);
+                        @Value("${sql.rpc.rule_engine_callback_threads:3}") int ruleEngineCallbackThreads,
+                        @Value("${sql.rpc.device_actor_callback_threads:3}") int deviceActorCallbackThreads) {
+        if (ruleEngineCallbackThreads < 1) {
+            throw new IllegalArgumentException("sql.rpc.rule_engine_callback_threads must be >= 1, but was " + ruleEngineCallbackThreads);
+        }
+        if (deviceActorCallbackThreads < 1) {
+            throw new IllegalArgumentException("sql.rpc.device_actor_callback_threads must be >= 1, but was " + deviceActorCallbackThreads);
         }
         this.rpcService = rpcService;
         this.tbClusterService = tbClusterService;
-        this.callbackExecutors = new ExecutorService[callbackThreads];
-        for (int i = 0; i < callbackThreads; i++) {
-            callbackExecutors[i] = Executors.newSingleThreadExecutor(
-                    ThingsBoardThreadFactory.forName("rpc-persist-callback-" + i));
+        this.ruleEngineCallbackExecutors = new ExecutorService[ruleEngineCallbackThreads];
+        for (int i = 0; i < ruleEngineCallbackThreads; i++) {
+            ruleEngineCallbackExecutors[i] = Executors.newSingleThreadExecutor(
+                    ThingsBoardThreadFactory.forName("rpc-rule-engine-callback-" + i));
         }
+        this.deviceActorCallbackExecutor = Executors.newFixedThreadPool(deviceActorCallbackThreads,
+                ThingsBoardThreadFactory.forName("rpc-device-actor-callback"));
     }
 
     @PreDestroy
     private void destroy() {
-        for (ExecutorService executor : callbackExecutors) {
+        for (ExecutorService executor : ruleEngineCallbackExecutors) {
             executor.shutdownNow();
         }
+        deviceActorCallbackExecutor.shutdownNow();
     }
 
-    public void create(TenantId tenantId, Rpc rpc) {
-        rpcService.save(rpc);
-        executorFor(rpc.getUuidId()).execute(() -> notifyRuleEngine(tenantId, rpc));
+    /**
+     * Enqueues the create onto the batched write queue and resumes the caller once the row's fate is known. The
+     * continuation is invoked exactly once.
+     */
+    public void createIfAbsent(TenantId tenantId, Rpc rpc, Consumer<RpcPersistResult> continuation) {
+        DonAsynchron.withCallback(rpcService.createIfAbsentAsync(rpc),
+                inserted -> {
+                    RpcPersistResult result = Boolean.TRUE.equals(inserted)
+                            ? RpcPersistResult.INSERTED : RpcPersistResult.DUPLICATE;
+                    if (RpcPersistResult.INSERTED == result) {
+                        // Enqueue before resuming the actor, so RPC_QUEUED sits on the stripe ahead of any
+                        // status event the resumed actor causes. Only the enqueue happens here.
+                        ruleEngineCallbackExecutorFor(rpc.getUuidId()).execute(() -> notifyRuleEngine(tenantId, rpc));
+                    } else {
+                        log.debug("[{}][{}][{}] Skipping RPC_QUEUED notification - a row for this RPC already existed",
+                                tenantId, rpc.getDeviceId(), rpc.getId());
+                    }
+                    continuation.accept(result);
+                },
+                t -> {
+                    log.error("[{}][{}][{}] Failed to persist RPC create with status [{}]",
+                            tenantId, rpc.getDeviceId(), rpc.getId(), rpc.getStatus(), t);
+                    continuation.accept(RpcPersistResult.FAILED);
+                },
+                deviceActorCallbackExecutor);
     }
 
     public void update(TenantId tenantId, Rpc rpc) {
@@ -92,11 +127,11 @@ public class TbRpcService {
                 },
                 t -> log.error("[{}][{}][{}] Failed to persist RPC with status [{}]",
                         tenantId, rpc.getDeviceId(), rpc.getId(), rpc.getStatus(), t),
-                executorFor(rpc.getUuidId()));
+                ruleEngineCallbackExecutorFor(rpc.getUuidId()));
     }
 
-    private Executor executorFor(UUID rpcId) {
-        return callbackExecutors[HashPartitioner.resolvePartition(rpcId.hashCode(), callbackExecutors.length)];
+    private Executor ruleEngineCallbackExecutorFor(UUID rpcId) {
+        return ruleEngineCallbackExecutors[HashPartitioner.resolvePartition(rpcId.hashCode(), ruleEngineCallbackExecutors.length)];
     }
 
     private void notifyRuleEngine(TenantId tenantId, Rpc rpc) {

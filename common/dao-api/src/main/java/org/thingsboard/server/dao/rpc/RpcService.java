@@ -27,7 +27,14 @@ import org.thingsboard.server.dao.entity.EntityDaoService;
 
 public interface RpcService extends EntityDaoService {
 
-    Rpc save(Rpc rpc);
+    /**
+     * Batched, non-blocking insert-if-absent. Persists the RPC only if no row with this id exists, so a
+     * re-delivered command is a no-op rather than an upsert that resurrects or clobbers the existing row. The
+     * row is written by the shared rpcId-striped batch queue, not by the calling thread.
+     *
+     * @return a future resolving to true if a row was inserted, false if a row with this id already existed
+     */
+    ListenableFuture<Boolean> createIfAbsentAsync(Rpc rpc);
 
     ListenableFuture<Boolean> updateAsync(Rpc rpc);
 

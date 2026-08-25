@@ -26,6 +26,13 @@ import org.thingsboard.server.dao.Dao;
 
 public interface RpcDao extends Dao<Rpc> {
 
+    /**
+     * Idempotent by rpcId: a re-delivered command must not overwrite the row created by the first delivery.
+     *
+     * @return true if a row was inserted, false if a row with this id already existed
+     */
+    ListenableFuture<Boolean> createIfAbsentAsync(Rpc rpc);
+
     ListenableFuture<Boolean> updateAsync(Rpc rpc);
 
     PageData<Rpc> findAllByDeviceId(TenantId tenantId, DeviceId deviceId, PageLink pageLink);

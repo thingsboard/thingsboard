@@ -49,14 +49,16 @@ public class BaseRpcService implements RpcService {
     private final RpcDao rpcDao;
 
     @Override
-    public Rpc save(Rpc rpc) {
-        log.trace("Executing save, [{}]", rpc);
-        return rpcDao.save(rpc.getTenantId(), rpc);
+    public ListenableFuture<Boolean> createIfAbsentAsync(Rpc rpc) {
+        log.trace("Executing createIfAbsentAsync, tenantId [{}], deviceId [{}], rpcId [{}], status [{}]",
+                rpc.getTenantId(), rpc.getDeviceId(), rpc.getId(), rpc.getStatus());
+        return rpcDao.createIfAbsentAsync(rpc);
     }
 
     @Override
     public ListenableFuture<Boolean> updateAsync(Rpc rpc) {
-        log.trace("Executing updateAsync, [{}]", rpc);
+        log.trace("Executing updateAsync, tenantId [{}], deviceId [{}], rpcId [{}], status [{}]",
+                rpc.getTenantId(), rpc.getDeviceId(), rpc.getId(), rpc.getStatus());
         return rpcDao.updateAsync(rpc);
     }
 

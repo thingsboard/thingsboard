@@ -28,14 +28,18 @@ import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.rpc.Rpc;
 import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.rpc.RpcPersistResult;
 import org.thingsboard.server.dao.rpc.RpcService;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -56,7 +60,7 @@ public class TbRpcServiceTest {
 
     @Before
     public void setUp() {
-        tbRpcService = new TbRpcService(rpcService, clusterService, 1);
+        tbRpcService = new TbRpcService(rpcService, clusterService, 1, 1);
     }
 
     @Test
@@ -67,19 +71,6 @@ public class TbRpcServiceTest {
         tbRpcService.update(rpc.getTenantId(), rpc);
 
         verify(rpcService).updateAsync(rpc);
-        verify(clusterService, timeout(5000))
-                .pushMsgToRuleEngine(eq(rpc.getTenantId()), eq(rpc.getDeviceId()), any(TbMsg.class), isNull());
-    }
-
-    @Test
-    public void createPersistsSynchronouslyThenPushesToRuleEngine() {
-        Rpc rpc = newRpc();
-        when(rpcService.save(rpc)).thenReturn(rpc);
-
-        tbRpcService.create(rpc.getTenantId(), rpc);
-
-        // create must persist synchronously via save(...)
-        verify(rpcService).save(rpc);
         verify(clusterService, timeout(5000))
                 .pushMsgToRuleEngine(eq(rpc.getTenantId()), eq(rpc.getDeviceId()), any(TbMsg.class), isNull());
     }
@@ -102,7 +93,7 @@ public class TbRpcServiceTest {
     public void sameRpcIdUpdateNotificationsRunInSubmissionOrderOnStripedExecutor() throws InterruptedException {
         // A single rpcId always maps to one stripe; this checks that two update notifications for the
         // SAME rpcId are serialized on that stripe (DELIVERED before SUCCESSFUL).
-        tbRpcService = new TbRpcService(rpcService, clusterService, 3);
+        tbRpcService = new TbRpcService(rpcService, clusterService, 3, 1);
 
         RpcId rpcId = new RpcId(UUID.randomUUID());
         DeviceId deviceId = new DeviceId(UUID.randomUUID());
@@ -136,6 +127,104 @@ public class TbRpcServiceTest {
         List<TbMsg> msgs = msgCaptor.getAllValues();
         assertEquals(TbMsgType.RPC_DELIVERED, msgs.get(0).getInternalType());
         assertEquals(TbMsgType.RPC_SUCCESSFUL, msgs.get(1).getInternalType());
+    }
+
+    @Test
+    public void createIfAbsentResumesWithInsertedThenPushesToRuleEngine() {
+        Rpc rpc = newRpc();
+        when(rpcService.createIfAbsentAsync(rpc)).thenReturn(Futures.immediateFuture(true));
+        AtomicReference<RpcPersistResult> result = new AtomicReference<>();
+
+        tbRpcService.createIfAbsent(rpc.getTenantId(), rpc, result::set);
+
+        verify(rpcService).createIfAbsentAsync(rpc);
+        verify(clusterService, timeout(5000))
+                .pushMsgToRuleEngine(eq(rpc.getTenantId()), eq(rpc.getDeviceId()), any(TbMsg.class), isNull());
+        assertEquals(RpcPersistResult.INSERTED, result.get());
+    }
+
+    @Test
+    public void createIfAbsentResumesWithDuplicateAndSkipsTheRuleEngine() {
+        Rpc rpc = newRpc();
+        // The original create already published RPC_QUEUED; a second one would be spurious.
+        when(rpcService.createIfAbsentAsync(rpc)).thenReturn(Futures.immediateFuture(false));
+        AtomicReference<RpcPersistResult> result = new AtomicReference<>();
+
+        tbRpcService.createIfAbsent(rpc.getTenantId(), rpc, result::set);
+
+        verify(clusterService, after(500).never())
+                .pushMsgToRuleEngine(any(TenantId.class), any(DeviceId.class), any(TbMsg.class), isNull());
+        assertEquals(RpcPersistResult.DUPLICATE, result.get());
+    }
+
+    @Test
+    public void createIfAbsentResumesWithFailedWhenTheWriteThrows() {
+        Rpc rpc = newRpc();
+        when(rpcService.createIfAbsentAsync(rpc))
+                .thenReturn(Futures.immediateFailedFuture(new RuntimeException("write failed")));
+        AtomicReference<RpcPersistResult> result = new AtomicReference<>();
+
+        tbRpcService.createIfAbsent(rpc.getTenantId(), rpc, result::set);
+
+        verify(clusterService, after(500).never())
+                .pushMsgToRuleEngine(any(TenantId.class), any(DeviceId.class), any(TbMsg.class), isNull());
+        assertEquals(RpcPersistResult.FAILED, result.get());
+    }
+
+    @Test
+    public void createIfAbsentResumesTheActorBeforeTheRuleEnginePushRuns() {
+        Rpc rpc = newRpc();
+        when(rpcService.createIfAbsentAsync(rpc)).thenReturn(Futures.immediateFuture(true));
+        // Separate pools, so the actor is resumed without waiting for the rule engine publish to finish.
+        List<String> order = new ArrayList<>();
+        CountDownLatch pushed = new CountDownLatch(1);
+        doAnswer(invocation -> {
+            order.add("push");
+            pushed.countDown();
+            return null;
+        }).when(clusterService).pushMsgToRuleEngine(any(TenantId.class), any(DeviceId.class), any(TbMsg.class), isNull());
+
+        tbRpcService.createIfAbsent(rpc.getTenantId(), rpc, r -> order.add("continuation"));
+
+        verify(clusterService, timeout(5000))
+                .pushMsgToRuleEngine(any(TenantId.class), any(DeviceId.class), any(TbMsg.class), isNull());
+        assertEquals(List.of("continuation", "push"), order);
+    }
+
+    @Test
+    public void createNotificationForOneRpcIdPrecedesItsLaterStatusNotification() throws InterruptedException {
+        tbRpcService = new TbRpcService(rpcService, clusterService, 3, 1);
+
+        RpcId rpcId = new RpcId(UUID.randomUUID());
+        DeviceId deviceId = new DeviceId(UUID.randomUUID());
+        Rpc queued = newRpc(rpcId, deviceId, RpcStatus.QUEUED);
+        Rpc delivered = newRpc(rpcId, deviceId, RpcStatus.DELIVERED);
+        when(rpcService.createIfAbsentAsync(queued)).thenReturn(Futures.immediateFuture(true));
+        when(rpcService.updateAsync(delivered)).thenReturn(Futures.immediateFuture(true));
+
+        // Hold the stripe inside the RPC_QUEUED push, then submit DELIVERED: without per-rpcId serialization the
+        // fast DELIVERED would overtake the sleeping QUEUED. Two immediate futures would pass by construction.
+        CountDownLatch queuedStarted = new CountDownLatch(1);
+        doAnswer(invocation -> {
+            TbMsg msg = invocation.getArgument(2);
+            if (msg.getInternalType() == TbMsgType.RPC_QUEUED) {
+                queuedStarted.countDown();
+                Thread.sleep(300);
+            }
+            return null;
+        }).when(clusterService).pushMsgToRuleEngine(eq(TenantId.SYS_TENANT_ID), eq(deviceId), any(TbMsg.class), isNull());
+
+        tbRpcService.createIfAbsent(queued.getTenantId(), queued, r -> { });
+        assertTrue(queuedStarted.await(5, TimeUnit.SECONDS));
+        tbRpcService.update(delivered.getTenantId(), delivered);
+
+        ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        verify(clusterService, timeout(5000).times(2))
+                .pushMsgToRuleEngine(eq(TenantId.SYS_TENANT_ID), eq(deviceId), msgCaptor.capture(), isNull());
+
+        List<TbMsg> msgs = msgCaptor.getAllValues();
+        assertEquals(TbMsgType.RPC_QUEUED, msgs.get(0).getInternalType());
+        assertEquals(TbMsgType.RPC_DELIVERED, msgs.get(1).getInternalType());
     }
 
     private Rpc newRpc() {
