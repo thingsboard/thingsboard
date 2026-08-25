@@ -250,8 +250,16 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
 
         ToDeviceRpcRequestMetadata md = toDeviceRpcPendingMap.get(requestId);
         if (md == null) {
-            // Expired at arrival, or already completed. Not gated on the result: the reply carries only the id,
-            // and completion is remove-once - so the caller can read the row instead of waiting for a timeout.
+            if (RpcPersistResult.FAILED == result) {
+                // Nothing was written, so there is no row for the caller to read: replying the id would hand
+                // back one that 404s. Let it surface an error via DefaultTbCoreDeviceRpcService instead.
+                log.debug("[{}][{}][{}] RPC create did not persist and nothing is pending - not replying the rpcId",
+                        deviceId, rpcId, requestId);
+                return;
+            }
+            // Expired at arrival, or already completed. Not gated on INSERTED vs DUPLICATE: the reply carries
+            // only the id, and completion is remove-once - so the caller can read the row instead of waiting
+            // for a timeout.
             sendRpcIdResponse(rpcId);
             return;
         }

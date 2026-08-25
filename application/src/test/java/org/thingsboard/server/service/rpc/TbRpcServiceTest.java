@@ -31,7 +31,6 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.rpc.RpcPersistResult;
 import org.thingsboard.server.dao.rpc.RpcService;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
@@ -172,23 +171,67 @@ public class TbRpcServiceTest {
     }
 
     @Test
-    public void createIfAbsentResumesTheActorBeforeTheRuleEnginePushRuns() {
+    public void createIfAbsentResumesTheActorWithoutWaitingForTheRuleEnginePush() throws InterruptedException {
         Rpc rpc = newRpc();
         when(rpcService.createIfAbsentAsync(rpc)).thenReturn(Futures.immediateFuture(true));
-        // Separate pools, so the actor is resumed without waiting for the rule engine publish to finish.
-        List<String> order = new ArrayList<>();
-        CountDownLatch pushed = new CountDownLatch(1);
+        // The notification and the actor resume are separate callbacks on separate pools, so their relative
+        // order is not fixed - what must hold is that a stalled publish cannot hold up the resume. Block inside
+        // the publish and require the resume to land anyway.
+        CountDownLatch pushEntered = new CountDownLatch(1);
+        CountDownLatch releasePush = new CountDownLatch(1);
         doAnswer(invocation -> {
-            order.add("push");
-            pushed.countDown();
+            pushEntered.countDown();
+            releasePush.await(5, TimeUnit.SECONDS);
             return null;
         }).when(clusterService).pushMsgToRuleEngine(any(TenantId.class), any(DeviceId.class), any(TbMsg.class), isNull());
 
-        tbRpcService.createIfAbsent(rpc.getTenantId(), rpc, r -> order.add("continuation"));
+        CountDownLatch resumed = new CountDownLatch(1);
+        tbRpcService.createIfAbsent(rpc.getTenantId(), rpc, r -> resumed.countDown());
 
-        verify(clusterService, timeout(5000))
-                .pushMsgToRuleEngine(any(TenantId.class), any(DeviceId.class), any(TbMsg.class), isNull());
-        assertEquals(List.of("continuation", "push"), order);
+        assertTrue(pushEntered.await(5, TimeUnit.SECONDS));
+        assertTrue("actor resume must not wait for the rule engine publish", resumed.await(5, TimeUnit.SECONDS));
+        releasePush.countDown();
+    }
+
+    @Test
+    public void createNotificationIsQueuedEvenWhileTheActorResumePoolIsBusy() throws InterruptedException {
+        // One actor-resume thread, and it is held busy. The create notification must still reach the stripe
+        // ahead of a status notification submitted after it: if the notify only got enqueued once the resume
+        // pool freed up, RPC_DELIVERED would overtake RPC_QUEUED.
+        tbRpcService = new TbRpcService(rpcService, clusterService, 3, 1);
+
+        Rpc blocker = newRpc();
+        when(rpcService.createIfAbsentAsync(blocker)).thenReturn(Futures.immediateFuture(true));
+        CountDownLatch poolBusy = new CountDownLatch(1);
+        CountDownLatch releasePool = new CountDownLatch(1);
+        tbRpcService.createIfAbsent(blocker.getTenantId(), blocker, r -> {
+            poolBusy.countDown();
+            try {
+                releasePool.await(5, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
+        assertTrue(poolBusy.await(5, TimeUnit.SECONDS));
+
+        RpcId rpcId = new RpcId(UUID.randomUUID());
+        DeviceId deviceId = new DeviceId(UUID.randomUUID());
+        Rpc queued = newRpc(rpcId, deviceId, RpcStatus.QUEUED);
+        Rpc delivered = newRpc(rpcId, deviceId, RpcStatus.DELIVERED);
+        when(rpcService.createIfAbsentAsync(queued)).thenReturn(Futures.immediateFuture(true));
+        when(rpcService.updateAsync(delivered)).thenReturn(Futures.immediateFuture(true));
+
+        tbRpcService.createIfAbsent(queued.getTenantId(), queued, r -> { });
+        tbRpcService.update(delivered.getTenantId(), delivered);
+
+        ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        verify(clusterService, timeout(5000).times(2))
+                .pushMsgToRuleEngine(eq(TenantId.SYS_TENANT_ID), eq(deviceId), msgCaptor.capture(), isNull());
+
+        List<TbMsg> msgs = msgCaptor.getAllValues();
+        assertEquals(TbMsgType.RPC_QUEUED, msgs.get(0).getInternalType());
+        assertEquals(TbMsgType.RPC_DELIVERED, msgs.get(1).getInternalType());
+        releasePool.countDown();
     }
 
     @Test

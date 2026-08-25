@@ -462,6 +462,23 @@ public class DeviceActorMessageProcessorTest {
     }
 
     @Test
+    public void expiredOnArrivalRpcWithFailedPersistDoesNotReplyRpcId() {
+        mockRpcInfra();
+        UUID rpcId = UUID.randomUUID();
+        subscribeAsyncSession();
+
+        processor.processRpcRequest(mock(TbActorCtx.class),
+                new ToDeviceRpcRequestActorMsg("svc", expiredRequest(rpcId)));
+        deliverPersistResult(rpcId, 0, RpcPersistResult.FAILED);
+
+        // The insert rolled back, so no row exists: replying the rpcId would hand the caller an id that 404s
+        // forever. Nothing pending either, so the FAILED result must not fall through to the reply.
+        verify(coreRpcService, never()).processRpcResponseFromDeviceActor(any());
+        verify(toTransport, never()).process(any(), any());
+        assertThat(processor.toDeviceRpcPendingMap).isEmpty();
+    }
+
+    @Test
     public void arrivalSendsNothingUntilThePersistResultArrives() {
         mockRpcInfra();
         subscribeAsyncSession();

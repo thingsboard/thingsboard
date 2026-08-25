@@ -86,28 +86,32 @@ public class TbRpcService {
 
     /**
      * Enqueues the create onto the batched write queue and resumes the caller once the row's fate is known. The
-     * continuation is invoked exactly once.
+     * continuation is invoked exactly once, from the actor-resume pool; the RPC_QUEUED notification is a
+     * separate callback on the rpcId stripe, so publishing never sits on the delivery path.
      */
     public void createIfAbsent(TenantId tenantId, Rpc rpc, Consumer<RpcPersistResult> continuation) {
-        DonAsynchron.withCallback(rpcService.createIfAbsentAsync(rpc),
+        ListenableFuture<Boolean> future = rpcService.createIfAbsentAsync(rpc);
+        // Notify on the rpcId stripe, exactly as the update path does. Both callbacks are dispatched while the
+        // write's future is being completed, so RPC_QUEUED is queued on the stripe before any status event the
+        // resumed actor can cause - a later status write cannot enqueue its own notification until its own
+        // future completes, a full batch cycle away.
+        DonAsynchron.withCallback(future,
                 inserted -> {
-                    RpcPersistResult result = Boolean.TRUE.equals(inserted)
-                            ? RpcPersistResult.INSERTED : RpcPersistResult.DUPLICATE;
-                    if (RpcPersistResult.INSERTED == result) {
-                        // Enqueue before resuming the actor, so RPC_QUEUED sits on the stripe ahead of any
-                        // status event the resumed actor causes. Only the enqueue happens here.
-                        ruleEngineCallbackExecutorFor(rpc.getUuidId()).execute(() -> notifyRuleEngine(tenantId, rpc));
+                    if (Boolean.TRUE.equals(inserted)) {
+                        notifyRuleEngine(tenantId, rpc);
                     } else {
                         log.debug("[{}][{}][{}] Skipping RPC_QUEUED notification - a row for this RPC already existed",
                                 tenantId, rpc.getDeviceId(), rpc.getId());
                     }
-                    continuation.accept(result);
                 },
-                t -> {
-                    log.error("[{}][{}][{}] Failed to persist RPC create with status [{}]",
-                            tenantId, rpc.getDeviceId(), rpc.getId(), rpc.getStatus(), t);
-                    continuation.accept(RpcPersistResult.FAILED);
-                },
+                t -> log.error("[{}][{}][{}] Failed to persist RPC create with status [{}]",
+                        tenantId, rpc.getDeviceId(), rpc.getId(), rpc.getStatus(), t),
+                ruleEngineCallbackExecutorFor(rpc.getUuidId()));
+        // Resume the actor on its own pool, so rule engine publishing is never on the command-delivery path.
+        DonAsynchron.withCallback(future,
+                inserted -> continuation.accept(Boolean.TRUE.equals(inserted)
+                        ? RpcPersistResult.INSERTED : RpcPersistResult.DUPLICATE),
+                t -> continuation.accept(RpcPersistResult.FAILED),
                 deviceActorCallbackExecutor);
     }
 
