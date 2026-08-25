@@ -58,7 +58,7 @@ public class V4_2_2_4MigrationIntegrationTest extends AbstractControllerTest {
 
     @Test
     public void batchLoopClosesAllStuckRowsAcrossMultipleWindowsAndLeavesOthersUntouched() {
-        // batchSize is wired to 2 via the class-level @TestPropertySource (< the 5 stuck rows seeded below), so
+        // batchSize is wired to 2 via the class-level @TestPropertySource (< the 6 stuck rows seeded below), so
         // applyAfterCommit() must run several keyset-paginated windows, proving the cursor actually advances
         // across batches instead of just once.
 

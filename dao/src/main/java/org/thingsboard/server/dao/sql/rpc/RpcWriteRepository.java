@@ -21,6 +21,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.rpc.RpcKind;
 import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.dao.model.sql.RpcEntity;
 
@@ -48,17 +49,20 @@ public class RpcWriteRepository {
             "UPDATE rpc SET status = ?, response = COALESCE(?, response) " +
             "WHERE id = ? AND status = ANY(?);";
 
-    // Allowed-from arrays are a pure function of (target status, oneway), so precompute them once instead of
-    // rebuilding an EnumSet + String[] for every row in every batch on the RPC status-write hot path.
-    private static final Map<RpcStatus, String[]> ALLOWED_FROM_TWO_WAY = precomputeAllowedFrom(false);
-    private static final Map<RpcStatus, String[]> ALLOWED_FROM_ONE_WAY = precomputeAllowedFrom(true);
+    // The status names bound into the guard are a pure function of (kind, target status), so precompute the
+    // arrays once instead of mapping names for every row in every batch on the RPC status-write hot path.
+    private static final Map<RpcKind, Map<RpcStatus, String[]>> ALLOWED_FROM = precomputeAllowedFrom();
 
-    private static Map<RpcStatus, String[]> precomputeAllowedFrom(boolean oneway) {
-        Map<RpcStatus, String[]> byStatus = new EnumMap<>(RpcStatus.class);
-        for (RpcStatus status : RpcStatus.values()) {
-            byStatus.put(status, status.getAllowedFromStatuses(oneway).stream().map(Enum::name).toArray(String[]::new));
+    private static Map<RpcKind, Map<RpcStatus, String[]>> precomputeAllowedFrom() {
+        Map<RpcKind, Map<RpcStatus, String[]>> byKind = new EnumMap<>(RpcKind.class);
+        for (RpcKind kind : RpcKind.values()) {
+            Map<RpcStatus, String[]> byStatus = new EnumMap<>(RpcStatus.class);
+            for (RpcStatus status : RpcStatus.values()) {
+                byStatus.put(status, status.getAllowedFromStatuses(kind).stream().map(Enum::name).toArray(String[]::new));
+            }
+            byKind.put(kind, byStatus);
         }
-        return byStatus;
+        return byKind;
     }
 
     private final JdbcTemplate jdbcTemplate;
@@ -139,8 +143,7 @@ public class RpcWriteRepository {
     }
 
     private static String[] allowedFromArray(RpcEntity rpc) {
-        Map<RpcStatus, String[]> byStatus = Boolean.TRUE.equals(rpc.getOneway()) ? ALLOWED_FROM_ONE_WAY : ALLOWED_FROM_TWO_WAY;
-        return byStatus.get(rpc.getStatus());
+        return ALLOWED_FROM.get(RpcKind.of(rpc.getOneway())).get(rpc.getStatus());
     }
 
 }

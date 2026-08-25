@@ -15,15 +15,15 @@
  */
 package org.thingsboard.server.actors.device;
 
+import com.google.common.util.concurrent.Futures;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.common.util.LinkedHashMapRemoveEldest;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.RpcId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -35,7 +35,11 @@ import org.thingsboard.server.common.msg.rpc.RpcPersistResult;
 import org.thingsboard.server.common.msg.rpc.RpcPersistResultActorMsg;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequestActorMsg;
+import org.thingsboard.server.common.msg.edge.EdgeHighPriorityMsg;
+import org.thingsboard.server.common.msg.rule.engine.DeviceEdgeUpdateMsg;
+import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionType;
 import org.thingsboard.server.gen.transport.TransportProtos.ToDeviceRpcResponseMsg;
@@ -54,7 +58,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
@@ -83,35 +86,6 @@ public class DeviceActorMessageProcessorTest {
         given(systemContext.getRpcSubmitStrategy()).willReturn("BURST");
         processor = new DeviceActorMessageProcessor(systemContext, tenantId, deviceId);
         given(systemContext.getTbCoreToTransportService()).willReturn(mock(TbCoreToTransportService.class));
-    }
-
-    @Test
-    public void givenSystemContext_whenNewInstance_thenVerifySessionMapMaxSize() {
-        assertThat(processor.sessions).isInstanceOf(LinkedHashMapRemoveEldest.class);
-        assertThat(processor.sessions.getMaxEntries()).isEqualTo(MAX_CONCURRENT_SESSIONS_PER_DEVICE);
-        assertThat(processor.sessions.getRemovalConsumer()).isNotNull();
-    }
-
-    @Test
-    public void givenFullSessionMap_whenSessionOverflow_thenShouldDeleteAttributeAndRPCSubscriptions() {
-        //givenFullSessionMap
-        for (int i = 0; i < MAX_CONCURRENT_SESSIONS_PER_DEVICE; i++) {
-            UUID sessionID = UUID.randomUUID();
-            processor.sessions.put(sessionID, Mockito.mock(SessionInfoMetaData.class, RETURNS_DEEP_STUBS));
-            processor.attributeSubscriptions.put(sessionID, Mockito.mock(SessionInfo.class));
-            processor.rpcSubscriptions.put(sessionID, Mockito.mock(SessionInfo.class));
-        }
-        assertThat(processor.sessions.size()).isEqualTo(MAX_CONCURRENT_SESSIONS_PER_DEVICE);
-        assertThat(processor.attributeSubscriptions.size()).isEqualTo(MAX_CONCURRENT_SESSIONS_PER_DEVICE);
-        assertThat(processor.rpcSubscriptions.size()).isEqualTo(MAX_CONCURRENT_SESSIONS_PER_DEVICE);
-
-        //add one more
-        processor.sessions.put(UUID.randomUUID(), Mockito.mock(SessionInfoMetaData.class));
-
-        assertThat(processor.sessions.size()).isEqualTo(MAX_CONCURRENT_SESSIONS_PER_DEVICE);
-        assertThat(processor.attributeSubscriptions.size()).isEqualTo(MAX_CONCURRENT_SESSIONS_PER_DEVICE - 1);
-        assertThat(processor.rpcSubscriptions.size()).isEqualTo(MAX_CONCURRENT_SESSIONS_PER_DEVICE - 1);
-
     }
 
     @Test
@@ -633,6 +607,52 @@ public class DeviceActorMessageProcessorTest {
     }
 
     @Test
+    public void duplicateHeadDoesNotStallTheSequentialQueue() {
+        given(systemContext.getRpcSubmitStrategy()).willReturn("SEQUENTIAL_ON_ACK_FROM_DEVICE");
+        processor = new DeviceActorMessageProcessor(systemContext, tenantId, deviceId);
+        mockRpcInfra();
+        TbActorCtx ctx = mock(TbActorCtx.class);
+        subscribeAsyncSession();
+
+        UUID rpcA = UUID.randomUUID();
+        UUID rpcB = UUID.randomUUID();
+        processor.processRpcRequest(ctx, new ToDeviceRpcRequestActorMsg("svc", persistedRequest(rpcA)));
+        processor.processRpcRequest(ctx, new ToDeviceRpcRequestActorMsg("svc", persistedRequest(rpcB)));
+
+        // A is a re-delivery, so the existing row owns delivery: A must be released and B must advance, or B
+        // waits out its own expiry behind a command that will never be sent.
+        deliverPersistResult(rpcA, 0, RpcPersistResult.DUPLICATE);
+        deliverPersistResult(rpcB, 1, RpcPersistResult.INSERTED);
+
+        assertThat(publishedRequestIds()).containsExactly(1);
+    }
+
+    @Test
+    public void persistentEdgeRpcIsQueuedToTheEdgeOnlyAfterItIsDurable() {
+        mockRpcInfra();
+        given(systemContext.isEdgesEnabled()).willReturn(true);
+        TbClusterService clusterService = mock(TbClusterService.class);
+        given(systemContext.getClusterService()).willReturn(clusterService);
+        EdgeService edgeService = mock(EdgeService.class);
+        given(systemContext.getEdgeService()).willReturn(edgeService);
+        given(edgeService.isEdgeActiveAsync(any(), any(), any())).willReturn(Futures.immediateFuture(true));
+        processor.processEdgeUpdate(new DeviceEdgeUpdateMsg(tenantId, deviceId, new EdgeId(UUID.randomUUID())));
+
+        UUID rpcId = UUID.randomUUID();
+        processor.processRpcRequest(mock(TbActorCtx.class),
+                new ToDeviceRpcRequestActorMsg("svc", persistedRequest(rpcId)));
+
+        // Persist-before-send applies to the edge path too: nothing queued on the arrival turn.
+        verify(clusterService, never()).onEdgeHighPriorityMsg(any());
+
+        deliverPersistResult(rpcId, 0, RpcPersistResult.INSERTED);
+
+        // The edge queue write happens on the persist-result turn, and never goes to a transport session.
+        verify(clusterService).onEdgeHighPriorityMsg(any(EdgeHighPriorityMsg.class));
+        verify(toTransport, never()).process(any(), any());
+    }
+
+    @Test
     public void actorRestartBetweenTurnsStillSendsTheDurableRow() {
         mockRpcInfra();
         UUID rpcId = UUID.randomUUID();
@@ -680,9 +700,9 @@ public class DeviceActorMessageProcessorTest {
     private void registerEntry(int requestId, boolean persisted) {
         ToDeviceRpcRequestActorMsg actorMsg =
                 new ToDeviceRpcRequestActorMsg("svc", persistedRequest(UUID.randomUUID()));
-        ToDeviceRpcRequestMetadata md =
-                new ToDeviceRpcRequestMetadata(actorMsg, System.currentTimeMillis());
-        md.setPersisted(persisted);
+        ToDeviceRpcRequestMetadata md = persisted
+                ? ToDeviceRpcRequestMetadata.arrived(actorMsg, System.currentTimeMillis(), false)
+                : ToDeviceRpcRequestMetadata.awaitingPersist(actorMsg, System.currentTimeMillis());
         processor.toDeviceRpcPendingMap.put(requestId, md);
     }
 

@@ -17,7 +17,10 @@ package org.thingsboard.server.common.data.rpc;
 
 import lombok.Getter;
 
+import java.util.Collections;
+import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.Map;
 import java.util.Set;
 
 public enum RpcStatus {
@@ -31,6 +34,10 @@ public enum RpcStatus {
     FAILED(false),
     DELETED(false);
 
+    // Precomputed once per kind: a pure function of (target status, kind), read on every status write.
+    private static final Map<RpcStatus, Set<RpcStatus>> ALLOWED_FROM_ONE_WAY = allowedFrom(RpcKind.ONE_WAY);
+    private static final Map<RpcStatus, Set<RpcStatus>> ALLOWED_FROM_TWO_WAY = allowedFrom(RpcKind.TWO_WAY);
+
     @Getter
     private final boolean pushDeleteNotificationToCore;
 
@@ -43,8 +50,22 @@ public enum RpcStatus {
      * No terminal status appears in any set, so terminals are immutable. TIMEOUT is an in-flight peer of SENT
      * (delivery ack timed out, retrying). The one-way and two-way machines differ in exactly one place: for a
      * one-way RPC DELIVERED is a terminal success, so it is never an allowed predecessor of a terminal write.
+     *
+     * @return an immutable set; the same instance on every call
      */
-    public Set<RpcStatus> getAllowedFromStatuses(boolean oneway) {
+    public Set<RpcStatus> getAllowedFromStatuses(RpcKind kind) {
+        return (RpcKind.ONE_WAY == kind ? ALLOWED_FROM_ONE_WAY : ALLOWED_FROM_TWO_WAY).get(this);
+    }
+
+    private static Map<RpcStatus, Set<RpcStatus>> allowedFrom(RpcKind kind) {
+        Map<RpcStatus, Set<RpcStatus>> byStatus = new EnumMap<>(RpcStatus.class);
+        for (RpcStatus status : values()) {
+            byStatus.put(status, Collections.unmodifiableSet(status.computeAllowedFrom(kind)));
+        }
+        return Collections.unmodifiableMap(byStatus);
+    }
+
+    private Set<RpcStatus> computeAllowedFrom(RpcKind kind) {
         return switch (this) {
             case SENT -> EnumSet.of(QUEUED, TIMEOUT);
             case DELIVERED -> EnumSet.of(QUEUED, SENT, TIMEOUT);
@@ -54,7 +75,7 @@ public enum RpcStatus {
             // message reordering can leave the row at QUEUED when the outcome lands. One-way DELIVERED is a
             // terminal success, so it is excluded for one-way; SUCCESSFUL is unreachable for one-way (no device
             // response) but stays consistent with FAILED/EXPIRED.
-            case SUCCESSFUL, FAILED, EXPIRED -> oneway
+            case SUCCESSFUL, FAILED, EXPIRED -> RpcKind.ONE_WAY == kind
                     ? EnumSet.of(QUEUED, SENT, TIMEOUT)
                     : EnumSet.of(QUEUED, SENT, DELIVERED, TIMEOUT);
             case DELETED -> EnumSet.noneOf(RpcStatus.class);             // not written via the guarded UPDATE

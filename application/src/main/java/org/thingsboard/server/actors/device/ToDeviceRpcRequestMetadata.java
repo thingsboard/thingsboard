@@ -34,4 +34,26 @@ public class ToDeviceRpcRequestMetadata {
     // False only while a persistent create is still queued for its batch insert; the send paths must not touch
     // an entry until its row is durable. Defaults true: every other path is either already durable or never persists.
     private boolean persisted = true;
+
+    /** A persistent create still queued for its batch insert: nothing sent, nothing durable yet. */
+    static ToDeviceRpcRequestMetadata awaitingPersist(ToDeviceRpcRequestActorMsg msg, long createdTime) {
+        ToDeviceRpcRequestMetadata md = new ToDeviceRpcRequestMetadata(msg, createdTime);
+        md.setPersisted(false);
+        return md;
+    }
+
+    /** A request that is durable already, or never persists, with its send decision made. */
+    static ToDeviceRpcRequestMetadata arrived(ToDeviceRpcRequestActorMsg msg, long createdTime, boolean sent) {
+        ToDeviceRpcRequestMetadata md = new ToDeviceRpcRequestMetadata(msg, createdTime);
+        md.setSent(sent);
+        return md;
+    }
+
+    /** A row reloaded on actor init: durable by definition, sent/delivered recovered from its persisted status. */
+    static ToDeviceRpcRequestMetadata restored(ToDeviceRpcRequestActorMsg msg, long createdTime,
+                                               boolean sent, boolean delivered) {
+        ToDeviceRpcRequestMetadata md = arrived(msg, createdTime, sent);
+        md.setDelivered(delivered);
+        return md;
+    }
 }
