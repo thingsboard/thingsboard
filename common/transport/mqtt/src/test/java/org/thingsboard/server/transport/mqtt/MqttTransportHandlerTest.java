@@ -139,6 +139,12 @@ public class MqttTransportHandlerTest {
         return new MqttConnectMessage(mqttFixedHeader, variableHeader, payload);
     }
 
+    // MQTT 5 is required: ReturnCodeResolver collapses BAD_USERNAME_OR_PASSWORD and NOT_AUTHORIZED_5 into
+    // a single NOT_AUTHORIZED code for older clients, which would make the two cases indistinguishable.
+    MqttConnectMessage getMqttV5ConnectMessage() {
+        return getMqttConnectMessage(MqttVersion.MQTT_5);
+    }
+
     MqttPublishMessage getMqttPublishMessage() {
         return getMqttPublishMessage("v1/gateway/telemetry");
     }
@@ -279,11 +285,8 @@ public class MqttTransportHandlerTest {
         willAnswer(unknownCredentials()).given(transportService)
                 .process(eq(DeviceTransportType.MQTT), any(TransportProtos.ValidateBasicMqttCredRequestMsg.class), any());
 
-        // MQTT 5 is required in both connect tests: ReturnCodeResolver collapses BAD_USERNAME_OR_PASSWORD and
-        // NOT_AUTHORIZED_5 into a single NOT_AUTHORIZED code for older clients, which would make the cases
-        // indistinguishable.
         //when
-        handler.processConnect(ctx, getMqttConnectMessage(MqttVersion.MQTT_5));
+        handler.processConnect(ctx, getMqttV5ConnectMessage());
 
         //then
         assertThat(getConnAckReturnCode(), is(MqttConnectReturnCode.CONNECTION_REFUSED_BAD_USERNAME_OR_PASSWORD));
@@ -302,7 +305,7 @@ public class MqttTransportHandlerTest {
                 .process(eq(DeviceTransportType.MQTT), any(TransportProtos.ValidateDeviceX509CertRequestMsg.class), any());
 
         //when
-        handler.processConnect(ctx, getMqttConnectMessage(MqttVersion.MQTT_5));
+        handler.processConnect(ctx, getMqttV5ConnectMessage());
 
         //then
         assertThat(getConnAckReturnCode(), is(MqttConnectReturnCode.CONNECTION_REFUSED_NOT_AUTHORIZED_5));
