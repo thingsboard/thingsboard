@@ -562,15 +562,18 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
     }
 
     /**
-     * The entry the current submit strategy treats as first in line, before any send filtering. The only
-     * strategy difference lives here: SEQUENTIAL_ON_RESPONSE_FROM_DEVICE keeps a delivered entry first, because
-     * it still owes a response, while the others step over it.
+     * The entry the current submit strategy treats as first in line, before any send filtering. The strategies
+     * differ here in exactly one way: SEQUENTIAL_ON_RESPONSE_FROM_DEVICE keeps a delivered entry first, because
+     * it still owes a response, while the others step over it. They differ in other respects elsewhere - see
+     * {@link #isSendNewRpcAvailable()} and the response, status and timeout handlers.
+     * <p>
+     * Neither branch filters on write confirmation, and that is deliberate: an entry whose insert has not
+     * confirmed must hold up the ones behind it. Step over it and a later command whose insert flushed first
+     * would reach the device first.
      */
     private Optional<Map.Entry<Integer, ToDeviceRpcRequestMetadata>> findFirstPending() {
         return rpcSubmitStrategy.equals(RpcSubmitStrategy.SEQUENTIAL_ON_RESPONSE_FROM_DEVICE)
                 ? toDeviceRpcPendingMap.entrySet().stream().findFirst()
-                // Blocking on purpose: an entry whose insert has not confirmed must hold up the ones behind it.
-                // Step over it and a later command whose insert flushed first reaches the device first.
                 : toDeviceRpcPendingMap.entrySet().stream().filter(e -> undelivered(e.getValue())).findFirst();
     }
 

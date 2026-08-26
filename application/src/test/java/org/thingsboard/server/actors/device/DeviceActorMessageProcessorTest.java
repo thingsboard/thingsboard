@@ -90,6 +90,9 @@ public class DeviceActorMessageProcessorTest {
     TbRpcService rpcService;
     TbCoreDeviceRpcService coreRpcService;
     TbCoreToTransportService toTransport;
+    ScheduledExecutorService scheduler;
+    ScheduledFuture<?> awaitResponseFuture;
+    private UUID asyncSessionId;
 
     @Before
     public void setUp() {
@@ -99,6 +102,12 @@ public class DeviceActorMessageProcessorTest {
         given(systemContext.getDeviceService()).willReturn(deviceService);
         // Evicting a session notifies the transport that it was closed.
         given(systemContext.getTbCoreToTransportService()).willReturn(mock(TbCoreToTransportService.class));
+        // Stubbed for every test, not just the ones that schedule: the processor reads the scheduler in its
+        // constructor, so stubbing it per-test would impose an ordering rule each new test has to rediscover.
+        awaitResponseFuture = mock(ScheduledFuture.class);
+        scheduler = mock(ScheduledExecutorService.class);
+        doReturn(awaitResponseFuture).when(scheduler).schedule(any(Runnable.class), anyLong(), any(TimeUnit.class));
+        given(systemContext.getScheduler()).willReturn(scheduler);
         useStrategy(RpcSubmitStrategy.BURST);
     }
 
@@ -596,10 +605,6 @@ public class DeviceActorMessageProcessorTest {
     public void deliveredHeadBlocksTheQueueUntilTheDeviceRespondsOnResponseStrategy() {
         // The one behaviour that separates ON_RESPONSE from ON_ACK: a delivered entry stays the head and keeps
         // blocking, because the device still owes an answer. Under ON_ACK the delivery ack would release B.
-        ScheduledFuture<?> awaitResponse = mock(ScheduledFuture.class);
-        ScheduledExecutorService scheduler = mock(ScheduledExecutorService.class);
-        doReturn(awaitResponse).when(scheduler).schedule(any(Runnable.class), anyLong(), any(TimeUnit.class));
-        given(systemContext.getScheduler()).willReturn(scheduler); // read in the constructor, so stub it first
         useStrategy(RpcSubmitStrategy.SEQUENTIAL_ON_RESPONSE_FROM_DEVICE);
         mockRpcInfra();
         TbActorCtx ctx = mock(TbActorCtx.class);
@@ -625,7 +630,7 @@ public class DeviceActorMessageProcessorTest {
         // Only the real response releases B, and it cancels the await timer.
         processor.processRpcResponses(sessionInfoProto(), ToDeviceRpcResponseMsg.newBuilder()
                 .setRequestId(0).setPayload("{\"ok\":true}").build());
-        verify(awaitResponse).cancel(true);
+        verify(awaitResponseFuture).cancel(true);
         assertThat(publishedRequestIds()).containsExactly(0, 1);
     }
 
@@ -647,18 +652,65 @@ public class DeviceActorMessageProcessorTest {
     }
 
     @Test
-    public void nonPersistentRpcWaitsForAnyPendingEntryOnResponseStrategy() {
-        // ON_RESPONSE is stricter than ON_ACK: any pending entry at all blocks a new arrival, delivered or not.
+    public void nonPersistentRpcWaitsForADeliveredEntryOnResponseStrategy() {
+        // The rule that separates ON_RESPONSE from ON_ACK on the arrival turn: a DELIVERED entry still blocks a
+        // new arrival, because the device owes a response. Under the ON_ACK rule the ack would have freed the
+        // queue and B would go out - which is what makes this test distinguish the two, rather than just
+        // repeating its ON_ACK sibling.
         useStrategy(RpcSubmitStrategy.SEQUENTIAL_ON_RESPONSE_FROM_DEVICE);
         mockRpcInfra();
         TbActorCtx ctx = mock(TbActorCtx.class);
         subscribeAsyncSession();
 
-        processor.processRpcRequest(ctx, new ToDeviceRpcRequestActorMsg("svc", nonPersistedRequest(UUID.randomUUID())));
+        UUID rpcA = UUID.randomUUID();
+        processor.processRpcRequest(ctx, new ToDeviceRpcRequestActorMsg("svc", nonPersistedRequest(rpcA)));
+        assertThat(publishedRequestIds()).containsExactly(0);
+
+        deliverDeliveryAck(rpcA, 0);
+        assertThat(processor.toDeviceRpcPendingMap.get(0).isDelivered()).isTrue();
+
         processor.processRpcRequest(ctx, new ToDeviceRpcRequestActorMsg("svc", nonPersistedRequest(UUID.randomUUID())));
 
         assertThat(publishedRequestIds()).containsExactly(0);
         assertThat(processor.toDeviceRpcPendingMap).containsKeys(0, 1);
+    }
+
+    @Test
+    public void deliveredEntryIsSteppedOverOnAckStrategy() {
+        // The other side of the contrast above: under ON_ACK the delivery ack releases the queue on its own -
+        // it falls through to the advance, where ON_RESPONSE returns early - and findFirstPending then steps
+        // over the delivered entry to reach B.
+        useStrategy(RpcSubmitStrategy.SEQUENTIAL_ON_ACK_FROM_DEVICE);
+        mockRpcInfra();
+        TbActorCtx ctx = mock(TbActorCtx.class);
+        subscribeAsyncSession();
+
+        UUID rpcA = UUID.randomUUID();
+        processor.processRpcRequest(ctx, new ToDeviceRpcRequestActorMsg("svc", nonPersistedRequest(rpcA)));
+        processor.processRpcRequest(ctx, new ToDeviceRpcRequestActorMsg("svc", nonPersistedRequest(UUID.randomUUID())));
+        assertThat(publishedRequestIds()).containsExactly(0);
+
+        deliverDeliveryAck(rpcA, 0);
+
+        assertThat(publishedRequestIds()).containsExactly(0, 1);
+    }
+
+    @Test
+    public void reloadedDeliveredRpcArmsTheAwaitTimerFromTheQueueCheckOnResponseStrategy() {
+        // The await timer is normally armed by the delivery ack. It must also be armed by the queue check
+        // itself, for a row reloaded as DELIVERED on actor init - nothing acked it in this actor's lifetime, so
+        // without this the row would sit forever with no response deadline.
+        useStrategy(RpcSubmitStrategy.SEQUENTIAL_ON_RESPONSE_FROM_DEVICE);
+        mockRpcInfra();
+        stubInFlight(inFlightRow(RpcStatus.DELIVERED, 4, System.currentTimeMillis()));
+
+        processor.init(mock(TbActorCtx.class));
+        verify(scheduler, never()).schedule(any(Runnable.class), anyLong(), any(TimeUnit.class));
+
+        pushViaAsyncSession();
+
+        verify(scheduler).schedule(any(Runnable.class), anyLong(), any(TimeUnit.class));
+        verify(toTransport, never()).process(any(), any());
     }
 
     @Test
@@ -707,10 +759,6 @@ public class DeviceActorMessageProcessorTest {
     public void deliveredHeadTimeoutReleasesTheQueueOnResponseStrategy() {
         // A delivered head that never gets its response must not wedge the queue: when its own expiry fires, the
         // await timer is cancelled and the next command goes out.
-        ScheduledFuture<?> awaitResponse = mock(ScheduledFuture.class);
-        ScheduledExecutorService scheduler = mock(ScheduledExecutorService.class);
-        doReturn(awaitResponse).when(scheduler).schedule(any(Runnable.class), anyLong(), any(TimeUnit.class));
-        given(systemContext.getScheduler()).willReturn(scheduler);
         useStrategy(RpcSubmitStrategy.SEQUENTIAL_ON_RESPONSE_FROM_DEVICE);
         mockRpcInfra();
         TbActorCtx ctx = mock(TbActorCtx.class);
@@ -727,7 +775,7 @@ public class DeviceActorMessageProcessorTest {
 
         processor.processServerSideRpcTimeout(new DeviceActorServerSideRpcTimeoutMsg(0, 0L));
 
-        verify(awaitResponse).cancel(true);
+        verify(awaitResponseFuture).cancel(true);
         assertThat(publishedRequestIds()).containsExactly(0, 1);
     }
 
@@ -907,12 +955,20 @@ public class DeviceActorMessageProcessorTest {
                 .build(), TbCallback.EMPTY));
     }
 
+    /**
+     * One ASYNC session per processor, reused on every call. Minting a fresh one each time would make these
+     * tests depend on the concurrent-session limit evicting the previous session: at a limit above 1 the
+     * sessions accumulate, and a completion fans the next command out to every one of them, so a command shows
+     * up once per session and the assertions read like a double-send bug in production code.
+     */
     private UUID subscribeAsyncSession() {
-        UUID sessionId = UUID.randomUUID();
-        SessionInfo sessionInfo = new SessionInfo(SessionType.ASYNC, "svc");
-        processor.sessions.put(sessionId, new SessionInfoMetaData(sessionInfo));
-        processor.rpcSubscriptions.put(sessionId, sessionInfo);
-        return sessionId;
+        if (asyncSessionId == null) {
+            asyncSessionId = UUID.randomUUID();
+            SessionInfo sessionInfo = new SessionInfo(SessionType.ASYNC, "svc");
+            processor.sessions.put(asyncSessionId, new SessionInfoMetaData(sessionInfo));
+            processor.rpcSubscriptions.put(asyncSessionId, sessionInfo);
+        }
+        return asyncSessionId;
     }
 
     private ToDeviceRpcRequest persistedRequest(UUID rpcId) {
@@ -968,6 +1024,7 @@ public class DeviceActorMessageProcessorTest {
     /** Rebuilds the processor against the current stubs, as an actor restart would. */
     private void rebuildProcessor() {
         processor = new DeviceActorMessageProcessor(systemContext, tenantId, deviceId);
+        asyncSessionId = null; // the new processor has empty session maps, so the cached session is gone with it
     }
 
     private Rpc inFlightRow(RpcStatus status, int requestId, long createdTime) {
