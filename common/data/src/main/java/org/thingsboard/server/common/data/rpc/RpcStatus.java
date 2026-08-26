@@ -34,9 +34,10 @@ public enum RpcStatus {
     FAILED(false),
     DELETED(false);
 
-    // Precomputed once per kind: a pure function of (target status, kind), read on every status write.
-    private static final Map<RpcStatus, Set<RpcStatus>> ALLOWED_FROM_ONE_WAY = allowedFrom(RpcKind.ONE_WAY);
-    private static final Map<RpcStatus, Set<RpcStatus>> ALLOWED_FROM_TWO_WAY = allowedFrom(RpcKind.TWO_WAY);
+    // A pure function of (kind, target status), so the sets are built once here and handed out as shared
+    // unmodifiable views that no caller can corrupt. Callers on a write path keep their own representation
+    // (RpcWriteRepository caches the status names the SQL guard binds).
+    private static final Map<RpcKind, Map<RpcStatus, Set<RpcStatus>>> ALLOWED_FROM = allowedFrom();
 
     @Getter
     private final boolean pushDeleteNotificationToCore;
@@ -54,15 +55,19 @@ public enum RpcStatus {
      * @return an immutable set; the same instance on every call
      */
     public Set<RpcStatus> getAllowedFromStatuses(RpcKind kind) {
-        return (RpcKind.ONE_WAY == kind ? ALLOWED_FROM_ONE_WAY : ALLOWED_FROM_TWO_WAY).get(this);
+        return ALLOWED_FROM.get(kind).get(this);
     }
 
-    private static Map<RpcStatus, Set<RpcStatus>> allowedFrom(RpcKind kind) {
-        Map<RpcStatus, Set<RpcStatus>> byStatus = new EnumMap<>(RpcStatus.class);
-        for (RpcStatus status : values()) {
-            byStatus.put(status, Collections.unmodifiableSet(status.computeAllowedFrom(kind)));
+    private static Map<RpcKind, Map<RpcStatus, Set<RpcStatus>>> allowedFrom() {
+        Map<RpcKind, Map<RpcStatus, Set<RpcStatus>>> byKind = new EnumMap<>(RpcKind.class);
+        for (RpcKind kind : RpcKind.values()) {
+            Map<RpcStatus, Set<RpcStatus>> byStatus = new EnumMap<>(RpcStatus.class);
+            for (RpcStatus status : values()) {
+                byStatus.put(status, Collections.unmodifiableSet(status.computeAllowedFrom(kind)));
+            }
+            byKind.put(kind, Collections.unmodifiableMap(byStatus));
         }
-        return Collections.unmodifiableMap(byStatus);
+        return Collections.unmodifiableMap(byKind);
     }
 
     private Set<RpcStatus> computeAllowedFrom(RpcKind kind) {

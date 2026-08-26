@@ -216,21 +216,13 @@ public class TbRpcServiceTest {
 
         RpcId rpcId = new RpcId(UUID.randomUUID());
         DeviceId deviceId = new DeviceId(UUID.randomUUID());
-        Rpc queued = newRpc(rpcId, deviceId, RpcStatus.QUEUED);
-        Rpc delivered = newRpc(rpcId, deviceId, RpcStatus.DELIVERED);
-        when(rpcService.createIfAbsentAsync(queued)).thenReturn(Futures.immediateFuture(true));
-        when(rpcService.updateAsync(delivered)).thenReturn(Futures.immediateFuture(true));
+        Rpc queued = stubbedQueuedCreate(rpcId, deviceId);
+        Rpc delivered = stubbedDeliveredUpdate(rpcId, deviceId);
 
         tbRpcService.createIfAbsent(queued.getTenantId(), queued, r -> { });
         tbRpcService.update(delivered.getTenantId(), delivered);
 
-        ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        verify(clusterService, timeout(5000).times(2))
-                .pushMsgToRuleEngine(eq(TenantId.SYS_TENANT_ID), eq(deviceId), msgCaptor.capture(), isNull());
-
-        List<TbMsg> msgs = msgCaptor.getAllValues();
-        assertEquals(TbMsgType.RPC_QUEUED, msgs.get(0).getInternalType());
-        assertEquals(TbMsgType.RPC_DELIVERED, msgs.get(1).getInternalType());
+        assertRuleEngineSawQueuedThenDelivered(deviceId);
         releasePool.countDown();
     }
 
@@ -240,10 +232,8 @@ public class TbRpcServiceTest {
 
         RpcId rpcId = new RpcId(UUID.randomUUID());
         DeviceId deviceId = new DeviceId(UUID.randomUUID());
-        Rpc queued = newRpc(rpcId, deviceId, RpcStatus.QUEUED);
-        Rpc delivered = newRpc(rpcId, deviceId, RpcStatus.DELIVERED);
-        when(rpcService.createIfAbsentAsync(queued)).thenReturn(Futures.immediateFuture(true));
-        when(rpcService.updateAsync(delivered)).thenReturn(Futures.immediateFuture(true));
+        Rpc queued = stubbedQueuedCreate(rpcId, deviceId);
+        Rpc delivered = stubbedDeliveredUpdate(rpcId, deviceId);
 
         // Hold the stripe inside the RPC_QUEUED push, then submit DELIVERED: without per-rpcId serialization the
         // fast DELIVERED would overtake the sleeping QUEUED. Two immediate futures would pass by construction.
@@ -261,6 +251,26 @@ public class TbRpcServiceTest {
         assertTrue(queuedStarted.await(5, TimeUnit.SECONDS));
         tbRpcService.update(delivered.getTenantId(), delivered);
 
+        assertRuleEngineSawQueuedThenDelivered(deviceId);
+    }
+
+    private Rpc stubbedQueuedCreate(RpcId rpcId, DeviceId deviceId) {
+        Rpc queued = newRpc(rpcId, deviceId, RpcStatus.QUEUED);
+        when(rpcService.createIfAbsentAsync(queued)).thenReturn(Futures.immediateFuture(true));
+        return queued;
+    }
+
+    private Rpc stubbedDeliveredUpdate(RpcId rpcId, DeviceId deviceId) {
+        Rpc delivered = newRpc(rpcId, deviceId, RpcStatus.DELIVERED);
+        when(rpcService.updateAsync(delivered)).thenReturn(Futures.immediateFuture(true));
+        return delivered;
+    }
+
+    /**
+     * The shared assertion of both create-then-update ordering tests: the rule engine saw RPC_QUEUED before
+     * RPC_DELIVERED for this device. Each test differs only in how it stresses the executors beforehand.
+     */
+    private void assertRuleEngineSawQueuedThenDelivered(DeviceId deviceId) {
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         verify(clusterService, timeout(5000).times(2))
                 .pushMsgToRuleEngine(eq(TenantId.SYS_TENANT_ID), eq(deviceId), msgCaptor.capture(), isNull());

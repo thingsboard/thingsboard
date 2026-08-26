@@ -89,7 +89,7 @@ public class JpaRpcDao extends JpaAbstractDao<RpcEntity, Rpc> implements RpcDao,
         // its later status updates share a batch without racing.
         Function<RpcWrite, Integer> hashcodeFunction = write -> write.entity().getUuid().hashCode();
         queue = new TbSqlBlockingQueueWrapper<>(params, hashcodeFunction, batchThreads, statsFactory);
-        queue.init(logExecutor, entries -> rpcWriteRepository.write(entries),
+        queue.init(logExecutor, rpcWriteRepository::write,
                 Comparator.comparing((RpcWrite write) -> write.entity().getUuid()),
                 Function.identity());
     }

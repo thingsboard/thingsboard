@@ -16,6 +16,7 @@
 package org.thingsboard.server.actors.device;
 
 import lombok.Data;
+import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequestActorMsg;
 
 /**
@@ -49,11 +50,14 @@ public class ToDeviceRpcRequestMetadata {
         return md;
     }
 
-    /** A row reloaded on actor init: durable by definition, sent/delivered recovered from its persisted status. */
-    static ToDeviceRpcRequestMetadata restored(ToDeviceRpcRequestActorMsg msg, long createdTime,
-                                               boolean sent, boolean delivered) {
-        ToDeviceRpcRequestMetadata md = arrived(msg, createdTime, sent);
-        md.setDelivered(delivered);
+    /**
+     * A row reloaded on actor init: durable by definition, with sent/delivered derived from the status it was
+     * persisted with. Takes the status rather than the two flags so the mapping lives in one place and there is
+     * no boolean pair for a caller to transpose.
+     */
+    static ToDeviceRpcRequestMetadata restored(ToDeviceRpcRequestActorMsg msg, long createdTime, RpcStatus status) {
+        ToDeviceRpcRequestMetadata md = arrived(msg, createdTime, status != RpcStatus.QUEUED);
+        md.setDelivered(status == RpcStatus.DELIVERED);
         return md;
     }
 }

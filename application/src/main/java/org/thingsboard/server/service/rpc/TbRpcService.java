@@ -52,8 +52,7 @@ public class TbRpcService {
 
     // Striped by rpcId so one command's lifecycle events keep their order (RPC_QUEUED before RPC_DELIVERED).
     private final ExecutorService[] ruleEngineCallbackExecutors;
-    // Separate from the stripes above so rule engine publishing is never on the command-delivery path: a stall
-    // there would otherwise hold up device sends. Needs no striping - the actor fixed delivery order already.
+    // Separate pool, so a stalled rule engine publish never holds up a device send.
     private final ExecutorService deviceActorCallbackExecutor;
 
     public TbRpcService(RpcService rpcService, TbClusterService tbClusterService,
@@ -85,48 +84,35 @@ public class TbRpcService {
     }
 
     /**
-     * Enqueues the create onto the batched write queue and resumes the caller once the row's fate is known. The
-     * continuation is invoked exactly once, from the actor-resume pool; the RPC_QUEUED notification is a
-     * separate callback on the rpcId stripe, so publishing never sits on the delivery path.
+     * Enqueues the create onto the batched write queue and resumes the caller once the row's fate is known.
+     * The result is reported exactly once, on the actor-resume pool.
      */
-    public void createIfAbsent(TenantId tenantId, Rpc rpc, Consumer<RpcPersistResult> continuation) {
+    public void createIfAbsent(TenantId tenantId, Rpc rpc, Consumer<RpcPersistResult> onPersistResult) {
         ListenableFuture<Boolean> future = rpcService.createIfAbsentAsync(rpc);
-        // Notify on the rpcId stripe, exactly as the update path does. Both callbacks are dispatched while the
-        // write's future is being completed, so RPC_QUEUED is queued on the stripe before any status event the
-        // resumed actor can cause - a later status write cannot enqueue its own notification until its own
-        // future completes, a full batch cycle away.
+        // Attached before the resume, so RPC_QUEUED reaches the stripe ahead of any status event the resumed
+        // actor can cause.
+        notifyRuleEngineWhenPersisted(tenantId, rpc, future, "a row for this RPC already existed");
         DonAsynchron.withCallback(future,
-                inserted -> {
-                    if (Boolean.TRUE.equals(inserted)) {
-                        notifyRuleEngine(tenantId, rpc);
-                    } else {
-                        log.debug("[{}][{}][{}] Skipping RPC_QUEUED notification - a row for this RPC already existed",
-                                tenantId, rpc.getDeviceId(), rpc.getId());
-                    }
-                },
-                t -> log.error("[{}][{}][{}] Failed to persist RPC create with status [{}]",
-                        tenantId, rpc.getDeviceId(), rpc.getId(), rpc.getStatus(), t),
-                ruleEngineCallbackExecutorFor(rpc.getUuidId()));
-        // Resume the actor on its own pool, so rule engine publishing is never on the command-delivery path.
-        DonAsynchron.withCallback(future,
-                inserted -> continuation.accept(Boolean.TRUE.equals(inserted)
+                inserted -> onPersistResult.accept(Boolean.TRUE.equals(inserted)
                         ? RpcPersistResult.INSERTED : RpcPersistResult.DUPLICATE),
-                t -> continuation.accept(RpcPersistResult.FAILED),
+                t -> onPersistResult.accept(RpcPersistResult.FAILED), // logged by the callback above, same future
                 deviceActorCallbackExecutor);
     }
 
     public void update(TenantId tenantId, Rpc rpc) {
-        persist(tenantId, rpc, rpcService.updateAsync(rpc));
+        notifyRuleEngineWhenPersisted(tenantId, rpc, rpcService.updateAsync(rpc),
+                "RPC row is not updatable (already terminal or removed)");
     }
 
-    private void persist(TenantId tenantId, Rpc rpc, ListenableFuture<Boolean> future) {
+    /** {@code skipReason} explains the case where the write completed without changing a row. */
+    private void notifyRuleEngineWhenPersisted(TenantId tenantId, Rpc rpc, ListenableFuture<Boolean> future, String skipReason) {
         DonAsynchron.withCallback(future,
                 persisted -> {
                     if (Boolean.TRUE.equals(persisted)) {
-                        notifyRuleEngine(tenantId, rpc);
+                        pushRpcMsgToRuleEngine(tenantId, rpc);
                     } else {
-                        log.debug("[{}][{}][{}] Skipping rule engine notification for status [{}] - RPC row is not updatable (already terminal or removed)",
-                                tenantId, rpc.getDeviceId(), rpc.getId(), rpc.getStatus());
+                        log.debug("[{}][{}][{}] Skipping rule engine notification for status [{}] - {}",
+                                tenantId, rpc.getDeviceId(), rpc.getId(), rpc.getStatus(), skipReason);
                     }
                 },
                 t -> log.error("[{}][{}][{}] Failed to persist RPC with status [{}]",
@@ -138,23 +124,19 @@ public class TbRpcService {
         return ruleEngineCallbackExecutors[HashPartitioner.resolvePartition(rpcId.hashCode(), ruleEngineCallbackExecutors.length)];
     }
 
-    private void notifyRuleEngine(TenantId tenantId, Rpc rpc) {
+    private void pushRpcMsgToRuleEngine(TenantId tenantId, Rpc rpc) {
         try {
-            pushRpcMsgToRuleEngine(tenantId, rpc);
+            TbMsg msg = TbMsg.newMsg()
+                    .type(TbMsgType.valueOf("RPC_" + rpc.getStatus().name()))
+                    .originator(rpc.getDeviceId())
+                    .copyMetaData(TbMsgMetaData.EMPTY)
+                    .data(JacksonUtil.toString(rpc))
+                    .build();
+            tbClusterService.pushMsgToRuleEngine(tenantId, rpc.getDeviceId(), msg, null);
         } catch (Throwable t) {
             log.error("[{}][{}][{}] Failed to push RPC with status [{}] to rule engine",
                     tenantId, rpc.getDeviceId(), rpc.getId(), rpc.getStatus(), t);
         }
-    }
-
-    private void pushRpcMsgToRuleEngine(TenantId tenantId, Rpc rpc) {
-        TbMsg msg = TbMsg.newMsg()
-                .type(TbMsgType.valueOf("RPC_" + rpc.getStatus().name()))
-                .originator(rpc.getDeviceId())
-                .copyMetaData(TbMsgMetaData.EMPTY)
-                .data(JacksonUtil.toString(rpc))
-                .build();
-        tbClusterService.pushMsgToRuleEngine(tenantId, rpc.getDeviceId(), msg, null);
     }
 
     public PageData<Rpc> findInFlightForReload(TenantId tenantId, DeviceId deviceId, PageLink pageLink) {

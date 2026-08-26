@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.thingsboard.server.common.data.rpc.RpcStatus.DELIVERED;
 import static org.thingsboard.server.common.data.rpc.RpcStatus.QUEUED;
 import static org.thingsboard.server.common.data.rpc.RpcStatus.SENT;
@@ -83,6 +84,23 @@ class RpcStatusTest {
             assertThat(target.getAllowedFromStatuses(RpcKind.ONE_WAY))
                     .as("target %s (one-way) must not allow overwriting a terminal status", target)
                     .doesNotContainAnyElementsOf(terminals);
+        }
+    }
+
+    @Test
+    void allowedFromStatusesAreSharedAndImmutable() {
+        // The sets are precomputed once and handed to every caller, so a mutable set here would let one caller
+        // corrupt the state machine for all of them.
+        for (RpcKind kind : RpcKind.values()) {
+            for (RpcStatus target : RpcStatus.values()) {
+                Set<RpcStatus> allowed = target.getAllowedFromStatuses(kind);
+                assertThat(target.getAllowedFromStatuses(kind))
+                        .as("%s (%s) must hand out the same instance on every call", target, kind)
+                        .isSameAs(allowed);
+                assertThatThrownBy(() -> allowed.add(QUEUED))
+                        .as("%s (%s) must hand out an unmodifiable set", target, kind)
+                        .isInstanceOf(UnsupportedOperationException.class);
+            }
         }
     }
 
