@@ -55,7 +55,7 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
 public class EntitiesRelatedEntityIdAsyncLoaderTest {
 
     private static final EntityId ASSET_ORIGINATOR_ID = new AssetId(UUID.randomUUID());
-    private static final TenantId TENANT_ID = new TenantId(UUID.randomUUID());
+    private static final TenantId TENANT_ID = TenantId.fromUUID(UUID.randomUUID());
     private static final ListeningExecutor DB_EXECUTOR = DirectListeningExecutor.INSTANCE;
 
     private TbContext ctxMock;

@@ -16,8 +16,10 @@
 package org.thingsboard.server.common.data.kv;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 public class BaseDeleteTsKvQuery extends BaseTsKvQuery implements DeleteTsKvQuery {
 
     private final Boolean rewriteLatestIfDeleted;

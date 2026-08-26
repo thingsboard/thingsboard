@@ -1227,11 +1227,38 @@ pre.tb-highlight {
     white-space: pre-line;
   }
 
-  // TinyMCE
+  // HugeRTE
 
-  .tox-tinymce {
+  .tox-hugerte {
     button:not(.mat-mdc-menu-item):not(.mat-sort-header-button) {
       text-transform: none;
+    }
+  }
+
+  .tox-tiered-menu {
+    .tox-menu {
+      width: fit-content;
+      max-width: min(80%, 440px);
+      @media screen and (max-width: 510px) {
+        max-width: calc(100% - 64px);
+      }
+      @media screen and (min-width: 511px) and (max-width: 548px) {
+        max-width: calc(100% - 84px);
+      }
+      @media screen and (min-width: 549px) and (max-width: 599px) {
+        max-width: calc(100% - 104px);
+      }
+
+      .tox-collection__item-label {
+        word-break: normal;
+      }
+    }
+
+    > .tox-collection--list:not(:first-child) {
+      @media screen and (max-width: 890px) {
+        left: auto !important;
+        right: 0 !important;
+      }
     }
   }
 

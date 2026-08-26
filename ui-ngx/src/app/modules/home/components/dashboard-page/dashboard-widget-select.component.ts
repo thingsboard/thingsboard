@@ -39,7 +39,14 @@ import { ItemType, FilterParamInfo, WidgetCategory } from '@shared/models/iot-hu
 import { IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
-import { filterIotHubItemsBySearch, groupIotHubFilterItems, IotHubFilterGroup, resolveIotHubItemImageUrl } from '@home/components/iot-hub/iot-hub-utils';
+import {
+  filterIotHubItemsBySearch,
+  groupIotHubFilterItems,
+  IotHubFilterGroup,
+  isBuiltInItem,
+  resolveIotHubItemImageUrl
+} from '@home/components/iot-hub/iot-hub-utils';
+import { IotHubBuiltInService } from '@home/components/iot-hub/iot-hub-built-in.service';
 
 type selectWidgetMode = 'installed' | 'iotHub';
 type installedSubMode = 'default' | 'allWidgets';
@@ -278,6 +285,7 @@ export class DashboardWidgetSelectComponent {
   constructor(private widgetsService: WidgetService,
               private iotHubApiService: IotHubApiService,
               private iotHubActions: IotHubActionsService,
+              private iotHubBuiltInService: IotHubBuiltInService,
               private translate: TranslateService,
               private cd: ChangeDetectorRef) {
 
@@ -494,6 +502,13 @@ export class DashboardWidgetSelectComponent {
       }
       return;
     }
+    if (isBuiltInItem(item)) {
+      // Built-in widgets ship with the platform: pick the local widget type matched by fqn
+      // instead of installing a duplicate, exactly like an already installed item.
+      this.selectBuiltInWidget(item);
+      return;
+    }
+    // Built-in items never reach the dialog (they return above), so anything added from it installs.
     this.iotHubActions.openItemDetail(item, undefined, undefined, 'add').subscribe(result => {
       if (result?.action === 'add') {
         this.installAndAddWidget(result.item);
@@ -503,6 +518,10 @@ export class DashboardWidgetSelectComponent {
 
   isIotHubWidgetInstalled(item: MpItemVersionView): boolean {
     return this.installedWidgets?.some(i => i.itemId === item.itemId) ?? false;
+  }
+
+  isIotHubWidgetBuiltIn(item: MpItemVersionView): boolean {
+    return isBuiltInItem(item);
   }
 
   getIotHubItemImage(item: MpItemVersionView): string | null {
@@ -735,6 +754,26 @@ export class DashboardWidgetSelectComponent {
       this.iotHubWidgetsFilter = this.searchSubject.value + '|' + Date.now();
     }
     this.cd.markForCheck();
+  }
+
+  private selectBuiltInWidget(item: MpItemVersionView): void {
+    this.iotHubBuiltInService.resolveLocalWidgetTypeInfo(item).subscribe(lookup => {
+      if (lookup.value) {
+        this.widgetSelected.emit(this.toWidgetInfo(lookup.value));
+        return;
+      }
+      if (lookup.failed) {
+        // Existence is unknown — installing now could duplicate a widget that is still there.
+        this.iotHubActions.showBuiltInLookupFailed(item);
+        return;
+      }
+      // The local copy is gone (e.g. deleted by a sysadmin) — installing is the only way back.
+      this.iotHubActions.confirmInstallMissingBuiltIn(item).subscribe(confirmed => {
+        if (confirmed) {
+          this.installAndAddWidget(item);
+        }
+      });
+    });
   }
 
   private installAndAddWidget(item: MpItemVersionView): void {

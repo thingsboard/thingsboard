@@ -22,6 +22,8 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 
+import static org.thingsboard.server.common.data.StringUtils.removeStart;
+
 public enum EntityType {
     TENANT(1),
     CUSTOMER(2),
@@ -76,7 +78,7 @@ public enum EntityType {
     @Getter
     private final String tableName;
     @Getter
-    private final String normalName = StringUtils.capitalize(StringUtils.removeStart(name(), "TB_")
+    private final String normalName = StringUtils.capitalize(removeStart(name(), "TB_")
             .toLowerCase().replaceAll("_", " "));
 
     public static final List<String> NORMAL_NAMES = EnumSet.allOf(EntityType.class).stream()

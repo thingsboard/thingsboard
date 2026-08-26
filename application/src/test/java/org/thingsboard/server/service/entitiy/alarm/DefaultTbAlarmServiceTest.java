@@ -19,7 +19,7 @@ import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cluster.TbClusterService;
@@ -66,35 +66,35 @@ import static org.mockito.Mockito.when;
 @SpringJUnitConfig(DefaultTbAlarmService.class)
 class DefaultTbAlarmServiceTest {
 
-    @MockBean
+    @MockitoBean
     TbLogEntityActionService logEntityActionService;
-    @MockBean
+    @MockitoBean
     EdgeService edgeService;
-    @MockBean
+    @MockitoBean
     AlarmService alarmService;
-    @MockBean
+    @MockitoBean
     TbAlarmCommentService alarmCommentService;
-    @MockBean
+    @MockitoBean
     AlarmSubscriptionService alarmSubscriptionService;
-    @MockBean
+    @MockitoBean
     CustomerService customerService;
-    @MockBean
+    @MockitoBean
     TbClusterService tbClusterService;
-    @MockBean
+    @MockitoBean
     EntitiesVersionControlService vcService;
-    @MockBean
+    @MockitoBean
     AccessControlService accessControlService;
-    @MockBean
+    @MockitoBean
     TenantService tenantService;
-    @MockBean
+    @MockitoBean
     AssetService assetService;
-    @MockBean
+    @MockitoBean
     DeviceService deviceService;
-    @MockBean
+    @MockitoBean
     AssetProfileService assetProfileService;
-    @MockBean
+    @MockitoBean
     DeviceProfileService deviceProfileService;
-    @MockBean
+    @MockitoBean
     EntityService entityService;
 
     @Autowired

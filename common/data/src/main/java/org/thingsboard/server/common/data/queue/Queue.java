@@ -18,6 +18,7 @@ package org.thingsboard.server.common.data.queue;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.BaseDataWithAdditionalInfo;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
@@ -30,6 +31,7 @@ import org.thingsboard.server.common.data.validation.NoXss;
 import java.util.Optional;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 public class Queue extends BaseDataWithAdditionalInfo<QueueId> implements HasName, HasTenantId, QueueConfig {
     private TenantId tenantId;
     @NoXss
