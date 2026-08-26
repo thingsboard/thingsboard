@@ -140,14 +140,21 @@ public class NashornJsInvokeService extends AbstractJsInvokeService {
 
     @Override
     protected ListenableFuture<UUID> doEval(UUID scriptId, JsScriptInfo scriptInfo, String jsScript) {
+        // A top-level function declaration creates a non-configurable property on the Nashorn Global
+        // that can never be deleted, so every eval/release cycle would grow the Global's PropertyMap
+        // shape history forever. Declaring the function inside an IIFE and assigning it to a global
+        // property keeps the property configurable, allowing doRelease() to actually delete it.
+        // The prefix stays on the first line so that script line numbers in errors are unchanged.
+        String wrappedScript = "this['" + scriptInfo.getFunctionName() + "'] = (function() { " + jsScript
+                + "\nreturn " + scriptInfo.getFunctionName() + ";\n})();";
         return jsExecutor.submit(() -> {
             try {
                 evalLock.lock();
                 try {
                     if (useJsSandbox) {
-                        sandbox.eval(jsScript);
+                        sandbox.eval(wrappedScript);
                     } else {
-                        engine.eval(jsScript);
+                        engine.eval(wrappedScript);
                     }
                 } finally {
                     evalLock.unlock();
@@ -182,10 +189,11 @@ public class NashornJsInvokeService extends AbstractJsInvokeService {
     }
 
     protected void doRelease(UUID scriptId, JsScriptInfo scriptInfo) throws ScriptException {
+        String deleteScript = "delete this['" + scriptInfo.getFunctionName() + "'];";
         if (useJsSandbox) {
-            sandbox.eval(scriptInfo.getFunctionName() + " = undefined;");
+            sandbox.eval(deleteScript);
         } else {
-            engine.eval(scriptInfo.getFunctionName() + " = undefined;");
+            engine.eval(deleteScript);
         }
     }
 
