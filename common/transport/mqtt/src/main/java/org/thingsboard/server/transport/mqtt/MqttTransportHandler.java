@@ -157,7 +157,6 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     volatile InetSocketAddress address;
     volatile GatewaySessionHandler gatewaySessionHandler;
     volatile SparkplugNodeSessionHandler sparkplugSessionHandler;
-    private volatile boolean clientCertPresented;
 
     private final ConcurrentHashMap<String, String> otaPackSessions;
     private final ConcurrentHashMap<String, Integer> chunkSizes;
@@ -1054,9 +1053,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             deviceSessionCtx.setProvisionOnly(true);
             ctx.writeAndFlush(createMqttConnAckMsg(MqttConnectReturnCode.CONNECTION_ACCEPTED, msg));
         } else {
-            X509Certificate cert;
-            if (sslHandler != null && (cert = getX509Certificate()) != null) {
-                clientCertPresented = true;
+            X509Certificate cert = getX509Certificate();
+            if (cert != null) {
                 processX509CertConnect(ctx, cert, msg);
             } else {
                 processAuthTokenConnect(ctx, msg);
@@ -1081,7 +1079,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 new TransportServiceCallback<>() {
                     @Override
                     public void onSuccess(ValidateDeviceCredentialsResponse msg) {
-                        onValidateDeviceResponse(msg, ctx, connectMessage);
+                        onValidateDeviceResponse(msg, ctx, connectMessage, false);
                     }
 
                     @Override
@@ -1104,7 +1102,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     new TransportServiceCallback<>() {
                         @Override
                         public void onSuccess(ValidateDeviceCredentialsResponse msg) {
-                            onValidateDeviceResponse(msg, ctx, connectMessage);
+                            onValidateDeviceResponse(msg, ctx, connectMessage, true);
                         }
 
                         @Override
@@ -1123,6 +1121,9 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     }
 
     private X509Certificate getX509Certificate() {
+        if (sslHandler == null) {
+            return null;
+        }
         try {
             Certificate[] certChain = sslHandler.engine().getSession().getPeerCertificates();
             if (certChain.length > 0) {
@@ -1323,11 +1324,11 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         deviceSessionCtx.release();
     }
 
-    private void onValidateDeviceResponse(ValidateDeviceCredentialsResponse msg, ChannelHandlerContext ctx, MqttConnectMessage connectMessage) {
+    private void onValidateDeviceResponse(ValidateDeviceCredentialsResponse msg, ChannelHandlerContext ctx, MqttConnectMessage connectMessage, boolean x509Auth) {
         if (!msg.hasDeviceInfo()) {
             context.onAuthFailure(address);
             MqttConnectReturnCode returnCode = MqttConnectReturnCode.CONNECTION_REFUSED_NOT_AUTHORIZED_5;
-            if (!clientCertPresented) {
+            if (!x509Auth) {
                 String username = connectMessage.payload().userName();
                 byte[] passwordBytes = connectMessage.payload().passwordInBytes();
                 String clientId = connectMessage.payload().clientIdentifier();

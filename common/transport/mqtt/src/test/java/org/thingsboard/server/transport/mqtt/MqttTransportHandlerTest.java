@@ -28,6 +28,7 @@ import io.netty.handler.codec.mqtt.MqttMessageType;
 import io.netty.handler.codec.mqtt.MqttPublishMessage;
 import io.netty.handler.codec.mqtt.MqttPublishVariableHeader;
 import io.netty.handler.codec.mqtt.MqttQoS;
+import io.netty.handler.codec.mqtt.MqttVersion;
 import io.netty.handler.ssl.SslHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
@@ -129,8 +130,12 @@ public class MqttTransportHandlerTest {
     }
 
     MqttConnectMessage getMqttConnectMessage() {
+        return getMqttConnectMessage(MqttVersion.MQTT_3_1_1);
+    }
+
+    MqttConnectMessage getMqttConnectMessage(MqttVersion version) {
         MqttFixedHeader mqttFixedHeader = new MqttFixedHeader(MqttMessageType.CONNECT, true, MqttQoS.AT_LEAST_ONCE, false, 123);
-        MqttConnectVariableHeader variableHeader = new MqttConnectVariableHeader("device", packedId.incrementAndGet(), true, true, true, 1, true, false, 60);
+        MqttConnectVariableHeader variableHeader = new MqttConnectVariableHeader(version.protocolName(), version.protocolLevel(), true, true, true, 1, true, false, 60);
         MqttConnectPayload payload = new MqttConnectPayload("clientId", "topic", "message".getBytes(StandardCharsets.UTF_8), "username", "password".getBytes(StandardCharsets.UTF_8));
         return new MqttConnectMessage(mqttFixedHeader, variableHeader, payload);
     }
@@ -275,8 +280,11 @@ public class MqttTransportHandlerTest {
         willAnswer(unknownCredentials()).given(transportService)
                 .process(eq(DeviceTransportType.MQTT), any(TransportProtos.ValidateBasicMqttCredRequestMsg.class), any());
 
+        // MQTT 5 is required in both connect tests: ReturnCodeResolver collapses BAD_USERNAME_OR_PASSWORD and
+        // NOT_AUTHORIZED_5 into a single NOT_AUTHORIZED code for older clients, which would make the cases
+        // indistinguishable.
         //when
-        handler.processConnect(ctx, getMqttV5ConnectMessage());
+        handler.processConnect(ctx, getMqttConnectMessage(MqttVersion.MQTT_5));
 
         //then
         assertThat(getConnAckReturnCode(), is(MqttConnectReturnCode.CONNECTION_REFUSED_BAD_USERNAME_OR_PASSWORD));
@@ -284,20 +292,22 @@ public class MqttTransportHandlerTest {
     }
 
     @Test
-    public void givenTwoWayTlsAndUnknownCertificate_whenProcessConnect_thenKeepsGenericReturnCode() throws Exception {
+    public void givenTwoWayTlsAndUnknownCertificate_whenProcessConnect_thenKeepsGenericReturnCodeAndProbesPeerCertOnce() throws Exception {
         //given
         X509Certificate cert = mock(X509Certificate.class);
         given(cert.getEncoded()).willReturn("cert".getBytes(StandardCharsets.UTF_8));
-        given(givenTlsSession().getPeerCertificates()).willReturn(new Certificate[]{cert});
+        SSLSession sslSession = givenTlsSession();
+        given(sslSession.getPeerCertificates()).willReturn(new Certificate[]{cert});
         given(context.isSkipValidityCheckForClientCert()).willReturn(true);
         willAnswer(unknownCredentials()).given(transportService)
                 .process(eq(DeviceTransportType.MQTT), any(TransportProtos.ValidateDeviceX509CertRequestMsg.class), any());
 
         //when
-        handler.processConnect(ctx, getMqttV5ConnectMessage());
+        handler.processConnect(ctx, getMqttConnectMessage(MqttVersion.MQTT_5));
 
         //then
         assertThat(getConnAckReturnCode(), is(MqttConnectReturnCode.CONNECTION_REFUSED_NOT_AUTHORIZED_5));
+        verify(sslSession, times(1)).getPeerCertificates();
     }
 
     SSLSession givenTlsSession() {
@@ -314,15 +324,6 @@ public class MqttTransportHandlerTest {
             callback.onSuccess(ValidateDeviceCredentialsResponse.builder().build());
             return null;
         };
-    }
-
-    // MQTT 5 is required: ReturnCodeResolver collapses BAD_USERNAME_OR_PASSWORD and NOT_AUTHORIZED_5 into
-    // a single NOT_AUTHORIZED code for older clients, which would make the two cases indistinguishable.
-    MqttConnectMessage getMqttV5ConnectMessage() {
-        MqttFixedHeader mqttFixedHeader = new MqttFixedHeader(MqttMessageType.CONNECT, true, MqttQoS.AT_LEAST_ONCE, false, 123);
-        MqttConnectVariableHeader variableHeader = new MqttConnectVariableHeader("MQTT", 5, true, true, true, 1, true, false, 60);
-        MqttConnectPayload payload = new MqttConnectPayload("clientId", "topic", "message".getBytes(StandardCharsets.UTF_8), "username", "password".getBytes(StandardCharsets.UTF_8));
-        return new MqttConnectMessage(mqttFixedHeader, variableHeader, payload);
     }
 
     MqttConnectReturnCode getConnAckReturnCode() {
