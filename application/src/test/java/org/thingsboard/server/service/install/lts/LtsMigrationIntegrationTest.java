@@ -183,7 +183,7 @@ public class LtsMigrationIntegrationTest extends AbstractControllerTest {
         assertFalse(columnExists("calculated_field", "additional_info"));
 
         // Drive the runner over a range whose target (4.3.1.2) selects only the 4.3.1.2 migration.
-        ltsMigrationService.applyMigrations("4.3.1.1", "4.3.1.2");
+        ltsMigrationService.applyMigrations("4.3.1.1", "4.3.1.2", () -> {});
 
         // The 4.3.1.2 schema SQL ran: the column exists again.
         assertTrue(columnExists("calculated_field", "additional_info"));
