@@ -602,7 +602,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
     private boolean isEligibleHead(int requestId) {
         return findHead()
                 .filter(e -> e.getKey() == requestId)
-                .map(e -> e.getValue().isPersisted() && undelivered(e.getValue()))
+                .map(this::sendable)
                 .orElse(false);
     }
 
