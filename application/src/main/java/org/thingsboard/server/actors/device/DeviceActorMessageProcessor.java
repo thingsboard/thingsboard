@@ -286,8 +286,8 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
             trySendToEdge(request, requestId);
             return;
         }
-        if (rpcSequential && !isSendableHead(requestId)) {
-            log.debug("[{}][{}][{}] RPC is durable but not at the head of the sequential queue - deferring send",
+        if (rpcSequential && mustWaitItsTurn(requestId)) {
+            log.debug("[{}][{}][{}] RPC is durable but not its turn in the sequential queue - deferring send",
                     deviceId, rpcId, requestId);
             return;
         }
@@ -324,7 +324,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         }
     }
 
-    // A create that failed or turned out to be a duplicate still occupied the head of the pending map from
+    // A create that failed or turned out to be a duplicate still occupied its place in the pending map from
     // arrival. Dropping it without advancing would stall every later command for this device until expiry.
     private void releasePendingRpc(UUID rpcId, int requestId, String reason) {
         toDeviceRpcPendingMap.remove(requestId);
@@ -562,39 +562,39 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
     }
 
     /**
-     * The entry the current submit strategy treats as the head of the queue, before any eligibility filtering.
-     * The only strategy difference lives here: SEQUENTIAL_ON_RESPONSE_FROM_DEVICE keeps a delivered entry as
-     * the head, because it still owes a response, while the others step over it.
+     * The entry the current submit strategy treats as first in line, before any send filtering. The only
+     * strategy difference lives here: SEQUENTIAL_ON_RESPONSE_FROM_DEVICE keeps a delivered entry first, because
+     * it still owes a response, while the others step over it.
      */
-    private Optional<Map.Entry<Integer, ToDeviceRpcRequestMetadata>> findHead() {
+    private Optional<Map.Entry<Integer, ToDeviceRpcRequestMetadata>> findFirstPending() {
         return rpcSubmitStrategy.equals(RpcSubmitStrategy.SEQUENTIAL_ON_RESPONSE_FROM_DEVICE)
                 ? toDeviceRpcPendingMap.entrySet().stream().findFirst()
-                // Head-of-line on purpose: an entry whose insert has not confirmed must block the ones behind
-                // it. Step over it and a later command whose insert flushed first reaches the device first.
+                // Blocking on purpose: an entry whose insert has not confirmed must hold up the ones behind it.
+                // Step over it and a later command whose insert flushed first reaches the device first.
                 : toDeviceRpcPendingMap.entrySet().stream().filter(e -> undelivered(e.getValue())).findFirst();
     }
 
     private Optional<Map.Entry<Integer, ToDeviceRpcRequestMetadata>> getFirstRpc() {
-        Optional<Map.Entry<Integer, ToDeviceRpcRequestMetadata>> head = findHead();
-        // A delivered head owes a response, not another send. Only SEQUENTIAL_ON_RESPONSE_FROM_DEVICE can see
-        // one here - findHead() steps over delivered entries for the other strategies.
-        head.filter(e -> e.getValue().isDelivered()).ifPresent(this::awaitResponseFromDevice);
-        return head.filter(this::sendable);
+        Optional<Map.Entry<Integer, ToDeviceRpcRequestMetadata>> first = findFirstPending();
+        // A delivered entry owes a response, not another send. Only SEQUENTIAL_ON_RESPONSE_FROM_DEVICE can see
+        // one here - findFirstPending() steps over delivered entries for the other strategies.
+        first.filter(e -> e.getValue().isDelivered()).ifPresent(this::awaitResponseFromDevice);
+        return first.filter(this::sendable);
     }
 
-    /** Starts the response deadline for a delivered head, unless one is already running. */
-    private void awaitResponseFromDevice(Map.Entry<Integer, ToDeviceRpcRequestMetadata> head) {
+    /** Starts the response deadline for a delivered entry, unless one is already running. */
+    private void awaitResponseFromDevice(Map.Entry<Integer, ToDeviceRpcRequestMetadata> pending) {
         if (awaitRpcResponseFuture == null || awaitRpcResponseFuture.isCancelled()) {
-            awaitRpcResponseFuture = scheduleAwaitRpcResponseFuture(head.getValue().getMsg().getMsg().getId(), head.getKey());
+            awaitRpcResponseFuture = scheduleAwaitRpcResponseFuture(pending.getValue().getMsg().getMsg().getId(), pending.getKey());
         }
     }
 
-    /** Whether the entry under {@code requestId} is currently the head and may be sent. */
-    private boolean isSendableHead(int requestId) {
-        return findHead()
+    /** Whether something ahead of {@code requestId} still holds the sequential queue, so it cannot go out yet. */
+    private boolean mustWaitItsTurn(int requestId) {
+        return findFirstPending()
                 .filter(e -> e.getKey() == requestId)
                 .filter(this::sendable)
-                .isPresent();
+                .isEmpty();
     }
 
     private void sendNextPendingRequest(UUID rpcId, int requestId, String logMessage) {
