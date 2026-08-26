@@ -286,7 +286,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
             trySendToEdge(request, requestId);
             return;
         }
-        if (rpcSequential && !isEligibleHead(requestId)) {
+        if (rpcSequential && !isSendableHead(requestId)) {
             log.debug("[{}][{}][{}] RPC is durable but not at the head of the sequential queue - deferring send",
                     deviceId, rpcId, requestId);
             return;
@@ -575,35 +575,26 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
     }
 
     private Optional<Map.Entry<Integer, ToDeviceRpcRequestMetadata>> getFirstRpc() {
-        return findHead().filter(this::isSendableHead);
+        Optional<Map.Entry<Integer, ToDeviceRpcRequestMetadata>> head = findHead();
+        // A delivered head owes a response, not another send. Only SEQUENTIAL_ON_RESPONSE_FROM_DEVICE can see
+        // one here - findHead() steps over delivered entries for the other strategies.
+        head.filter(e -> e.getValue().isDelivered()).ifPresent(this::awaitResponseFromDevice);
+        return head.filter(this::sendable);
     }
 
-    /**
-     * Whether the head may be sent now. The delivered branch is reachable only under
-     * SEQUENTIAL_ON_RESPONSE_FROM_DEVICE, since {@link #findHead()} filters delivered entries out for the
-     * other strategies - which is why one predicate covers all of them.
-     */
-    private boolean isSendableHead(Map.Entry<Integer, ToDeviceRpcRequestMetadata> entry) {
-        var md = entry.getValue();
-        if (md.isDelivered()) {
-            if (awaitRpcResponseFuture == null || awaitRpcResponseFuture.isCancelled()) {
-                var toDeviceRpcRequest = md.getMsg().getMsg();
-                awaitRpcResponseFuture = scheduleAwaitRpcResponseFuture(toDeviceRpcRequest.getId(), entry.getKey());
-            }
-            return false;
+    /** Starts the response deadline for a delivered head, unless one is already running. */
+    private void awaitResponseFromDevice(Map.Entry<Integer, ToDeviceRpcRequestMetadata> head) {
+        if (awaitRpcResponseFuture == null || awaitRpcResponseFuture.isCancelled()) {
+            awaitRpcResponseFuture = scheduleAwaitRpcResponseFuture(head.getValue().getMsg().getMsg().getId(), head.getKey());
         }
-        return md.isPersisted();
     }
 
-    /**
-     * Side-effect-free counterpart of {@link #getFirstRpc()}: that one would schedule the await-response future
-     * merely because a row became durable.
-     */
-    private boolean isEligibleHead(int requestId) {
+    /** Whether the entry under {@code requestId} is currently the head and may be sent. */
+    private boolean isSendableHead(int requestId) {
         return findHead()
                 .filter(e -> e.getKey() == requestId)
-                .map(this::sendable)
-                .orElse(false);
+                .filter(this::sendable)
+                .isPresent();
     }
 
     private void sendNextPendingRequest(UUID rpcId, int requestId, String logMessage) {
