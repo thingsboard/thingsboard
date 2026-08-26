@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.rpc;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -44,6 +45,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.rpc.RpcError;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
@@ -54,12 +56,16 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.InstanceOfAssertFactories.throwable;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
 public class TbSendRPCRequestNodeTest {
@@ -97,6 +103,40 @@ public class TbSendRPCRequestNodeTest {
     @Test
     public void verifyDefaultConfig() {
         assertThat(config.getTimeoutInSeconds()).isEqualTo(60);
+        assertThat(config.isForceAck()).isTrue();
+        assertThat(config.isOverrideResponseTimeout()).isFalse();
+    }
+
+    @Test
+    public void givenVersionZeroConfig_whenUpgrade_thenBothFlagsSetToLegacyValues() throws TbNodeException {
+        // GIVEN
+        JsonNode oldConfiguration = JacksonUtil.newObjectNode().put("timeoutInSeconds", 60);
+
+        // WHEN
+        TbPair<Boolean, JsonNode> upgradeResult = node.upgrade(0, oldConfiguration);
+
+        // THEN
+        assertThat(upgradeResult.getFirst()).isTrue();
+        assertThat(upgradeResult.getSecond().get("forceAck").asBoolean()).isTrue();
+        assertThat(upgradeResult.getSecond().get("overrideResponseTimeout").asBoolean()).isFalse();
+        assertThat(upgradeResult.getSecond().get("timeoutInSeconds").asInt()).isEqualTo(60);
+    }
+
+    @Test
+    public void givenAlreadyUpgradedConfig_whenUpgrade_thenNoChanges() throws TbNodeException {
+        // GIVEN
+        JsonNode oldConfiguration = JacksonUtil.newObjectNode()
+                .put("timeoutInSeconds", 60)
+                .put("forceAck", false)
+                .put("overrideResponseTimeout", true);
+
+        // WHEN
+        TbPair<Boolean, JsonNode> upgradeResult = node.upgrade(0, oldConfiguration);
+
+        // THEN
+        assertThat(upgradeResult.getFirst()).isFalse();
+        assertThat(upgradeResult.getSecond().get("forceAck").asBoolean()).isFalse();
+        assertThat(upgradeResult.getSecond().get("overrideResponseTimeout").asBoolean()).isTrue();
     }
 
     @ParameterizedTest
@@ -414,6 +454,19 @@ public class TbSendRPCRequestNodeTest {
         return requestCaptor;
     }
 
+    private void stubRpcResponse(RpcError error, String response) {
+        willAnswer(invocation -> {
+            Consumer<RuleEngineDeviceRpcResponse> consumer = invocation.getArgument(1);
+            RuleEngineDeviceRpcResponse rpcResponse = mock(RuleEngineDeviceRpcResponse.class);
+            given(rpcResponse.getError()).willReturn(Optional.ofNullable(error));
+            if (error == null) {
+                given(rpcResponse.getResponse()).willReturn(Optional.ofNullable(response));
+            }
+            consumer.accept(rpcResponse);
+            return null;
+        }).given(rpcServiceMock).sendRpcRequestToDevice(any(RuleEngineDeviceRpcRequest.class), any(Consumer.class));
+    }
+
     @Test
     public void givenRpcResponseWithoutError_whenOnMsg_thenSendsRpcRequest() {
         TbMsg outMsg = TbMsg.newMsg()
@@ -481,6 +534,93 @@ public class TbSendRPCRequestNodeTest {
         then(ctxMock).should().ack(msg);
     }
 
+    @Test
+    public void givenForceAckDisabledAndSuccessfulResponse_whenOnMsg_thenTellSuccessOnIncomingMsg() throws TbNodeException {
+        // GIVEN
+        config.setForceAck(false);
+        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+        given(ctxMock.getRpcService()).willReturn(rpcServiceMock);
+        given(ctxMock.getTenantId()).willReturn(TENANT_ID);
+        stubRpcResponse(null, "{\"rpcId\":\"6b04b5b2-1d94-4a4e-9b47-4f1e0e40e4a1\"}");
+
+        TbMsgMetaData metadata = new TbMsgMetaData();
+        metadata.putValue(DataConstants.PERSISTENT, "true");
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE)
+                .originator(DEVICE_ID)
+                .copyMetaData(metadata)
+                .data(MSG_DATA)
+                .build();
+
+        // WHEN
+        node.onMsg(ctxMock, msg);
+
+        // THEN
+        then(ctxMock).should(never()).ack(any());
+        then(ctxMock).should(never()).enqueueForTellNext(any(), any(String.class));
+        ArgumentCaptor<TbMsg> outMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        then(ctxMock).should().tellSuccess(outMsgCaptor.capture());
+        TbMsg outMsg = outMsgCaptor.getValue();
+        assertThat(outMsg.getId()).isEqualTo(msg.getId());
+        assertThat(outMsg.getMetaData()).isEqualTo(msg.getMetaData());
+        assertThat(outMsg.getData()).isEqualTo("{\"rpcId\":\"6b04b5b2-1d94-4a4e-9b47-4f1e0e40e4a1\"}");
+    }
+
+    @Test
+    public void givenForceAckDisabledAndEmptyResponse_whenOnMsg_thenTellSuccessWithEmptyJson() throws TbNodeException {
+        // GIVEN
+        config.setForceAck(false);
+        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+        given(ctxMock.getRpcService()).willReturn(rpcServiceMock);
+        given(ctxMock.getTenantId()).willReturn(TENANT_ID);
+        stubRpcResponse(null, null);
+
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE)
+                .originator(DEVICE_ID)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(MSG_DATA)
+                .build();
+
+        // WHEN
+        node.onMsg(ctxMock, msg);
+
+        // THEN
+        ArgumentCaptor<TbMsg> outMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        then(ctxMock).should().tellSuccess(outMsgCaptor.capture());
+        assertThat(outMsgCaptor.getValue().getData()).isEqualTo(TbMsg.EMPTY_JSON_OBJECT);
+    }
+
+    @Test
+    public void givenForceAckDisabledAndErrorResponse_whenOnMsg_thenTellFailureOnIncomingMsg() throws TbNodeException {
+        // GIVEN
+        config.setForceAck(false);
+        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+        given(ctxMock.getRpcService()).willReturn(rpcServiceMock);
+        given(ctxMock.getTenantId()).willReturn(TENANT_ID);
+        stubRpcResponse(RpcError.TIMEOUT, null);
+
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE)
+                .originator(DEVICE_ID)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(MSG_DATA)
+                .build();
+
+        // WHEN
+        node.onMsg(ctxMock, msg);
+
+        // THEN
+        then(ctxMock).should(never()).ack(any());
+        then(ctxMock).should(never()).enqueueForTellFailure(any(), any(String.class));
+        ArgumentCaptor<TbMsg> outMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        ArgumentCaptor<Throwable> errorCaptor = ArgumentCaptor.forClass(Throwable.class);
+        then(ctxMock).should().tellFailure(outMsgCaptor.capture(), errorCaptor.capture());
+        assertThat(outMsgCaptor.getValue().getId()).isEqualTo(msg.getId());
+        assertThat(outMsgCaptor.getValue().getData()).isEqualTo("{\"error\":\"TIMEOUT\"}");
+        assertThat(errorCaptor.getValue()).hasMessage("TIMEOUT");
+    }
+
     @ParameterizedTest
     @EnumSource(EntityType.class)
     public void givenOriginatorIsNotDevice_whenOnMsg_thenThrowsException(EntityType entityType) {
@@ -499,6 +639,95 @@ public class TbSendRPCRequestNodeTest {
         assertThat(throwableCaptor.getValue()).isInstanceOf(RuntimeException.class)
                 .hasMessage(EntityType.DEVICE != entityType ? "Message originator is not a device entity!"
                         : "Method is not present in the message!");
+    }
+
+    @Test
+    public void givenOverrideResponseTimeoutDisabled_whenOnMsg_thenDeadlineIsExpirationTime() {
+        given(ctxMock.getRpcService()).willReturn(rpcServiceMock);
+        given(ctxMock.getTenantId()).willReturn(TENANT_ID);
+        long expirationTime = System.currentTimeMillis() + 120_000L;
+
+        TbMsgMetaData metadata = new TbMsgMetaData();
+        metadata.putValue(DataConstants.EXPIRATION_TIME, Long.toString(expirationTime));
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE)
+                .originator(DEVICE_ID)
+                .copyMetaData(metadata)
+                .data(MSG_DATA)
+                .build();
+        node.onMsg(ctxMock, msg);
+
+        assertThat(captureRequest().getValue().getRuleEngineResponseDeadline()).isEqualTo(expirationTime);
+    }
+
+    @Test
+    public void givenOverrideResponseTimeoutEnabled_whenOnMsg_thenDeadlineIsNowPlusTimeout() throws TbNodeException {
+        config.setOverrideResponseTimeout(true);
+        config.setTimeoutInSeconds(15);
+        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+        given(ctxMock.getRpcService()).willReturn(rpcServiceMock);
+        given(ctxMock.getTenantId()).willReturn(TENANT_ID);
+
+        TbMsgMetaData metadata = new TbMsgMetaData();
+        metadata.putValue(DataConstants.EXPIRATION_TIME, Long.toString(System.currentTimeMillis() + 600_000L));
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE)
+                .originator(DEVICE_ID)
+                .copyMetaData(metadata)
+                .data(MSG_DATA)
+                .build();
+
+        long before = System.currentTimeMillis();
+        node.onMsg(ctxMock, msg);
+        long after = System.currentTimeMillis();
+
+        assertThat(captureRequest().getValue().getRuleEngineResponseDeadline())
+                .isBetween(before + 15_000L, after + 15_000L);
+    }
+
+    @Test
+    public void givenOverrideResponseTimeoutEnabledAndZeroTimeout_whenOnMsg_thenDeadlineIsNow() throws TbNodeException {
+        config.setOverrideResponseTimeout(true);
+        config.setTimeoutInSeconds(0);
+        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+        given(ctxMock.getRpcService()).willReturn(rpcServiceMock);
+        given(ctxMock.getTenantId()).willReturn(TENANT_ID);
+
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE)
+                .originator(DEVICE_ID)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(MSG_DATA)
+                .build();
+
+        long before = System.currentTimeMillis();
+        node.onMsg(ctxMock, msg);
+        long after = System.currentTimeMillis();
+
+        assertThat(captureRequest().getValue().getRuleEngineResponseDeadline()).isBetween(before, after);
+    }
+
+    @Test
+    public void givenNegativeTimeout_whenInit_thenThrowsUnrecoverableException() {
+        config.setTimeoutInSeconds(-1);
+        var configuration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        var nodeUnderTest = new TbSendRPCRequestNode();
+
+        assertThatThrownBy(() -> nodeUnderTest.init(ctxMock, configuration))
+                .isInstanceOf(TbNodeException.class)
+                .hasMessage("Timeout in seconds must be non-negative!")
+                .asInstanceOf(throwable(TbNodeException.class))
+                .extracting(TbNodeException::isUnrecoverable)
+                .isEqualTo(true);
+    }
+
+    @Test
+    public void givenZeroTimeout_whenInit_thenNoException() {
+        config.setTimeoutInSeconds(0);
+        var configuration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        var nodeUnderTest = new TbSendRPCRequestNode();
+
+        assertThatCode(() -> nodeUnderTest.init(ctxMock, configuration)).doesNotThrowAnyException();
     }
 
     @ParameterizedTest

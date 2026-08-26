@@ -114,7 +114,7 @@ public class DefaultTbRuleEngineRpcService implements TbRuleEngineDeviceRpcServi
     public void sendRpcRequestToDevice(RuleEngineDeviceRpcRequest src, Consumer<RuleEngineDeviceRpcResponse> consumer) {
         ToDeviceRpcRequest request = new ToDeviceRpcRequest(src.getRequestUUID(), src.getTenantId(), src.getDeviceId(),
                 src.isOneway(), src.getExpirationTime(), new ToDeviceRpcRequestBody(src.getMethod(), src.getBody()), src.isPersisted(), src.getRetries(), src.getAdditionalInfo());
-        forwardRpcRequestToDeviceActor(request, response -> {
+        forwardRpcRequestToDeviceActor(request, src.getRuleEngineResponseDeadline(), response -> {
             String originServiceId = src.getOriginServiceId();
             if (src.isRestApiCall() && originServiceId != null) {
                 sendRpcResponseToTbCore(originServiceId, response);
@@ -155,12 +155,12 @@ public class DefaultTbRuleEngineRpcService implements TbRuleEngineDeviceRpcServi
         }
     }
 
-    private void forwardRpcRequestToDeviceActor(ToDeviceRpcRequest request, Consumer<FromDeviceRpcResponse> responseConsumer) {
+    private void forwardRpcRequestToDeviceActor(ToDeviceRpcRequest request, long ruleEngineResponseDeadline, Consumer<FromDeviceRpcResponse> responseConsumer) {
         log.trace("[{}][{}] Processing local rpc call to device actor [{}]", request.getTenantId(), request.getId(), request.getDeviceId());
         UUID requestId = request.getId();
         toDeviceRpcRequests.put(requestId, responseConsumer);
         sendRpcRequestToDevice(request);
-        scheduleTimeout(request, requestId);
+        scheduleTimeout(requestId, ruleEngineResponseDeadline);
     }
 
     private void sendRpcRequestToDevice(ToDeviceRpcRequest msg) {
@@ -191,8 +191,8 @@ public class DefaultTbRuleEngineRpcService implements TbRuleEngineDeviceRpcServi
         }
     }
 
-    private void scheduleTimeout(ToDeviceRpcRequest request, UUID requestId) {
-        long timeout = Math.max(0, request.getExpirationTime() - System.currentTimeMillis()) + TimeUnit.SECONDS.toMillis(1);
+    private void scheduleTimeout(UUID requestId, long ruleEngineResponseDeadline) {
+        long timeout = Math.max(0, ruleEngineResponseDeadline - System.currentTimeMillis()) + TimeUnit.SECONDS.toMillis(1);
         log.trace("[{}] processing the request: [{}]", this.hashCode(), requestId);
         scheduler.schedule(() -> {
             log.trace("[{}] timeout the request: [{}]", this.hashCode(), requestId);

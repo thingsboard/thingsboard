@@ -23,3 +23,20 @@
 ALTER TABLE rule_chain ADD COLUMN IF NOT EXISTS notes varchar(1000000);
 
 -- RULE CHAIN NOTES MIGRATION END
+
+-- RPC CALL REQUEST NODE FORCE ACK START
+
+WITH rpc_node AS (
+    SELECT id, configuration::jsonb AS config
+    FROM rule_node
+    WHERE type = 'org.thingsboard.rule.engine.rpc.TbSendRPCRequestNode' AND configuration_version = 0
+)
+UPDATE rule_node SET
+    configuration = (rpc_node.config || jsonb_build_object(
+        'forceAck', COALESCE((rpc_node.config ->> 'forceAck')::boolean, true),
+        'overrideResponseTimeout', COALESCE((rpc_node.config ->> 'overrideResponseTimeout')::boolean, false)))::varchar,
+    configuration_version = 1
+FROM rpc_node
+WHERE rule_node.id = rpc_node.id;
+
+-- RPC CALL REQUEST NODE FORCE ACK END

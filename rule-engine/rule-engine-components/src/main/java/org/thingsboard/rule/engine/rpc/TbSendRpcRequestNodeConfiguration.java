@@ -22,11 +22,15 @@ import org.thingsboard.rule.engine.api.NodeConfiguration;
 public class TbSendRpcRequestNodeConfiguration implements NodeConfiguration<TbSendRpcRequestNodeConfiguration> {
 
     private int timeoutInSeconds;
+    private boolean forceAck;
+    private boolean overrideResponseTimeout;
 
     @Override
     public TbSendRpcRequestNodeConfiguration defaultConfiguration() {
         TbSendRpcRequestNodeConfiguration configuration = new TbSendRpcRequestNodeConfiguration();
         configuration.setTimeoutInSeconds(60);
+        configuration.setForceAck(true);
+        configuration.setOverrideResponseTimeout(false);
         return configuration;
     }
 }

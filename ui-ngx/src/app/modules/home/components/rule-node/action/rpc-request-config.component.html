@@ -15,10 +15,11 @@
     limitations under the License.
 
 -->
-<section [formGroup]="rpcRequestConfigForm" class="flex flex-col">
-  <mat-form-field class="mat-block flex-1" appearance="outline">
+<section [formGroup]="rpcRequestConfigForm" class="tb-form-panel no-padding no-border">
+  <mat-form-field class="mat-block flex-1">
     <mat-label translate>rule-node-config.timeout-sec</mat-label>
     <input type="number" min="0" step="1" matInput formControlName="timeoutInSeconds" required>
+    <mat-hint translate>rule-node-config.rpc-timeout-hint</mat-hint>
     @if (rpcRequestConfigForm.get('timeoutInSeconds').hasError('required')) {
       <mat-error>
         {{ 'rule-node-config.timeout-required' | translate }}
@@ -30,4 +31,19 @@
       </mat-error>
     }
   </mat-form-field>
+  <div tb-hint-tooltip-icon="{{ (rpcRequestConfigForm.get('forceAck').value
+                                 ? 'rule-node-config.rpc-force-ack-hint-enabled'
+                                 : 'rule-node-config.rpc-force-ack-hint') | translate }}"
+       class="tb-form-row same-padding">
+    <mat-slide-toggle class="mat-slide margin" formControlName="forceAck">
+      {{ 'rule-node-config.rpc-force-ack' | translate }}
+    </mat-slide-toggle>
+  </div>
+  <div tb-hint-tooltip-icon="{{ 'rule-node-config.rpc-override-response-timeout-hint' | translate:
+                                { timeoutLabel: 'rule-node-config.timeout-sec' | translate } }}"
+       class="tb-form-row same-padding">
+    <mat-slide-toggle class="mat-slide margin" formControlName="overrideResponseTimeout">
+      {{ 'rule-node-config.rpc-override-response-timeout' | translate }}
+    </mat-slide-toggle>
+  </div>
 </section>
