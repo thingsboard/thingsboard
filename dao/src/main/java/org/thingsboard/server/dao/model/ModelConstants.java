@@ -586,6 +586,8 @@ public class ModelConstants {
     public static final String RPC_RESPONSE = "response";
     public static final String RPC_STATUS = "status";
     public static final String RPC_ADDITIONAL_INFO = ADDITIONAL_INFO_PROPERTY;
+    public static final String RPC_REQUEST_ID = "request_id";
+    public static final String RPC_ONEWAY = "oneway";
 
     /**
      * Edge constants.

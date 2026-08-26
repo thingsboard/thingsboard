@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.rpc;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
@@ -44,6 +45,10 @@ public class Rpc extends BaseData<RpcId> implements HasTenantId {
     private RpcStatus status;
     @Schema(description = "Additional info used in the rule engine to process the updates to the RPC state.", accessMode = Schema.AccessMode.READ_ONLY)
     private JsonNode additionalInfo;
+    @JsonIgnore
+    private Integer requestId;
+    @JsonIgnore
+    private Boolean oneway;
 
     public Rpc() {
         super();
@@ -62,6 +67,8 @@ public class Rpc extends BaseData<RpcId> implements HasTenantId {
         this.response = rpc.getResponse();
         this.status = rpc.getStatus();
         this.additionalInfo = rpc.getAdditionalInfo();
+        this.requestId = rpc.getRequestId();
+        this.oneway = rpc.getOneway();
     }
 
     @Schema(description = "JSON object with the rpc Id. Referencing non-existing rpc Id will cause error.")

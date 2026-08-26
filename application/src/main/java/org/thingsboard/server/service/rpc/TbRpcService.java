@@ -31,9 +31,9 @@ import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rpc.Rpc;
-import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.msg.rpc.RpcPersistResult;
 import org.thingsboard.server.dao.rpc.RpcService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
@@ -41,6 +41,7 @@ import java.util.UUID;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 
 @TbCoreComponent
 @Service
@@ -49,78 +50,97 @@ public class TbRpcService {
     private final RpcService rpcService;
     private final TbClusterService tbClusterService;
 
-    private final ExecutorService[] callbackExecutors;
+    // Striped by rpcId so one command's lifecycle events keep their order (RPC_QUEUED before RPC_DELIVERED).
+    private final ExecutorService[] ruleEngineCallbackExecutors;
+    // Separate pool, so a stalled rule engine publish never holds up a device send.
+    private final ExecutorService deviceActorCallbackExecutor;
 
     public TbRpcService(RpcService rpcService, TbClusterService tbClusterService,
-                        @Value("${sql.rpc.callback_threads:3}") int callbackThreads) {
-        if (callbackThreads < 1) {
-            throw new IllegalArgumentException("sql.rpc.callback_threads must be >= 1, but was " + callbackThreads);
+                        @Value("${sql.rpc.rule_engine_callback_threads:3}") int ruleEngineCallbackThreads,
+                        @Value("${sql.rpc.device_actor_callback_threads:3}") int deviceActorCallbackThreads) {
+        if (ruleEngineCallbackThreads < 1) {
+            throw new IllegalArgumentException("sql.rpc.rule_engine_callback_threads must be >= 1, but was " + ruleEngineCallbackThreads);
+        }
+        if (deviceActorCallbackThreads < 1) {
+            throw new IllegalArgumentException("sql.rpc.device_actor_callback_threads must be >= 1, but was " + deviceActorCallbackThreads);
         }
         this.rpcService = rpcService;
         this.tbClusterService = tbClusterService;
-        this.callbackExecutors = new ExecutorService[callbackThreads];
-        for (int i = 0; i < callbackThreads; i++) {
-            callbackExecutors[i] = Executors.newSingleThreadExecutor(
-                    ThingsBoardThreadFactory.forName("rpc-persist-callback-" + i));
+        this.ruleEngineCallbackExecutors = new ExecutorService[ruleEngineCallbackThreads];
+        for (int i = 0; i < ruleEngineCallbackThreads; i++) {
+            ruleEngineCallbackExecutors[i] = Executors.newSingleThreadExecutor(
+                    ThingsBoardThreadFactory.forName("rpc-rule-engine-callback-" + i));
         }
+        this.deviceActorCallbackExecutor = Executors.newFixedThreadPool(deviceActorCallbackThreads,
+                ThingsBoardThreadFactory.forName("rpc-device-actor-callback"));
     }
 
     @PreDestroy
     private void destroy() {
-        for (ExecutorService executor : callbackExecutors) {
+        for (ExecutorService executor : ruleEngineCallbackExecutors) {
             executor.shutdownNow();
         }
+        deviceActorCallbackExecutor.shutdownNow();
     }
 
-    public void create(TenantId tenantId, Rpc rpc) {
-        rpcService.save(rpc);
-        executorFor(rpc.getUuidId()).execute(() -> notifyRuleEngine(tenantId, rpc));
+    /**
+     * Enqueues the create onto the batched write queue and resumes the caller once the row's fate is known.
+     * The result is reported exactly once, on the actor-resume pool.
+     */
+    public void createIfAbsent(TenantId tenantId, Rpc rpc, Consumer<RpcPersistResult> onPersistResult) {
+        ListenableFuture<Boolean> future = rpcService.createIfAbsentAsync(rpc);
+        // Attached before the resume, so RPC_QUEUED reaches the stripe ahead of any status event the resumed
+        // actor can cause.
+        notifyRuleEngineWhenPersisted(tenantId, rpc, future, "a row for this RPC already existed");
+        DonAsynchron.withCallback(future,
+                inserted -> onPersistResult.accept(Boolean.TRUE.equals(inserted)
+                        ? RpcPersistResult.INSERTED : RpcPersistResult.DUPLICATE),
+                t -> onPersistResult.accept(RpcPersistResult.FAILED), // logged by the callback above, same future
+                deviceActorCallbackExecutor);
     }
 
     public void update(TenantId tenantId, Rpc rpc) {
-        persist(tenantId, rpc, rpcService.updateAsync(rpc));
+        notifyRuleEngineWhenPersisted(tenantId, rpc, rpcService.updateAsync(rpc),
+                "RPC row is not updatable (already terminal or removed)");
     }
 
-    private void persist(TenantId tenantId, Rpc rpc, ListenableFuture<Boolean> future) {
+    /** {@code skipReason} explains the case where the write completed without changing a row. */
+    private void notifyRuleEngineWhenPersisted(TenantId tenantId, Rpc rpc, ListenableFuture<Boolean> future, String skipReason) {
         DonAsynchron.withCallback(future,
                 persisted -> {
                     if (Boolean.TRUE.equals(persisted)) {
-                        notifyRuleEngine(tenantId, rpc);
+                        pushRpcMsgToRuleEngine(tenantId, rpc);
                     } else {
-                        log.debug("[{}][{}][{}] Skipping rule engine notification for status [{}] - RPC row no longer exists",
-                                tenantId, rpc.getDeviceId(), rpc.getId(), rpc.getStatus());
+                        log.debug("[{}][{}][{}] Skipping rule engine notification for status [{}] - {}",
+                                tenantId, rpc.getDeviceId(), rpc.getId(), rpc.getStatus(), skipReason);
                     }
                 },
                 t -> log.error("[{}][{}][{}] Failed to persist RPC with status [{}]",
                         tenantId, rpc.getDeviceId(), rpc.getId(), rpc.getStatus(), t),
-                executorFor(rpc.getUuidId()));
+                ruleEngineCallbackExecutorFor(rpc.getUuidId()));
     }
 
-    private Executor executorFor(UUID rpcId) {
-        return callbackExecutors[HashPartitioner.resolvePartition(rpcId.hashCode(), callbackExecutors.length)];
+    private Executor ruleEngineCallbackExecutorFor(UUID rpcId) {
+        return ruleEngineCallbackExecutors[HashPartitioner.resolvePartition(rpcId.hashCode(), ruleEngineCallbackExecutors.length)];
     }
 
-    private void notifyRuleEngine(TenantId tenantId, Rpc rpc) {
+    private void pushRpcMsgToRuleEngine(TenantId tenantId, Rpc rpc) {
         try {
-            pushRpcMsgToRuleEngine(tenantId, rpc);
+            TbMsg msg = TbMsg.newMsg()
+                    .type(TbMsgType.valueOf("RPC_" + rpc.getStatus().name()))
+                    .originator(rpc.getDeviceId())
+                    .copyMetaData(TbMsgMetaData.EMPTY)
+                    .data(JacksonUtil.toString(rpc))
+                    .build();
+            tbClusterService.pushMsgToRuleEngine(tenantId, rpc.getDeviceId(), msg, null);
         } catch (Throwable t) {
             log.error("[{}][{}][{}] Failed to push RPC with status [{}] to rule engine",
                     tenantId, rpc.getDeviceId(), rpc.getId(), rpc.getStatus(), t);
         }
     }
 
-    private void pushRpcMsgToRuleEngine(TenantId tenantId, Rpc rpc) {
-        TbMsg msg = TbMsg.newMsg()
-                .type(TbMsgType.valueOf("RPC_" + rpc.getStatus().name()))
-                .originator(rpc.getDeviceId())
-                .copyMetaData(TbMsgMetaData.EMPTY)
-                .data(JacksonUtil.toString(rpc))
-                .build();
-        tbClusterService.pushMsgToRuleEngine(tenantId, rpc.getDeviceId(), msg, null);
-    }
-
-    public PageData<Rpc> findAllByDeviceIdAndStatus(TenantId tenantId, DeviceId deviceId, RpcStatus rpcStatus, PageLink pageLink) {
-        return rpcService.findAllByDeviceIdAndStatus(tenantId, deviceId, rpcStatus, pageLink);
+    public PageData<Rpc> findInFlightForReload(TenantId tenantId, DeviceId deviceId, PageLink pageLink) {
+        return rpcService.findInFlightForReload(tenantId, deviceId, pageLink);
     }
 
 }
