@@ -39,10 +39,12 @@
               </div>
               <div class="tb-iot-hub-widget-card-label">
                 <span class="tb-iot-hub-widget-card-name" tbTruncateWithTooltip>{{ item.name }}</span>
-                <span class="tb-iot-hub-widget-card-installs">
-                  <mat-icon>file_download</mat-icon>
-                  {{ item.totalInstallCount | shortNumber }}
-                </span>
+                @if (showInstallCount(item)) {
+                  <span class="tb-iot-hub-widget-card-installs">
+                    <mat-icon>file_download</mat-icon>
+                    {{ item.totalInstallCount | shortNumber }}
+                  </span>
+                }
               </div>
             </div>
           }
@@ -63,10 +65,12 @@
               </div>
               <div class="tb-iot-hub-widget-card-label">
                 <span class="tb-iot-hub-widget-card-name" tbTruncateWithTooltip>{{ item.name }}</span>
-                <span class="tb-iot-hub-widget-card-installs">
-                  <mat-icon>file_download</mat-icon>
-                  {{ item.totalInstallCount | shortNumber }}
-                </span>
+                @if (showInstallCount(item)) {
+                  <span class="tb-iot-hub-widget-card-installs">
+                    <mat-icon>file_download</mat-icon>
+                    {{ item.totalInstallCount | shortNumber }}
+                  </span>
+                }
               </div>
             </div>
           }

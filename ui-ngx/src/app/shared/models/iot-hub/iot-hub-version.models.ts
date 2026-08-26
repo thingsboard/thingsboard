@@ -109,6 +109,14 @@ export interface MpItemVersionView {
   creatorVerified: boolean;
   installCount: number;
   totalInstallCount: number;
+  /**
+   * Server-owned, read-only marker for content that already ships inside ThingsBoard
+   * (a bundled widget, a SCADA symbol) instead of being installed by the IoT Hub.
+   * Optional on purpose: older Hub deployments simply omit the field, so it must never
+   * be read directly — use `isBuiltInItem()` from `@home/components/iot-hub/iot-hub-utils`.
+   * Never send it back to the server.
+   */
+  builtIn?: boolean;
   resources: MpItemVersionResource[];
   relatedItems?: string[];
   checksum?: string;

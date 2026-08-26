@@ -16,7 +16,10 @@
 
 import { Injectable } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { Observable, of } from 'rxjs';
+import { Observable, of, EMPTY } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
+import { TranslateService } from '@ngx-translate/core';
+import { DialogService } from '@core/services/dialog.service';
 import { MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
 import { ItemType } from '@shared/models/iot-hub/iot-hub-item.models';
 import { DeviceInstalledItemDescriptor, IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
@@ -28,12 +31,24 @@ import { TbIotHubUpdateDialogComponent, IotHubUpdateDialogData } from './iot-hub
 import { TbIotHubDeleteDialogComponent, IotHubDeleteDialogData } from './iot-hub-delete-dialog.component';
 import { TbDeviceInstallDialogComponent, DeviceInstallDialogData } from './device-install-dialog/device-install-dialog.component';
 import { TbIotHubInstalledItemsDialogComponent, IotHubInstalledItemsDialogData } from './iot-hub-installed-items-dialog.component';
+import { IotHubBuiltInService } from './iot-hub-built-in.service';
+import { isBuiltInItem } from './iot-hub-utils';
+
+/**
+ * What `openBuiltInOrConfirmInstall` did with a built-in item: 'handled' means nothing is left to do
+ * (the local copy was opened, or the user was told why it could not be), while 'install-requested'
+ * means the component really is absent and the user asked for it to be installed.
+ */
+export type IotHubBuiltInAction = 'handled' | 'install-requested';
 
 @Injectable()
 export class IotHubActionsService {
 
   constructor(
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private dialogService: DialogService,
+    private translate: TranslateService,
+    private builtInService: IotHubBuiltInService
   ) {}
 
   openItemDetail(item: MpItemVersionView, installedItem?: IotHubInstalledItem, installedItemsCount?: number,
@@ -68,15 +83,82 @@ export class IotHubActionsService {
     }).afterClosed();
   }
 
+  /**
+   * Runs the primary action of an item: built-in content is opened locally (never installed),
+   * device packages are connected, everything else goes through the install dialog.
+   */
   installItem(item: MpItemVersionView): Observable<string> {
+    if (isBuiltInItem(item)) {
+      return this.openOrInstallBuiltIn(item);
+    }
+    return this.runInstall(item);
+  }
+
+  /** Opens the local copy of a built-in item, or asks to install it when it really is absent. */
+  openBuiltInOrConfirmInstall(item: MpItemVersionView): Observable<IotHubBuiltInAction> {
+    return this.builtInService.openLocalComponent(item).pipe(
+      switchMap(outcome => {
+        switch (outcome) {
+          case 'missing':
+            return this.confirmInstallMissingBuiltIn(item).pipe(
+              map((confirmed): IotHubBuiltInAction => confirmed ? 'install-requested' : 'handled')
+            );
+          case 'failed':
+            this.showBuiltInLookupFailed(item);
+            return of<IotHubBuiltInAction>('handled');
+          default:
+            // 'opened' or 'cancelled' — the component is in place either way, so never install.
+            return of<IotHubBuiltInAction>('handled');
+        }
+      })
+    );
+  }
+
+  /**
+   * Asks whether to install a built-in item whose local copy is gone — the component the Hub entry
+   * mirrors was deleted from this instance, so installing is the only way to get it back.
+   */
+  confirmInstallMissingBuiltIn(item: MpItemVersionView): Observable<boolean> {
+    return this.dialogService.confirm(
+      this.translate.instant('iot-hub.built-in-missing-title'),
+      this.translate.instant('iot-hub.built-in-missing-text', { name: item?.name }),
+      this.translate.instant('action.cancel'),
+      this.translate.instant('iot-hub.install')
+    );
+  }
+
+  /** Reports that the local copy could not be checked — nothing was opened and nothing installed. */
+  showBuiltInLookupFailed(item: MpItemVersionView): void {
+    this.dialogService.alert(
+      this.translate.instant('iot-hub.built-in-lookup-failed-title'),
+      this.translate.instant('iot-hub.built-in-lookup-failed-text', { name: item?.name })
+    );
+  }
+
+  private openOrInstallBuiltIn(item: MpItemVersionView): Observable<string> {
+    return this.openBuiltInOrConfirmInstall(item).pipe(
+      // The confirmation inside is the only one the user gets: install starts immediately,
+      // and opening the component is a separate click once it is back in the library.
+      switchMap(action => action === 'install-requested' ? this.runInstall(item, true) : EMPTY)
+    );
+  }
+
+  private runInstall(item: MpItemVersionView, skipConfirm = false): Observable<string> {
+    if (item.type === ItemType.ALARM_RULE) {
+      this.dialogService.alert(
+        this.translate.instant('iot-hub.alarm-rule-install-update-required'),
+        this.translate.instant('iot-hub.alarm-rule-install-update-required-text')
+      );
+      return EMPTY;
+    }
     if (item.type === ItemType.DEVICE) {
-      return this.installDevice(item);
+      return this.openDeviceInstallDialog(item);
     }
     return this.dialog.open(TbIotHubInstallDialogComponent, {
       panelClass: ['tb-dialog'],
       disableClose: true,
       autoFocus: false,
-      data: { item } as IotHubInstallDialogData
+      data: { item, skipConfirm } as IotHubInstallDialogData
     }).afterClosed();
   }
 
@@ -110,6 +192,8 @@ export class IotHubActionsService {
     }).afterClosed();
   }
 
+  // Reached only for items whose action mode is 'connect', i.e. never for built-in content:
+  // that decision is made once, at the public entry points above.
   installDevice(item: MpItemVersionView): Observable<string> {
     return this.openDeviceInstallDialog(item);
   }

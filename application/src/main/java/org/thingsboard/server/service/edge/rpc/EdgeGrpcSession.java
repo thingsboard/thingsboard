@@ -790,7 +790,7 @@ public abstract class EdgeGrpcSession implements Closeable {
         ctx.getClusterService().onEdgeEventUpdate(new EdgeEventUpdateMsg(edge.getTenantId(), edge.getId()));
     }
 
-    private void stopCurrentSendDownlinkMsgsTask(Boolean isInterrupted) {
+    protected void stopCurrentSendDownlinkMsgsTask(Boolean isInterrupted) {
         if (sessionState.getSendDownlinkMsgsFuture() != null && !sessionState.getSendDownlinkMsgsFuture().isDone()) {
             sessionState.getSendDownlinkMsgsFuture().set(isInterrupted);
         }

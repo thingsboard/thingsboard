@@ -126,9 +126,7 @@ public class LtsMigrationService {
     // so a cross-family upgrade is fully handled by the target-family migrations.
     // Excluding the dormant older-family beans avoids double-processing.
     static boolean isInRangeForTargetFamily(LtsVersion version, LtsVersion from, LtsVersion to) {
-        return version.sameFamily(to)
-                && version.compareTo(from) > 0
-                && version.compareTo(to) <= 0;
+        return version.sameFamily(to) && version.isInRange(from, to);
     }
 
     private void runSchemaUpdate(String version) {
