@@ -67,7 +67,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.fail;
@@ -170,7 +169,7 @@ public class MqttTransportHandlerTest {
 
     @Test
     public void givenQueueLimit_whenEnqueueRegularSessionMsgOverLimit_thenOK() {
-        List<MqttPublishMessage> messages = Stream.generate(this::getMqttPublishMessage).limit(MSG_QUEUE_LIMIT).collect(Collectors.toList());
+        List<MqttPublishMessage> messages = Stream.generate(this::getMqttPublishMessage).limit(MSG_QUEUE_LIMIT).toList();
         messages.forEach(msg -> handler.enqueueRegularSessionMsg(ctx, msg));
         assertThat(handler.deviceSessionCtx.getMsgQueueSize(), is(MSG_QUEUE_LIMIT));
         assertThat(handler.deviceSessionCtx.getMsgQueueSnapshot(), contains(messages.toArray()));
@@ -180,7 +179,7 @@ public class MqttTransportHandlerTest {
     public void givenQueueLimit_whenEnqueueRegularSessionMsgOverLimit_thenCtxClose() {
         final int limit = MSG_QUEUE_LIMIT + 1;
         willDoNothing().given(handler).processMsgQueue(ctx);
-        List<MqttPublishMessage> messages = Stream.generate(this::getMqttPublishMessage).limit(limit).collect(Collectors.toList());
+        List<MqttPublishMessage> messages = Stream.generate(this::getMqttPublishMessage).limit(limit).toList();
 
         messages.forEach((msg) -> handler.enqueueRegularSessionMsg(ctx, msg));
 
@@ -194,7 +193,7 @@ public class MqttTransportHandlerTest {
     public void givenMqttConnectMessageAndPublishImmediately_whenProcessMqttMsg_thenEnqueueRegularSessionMsg() {
         givenMqttConnectMessage_whenProcessMqttMsg_thenProcessConnect();
 
-        List<MqttPublishMessage> messages = Stream.generate(this::getMqttPublishMessage).limit(MSG_QUEUE_LIMIT).collect(Collectors.toList());
+        List<MqttPublishMessage> messages = Stream.generate(this::getMqttPublishMessage).limit(MSG_QUEUE_LIMIT).toList();
 
         messages.forEach((msg) -> handler.channelRead(ctx, msg));
 
@@ -215,7 +214,7 @@ public class MqttTransportHandlerTest {
         //given
         assertThat(handler.deviceSessionCtx.isConnected(), is(false));
         assertThat(MSG_QUEUE_LIMIT, greaterThan(2));
-        List<MqttPublishMessage> messages = Stream.generate(this::getMqttPublishMessage).limit(MSG_QUEUE_LIMIT).collect(Collectors.toList());
+        List<MqttPublishMessage> messages = Stream.generate(this::getMqttPublishMessage).limit(MSG_QUEUE_LIMIT).toList();
         messages.forEach((msg) -> handler.enqueueRegularSessionMsg(ctx, msg));
         willDoNothing().given(handler).processRegularSessionMsg(any(), any());
         executor = Executors.newCachedThreadPool(ThingsBoardThreadFactory.forName(getClass().getName()));
