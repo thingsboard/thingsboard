@@ -474,7 +474,7 @@ public class SystemPatchApplierTest {
 
         ReflectionTestUtils.invokeMethod(reconciler, "applyPatchIfNeeded");
 
-        verify(ltsMigrationService).applyMigrations("4.3.0.0", "4.3.1.0");
+        verify(ltsMigrationService).applyMigrations(eq("4.3.0.0"), eq("4.3.1.0"), any());
         verify(schemaSettingsService).updateSchemaVersion();
     }
 
@@ -519,7 +519,7 @@ public class SystemPatchApplierTest {
         ReflectionTestUtils.invokeMethod(reconciler, "applyPatchIfNeeded");
 
         verify(schemaSettingsService).updateSchemaVersion();
-        verify(ltsMigrationService).applyMigrations("4.3.1.0", "4.3.2.0");
+        verify(ltsMigrationService).applyMigrations(eq("4.3.1.0"), eq("4.3.2.0"), any());
     }
 
     @Test

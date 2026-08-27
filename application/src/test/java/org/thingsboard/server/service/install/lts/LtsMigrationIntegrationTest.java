@@ -127,7 +127,7 @@ public class LtsMigrationIntegrationTest extends AbstractControllerTest {
 
     @Test
     public void appliesSqlDeprecatesTypesDeletesBundleAndRecordsVersion() {
-        ltsMigrationService.applyMigrations("4.2.2.2", "4.2.2.3");
+        ltsMigrationService.applyMigrations("4.2.2.2", "4.2.2.3", () -> {});
 
         // 1. The version's SQL ran: iot_hub_installed_item table now exists.
         assertTrue(tableExists("iot_hub_installed_item"));
@@ -144,9 +144,9 @@ public class LtsMigrationIntegrationTest extends AbstractControllerTest {
 
     @Test
     public void reRunFromCurrentVersionIsNoOp() {
-        ltsMigrationService.applyMigrations("4.2.2.2", "4.2.2.3");
+        ltsMigrationService.applyMigrations("4.2.2.2", "4.2.2.3", () -> {});
         // Re-running from the now-current version selects an empty range — nothing changes, nothing throws.
-        ltsMigrationService.applyMigrations("4.2.2.3", "4.2.2.3");
+        ltsMigrationService.applyMigrations("4.2.2.3", "4.2.2.3", () -> {});
 
         assertEquals(Long.valueOf(V_4_2_2_3),
                 jdbcTemplate.queryForObject("SELECT schema_version FROM tb_schema_settings", Long.class));
@@ -183,7 +183,7 @@ public class LtsMigrationIntegrationTest extends AbstractControllerTest {
         assertFalse(columnExists("calculated_field", "additional_info"));
 
         // Drive the runner over a range whose target (4.3.1.2) selects only the 4.3.1.2 migration.
-        ltsMigrationService.applyMigrations("4.3.1.1", "4.3.1.2");
+        ltsMigrationService.applyMigrations("4.3.1.1", "4.3.1.2", () -> {});
 
         // The 4.3.1.2 schema SQL ran: the column exists again.
         assertTrue(columnExists("calculated_field", "additional_info"));

@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.sql;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.common.util.HashPartitioner;
 import org.thingsboard.server.common.stats.MessagesStats;
 import org.thingsboard.server.common.stats.StatsFactory;
 
@@ -58,7 +59,7 @@ public class TbSqlBlockingQueueWrapper<E, R> {
     }
 
     public ListenableFuture<R> add(E element) {
-        int queueIndex = element != null ? (hashCodeFunction.apply(element) & 0x7FFFFFFF) % maxThreads : 0;
+        int queueIndex = element != null ? HashPartitioner.resolvePartition(hashCodeFunction.apply(element), maxThreads) : 0;
         return queues.get(queueIndex).add(element);
     }
 

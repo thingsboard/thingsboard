@@ -49,9 +49,17 @@ public class BaseRpcService implements RpcService {
     private final RpcDao rpcDao;
 
     @Override
-    public Rpc save(Rpc rpc) {
-        log.trace("Executing save, [{}]", rpc);
-        return rpcDao.save(rpc.getTenantId(), rpc);
+    public ListenableFuture<Boolean> createIfAbsentAsync(Rpc rpc) {
+        log.trace("Executing createIfAbsentAsync, tenantId [{}], deviceId [{}], rpcId [{}], status [{}]",
+                rpc.getTenantId(), rpc.getDeviceId(), rpc.getId(), rpc.getStatus());
+        return rpcDao.createIfAbsentAsync(rpc);
+    }
+
+    @Override
+    public ListenableFuture<Boolean> updateAsync(Rpc rpc) {
+        log.trace("Executing updateAsync, tenantId [{}], deviceId [{}], rpcId [{}], status [{}]",
+                rpc.getTenantId(), rpc.getDeviceId(), rpc.getId(), rpc.getStatus());
+        return rpcDao.updateAsync(rpc);
     }
 
     @Override
@@ -101,6 +109,14 @@ public class BaseRpcService implements RpcService {
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         validatePageLink(pageLink);
         return rpcDao.findAllByDeviceIdAndStatus(tenantId, deviceId, rpcStatus, pageLink);
+    }
+
+    @Override
+    public PageData<Rpc> findInFlightForReload(TenantId tenantId, DeviceId deviceId, PageLink pageLink) {
+        log.trace("Executing findInFlightForReload, tenantId [{}], deviceId [{}], pageLink [{}]", tenantId, deviceId, pageLink);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validatePageLink(pageLink);
+        return rpcDao.findInFlightForReload(tenantId, deviceId, pageLink);
     }
 
     @Override

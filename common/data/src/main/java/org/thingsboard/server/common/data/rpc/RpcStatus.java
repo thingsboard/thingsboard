@@ -17,6 +17,12 @@ package org.thingsboard.server.common.data.rpc;
 
 import lombok.Getter;
 
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.EnumSet;
+import java.util.Map;
+import java.util.Set;
+
 public enum RpcStatus {
 
     QUEUED(true),
@@ -28,11 +34,57 @@ public enum RpcStatus {
     FAILED(false),
     DELETED(false);
 
+    // A pure function of (kind, target status), so the sets are built once here and handed out as shared
+    // unmodifiable views that no caller can corrupt. Callers on a write path keep their own representation
+    // (RpcWriteRepository caches the status names the SQL guard binds).
+    private static final Map<RpcKind, Map<RpcStatus, Set<RpcStatus>>> ALLOWED_FROM = allowedFrom();
+
     @Getter
     private final boolean pushDeleteNotificationToCore;
 
     RpcStatus(boolean pushDeleteNotificationToCore) {
         this.pushDeleteNotificationToCore = pushDeleteNotificationToCore;
+    }
+
+    /**
+     * The set of CURRENT (persisted) statuses that a guarded status UPDATE to THIS (target) status may overwrite.
+     * No terminal status appears in any set, so terminals are immutable. TIMEOUT is an in-flight peer of SENT
+     * (delivery ack timed out, retrying). The one-way and two-way machines differ in exactly one place: for a
+     * one-way RPC DELIVERED is a terminal success, so it is never an allowed predecessor of a terminal write.
+     *
+     * @return an immutable set; the same instance on every call
+     */
+    public Set<RpcStatus> getAllowedFromStatuses(RpcKind kind) {
+        return ALLOWED_FROM.get(kind).get(this);
+    }
+
+    private static Map<RpcKind, Map<RpcStatus, Set<RpcStatus>>> allowedFrom() {
+        Map<RpcKind, Map<RpcStatus, Set<RpcStatus>>> byKind = new EnumMap<>(RpcKind.class);
+        for (RpcKind kind : RpcKind.values()) {
+            Map<RpcStatus, Set<RpcStatus>> byStatus = new EnumMap<>(RpcStatus.class);
+            for (RpcStatus status : values()) {
+                byStatus.put(status, Collections.unmodifiableSet(status.computeAllowedFrom(kind)));
+            }
+            byKind.put(kind, Collections.unmodifiableMap(byStatus));
+        }
+        return Collections.unmodifiableMap(byKind);
+    }
+
+    private Set<RpcStatus> computeAllowedFrom(RpcKind kind) {
+        return switch (this) {
+            case SENT -> EnumSet.of(QUEUED, TIMEOUT);
+            case DELIVERED -> EnumSet.of(QUEUED, SENT, TIMEOUT);
+            case QUEUED -> EnumSet.of(SENT, TIMEOUT);                     // retry re-queue
+            case TIMEOUT -> EnumSet.of(SENT);                            // delivery ack timed out while SENT
+            // Terminals may overwrite any in-flight predecessor: async status writes and status-vs-response
+            // message reordering can leave the row at QUEUED when the outcome lands. One-way DELIVERED is a
+            // terminal success, so it is excluded for one-way; SUCCESSFUL is unreachable for one-way (no device
+            // response) but stays consistent with FAILED/EXPIRED.
+            case SUCCESSFUL, FAILED, EXPIRED -> RpcKind.ONE_WAY == kind
+                    ? EnumSet.of(QUEUED, SENT, TIMEOUT)
+                    : EnumSet.of(QUEUED, SENT, DELIVERED, TIMEOUT);
+            case DELETED -> EnumSet.noneOf(RpcStatus.class);             // not written via the guarded UPDATE
+        };
     }
 
 }
