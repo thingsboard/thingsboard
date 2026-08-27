@@ -39,7 +39,7 @@ export class RpcRequestConfigComponent extends RuleNodeConfigurationComponent {
   protected onConfigurationSet(configuration: RuleNodeConfiguration) {
     this.rpcRequestConfigForm = this.fb.group({
       timeoutInSeconds: [configuration ? configuration.timeoutInSeconds : null, [Validators.required, Validators.min(0)]],
-      forceAck: [configuration ? configuration.forceAck : true, []],
+      forceAck: [configuration?.forceAck ?? true, []],
       overrideResponseTimeout: [configuration ? configuration.overrideResponseTimeout : false, []]
     });
   }
