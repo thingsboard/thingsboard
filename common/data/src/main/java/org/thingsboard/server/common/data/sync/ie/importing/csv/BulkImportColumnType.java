@@ -48,6 +48,7 @@ public enum BulkImportColumnType {
     SNMP_VERSION,
     SNMP_COMMUNITY_STRING,
     IS_GATEWAY,
+    OVERWRITE_ACTIVITY_TIME,
     DESCRIPTION,
     ROUTING_KEY,
     SECRET;

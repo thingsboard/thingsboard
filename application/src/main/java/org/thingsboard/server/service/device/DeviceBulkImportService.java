@@ -101,6 +101,9 @@ public class DeviceBulkImportService extends AbstractBulkImportService<Device> {
                 case IS_GATEWAY:
                     additionalInfo.set("gateway", BooleanNode.valueOf(Boolean.parseBoolean(value)));
                     break;
+                case OVERWRITE_ACTIVITY_TIME:
+                    additionalInfo.set("overwriteActivityTime", BooleanNode.valueOf(Boolean.parseBoolean(value)));
+                    break;
             }
             device.setAdditionalInfo(additionalInfo);
         });
