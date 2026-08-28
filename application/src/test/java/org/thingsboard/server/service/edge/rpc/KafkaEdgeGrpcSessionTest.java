@@ -15,15 +15,19 @@
  */
 package org.thingsboard.server.service.edge.rpc;
 
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import io.grpc.stub.StreamObserver;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.ResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToEdgeEventNotificationMsg;
 import org.thingsboard.server.queue.TbQueueConsumer;
@@ -187,6 +191,132 @@ class KafkaEdgeGrpcSessionTest {
                 .untilAsserted(() -> assertThat(queueConsumer.getPolledEvents())
                         .as("event held during sync must be picked up once sync completes, not lost")
                         .hasSize(1));
+    }
+
+    @Test
+    void interruptedPackIsRetriedFromMemoryAndCommittedOnce() {
+        DeliveringSession session = deliveringSession();
+        session.interruptAttempts = 2;
+        setReadinessFlags(session, true, false, false);
+        RecordingEdgeEventConsumer consumer = new RecordingEdgeEventConsumer();
+
+        boolean delivered = deliverEdgeEvents(session, consumer);
+
+        assertThat(delivered).as("a pack interrupted twice must still end up delivered").isTrue();
+        assertThat(session.sendAttempts.get()).as("interrupted attempts must be retried").isEqualTo(3);
+        // Also proves the pack is re-converted per attempt, so a retry picks up the current entity state.
+        assertThat(session.convertCalls.get()).isEqualTo(3);
+    }
+
+    @Test
+    void packInterruptedBySyncIsHeldUntilSyncCompletesInsteadOfBeingDropped() throws Exception {
+        DeliveringSession session = deliveringSession();
+        // The sync request already interrupted the send that was in flight; the session stays not ready while it runs.
+        setReadinessFlags(session, true, true, false);
+        RecordingEdgeEventConsumer consumer = new RecordingEdgeEventConsumer();
+
+        AtomicInteger result = new AtomicInteger(-1);
+        Thread worker = new Thread(() -> result.set(deliverEdgeEvents(session, consumer) ? 1 : 0));
+        worker.start();
+
+        // While the sync is in progress nothing is sent and, crucially, the pack is not abandoned either.
+        sleepQuietly(POLL_INTERVAL_MS * 5);
+        assertThat(session.sendAttempts.get()).as("must not send while sync is in progress").isZero();
+        assertThat(result.get()).as("must not give up on the pack while sync is in progress").isEqualTo(-1);
+
+        setReadinessFlags(session, true, false, false);
+        worker.join(TimeUnit.SECONDS.toMillis(5));
+
+        assertThat(result.get()).as("pack held during sync must be delivered once sync completes").isEqualTo(1);
+        assertThat(session.sendAttempts.get()).isEqualTo(1);
+    }
+
+    @Test
+    void packIsLeftUncommittedWhenSessionCanNoLongerDeliverIt() {
+        DeliveringSession disconnected = deliveringSession();
+        setReadinessFlags(disconnected, false, false, false);
+        assertThat(deliverEdgeEvents(disconnected, new RecordingEdgeEventConsumer()))
+                .as("disconnected session must not commit the pack, so it is redelivered on reconnect")
+                .isFalse();
+        assertThat(disconnected.sendAttempts.get()).isZero();
+
+        DeliveringSession stopping = deliveringSession();
+        setReadinessFlags(stopping, true, false, false);
+        RecordingEdgeEventConsumer stopped = new RecordingEdgeEventConsumer();
+        stopped.stop();
+        assertThat(deliverEdgeEvents(stopping, stopped))
+                .as("stopped consumer must not commit the pack")
+                .isFalse();
+        assertThat(stopping.sendAttempts.get()).isZero();
+    }
+
+    @Test
+    void nonInterruptionFailureIsNotRetriedForever() {
+        DeliveringSession session = deliveringSession();
+        session.failWith = new IllegalStateException("boom");
+        setReadinessFlags(session, true, false, false);
+
+        assertThat(deliverEdgeEvents(session, new RecordingEdgeEventConsumer()))
+                .as("a send failure must not be committed")
+                .isFalse();
+        assertThat(session.sendAttempts.get())
+                .as("a failure that is not an interruption must not be retried - it would block the queue forever")
+                .isEqualTo(1);
+    }
+
+    private DeliveringSession deliveringSession() {
+        EdgeEventStorageSettings storageSettings = new EdgeEventStorageSettings();
+        storageSettings.setNoRecordsSleepInterval(POLL_INTERVAL_MS);
+        EdgeContextComponent sessionCtx = mock(EdgeContextComponent.class);
+        when(sessionCtx.getEdgeEventStorageSettings()).thenReturn(storageSettings);
+        @SuppressWarnings("unchecked")
+        StreamObserver<ResponseMsg> outputStream = mock(StreamObserver.class);
+        DeliveringSession deliveringSession = new DeliveringSession(sessionCtx, outputStream);
+        ReflectionTestUtils.setField(deliveringSession, "edge", new Edge(new EdgeId(UUID.randomUUID())));
+        ReflectionTestUtils.setField(deliveringSession, "tenantId", TenantId.fromUUID(UUID.randomUUID()));
+        return deliveringSession;
+    }
+
+    private static boolean deliverEdgeEvents(KafkaEdgeGrpcSession session, TbQueueConsumer<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> consumer) {
+        return Boolean.TRUE.equals(ReflectionTestUtils.invokeMethod(session, "deliverEdgeEvents", List.of(new EdgeEvent()), consumer));
+    }
+
+    private static void setReadinessFlags(KafkaEdgeGrpcSession session, boolean connected, boolean syncInProgress, boolean highPriorityProcessing) {
+        ReflectionTestUtils.setField(session, "connected", connected);
+        ReflectionTestUtils.setField(session, "syncInProgress", syncInProgress);
+        ReflectionTestUtils.setField(session, "isHighPriorityProcessing", highPriorityProcessing);
+    }
+
+    /**
+     * Session whose downlink send is fully controllable, so the retry loop can be driven without a real gRPC stream.
+     */
+    private static class DeliveringSession extends KafkaEdgeGrpcSession {
+
+        final AtomicInteger sendAttempts = new AtomicInteger();
+        final AtomicInteger convertCalls = new AtomicInteger();
+        volatile int interruptAttempts;
+        volatile RuntimeException failWith;
+
+        DeliveringSession(EdgeContextComponent ctx, StreamObserver<ResponseMsg> outputStream) {
+            super(ctx, mock(TopicService.class), mock(TbCoreQueueFactory.class), mock(KafkaAdmin.class), outputStream,
+                    (edgeId, s) -> {}, (edge, uuid) -> {}, null, 0, 0);
+        }
+
+        @Override
+        protected List<DownlinkMsg> convertToDownlinkMsgsPack(List<EdgeEvent> edgeEvents) {
+            convertCalls.incrementAndGet();
+            return List.of(DownlinkMsg.newBuilder().setDownlinkMsgId(1).build());
+        }
+
+        @Override
+        protected ListenableFuture<Boolean> sendDownlinkMsgsPack(List<DownlinkMsg> downlinkMsgsPack) {
+            int attempt = sendAttempts.incrementAndGet();
+            if (failWith != null) {
+                return Futures.immediateFailedFuture(failWith);
+            }
+            // true means the send was interrupted, e.g. by a sync request
+            return Futures.immediateFuture(attempt <= interruptAttempts);
+        }
     }
 
     private boolean isReadyToProcessGeneralEvents() {
