@@ -31,6 +31,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
+import org.thingsboard.server.cache.TbCacheValueWrapper;
 import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.AttributeScope;
@@ -186,6 +187,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             session.onEdgeRemoval();
             sessions.remove(session);
         }
+        cancelPendingDisconnectNotification(edgeId);
     }
 
     @Override
@@ -226,8 +228,8 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         // If the edge reconnected within the disconnect-notification delay window, suppress the pending
         // "disconnected" notification - the drop was transient (debounce for flapping edges).
         cancelPendingDisconnectNotification(edgeId);
-        pushRuleEngineMessage(tenantId, edge, lastConnectTs, TbMsgType.CONNECT_EVENT);
         // Connect notifies immediately; only the disconnect notification is debounced (see scheduleDisconnectNotification).
+        pushRuleEngineMessage(tenantId, edge, lastConnectTs, TbMsgType.CONNECT_EVENT);
         notifyEdgeConnectivity(edge, true);
         edgeSession.onEdgeConnect();
     }
@@ -263,7 +265,12 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                 log.debug("[{}] No session found by sessionId [{}] to destroy", edgeId, sessionId);
             }
         }
-        edgeIdServiceIdCache.evict(edgeId);
+        // Don't evict while a live session for this edge still exists on this node (e.g. a stale session
+        // disconnecting after a newer one already replaced it) - that newer session legitimately owns the
+        // cache entry, and wiping it would let another node's pending task fire a false 'disconnected' notification.
+        if (!sessions.hasByEdgeId(edgeId)) {
+            evictServiceIdCacheIfOwnedByThisNode(edgeId);
+        }
     }
 
     private void scheduleSyncRequestTimeout(ToEdgeSyncRequest request, UUID requestId) {
@@ -394,9 +401,9 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     }
 
     private void fireDelayedDisconnectNotification(PendingDisconnect pending) {
-        // Claim-once guard: the @PreDestroy flush and a concurrently-firing scheduled task can both call this for
-        // the same PendingDisconnect. tryClaim() ensures notifyEdgeConnectivity fires at most once without relying
-        // on downstream notification dedup.
+        // Claim-once guard: the @PreDestroy preDestroy() flush and a concurrently-firing scheduled task can both call
+        // this for the same PendingDisconnect. tryClaim() ensures notifyEdgeConnectivity fires at most once without
+        // relying on downstream notification dedup.
         if (!pending.tryClaim()) {
             return;
         }
@@ -420,6 +427,22 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         }
     }
 
+    // Only evict if the cache still points to this node. If the edge already reconnected to a different
+    // TB-Core node within the keep-alive window, that node has overwritten the entry - evicting it here
+    // would wipe the live owner and make fireDelayedDisconnectNotification raise a false 'disconnected'.
+    private void evictServiceIdCacheIfOwnedByThisNode(EdgeId edgeId) {
+        if (isOwnedByThisNode(edgeId)) {
+            edgeIdServiceIdCache.evict(edgeId);
+        }
+    }
+
+    // The edge's service-id cache entry still points at this node, i.e. this node is the recorded owner.
+    private boolean isOwnedByThisNode(EdgeId edgeId) {
+        TbCacheValueWrapper<String> wrapper = edgeIdServiceIdCache.get(edgeId);
+        return wrapper != null && serviceInfoProvider.getServiceId().equals(wrapper.get());
+    }
+
+    // The edge has a live owner somewhere in the cluster (the cache is cluster-wide), regardless of which node.
     private boolean isConnectedClusterWide(EdgeId edgeId) {
         return edgeIdServiceIdCache.get(edgeId) != null;
     }
