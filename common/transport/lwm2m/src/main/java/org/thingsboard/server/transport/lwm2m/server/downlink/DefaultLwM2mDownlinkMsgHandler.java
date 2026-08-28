@@ -68,6 +68,7 @@ import org.eclipse.leshan.core.response.WriteAttributesResponse;
 import org.eclipse.leshan.core.response.WriteCompositeResponse;
 import org.eclipse.leshan.core.response.WriteResponse;
 import org.eclipse.leshan.core.util.Hex;
+import org.eclipse.leshan.core.util.datatype.ULong;
 import org.eclipse.leshan.server.model.LwM2mModelProvider;
 import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.stereotype.Service;
@@ -87,6 +88,7 @@ import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogServic
 import org.thingsboard.server.transport.lwm2m.server.rpc.composite.RpcWriteCompositeRequest;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -653,9 +655,17 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
         switch (type) {
             case STRING:    // String
                 return new WriteRequest(contentFormat, objectId, instanceId, resourceId, value.toString());
-            case INTEGER:   // Long
-                final long valueInt = Integer.toUnsignedLong(Integer.parseInt(value.toString()));
+            case INTEGER:   // Integer:
+                final int valueInt = Integer.parseInt(value.toString());
                 return new WriteRequest(contentFormat, objectId, instanceId, resourceId, valueInt);
+            case UNSIGNED_INTEGER:   // ULong
+                BigInteger validateUnsignedInt = new BigInteger(value.toString());
+                if (validateUnsignedInt.signum() < 0 ||
+                        validateUnsignedInt.bitLength() > 64) {
+                    throw new IllegalArgumentException("Invalid UNSIGNED_INTEGER");
+                }
+                ULong valueUnsignedInt = ULong.valueOf(validateUnsignedInt);
+                return new WriteRequest(contentFormat, objectId, instanceId, resourceId, valueUnsignedInt);
             case OBJLNK:    // ObjectLink
                 return new WriteRequest(contentFormat, objectId, instanceId, resourceId, ObjectLink.fromPath(value.toString()));
             case BOOLEAN:   // Boolean
