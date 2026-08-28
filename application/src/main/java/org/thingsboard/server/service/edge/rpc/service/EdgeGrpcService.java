@@ -31,6 +31,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
+import org.thingsboard.server.cache.TbCacheValueWrapper;
 import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.AttributeScope;
@@ -64,12 +65,16 @@ import org.thingsboard.server.service.edge.rpc.session.EdgeSessionsHolder;
 import org.thingsboard.server.service.edge.rpc.session.manager.EdgeGrpcSessionManager;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import static org.thingsboard.server.service.state.DefaultDeviceStateService.ACTIVITY_STATE;
@@ -89,6 +94,9 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     @Value("${edges.state.persistToTelemetry:false}")
     private boolean persistToTelemetry;
 
+    @Value("${edges.connectivity.disconnect_notification_delay_ms:60000}")
+    private long disconnectNotificationDelayMs;
+
     @Autowired
     @Lazy
     private EdgeContextComponent ctx;
@@ -100,18 +108,24 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private final TelemetrySubscriptionService tsSubService;
     private final TbTransactionalCache<EdgeId, String> edgeIdServiceIdCache;
 
+    private final ConcurrentMap<EdgeId, PendingDisconnect> pendingDisconnectNotifications = new ConcurrentHashMap<>();
     private final ConcurrentMap<UUID, Consumer<FromEdgeSyncResponse>> localSyncEdgeRequests = new ConcurrentHashMap<>();
     private ScheduledExecutorService executorService;
     private ScheduledExecutorService sendDownlinkExecutorService;
 
     @PostConstruct
     public void onStartUp() {
-        this.executorService = ThingsBoardExecutors.newSingleThreadScheduledExecutor("edge-service");
+        // removeOnCancelPolicy: cancelled delayed disconnect notifications (common with flapping edges) are dropped
+        // from the queue right away on reconnect, instead of piling up until their original fire time.
+        this.executorService = ThingsBoardExecutors.newSingleThreadScheduledExecutor("edge-service", true);
         this.sendDownlinkExecutorService = ThingsBoardExecutors.newScheduledThreadPool(sendSchedulerPoolSize, "edge-send-scheduler");
     }
 
     @PreDestroy
     private void preDestroy() {
+        List<PendingDisconnect> pendingToFlush = new ArrayList<>(pendingDisconnectNotifications.values());
+        pendingDisconnectNotifications.clear();
+        pendingToFlush.forEach(this::fireDelayedDisconnectNotification);
         shutdownExecutorSafely(executorService);
         shutdownExecutorSafely(sendDownlinkExecutorService);
         sessions.forEach(EdgeGrpcSessionManager::onEdgeDisconnect);
@@ -173,6 +187,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             session.onEdgeRemoval();
             sessions.remove(session);
         }
+        cancelPendingDisconnectNotification(edgeId);
     }
 
     @Override
@@ -210,7 +225,12 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         long lastConnectTs = System.currentTimeMillis();
         save(tenantId, edgeId, LAST_CONNECT_TIME, lastConnectTs);
         edgeIdServiceIdCache.put(edgeId, serviceInfoProvider.getServiceId());
+        // If the edge reconnected within the disconnect-notification delay window, suppress the pending
+        // "disconnected" notification - the drop was transient (debounce for flapping edges).
+        cancelPendingDisconnectNotification(edgeId);
+        // Connect notifies immediately; only the disconnect notification is debounced (see scheduleDisconnectNotification).
         pushRuleEngineMessage(tenantId, edge, lastConnectTs, TbMsgType.CONNECT_EVENT);
+        notifyEdgeConnectivity(edge, true);
         edgeSession.onEdgeConnect();
     }
 
@@ -230,6 +250,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             long lastDisconnectTs = System.currentTimeMillis();
             save(tenantId, edgeId, LAST_DISCONNECT_TIME, lastDisconnectTs);
             pushRuleEngineMessage(tenantId, edge, lastDisconnectTs, TbMsgType.DISCONNECT_EVENT);
+            scheduleDisconnectNotification(edge);
         } else {
             log.info("[{}] edge session [{}] is not current anymore. Attempting to destroy it by sessionId.", edgeId, sessionId);
             EdgeGrpcSessionManager stale = sessions.removeBySessionId(sessionId);
@@ -244,7 +265,12 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                 log.debug("[{}] No session found by sessionId [{}] to destroy", edgeId, sessionId);
             }
         }
-        edgeIdServiceIdCache.evict(edgeId);
+        // Don't evict while a live session for this edge still exists on this node (e.g. a stale session
+        // disconnecting after a newer one already replaced it) - that newer session legitimately owns the
+        // cache entry, and wiping it would let another node's pending task fire a false 'disconnected' notification.
+        if (!sessions.hasByEdgeId(edgeId)) {
+            evictServiceIdCacheIfOwnedByThisNode(edgeId);
+        }
     }
 
     private void scheduleSyncRequestTimeout(ToEdgeSyncRequest request, UUID requestId) {
@@ -318,12 +344,6 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                 edgeState.put(ACTIVITY_STATE, false);
                 edgeState.put(LAST_DISCONNECT_TIME, ts);
             }
-            ctx.getRuleProcessor().process(EdgeConnectionTrigger.builder()
-                    .tenantId(tenantId)
-                    .customerId(edge.getCustomerId())
-                    .edgeId(edgeId)
-                    .edgeName(edge.getName())
-                    .connected(isConnected).build());
             String data = JacksonUtil.toString(edgeState);
             TbMsgMetaData md = new TbMsgMetaData();
             if (!persistToTelemetry) {
@@ -341,6 +361,95 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             clusterService.pushMsgToRuleEngine(tenantId, edgeId, tbMsg, null);
         } catch (Exception e) {
             log.warn("[{}][{}] Failed to push {}", tenantId, edge.getId(), msgType, e);
+        }
+    }
+
+    private void notifyEdgeConnectivity(Edge edge, boolean connected) {
+        try {
+            ctx.getRuleProcessor().process(EdgeConnectionTrigger.builder()
+                    .tenantId(edge.getTenantId())
+                    .customerId(edge.getCustomerId())
+                    .edgeId(edge.getId())
+                    .edgeName(edge.getName())
+                    .connected(connected).build());
+        } catch (Exception e) {
+            log.warn("[{}][{}] Failed to process edge connectivity notification (connected={})", edge.getTenantId(), edge.getId(), connected, e);
+        }
+    }
+
+    private void scheduleDisconnectNotification(Edge edge) {
+        // Zero delay means "no debounce": notify immediately and skip the cluster-wide re-verify guard.
+        if (disconnectNotificationDelayMs <= 0) {
+            notifyEdgeConnectivity(edge, false);
+            return;
+        }
+        EdgeId edgeId = edge.getId();
+        pendingDisconnectNotifications.compute(edgeId, (id, existing) -> {
+            if (existing != null) {
+                cancelIfPending(existing.getFuture());
+            }
+            // Create the pending entry first so the scheduled task can reference it (for the identity-keyed
+            // remove in fireDelayedDisconnectNotification), then back-fill its future. Doing this inside compute()
+            // keeps it under the map bin lock, so the future is set before the entry becomes visible to other threads.
+            PendingDisconnect pending = new PendingDisconnect(edge);
+            ScheduledFuture<?> future = executorService.schedule(
+                    () -> fireDelayedDisconnectNotification(pending),
+                    disconnectNotificationDelayMs, TimeUnit.MILLISECONDS);
+            pending.setFuture(future);
+            return pending;
+        });
+    }
+
+    private void fireDelayedDisconnectNotification(PendingDisconnect pending) {
+        // Claim-once guard: the @PreDestroy preDestroy() flush and a concurrently-firing scheduled task can both call
+        // this for the same PendingDisconnect. tryClaim() ensures notifyEdgeConnectivity fires at most once without
+        // relying on downstream notification dedup.
+        if (!pending.tryClaim()) {
+            return;
+        }
+        Edge edge = pending.getEdge();
+        EdgeId edgeId = edge.getId();
+        // Identity-keyed remove: don't clobber a newer entry if a second disconnect races with this task firing.
+        pendingDisconnectNotifications.remove(edgeId, pending);
+        // Re-verify the edge is still disconnected. The cache is cluster-wide, so this also covers the case
+        // where the edge dropped on this node and reconnected to a different TB-Core node within the window.
+        if (sessions.hasByEdgeId(edgeId) || isConnectedClusterWide(edgeId)) {
+            log.debug("[{}][{}] Edge reconnected within the disconnect notification delay - skipping disconnect notification", edge.getTenantId(), edgeId);
+            return;
+        }
+        notifyEdgeConnectivity(edge, false);
+    }
+
+    private void cancelPendingDisconnectNotification(EdgeId edgeId) {
+        PendingDisconnect pending = pendingDisconnectNotifications.remove(edgeId);
+        if (pending != null) {
+            cancelIfPending(pending.getFuture());
+        }
+    }
+
+    // Only evict if the cache still points to this node. If the edge already reconnected to a different
+    // TB-Core node within the keep-alive window, that node has overwritten the entry - evicting it here
+    // would wipe the live owner and make fireDelayedDisconnectNotification raise a false 'disconnected'.
+    private void evictServiceIdCacheIfOwnedByThisNode(EdgeId edgeId) {
+        if (isOwnedByThisNode(edgeId)) {
+            edgeIdServiceIdCache.evict(edgeId);
+        }
+    }
+
+    // The edge's service-id cache entry still points at this node, i.e. this node is the recorded owner.
+    private boolean isOwnedByThisNode(EdgeId edgeId) {
+        TbCacheValueWrapper<String> wrapper = edgeIdServiceIdCache.get(edgeId);
+        return wrapper != null && serviceInfoProvider.getServiceId().equals(wrapper.get());
+    }
+
+    // The edge has a live owner somewhere in the cluster (the cache is cluster-wide), regardless of which node.
+    private boolean isConnectedClusterWide(EdgeId edgeId) {
+        return edgeIdServiceIdCache.get(edgeId) != null;
+    }
+
+    private static void cancelIfPending(ScheduledFuture<?> future) {
+        if (future != null && !future.isDone()) {
+            future.cancel(false);
         }
     }
 
@@ -389,4 +498,33 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             e.shutdown();
         }
     }
+
+    static final class PendingDisconnect {
+
+        private final Edge edge;
+        private final AtomicBoolean notified = new AtomicBoolean(false);
+        private ScheduledFuture<?> future;
+
+        PendingDisconnect(Edge edge) {
+            this.edge = edge;
+        }
+
+        Edge getEdge() {
+            return edge;
+        }
+
+        ScheduledFuture<?> getFuture() {
+            return future;
+        }
+
+        void setFuture(ScheduledFuture<?> future) {
+            this.future = future;
+        }
+
+        boolean tryClaim() {
+            return notified.compareAndSet(false, true);
+        }
+
+    }
+
 }

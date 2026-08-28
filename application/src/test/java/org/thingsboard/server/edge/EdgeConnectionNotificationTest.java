@@ -28,7 +28,7 @@ import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.controller.AbstractWebTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.edge.imitator.EdgeImitator;
-import org.thingsboard.server.service.edge.rpc.EdgeGrpcService;
+import org.thingsboard.server.service.edge.rpc.service.EdgeGrpcService;
 
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
