@@ -238,19 +238,17 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         TenantId tenantId = edge.getTenantId();
         EdgeId edgeId = edge.getId();
         log.info("[{}][{}] edge disconnected!", edgeId, sessionId);
-        EdgeGrpcSessionManager current = sessions.getByEdgeId(edgeId);
-        if (current != null && current.getState().getSessionId().equals(sessionId)) {
-            EdgeGrpcSessionManager toRemove = sessions.removeByEdgeId(edgeId);
-            if (toRemove != null) {
-                toRemove.onEdgeDisconnect();
-                toRemove.destroyAndMarkAsZombieIfFailed();
-            }
+        EdgeGrpcSessionManager toRemove = sessions.removeByEdgeIdIfCurrent(edgeId, sessionId);
+        if (toRemove != null) {
             sessions.removeBySessionId(sessionId);
             save(tenantId, edgeId, ACTIVITY_STATE, false);
             long lastDisconnectTs = System.currentTimeMillis();
             save(tenantId, edgeId, LAST_DISCONNECT_TIME, lastDisconnectTs);
             pushRuleEngineMessage(tenantId, edge, lastDisconnectTs, TbMsgType.DISCONNECT_EVENT);
             scheduleDisconnectNotification(edge);
+            toRemove.onEdgeDisconnect();
+            // keep the slow teardown last, after the state transition is fully recorded
+            toRemove.destroyAndMarkAsZombieIfFailed();
         } else {
             log.info("[{}] edge session [{}] is not current anymore. Attempting to destroy it by sessionId.", edgeId, sessionId);
             EdgeGrpcSessionManager stale = sessions.removeBySessionId(sessionId);
