@@ -58,6 +58,7 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.util.KvUtils;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.cf.CalculatedFieldQueueService;
+import org.thingsboard.server.service.edge.attributes.AttributesEdgeSyncService;
 import org.thingsboard.server.service.entitiy.entityview.TbEntityViewService;
 import org.thingsboard.server.service.state.DefaultDeviceStateService;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
@@ -90,6 +91,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     private final TbApiUsageStateService apiUsageStateService;
     private final CalculatedFieldQueueService calculatedFieldQueueService;
     private final DeviceStateManager deviceStateManager;
+    private final AttributesEdgeSyncService attributesEdgeSyncService;
 
     private ExecutorService tsCallBackExecutor;
 
@@ -104,7 +106,8 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
                                                TbApiUsageReportClient apiUsageClient,
                                                TbApiUsageStateService apiUsageStateService,
                                                CalculatedFieldQueueService calculatedFieldQueueService,
-                                               DeviceStateManager deviceStateManager) {
+                                               DeviceStateManager deviceStateManager,
+                                               AttributesEdgeSyncService attributesEdgeSyncService) {
         this.attrService = attrService;
         this.tsService = tsService;
         this.tbEntityViewService = tbEntityViewService;
@@ -112,6 +115,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         this.apiUsageStateService = apiUsageStateService;
         this.calculatedFieldQueueService = calculatedFieldQueueService;
         this.deviceStateManager = deviceStateManager;
+        this.attributesEdgeSyncService = attributesEdgeSyncService;
     }
 
     @PostConstruct
@@ -225,6 +229,10 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
             );
         }
 
+        if (attributesEdgeSyncService.isEdgeSyncRequired(request)) {
+            attributesEdgeSyncService.onAttributesUpdate(request, resultFuture);
+        }
+
         if (strategy.sendWsUpdate()) {
             addWsCallback(resultFuture, success -> onAttributesUpdate(tenantId, entityId, request.getScope().name(), request.getEntries()));
         }
@@ -285,6 +293,10 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
             addMainCallback(deleteFuture, success -> deviceStateManager.onDeviceInactivityTimeoutUpdate(
                     tenantId, new DeviceId(entityId.getId()), 0L, TbCallback.EMPTY)
             );
+        }
+
+        if (attributesEdgeSyncService.isEdgeSyncRequired(request)) {
+            attributesEdgeSyncService.onAttributesDelete(request, deleteFuture);
         }
 
         addWsCallback(deleteFuture, success -> onAttributesDelete(tenantId, entityId, request.getScope().name(), request.getKeys()));

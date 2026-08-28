@@ -33,6 +33,7 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.telemetry.settings.AttributesProcessingSettings;
 import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
@@ -212,6 +213,7 @@ public class TbMsgAttributesNode implements TbNode {
                 .previousCalculatedFieldIds(msg.getPreviousCalculatedFieldIds())
                 .tbMsgId(msg.getId())
                 .tbMsgType(msg.getInternalType())
+                .msgSource(msg.getMetaData().getValue(DataConstants.MSG_SOURCE_KEY))
                 .callback(callback)
                 .build());
     }

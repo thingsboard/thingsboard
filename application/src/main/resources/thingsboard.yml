@@ -654,6 +654,11 @@ cache:
     # Will enable cache-aside strategy for SQL timeseries latest DAO.
     # make sure that if cache.type is 'redis' and cache.ts_latest.enabled is 'true' if you change 'maxmemory-policy' Redis config property to 'allkeys-lru', 'allkeys-lfu' or 'allkeys-random'
     enabled: "${CACHE_TS_LATEST_ENABLED:true}"
+  gateway_flag:
+    # Maximum number of entries in the local (always in-memory, per node) cache of the device gateway flag, used by the attributes sync to edge
+    max_size: "${CACHE_GATEWAY_FLAG_MAX_SIZE:500000}"
+    # Time to live of the cached gateway flag, counted since the last access. Bounds the flag staleness in case a device lifecycle broadcast is missed
+    time_to_live_in_minutes: "${CACHE_GATEWAY_FLAG_TTL:30}"
   specs:
     relations:
       timeToLiveInMinutes: "${CACHE_SPECS_RELATIONS_TTL:1440}" # Relations cache TTL
@@ -1644,6 +1649,10 @@ edges:
   send_scheduler_pool_size: "${EDGES_SEND_SCHEDULER_POOL_SIZE:4}"
   # Number of threads that are used to convert edge events from DB into downlink messages and send them for delivery
   grpc_callback_thread_pool_size: "${EDGES_GRPC_CALLBACK_POOL_SIZE:4}"
+  # Number of single-thread workers that are used to sync attribute updates to edge (e.g. configuration attributes of gateway devices). The worker is selected by the entity id to preserve the per-entity order of events
+  attributes_sync_pool_size: "${EDGES_ATTRIBUTES_SYNC_POOL_SIZE:8}"
+  # Maximum number of pending attribute sync tasks per worker. When the queue is full, new tasks are discarded - such updates reach the edge only with the next update of the same attributes or a manual edge synchronization
+  attributes_sync_max_queue_size: "${EDGES_ATTRIBUTES_SYNC_MAX_QUEUE_SIZE:5000}"
   state:
     # Persist state of edge (active, last connect, last disconnect) into timeseries or attributes tables. 'false' means to store edge state into attributes table
     persistToTelemetry: "${EDGES_PERSIST_STATE_TO_TELEMETRY:false}"

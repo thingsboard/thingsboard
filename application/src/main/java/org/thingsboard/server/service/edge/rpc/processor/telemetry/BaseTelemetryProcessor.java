@@ -325,6 +325,7 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
                         .entityId(entityId)
                         .scope(scope)
                         .entries(attributesToSave)
+                        .msgSource(getMsgSourceKey())
                         .callback(new FutureCallback<>() {
                             @Override
                             public void onSuccess(@Nullable Void tmp) {
