@@ -272,20 +272,23 @@ public class EdgeMsgConstructorUtils {
                 responseBuilder.setResponse(body.get("response").asText());
             }
             builder.setResponseMsg(responseBuilder.build());
-        } else {
+        } else if (body.has("method")) {
             RpcRequestMsg.Builder requestBuilder = RpcRequestMsg.newBuilder();
             requestBuilder.setMethod(body.get("method").asText());
             requestBuilder.setParams(body.get("params").asText());
             builder.setRequestMsg(requestBuilder.build());
         }
+        // else: status-only message (rpcStatus set in constructDeviceRpcMsg) carries neither request nor response body
         return builder.build();
     }
 
     private static DeviceRpcCallMsg.Builder constructDeviceRpcMsg(UUID deviceId, JsonNode body) {
         DeviceRpcCallMsg.Builder builder = DeviceRpcCallMsg.newBuilder()
                 .setDeviceIdMSB(deviceId.getMostSignificantBits())
-                .setDeviceIdLSB(deviceId.getLeastSignificantBits())
-                .setRequestId(body.get("requestId").asInt());
+                .setDeviceIdLSB(deviceId.getLeastSignificantBits());
+        if (body.get("requestId") != null) {
+            builder.setRequestId(body.get("requestId").asInt());
+        }
         if (body.get("oneway") != null) {
             builder.setOneway(body.get("oneway").asBoolean());
         }
@@ -311,6 +314,9 @@ public class EdgeMsgConstructorUtils {
         }
         if (body.get("sessionId") != null) {
             builder.setSessionId(body.get("sessionId").asText());
+        }
+        if (body.get("rpcStatus") != null) {
+            builder.setRpcStatus(body.get("rpcStatus").asText());
         }
         return builder;
     }

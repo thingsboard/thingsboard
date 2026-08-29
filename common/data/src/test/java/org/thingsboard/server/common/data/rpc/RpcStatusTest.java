@@ -26,20 +26,20 @@ import static org.thingsboard.server.common.data.rpc.RpcStatus.SENT;
 
 class RpcStatusTest {
 
-    private static final List<RpcStatus> pushDeleteNotificationToCoreStatuses = List.of(
+    private static final List<RpcStatus> intermediateStatuses = List.of(
             QUEUED,
             SENT,
             DELIVERED
     );
 
     @Test
-    void isPushDeleteNotificationToCoreStatusTest() {
+    void isIntermediateStatusTest() {
         var rpcStatuses = RpcStatus.values();
         for (var status : rpcStatuses) {
-            if (pushDeleteNotificationToCoreStatuses.contains(status)) {
-                assertThat(status.isPushDeleteNotificationToCore()).isTrue();
+            if (intermediateStatuses.contains(status)) {
+                assertThat(status.isIntermediate()).isTrue();
             } else {
-                assertThat(status.isPushDeleteNotificationToCore()).isFalse();
+                assertThat(status.isIntermediate()).isFalse();
             }
         }
     }

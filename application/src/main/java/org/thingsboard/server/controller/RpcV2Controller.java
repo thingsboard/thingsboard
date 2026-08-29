@@ -24,6 +24,7 @@ import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -47,6 +48,7 @@ import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.rpc.RemoveRpcActorMsg;
+import org.thingsboard.server.service.rpc.TbRpcService;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.exception.ToErrorResponseEntity;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -73,6 +75,9 @@ import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CU
 @RequestMapping(TbUrlConstants.RPC_V2_URL_PREFIX)
 @Slf4j
 public class RpcV2Controller extends AbstractRpcController {
+
+    @Autowired
+    private TbRpcService tbRpcService;
 
     private static final String RPC_REQUEST_DESCRIPTION = "Sends the one-way remote-procedure call (RPC) request to device. " +
             "The RPC call is A JSON that contains the method name ('method'), parameters ('params') and multiple optional fields. " +
@@ -230,13 +235,13 @@ public class RpcV2Controller extends AbstractRpcController {
         Rpc rpc = checkRpcId(rpcId, Operation.DELETE);
 
         if (rpc != null) {
-            if (rpc.getStatus().isPushDeleteNotificationToCore()) {
+            if (rpc.getStatus().isIntermediate()) {
                 RemoveRpcActorMsg removeMsg = new RemoveRpcActorMsg(getTenantId(), rpc.getDeviceId(), rpc.getUuidId());
                 log.trace("[{}] Forwarding msg {} to queue actor!", rpc.getDeviceId(), rpc);
                 tbClusterService.pushMsgToCore(removeMsg, null);
             }
 
-            rpcService.deleteRpc(getTenantId(), rpcId);
+            tbRpcService.deleteRpc(getTenantId(), rpcId);
             rpc.setStatus(RpcStatus.DELETED);
 
             TbMsg msg = TbMsg.newMsg()
