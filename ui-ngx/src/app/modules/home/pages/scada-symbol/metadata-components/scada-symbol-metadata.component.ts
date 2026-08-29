@@ -36,7 +36,11 @@ import {
   Validators
 } from '@angular/forms';
 import { PageComponent } from '@shared/components/page.component';
-import { emptyMetadata, ScadaSymbolMetadata } from '@home/components/widget/lib/scada/scada-symbol.models';
+import {
+  emptyMetadata,
+  ScadaSymbolActionTrigger,
+  ScadaSymbolMetadata
+} from '@home/components/widget/lib/scada/scada-symbol.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { ToggleHeaderOption } from '@shared/components/toggle-header.component';
@@ -46,7 +50,7 @@ import {
 } from '@home/pages/scada-symbol/metadata-components/scada-symbol-metadata-tags.component';
 import { TbEditorCompleter } from '@shared/models/ace/completion.models';
 import {
-  clickActionFunctionCompletions,
+  actionFunctionCompletions,
   elementStateRenderFunctionCompletions,
   generalStateRenderFunctionCompletions,
   scadaSymbolContextCompletion,
@@ -122,7 +126,7 @@ export class ScadaSymbolMetadataComponent extends PageComponent implements OnIni
 
   generalStateRenderFunctionCompleter: TbEditorCompleter;
   elementStateRenderFunctionCompleter: TbEditorCompleter;
-  clickActionFunctionCompleter: TbEditorCompleter;
+  actionFunctionCompleter: TbEditorCompleter;
 
   highlightRules = scadaSymbolGeneralStateHighlightRules;
 
@@ -205,9 +209,9 @@ export class ScadaSymbolMetadataComponent extends PageComponent implements OnIni
     this.symbolMetadataTags.editTagStateRenderFunction(tag);
   }
 
-  editTagClickAction(tag: string): void {
+  editTagAction(tag: string, trigger: ScadaSymbolActionTrigger): void {
     this.selectedOption = 'tags';
-    this.symbolMetadataTags.editTagClickAction(tag);
+    this.symbolMetadataTags.editTagAction(tag, trigger);
   }
 
   public validate(c: UntypedFormControl) {
@@ -240,11 +244,11 @@ export class ScadaSymbolMetadataComponent extends PageComponent implements OnIni
     } else {
       this.elementStateRenderFunctionCompleter.updateCompletions(elementStateRender);
     }
-    const clickAction = clickActionFunctionCompletions(contextCompleter);
-    if (!this.clickActionFunctionCompleter) {
-      this.clickActionFunctionCompleter = new TbEditorCompleter(clickAction);
+    const actionFunction = actionFunctionCompletions(contextCompleter);
+    if (!this.actionFunctionCompleter) {
+      this.actionFunctionCompleter = new TbEditorCompleter(actionFunction);
     } else {
-      this.clickActionFunctionCompleter.updateCompletions(clickAction);
+      this.actionFunctionCompleter.updateCompletions(actionFunction);
     }
   }
 }

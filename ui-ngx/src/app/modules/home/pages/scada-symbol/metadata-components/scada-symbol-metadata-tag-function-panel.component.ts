@@ -30,10 +30,15 @@ import { WidgetService } from '@core/http/widget.service';
 import { TbEditorCompleter } from '@shared/models/ace/completion.models';
 import { AceHighlightRules } from '@shared/models/ace/ace.models';
 import {
-  scadaSymbolClickActionHighlightRules,
+  scadaSymbolActionFunctionHighlightRules,
   scadaSymbolRenderFunctionHighlightRules
 } from '@home/pages/scada-symbol/scada-symbol-editor.models';
 import { JsFuncComponent } from '@shared/components/js-func.component';
+import {
+  ScadaSymbolActionTrigger,
+  scadaSymbolActionTriggerHelpIds,
+  scadaSymbolActionTriggerTranslations
+} from '@home/components/widget/lib/scada/scada-symbol.models';
 
 @Component({
     selector: 'tb-scada-symbol-metadata-tag-function-panel',
@@ -51,7 +56,7 @@ export class ScadaSymbolMetadataTagFunctionPanelComponent implements OnInit, Aft
   tagFunction: string;
 
   @Input()
-  tagFunctionType: 'renderFunction' | 'clickAction';
+  tagFunctionType: 'renderFunction' | ScadaSymbolActionTrigger;
 
   @Input()
   tag: string;
@@ -98,11 +103,11 @@ export class ScadaSymbolMetadataTagFunctionPanelComponent implements OnInit, Aft
       this.tagFunctionArgs = ['ctx', 'element'];
       this.highlightRules = scadaSymbolRenderFunctionHighlightRules;
       this.tagFunctionHelpId = 'scada/tag_state_render_fn';
-    } else if (this.tagFunctionType === 'clickAction') {
-      this.panelTitle = 'scada.tag.on-click-action';
+    } else {
+      this.panelTitle = scadaSymbolActionTriggerTranslations.get(this.tagFunctionType);
       this.tagFunctionArgs = ['ctx', 'element', 'event'];
-      this.highlightRules = scadaSymbolClickActionHighlightRules;
-      this.tagFunctionHelpId = 'scada/tag_click_action_fn';
+      this.highlightRules = scadaSymbolActionFunctionHighlightRules;
+      this.tagFunctionHelpId = scadaSymbolActionTriggerHelpIds.get(this.tagFunctionType);
     }
   }
 

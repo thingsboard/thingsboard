@@ -38,7 +38,12 @@ import {
   UntypedFormGroup,
   Validator
 } from '@angular/forms';
-import { ScadaSymbolTag } from '@home/components/widget/lib/scada/scada-symbol.models';
+import {
+  ScadaSymbolActionTrigger,
+  scadaSymbolActionTriggers,
+  scadaSymbolActionTriggerTranslations,
+  ScadaSymbolTag
+} from '@home/components/widget/lib/scada/scada-symbol.models';
 import {
   ScadaSymbolMetadataTagComponent
 } from '@home/pages/scada-symbol/metadata-components/scada-symbol-metadata-tag.component';
@@ -46,7 +51,7 @@ import { TbEditorCompleter } from '@shared/models/ace/completion.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 const tagIsEmpty = (tag: ScadaSymbolTag): boolean =>
-  !tag.stateRenderFunction && !tag.actions?.click?.actionFunction;
+  !tag.stateRenderFunction && !scadaSymbolActionTriggers.some(trigger => tag.actions?.[trigger]?.actionFunction);
 
 @Component({
     selector: 'tb-scada-symbol-metadata-tags',
@@ -85,7 +90,11 @@ export class ScadaSymbolMetadataTagsComponent implements ControlValueAccessor, O
   elementStateRenderFunctionCompleter: TbEditorCompleter;
 
   @Input()
-  clickActionFunctionCompleter: TbEditorCompleter;
+  actionFunctionCompleter: TbEditorCompleter;
+
+  actionTriggers = scadaSymbolActionTriggers;
+
+  actionTriggerTranslations = scadaSymbolActionTriggerTranslations;
 
   tagsFormGroup: UntypedFormGroup;
 
@@ -184,12 +193,12 @@ export class ScadaSymbolMetadataTagsComponent implements ControlValueAccessor, O
     });
   }
 
-  editTagClickAction(tag: string): void {
+  editTagAction(tag: string, trigger: ScadaSymbolActionTrigger): void {
     setTimeout(() => {
       const tags: ScadaSymbolTag[] = this.tagsFormGroup.get('tags').value;
       const index = tags.findIndex(t => t.tag === tag);
       const tagComponent = this.metadataTags.get(index);
-      tagComponent?.editClickAction();
+      tagComponent?.editAction(trigger);
     });
   }
 
@@ -204,12 +213,14 @@ export class ScadaSymbolMetadataTagsComponent implements ControlValueAccessor, O
       const found = result.find(t => t.tag === tag.tag);
       if (found) {
         found.stateRenderFunction = tag.stateRenderFunction;
-        if (tag.actions?.click?.actionFunction) {
-          found.actions = {
-            click: {
-              actionFunction: tag.actions.click.actionFunction
-            }
-          };
+        for (const trigger of scadaSymbolActionTriggers) {
+          const actionFunction = tag.actions?.[trigger]?.actionFunction;
+          if (actionFunction) {
+            found.actions = found.actions || {};
+            found.actions[trigger] = {
+              actionFunction
+            };
+          }
         }
       }
     }

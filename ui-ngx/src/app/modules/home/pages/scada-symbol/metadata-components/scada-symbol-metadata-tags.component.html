@@ -20,7 +20,9 @@
     <div class="tb-form-table-header">
       <div class="tb-form-table-header-cell tb-tag-header" translate>scada.tag.tag</div>
       <div class="tb-form-table-header-cell tb-state-render-function-header" translate>scada.state-render-function</div>
-      <div class="tb-form-table-header-cell tb-on-click-action-header" translate>scada.tag.on-click-action</div>
+      @for (trigger of actionTriggers; track trigger) {
+        <div class="tb-form-table-header-cell tb-action-function-header">{{ actionTriggerTranslations.get(trigger) | translate }}</div>
+      }
     </div>
     @if (tagsFormArray().controls.length) {
       <div class="tb-form-table-body">
@@ -28,7 +30,7 @@
           <div>
             <tb-scada-symbol-metadata-tag class="flex-1"
                                           [elementStateRenderFunctionCompleter]="elementStateRenderFunctionCompleter"
-                                          [clickActionFunctionCompleter]="clickActionFunctionCompleter"
+                                          [actionFunctionCompleter]="actionFunctionCompleter"
                                           [formControl]="tagControl">
             </tb-scada-symbol-metadata-tag>
             @if (!$last) {

@@ -33,6 +33,7 @@ import { Subject } from 'rxjs';
 import { ScadaSymbolData, ScadaSymbolEditObjectCallbacks } from '@home/pages/scada-symbol/scada-symbol-editor.models';
 import {
   parseScadaSymbolMetadataFromContent,
+  ScadaSymbolActionTrigger,
   ScadaSymbolMetadata,
   ScadaSymbolObjectSettings,
   updateScadaSymbolMetadataInContent
@@ -330,11 +331,11 @@ export class ScadaSymbolComponent extends PageComponent
     return false;
   }
 
-  tagHasClickAction(tag: string): boolean {
+  tagHasAction(tag: string, trigger: ScadaSymbolActionTrigger): boolean {
     const metadata: ScadaSymbolMetadata = this.scadaSymbolFormGroup.get('metadata').value;
     if (metadata.tags) {
       const found = metadata.tags.find(t => t.tag === tag);
-      return !!found?.actions?.click?.actionFunction;
+      return !!found?.actions?.[trigger]?.actionFunction;
     }
     return false;
   }
@@ -343,8 +344,8 @@ export class ScadaSymbolComponent extends PageComponent
     this.symbolMetadata.editTagStateRenderFunction(tag);
   }
 
-  editTagClickAction(tag: string) {
-    this.symbolMetadata.editTagClickAction(tag);
+  editTagAction(tag: string, trigger: ScadaSymbolActionTrigger) {
+    this.symbolMetadata.editTagAction(tag, trigger);
   }
 
   onSymbolEditObjectDirty(dirty: boolean) {
