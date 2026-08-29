@@ -621,8 +621,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
       ? (key.type === EntityKeyType.ENTITY_FIELD ? 'entityField'
          : key.type === EntityKeyType.TIME_SERIES ? 'timeseries' : 'attribute')
       : 'entityField';
-    const keyFilters: KeyFilter[] = null; // TODO:
-    this.entityDatasource.loadEntities(this.pageLink, sortOrderLabel, sortColumnType, keyFilters);
+    this.entityDatasource.loadEntities(this.pageLink, sortOrderLabel, sortColumnType, null);
     this.ctx.detectChanges();
   }
 

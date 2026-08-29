@@ -727,8 +727,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
       ? (key.type === EntityKeyType.ENTITY_FIELD || key.type === EntityKeyType.ALARM_FIELD ? 'entityField'
          : key.type === EntityKeyType.TIME_SERIES ? 'timeseries' : 'attribute')
       : 'entityField';
-    const keyFilters: KeyFilter[] = null; // TODO:
-    this.alarmsDatasource.loadAlarms(this.pageLink, sortOrderLabel, sortColumnType, keyFilters);
+    this.alarmsDatasource.loadAlarms(this.pageLink, sortOrderLabel, sortColumnType, null);
     this.ctx.detectChanges();
   }
 
