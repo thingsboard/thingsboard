@@ -87,6 +87,9 @@ public class SystemInfoController extends BaseController {
     @Value("${iot-hub.base-url:https://iot-hub.thingsboard.io}")
     private String iotHubBaseUrl;
 
+    @Value("${server.ws.dynamic_page_link.refresh_interval:60}")
+    private long dynamicPageLinkRefreshIntervalSec;
+
     private static final Set<String> ACCEPTED_NULLS_ORDER_STRATEGIES = Set.of("default", "nulls_first", "nulls_last");
 
     @Autowired(required = false)
@@ -188,6 +191,7 @@ public class SystemInfoController extends BaseController {
             systemParams.setIntermediateAggregationIntervalInSecForCF(tenantProfileConfiguration.getIntermediateAggregationIntervalInSecForCF());
             systemParams.setTrendzSettings(trendzSettingsService.findTrendzSettings(currentUser.getTenantId()));
         }
+        systemParams.setDynamicPageLinkRefreshIntervalSec(dynamicPageLinkRefreshIntervalSec);
         systemParams.setIotHubBaseUrl(iotHubBaseUrl);
         systemParams.setMobileQrEnabled(Optional.ofNullable(qrCodeSettingService.findQrCodeSettings(TenantId.SYS_TENANT_ID))
                 .map(QrCodeSettings::getQrCodeConfig).map(QRCodeConfig::isShowOnHomePage)
