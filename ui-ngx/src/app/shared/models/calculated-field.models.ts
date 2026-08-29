@@ -33,6 +33,7 @@ import { EntitySearchDirection } from '@shared/models/relation.models';
 import { AbstractControl, FormControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { AlarmRule } from "@shared/models/alarm-rule.models";
 import { AlarmSeverity } from "@shared/models/alarm.models";
+import { EntityFilter } from '@shared/models/query/query.models';
 
 export const FORBIDDEN_NAMES = ['ctx', 'e', 'pi'];
 
@@ -527,24 +528,22 @@ export const ArgumentEntityTypeParamsMap =new Map<ArgumentEntityType, ArgumentEn
   [ArgumentEntityType.Customer, { title: 'calculated-fields.customer-name', entityType: EntityType.CUSTOMER }],
 ])
 
-export const getCalculatedFieldCurrentEntityFilter = (entityName: string, entityId: EntityId) => {
-  switch (entityId?.entityType) {
-    case EntityType.ASSET_PROFILE:
-      return {
-        assetTypes: [entityName],
-        type: AliasFilterType.assetType
-      };
-    case EntityType.DEVICE_PROFILE:
-      return {
-        deviceTypes: [entityName],
-        type: AliasFilterType.deviceType
-      };
-    default:
-      return {
-        type: AliasFilterType.singleEntity,
-        singleEntity: entityId,
-      };
+export const getCalculatedFieldCurrentEntityFilter = (entityName: string, entityId: EntityId | EntityId[]): EntityFilter => {
+  const entityType = (Array.isArray(entityId) ? entityId[0]?.entityType : entityId?.entityType) as EntityType;
+
+  if (entityType === EntityType.DEVICE_PROFILE || entityType === EntityType.ASSET_PROFILE) {
+    const profileNames = Array.isArray(entityId) ? entityId.map(value => value.id) : [entityName];
+    return entityType === EntityType.ASSET_PROFILE
+      ? { type: AliasFilterType.assetType, assetTypes: profileNames }
+      : { type: AliasFilterType.deviceType, deviceTypes: profileNames };
   }
+
+  if (Array.isArray(entityId)) {
+    return entityId.length === 1
+      ? { type: AliasFilterType.singleEntity, singleEntity: entityId[0] }
+      : { type: AliasFilterType.entityList, entityType, entityList: entityId.map(value => value.id) };
+  }
+  return { type: AliasFilterType.singleEntity, singleEntity: entityId };
 }
 
 export const debugCfActionEnabled = (cf: CalculatedField) => {

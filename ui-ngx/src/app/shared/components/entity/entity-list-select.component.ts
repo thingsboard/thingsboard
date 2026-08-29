@@ -76,6 +76,12 @@ export class EntityListSelectComponent implements ControlValueAccessor, OnInit {
   @Input()
   appearance: MatFormFieldAppearance = 'fill';
 
+  @Input()
+  entityTypeLabel: string;
+
+  @Input()
+  entityListLabel: string;
+
   displayEntityTypeSelect: boolean;
 
   private defaultEntityType: EntityType | AliasEntityType = null;

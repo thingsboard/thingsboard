@@ -267,11 +267,10 @@ export class AlarmRulesTableConfig extends EntityTableConfig<AlarmRuleTableEntit
     $event?.stopPropagation();
     const copyCalculatedAlarmRule = deepClone(calculatedField);
     if (this.pageMode) {
-      copyCalculatedAlarmRule.entityId = null;
       delete (copyCalculatedAlarmRule as CalculatedFieldAlarmRuleInfo).entityName;
     }
     delete copyCalculatedAlarmRule.id;
-    this.getCalculatedAlarmDialog(copyCalculatedAlarmRule, 'action.apply', isDirty)
+    this.getCalculatedAlarmDialog(copyCalculatedAlarmRule, 'action.apply', isDirty, this.pageMode)
       .subscribe((res) => {
         if (res) {
           this.updateData();
@@ -279,8 +278,9 @@ export class AlarmRulesTableConfig extends EntityTableConfig<AlarmRuleTableEntit
       });
   }
 
-  private getCalculatedAlarmDialog(value?: AlarmRuleTableEntity, buttonTitle = 'action.add', isDirty = false): Observable<CalculatedFieldAlarmRule> {
-    const entityId = this.entityId || value?.entityId;
+  private getCalculatedAlarmDialog(value?: AlarmRuleTableEntity, buttonTitle = 'action.add', isDirty = false,
+                                   selectNewEntity = false): Observable<CalculatedFieldAlarmRule> {
+    const entityId = selectNewEntity ? null : (this.entityId || value?.entityId);
     const entityName = this.entityName || (value as CalculatedFieldAlarmRuleInfo)?.entityName;
     return this.dialog.open<AlarmRuleDialogComponent, AlarmRuleDialogData, CalculatedFieldAlarmRule>(AlarmRuleDialogComponent, {
       disableClose: true,
