@@ -19,6 +19,7 @@ import lombok.Builder;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
@@ -32,8 +33,10 @@ class DeviceStateData {
     private final TenantId tenantId;
     private final CustomerId customerId;
     private final DeviceId deviceId;
+    private DeviceProfileId deviceProfileId;
     private final long deviceCreationTime;
     private TbMsgMetaData metaData;
     private final DeviceState state;
-    
+    private boolean inactivityTimeoutOverridden;
+
 }

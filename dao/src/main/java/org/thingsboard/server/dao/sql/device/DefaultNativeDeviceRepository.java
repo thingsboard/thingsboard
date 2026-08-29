@@ -44,12 +44,17 @@ public class DefaultNativeDeviceRepository extends AbstractNativeRepository impl
 
     @Override
     public PageData<DeviceIdInfo> findDeviceIdInfos(Pageable pageable) {
-        String DEVICE_ID_INFO_QUERY = "SELECT tenant_id as tenantId, customer_id as customerId, id as id FROM device ORDER BY created_time ASC LIMIT %s OFFSET %s";
+        String DEVICE_ID_INFO_QUERY = "SELECT tenant_id as tenantId, customer_id as customerId, id as id, device_profile_id as deviceProfileId FROM device ORDER BY created_time ASC LIMIT %s OFFSET %s";
         return find(COUNT_QUERY, DEVICE_ID_INFO_QUERY, pageable, row -> {
             UUID id = (UUID) row.get("id");
             var tenantIdObj = row.get("tenantId");
             var customerIdObj = row.get("customerId");
-            return new DeviceIdInfo(tenantIdObj != null ? (UUID) tenantIdObj : TenantId.SYS_TENANT_ID.getId(), customerIdObj != null ? (UUID) customerIdObj : null, id);
+            var deviceProfileIdObj = row.get("deviceProfileId");
+            return new DeviceIdInfo(
+                    tenantIdObj != null ? (UUID) tenantIdObj : TenantId.SYS_TENANT_ID.getId(),
+                    customerIdObj != null ? (UUID) customerIdObj : null,
+                    id,
+                    deviceProfileIdObj != null ? (UUID) deviceProfileIdObj : null);
         });
     }
 
