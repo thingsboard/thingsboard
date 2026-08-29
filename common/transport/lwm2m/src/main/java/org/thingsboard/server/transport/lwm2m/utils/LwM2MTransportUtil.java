@@ -45,6 +45,7 @@ import org.thingsboard.server.transport.lwm2m.server.ota.firmware.FirmwareUpdate
 import org.thingsboard.server.transport.lwm2m.server.ota.software.SoftwareUpdateResult;
 import org.thingsboard.server.transport.lwm2m.server.ota.software.SoftwareUpdateState;
 
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -186,6 +187,7 @@ public class LwM2MTransportUtil {
                 return FLOAT;
             case "Integer":
             case "Long":
+            case "BigInteger":
                 return INTEGER;
             case "String":
                 return STRING;
@@ -212,10 +214,14 @@ public class LwM2MTransportUtil {
                 try {
                     return Long.valueOf(value.toString());
                 } catch (NumberFormatException l) {
-                    if (value.getAsFloat() >= Float.MIN_VALUE && value.getAsFloat() <= Float.MAX_VALUE) {
-                        return value.getAsFloat();
-                    } else {
-                        return value.getAsDouble();
+                    try {
+                        return new BigInteger(value.toString());
+                    } catch (NumberFormatException k) {
+                        if (value.getAsFloat() >= Float.MIN_VALUE && value.getAsFloat() <= Float.MAX_VALUE) {
+                            return value.getAsFloat();
+                        } else {
+                            return value.getAsDouble();
+                        }
                     }
                 }
             }
