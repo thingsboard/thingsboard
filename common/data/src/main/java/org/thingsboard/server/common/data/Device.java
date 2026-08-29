@@ -242,4 +242,9 @@ public class Device extends BaseDataWithAdditionalInfo<DeviceId> implements HasL
         return super.getAdditionalInfo();
     }
 
+    public int getLastActivityTime() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getLastActivityTime'");
+    }
+
 }
