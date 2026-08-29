@@ -141,8 +141,6 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
     private static final String SESSION_LIMITS = "getSessionLimits";
 
-    private static final String PAYLOAD_TOO_LARGE = "PAYLOAD_TOO_LARGE";
-
     private static final MqttQoS MAX_SUPPORTED_QOS_LVL = AT_LEAST_ONCE;
 
     private final UUID sessionId;
@@ -685,11 +683,6 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             this.chunkSizes.put(requestId, chunkSize);
         } else {
             chunkSize = chunkSizes.getOrDefault(requestId, 0);
-        }
-
-        if (chunkSize > context.getMaxPayloadSize()) {
-            sendOtaPackageError(ctx, PAYLOAD_TOO_LARGE);
-            return;
         }
 
         String otaPackageId = otaPackSessions.get(requestId);
