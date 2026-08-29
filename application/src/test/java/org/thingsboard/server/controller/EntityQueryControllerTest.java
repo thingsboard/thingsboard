@@ -18,6 +18,8 @@ package org.thingsboard.server.controller;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.util.concurrent.FutureCallback;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -27,6 +29,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.ResultActions;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
@@ -42,6 +45,10 @@ import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.kv.Aggregation;
+import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
+import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.AlarmCountQuery;
 import org.thingsboard.server.common.data.query.AlarmData;
@@ -75,14 +82,20 @@ import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
+import org.thingsboard.server.common.data.query.ComparisonTsValue;
 import org.thingsboard.server.dao.queue.QueueStatsService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.AggHistoryCmd;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.AggKey;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -106,6 +119,9 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
     @Autowired
     private QueueStatsService queueStatsService;
+
+    @Autowired
+    private TelemetrySubscriptionService tsService;
 
     @Before
     public void beforeTest() throws Exception {
@@ -1327,6 +1343,212 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         predicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
         numericFilter.setPredicate(predicate);
         return numericFilter;
+    }
+
+    @Test
+    public void testFindEntityDataAggHistoryByQuery() throws Exception {
+        Device device = new Device();
+        device.setName("AggHistoryDevice");
+        device.setType("default");
+        device = doPost("/api/device", device, Device.class);
+
+        long now = System.currentTimeMillis();
+        long startTs = now - TimeUnit.MINUTES.toMillis(30);
+        long endTs = now;
+        long previousStartTs = now - TimeUnit.MINUTES.toMillis(60);
+        long previousEndTs = startTs - 1;
+
+        List<TsKvEntry> currentData = new ArrayList<>();
+        for (int i = 0; i < 20; i++) {
+            long ts = startTs + i * TimeUnit.MINUTES.toMillis(1);
+            currentData.add(new BasicTsKvEntry(ts, new LongDataEntry("temperature", 30L)));
+        }
+        List<TsKvEntry> previousData = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            long ts = previousStartTs + i * TimeUnit.MINUTES.toMillis(1);
+            previousData.add(new BasicTsKvEntry(ts, new LongDataEntry("temperature", 30L)));
+        }
+        sendTelemetry(device, currentData);
+        sendTelemetry(device, previousData);
+
+        DeviceTypeFilter filter = new DeviceTypeFilter(List.of("default"), "AggHistoryDevice");
+        EntityDataPageLink pageLink = new EntityDataPageLink(10, 0, null, null);
+        EntityDataQuery query = new EntityDataQuery(filter, pageLink, Collections.emptyList(), Collections.emptyList(), null);
+
+        AggKey key = new AggKey();
+        key.setId(1);
+        key.setKey("temperature");
+        key.setAgg(Aggregation.SUM);
+        key.setPreviousStartTs(previousStartTs);
+        key.setPreviousEndTs(previousEndTs);
+
+        AggHistoryCmd cmd = new AggHistoryCmd();
+        cmd.setKeys(List.of(key));
+        cmd.setStartTs(startTs);
+        cmd.setEndTs(endTs);
+
+        ObjectNode request = JacksonUtil.newObjectNode();
+        request.set("query", JacksonUtil.valueToTree(query));
+        request.set("aggHistoryCmd", JacksonUtil.valueToTree(cmd));
+
+        PageData<EntityData> result = doPostAsyncWithTypedResponse("/api/entitiesQuery/find/aggHistory",
+                request, new TypeReference<>() {}, status().isOk());
+
+        assertThat(result.getData()).hasSize(1);
+        EntityData entityData = result.getData().get(0);
+        assertThat(entityData.getEntityId()).isEqualTo(device.getId());
+        ComparisonTsValue agg = entityData.getAggLatest().get(1);
+        assertThat(agg).isNotNull();
+        assertThat(agg.getCurrent().getValue()).isEqualTo("600");
+        assertThat(agg.getPrevious().getValue()).isEqualTo("300");
+    }
+
+    @Test
+    public void testFindEntityDataAggHistoryByQuery_previousValueOnly() throws Exception {
+        Device device = new Device();
+        device.setName("AggPrevOnlyDevice");
+        device.setType("default");
+        device = doPost("/api/device", device, Device.class);
+
+        long now = System.currentTimeMillis();
+        long startTs = now - TimeUnit.MINUTES.toMillis(30);
+        long endTs = now;
+        long previousStartTs = now - TimeUnit.MINUTES.toMillis(60);
+        long previousEndTs = startTs - 1;
+
+        List<TsKvEntry> currentData = new ArrayList<>();
+        for (int i = 0; i < 5; i++) {
+            currentData.add(new BasicTsKvEntry(startTs + i * TimeUnit.MINUTES.toMillis(1),
+                    new LongDataEntry("temperature", 100L)));
+        }
+        List<TsKvEntry> previousData = new ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+            previousData.add(new BasicTsKvEntry(previousStartTs + i * TimeUnit.MINUTES.toMillis(1),
+                    new LongDataEntry("temperature", 10L)));
+        }
+        sendTelemetry(device, currentData);
+        sendTelemetry(device, previousData);
+
+        AggKey key = new AggKey();
+        key.setId(7);
+        key.setKey("temperature");
+        key.setAgg(Aggregation.SUM);
+        key.setPreviousStartTs(previousStartTs);
+        key.setPreviousEndTs(previousEndTs);
+        key.setPreviousValueOnly(true);
+
+        PageData<EntityData> result = postAggHistory(device, startTs, endTs, List.of(key));
+
+        ComparisonTsValue agg = result.getData().get(0).getAggLatest().get(7);
+        assertThat(agg.getPrevious().getValue()).isEqualTo("30");
+        assertThat(agg.getCurrent()).isNull();
+    }
+
+    @Test
+    public void testFindEntityDataAggHistoryByQuery_noTelemetry() throws Exception {
+        Device device = new Device();
+        device.setName("AggEmptyDevice");
+        device.setType("default");
+        device = doPost("/api/device", device, Device.class);
+
+        long now = System.currentTimeMillis();
+        AggKey key = new AggKey();
+        key.setId(1);
+        key.setKey("temperature");
+        key.setAgg(Aggregation.SUM);
+
+        PageData<EntityData> result = postAggHistory(device, now - TimeUnit.HOURS.toMillis(1), now, List.of(key));
+
+        ComparisonTsValue agg = result.getData().get(0).getAggLatest().get(1);
+        assertThat(agg).isNotNull();
+        assertThat(agg.getCurrent().getValue()).isEqualTo("0");
+        assertThat(agg.getPrevious()).isNull();
+    }
+
+    @Test
+    public void testFindEntityDataAggHistoryByQuery_multipleKeysMixedAggregation() throws Exception {
+        Device device = new Device();
+        device.setName("AggMultiKeyDevice");
+        device.setType("default");
+        device = doPost("/api/device", device, Device.class);
+
+        long now = System.currentTimeMillis();
+        long startTs = now - TimeUnit.MINUTES.toMillis(30);
+        long endTs = now;
+
+        List<TsKvEntry> data = new ArrayList<>();
+        long[] values = {10L, 20L, 30L, 40L, 50L};
+        for (int i = 0; i < values.length; i++) {
+            data.add(new BasicTsKvEntry(startTs + i * TimeUnit.MINUTES.toMillis(1),
+                    new LongDataEntry("temperature", values[i])));
+        }
+        sendTelemetry(device, data);
+
+        AggKey minKey = new AggKey();
+        minKey.setId(1);
+        minKey.setKey("temperature");
+        minKey.setAgg(Aggregation.MIN);
+
+        AggKey maxKey = new AggKey();
+        maxKey.setId(2);
+        maxKey.setKey("temperature");
+        maxKey.setAgg(Aggregation.MAX);
+
+        AggKey avgKey = new AggKey();
+        avgKey.setId(3);
+        avgKey.setKey("temperature");
+        avgKey.setAgg(Aggregation.AVG);
+
+        PageData<EntityData> result = postAggHistory(device, startTs, endTs, List.of(minKey, maxKey, avgKey));
+
+        var aggLatest = result.getData().get(0).getAggLatest();
+        assertThat(aggLatest.get(1).getCurrent().getValue()).isEqualTo("10");
+        assertThat(aggLatest.get(2).getCurrent().getValue()).isEqualTo("50");
+        assertThat(Double.parseDouble(aggLatest.get(3).getCurrent().getValue())).isEqualTo(30.0);
+    }
+
+    private PageData<EntityData> postAggHistory(Device device, long startTs, long endTs, List<AggKey> keys) throws Exception {
+        DeviceTypeFilter filter = new DeviceTypeFilter(List.of("default"), device.getName());
+        EntityDataPageLink pageLink = new EntityDataPageLink(10, 0, null, null);
+        EntityDataQuery query = new EntityDataQuery(filter, pageLink, Collections.emptyList(), Collections.emptyList(), null);
+
+        AggHistoryCmd cmd = new AggHistoryCmd();
+        cmd.setKeys(keys);
+        cmd.setStartTs(startTs);
+        cmd.setEndTs(endTs);
+
+        ObjectNode request = JacksonUtil.newObjectNode();
+        request.set("query", JacksonUtil.valueToTree(query));
+        request.set("aggHistoryCmd", JacksonUtil.valueToTree(cmd));
+
+        return doPostAsyncWithTypedResponse("/api/entitiesQuery/find/aggHistory",
+                request, new TypeReference<>() {}, status().isOk());
+    }
+
+    private void sendTelemetry(Device device, List<TsKvEntry> tsData) throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicReference<Throwable> error = new AtomicReference<>();
+        tsService.saveTimeseries(TimeseriesSaveRequest.builder()
+                .tenantId(device.getTenantId())
+                .entityId(device.getId())
+                .entries(tsData)
+                .callback(new FutureCallback<>() {
+                    @Override
+                    public void onSuccess(@Nullable Void result) {
+                        latch.countDown();
+                    }
+
+                    @Override
+                    public void onFailure(Throwable t) {
+                        error.set(t);
+                        latch.countDown();
+                    }
+                })
+                .build());
+        assertThat(latch.await(TIMEOUT, TimeUnit.SECONDS)).isTrue();
+        if (error.get() != null) {
+            throw new AssertionError("Failed to save telemetry", error.get());
+        }
     }
 
     private KeyFilter buildStringKeyFilter(EntityKeyType entityKeyType, String name, StringFilterPredicate.StringOperation operation, String value) {
