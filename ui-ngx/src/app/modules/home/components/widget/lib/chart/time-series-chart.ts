@@ -186,7 +186,8 @@ export class TbTimeSeriesChart {
               private readonly inputSettings: DeepPartial<TimeSeriesChartSettings>,
               private chartElement: HTMLElement,
               private renderer: Renderer2,
-              private autoResize = true) {
+              private autoResize = true,
+              private sortDataKeys = false) {
 
     let tooltipValueFormatFunction: TimeSeriesChartTooltipValueFormatFunction;
 
@@ -517,6 +518,9 @@ export class TbTimeSeriesChart {
           });
         }
       }
+    }
+    if (this.sortDataKeys) {
+      this.dataItems.sort((a, b) => a.dataKey.label.localeCompare(b.dataKey.label));
     }
   }
 
