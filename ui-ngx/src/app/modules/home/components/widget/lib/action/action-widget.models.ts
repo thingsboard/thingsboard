@@ -59,6 +59,7 @@ import { parseError } from '@shared/models/error.models';
 import { CompiledTbFunction, compileTbFunction } from '@shared/models/js-function.models';
 import { HttpClient } from '@angular/common/http';
 import { StateObject } from '@core/api/widget-api.models';
+import { TOAST_PANEL_MIN_HEIGHT, TOAST_PANEL_MIN_WIDTH } from '@shared/components/toast.directive';
 
 @Directive()
 // eslint-disable-next-line @angular-eslint/directive-class-suffix
@@ -146,7 +147,11 @@ export abstract class BasicActionWidgetComponent implements OnInit, OnDestroy, A
   }
 
   private onError(error: string) {
-    this.ctx.showErrorToast(error, 'bottom', 'center', this.ctx.toastTargetId, true);
+    const widgetElement = this.ctx.$widgetElement[0];
+    const isFit = widgetElement.offsetHeight >= TOAST_PANEL_MIN_HEIGHT || widgetElement.offsetWidth >= TOAST_PANEL_MIN_WIDTH;
+    const verticalPosition = isFit ? 'bottom' : 'top';
+    const horizontalPosition = isFit ? 'center' : 'right';
+    this.ctx.showErrorToast(error, verticalPosition, horizontalPosition, this.ctx.toastTargetId, true);
   }
 
   protected updateValue<V>(valueSetter: ValueSetter<V>,
