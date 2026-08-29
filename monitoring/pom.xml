@@ -80,6 +80,10 @@
             <artifactId>httpclient</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.apache.httpcomponents.client5</groupId>
+            <artifactId>httpclient5</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.slack.api</groupId>
             <artifactId>slack-api-client</artifactId>
         </dependency>

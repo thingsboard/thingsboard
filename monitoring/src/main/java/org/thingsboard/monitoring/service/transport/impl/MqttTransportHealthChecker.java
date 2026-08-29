@@ -45,7 +45,10 @@ public class MqttTransportHealthChecker extends TransportHealthChecker<MqttTrans
 
     @Override
     protected void initClient() throws Exception {
-        if (mqttClient == null || !mqttClient.isConnected()) {
+        if (mqttClient != null && mqttClient.isConnected() && !isSessionExpired()) {
+            return;
+        }
+        reconnectIfNeeded(mqttClient != null, this::closeMqttClient, () -> {
             String clientId = MqttAsyncClient.generateClientId();
             String accessToken = target.getDevice().getCredentials().getCredentialsId();
             mqttClient = new MqttClient(target.getBaseUrl(), clientId, new MemoryPersistence());
@@ -58,8 +61,7 @@ public class MqttTransportHealthChecker extends TransportHealthChecker<MqttTrans
             if (result.getException() != null) {
                 throw result.getException();
             }
-            log.debug("Initialized MQTT client for URI {}", mqttClient.getServerURI());
-        }
+        });
     }
 
     @Override
@@ -73,9 +75,25 @@ public class MqttTransportHealthChecker extends TransportHealthChecker<MqttTrans
     @Override
     protected void destroyClient() throws Exception {
         if (mqttClient != null) {
-            mqttClient.disconnect();
+            closeMqttClient();
+        }
+    }
+
+    private void closeMqttClient() {
+        try {
+            if (mqttClient.isConnected()) {
+                mqttClient.disconnect();
+            }
+        } catch (Exception e) {
+            log.warn("Failed to disconnect MQTT client", e);
+        } finally {
+            try {
+                mqttClient.close();
+            } catch (Exception e) {
+                log.warn("Failed to close MQTT client", e);
+            }
             mqttClient = null;
-            log.info("Disconnected MQTT client");
+            log.debug("Disconnected {} client", getTransportType());
         }
     }
 

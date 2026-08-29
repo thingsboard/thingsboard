@@ -25,11 +25,40 @@ import org.thingsboard.monitoring.config.transport.TransportMonitoringTarget;
 import org.thingsboard.monitoring.config.transport.TransportType;
 import org.thingsboard.monitoring.service.BaseHealthChecker;
 
+import java.util.concurrent.TimeUnit;
+
 @Slf4j
 public abstract class TransportHealthChecker<C extends TransportMonitoringConfig> extends BaseHealthChecker<C, TransportMonitoringTarget> {
 
     @Value("${monitoring.calculated_fields.enabled:true}")
     private boolean calculatedFieldsMonitoringEnabled;
+    @Value("${monitoring.session_duration_ms:3600000}")
+    private long sessionDurationMs;
+
+    private long sessionStartTimeNanos;
+
+    protected boolean isSessionExpired() {
+        return sessionDurationMs > 0 && System.nanoTime() - sessionStartTimeNanos >= TimeUnit.MILLISECONDS.toNanos(sessionDurationMs);
+    }
+
+    protected void recordSessionStart() {
+        sessionStartTimeNanos = System.nanoTime();
+    }
+
+    protected final void reconnectIfNeeded(boolean clientExists, ThrowingAction disconnect, ThrowingAction connect) throws Exception {
+        if (clientExists) {
+            log.info("Reconnecting {} client to {}", getTransportType(), target.getBaseUrl());
+            disconnect.run();
+        }
+        connect.run();
+        recordSessionStart();
+        log.debug("Connected {} client to {}", getTransportType(), target.getBaseUrl());
+    }
+
+    @FunctionalInterface
+    protected interface ThrowingAction {
+        void run() throws Exception;
+    }
 
     public TransportHealthChecker(C config, TransportMonitoringTarget target) {
         super(config, target);

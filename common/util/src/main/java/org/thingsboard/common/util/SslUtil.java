@@ -33,10 +33,13 @@ import org.bouncycastle.pkcs.PKCSException;
 import org.bouncycastle.pkcs.jcajce.JcePKCSPBEInputDecryptorProviderBuilder;
 import org.thingsboard.server.common.data.StringUtils;
 
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
+import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.Security;
 import java.security.cert.CertificateException;
@@ -132,6 +135,13 @@ public class SslUtil {
 
     public static char[] getPassword(String passStr) {
         return StringUtils.isEmpty(passStr) ? EMPTY_PASS : passStr.toCharArray();
+    }
+
+    @SneakyThrows
+    public static X509Certificate[] getDefaultTrustedCertificates() {
+        TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        tmf.init((KeyStore) null); // JVM default trust store (cacerts)
+        return ((X509TrustManager) tmf.getTrustManagers()[0]).getAcceptedIssuers();
     }
 
 }
