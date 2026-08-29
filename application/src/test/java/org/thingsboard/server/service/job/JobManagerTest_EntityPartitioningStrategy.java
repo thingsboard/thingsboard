@@ -15,8 +15,18 @@
  */
 package org.thingsboard.server.service.job;
 
+import org.junit.Test;
 import org.springframework.test.context.TestPropertySource;
+import org.thingsboard.server.common.data.job.DummyJobConfiguration;
+import org.thingsboard.server.common.data.job.Job;
+import org.thingsboard.server.common.data.job.JobStatus;
+import org.thingsboard.server.common.data.id.JobId;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+
+import java.util.concurrent.TimeUnit;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 @DaoSqlTest
 @TestPropertySource(properties = {
@@ -37,6 +47,41 @@ public class JobManagerTest_EntityPartitioningStrategy extends JobManagerTest {
 
     @Override
     public void testSubmitJob_generalError() {
+    }
+
+    /*
+     * Overridden because DummyTask.getEntityId() returns a random UUID per task,
+     * so with entity partitioning all tasks are spread across partitions and
+     * processed concurrently — they all finish at the same time. Using very long
+     * taskProcessingTimeMs ensures tasks are reliably in-flight when cancel fires,
+     * regardless of GC pauses or CI load. No successfulCount check is needed here:
+     * we just wait for the job to be RUNNING, then cancel while tasks are sleeping.
+     */
+    @Override
+    @Test
+    public void testCancelJob_whileRunning() throws Exception {
+        int tasksCount = 200;
+        JobId jobId = submitJob(DummyJobConfiguration.builder()
+                .successfulTasksCount(tasksCount)
+                .taskProcessingTimeMs(TimeUnit.SECONDS.toMillis(30))
+                .taskProcessingTimeoutMs(TimeUnit.SECONDS.toMillis(60))
+                .build()).getId();
+
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            Job job = findJobById(jobId);
+            assertThat(job.getStatus()).isEqualTo(JobStatus.RUNNING);
+        });
+        cancelJob(jobId);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            Job job = findJobById(jobId);
+            assertThat(job.getStatus()).isEqualTo(JobStatus.CANCELLED);
+            assertThat(job.getResult().getDiscardedCount()).isBetween(1, tasksCount);
+            assertThat(job.getResult().getTotalCount()).isEqualTo(tasksCount);
+            assertThat(job.getResult().getCompletedCount()).isEqualTo(tasksCount);
+            assertThat(job.getResult().getStartTs()).isPositive();
+            assertThat(job.getResult().getFinishTs()).isPositive();
+            assertThat(job.getResult().getCancellationTs()).isPositive();
+        });
     }
 
 }
