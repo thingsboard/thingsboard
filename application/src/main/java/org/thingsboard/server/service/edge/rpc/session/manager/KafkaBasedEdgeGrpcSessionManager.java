@@ -99,6 +99,15 @@ public class KafkaBasedEdgeGrpcSessionManager extends AbstractEdgeGrpcSessionMan
     public boolean destroy() {
         cancelHighPriorityProcessing();
         EdgeSessionState state = getState();
+        // Unblock the consumer loop first: processMsgs() may be parked on the send-downlink
+        // future of a batch that the (now gone) edge will never acknowledge. Completing it as
+        // interrupted lets the loop observe the stop flag instead of stalling consumer.stop().
+        if (state.getSendDownlinkMsgsFuture() != null && !state.getSendDownlinkMsgsFuture().isDone()) {
+            state.getSendDownlinkMsgsFuture().set(true);
+        }
+        if (state.getScheduledSendDownlinkTask() != null) {
+            state.getScheduledSendDownlinkTask().cancel(true);
+        }
         try {
             if (consumer != null) {
                 log.info("[{}][{}] Stopping edge event consumer...", state.getTenantId(), state.getEdgeId());

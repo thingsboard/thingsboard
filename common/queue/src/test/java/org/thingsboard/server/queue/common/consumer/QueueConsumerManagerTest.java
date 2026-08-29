@@ -31,6 +31,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BooleanSupplier;
@@ -145,6 +146,98 @@ class QueueConsumerManagerTest {
                 .isTrue();
     }
 
+    // --- stop() behaviour ---------------------------------------------------
+    // Stopping must work both while the loop is idle and while it is blocked inside the
+    // msg pack processor. A stop that cannot terminate the loop leaves a zombie consumer
+    // behind, which (for kafka) keeps its group membership alive via heartbeats and blocks
+    // the next consumer of the same group from getting partitions assigned (see edge
+    // downlink starvation after session handover).
+
+    private static final long SHORT_STOP_TIMEOUT_MS = 200;
+
+    @Test
+    void stopShouldCompleteGracefullyWhenConsumerLoopIsIdle() {
+        manager = launchManager(consumer, null, (msgs, c) -> c.commit());
+
+        await().atMost(5, TimeUnit.SECONDS)
+                .untilAsserted(() -> assertThat(consumer.getPollCount()).isPositive());
+
+        manager.stop();
+
+        assertThat(consumerLoopHasExited()).as("consumer loop thread released").isTrue();
+    }
+
+    @Test
+    void stopShouldInterruptConsumerLoopThatIsBlockedInProcessing() throws Exception {
+        CountDownLatch processingStarted = new CountDownLatch(1);
+        CountDownLatch neverReleased = new CountDownLatch(1);
+        consumer.enqueue(List.of(mock(TbQueueMsg.class)));
+        manager = launchManager(consumer, null, (msgs, c) -> {
+            processingStarted.countDown();
+            // simulates waiting for a downlink delivery that will never be acknowledged
+            neverReleased.await();
+        }, SHORT_STOP_TIMEOUT_MS);
+        assertThat(processingStarted.await(5, TimeUnit.SECONDS))
+                .as("processor entered its blocking section").isTrue();
+
+        long stopStarted = System.currentTimeMillis();
+        manager.stop();
+
+        assertThat(System.currentTimeMillis() - stopStarted)
+                .as("stop() must not hang much longer than the configured stop timeout")
+                .isLessThan(SHORT_STOP_TIMEOUT_MS + 3000);
+        assertThat(consumerLoopHasExited())
+                .as("blocked consumer loop must be interrupted, not abandoned").isTrue();
+    }
+
+    @Test
+    void stopShouldReturnImmediatelyWhenConsumerWasNeverLaunched() {
+        consumerExecutor = Executors.newSingleThreadExecutor();
+        manager = QueueConsumerManager.<TbQueueMsg>builder()
+                .name("test-consumer")
+                .pollInterval(POLL_INTERVAL_MS)
+                .consumerCreator(() -> consumer)
+                .consumerExecutor(consumerExecutor)
+                .msgPackProcessor((msgs, c) -> c.commit())
+                .build();
+
+        manager.stop();
+
+        assertThat(consumer.isStopped()).isTrue();
+    }
+
+    @Test
+    void consumerLoopShouldSurviveProcessorFailuresAndKeepPolling() {
+        AtomicInteger processedBatches = new AtomicInteger();
+        consumer.enqueue(List.of(mock(TbQueueMsg.class)));
+        consumer.enqueue(List.of(mock(TbQueueMsg.class)));
+        manager = launchManager(consumer, null, (msgs, c) -> {
+            if (processedBatches.incrementAndGet() == 1) {
+                throw new RuntimeException("transient failure on the first batch");
+            }
+            c.commit();
+        });
+
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() ->
+                assertThat(processedBatches.get())
+                        .as("loop keeps processing after a processor failure")
+                        .isGreaterThanOrEqualTo(2));
+    }
+
+    /**
+     * The single-threaded consumer executor can only run this probe task once the
+     * consumer loop has actually finished - a hung loop keeps the thread forever.
+     */
+    private boolean consumerLoopHasExited() {
+        try {
+            consumerExecutor.submit(() -> {
+            }).get(5, TimeUnit.SECONDS);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     private static void awaitReadinessGateEvaluated(AtomicInteger readinessChecks) {
         await().atMost(5, TimeUnit.SECONDS)
                 .untilAsserted(() -> assertThat(readinessChecks.get())
@@ -161,6 +254,12 @@ class QueueConsumerManagerTest {
 
     private QueueConsumerManager<TbQueueMsg> launchManager(TestQueueConsumer consumer, BooleanSupplier readinessCheck,
                                                            QueueConsumerManager.MsgPackProcessor<TbQueueMsg> processor) {
+        return launchManager(consumer, readinessCheck, processor, null);
+    }
+
+    private QueueConsumerManager<TbQueueMsg> launchManager(TestQueueConsumer consumer, BooleanSupplier readinessCheck,
+                                                           QueueConsumerManager.MsgPackProcessor<TbQueueMsg> processor,
+                                                           Long stopTimeoutMs) {
         consumerExecutor = Executors.newSingleThreadExecutor();
         QueueConsumerManager<TbQueueMsg> queueConsumerManager = QueueConsumerManager.<TbQueueMsg>builder()
                 .name("test-consumer")
@@ -168,6 +267,7 @@ class QueueConsumerManagerTest {
                 .consumerCreator(() -> consumer)
                 .consumerExecutor(consumerExecutor)
                 .readinessCheck(readinessCheck)
+                .stopTimeoutMs(stopTimeoutMs)
                 .msgPackProcessor(processor)
                 .build();
         queueConsumerManager.subscribe();
