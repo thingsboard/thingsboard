@@ -27,9 +27,15 @@ export class MillisecondsToTimeStringPipe implements PipeTransform {
   constructor(private translate: TranslateService) {
   }
 
-  transform(milliSeconds: number, shortFormat = false, onlyFirstDigit = false): string {
+  transform(milliSeconds: number, shortFormat = false, onlyFirstDigit = false, withLastPrefix = false): string {
     const { years, days, hours, minutes, seconds } = this.extractTimeUnits(milliSeconds);
-    return this.formatTimeString(years, days, hours, minutes, seconds, shortFormat, onlyFirstDigit);
+    const timeString = this.formatTimeString(years, days, hours, minutes, seconds, shortFormat, onlyFirstDigit);
+    if (!withLastPrefix) {
+      return timeString;
+    }
+    const firstUnit = this.getTimeUnits(years, days, hours, minutes, seconds).find(unit => unit.value > 0);
+    const prefixParams = firstUnit ? { unit: firstUnit.key, count: firstUnit.value } : { unit: 'seconds', count: 0 };
+    return this.translate.instant('timewindow.last-prefix', prefixParams) + ' ' + timeString;
   }
 
   private extractTimeUnits(milliseconds: number): { years: number; days: number; hours: number; minutes: number; seconds: number } {
@@ -41,6 +47,16 @@ export class MillisecondsToTimeStringPipe implements PipeTransform {
     return { years, days, hours, minutes, seconds };
   }
 
+  private getTimeUnits(years: number, days: number, hours: number, minutes: number, seconds: number) {
+    return [
+      { value: years, key: 'years', shortKey: 'short.years' },
+      { value: days, key: 'days', shortKey: 'short.days' },
+      { value: hours, key: 'hours', shortKey: 'short.hours' },
+      { value: minutes, key: 'minutes', shortKey: 'short.minutes' },
+      { value: seconds, key: 'seconds', shortKey: 'short.seconds' }
+    ];
+  }
+
   private formatTimeString(
     years: number,
     days: number,
@@ -50,16 +66,8 @@ export class MillisecondsToTimeStringPipe implements PipeTransform {
     shortFormat: boolean,
     onlyFirstDigit: boolean
   ): string {
-    const timeUnits = [
-      { value: years, key: 'years', shortKey: 'short.years' },
-      { value: days, key: 'days', shortKey: 'short.days' },
-      { value: hours, key: 'hours', shortKey: 'short.hours' },
-      { value: minutes, key: 'minutes', shortKey: 'short.minutes' },
-      { value: seconds, key: 'seconds', shortKey: 'short.seconds' }
-    ];
-
     let timeString = '';
-    for (const { value, key, shortKey } of timeUnits) {
+    for (const { value, key, shortKey } of this.getTimeUnits(years, days, hours, minutes, seconds)) {
       if (value > 0) {
         timeString += this.translate.instant(shortFormat ? `timewindow.${shortKey}` : `timewindow.${key}`, { [key]: value });
         if (onlyFirstDigit) {
