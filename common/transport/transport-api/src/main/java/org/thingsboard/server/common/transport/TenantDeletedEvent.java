@@ -13,16 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server.session;
+package org.thingsboard.server.common.transport;
 
-import org.thingsboard.server.gen.transport.TransportProtos;
+import lombok.Getter;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.queue.discovery.event.TbApplicationEvent;
 
-public interface LwM2MSessionManager {
+public final class TenantDeletedEvent extends TbApplicationEvent {
 
-    void register(TransportProtos.SessionInfoProto sessionInfo);
+    private static final long serialVersionUID = -3801673609913423334L;
+    @Getter
+    private final TenantId tenantId;
 
-    void deregister(TransportProtos.SessionInfoProto sessionInfo);
-
-    void deregister(TransportProtos.SessionInfoProto sessionInfo, boolean notifyCore);
-
+    public TenantDeletedEvent(TenantId tenantId) {
+        super(new Object());
+        this.tenantId = tenantId;
+    }
 }

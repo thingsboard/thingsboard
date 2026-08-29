@@ -15,13 +15,44 @@
  */
 package org.thingsboard.server.transport.mqtt.mqttv3.client;
 
+import com.google.gson.JsonObject;
+import io.netty.buffer.Unpooled;
+import io.netty.handler.codec.mqtt.MqttQoS;
+import org.awaitility.Awaitility;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
+import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.common.transport.limits.TransportRateLimitService;
+import org.thingsboard.server.common.transport.service.DefaultTransportService;
+import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.transport.mqtt.MqttTestConfigProperties;
+import org.thingsboard.server.transport.mqtt.mqttv3.MqttTestClient;
+
+import java.util.concurrent.TimeUnit;
+
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 @DaoSqlTest
 public class MqttClientConnectionTest extends AbstractMqttClientConnectionTest {
+
+    @Autowired
+    DefaultTransportService defaultTransportService;
+    @Autowired
+    DeviceService deviceService;
+    @MockitoSpyBean
+    TransportRateLimitService rateLimitService;
 
     @Before
     public void beforeTest() throws Exception {
@@ -44,5 +75,96 @@ public class MqttClientConnectionTest extends AbstractMqttClientConnectionTest {
     @Test
     public void testClientWithWrongClientIdAndEmptyUsernamePassword() throws Exception {
         processClientWithWrongClientIdAndEmptyUsernamePasswordTest();
+    }
+
+    @Test
+    public void testClientShouldBeDisconnectedAfterTenantDeletion() throws Exception {
+        loginSysAdmin();
+        Tenant tenant = new Tenant();
+        tenant.setTitle("Mqtt Client Connection Test Tenant");
+        Tenant savedTenant = saveTenant(tenant);
+
+        User tenantAdmin = new User();
+        tenantAdmin.setAuthority(Authority.TENANT_ADMIN);
+        tenantAdmin.setTenantId(savedTenant.getTenantId());
+        tenantAdmin.setEmail("mqttTestClient@thingsboard.org");
+        createUserAndLogin(tenantAdmin, TENANT_ADMIN_PASSWORD);
+
+        savedDevice = createDevice(RandomStringUtils.randomAlphabetic(10), "default", false);
+        DeviceCredentials deviceCredentials =
+                doGet("/api/device/" + savedDevice.getId().getId().toString() + "/credentials", DeviceCredentials.class);
+        accessToken = deviceCredentials.getCredentialsId();
+
+        MqttTestClient client = new MqttTestClient();
+        client.connectAndWait(accessToken);
+        Assert.assertTrue(client.isConnected());
+
+        loginSysAdmin();
+
+        Mockito.clearInvocations(rateLimitService);
+        deleteTenant(savedTenant.getId());
+
+        Awaitility.await("awaiting defaultTransportService.sessions is empty")
+                .pollInterval(10, TimeUnit.MILLISECONDS)
+                .atMost(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .until(() -> defaultTransportService.sessions.isEmpty());
+
+        Awaitility.await()
+                .atMost(10, TimeUnit.SECONDS)
+                .until(() -> !client.isConnected());
+
+        verify(rateLimitService, never()).checkLimits(Mockito.any(), Mockito.any(), Mockito.any(), anyInt(), anyBoolean());
+    }
+
+    @Test
+    public void testGatewayShouldBeDisconnectedAfterTenantDeletion() throws Exception {
+        loginSysAdmin();
+        Tenant tenant = new Tenant();
+        tenant.setTitle("Mqtt Client Connection Test Tenant");
+        Tenant savedTenant = saveTenant(tenant);
+
+        User tenantAdmin = new User();
+        tenantAdmin.setAuthority(Authority.TENANT_ADMIN);
+        tenantAdmin.setTenantId(savedTenant.getTenantId());
+        tenantAdmin.setEmail("mqttTestClient@thingsboard.org");
+        createUserAndLogin(tenantAdmin, TENANT_ADMIN_PASSWORD);
+
+        savedDevice = createDevice(RandomStringUtils.randomAlphabetic(10), "default", true);
+        DeviceCredentials deviceCredentials =
+                doGet("/api/device/" + savedDevice.getId().getId().toString() + "/credentials", DeviceCredentials.class);
+        accessToken = deviceCredentials.getCredentialsId();
+
+        MqttTestClient client = new MqttTestClient();
+        client.connectAndWait(accessToken);
+
+        String deviceName = "gateway_device_" + RandomStringUtils.randomAlphabetic(5);
+        client.publish("v1/gateway/connect", createGatewayConnectPayload(deviceName).toString().getBytes());
+
+        Awaitility.await("awaiting till device is created")
+                .pollInterval(10, TimeUnit.MILLISECONDS)
+                .atMost(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .until(() -> deviceService.findDeviceByTenantIdAndName(savedTenant.getTenantId(), deviceName) != null);
+
+        loginSysAdmin();
+
+        Mockito.clearInvocations(rateLimitService);
+        deleteTenant(savedTenant.getId());
+
+        Awaitility.await("awaiting defaultTransportService.sessions is empty")
+                .pollInterval(10, TimeUnit.MILLISECONDS)
+                .atMost(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .until(() -> defaultTransportService.sessions.isEmpty());
+
+        Awaitility.await()
+                .atMost(10, TimeUnit.SECONDS)
+                .until(() -> !client.isConnected());
+
+        verify(rateLimitService, never()).checkLimits(Mockito.any(), Mockito.any(), Mockito.any(), anyInt(), anyBoolean());
+    }
+
+    protected JsonObject createGatewayConnectPayload(String deviceName){
+        JsonObject payload = new JsonObject();
+        payload.addProperty("device", deviceName);
+        return payload;
     }
 }

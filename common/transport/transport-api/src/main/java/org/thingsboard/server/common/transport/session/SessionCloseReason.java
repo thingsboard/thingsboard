@@ -13,16 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server.session;
+package org.thingsboard.server.common.transport.session;
 
-import org.thingsboard.server.gen.transport.TransportProtos;
+public enum SessionCloseReason {
 
-public interface LwM2MSessionManager {
+    TENANT_DELETED;
 
-    void register(TransportProtos.SessionInfoProto sessionInfo);
-
-    void deregister(TransportProtos.SessionInfoProto sessionInfo);
-
-    void deregister(TransportProtos.SessionInfoProto sessionInfo, boolean notifyCore);
+    public static boolean shouldNotifyCore(SessionCloseReason reason) {
+        return reason != TENANT_DELETED;
+    }
 
 }

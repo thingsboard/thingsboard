@@ -65,6 +65,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.ota.OtaPackageUtil;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
+import org.thingsboard.server.common.transport.session.SessionCloseReason;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
@@ -289,11 +290,13 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
 
     private void doUnReg(Registration registration, LwM2mClient client) {
         try {
-            logService.log(client, LOG_LWM2M_INFO + ": Client unRegistration");
+            if (client.shouldNotifyCore()) {
+                logService.log(client, LOG_LWM2M_INFO + ": Client unRegistration");
+            }
             clientContext.unregister(client, registration);
             SessionInfoProto sessionInfo = client.getSession();
             if (sessionInfo != null) {
-                sessionManager.deregister(sessionInfo);
+                sessionManager.deregister(sessionInfo, client.shouldNotifyCore());
                 sessionStore.remove(registration.getEndpoint());
                 log.info("Client close session: [{}] unReg [{}] name  [{}] profile ", registration.getId(), registration.getEndpoint(), sessionInfo.getDeviceType());
             } else {
@@ -445,6 +448,15 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
     @Override
     public void onDeviceDelete(DeviceId deviceId) {
         clearAndUnregister(clientContext.getClientByDeviceId(deviceId.getId()));
+    }
+
+    @Override
+    public void onTenantDelete(DeviceId deviceId) {
+        LwM2mClient client = clientContext.getClientByDeviceId(deviceId.getId());
+        if (client != null) {
+            client.setSessionCloseReason(SessionCloseReason.TENANT_DELETED);
+            clearAndUnregister(client);
+        }
     }
 
     @Override
