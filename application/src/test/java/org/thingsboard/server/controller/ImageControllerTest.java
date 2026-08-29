@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.sql.resource.TbResourceRepository;
+import org.thingsboard.server.dao.util.ImageUtils;
 
 import java.util.Base64;
 import java.util.List;
@@ -320,6 +321,38 @@ public class ImageControllerTest extends AbstractControllerTest {
         loginTenantAdmin();
         systemParams = doGet("/api/system/params", SystemParams.class);
         assertThat(systemParams.getMaxResourceSize()).isEqualTo(0);
+    }
+
+    @Test
+    public void testSkipPreviewForLargeImage() throws Exception {
+        // PNG_IMAGE is 200x160 = 128000 bytes decoded (200*160*4)
+        // maxResourceSize must be > file size (so upload passes) but < decoded size (so preview is skipped)
+        loginSysAdmin();
+        updateDefaultTenantProfileConfig(tenantProfileConfig -> {
+            tenantProfileConfig.setMaxResourceSize(50000);
+        });
+        loginTenantAdmin();
+
+        try {
+            String filename = "large_decoded_image.png";
+            TbResourceInfo imageInfo = uploadImage(HttpMethod.POST, "/api/image", filename, "image/png", PNG_IMAGE);
+
+            ImageDescriptor imageDescriptor = imageInfo.getDescriptor(ImageDescriptor.class);
+            assertThat(imageDescriptor.getWidth()).isEqualTo(200);
+            assertThat(imageDescriptor.getHeight()).isEqualTo(160);
+
+            ImageDescriptor previewDescriptor = imageDescriptor.getPreviewDescriptor();
+            assertThat(previewDescriptor.getMediaType()).isEqualTo("image/gif");
+            assertThat(previewDescriptor.getWidth()).isEqualTo(1);
+            assertThat(previewDescriptor.getHeight()).isEqualTo(1);
+
+            assertThat(downloadImagePreview("tenant", filename)).containsExactly(ImageUtils.PLACEHOLDER_PREVIEW);
+        } finally {
+            loginSysAdmin();
+            updateDefaultTenantProfileConfig(tenantProfileConfig -> {
+                tenantProfileConfig.setMaxResourceSize(0);
+            });
+        }
     }
 
     @Test

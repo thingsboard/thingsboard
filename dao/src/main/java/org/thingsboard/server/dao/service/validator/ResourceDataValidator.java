@@ -89,6 +89,13 @@ public class ResourceDataValidator extends DataValidator<TbResource> {
         }
     }
 
+    public long getMaxResourceSize(TenantId tenantId) {
+        if (tenantId.isSysTenantId()) {
+            return 0;
+        }
+        return tenantProfileCache.get(tenantId).getDefaultProfileConfiguration().getMaxResourceSize();
+    }
+
     public void validateResourceSize(TenantId tenantId, TbResourceId resourceId, long dataSize) {
         if (!tenantId.isSysTenantId()) {
             DefaultTenantProfileConfiguration profileConfiguration = tenantProfileCache.get(tenantId).getDefaultProfileConfiguration();
