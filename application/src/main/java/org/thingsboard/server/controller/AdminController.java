@@ -146,15 +146,22 @@ public class AdminController extends BaseController {
     public AdminSettings saveAdminSettings(
             @Parameter(description = "A JSON value representing the Administration Settings.")
             @RequestBody AdminSettings adminSettings) throws ThingsboardException {
-        accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.WRITE);
+        SecurityUser securityUser = getCurrentUser();
+        accessControlService.checkPermission(securityUser, Resource.ADMIN_SETTINGS, Operation.WRITE);
         adminSettings.setTenantId(getTenantId());
-        adminSettings = checkNotNull(adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, adminSettings));
-        if (adminSettings.getKey().equals(MAIL_SETTINGS_KEY)) {
-            mailService.updateMailConfiguration();
-            ((ObjectNode) adminSettings.getJsonValue()).remove("password");
-            ((ObjectNode) adminSettings.getJsonValue()).remove("refreshToken");
-        } else if (adminSettings.getKey().equals("sms")) {
-            smsService.updateSmsConfiguration();
+        try {
+            adminSettings = checkNotNull(adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, adminSettings));
+            if (adminSettings.getKey().equals(MAIL_SETTINGS_KEY)) {
+                mailService.updateMailConfiguration();
+                ((ObjectNode) adminSettings.getJsonValue()).remove("password");
+                ((ObjectNode) adminSettings.getJsonValue()).remove("refreshToken");
+            } else if (adminSettings.getKey().equals("sms")) {
+                smsService.updateSmsConfiguration();
+            }
+            logSettingsAction(securityUser, null, adminSettings.getKey());
+        } catch (Exception e) {
+            logSettingsAction(securityUser, e, adminSettings.getKey());
+            throw e;
         }
         return adminSettings;
     }
@@ -175,8 +182,15 @@ public class AdminController extends BaseController {
     public SecuritySettings saveSecuritySettings(
             @Parameter(description = "A JSON value representing the Security Settings.")
             @RequestBody SecuritySettings securitySettings) throws ThingsboardException {
-        accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.WRITE);
-        securitySettings = checkNotNull(securitySettingsService.saveSecuritySettings(securitySettings));
+        SecurityUser securityUser = getCurrentUser();
+        accessControlService.checkPermission(securityUser, Resource.ADMIN_SETTINGS, Operation.WRITE);
+        try {
+            securitySettings = checkNotNull(securitySettingsService.saveSecuritySettings(securitySettings));
+            logSettingsAction(securityUser, null, "securitySettings");
+        } catch (Exception e) {
+            logSettingsAction(securityUser, e, "securitySettings");
+            throw e;
+        }
         return securitySettings;
     }
 
@@ -198,8 +212,20 @@ public class AdminController extends BaseController {
             @RequestBody JwtSettings jwtSettings) throws ThingsboardException {
         SecurityUser securityUser = getCurrentUser();
         accessControlService.checkPermission(securityUser, Resource.ADMIN_SETTINGS, Operation.WRITE);
-        checkNotNull(jwtSettingsService.saveJwtSettings(jwtSettings));
+        try {
+            checkNotNull(jwtSettingsService.saveJwtSettings(jwtSettings));
+            logSettingsAction(securityUser, null, "jwtSettings");
+        } catch (Exception e) {
+            logSettingsAction(securityUser, e, "jwtSettings");
+            throw e;
+        }
         return tokenFactory.createTokenPair(securityUser);
+    }
+
+    private void logSettingsAction(SecurityUser securityUser, Exception e, String key) {
+        auditLogService.logEntityAction(securityUser.getTenantId(), securityUser.getCustomerId(),
+                securityUser.getId(), securityUser.getName(),
+                securityUser.getId(), securityUser, ActionType.SETTINGS_UPDATED, e, key);
     }
 
     @ApiOperation(value = "Send test email (sendTestMail)",

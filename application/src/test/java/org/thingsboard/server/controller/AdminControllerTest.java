@@ -15,19 +15,27 @@
  */
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.awaitility.Awaitility;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AdminSettings;
+import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.audit.AuditLog;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.security.model.JwtSettings;
+import org.thingsboard.server.common.data.security.model.SecuritySettings;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -179,6 +187,58 @@ public class AdminControllerTest extends AbstractControllerTest {
         assertThat(jwtSettings).isEqualTo(newJwtSettings);
 
         resetJwtSettingsToDefault();
+    }
+
+    @Test
+    public void testSaveAdminSettingsAuditLog() throws Exception {
+        loginSysAdmin();
+
+        long startTs = System.currentTimeMillis();
+        AdminSettings adminSettings = doGet("/api/admin/settings/general", AdminSettings.class);
+        ((ObjectNode) adminSettings.getJsonValue()).put("baseUrl", "http://audit-test.org");
+        doPost("/api/admin/settings", adminSettings).andExpect(status().isOk());
+
+        awaitSettingsAuditLog("general", startTs);
+
+        // cleanup
+        ((ObjectNode) adminSettings.getJsonValue()).put("baseUrl", "http://localhost:8080");
+        doPost("/api/admin/settings", adminSettings).andExpect(status().isOk());
+    }
+
+    @Test
+    public void testSaveSecuritySettingsAuditLog() throws Exception {
+        loginSysAdmin();
+
+        long startTs = System.currentTimeMillis();
+        SecuritySettings securitySettings = doGet("/api/admin/securitySettings", SecuritySettings.class);
+        doPost("/api/admin/securitySettings", securitySettings).andExpect(status().isOk());
+
+        awaitSettingsAuditLog("securitySettings", startTs);
+    }
+
+    @Test
+    public void testSaveJwtSettingsAuditLog() throws Exception {
+        loginSysAdmin();
+
+        long startTs = System.currentTimeMillis();
+        JwtSettings jwtSettings = doGet("/api/admin/jwtSettings", JwtSettings.class);
+        doPost("/api/admin/jwtSettings", jwtSettings).andExpect(status().isOk());
+
+        loginSysAdmin();
+        awaitSettingsAuditLog("jwtSettings", startTs);
+    }
+
+    private void awaitSettingsAuditLog(String expectedSettingsKey, long startTs) {
+        Awaitility.await("Await audit log: SETTINGS_UPDATED/" + expectedSettingsKey)
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .until(() -> doGetTypedWithTimePageLink(
+                        "/api/audit/logs/entity/USER/" + currentUserId.getId() + "?",
+                        new TypeReference<PageData<AuditLog>>() {},
+                        new TimePageLink(100, 0, null, null, startTs, null)).getData().stream()
+                        .anyMatch(log -> log.getActionType() == ActionType.SETTINGS_UPDATED
+                                && log.getActionData() != null
+                                && expectedSettingsKey.equals(log.getActionData().path("settingsKey").asText(null)))
+                );
     }
 
 }
