@@ -17,7 +17,7 @@
 import * as CanvasGauges from 'canvas-gauges';
 import { FontSettings, getFontFamily } from '@home/components/widget/lib/settings.models';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { isDefined, isDefinedAndNotNull } from '@core/utils';
+import { isDefined, isDefinedAndNotNull, isNumeric } from '@core/utils';
 import tinycolor from 'tinycolor2';
 import Highlight = CanvasGauges.Highlight;
 import BaseGauge = CanvasGauges.BaseGauge;
@@ -27,6 +27,7 @@ import { ValueFormatProcessor } from '@shared/models/widget-settings.models';
 import { UnitService } from '@core/services/unit.service';
 import { DataKey } from '@shared/models/widget.models';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
+import { NOT_SUPPORTED } from '@shared/models/telemetry/telemetry.models';
 
 export type AnimationRule = 'linear' | 'quad' | 'quint' | 'cycle'
                             | 'bounce' | 'elastic' | 'dequad' | 'dequint'
@@ -95,11 +96,16 @@ export abstract class TbBaseGauge<S, O extends GenericOptions> {
       const cellData = this.ctx.data[0];
       if (cellData.data.length > 0) {
         const tvPair = cellData.data[cellData.data.length - 1];
-        let value = parseFloat(tvPair[1]);
+        const origValue = tvPair[1];
+        let value = parseFloat(origValue);
         if (this.formatValue) {
           value = parseFloat(this.formatValue.format(value));
         }
-        if (value !== this.gauge.value) {
+        const valueText = !isNumeric(origValue) ? NOT_SUPPORTED : !value ? 'N/A' : '';
+        if (this.gauge.options.valueText !== valueText) {
+          this.gauge.update({valueText} as GenericOptions);
+        }
+        if (!isNaN(value) && value !== this.gauge.value) {
           if (!this.gauge.options.animation) {
             this.gauge._value = value;
           } else {

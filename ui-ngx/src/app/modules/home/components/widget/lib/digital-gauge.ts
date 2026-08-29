@@ -21,7 +21,7 @@ import {
   DigitalGaugeSettings
 } from '@home/components/widget/lib/digital-gauge.models';
 import tinycolor from 'tinycolor2';
-import { isDefinedAndNotNull } from '@core/utils';
+import { isDefinedAndNotNull, isNumeric } from '@core/utils';
 import { prepareFontSettings } from '@home/components/widget/lib/settings.models';
 import { CanvasDigitalGauge, CanvasDigitalGaugeOptions } from '@home/components/widget/lib/canvas-digital-gauge';
 import { DatePipe } from '@angular/common';
@@ -36,6 +36,7 @@ import { UnitService } from '@core/services/unit.service';
 import { isNotEmptyTbUnits } from '@shared/models/unit.models';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 import GenericOptions = CanvasGauges.GenericOptions;
+import { NOT_SUPPORTED } from '@shared/models/telemetry/telemetry.models';
 
 // @dynamic
 export class TbCanvasDigitalGauge {
@@ -269,8 +270,15 @@ export class TbCanvasDigitalGauge {
           (this.gauge.options as CanvasDigitalGaugeOptions).labelTimestamp =
             filter.transform(timestamp, this.localSettings.timestampFormat);
         }
-        const value = parseFloat(tvPair[1]);
-        if (value !== this.gauge.value) {
+        const origValue = tvPair[1];
+        const value = parseFloat(origValue);
+        const options = this.gauge.options as CanvasDigitalGaugeOptions;
+        const valueText = !origValue ? 'N/A' : !isNumeric(origValue) ? NOT_SUPPORTED : '';
+        if (options.valueText !== valueText) {
+          options.valueText = valueText;
+          this.gauge.update({} as CanvasDigitalGaugeOptions);
+        }
+        if (!isNaN(value) && value !== this.gauge.value) {
           if (!this.gauge.options.animation) {
             this.gauge._value = value;
           } else {
