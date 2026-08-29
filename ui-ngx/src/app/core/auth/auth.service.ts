@@ -73,6 +73,12 @@ export class AuthService {
   private refreshTokenSubject: ReplaySubject<LoginResponse> = null;
   private jwtHelper = new JwtHelperService();
 
+  // Set in loadUser when the user arrives via a root-URL login (OAuth2 redirect,
+  // or username/password/publicId in the query). Such logins resolve during
+  // bootstrap and produce a single selectUserReady emission, so gotoDefaultPlace
+  // is driven here rather than from the app.component subscription.
+  private urlAuthRedirect = false;
+
   private static _storeGet(key) {
     return localStorage.getItem(key);
   }
@@ -102,10 +108,18 @@ export class AuthService {
       (authPayload) => {
         this.notifyAuthenticated(authPayload);
         this.notifyUserLoaded(true);
+        if (this.urlAuthRedirect) {
+          this.urlAuthRedirect = false;
+          this.gotoDefaultPlace(true);
+        }
       },
       () => {
         this.notifyUnauthenticated();
         this.notifyUserLoaded(true);
+        if (this.urlAuthRedirect) {
+          this.urlAuthRedirect = false;
+          this.gotoDefaultPlace(false);
+        }
       }
     );
   }
@@ -303,6 +317,9 @@ export class AuthService {
       const username = this.utils.getQueryParam('username');
       const password = this.utils.getQueryParam('password');
       const loginError = this.utils.getQueryParam('loginError');
+      // Deep links (pathname !== '/') must open the requested page, not the default dashboard.
+      this.urlAuthRedirect = window.location.pathname === '/' &&
+        !!(publicId || accessToken || (username && password));
       if (publicId) {
         return this.publicLogin(publicId).pipe(
           mergeMap((response) => {
