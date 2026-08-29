@@ -2821,7 +2821,7 @@
     "timeseries-placeholder": "Tijdreeks",
     "target-entity": "Doelentiteit",
     "attributes-propagation": "Attribuutpropagatie",
-    "attributes-propagation-hint": "De entiteitweergave kopieert automatisch opgegeven attributen van de doelentiteit telkens wanneer je deze entiteitweergave opslaat of bijwerkt. Om prestatieredenen worden attributen van de doelentiteit niet bij elke wijziging doorgegeven. Je kunt automatische propagatie inschakelen door een \"copy to view\"-regelnode te configureren in je regelketen en \"Post attributes\" en \"Attributes Updated\" berichten eraan te koppelen.",
+    "attributes-propagation-hint": "De entiteitweergave kopieert automatisch opgegeven attributen van de doelentiteit telkens wanneer je deze entiteitweergave opslaat of bijwerkt. Om prestatieredenen worden attributen van de doelentiteit niet bij elke wijziging doorgegeven. Je kunt automatische propagatie inschakelen door een \"copy to view\"-regelnode te configureren in je regelketen en \"Post Attributes\" en \"Attributes Updated\" berichten eraan te koppelen.",
     "timeseries-data": "Tijdreeksgegevens",
     "timeseries-data-hint": "Configureer de sleutels van tijdreeksgegevens van de doelentiteit die toegankelijk zullen zijn voor de entiteitweergave. Deze tijdreeksgegevens zijn alleen-lezen.",
     "search": "Zoek entiteitweergaven",
