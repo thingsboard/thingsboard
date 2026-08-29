@@ -3,7 +3,7 @@ name: Feature request
 about: Suggest an idea for this project
 title: "Your title here"
 labels: ['feature']
-assignees: 'Ultrazombie'
+assignees: 'mykhailokornieiev'
 
 ---
 
