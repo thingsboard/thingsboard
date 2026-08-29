@@ -21,6 +21,7 @@ import { UserComponent } from '@modules/home/pages/user/user.component';
 import { UserRoutingModule } from '@modules/home/pages/user/user-routing.module';
 import { AddUserDialogComponent } from '@modules/home/pages/user/add-user-dialog.component';
 import { ActivationLinkDialogComponent } from '@modules/home/pages/user/activation-link-dialog.component';
+import { PasswordResetLinkDialogComponent } from '@modules/home/pages/user/password-reset-link-dialog.component';
 import { HomeComponentsModule } from '@modules/home/components/home-components.module';
 import { UserTabsComponent } from '@home/pages/user/user-tabs.component';
 
@@ -29,7 +30,8 @@ import { UserTabsComponent } from '@home/pages/user/user-tabs.component';
     UserComponent,
     UserTabsComponent,
     AddUserDialogComponent,
-    ActivationLinkDialogComponent
+    ActivationLinkDialogComponent,
+    PasswordResetLinkDialogComponent
   ],
   imports: [
     CommonModule,

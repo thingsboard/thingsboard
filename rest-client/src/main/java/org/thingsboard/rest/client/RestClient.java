@@ -74,6 +74,7 @@ import org.thingsboard.server.common.data.UpdateMessage;
 import org.thingsboard.server.common.data.UsageInfo;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.UserEmailInfo;
+import org.thingsboard.server.common.data.UserPasswordResetLink;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.alarm.AlarmCommentInfo;
@@ -2829,6 +2830,14 @@ public class RestClient implements Closeable {
 
     public String getActivationLink(UserId userId) {
         return restTemplate.getForEntity(baseURL + "/api/user/{userId}/activationLink", String.class, userId.getId()).getBody();
+    }
+
+    public String getPasswordResetLink(UserId userId) {
+        return restTemplate.getForEntity(baseURL + "/api/user/{userId}/passwordResetLink", String.class, userId.getId()).getBody();
+    }
+
+    public UserPasswordResetLink getPasswordResetLinkInfo(UserId userId) {
+        return restTemplate.getForEntity(baseURL + "/api/user/{userId}/passwordResetLinkInfo", UserPasswordResetLink.class, userId.getId()).getBody();
     }
 
     public void deleteUser(UserId userId) {

@@ -27,6 +27,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.UserActivationLink;
+import org.thingsboard.server.common.data.UserPasswordResetLink;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
@@ -295,6 +296,94 @@ public class AuthControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testGetPasswordResetLink() throws Exception {
+        loginTenantAdmin();
+        User user = new User();
+        user.setAuthority(Authority.TENANT_ADMIN);
+        user.setEmail("tenant-admin-reset@thingsboard.org");
+        User savedUser = createUserAndLogin(user, "initialPassword1");
+        loginTenantAdmin();
+
+        String resetLink = getPasswordResetLink(savedUser);
+        assertThat(resetLink).contains("/api/noauth/resetPassword?resetToken=");
+
+        UserPasswordResetLink resetLinkInfo = getPasswordResetLinkInfo(savedUser);
+        assertThat(resetLinkInfo.value()).contains("/api/noauth/resetPassword?resetToken=");
+        assertThat(resetLinkInfo.ttlMs()).isPositive();
+
+        // verify the link works end-to-end (use the freshest one)
+        String resetToken = StringUtils.substringAfterLast(resetLinkInfo.value(), "resetToken=");
+        Mockito.doNothing().when(mailService).sendPasswordWasResetEmail(anyString(), anyString());
+        doPost("/api/noauth/resetPassword", JacksonUtil.newObjectNode()
+                .put("resetToken", resetToken)
+                .put("password", "newPassword1"))
+                .andExpect(status().isOk());
+
+        resetTokens();
+        loginUser(savedUser.getEmail(), "newPassword1");
+    }
+
+    @Test
+    public void testGetPasswordResetLinkReusesValidToken() throws Exception {
+        loginTenantAdmin();
+        User user = new User();
+        user.setAuthority(Authority.TENANT_ADMIN);
+        user.setEmail("tenant-admin-reset-reuse@thingsboard.org");
+        User savedUser = createUserAndLogin(user, "initialPassword1");
+        loginTenantAdmin();
+
+        // repeated calls are idempotent while the token is still valid — no churn for prefetch/double-click
+        UserPasswordResetLink first = getPasswordResetLinkInfo(savedUser);
+        UserPasswordResetLink second = getPasswordResetLinkInfo(savedUser);
+        assertThat(second.value()).isEqualTo(first.value());
+
+        // the reused link still works end-to-end
+        String resetToken = StringUtils.substringAfterLast(first.value(), "resetToken=");
+        Mockito.doNothing().when(mailService).sendPasswordWasResetEmail(anyString(), anyString());
+        doPost("/api/noauth/resetPassword", JacksonUtil.newObjectNode()
+                .put("resetToken", resetToken)
+                .put("password", "newPassword1"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void testGetPasswordResetLinkForNotYetActivatedUser() throws Exception {
+        loginTenantAdmin();
+        User user = new User();
+        user.setAuthority(Authority.TENANT_ADMIN);
+        user.setEmail("tenant-admin-reset-not-activated@thingsboard.org");
+        user = doPost("/api/user", user, User.class);
+
+        doGet("/api/user/" + user.getId() + "/passwordResetLinkInfo")
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", is("User is not yet activated!")));
+    }
+
+    @Test
+    public void testGetPasswordResetLinkForDisabledUser() throws Exception {
+        loginTenantAdmin();
+        User user = new User();
+        user.setAuthority(Authority.TENANT_ADMIN);
+        user.setEmail("tenant-admin-reset-disabled@thingsboard.org");
+        User savedUser = createUserAndLogin(user, "initialPassword1");
+        loginTenantAdmin();
+
+        doPost("/api/user/" + savedUser.getId() + "/userCredentialsEnabled?userCredentialsEnabled=false")
+                .andExpect(status().isOk());
+
+        doGet("/api/user/" + savedUser.getId() + "/passwordResetLinkInfo")
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", is("User account is disabled!")));
+    }
+
+    @Test
+    public void testGetPasswordResetLinkForbiddenForCustomerUser() throws Exception {
+        loginCustomerUser();
+        doGet("/api/user/" + customerUserId + "/passwordResetLinkInfo")
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     public void testGetPageWithoutRedirect() throws Exception {
         doGet("/login").andExpect(status().isOk());
         doGet("/home").andExpect(status().isOk());
@@ -320,6 +409,14 @@ public class AuthControllerTest extends AbstractControllerTest {
 
     private UserActivationLink getActivationLinkInfo(User user) throws Exception {
         return doGet("/api/user/" + user.getId() + "/activationLinkInfo", UserActivationLink.class);
+    }
+
+    private String getPasswordResetLink(User user) throws Exception {
+        return doGet("/api/user/" + user.getId() + "/passwordResetLink", String.class);
+    }
+
+    private UserPasswordResetLink getPasswordResetLinkInfo(User user) throws Exception {
+        return doGet("/api/user/" + user.getId() + "/passwordResetLinkInfo", UserPasswordResetLink.class);
     }
 
 }

@@ -63,6 +63,11 @@ export interface ActivationLinkInfo {
   ttlMs: number;
 }
 
+export interface PasswordResetLinkInfo {
+  value: string;
+  ttlMs: number;
+}
+
 export interface AuthUser {
   sub: string;
   scopes: string[];

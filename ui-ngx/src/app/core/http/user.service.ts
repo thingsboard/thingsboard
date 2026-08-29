@@ -16,7 +16,7 @@
 
 import { Injectable } from '@angular/core';
 import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
-import { ActivationLinkInfo, User, UserEmailInfo } from '@shared/models/user.model';
+import { ActivationLinkInfo, PasswordResetLinkInfo, User, UserEmailInfo } from '@shared/models/user.model';
 import { Observable } from 'rxjs';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { PageLink } from '@shared/models/page/page-link';
@@ -79,6 +79,10 @@ export class UserService {
 
   public getActivationLinkInfo(userId: string, config?: RequestConfig): Observable<ActivationLinkInfo> {
     return this.http.get<ActivationLinkInfo>(`/api/user/${userId}/activationLinkInfo`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getPasswordResetLinkInfo(userId: string, config?: RequestConfig): Observable<PasswordResetLinkInfo> {
+    return this.http.get<PasswordResetLinkInfo>(`/api/user/${userId}/passwordResetLinkInfo`, defaultHttpOptionsFromConfig(config));
   }
 
   public sendActivationEmail(email: string, config?: RequestConfig) {

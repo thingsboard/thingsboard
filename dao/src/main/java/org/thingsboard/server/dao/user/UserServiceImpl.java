@@ -305,6 +305,16 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
     }
 
     @Override
+    public UserCredentials checkUserPasswordResetToken(TenantId tenantId, UserCredentials userCredentials) {
+        if (userCredentials.getResetTokenTtl() < TimeUnit.MINUTES.toMillis(15)) { // renew link if less than 15 minutes before expiration
+            userCredentials = generatePasswordResetToken(userCredentials);
+            userCredentials = saveUserCredentials(tenantId, userCredentials);
+            log.debug("[{}][{}] Regenerated expired user password reset token", tenantId, userCredentials.getUserId());
+        }
+        return userCredentials;
+    }
+
+    @Override
     public UserCredentials replaceUserCredentials(TenantId tenantId, UserCredentials userCredentials) {
         log.trace("Executing replaceUserCredentials [{}]", userCredentials);
         userCredentialsValidator.validate(userCredentials, data -> tenantId);
