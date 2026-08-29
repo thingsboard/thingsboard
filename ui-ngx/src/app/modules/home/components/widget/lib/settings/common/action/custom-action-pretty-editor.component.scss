@@ -51,7 +51,7 @@
     }
 
     .right-panel {
-      padding: 8px 0 0;
+      padding: 0;
     }
 
     .tb-js-func {
@@ -95,6 +95,27 @@
 
   .tb-content {
     border: 1px solid #c0c0c0;
+    .tb-html {
+      .tb-html-content-panel {
+        border: none;
+      }
+    }
+    .tb-css {
+      .tb-css-content-panel {
+        border: none;
+      }
+    }
+    .tb-js-func {
+      padding-top: 8px;
+      .tb-js-func-toolbar {
+        padding: 0 5px;
+      }
+      .tb-js-func-panel {
+        border-left: none;
+        border-right: none;
+        border-bottom: none;
+      }
+    }
   }
 
   .gutter {
@@ -117,11 +138,15 @@
   .tb-action-expand-button {
     position: absolute;
     right: 14px;
+    top: 8px;
+    height: 48px;
     z-index: 2;
 
     &.tb-fullscreen-editor {
       position: relative;
       right: 0;
+      top: 0;
+      height: auto;
     }
   }
 
@@ -131,6 +156,3 @@
     }
   }
 }
-
-
-

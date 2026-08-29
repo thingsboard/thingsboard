@@ -15,46 +15,65 @@
     limitations under the License.
 
 -->
-<mat-tab-group selectedIndex="{{hasCustomFunction ? 3 : 2}}" dynamicHeight="true" style="width: 100%; height: 100%;">
-  <mat-tab label="{{ 'widget.resources' | translate }}" style="width: 100%; height: 100%;">
-    <div class="tb-custom-action-editor-container" style="background-color: #fff;">
-      <div class="mat-padding">
-        <div class="flex flex-1 flex-row items-center justify-start"
-             *ngFor="let resource of action.customResources; let i = index" style="padding-top: 10px;">
-          <tb-resource-autocomplete class="mat-block flex-1"
-                                    subscriptSizing="dynamic"
-                                    hideRequiredMarker required
-                                    [allowAutocomplete]="resource.isModule"
-                                    [(ngModel)]="resource.url"
-                                    (ngModelChange)="notifyActionUpdated()"
-                                    placeholder="{{ 'widget.resource-url' | translate }}">
-          </tb-resource-autocomplete>
-          <mat-checkbox [(ngModel)]="resource.isModule"
-                        (ngModelChange)="notifyActionUpdated()">
-            {{ 'widget.resource-is-extension' | translate }}
-          </mat-checkbox>
-          <button mat-icon-button color="primary"
+<mat-tab-group dynamicHeight
+               [mat-stretch-tabs]="fullscreen"
+               [selectedIndex]="fullscreen ? 2 : 3"
+               [animationDuration]="tabsAnimationDuration"
+               [disablePagination]="fullscreen"
+               class="size-full"
+               [class.flex-1]="!fullscreen">
+  <mat-tab #resourceTab="matTab">
+    <ng-template mat-tab-label>
+      <div [matBadge]="action.customResources.length" [matBadgeHidden]="resourceTab.isActive || !action.customResources.length"
+           matBadgeSize="small">{{ 'widgets.html-container.resources' | translate }}</div>
+    </ng-template>
+    <div class="flex flex-col" [class.h-full]="fullscreen">
+      <div class="flex flex-col gap-2 pt-4" [class.px-2]="fullscreen" [class.overflow-y-auto]="fullscreen">
+        @if (action.customResources.length) {
+          @for (resource of action.customResources; track resource; let i = $index) {
+            <div class="tb-form-row no-border no-padding">
+              <tb-resource-autocomplete class="flex-1"
+                                        subscriptSizing="dynamic"
+                                        inlineField
+                                        hideRequiredMarker required
+                                        [allowAutocomplete]="resource.isModule"
+                                        [(ngModel)]="resource.url"
+                                        (ngModelChange)="notifyActionUpdated()"
+                                        placeholder="{{ 'widget.resource-url' | translate }}">
+              </tb-resource-autocomplete>
+              <mat-checkbox [(ngModel)]="resource.isModule"
+                            (ngModelChange)="notifyActionUpdated()">
+                {{ 'widget.resource-is-extension' | translate }}
+              </mat-checkbox>
+
+              <button mat-icon-button color="primary"
+                      [disabled]="isLoading$ | async"
+                      type="button"
+                      (click)="removeResource(i)"
+                      matTooltip="{{'widget.remove-resource' | translate}}"
+                      matTooltipPosition="above">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          }
+        } @else {
+          <span translate
+                class="tb-prompt flex items-center justify-center py-3">widgets.html-container.no-resources</span>
+        }
+        <div>
+          <button mat-button mat-raised-button color="primary"
                   [disabled]="isLoading$ | async"
                   type="button"
-                  (click)="removeResource(i)"
-                  matTooltip="{{'widget.remove-resource' | translate}}"
+                  (click)="addResource()"
+                  matTooltip="{{'widget.add-resource' | translate}}"
                   matTooltipPosition="above">
-            <mat-icon>close</mat-icon>
+            <span translate>action.add</span>
           </button>
         </div>
-        <button mat-button mat-raised-button color="primary"
-                style="margin-top: 18px;"
-                [disabled]="isLoading$ | async"
-                type="button"
-                (click)="addResource()"
-                matTooltip="{{'widget.add-resource' | translate}}"
-                matTooltipPosition="above">
-          <span translate>action.add</span>
-        </button>
       </div>
     </div>
   </mat-tab>
-  <mat-tab label="{{ 'widget.css' | translate }}" style="width: 100%; height: 100%;">
+  <mat-tab label="{{ 'widget.css' | translate }}" class="size-full">
     <div class="tb-custom-action-editor-container" tb-fullscreen [fullscreen]="cssFullscreen">
       <div class="tb-editor-area-title-panel">
         <button mat-button
@@ -73,7 +92,7 @@
       <div #cssInput class="css-panel"></div>
     </div>
   </mat-tab>
-  <mat-tab label="{{ 'widget.html' | translate }}" style="width: 100%; height: 100%;">
+  <mat-tab label="{{ 'widget.html' | translate }}" class="size-full">
     <div class="tb-custom-action-editor-container" tb-fullscreen [fullscreen]="htmlFullscreen">
       <div class="tb-editor-area-title-panel">
         <button mat-button
@@ -91,18 +110,20 @@
       <div #htmlInput class="html-panel"></div>
     </div>
   </mat-tab>
-  <mat-tab *ngIf="hasCustomFunction" label="{{ 'widget.js' | translate }}" style="width: 100%; height: 100%;">
-    <tb-js-func
-      [(ngModel)]="action.customFunction"
-      (ngModelChange)="notifyActionUpdated()"
-      withModules
-      [functionArgs]="['$event', 'widgetContext', 'entityId', 'entityName', 'htmlTemplate', 'additionalParams', 'entityLabel']"
-      [disableUndefinedCheck]="true"
-      [validationArgs]="[]"
-      [editorCompleter]="customPrettyActionEditorCompleter"
-      functionTitle="{{ 'widget-action.custom-pretty-function' | translate }}"
-      [helpId]="helpId"
-      [helpPopupStyle]="{width: '900px'}">
-    </tb-js-func>
-  </mat-tab>
+  @if (hasCustomFunction) {
+    <mat-tab label="{{ 'widget.js' | translate }}" class="size-full">
+      <tb-js-func
+        [(ngModel)]="action.customFunction"
+        (ngModelChange)="notifyActionUpdated()"
+        withModules
+        [functionArgs]="['$event', 'widgetContext', 'entityId', 'entityName', 'htmlTemplate', 'additionalParams', 'entityLabel']"
+        [disableUndefinedCheck]="true"
+        [validationArgs]="[]"
+        [editorCompleter]="customPrettyActionEditorCompleter"
+        functionTitle="{{ 'widget-action.custom-pretty-function' | translate }}"
+        [helpId]="helpId"
+        [helpPopupStyle]="{width: '900px'}">
+      </tb-js-func>
+    </mat-tab>
+  }
 </mat-tab-group>

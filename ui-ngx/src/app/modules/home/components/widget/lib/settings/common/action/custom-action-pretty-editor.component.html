@@ -15,37 +15,31 @@
     limitations under the License.
 
 -->
-<div class="tb-custom-action-pretty" tb-fullscreen [fullscreen]="fullscreen">
-  <div class="tb-action-expand-button flex flex-row items-center justify-end" [class.tb-fullscreen-editor]="fullscreen">
-    <button *ngIf="!fullscreen"
-            class="lt-md:!hidden"
-            mat-icon-button
+<div class="tb-custom-action-pretty flex flex-col gap-2" tb-fullscreen [fullscreen]="fullscreen">
+  <div class="tb-action-expand-button flex flex-row items-center justify-end gap-1" [class.tb-fullscreen-editor]="fullscreen">
+    @if (helpId) {
+      <div [tb-help-popup]="helpId" [tb-help-popup-placement]="'bottomRight'" [tb-help-popup-style]="fullscreen ? {width: '900px'} : {maxWidth: '60vw'}"></div>
+    }
+    <button mat-stroked-button
+            type="button"
             matTooltip="{{ 'widget.toggle-fullscreen' | translate }}"
             matTooltipPosition="above"
-            (click)="fullscreen = true">
-      <mat-icon>fullscreen</mat-icon>
-    </button>
-    <button *ngIf="fullscreen"
-            mat-button
-            matTooltip="{{ 'widget.toggle-fullscreen' | translate }}"
-            matTooltipPosition="above"
-            (click)="fullscreen = false">
-      <mat-icon>fullscreen_exit</mat-icon>
-      <span translate>widget.toggle-fullscreen</span>
+            (click)="toggleFullScreen()">
+      <mat-icon>{{ fullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+      <span>{{ (fullscreen ? 'fullscreen.exit' : 'fullscreen.fullscreen') | translate }}</span>
     </button>
   </div>
   <div class="tb-custom-action-editor" [class.tb-fullscreen-editor]="fullscreen">
-    <div *ngIf="!fullscreen; else fullscreenEditor">
-      <tb-custom-action-pretty-resources-tabs [hasCustomFunction]="true"
-                                              [helpId]="helpId"
-                                              [action]="action" (actionUpdated)="onActionUpdated($event ? true : false)">
-      </tb-custom-action-pretty-resources-tabs>
-    </div>
-    <ng-template #fullscreenEditor>
+    @if (!fullscreen) {
+        <tb-custom-action-pretty-resources-tabs [hasCustomFunction]="true"
+                                                [fullscreen]="fullscreen"
+                                                [action]="action" (actionUpdated)="onActionUpdated($event ? true : false)">
+        </tb-custom-action-pretty-resources-tabs>
+    } @else {
       <div class="tb-fullscreen-panel tb-layout-fill flex flex-row">
         <div #leftPanel class="tb-split tb-content left-panel">
           <tb-custom-action-pretty-resources-tabs [hasCustomFunction]="false"
-                                                  [helpId]="helpId"
+                                                  [fullscreen]="fullscreen"
                                                   [action]="action" (actionUpdated)="onActionUpdated($event ? true : false)">
           </tb-custom-action-pretty-resources-tabs>
         </div>
@@ -59,12 +53,10 @@
             [disableUndefinedCheck]="true"
             [validationArgs]="[]"
             [editorCompleter]="customPrettyActionEditorCompleter"
-            functionTitle="{{ 'widget-action.custom-pretty-function' | translate }}"
-            [helpId]="helpId"
-            [helpPopupStyle]="{width: '900px'}">
+            functionTitle="{{ 'widget-action.custom-pretty-function' | translate }}">
           </tb-js-func>
         </div>
       </div>
-    </ng-template>
+    }
   </div>
 </div>

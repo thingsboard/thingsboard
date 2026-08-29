@@ -58,6 +58,9 @@ export class CustomActionPrettyResourcesTabsComponent extends PageComponent impl
   @Input()
   helpId: string;
 
+  @Input()
+  fullscreen = false;
+
   @Output()
   actionUpdated: EventEmitter<CustomActionDescriptor> = new EventEmitter<CustomActionDescriptor>();
 
@@ -78,6 +81,8 @@ export class CustomActionPrettyResourcesTabsComponent extends PageComponent impl
   setValuesPending = false;
 
   customPrettyActionEditorCompleter = CustomPrettyActionEditorCompleter;
+
+  tabsAnimationDuration = '500ms';
 
   constructor(private raf: RafService) {
     super();
