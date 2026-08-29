@@ -42,6 +42,7 @@ import org.thingsboard.server.common.data.device.profile.JsonTransportPayloadCon
 import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.transport.AbstractTransportIntegrationTest;
 import org.thingsboard.server.utils.PortFinder;
 
@@ -175,5 +176,15 @@ public abstract class AbstractCoapIntegrationTest extends AbstractTransportInteg
         device.setName(name);
         device.setType(type);
         return doPost("/api/device", device, Device.class);
+    }
+
+    protected CoapTestClient createClientForFeatureWithConfirmableParameter(FeatureType featureType, boolean confirmable) {
+        CoapTestClient coapTestClient = new CoapTestClient(accessToken, featureType);
+        if (confirmable) {
+            coapTestClient.useCONs();
+        } else {
+            coapTestClient.useNONs();
+        }
+        return coapTestClient;
     }
 }
