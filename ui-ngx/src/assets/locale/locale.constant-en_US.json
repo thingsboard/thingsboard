@@ -3211,7 +3211,9 @@
         "login-here": "Login here",
         "to-increase-limit": "to increase limit.",
         "increase-limit-request-sent-title": "We have sent an automated request to your System Administrator to increase the limit",
-        "increase-limit-request-sent-text": "Please allow some time for them to review the request and update the settings. You may need to refresh this page to see the changes."
+        "increase-limit-request-sent-text": "Please allow some time for them to review the request and update the settings. You may need to refresh this page to see the changes.",
+        "entity-not-valid": "Please select an existing {{entity}} from the list.",
+        "entity-not-valid-create-new": "Please select an existing {{entity}} or create a new one."
     },
     "entity-field": {
         "created-time": "Created time",

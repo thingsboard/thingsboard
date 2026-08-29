@@ -17,10 +17,11 @@
 -->
 <mat-form-field [formGroup]="selectTemplateFormGroup" class="mat-block" [appearance]="appearance">
   <mat-label translate>notification.template</mat-label>
-  <input matInput type="text"
+  <input matInput [errorStateMatcher]="this" type="text"
          #templateInput
          formControlName="templateName"
          (focusin)="onFocus()"
+         (blur)="onBlur()"
          [required]="required"
          [matAutocomplete]="templateAutocomplete">
   @if (selectTemplateFormGroup.get('templateName').value && !disabled) {
@@ -49,6 +50,8 @@
     </button>
   }
   <mat-autocomplete class="tb-autocomplete"
+                    (opened)="onPanelOpened()"
+                    (closed)="onPanelClosed()"
                     #templateAutocomplete="matAutocomplete"
                     [displayWith]="displayTemplateFn"
                     >
@@ -86,6 +89,11 @@
   @if (selectTemplateFormGroup.get('templateName').hasError('required')) {
     <mat-error>
       {{ 'notification.template-required' | translate }}
+    </mat-error>
+  }
+  @if (selectTemplateFormGroup.get('templateName').hasError('objectRequired')) {
+    <mat-error>
+      {{ (allowCreate ? 'entity.entity-not-valid-create-new' : 'entity.entity-not-valid') | translate: {entity: 'notification.template' | translate | lowercase} }}
     </mat-error>
   }
 </mat-form-field>

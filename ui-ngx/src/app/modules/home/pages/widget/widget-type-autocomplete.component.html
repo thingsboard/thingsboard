@@ -20,11 +20,12 @@
   @if (label) {
     <mat-label>{{ label }}</mat-label>
   }
-  <input matInput type="text"
+  <input matInput [errorStateMatcher]="this" type="text"
          #widgetTypeInput
          placeholder="{{ placeholder }}"
          formControlName="widgetType"
          (focusin)="onFocus()"
+         (blur)="onBlur()"
          [required]="required"
          [matAutocomplete]="widgetTypeAutocomplete">
   @if (selectWidgetTypeFormGroup.get('widgetType').value && !disabled) {
@@ -37,6 +38,8 @@
   }
   <mat-autocomplete
     class="tb-autocomplete tb-widget-type-autocomplete"
+    (opened)="onPanelOpened()"
+    (closed)="onPanelClosed()"
     #widgetTypeAutocomplete
     [displayWith]="displayWidgetTypeFn">
     @for (widgetType of filteredWidgetTypes | async; track widgetType) {
@@ -68,6 +71,11 @@
       </mat-option>
     }
   </mat-autocomplete>
+  @if (selectWidgetTypeFormGroup.get('widgetType').hasError('objectRequired')) {
+    <mat-error>
+      {{ 'entity.entity-not-valid' | translate: {entity: label | lowercase} }}
+    </mat-error>
+  }
   <mat-error>
     <ng-content select="[tb-error]"></ng-content>
   </mat-error>

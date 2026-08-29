@@ -17,10 +17,11 @@
 -->
 <mat-form-field [formGroup]="conversationSlackFormGroup" class="mat-block" [appearance]="appearance">
   <mat-label>{{ labelText }}</mat-label>
-  <input matInput type="text"
+  <input matInput [errorStateMatcher]="this" type="text"
          #slackInput
          formControlName="conversation"
          (focusin)="onFocus()"
+         (blur)="onBlur()"
          [required]="required"
          [matAutocomplete]="slackAutocomplete">
   @if (conversationSlackFormGroup.get('conversation').value && !disabled) {
@@ -31,23 +32,24 @@
     </button>
   }
   <mat-autocomplete class="tb-autocomplete"
+                    (opened)="onPanelOpened()"
+                    (closed)="onPanelClosed()"
                     #slackAutocomplete="matAutocomplete"
-                    [displayWith]="displaySlackConversationFn"
-                    >
+                    [displayWith]="displaySlackConversationFn">
     @for (template of slackConversation$ | async; track template) {
       <mat-option [value]="template" class="template-option">
-        <span [innerHTML]="template.title | highlight:slackSearchText"></span>
+        <span [innerHTML]="template.title | highlight:searchText"></span>
       </mat-option>
     }
     @if (!(slackConversation$ | async)?.length) {
       <mat-option [value]="null" class="tb-not-found">
         <div class="tb-not-found-content" (click)="$event.stopPropagation()">
-          @if (!textIsNotEmpty(slackSearchText)) {
+          @if (!textIsNotEmpty(searchText)) {
             <div>
               <span translate>notification.not-found-slack-recipient</span>
             </div>
           } @else {
-            <span>Not slack recipient matches {{ truncate.transform(slackSearchText, true, 6, &apos;...&apos;) }}</span>
+            <span>Not slack recipient matches {{ truncate.transform(searchText, true, 6, &apos;...&apos;) }}</span>
           }
         </div>
       </mat-option>
@@ -56,6 +58,11 @@
   @if (conversationSlackFormGroup.get('conversation').hasError('required')) {
     <mat-error>
       {{ requiredText }}
+    </mat-error>
+  }
+  @if (conversationSlackFormGroup.get('conversation').hasError('objectRequired')) {
+    <mat-error>
+      {{ 'entity.entity-not-valid' | translate: {entity: labelText | lowercase} }}
     </mat-error>
   }
 </mat-form-field>
