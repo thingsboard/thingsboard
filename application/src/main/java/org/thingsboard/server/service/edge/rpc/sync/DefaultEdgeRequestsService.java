@@ -44,7 +44,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
-import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
@@ -160,17 +159,7 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
                     if (DefaultDeviceStateService.ACTIVITY_KEYS_WITHOUT_INACTIVITY_TIMEOUT.contains(attr.getKey())) {
                         continue;
                     }
-                    if (attr.getDataType() == DataType.BOOLEAN && attr.getBooleanValue().isPresent()) {
-                        attributes.put(attr.getKey(), attr.getBooleanValue().get());
-                    } else if (attr.getDataType() == DataType.DOUBLE && attr.getDoubleValue().isPresent()) {
-                        attributes.put(attr.getKey(), attr.getDoubleValue().get());
-                    } else if (attr.getDataType() == DataType.LONG && attr.getLongValue().isPresent()) {
-                        attributes.put(attr.getKey(), attr.getLongValue().get());
-                    } else if (attr.getDataType() == DataType.JSON && attr.getJsonValue().isPresent()) {
-                        attributes.set(attr.getKey(), JacksonUtil.toJsonNode(attr.getJsonValue().get()));
-                    } else {
-                        attributes.put(attr.getKey(), attr.getValueAsString());
-                    }
+                    JacksonUtil.addKvEntry(attributes, attr);
                 }
                 if (!attributes.isEmpty()) {
                     entityData.put("kv", attributes);

@@ -23,6 +23,7 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -78,6 +79,7 @@ public class TbMsgDeleteAttributesNode implements TbNode {
                     .previousCalculatedFieldIds(msg.getPreviousCalculatedFieldIds())
                     .tbMsgId(msg.getId())
                     .tbMsgType(msg.getInternalType())
+                    .msgSource(msg.getMetaData().getValue(DataConstants.MSG_SOURCE_KEY))
                     .callback(config.isSendAttributesDeletedNotification() ?
                             new AttributesDeleteNodeCallback(ctx, msg, scope.name(), keysToDelete) :
                             new TelemetryNodeCallback(ctx, msg))
