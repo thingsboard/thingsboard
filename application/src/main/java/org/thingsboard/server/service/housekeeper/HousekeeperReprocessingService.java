@@ -82,7 +82,7 @@ public class HousekeeperReprocessingService {
         for (TbProtoQueueMsg<ToHousekeeperServiceMsg> msg : msgs) {
             log.trace("Reprocessing task: {}", msg);
             try {
-                housekeeperService.processTask(msg.getValue());
+                housekeeperService.processTask(msg.getValue(), true);
             } catch (InterruptedException e) {
                 return;
             } catch (Throwable e) {
