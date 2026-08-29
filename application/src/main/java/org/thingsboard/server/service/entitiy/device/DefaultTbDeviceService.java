@@ -109,7 +109,7 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
             logEntityActionService.logEntityAction(tenantId, deviceId, device, device.getCustomerId(), actionType,
                     user, deviceId.toString());
         } catch (Exception e) {
-            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.DEVICE), actionType,
+            logEntityActionService.logEntityAction(tenantId, getOrEmptyId(deviceId, EntityType.DEVICE), actionType,
                     user, e, deviceId.toString());
             throw e;
         }

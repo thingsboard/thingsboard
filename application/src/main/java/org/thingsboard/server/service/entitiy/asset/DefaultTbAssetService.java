@@ -70,7 +70,7 @@ public class DefaultTbAssetService extends AbstractTbEntityService implements Tb
             assetService.deleteAsset(tenantId, assetId);
             logEntityActionService.logEntityAction(tenantId, assetId, asset, asset.getCustomerId(), actionType, user, assetId.toString());
         } catch (Exception e) {
-            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.ASSET), actionType, user, e,
+            logEntityActionService.logEntityAction(tenantId, getOrEmptyId(assetId, EntityType.ASSET), actionType, user, e,
                     assetId.toString());
             throw e;
         }

@@ -193,7 +193,7 @@ public class DefaultTbRuleChainService extends AbstractTbEntityService implement
             ruleChainService.deleteRuleChainById(tenantId, ruleChainId);
             logEntityActionService.logEntityAction(tenantId, ruleChainId, ruleChain, null, ActionType.DELETED, user, ruleChainId.toString());
         } catch (Exception e) {
-            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.RULE_CHAIN), ActionType.DELETED,
+            logEntityActionService.logEntityAction(tenantId, getOrEmptyId(ruleChainId, EntityType.RULE_CHAIN), ActionType.DELETED,
                     user, e, ruleChainId.toString());
             throw e;
         }
