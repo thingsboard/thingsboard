@@ -358,16 +358,26 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                         Futures.addCallback(fetchDeviceState(device), new FutureCallback<>() {
                             @Override
                             public void onSuccess(DeviceStateData state) {
-                                TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, device.getId());
-                                Set<DeviceId> deviceIds = partitionedEntities.get(tpi);
-                                boolean isMyPartition = deviceIds != null;
-                                if (isMyPartition) {
-                                    deviceIds.add(state.getDeviceId());
-                                    initializeActivityState(deviceId, state);
+                                try {
+                                    TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, device.getId());
+                                    Set<DeviceId> deviceIds = partitionedEntities.get(tpi);
+                                    boolean isMyPartition = deviceIds != null;
+                                    if (isMyPartition) {
+                                        deviceIds.add(state.getDeviceId());
+                                        initializeActivityState(deviceId, state);
+                                        callback.onSuccess();
+                                    } else {
+                                        log.debug("[{}][{}] Device belongs to external partition. Probably rebalancing is in progress. Topic: {}", tenantId, deviceId, tpi.getFullTopicName());
+                                        callback.onFailure(new RuntimeException("Device belongs to external partition " + tpi.getFullTopicName() + "!"));
+                                    }
+                                } catch (TenantNotFoundException e) {
+                                    // Tenant was removed (e.g. during shutdown / test tearDown) between fetchDeviceState completing
+                                    // and partition resolution. Device-state registration is moot in that case.
+                                    log.debug("[{}][{}] Tenant not found while registering device to the state service; skipping.", tenantId, deviceId);
                                     callback.onSuccess();
-                                } else {
-                                    log.debug("[{}][{}] Device belongs to external partition. Probably rebalancing is in progress. Topic: {}", tenantId, deviceId, tpi.getFullTopicName());
-                                    callback.onFailure(new RuntimeException("Device belongs to external partition " + tpi.getFullTopicName() + "!"));
+                                } catch (Throwable t) {
+                                    log.warn("[{}][{}] Failed to register device to the state service", tenantId, deviceId, t);
+                                    callback.onFailure(t);
                                 }
                             }
 
