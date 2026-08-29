@@ -27,7 +27,7 @@ import {
 } from '@angular/core';
 import { ControlValueAccessor, UntypedFormControl, NG_VALIDATORS, NG_VALUE_ACCESSOR, Validator } from '@angular/forms';
 import { Ace } from 'ace-builds';
-import { getAce } from '@shared/models/ace/ace.models';
+import { getAce, getLanguageProvider } from '@shared/models/ace/ace.models';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -35,6 +35,9 @@ import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
 import { beautifyCss } from '@shared/models/beautify.models';
+import type { LanguageProvider } from 'ace-linters';
+import { Subscription } from 'rxjs';
+import { mergeMap } from 'rxjs/operators';
 
 @Component({
     selector: 'tb-css',
@@ -88,6 +91,10 @@ export class CssComponent implements OnInit, OnDestroy, ControlValueAccessor, Va
 
   private propagateChange = null;
 
+  private languageProvider: LanguageProvider;
+  private worker: Worker;
+  private aceSubscription: Subscription;
+
   constructor(public elementRef: ElementRef,
               private utils: UtilsService,
               private translate: TranslateService,
@@ -112,9 +119,17 @@ export class CssComponent implements OnInit, OnDestroy, ControlValueAccessor, Va
     };
 
     editorOptions = {...editorOptions, ...advancedOptions};
-    getAce().subscribe(
-      (ace) => {
+    this.aceSubscription = getAce().pipe(
+      mergeMap((ace) => {
         this.cssEditor = ace.edit(editorElement, editorOptions);
+        this.cssEditor.session.setUseWorker(false);
+        this.worker = new Worker(new URL('../../core/worker/css-linter.worker', import.meta.url), { type: 'module' });
+        return getLanguageProvider(this.worker);
+      })
+    ).subscribe(
+      (languageProvider) => {
+        this.languageProvider = languageProvider;
+        this.languageProvider.registerEditor(this.cssEditor);
         this.cssEditor.session.setUseWrapMode(true);
         this.cssEditor.setValue(this.modelValue ? this.modelValue : '', -1);
         this.cssEditor.setReadOnly(this.disabled);
@@ -142,8 +157,14 @@ export class CssComponent implements OnInit, OnDestroy, ControlValueAccessor, Va
   }
 
   ngOnDestroy(): void {
+    this.aceSubscription?.unsubscribe();
     if (this.editorResize$) {
       this.editorResize$.disconnect();
+    }
+    if (this.languageProvider) {
+      this.languageProvider.closeConnection();
+    } else if (this.worker) {
+      this.worker.terminate();
     }
     if (this.cssEditor) {
       this.cssEditor.destroy();
