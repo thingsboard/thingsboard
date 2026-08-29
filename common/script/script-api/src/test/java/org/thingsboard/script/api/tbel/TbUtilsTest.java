@@ -18,6 +18,7 @@ package org.thingsboard.script.api.tbel;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Ints;
+import com.upokecenter.cbor.CBORObject;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -647,6 +648,42 @@ public class TbUtilsTest {
         ExecutionHashMap<String, Object> expectedJson = new ExecutionHashMap<>(1, ctx);
         expectedJson.put("hello", "world");
         Object actualJson = TbUtils.decodeToJson(ctx, expectedStr);
+        Assertions.assertEquals(expectedJson, actualJson);
+    }
+
+    @Test
+    public void parseCborToJson() throws IOException {
+        LinkedHashMap<String, Object> cborData = new LinkedHashMap<>();
+        cborData.put("hello", "world");
+        cborData.put("value", 42);
+        byte[] cborPayload = CBORObject.FromObject(cborData).EncodeToBytes();
+        Object actualJson = TbUtils.cborToJson(ctx, Bytes.asList(cborPayload));
+
+        ExecutionHashMap<String, Object> expectedJson = new ExecutionHashMap<>(2, ctx);
+        expectedJson.put("hello", "world");
+        expectedJson.put("value", 42);
+        Assertions.assertEquals(expectedJson, actualJson);
+    }
+
+    @Test
+    public void parseJsonObjectToCborAndBack() throws IOException {
+        String jsonStr = "{\"hello\": \"world\", \"value\": 42}";
+        Object expectedJson = TbUtils.decodeToJson(ctx, jsonStr);
+
+        List<Byte> cborBytes = TbUtils.jsonToCbor(ctx, expectedJson);
+        Object actualJson = TbUtils.cborToJson(ctx, cborBytes);
+
+        Assertions.assertEquals(expectedJson, actualJson);
+    }
+
+    @Test
+    public void parseJsonStringToCborAndBack() throws IOException {
+        String jsonStr = "{\"hello\": \"world\", \"value\": 42}";
+        Object expectedJson = TbUtils.decodeToJson(ctx, jsonStr);
+
+        List<Byte> cborBytes = TbUtils.jsonToCbor(ctx, jsonStr);
+        Object actualJson = TbUtils.cborToJson(ctx, cborBytes);
+
         Assertions.assertEquals(expectedJson, actualJson);
     }
 
@@ -1333,4 +1370,3 @@ public class TbUtilsTest {
         return result;
     }
 }
-

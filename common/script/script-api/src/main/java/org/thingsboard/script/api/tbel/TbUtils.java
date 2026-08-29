@@ -17,6 +17,7 @@ package org.thingsboard.script.api.tbel;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.primitives.Bytes;
+import com.upokecenter.cbor.CBORObject;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.mvel2.ExecutionContext;
@@ -109,11 +110,18 @@ public class TbUtils {
                 ExecutionContext.class, List.class)));
         parserConfig.addImport("decodeToJson", new MethodStub(TbUtils.class.getMethod("decodeToJson",
                 ExecutionContext.class, String.class)));
+        parserConfig.addImport("cborToJson", new MethodStub(TbUtils.class.getMethod("cborToJson",
+                ExecutionContext.class, List.class)));
+        parserConfig.addImport("jsonToCbor", new MethodStub(TbUtils.class.getMethod("jsonToCbor",
+                ExecutionContext.class, Object.class)));
+        parserConfig.addImport("jsonToCbor", new MethodStub(TbUtils.class.getMethod("jsonToCbor",
+                ExecutionContext.class, String.class)));
         parserConfig.addImport("stringToBytes", new MethodStub(TbUtils.class.getMethod("stringToBytes",
                 ExecutionContext.class, Object.class)));
         parserConfig.addImport("stringToBytes", new MethodStub(TbUtils.class.getMethod("stringToBytes",
                 ExecutionContext.class, Object.class, String.class)));
         parserConfig.registerNonConvertableMethods(TbUtils.class, Collections.singleton("stringToBytes"));
+        parserConfig.registerNonConvertableMethods(TbUtils.class, Collections.singleton("jsonToCbor"));
         parserConfig.addImport("parseInt", new MethodStub(TbUtils.class.getMethod("parseInt",
                 String.class)));
         parserConfig.addImport("parseInt", new MethodStub(TbUtils.class.getMethod("parseInt",
@@ -410,6 +418,23 @@ public class TbUtils {
 
     public static Object decodeToJson(ExecutionContext ctx, String jsonStr) throws IOException {
         return TbJson.parse(ctx, jsonStr);
+    }
+
+    public static Object cborToJson(ExecutionContext ctx, List<?> bytesList) throws IOException {
+        CBORObject cborObject = CBORObject.DecodeFromBytes(bytesFromList(bytesList));
+        return TbJson.parse(ctx, cborObject.ToJSONString());
+    }
+
+    public static List<Byte> jsonToCbor(ExecutionContext ctx, Object jsonValue) {
+        String jsonStr = TbJson.stringify(jsonValue);
+        byte[] cborBytes = CBORObject.FromJSONBytes(jsonStr.getBytes(StandardCharsets.UTF_8)).EncodeToBytes();
+        return bytesToList(ctx, cborBytes);
+    }
+
+    public static List<Byte> jsonToCbor(ExecutionContext ctx, String jsonStr) {
+        String safeJsonStr = jsonStr != null ? jsonStr : "null";
+        byte[] cborBytes = CBORObject.FromJSONBytes(safeJsonStr.getBytes(StandardCharsets.UTF_8)).EncodeToBytes();
+        return bytesToList(ctx, cborBytes);
     }
 
     public static String bytesToString(List<?> bytesList) {
@@ -1568,4 +1593,3 @@ public class TbUtils {
     }
 
 }
-
