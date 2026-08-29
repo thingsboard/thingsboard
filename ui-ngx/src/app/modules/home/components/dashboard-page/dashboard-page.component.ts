@@ -43,6 +43,7 @@ import { UtilsService } from '@core/services/utils.service';
 import {
   BreakpointId,
   BreakpointInfo,
+  BreakpointLayoutInfo,
   Dashboard,
   DashboardConfiguration,
   DashboardLayoutId,
@@ -149,6 +150,7 @@ import {
   MoveWidgetsDialogResult
 } from '@home/components/dashboard-page/layout/move-widgets-dialog.component';
 import { HttpStatusCode } from '@angular/common/http';
+import { ActionNotificationShow } from '@core/notification/notification.actions';
 
 // @dynamic
 @Component({
@@ -1106,6 +1108,17 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     if (!this.destroyed) {
       const layoutsData = this.dashboardUtils.getStateLayoutsData(this.dashboard, state);
       if (layoutsData) {
+        if (this.isEdit && Object.keys(layoutsData).some(l => {
+          const layout: DashboardPageLayout = this.layouts[l];
+          const breakpoint = (layout && layout.layoutCtx.breakpoint) || 'default';
+          const layoutInfo: BreakpointLayoutInfo = layoutsData[l][breakpoint] || layoutsData[l].default;
+          return layoutInfo && this.dashboardUtils.hasCollidingWidgets(layoutInfo.widgetLayouts);
+        })) {
+          this.store.dispatch(new ActionNotificationShow({
+            message: this.translate.instant('dashboard.state-widgets-overlap-warning'),
+            type: 'warn'
+          }));
+        }
         this.dashboardCtx.state = state;
         this.dashboardCtx.aliasController.dashboardStateChanged();
         this.isRightLayoutOpened = openRightLayout ? true : false;
