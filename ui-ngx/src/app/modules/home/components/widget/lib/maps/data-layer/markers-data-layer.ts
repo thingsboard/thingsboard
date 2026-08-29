@@ -422,7 +422,8 @@ class TbMarkerDataLayerItem extends TbLatestDataLayerItem<MarkersDataLayerSettin
     this.marker = L.marker(location, {
       tbMarkerData: data,
       snapIgnore: !this.dataLayer.isSnappable(),
-      bubblingMouseEvents: !this.dataLayer.isEditMode()
+      bubblingMouseEvents: !this.dataLayer.isEditMode(),
+      pane: this.dataLayer.getMarkerPaneName()
     });
     this.updateMarkerIcon(data, dsData);
     return this.marker;
@@ -577,8 +578,14 @@ export class TbMarkersDataLayer extends TbLatestMapDataLayer<MarkersDataLayerSet
   private clusterMarkerColorFunction: CompiledTbFunction<ClusterMarkerColorFunction>;
 
   constructor(protected map: TbMap<any>,
-              inputSettings: MarkersDataLayerSettings) {
-    super(map, inputSettings);
+              inputSettings: MarkersDataLayerSettings,
+              dataLayerIndex = 0,
+              dataLayerCount = 1) {
+    super(map, inputSettings, dataLayerIndex, dataLayerCount);
+  }
+
+  public getMarkerPaneName(): string {
+    return `tb-markers-pane-${this.dataLayerIndex}`;
   }
 
   public dataLayerType(): MapDataLayerType {
@@ -618,10 +625,20 @@ export class TbMarkersDataLayer extends TbLatestMapDataLayer<MarkersDataLayerSet
   }
 
   protected createDataLayerContainer(): FeatureGroup {
+    this.createMarkerPane();
     if (this.settings.markerClustering?.enable) {
       return this.createMarkersClusterContainer();
     } else {
       return super.createDataLayerContainer();
+    }
+  }
+
+  private createMarkerPane(): void {
+    const paneName = this.getMarkerPaneName();
+    const leafletMap = this.map.getMap();
+    if (!leafletMap.getPane(paneName)) {
+      const pane = leafletMap.createPane(paneName);
+      pane.style.zIndex = String(600 + (this.dataLayerCount - 1 - this.dataLayerIndex));
     }
   }
 
@@ -689,7 +706,8 @@ export class TbMarkersDataLayer extends TbLatestMapDataLayer<MarkersDataLayerSet
       removeOutsideVisibleBounds: this.settings.markerClustering?.lazyLoad,
       animate: this.settings.markerClustering?.zoomAnimation,
       chunkedLoading: this.settings.markerClustering?.chunkedLoad,
-      snapIgnore: !this.settings.edit?.snappable
+      snapIgnore: !this.settings.edit?.snappable,
+      clusterPane: this.getMarkerPaneName()
     };
     if (this.settings.markerClustering?.useClusterMarkerColorFunction) {
       markerClusterOptions.iconCreateFunction = (cluster) => {

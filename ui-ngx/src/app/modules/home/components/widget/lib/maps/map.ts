@@ -265,7 +265,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
     this.latestDataLayers = [];
     this.tripDataLayers = [];
     if (this.settings.markers) {
-      const markersDataLayers = this.settings.markers.map(settings => new TbMarkersDataLayer(this, settings));
+      const markersDataLayers = this.settings.markers.map((settings, i) => new TbMarkersDataLayer(this, settings, i, this.settings.markers.length));
       this.dataLayers.push(...markersDataLayers);
       this.latestDataLayers.push(...markersDataLayers);
     }

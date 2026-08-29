@@ -188,7 +188,9 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings = MapDataLay
   public dataLayerTooltipProcessor: DataLayerPatternProcessor;
 
   protected constructor(protected map: TbMap<any>,
-                        inputSettings: S) {
+                        inputSettings: S,
+                        protected dataLayerIndex = 0,
+                        protected dataLayerCount = 1) {
     this.settings = mergeDeepIgnoreArray({} as S, this.defaultBaseSettings(map) as S, inputSettings);
     if (this.settings.groups?.length) {
       this.settings.groups.forEach((group) => {
