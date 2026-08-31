@@ -109,7 +109,7 @@ public class AccessValidator {
             Operation.READ_TELEMETRY, Operation.WRITE_TELEMETRY, Operation.READ_ATTRIBUTES, Operation.WRITE_ATTRIBUTES);
 
     // Entity types in scope of the telemetry API. The rest own neither time series nor attributes, or are not supported by the API at all.
-    static final Set<EntityType> TELEMETRY_API_ENTITY_TYPES = Collections.unmodifiableSet(EnumSet.of(
+    private static final Set<EntityType> TELEMETRY_API_ENTITY_TYPES = Collections.unmodifiableSet(EnumSet.of(
             EntityType.DEVICE, EntityType.ASSET, EntityType.ENTITY_VIEW, EntityType.CUSTOMER, EntityType.TENANT,
             EntityType.TENANT_PROFILE, EntityType.USER, EntityType.EDGE, EntityType.RULE_CHAIN, EntityType.API_USAGE_STATE));
 

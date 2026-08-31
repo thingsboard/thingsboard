@@ -54,6 +54,7 @@ import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
+import org.thingsboard.server.exception.AccessDeniedException;
 import org.thingsboard.server.exception.UnauthorizedException;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -290,7 +291,7 @@ public class DefaultWebSocketService implements WebSocketService {
     }
 
     private void sendSubscriptionError(WebSocketSessionRef sessionRef, int cmdId, String defaultErrorMsg, Throwable e) {
-        if (e instanceof UnauthorizedException) {
+        if (e instanceof UnauthorizedException || e instanceof AccessDeniedException) {
             sendError(sessionRef, cmdId, SubscriptionErrorCode.UNAUTHORIZED, SubscriptionErrorCode.UNAUTHORIZED.getDefaultMsg());
         } else if (e instanceof IncorrectParameterException) {
             sendError(sessionRef, cmdId, SubscriptionErrorCode.BAD_REQUEST, e.getMessage());

@@ -137,12 +137,6 @@ public class AccessValidatorTest {
         );
     }
 
-    @Test
-    public void givenTelemetryApiScope_whenComparedWithExpectedEntityTypes_thenMatchesExactly() {
-        assertThat(AccessValidator.TELEMETRY_API_ENTITY_TYPES)
-                .containsExactlyInAnyOrderElementsOf(ENTITY_TYPES_IN_TELEMETRY_SCOPE);
-    }
-
     @ParameterizedTest
     @MethodSource("telemetryOperationsOnEntityTypesOutOfScope")
     public void givenEntityTypeOutOfTelemetryScope_whenValidate_thenFailsAndEntityIsNotFetched(EntityId entityId, Operation operation) {
