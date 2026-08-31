@@ -343,7 +343,7 @@ public class TelemetryControllerTest extends AbstractControllerTest {
     public void testSaveTelemetryForEntityTypeNotSupportedByTelemetryApiIsRejected() throws Exception {
         loginTenantAdmin();
 
-        doPostAsync("/api/plugins/telemetry/DASHBOARD/" + UUID.randomUUID() + "/timeseries/ANY",
+        doPostAsync("/api/plugins/telemetry/QUEUE/" + UUID.randomUUID() + "/timeseries/ANY",
                 "{\"temperature\":25}", String.class, status().isBadRequest());
     }
 

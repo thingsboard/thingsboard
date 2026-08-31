@@ -30,6 +30,8 @@ import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
@@ -38,8 +40,6 @@ import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.AccessControlService;
-import org.thingsboard.server.service.security.permission.Operation;
-import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -64,7 +64,8 @@ public class AccessValidatorTest {
 
     private static final Set<EntityType> EXPECTED_ENTITY_TYPES_WITH_TS_AND_ATTRIBUTES = EnumSet.of(
             EntityType.DEVICE, EntityType.ASSET, EntityType.ENTITY_VIEW, EntityType.CUSTOMER, EntityType.TENANT,
-            EntityType.TENANT_PROFILE, EntityType.USER, EntityType.EDGE, EntityType.RULE_CHAIN, EntityType.API_USAGE_STATE);
+            EntityType.TENANT_PROFILE, EntityType.USER, EntityType.EDGE, EntityType.RULE_CHAIN, EntityType.API_USAGE_STATE,
+            EntityType.CONVERTER, EntityType.INTEGRATION, EntityType.ENTITY_GROUP, EntityType.ROLE, EntityType.DASHBOARD);
 
     private static final List<Operation> EXPECTED_TS_AND_ATTRIBUTES_OPERATIONS = List.of(
             Operation.READ_TELEMETRY, Operation.WRITE_TELEMETRY, Operation.READ_ATTRIBUTES, Operation.WRITE_ATTRIBUTES);
@@ -92,7 +93,7 @@ public class AccessValidatorTest {
         user.setAuthority(Authority.CUSTOMER_USER);
         user.setTenantId(TENANT_ID);
         user.setCustomerId(new CustomerId(UUID.randomUUID()));
-        customerUser = new SecurityUser(user, true, null);
+        customerUser = new SecurityUser(user, true, null, null);
         callback = new RecordingCallback();
     }
 
