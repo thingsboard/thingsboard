@@ -35,6 +35,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.asset.Asset;
@@ -955,6 +956,17 @@ public class WebsocketApiTest extends AbstractControllerTest {
         Assert.assertNotNull(eData.get(0).getLatest().get(EntityKeyType.ATTRIBUTE));
         attrValue = eData.get(0).getLatest().get(EntityKeyType.ATTRIBUTE).get("anyAttributeKey");
         Assert.assertEquals(new TsValue(dataPoint5.getLastUpdateTs(), dataPoint5.getValueAsString()), attrValue);
+    }
+
+    @Test
+    public void testAttributesSubscriptionForEntityTypeOutOfTelemetryScope() throws Exception {
+        DeviceProfile deviceProfile = doPost("/api/deviceProfile", createDeviceProfile("Out of telemetry scope"), DeviceProfile.class);
+
+        JsonNode update = getWsClient().subscribeForAttributes(deviceProfile.getId(),
+                TbAttributeSubscriptionScope.SERVER_SCOPE.name(), List.of("anyAttributeKey"));
+
+        assertThat(update.get("errorCode").asInt()).isEqualTo(SubscriptionErrorCode.BAD_REQUEST.getCode());
+        assertThat(update.get("errorMsg").asText()).isEqualTo("Telemetry is not supported for entity type 'DEVICE_PROFILE'!");
     }
 
     @Test
