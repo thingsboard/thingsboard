@@ -31,6 +31,7 @@ export interface SysParamsState {
   maxDebugModeDurationMinutes: number;
   maxDataPointsPerRollingArg: number;
   maxArgumentsPerCF: number;
+  maxActivationLinkTtl: number;
   ruleChainDebugPerTenantLimitsConfiguration?: string;
   calculatedFieldDebugPerTenantLimitsConfiguration?: string;
   trendzSettings: TrendzSettings;

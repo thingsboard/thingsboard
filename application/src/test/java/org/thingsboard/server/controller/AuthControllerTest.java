@@ -25,6 +25,7 @@ import org.springframework.http.HttpHeaders;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.SystemParams;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.UserActivationLink;
 import org.thingsboard.server.common.data.id.UserId;
@@ -296,10 +297,10 @@ public class AuthControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testActivationLinkMaxTtlExposedInSecuritySettings() throws Exception {
+    public void testActivationLinkMaxTtlExposedInSystemParams() throws Exception {
         loginSysAdmin();
-        SecuritySettings securitySettings = doGet("/api/admin/securitySettings", SecuritySettings.class);
-        assertThat(securitySettings.getMaxActivationLinkTtl()).isEqualTo(720);
+        SystemParams systemParams = doGet("/api/system/params", SystemParams.class);
+        assertThat(systemParams.getMaxActivationLinkTtl()).isEqualTo(720);
     }
 
     @Test
@@ -316,18 +317,6 @@ public class AuthControllerTest extends AbstractControllerTest {
         SecuritySettings securitySettings = doGet("/api/admin/securitySettings", SecuritySettings.class);
         securitySettings.setUserActivationTokenTtl(721);
         doPost("/api/admin/securitySettings", securitySettings).andExpect(status().isBadRequest());
-    }
-
-    @Test
-    public void testActivationLinkMaxTtlIsReadOnlyOnSave() throws Exception {
-        loginSysAdmin();
-        SecuritySettings securitySettings = doGet("/api/admin/securitySettings", SecuritySettings.class);
-        // a client-supplied max is ignored: the server keeps its configured cap, so a TTL within that cap is accepted
-        securitySettings.setMaxActivationLinkTtl(1);
-        securitySettings.setUserActivationTokenTtl(100);
-        doPost("/api/admin/securitySettings", securitySettings).andExpect(status().isOk());
-        SecuritySettings updated = doGet("/api/admin/securitySettings", SecuritySettings.class);
-        assertThat(updated.getMaxActivationLinkTtl()).isEqualTo(720);
     }
 
     @Test

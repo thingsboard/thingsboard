@@ -61,7 +61,6 @@ public class DefaultSecuritySettingsService implements SecuritySettingsService {
             securitySettings.setPasswordResetTokenTtl(24);
             securitySettings.setUserActivationTokenTtl(24);
         }
-        applyMaxActivationLinkTtl(securitySettings);
         return securitySettings;
     }
 
@@ -78,20 +77,13 @@ public class DefaultSecuritySettingsService implements SecuritySettingsService {
             adminSettings.setTenantId(TenantId.SYS_TENANT_ID);
             adminSettings.setKey("securitySettings");
         }
-        securitySettings.setMaxActivationLinkTtl(null); // config-derived, must not be persisted
         adminSettings.setJsonValue(JacksonUtil.valueToTree(securitySettings));
         AdminSettings savedAdminSettings = adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, adminSettings);
         try {
-            SecuritySettings savedSecuritySettings = JacksonUtil.convertValue(savedAdminSettings.getJsonValue(), SecuritySettings.class);
-            applyMaxActivationLinkTtl(savedSecuritySettings);
-            return savedSecuritySettings;
+            return JacksonUtil.convertValue(savedAdminSettings.getJsonValue(), SecuritySettings.class);
         } catch (Exception e) {
             throw new RuntimeException("Failed to load security settings!", e);
         }
-    }
-
-    private void applyMaxActivationLinkTtl(SecuritySettings securitySettings) {
-        securitySettings.setMaxActivationLinkTtl(maxActivationLinkTtl);
     }
 
 }

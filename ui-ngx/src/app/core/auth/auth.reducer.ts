@@ -35,6 +35,7 @@ const emptyUserAuthState: AuthPayload = {
   maxArgumentsPerCF: 0,
   maxDataPointsPerRollingArg: 0,
   maxDebugModeDurationMinutes: 0,
+  maxActivationLinkTtl: 0,
   userSettings: initialUserSettings,
   trendzSettings: initialTrendzSettings
 };

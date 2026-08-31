@@ -38,5 +38,6 @@ public class SystemParams {
     String calculatedFieldDebugPerTenantLimitsConfiguration;
     long maxArgumentsPerCF;
     long maxDataPointsPerRollingArg;
+    int maxActivationLinkTtl;
     TrendzSettings trendzSettings;
 }

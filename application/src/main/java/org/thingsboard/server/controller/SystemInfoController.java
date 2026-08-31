@@ -76,6 +76,9 @@ public class SystemInfoController extends BaseController {
     @Value("${debug.settings.default_duration:15}")
     private int defaultDebugDurationMinutes;
 
+    @Value("${security.user_activation_link_max_ttl:720}")
+    private int maxActivationLinkTtl;
+
     @Autowired(required = false)
     private BuildProperties buildProperties;
 
@@ -150,7 +153,9 @@ public class SystemInfoController extends BaseController {
         }
         systemParams.setUserSettings(userSettingsNode);
         systemParams.setMaxDatapointsLimit(maxDatapointsLimit);
-        if (!currentUser.isSystemAdmin()) {
+        if (currentUser.isSystemAdmin()) {
+            systemParams.setMaxActivationLinkTtl(maxActivationLinkTtl);
+        } else {
             DefaultTenantProfileConfiguration tenantProfileConfiguration = tenantProfileCache.get(tenantId).getDefaultProfileConfiguration();
             systemParams.setMaxResourceSize(tenantProfileConfiguration.getMaxResourceSize());
             systemParams.setMaxDebugModeDurationMinutes(DebugModeUtil.getMaxDebugAllDuration(tenantProfileConfiguration.getMaxDebugModeDurationMinutes(), defaultDebugDurationMinutes));
