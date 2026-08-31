@@ -27,7 +27,6 @@ import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
-import org.thingsboard.server.common.data.cf.configuration.TimeSeriesImmediateOutputStrategy;
 import org.thingsboard.server.common.data.cf.configuration.TimeSeriesOutput;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
@@ -135,32 +134,20 @@ public class CalculatedFieldDataValidatorTest {
     }
 
     @Test
-    public void testEdgeAllowedWithImmediateOutputStrategy() {
-        givenAssignedToEdge(DEVICE_ID);
-        CalculatedField calculatedField = edgeOnlyCf(DEVICE_ID);
-        ((TimeSeriesOutput) calculatedField.getConfiguration().getOutput()).setStrategy(new TimeSeriesImmediateOutputStrategy());
-
-        assertThatCode(() -> validator.validateDataImpl(TENANT_ID, calculatedField)).doesNotThrowAnyException();
-    }
-
-    @Test
     public void testComputeOnCloudNeverRequiresAnEdge() {
         CalculatedField defaulted = cf(DEVICE_ID, null);
         CalculatedField cloud = cf(DEVICE_ID, ComputeOn.CLOUD);
-        ((TimeSeriesOutput) cloud.getConfiguration().getOutput()).setStrategy(new TimeSeriesImmediateOutputStrategy());
 
         assertThatCode(() -> validator.validateDataImpl(TENANT_ID, defaulted)).doesNotThrowAnyException();
         assertThatCode(() -> validator.validateDataImpl(TENANT_ID, cloud)).doesNotThrowAnyException();
     }
 
     private void givenNotAssignedToEdge(EntityId entityId) {
-        given(edgeSynchronizationManager.getEdgeId()).willReturn(new ThreadLocal<>());
         given(edgeService.findRelatedEdgeIdsByEntityId(eq(TENANT_ID), eq(entityId), any(PageLink.class)))
                 .willReturn(PageData.emptyPageData());
     }
 
     private void givenAssignedToEdge(EntityId entityId) {
-        given(edgeSynchronizationManager.getEdgeId()).willReturn(new ThreadLocal<>());
         given(edgeService.findRelatedEdgeIdsByEntityId(eq(TENANT_ID), eq(entityId), any(PageLink.class)))
                 .willReturn(new PageData<>(List.of(EDGE_ID), 1, 1, false));
     }

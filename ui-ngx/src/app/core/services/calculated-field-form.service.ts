@@ -53,7 +53,6 @@ export class CalculatedFieldFormService {
       name: ['', [Validators.required, Validators.maxLength(255)]],
       entityId: [null, Validators.required],
       type: [CalculatedFieldType.ALARM],
-      computeOn: [defaultComputeOn],
       debugSettings: [],
       configuration: this.fb.group({
         type: [CalculatedFieldType.ALARM],

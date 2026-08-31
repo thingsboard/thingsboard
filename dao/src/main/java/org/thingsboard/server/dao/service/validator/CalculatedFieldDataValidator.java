@@ -28,9 +28,9 @@ import org.thingsboard.server.common.data.cf.configuration.aggregation.RelatedEn
 import org.thingsboard.server.common.data.cf.configuration.aggregation.single.EntityAggregationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.cf.CalculatedFieldDao;
+import org.thingsboard.server.dao.edge.BaseRelatedEdgesService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.edge.EdgeSynchronizationManager;
 import org.thingsboard.server.exception.DataValidationException;
@@ -168,7 +168,7 @@ public class CalculatedFieldDataValidator extends DataValidator<CalculatedField>
         if (EntityType.DEVICE != entityId.getEntityType() && EntityType.ASSET != entityId.getEntityType()) {
             return;
         }
-        if (edgeService.findRelatedEdgeIdsByEntityId(tenantId, entityId, new PageLink(1)).getData().isEmpty()) {
+        if (edgeService.findRelatedEdgeIdsByEntityId(tenantId, entityId, BaseRelatedEdgesService.FIRST_PAGE).getData().isEmpty()) {
             throw new DataValidationException("Calculated field computed on the edge requires "
                     + entityId.getEntityType().name().toLowerCase() + " to be assigned to an edge!");
         }
