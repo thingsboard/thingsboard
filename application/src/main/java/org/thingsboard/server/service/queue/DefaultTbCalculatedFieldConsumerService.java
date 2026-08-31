@@ -90,9 +90,8 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractPartitionBa
                                                    PartitionService partitionService,
                                                    ApplicationEventPublisher eventPublisher,
                                                    JwtSettingsService jwtSettingsService,
-                                                   CalculatedFieldCache calculatedFieldCache,
                                                    CalculatedFieldStateService stateService) {
-        super(actorContext, tenantProfileCache, deviceProfileCache, assetProfileCache, tbResourceDataCache, calculatedFieldCache, apiUsageStateService, partitionService,
+        super(actorContext, tenantProfileCache, deviceProfileCache, assetProfileCache, tbResourceDataCache, apiUsageStateService, partitionService,
                 eventPublisher, jwtSettingsService);
         this.queueFactory = tbQueueFactory;
         this.stateService = stateService;

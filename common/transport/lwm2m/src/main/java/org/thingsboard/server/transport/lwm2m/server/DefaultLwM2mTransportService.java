@@ -32,7 +32,9 @@ import org.eclipse.leshan.server.californium.LwM2mPskStore;
 import org.eclipse.leshan.server.californium.endpoint.CaliforniumServerEndpointsProvider;
 import org.eclipse.leshan.server.californium.endpoint.coap.CoapServerProtocolProvider;
 import org.eclipse.leshan.server.californium.endpoint.coaps.CoapsServerProtocolProvider;
+import org.eclipse.leshan.server.endpoint.LwM2mServerEndpointsProvider;
 import org.eclipse.leshan.server.registration.RegistrationStore;
+import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
@@ -68,7 +70,7 @@ import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.se
 @DependsOn({"lwM2mDownlinkMsgHandler", "lwM2mUplinkMsgHandler"})
 @TbLwM2mTransportComponent
 @RequiredArgsConstructor
-public class DefaultLwM2mTransportService implements LwM2MTransportService {
+public class DefaultLwM2mTransportService implements LwM2MTransportService, SmartInitializingSingleton {
 
     public static final CipherSuite[] RPK_OR_X509_CIPHER_SUITES = {TLS_PSK_WITH_AES_128_CCM_8, TLS_PSK_WITH_AES_128_CBC_SHA256, TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8, TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256};
     public static final CipherSuite[] PSK_CIPHER_SUITES = {TLS_PSK_WITH_AES_128_CCM_8, TLS_PSK_WITH_AES_128_CBC_SHA256};
@@ -83,7 +85,21 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
     private final TbLwM2MAuthorizer authorizer;
     private final LwM2mVersionedModelProvider modelProvider;
 
-    private LeshanServer server;
+    private volatile LeshanServer server;
+    private volatile LwM2mServerListener serverListener;
+
+    @Override
+    public void afterSingletonsInstantiated() {
+        config.registerServerReloadCallback(() -> {
+            try {
+                log.info("LwM2M certificates reloaded. Recreating LwM2M server...");
+                recreateLwM2mServer();
+                log.info("LwM2M server recreated successfully with new certificates.");
+            } catch (Exception e) {
+                log.error("Failed to recreate LwM2M server after certificate reload", e);
+            }
+        });
+    }
 
     @AfterStartUp(order = AfterStartUp.AFTER_TRANSPORT_SERVICE)
     public void init() {
@@ -95,11 +111,11 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
     private void startLhServer() {
         log.info("Starting LwM2M transport server...");
         this.server.start();
-        LwM2mServerListener lhServerCertListener = new LwM2mServerListener(handler);
-        this.server.getRegistrationService().addListener(lhServerCertListener.registrationListener);
-        this.server.getPresenceService().addListener(lhServerCertListener.presenceListener);
-        this.server.getObservationService().addListener(lhServerCertListener.observationListener);
-        this.server.getSendService().addListener(lhServerCertListener.sendListener);
+        serverListener = new LwM2mServerListener(handler);
+        this.server.getRegistrationService().addListener(serverListener.registrationListener);
+        this.server.getPresenceService().addListener(serverListener.presenceListener);
+        this.server.getObservationService().addListener(serverListener.observationListener);
+        this.server.getSendService().addListener(serverListener.sendListener);
         log.info("Started LwM2M transport server.");
     }
 
@@ -212,6 +228,82 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
             /* by default trust all */
             builder.setTrustedCertificates(new X509Certificate[0]);
         }
+    }
+
+    private synchronized void recreateLwM2mServer() {
+        LeshanServer oldServer = this.server;
+        LwM2mServerListener oldListener = this.serverListener;
+
+        log.info("Creating new LwM2M server with updated certificates...");
+        LeshanServer newServer = getLhServer();
+
+        // Only cycle the endpoint providers (CoAP/DTLS). The RegistrationStore and SecurityStore are
+        // Spring singletons shared with newServer — calling oldServer.stop()/destroy() would propagate
+        // to them (LeshanServer.stop/destroy propagate to Stoppable/Destroyable stores), which would
+        // shut down the shared schedulers (TbInMemoryRegistrationStore.destroy calls schedExecutor.shutdownNow),
+        // killing newServer's cleaner tasks. Leaving the stores running preserves existing device
+        // registrations across the swap — clients only need to re-establish DTLS on next uplink.
+        if (oldServer != null) {
+            log.info("Stopping old LwM2M endpoints to release ports...");
+            if (oldListener != null) {
+                oldServer.getRegistrationService().removeListener(oldListener.registrationListener);
+                oldServer.getPresenceService().removeListener(oldListener.presenceListener);
+                oldServer.getObservationService().removeListener(oldListener.observationListener);
+                oldServer.getSendService().removeListener(oldListener.sendListener);
+            }
+            stopEndpoints(oldServer);
+        }
+
+        try {
+            newServer.start();
+        } catch (Exception e) {
+            log.error("Failed to start new LwM2M server", e);
+            destroyEndpoints(newServer);
+            // Attempt to restart the old endpoints (shared stores are still running).
+            if (oldServer != null) {
+                try {
+                    startEndpoints(oldServer);
+                    if (oldListener != null) {
+                        oldServer.getRegistrationService().addListener(oldListener.registrationListener);
+                        oldServer.getPresenceService().addListener(oldListener.presenceListener);
+                        oldServer.getObservationService().addListener(oldListener.observationListener);
+                        oldServer.getSendService().addListener(oldListener.sendListener);
+                    }
+                    log.info("Restored old LwM2M endpoints successfully.");
+                } catch (Exception restoreEx) {
+                    log.error("Failed to restore old LwM2M endpoints", restoreEx);
+                }
+            }
+            throw e;
+        }
+
+        LwM2mServerListener newListener = new LwM2mServerListener(handler);
+        newServer.getRegistrationService().addListener(newListener.registrationListener);
+        newServer.getPresenceService().addListener(newListener.presenceListener);
+        newServer.getObservationService().addListener(newListener.observationListener);
+        newServer.getSendService().addListener(newListener.sendListener);
+
+        this.server = newServer;
+        this.context.setServer(newServer);
+        this.serverListener = newListener;
+        log.info("New LwM2M server started with refreshed certificates. Existing device registrations preserved; clients will re-establish DTLS on next uplink.");
+
+        // Destroy old endpoints only — leave the shared stores alone.
+        if (oldServer != null) {
+            destroyEndpoints(oldServer);
+        }
+    }
+
+    private void stopEndpoints(LeshanServer server) {
+        server.getEndpointsProvider().forEach(LwM2mServerEndpointsProvider::stop);
+    }
+
+    private void startEndpoints(LeshanServer server) {
+        server.getEndpointsProvider().forEach(LwM2mServerEndpointsProvider::start);
+    }
+
+    private void destroyEndpoints(LeshanServer server) {
+        server.getEndpointsProvider().forEach(LwM2mServerEndpointsProvider::destroy);
     }
 
     @Override

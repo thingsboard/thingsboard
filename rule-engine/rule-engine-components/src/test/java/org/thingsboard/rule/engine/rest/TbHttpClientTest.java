@@ -27,6 +27,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.mockserver.integration.ClientAndServer;
 import org.springframework.util.LinkedMultiValueMap;
+import org.thingsboard.common.util.DirectListeningExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -156,6 +157,7 @@ public class TbHttpClientTest {
                 .build();
 
         var ctx = mock(TbContext.class);
+        when(ctx.getExternalCallExecutor()).thenReturn(DirectListeningExecutor.INSTANCE);
         when(ctx.transformMsg(
                 eq(msg),
                 eq(msg.getMetaData()),

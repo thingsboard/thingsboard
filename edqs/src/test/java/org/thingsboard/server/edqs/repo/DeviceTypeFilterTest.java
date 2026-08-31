@@ -19,15 +19,20 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.edqs.AttributeKv;
 import org.thingsboard.server.common.data.edqs.LatestTsKv;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
+import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
+import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
 import org.thingsboard.server.common.data.query.DeviceTypeFilter;
 import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
@@ -39,8 +44,10 @@ import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.StringFilterPredicate;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 public class DeviceTypeFilterTest extends AbstractEDQTest {
@@ -119,7 +126,50 @@ public class DeviceTypeFilterTest extends AbstractEDQTest {
         Assert.assertEquals("42", first.getLatest().get(EntityKeyType.ENTITY_FIELD).get("createdTime").getValue());
     }
 
+    @Test
+    public void testFindDeviceByBooleanAttributeWithMixedTypes() {
+        DeviceId device1Id = createLoraDevice("LoRa-1");
+        DeviceId device2Id = createLoraDevice("LoRa-2");
+        DeviceId device3Id = createLoraDevice("LoRa-3");
+
+        long ts = System.currentTimeMillis();
+        addOrUpdate(new AttributeKv(device1Id, AttributeScope.SERVER_SCOPE,
+                new BaseAttributeKvEntry(new BooleanDataEntry("active", true), ts), 1L));
+        addOrUpdate(new AttributeKv(device2Id, AttributeScope.SERVER_SCOPE,
+                new BaseAttributeKvEntry(new BooleanDataEntry("active", false), ts), 1L));
+        addOrUpdate(new AttributeKv(device3Id, AttributeScope.SERVER_SCOPE,
+                new BaseAttributeKvEntry(new StringDataEntry("active", "true"), ts), 1L));
+
+        KeyFilter activeFilter = new KeyFilter();
+        activeFilter.setKey(new EntityKey(EntityKeyType.SERVER_ATTRIBUTE, "active"));
+        activeFilter.setValueType(EntityKeyValueType.BOOLEAN);
+        BooleanFilterPredicate predicate = new BooleanFilterPredicate();
+        predicate.setOperation(BooleanFilterPredicate.BooleanOperation.EQUAL);
+        predicate.setValue(FilterPredicateValue.fromBoolean(true));
+        activeFilter.setPredicate(predicate);
+
+        var result = repository.countEntitiesByQuery(tenantId, null,
+                getDeviceTypeQuery("LoRa", List.of(activeFilter)), false);
+        Assert.assertEquals(2, result);
+    }
+
+    private DeviceId createLoraDevice(String name) {
+        DeviceId deviceId = new DeviceId(UUID.randomUUID());
+        Device device = new Device();
+        device.setId(deviceId);
+        device.setTenantId(tenantId);
+        device.setDeviceProfileId(loraProfileId);
+        device.setName(name);
+        device.setCreatedTime(42L);
+        addOrUpdate(EntityType.DEVICE, device);
+        return deviceId;
+    }
+
     private static EntityDataQuery getDeviceTypeQuery(String deviceType) {
+        return getDeviceTypeQuery(deviceType, null);
+    }
+
+    private static EntityDataQuery getDeviceTypeQuery(String deviceType, List<KeyFilter> extraFilters) {
         DeviceTypeFilter filter = new DeviceTypeFilter();
         filter.setDeviceTypes(Collections.singletonList(deviceType));
         var pageLink = new EntityDataPageLink(20, 0, null, new EntityDataSortOrder(new EntityKey(EntityKeyType.TIME_SERIES, "state"), EntityDataSortOrder.Direction.DESC), false);
@@ -135,7 +185,12 @@ public class DeviceTypeFilterTest extends AbstractEDQTest {
         nameFilter.setPredicate(predicate);
         nameFilter.setValueType(EntityKeyValueType.STRING);
 
-        return new EntityDataQuery(filter, pageLink, entityFields, latestValues, Arrays.asList(nameFilter));
+        List<KeyFilter> keyFilters = new ArrayList<>();
+        keyFilters.add(nameFilter);
+        if (extraFilters != null) {
+            keyFilters.addAll(extraFilters);
+        }
+        return new EntityDataQuery(filter, pageLink, entityFields, latestValues, keyFilters);
     }
 
 }

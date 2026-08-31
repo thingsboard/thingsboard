@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.script.api.tbel.TbUtils;
@@ -33,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
 
@@ -85,7 +87,7 @@ public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
             return expressionResult;
         }
         if (decimals.equals(0)) {
-            return TbUtils.toInt(expressionResult);
+            return TbUtils.toLong(expressionResult);
         }
         return TbUtils.toFixed(expressionResult, decimals);
     }
@@ -96,6 +98,8 @@ public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
         ObjectNode valuesNode = JacksonUtil.newObjectNode();
         if (result instanceof Double doubleValue) {
             valuesNode.put(outputName, doubleValue);
+        } else if (result instanceof Long longValue) {
+            valuesNode.put(outputName, longValue);
         } else if (result instanceof Integer integerValue) {
             valuesNode.put(outputName, integerValue);
         } else {

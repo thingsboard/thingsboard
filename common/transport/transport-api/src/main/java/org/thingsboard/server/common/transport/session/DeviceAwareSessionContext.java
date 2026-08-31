@@ -30,9 +30,6 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import java.util.Optional;
 import java.util.UUID;
 
-/**
- * @author Andrew Shvayka
- */
 @Data
 public abstract class DeviceAwareSessionContext implements SessionContext {
 

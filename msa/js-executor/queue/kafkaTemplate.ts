@@ -21,6 +21,7 @@ import { JsInvokeMessageProcessor } from '../api/jsInvokeMessageProcessor'
 import { IQueue } from './queue.models';
 import {
     Admin,
+    CompressionCodecs,
     CompressionTypes,
     Consumer,
     Kafka,
@@ -46,7 +47,31 @@ export class KafkaTemplate implements IQueue {
     private linger = Number(config.get('kafka.linger_ms'));
     private requestTimeout = Number(config.get('kafka.requestTimeout'));
     private connectionTimeout = Number(config.get('kafka.connectionTimeout'));
-    private compressionType = (config.get('kafka.compression') === "gzip") ? CompressionTypes.GZIP : CompressionTypes.None;
+    private compressionType = this.resolveCompressionType(config.get('kafka.compression'));
+
+    private resolveCompressionType(compression: string): CompressionTypes {
+        switch (compression) {
+            case 'gzip':
+                return CompressionTypes.GZIP;
+            case 'lz4': {
+                // Load the LZ4 codec lazily so users who don't enable LZ4 don't take a hard
+                // dependency on the lz4-napi native binary (e.g. inside pkg-built executables).
+                // The package re-assigns module.exports = LZ4Codec, which wipes the __esModule
+                // flag and the .default property — so accept either shape.
+                const lz4Module = require('@2l/kafkajs-lz4');
+                const LZ4Codec = lz4Module.default || lz4Module;
+                CompressionCodecs[CompressionTypes.LZ4] = new LZ4Codec().codec;
+                return CompressionTypes.LZ4;
+            }
+            case 'none':
+                return CompressionTypes.None;
+            default:
+                if (isNotEmptyStr(compression)) {
+                    this.logger.warn('Unknown kafka.compression value "%s"; falling back to no compression. Supported values: gzip, lz4, none.', compression);
+                }
+                return CompressionTypes.None;
+        }
+    }
     private partitionsConsumedConcurrently = Number(config.get('kafka.partitions_consumed_concurrently'));
 
     private kafkaClient: Kafka;

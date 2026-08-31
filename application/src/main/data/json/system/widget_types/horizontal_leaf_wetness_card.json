@@ -1,7 +1,7 @@
 {
   "fqn": "horizontal_leaf_wetness_card",
   "name": "Horizontal leaf wetness card",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/horizontal_leaf_wetness_card_system_widget_image.png",
   "description": "Displays the latest leaf wetness telemetry in a scalable horizontal layout.",
   "descriptor": {

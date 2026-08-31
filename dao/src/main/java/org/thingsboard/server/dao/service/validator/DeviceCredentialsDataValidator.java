@@ -18,10 +18,13 @@ package org.thingsboard.server.dao.service.validator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.dao.device.DeviceCredentialsDao;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
@@ -69,9 +72,24 @@ public class DeviceCredentialsDataValidator extends DataValidator<DeviceCredenti
         if (StringUtils.isEmpty(deviceCredentials.getCredentialsId())) {
             throw new DeviceCredentialsValidationException("Device credentials id should be specified!");
         }
+        rejectControlChars(deviceCredentials.getCredentialsId(), "credentialsId");
+        if (deviceCredentials.getCredentialsType() == DeviceCredentialsType.MQTT_BASIC) {
+            BasicMqttCredentials mqtt = JacksonUtil.fromString(deviceCredentials.getCredentialsValue(), BasicMqttCredentials.class);
+            if (mqtt != null) {
+                rejectControlChars(mqtt.getClientId(), "clientId");
+                rejectControlChars(mqtt.getUserName(), "userName");
+                rejectControlChars(mqtt.getPassword(), "password");
+            }
+        }
         Device device = deviceService.findDeviceById(tenantId, deviceCredentials.getDeviceId());
         if (device == null) {
             throw new DeviceCredentialsValidationException("Can't assign device credentials to non-existent device!");
+        }
+    }
+
+    private static void rejectControlChars(String value, String fieldName) {
+        if (StringUtils.containsControlChars(value)) {
+            throw new DeviceCredentialsValidationException(fieldName + " must not contain control characters!");
         }
     }
 }

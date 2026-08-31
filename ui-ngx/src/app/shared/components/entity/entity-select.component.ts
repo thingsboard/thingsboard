@@ -63,6 +63,12 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit, Afte
   @Input()
   appearance: MatFormFieldAppearance = 'fill';
 
+  @Input()
+  filterAllowedEntityTypes = true;
+
+  @Input()
+  defaultEntityType: AliasEntityType | EntityType;
+
   displayEntityTypeSelect: boolean;
 
   AliasEntityType = AliasEntityType;
@@ -70,8 +76,6 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit, Afte
   entityTypeNullUUID: Set<AliasEntityType | EntityType | string> = new Set([
     AliasEntityType.CURRENT_TENANT, AliasEntityType.CURRENT_USER, AliasEntityType.CURRENT_USER_OWNER
   ]);
-
-  private readonly defaultEntityType: EntityType | AliasEntityType = null;
 
   private propagateChange = (v: any) => { };
 
@@ -83,15 +87,17 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit, Afte
 
     const entityTypes = this.entityService.prepareAllowedEntityTypesList(this.allowedEntityTypes,
                                                                          this.useAliasEntityTypes);
+
+    let defaultEntityType: EntityType | AliasEntityType = null;
     if (entityTypes.length === 1) {
       this.displayEntityTypeSelect = false;
-      this.defaultEntityType = entityTypes[0];
+      defaultEntityType = entityTypes[0];
     } else {
       this.displayEntityTypeSelect = true;
     }
 
     this.entitySelectFormGroup = this.fb.group({
-      entityType: [this.defaultEntityType],
+      entityType: [defaultEntityType],
       entityId: [null]
     });
   }
@@ -122,6 +128,19 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit, Afte
     const additionNullUIIDEntityTypes = Object.keys(this.additionEntityTypes) as string[];
     if (additionNullUIIDEntityTypes.length > 0) {
       additionNullUIIDEntityTypes.forEach((entityType) => this.entityTypeNullUUID.add(entityType));
+    }
+
+    if (this.filterAllowedEntityTypes === false) {
+      if (this.allowedEntityTypes?.length === 1) {
+        this.displayEntityTypeSelect = false;
+        this.entitySelectFormGroup.get('entityType').setValue(this.allowedEntityTypes[0]);
+      } else {
+        this.displayEntityTypeSelect = true;
+      }
+    }
+
+    if (this.defaultEntityType) {
+      this.entitySelectFormGroup.get('entityType').setValue(this.defaultEntityType);
     }
   }
 

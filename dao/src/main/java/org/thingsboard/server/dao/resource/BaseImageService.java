@@ -173,7 +173,7 @@ public class BaseImageService extends BaseResourceService implements ImageServic
     }
 
     private String generatePublicResourceKey() {
-        return RandomStringUtils.randomAlphanumeric(32);
+        return RandomStringUtils.secure().nextAlphanumeric(32);
     }
 
     @Override
@@ -186,6 +186,12 @@ public class BaseImageService extends BaseResourceService implements ImageServic
     public TbResourceInfo getImageInfoByTenantIdAndKey(TenantId tenantId, String key) {
         log.trace("Executing getImageInfoByTenantIdAndKey [{}] [{}]", tenantId, key);
         return findResourceInfoByTenantIdAndKey(tenantId, ResourceType.IMAGE, key);
+    }
+
+    @Override
+    public Set<String> getAllImageKeysByTenantId(TenantId tenantId) {
+        log.trace("Executing getAllImageKeysByTenantId [{}]", tenantId);
+        return resourceInfoDao.findKeysByTenantIdAndResourceTypeAndResourceKeyPrefix(tenantId, ResourceType.IMAGE, "");
     }
 
     @Override

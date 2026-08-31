@@ -20,7 +20,7 @@ import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.TestExecutionListeners;
@@ -81,7 +81,7 @@ public abstract class AbstractEDQTest {
     protected DefaultEdqsRepository repository;
     @Autowired
     protected EdqsMapper edqsMapper;
-    @MockBean
+    @MockitoBean
     private DummyEdqsStatsService edqsStatsService;
 
     protected final TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());

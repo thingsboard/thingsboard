@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.transport.service;
 
+import com.google.common.util.concurrent.Striped;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -37,14 +38,20 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 @Component
 @TbTransportComponent
 @Slf4j
 public class DefaultTransportTenantProfileCache implements TransportTenantProfileCache {
 
-    private final Lock tenantProfileFetchLock = new ReentrantLock();
+    // Number of stripes for the per-tenant fetch locks. Only contended during concurrent cold-cache
+    // misses (cached tenants never take the lock), and concurrent fetches are already bounded by the
+    // transport callback pool, so this comfortably over-provisions the realistic concurrency.
+    private static final int TENANT_PROFILE_FETCH_LOCK_STRIPES = 1024;
+
+    // Bounded set of per-tenant locks: de-duplicates concurrent misses for the same tenant while
+    // letting different tenants fetch concurrently (eager array - no weak-ref overhead at this size).
+    private final Striped<Lock> tenantProfileFetchLocks = Striped.lock(TENANT_PROFILE_FETCH_LOCK_STRIPES);
     private final ConcurrentMap<TenantProfileId, TenantProfile> profiles = new ConcurrentHashMap<>();
     private final ConcurrentMap<TenantId, TenantProfileId> tenantIds = new ConcurrentHashMap<>();
     private final ConcurrentMap<TenantProfileId, Set<TenantId>> tenantProfileIds = new ConcurrentHashMap<>();
@@ -103,41 +110,50 @@ public class DefaultTransportTenantProfileCache implements TransportTenantProfil
     }
 
     private TenantProfile getTenantProfile(TenantId tenantId) {
-        TenantProfile profile = null;
-        TenantProfileId tenantProfileId = tenantIds.get(tenantId);
-        if (tenantProfileId != null) {
-            profile = profiles.get(tenantProfileId);
-        }
+        TenantProfile profile = lookupCached(tenantId);
         if (profile == null) {
-            tenantProfileFetchLock.lock();
+            // Per-tenant lock: de-duplicates concurrent misses for the SAME tenant while allowing
+            // different tenants to resolve their profiles concurrently.
+            Lock lock = tenantProfileFetchLocks.get(tenantId);
+            lock.lock();
             try {
-                tenantProfileId = tenantIds.get(tenantId);
-                if (tenantProfileId != null) {
-                    profile = profiles.get(tenantProfileId);
-                }
+                profile = lookupCached(tenantId);
                 if (profile == null) {
-                    TransportProtos.GetEntityProfileRequestMsg msg = TransportProtos.GetEntityProfileRequestMsg.newBuilder()
-                            .setEntityType(EntityType.TENANT.name())
-                            .setEntityIdMSB(tenantId.getId().getMostSignificantBits())
-                            .setEntityIdLSB(tenantId.getId().getLeastSignificantBits())
-                            .build();
-                    TransportProtos.GetEntityProfileResponseMsg entityProfileMsg = transportService.getEntityProfile(msg);
-                    profile = ProtoUtils.fromProto(entityProfileMsg.getTenantProfile());
-                    TenantProfile existingProfile = profiles.get(profile.getId());
-                    if (existingProfile != null) {
-                        profile = existingProfile;
-                    } else {
-                        profiles.put(profile.getId(), profile);
-                    }
-                    tenantProfileIds.computeIfAbsent(profile.getId(), id -> ConcurrentHashMap.newKeySet()).add(tenantId);
-                    tenantIds.put(tenantId, profile.getId());
-                    ApiUsageState apiUsageState = ProtoUtils.fromProto(entityProfileMsg.getApiState());
-                    rateLimitService.update(tenantId, apiUsageState.isTransportEnabled());
+                    profile = fetchAndCacheTenantProfile(tenantId);
                 }
             } finally {
-                tenantProfileFetchLock.unlock();
+                lock.unlock();
             }
         }
+        return profile;
+    }
+
+    private TenantProfile lookupCached(TenantId tenantId) {
+        TenantProfileId tenantProfileId = tenantIds.get(tenantId);
+        if (tenantProfileId != null) {
+            return profiles.get(tenantProfileId);
+        }
+        return null;
+    }
+
+    private TenantProfile fetchAndCacheTenantProfile(TenantId tenantId) {
+        TransportProtos.GetEntityProfileRequestMsg msg = TransportProtos.GetEntityProfileRequestMsg.newBuilder()
+                .setEntityType(EntityType.TENANT.name())
+                .setEntityIdMSB(tenantId.getId().getMostSignificantBits())
+                .setEntityIdLSB(tenantId.getId().getLeastSignificantBits())
+                .build();
+        TransportProtos.GetEntityProfileResponseMsg entityProfileMsg = transportService.getEntityProfile(msg);
+        TenantProfile profile = ProtoUtils.fromProto(entityProfileMsg.getTenantProfile());
+        TenantProfile existingProfile = profiles.get(profile.getId());
+        if (existingProfile != null) {
+            profile = existingProfile;
+        } else {
+            profiles.put(profile.getId(), profile);
+        }
+        tenantProfileIds.computeIfAbsent(profile.getId(), id -> ConcurrentHashMap.newKeySet()).add(tenantId);
+        tenantIds.put(tenantId, profile.getId());
+        ApiUsageState apiUsageState = ProtoUtils.fromProto(entityProfileMsg.getApiState());
+        rateLimitService.update(tenantId, apiUsageState.isTransportEnabled());
         return profile;
     }
 

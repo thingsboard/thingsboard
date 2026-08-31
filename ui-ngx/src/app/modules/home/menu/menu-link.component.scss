@@ -13,6 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
 
+@import '../../../../scss/constants';
+
+:host ::ng-deep {
+  a.is-new::after {
+    content: "NEW";
+    font-size: 12px;
+    letter-spacing: .03125em;
+    transform: translate(6px, -6px);
+    display: inline-block;
+    border-radius: 10px;
+    line-height: 22px;
+    height: 20px;
+    background: #fff;
+    color: $tb-primary-color;
+    padding-left: 6px;
+    padding-right: 6px;
+    margin-left: -6px;
+  }
 }

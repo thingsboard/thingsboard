@@ -1,0 +1,151 @@
+/**
+ * Copyright © 2016-2026 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+@import "../../../../../scss/constants";
+@import "../../components/iot-hub/iot-hub-common";
+
+:host {
+  display: block;
+  padding: 16px;
+  height: 100%;
+}
+
+.tb-installed-items-page {
+  background: white;
+  border-radius: 8px;
+  padding: 40px 40px 40px;
+}
+
+// Back button
+.tb-installed-back-btn {
+  margin-bottom: 40px;
+}
+
+// Header: title + check for updates
+.tb-installed-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 32px;
+}
+
+.tb-installed-title {
+  font-size: 36px;
+  font-weight: 500;
+  line-height: 48px;
+  color: rgba(0, 0, 0, 0.87);
+  margin: 0;
+}
+
+// Filter row — filter button + active chips on top
+.tb-installed-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+
+  .mat-mdc-chip {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+}
+
+// Search row — full-width search input below the filter row
+.tb-installed-search-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.tb-installed-filter-btn {
+  &.mat-primary {
+    --mat-button-outlined-outline-color: #{$tb-primary-color};
+  }
+}
+
+.tb-installed-filter-chips {
+  .mat-mdc-standard-chip:not(.mdc-evolution-chip--disabled) {
+    --mat-chip-elevated-container-color: rgba(0, 0, 0, 0.04);
+  }
+}
+
+.tb-installed-clear-btn {
+  font-size: 14px;
+  font-weight: 400;
+  color: rgba(0, 0, 0, 0.54);
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 6px 8px;
+  font-family: inherit;
+
+  &:hover {
+    color: rgba(0, 0, 0, 0.87);
+  }
+}
+
+// Filter menu panel
+::ng-deep .tb-installed-filter-menu {
+  .mat-mdc-menu-content {
+    padding: 0;
+  }
+
+  .tb-installed-filter-item {
+    height: 40px;
+    padding: 0 16px;
+
+    mat-checkbox {
+      width: 100%;
+    }
+  }
+
+  mat-divider {
+    margin: 0;
+  }
+}
+
+.tb-installed-search {
+  @include tb-iot-hub-page-search-container;
+}
+
+.tb-installed-search-input {
+  @include tb-iot-hub-page-search-input;
+}
+
+.tb-installed-search-action {
+  @include tb-iot-hub-page-search-action;
+}
+
+// Responsive
+@media #{$mat-lt-md} {
+  .tb-installed-items-page {
+    padding: 40px 24px;
+  }
+}
+
+@media #{$mat-xs} {
+  .tb-installed-items-page {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .tb-installed-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+}

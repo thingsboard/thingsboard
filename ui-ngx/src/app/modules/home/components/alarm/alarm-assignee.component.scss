@@ -40,7 +40,11 @@
   margin-left: 12px;
   margin-right: 20px;
   &.inline-icon {
-    margin-left: 0;
+    margin-left: 8px;
     margin-right: 8px;
+    padding: 6px 0 !important;
+  }
+  &.mat-icon {
+    font-size: 28px !important;
   }
 }

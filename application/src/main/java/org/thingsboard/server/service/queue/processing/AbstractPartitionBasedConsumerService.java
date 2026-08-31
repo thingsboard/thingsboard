@@ -45,12 +45,11 @@ public abstract class AbstractPartitionBasedConsumerService<N extends com.google
                                                  TbDeviceProfileCache deviceProfileCache,
                                                  TbAssetProfileCache assetProfileCache,
                                                  TbResourceDataCache tbResourceDataCache,
-                                                 CalculatedFieldCache calculatedFieldCache,
                                                  TbApiUsageStateService apiUsageStateService,
                                                  PartitionService partitionService,
                                                  ApplicationEventPublisher eventPublisher,
                                                  JwtSettingsService jwtSettingsService) {
-        super(actorContext, tenantProfileCache, deviceProfileCache, assetProfileCache, tbResourceDataCache, calculatedFieldCache, apiUsageStateService, partitionService, eventPublisher, jwtSettingsService);
+        super(actorContext, tenantProfileCache, deviceProfileCache, assetProfileCache, tbResourceDataCache, apiUsageStateService, partitionService, eventPublisher, jwtSettingsService);
     }
 
     @PostConstruct

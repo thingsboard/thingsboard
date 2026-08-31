@@ -105,8 +105,9 @@ class TbPolygonDataLayerItem extends TbLatestDataLayerItem<PolygonsDataLayerSett
     });
   }
 
-  protected doInvalidateCoordinates(data: FormattedData<TbMapDatasource>, _dsData: FormattedData<TbMapDatasource>[]): void {
+  protected doInvalidateCoordinates(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void {
     this.updatePolygonShape(data);
+    this.updateLabel(data, dsData);
   }
 
   protected addItemClass(clazz: string): void {

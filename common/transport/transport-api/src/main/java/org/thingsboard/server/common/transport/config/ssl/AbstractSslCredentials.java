@@ -37,41 +37,55 @@ import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class AbstractSslCredentials implements SslCredentials {
 
-    private char[] keyPasswordArray;
+    private record SslState(
+            char[] keyPasswordArray,
+            KeyStore keyStore,
+            PrivateKey privateKey,
+            PublicKey publicKey,
+            X509Certificate[] chain,
+            X509Certificate[] trusts
+    ) {}
 
-    private KeyStore keyStore;
-
-    private PrivateKey privateKey;
-
-    private PublicKey publicKey;
-
-    private X509Certificate[] chain;
-
-    private X509Certificate[] trusts;
+    private final AtomicReference<SslState> state = new AtomicReference<>();
 
     @Override
     public void init(boolean trustsOnly) throws IOException, GeneralSecurityException {
+        SslState newState = buildState(trustsOnly);
+        state.set(newState);
+    }
+
+    @Override
+    public void reload(boolean trustsOnly) throws IOException, GeneralSecurityException {
+        init(trustsOnly);
+    }
+
+    private SslState buildState(boolean trustsOnly) throws IOException, GeneralSecurityException {
         String keyPassword = getKeyPassword();
+        char[] keyPasswordArray;
         if (StringUtils.isEmpty(keyPassword)) {
-            this.keyPasswordArray = new char[0];
+            keyPasswordArray = new char[0];
         } else {
-            this.keyPasswordArray = keyPassword.toCharArray();
+            keyPasswordArray = keyPassword.toCharArray();
         }
-        this.keyStore = this.loadKeyStore(trustsOnly, this.keyPasswordArray);
-        Set<X509Certificate> trustedCerts = getTrustedCerts(this.keyStore, trustsOnly);
-        this.trusts = trustedCerts.toArray(new X509Certificate[0]);
+        KeyStore keyStore = this.loadKeyStore(trustsOnly, keyPasswordArray);
+        Set<X509Certificate> trustedCerts = getTrustedCerts(keyStore, trustsOnly);
+        X509Certificate[] trusts = trustedCerts.toArray(new X509Certificate[0]);
+        PrivateKey privateKey = null;
+        PublicKey publicKey = null;
+        X509Certificate[] chain = null;
         if (!trustsOnly) {
             PrivateKeyEntry privateKeyEntry = null;
             String keyAlias = this.getKeyAlias();
             if (!StringUtils.isEmpty(keyAlias)) {
-                privateKeyEntry = tryGetPrivateKeyEntry(this.keyStore, keyAlias, this.keyPasswordArray);
+                privateKeyEntry = tryGetPrivateKeyEntry(keyStore, keyAlias, keyPasswordArray);
             } else {
-                for (Enumeration<String> e = this.keyStore.aliases(); e.hasMoreElements(); ) {
+                for (Enumeration<String> e = keyStore.aliases(); e.hasMoreElements(); ) {
                     String alias = e.nextElement();
-                    privateKeyEntry = tryGetPrivateKeyEntry(this.keyStore, alias, this.keyPasswordArray);
+                    privateKeyEntry = tryGetPrivateKeyEntry(keyStore, alias, keyPasswordArray);
                     if (privateKeyEntry != null) {
                         this.updateKeyAlias(alias);
                         break;
@@ -82,50 +96,61 @@ public abstract class AbstractSslCredentials implements SslCredentials {
                 throw new IllegalArgumentException("Failed to get private key from the keystore or pem files. " +
                         "Please check if the private key exists in the keystore or pem files and if the provided private key password is valid.");
             }
-            this.chain = asX509Certificates(privateKeyEntry.getCertificateChain());
-            this.privateKey = privateKeyEntry.getPrivateKey();
-            if (this.chain.length > 0) {
-                this.publicKey = this.chain[0].getPublicKey();
+            chain = asX509Certificates(privateKeyEntry.getCertificateChain());
+            privateKey = privateKeyEntry.getPrivateKey();
+            if (chain.length > 0) {
+                publicKey = chain[0].getPublicKey();
             }
         }
+        return new SslState(keyPasswordArray, keyStore, privateKey, publicKey, chain, trusts);
+    }
+
+    private SslState getState() {
+        SslState s = state.get();
+        if (s == null) {
+            throw new IllegalStateException("SSL credentials not initialized. Call init() first.");
+        }
+        return s;
     }
 
     @Override
     public KeyStore getKeyStore() {
-        return this.keyStore;
+        return getState().keyStore;
     }
 
     @Override
     public PrivateKey getPrivateKey() {
-        return this.privateKey;
+        return getState().privateKey;
     }
 
     @Override
     public PublicKey getPublicKey() {
-        return this.publicKey;
+        return getState().publicKey;
     }
 
     @Override
     public X509Certificate[] getCertificateChain() {
-        return this.chain;
+        return getState().chain;
     }
 
     @Override
     public X509Certificate[] getTrustedCertificates() {
-        return this.trusts;
+        return getState().trusts;
     }
 
     @Override
     public TrustManagerFactory createTrustManagerFactory() throws NoSuchAlgorithmException, KeyStoreException {
+        SslState s = getState();
         TrustManagerFactory tmFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-        tmFactory.init(this.keyStore);
+        tmFactory.init(s.keyStore);
         return tmFactory;
     }
 
     @Override
     public KeyManagerFactory createKeyManagerFactory() throws NoSuchAlgorithmException, UnrecoverableKeyException, KeyStoreException {
+        SslState s = getState();
         KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-        kmf.init(this.keyStore, this.keyPasswordArray);
+        kmf.init(s.keyStore, s.keyPasswordArray);
         return kmf;
     }
 
@@ -133,7 +158,7 @@ public abstract class AbstractSslCredentials implements SslCredentials {
     public String getValueFromSubjectNameByKey(String subjectName, String key) {
         String[] dns = subjectName.split(",");
         Optional<String> cn = (Arrays.stream(dns).filter(dn -> dn.contains(key + "="))).findFirst();
-        String value = cn.isPresent() ? cn.get().replace(key + "=", "") : null;
+        String value = cn.map(s -> s.replace(key + "=", "")).orElse(null);
         return StringUtils.isNotEmpty(value) ? value : null;
     }
 
@@ -189,7 +214,7 @@ public abstract class AbstractSslCredentials implements SslCredentials {
                     if (cert instanceof X509Certificate) {
                         if (trustsOnly) {
                             // is CA certificate
-                            if (((X509Certificate) cert).getBasicConstraints()>=0) {
+                            if (((X509Certificate) cert).getBasicConstraints() >= 0) {
                                 set.add((X509Certificate) cert);
                             }
                         } else {
@@ -203,12 +228,12 @@ public abstract class AbstractSslCredentials implements SslCredentials {
                         if (trustsOnly) {
                             for (Certificate cert : certs) {
                                 // is CA certificate
-                                if (((X509Certificate) cert).getBasicConstraints()>=0) {
+                                if (((X509Certificate) cert).getBasicConstraints() >= 0) {
                                     set.add((X509Certificate) cert);
                                 }
                             }
                         } else {
-                            set.add((X509Certificate)certs[0]);
+                            set.add((X509Certificate) certs[0]);
                         }
                     }
                 }
@@ -216,4 +241,5 @@ public abstract class AbstractSslCredentials implements SslCredentials {
         } catch (KeyStoreException ignored) {}
         return Collections.unmodifiableSet(set);
     }
+
 }

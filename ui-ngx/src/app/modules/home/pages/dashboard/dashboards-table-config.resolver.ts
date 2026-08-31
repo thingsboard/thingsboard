@@ -77,7 +77,6 @@ import {
   EntityAliasesDialogComponent,
   EntityAliasesDialogData
 } from '@home/components/alias/entity-aliases-dialog.component';
-
 @Injectable()
 export class DashboardsTableConfigResolver  {
 

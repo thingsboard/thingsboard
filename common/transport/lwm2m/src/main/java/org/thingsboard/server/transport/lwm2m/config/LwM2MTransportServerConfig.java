@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.transport.lwm2m.config;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -26,17 +28,30 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.TbProperty;
 import org.thingsboard.server.common.transport.config.ssl.SslCredentials;
 import org.thingsboard.server.common.transport.config.ssl.SslCredentialsConfig;
 
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Component
 @ConditionalOnExpression("'${service.type:null}'=='tb-transport' || '${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core'")
 @ConfigurationProperties(prefix = "transport.lwm2m")
 public class LwM2MTransportServerConfig implements LwM2MSecureServerConfig {
+
+    private static final long RELOAD_DEBOUNCE_SECONDS = 2;
+
+    private final List<Runnable> serverReloadCallbacks = new CopyOnWriteArrayList<>();
+    private final ScheduledExecutorService reloadDebouncer = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("lwm2m-reload-debouncer"));
+
+    private volatile ScheduledFuture<?> pendingReload;
 
     @Getter
     @Value("${transport.lwm2m.dtls.retransmission_timeout:9000}")
@@ -134,6 +149,52 @@ public class LwM2MTransportServerConfig implements LwM2MSecureServerConfig {
     @Qualifier("lwm2mTrustCredentials")
     private SslCredentialsConfig trustCredentialsConfig;
 
+    @PostConstruct
+    public void init() {
+        credentialsConfig.registerReloadCallback(() -> {
+            log.info("LwM2M Server DTLS certificates reloaded. Scheduling debounced server reload...");
+            scheduleServerReload();
+        });
+
+        trustCredentialsConfig.registerReloadCallback(() -> {
+            log.info("LwM2M Trust certificates reloaded. Scheduling debounced server reload...");
+            scheduleServerReload();
+        });
+    }
+
+    @PreDestroy
+    public void destroy() {
+        reloadDebouncer.shutdownNow();
+    }
+
+    public void registerServerReloadCallback(Runnable callback) {
+        serverReloadCallbacks.add(callback);
+    }
+
+    /**
+     * Debounces server reload so that if both server and trust credentials change in the same
+     * poll cycle, only the 'single server recreation' is triggered after both are reloaded.
+     */
+    private synchronized void scheduleServerReload() {
+        if (pendingReload != null) {
+            pendingReload.cancel(false);
+        }
+        pendingReload = reloadDebouncer.schedule(() -> {
+            log.info("Debounce window elapsed. Triggering LwM2M server reload...");
+            notifyServerReload();
+        }, RELOAD_DEBOUNCE_SECONDS, TimeUnit.SECONDS);
+    }
+
+    private void notifyServerReload() {
+        for (Runnable callback : serverReloadCallbacks) {
+            try {
+                callback.run();
+            } catch (Exception e) {
+                log.error("Error executing LwM2M server reload callback", e);
+            }
+        }
+    }
+
     @Override
     public SslCredentials getSslCredentials() {
         return this.credentialsConfig.getCredentials();
@@ -142,4 +203,5 @@ public class LwM2MTransportServerConfig implements LwM2MSecureServerConfig {
     public SslCredentials getTrustSslCredentials() {
         return this.trustCredentialsConfig.getCredentials();
     }
+
 }

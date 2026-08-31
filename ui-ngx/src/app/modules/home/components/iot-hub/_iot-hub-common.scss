@@ -1,0 +1,134 @@
+/**
+ * Copyright © 2016-2026 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+// Shared IoT Hub visual building blocks — used across
+// iot-hub-browse, iot-hub-search, and dashboard-widget-select
+// to keep filter / search controls in sync.
+
+@mixin tb-iot-hub-search-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 8px 12px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 8px;
+  background: white;
+}
+
+@mixin tb-iot-hub-search-icon($color: rgba(0, 0, 0, 0.38)) {
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+  color: $color;
+  flex-shrink: 0;
+}
+
+@mixin tb-iot-hub-search-input-text($letter-spacing: normal) {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  letter-spacing: $letter-spacing;
+  color: rgba(0, 0, 0, 0.87);
+  background: transparent;
+
+  &::placeholder {
+    color: rgba(0, 0, 0, 0.38);
+  }
+}
+
+@mixin tb-iot-hub-search-clear {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  flex-shrink: 0;
+  color: rgba(0, 0, 0, 0.38);
+  --mdc-icon-button-state-layer-size: 24px;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+// Page-level search field — used by iot-hub-browse and iot-hub-search.
+// Larger than the filter inputs above: 56px tall, 16px text, with a 40px
+// trailing action area (search icon when empty, close icon-button when
+// typing).
+
+@mixin tb-iot-hub-page-search-container {
+  display: flex;
+  align-items: center;
+  width: 0;
+  height: 56px;
+  padding: 8px 4px 8px 16px;
+  gap: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 8px;
+  background: white;
+}
+
+@mixin tb-iot-hub-page-search-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  letter-spacing: 0.15px;
+  color: rgba(0, 0, 0, 0.87);
+  background: transparent;
+
+  &::placeholder {
+    color: rgba(0, 0, 0, 0.54);
+  }
+}
+
+@mixin tb-iot-hub-page-search-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  color: rgba(0, 0, 0, 0.54);
+
+  mat-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+  }
+
+  &.mat-mdc-icon-button {
+    padding: 8px;
+    --mdc-icon-button-state-layer-size: 40px;
+  }
+
+  &-static {
+    pointer-events: none;
+  }
+}

@@ -117,6 +117,10 @@ export abstract class EntityTabsComponent<T extends BaseData<HasId>,
     );
   }
 
+  resolveTabIndex(tab: string): number {
+    return 0;
+  }
+
   protected setEntity(entity: T) {
     this.entityValue = entity;
   }

@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 
 import java.util.Collection;
+import java.util.Set;
 
 public interface ImageService {
 
@@ -37,6 +38,8 @@ public interface ImageService {
     TbResourceInfo saveImageInfo(TbResourceInfo imageInfo);
 
     TbResourceInfo getImageInfoByTenantIdAndKey(TenantId tenantId, String key);
+
+    Set<String> getAllImageKeysByTenantId(TenantId tenantId);
 
     TbResourceInfo getPublicImageInfoByKey(String publicResourceKey);
 

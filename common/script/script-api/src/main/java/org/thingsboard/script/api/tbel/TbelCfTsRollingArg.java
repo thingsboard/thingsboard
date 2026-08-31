@@ -73,7 +73,7 @@ public class TbelCfTsRollingArg implements TbelCfArg, Iterable<TbelCfTsDoubleVal
             throw new IllegalArgumentException("Rolling argument values are empty.");
         }
 
-        double max = Double.MIN_VALUE;
+        double max = -Double.MAX_VALUE;
         for (TbelCfTsDoubleVal value : values) {
             double val = value.getValue();
             if (!ignoreNaN && Double.isNaN(val)) {

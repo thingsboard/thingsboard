@@ -1,7 +1,7 @@
 {
   "fqn": "horizontal_pressure_card",
   "name": "Horizontal pressure card",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/horizontal_pressure_card_system_widget_image.png",
   "description": "Displays the latest pressure telemetry in a scalable horizontal layout.",
   "descriptor": {

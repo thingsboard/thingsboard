@@ -1,7 +1,7 @@
 {
   "fqn": "carbon_monoxide_co_card",
   "name": "Carbon monoxide (CO) card",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/CO-value-card.svg",
   "description": "A colorless and odorless gas resulting from incomplete combustion, particularly in motor vehicles.",
   "descriptor": {

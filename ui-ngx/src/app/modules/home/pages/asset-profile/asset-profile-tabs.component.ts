@@ -36,4 +36,12 @@ export class AssetProfileTabsComponent extends EntityTabsComponent<AssetProfile>
     super.ngOnInit();
   }
 
+  resolveTabIndex(tab: string): number {
+    if (tab === 'cf') {
+      return 1;
+    } else {
+      return super.resolveTabIndex(tab);
+    }
+  }
+
 }

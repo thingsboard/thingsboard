@@ -52,7 +52,12 @@ public record GoogleVertexAiGeminiChatModelConfig(
     }
 
     @Override
-    public boolean supportsJsonMode() {
+    public boolean supportsSchemalessJsonOutput() {
+        return true;
+    }
+
+    @Override
+    public boolean supportsJsonSchemaOutput() {
         return true;
     }
 

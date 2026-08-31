@@ -22,8 +22,11 @@ import org.thingsboard.server.common.data.StringUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
+import java.util.Collections;
+import java.util.List;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -54,4 +57,15 @@ public class KeystoreSslCredentials extends AbstractSslCredentials {
     protected void updateKeyAlias(String keyAlias) {
         this.keyAlias = keyAlias;
     }
+
+    @Override
+    public List<Path> getCertificateFilePaths() {
+        if (!StringUtils.isEmpty(storeFile) && !storeFile.startsWith(ResourceUtils.CLASSPATH_URL_PREFIX)) {
+            // Include the path even if the file doesn't exist yet — the watcher uses mtime=0 / checksum="" as
+            // baseline, so a late-appearing file (e.g., mounted after boot) will be detected and trigger a reload.
+            return Collections.singletonList(Path.of(storeFile).toAbsolutePath());
+        }
+        return Collections.emptyList();
+    }
+
 }

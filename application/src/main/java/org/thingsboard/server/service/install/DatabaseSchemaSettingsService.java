@@ -23,6 +23,8 @@ public interface DatabaseSchemaSettingsService {
 
     void updateSchemaVersion();
 
+    void updateSchemaVersion(String version);
+
     String getPackageSchemaVersion();
 
     String getDbSchemaVersion();

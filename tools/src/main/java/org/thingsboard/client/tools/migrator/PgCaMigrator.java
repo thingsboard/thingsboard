@@ -249,7 +249,7 @@ public class PgCaMigrator {
 
     private List<Object> castToNumericIfPossible(List<Object> values) {
         try {
-            if (values.get(6) != null && NumberUtils.isNumber(values.get(6).toString())) {
+            if (values.get(6) != null && NumberUtils.isCreatable(values.get(6).toString())) {
                 Double casted = NumberUtils.createDouble(values.get(6).toString());
                 List<Object> numeric = Lists.newArrayList();
                 numeric.addAll(values);

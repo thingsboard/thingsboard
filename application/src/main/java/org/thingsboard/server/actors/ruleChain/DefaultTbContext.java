@@ -27,6 +27,7 @@ import org.thingsboard.rule.engine.api.DeviceStateManager;
 import org.thingsboard.rule.engine.api.JobManager;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.MqttClientSettings;
+import org.thingsboard.rule.engine.api.TbHttpClientSettings;
 import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.rule.engine.api.RuleEngineAiChatModelService;
 import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
@@ -1060,6 +1061,11 @@ public class DefaultTbContext implements TbContext {
     @Override
     public MqttClientSettings getMqttClientSettings() {
         return mainCtx.getMqttClientSettings();
+    }
+
+    @Override
+    public TbHttpClientSettings getTbHttpClientSettings() {
+        return mainCtx.getTbHttpClientSettings();
     }
 
     private TbMsgMetaData getActionMetaData(RuleNodeId ruleNodeId) {

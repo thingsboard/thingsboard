@@ -25,7 +25,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
@@ -66,9 +66,9 @@ public class AuditLogControllerTest extends AbstractControllerTest {
     @Autowired
     private AuditLogDao auditLogDao;
     @Getter
-    @SpyBean
+    @MockitoSpyBean
     private SqlPartitioningRepository partitioningRepository;
-    @SpyBean
+    @MockitoSpyBean
     private AuditLogsCleanUpService auditLogsCleanUpService;
 
     @Value("#{${sql.audit_logs.partition_size} * 60 * 60 * 1000}")

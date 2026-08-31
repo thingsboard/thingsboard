@@ -34,6 +34,7 @@ import { CalculatedFieldsTableConfig } from '@home/components/calculated-fields/
 import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
 import { ImportExportService } from '@shared/import-export/import-export.service';
 import { EntityDebugSettingsService } from '@home/components/entity/debug/entity-debug-settings.service';
+import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
 import { DatePipe } from '@angular/common';
 
 @Component({
@@ -63,6 +64,7 @@ export class CalculatedFieldsTableComponent {
               private renderer: Renderer2,
               private importExportService: ImportExportService,
               private entityDebugSettingsService: EntityDebugSettingsService,
+              private iotHubActions: IotHubActionsService,
               private destroyRef: DestroyRef) {
 
     effect(() => {
@@ -79,6 +81,7 @@ export class CalculatedFieldsTableComponent {
           this.entityName(),
           this.importExportService,
           this.entityDebugSettingsService,
+          this.iotHubActions,
         );
         this.cd.markForCheck();
       }

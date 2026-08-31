@@ -1,0 +1,143 @@
+/**
+ * Copyright © 2016-2026 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+@import "../../../../../scss/constants";
+
+// Outer page — 16px padding around the white container, matches
+// iot-hub-home.
+:host {
+  display: block;
+  padding: 16px;
+  height: 100%;
+}
+
+// Page container — same white card / dot pattern / blob layering
+// rules as the iot-hub home page.
+.tb-iot-hub-alarm-rules-unavailable {
+  position: relative;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  height: 100%;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 800px;
+    background-image: radial-gradient(circle, rgba(0, 0, 0, 0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+    mask-image: linear-gradient(to bottom, black 0%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 0%, transparent 100%);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  > *:not(.tb-iot-hub-blob) {
+    position: relative;
+    z-index: 2;
+  }
+}
+
+// Soft colored glow blobs — copied verbatim from iot-hub-home so the
+// page background matches. `color` is bound from the ALARM_RULE
+// HeroTypeConfig entry.
+.tb-iot-hub-blob {
+  position: absolute;
+  width: 568px;
+  height: 568px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.16;
+  filter: blur(120px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.tb-iot-hub-blob-left {
+  top: 56px;
+  left: -221px;
+}
+
+.tb-iot-hub-blob-right {
+  top: 259px;
+  right: -196px;
+}
+
+.tb-alarm-rules-banner-container {
+  height: 100%;
+  display: flex;
+  overflow-y: auto;
+  flex-direction: column;
+}
+
+// Banner content stack — vertically centred in the card.
+.tb-alarm-rules-banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 40px;
+  padding: 80px 40px;
+  margin: auto;
+}
+
+.tb-alarm-rules-banner-image {
+  width: 446px;
+  max-width: 100%;
+  height: auto;
+}
+
+.tb-alarm-rules-banner-title {
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 36px;
+  letter-spacing: 0.15px;
+  color: rgba(0, 0, 0, 0.87);
+  margin: 0;
+  max-width: 900px;
+}
+
+.tb-alarm-rules-banner-version {
+  color: $tb-primary-color;
+}
+
+.tb-alarm-rules-banner-desc {
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  letter-spacing: 0.15px;
+  color: rgba(0, 0, 0, 0.76);
+  margin: -24px 0 0;
+  max-width: 900px;
+}
+
+.tb-alarm-rules-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tb-alarm-rules-banner-current {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+  letter-spacing: 0.4px;
+  color: rgba(0, 0, 0, 0.54);
+  margin-top: -28px;
+}

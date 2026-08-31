@@ -20,6 +20,7 @@ import io.netty.handler.ssl.ClientAuth;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.thingsboard.common.util.AzureIotHubUtil;
@@ -29,6 +30,7 @@ import org.thingsboard.rule.engine.credentials.CredentialsType;
 import java.security.Security;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Slf4j
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class AzureIotHubSasCredentials extends CertPemCredentials {

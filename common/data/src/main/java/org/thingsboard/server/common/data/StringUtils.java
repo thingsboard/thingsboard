@@ -23,7 +23,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 
 import static org.apache.commons.lang3.StringUtils.repeat;
 
@@ -36,6 +38,12 @@ public class StringUtils {
     public static final String EMPTY = "";
 
     public static final int INDEX_NOT_FOUND = -1;
+
+    public static final Pattern CONTROL_CHARS = Pattern.compile("[\\x00-\\x1F\\x7F]");
+
+    public static boolean containsControlChars(String source) {
+        return source != null && CONTROL_CHARS.matcher(source).find();
+    }
 
     public static boolean isEmpty(String source) {
         return source == null || source.isEmpty();
@@ -155,7 +163,7 @@ public class StringUtils {
     }
 
     public static boolean equals(String str1, String str2) {
-        return org.apache.commons.lang3.StringUtils.equals(str1, str2);
+        return Objects.equals(str1, str2);
     }
 
     public static boolean equalsAny(String string, String... otherStrings) {
@@ -210,23 +218,23 @@ public class StringUtils {
     }
 
     public static String randomNumeric(int length) {
-        return RandomStringUtils.randomNumeric(length);
+        return RandomStringUtils.secure().nextNumeric(length);
     }
 
     public static String random(int length) {
-        return RandomStringUtils.random(length);
+        return RandomStringUtils.secure().next(length);
     }
 
     public static String random(int length, String chars) {
-        return RandomStringUtils.random(length, chars);
+        return RandomStringUtils.secure().next(length, chars);
     }
 
     public static String randomAlphanumeric(int count) {
-        return RandomStringUtils.randomAlphanumeric(count);
+        return RandomStringUtils.secure().nextAlphanumeric(count);
     }
 
     public static String randomAlphabetic(int count) {
-        return RandomStringUtils.randomAlphabetic(count);
+        return RandomStringUtils.secure().nextAlphabetic(count);
     }
 
     public static String generateSafeToken(int length) {

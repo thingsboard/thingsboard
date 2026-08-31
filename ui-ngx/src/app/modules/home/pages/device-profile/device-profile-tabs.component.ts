@@ -56,6 +56,14 @@ export class DeviceProfileTabsComponent extends EntityTabsComponent<DeviceProfil
     });
   }
 
+  resolveTabIndex(tab: string): number {
+    if (tab === 'cf') {
+      return 2;
+    } else {
+      return super.resolveTabIndex(tab);
+    }
+  }
+
   protected setEntity(entity: DeviceProfile) {
     this.isTransportTypeChanged = false;
     super.setEntity(entity);

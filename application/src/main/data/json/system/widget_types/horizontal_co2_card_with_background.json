@@ -1,7 +1,7 @@
 {
   "fqn": "horizontal_co2_card_with_background",
   "name": "Horizontal CO2 card with background",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/horizontal_co2_card_with_background_system_widget_image.png",
   "description": "Displays the latest CO2 level telemetry in a scalable horizontal layout with the background image.",
   "descriptor": {

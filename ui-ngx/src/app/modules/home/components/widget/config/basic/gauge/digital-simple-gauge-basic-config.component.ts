@@ -30,7 +30,7 @@ import {
   getTimewindowConfig,
   setTimewindowConfig
 } from '@home/components/widget/config/timewindow-config-panel.component';
-import { formatValue, isDefined, isUndefined } from '@core/utils';
+import { formatValue, isDefined, isDefinedAndNotNull, isNumeric, isUndefined } from '@core/utils';
 import { Component } from '@angular/core';
 import {
   convertLevelColorsSettingsToColorProcessor,
@@ -189,11 +189,10 @@ export class DigitalSimpleGaugeBasicConfigComponent extends BasicWidgetConfigCom
 
   private maxValueValidation(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
-      const value: string = control.value;
-      if (value) {
-        if (value < control.parent?.get('minValue').value) {
-          return {maxValue: true};
-        }
+      const value: number = control.value;
+      const minValue = control.parent?.get('minValue').value;
+      if (isNumeric(value) && isDefinedAndNotNull(minValue) && value < minValue) {
+        return {maxValue: true};
       }
       return null;
     };

@@ -20,6 +20,7 @@ import { HttpClient } from '@angular/common/http';
 
 import { Observable, of, ReplaySubject, throwError } from 'rxjs';
 import { catchError, map, mergeMap, tap } from 'rxjs/operators';
+import { setEdqsEnabled, setNullsOrderStrategy } from '@shared/models/page/page-link';
 
 import { LoginRequest, LoginResponse, PublicLoginRequest } from '@shared/models/login.models';
 import { Router, UrlTree } from '@angular/router';
@@ -441,6 +442,8 @@ export class AuthService {
     return this.http.get<SysParams>('/api/system/params', defaultHttpOptions()).pipe(
       map((sysParams) => {
         this.timeService.setMaxDatapointsLimit(sysParams.maxDatapointsLimit);
+        setNullsOrderStrategy(sysParams.nullsOrderStrategy);
+        setEdqsEnabled(sysParams.edqsEnabled);
         return sysParams;
       }),
       catchError(() => of({} as SysParamsState))

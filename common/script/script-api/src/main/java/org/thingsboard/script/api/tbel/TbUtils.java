@@ -1186,6 +1186,10 @@ public class TbUtils {
         return BigDecimal.valueOf(value).setScale(0, RoundingMode.HALF_UP).intValue();
     }
 
+    public static long toLong(double value) {
+        return BigDecimal.valueOf(value).setScale(0, RoundingMode.HALF_UP).longValue();
+    }
+
     public static boolean isNaN(double value) {
         return Double.isNaN(value);
     }
@@ -1349,7 +1353,7 @@ public class TbUtils {
         for (byte b : byteArray) {
             byteList.add(b);
         }
-        ExecutionArrayList<Byte> list = new ExecutionArrayList(byteList, ctx);
+        ExecutionArrayList<Byte> list = new ExecutionArrayList<>(byteList, ctx);
         return list;
     }
 

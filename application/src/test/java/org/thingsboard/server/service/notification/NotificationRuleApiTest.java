@@ -22,7 +22,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.function.ThrowingRunnable;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.data.util.Pair;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
@@ -137,7 +137,7 @@ import static org.thingsboard.server.common.data.notification.rule.trigger.confi
 })
 public class NotificationRuleApiTest extends AbstractNotificationApiTest {
 
-    @SpyBean
+    @MockitoSpyBean
     private AlarmSubscriptionService alarmSubscriptionService;
     @Autowired
     private DefaultSystemInfoService systemInfoService;

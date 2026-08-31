@@ -42,6 +42,10 @@ ENV CASSANDRA_LOG=/var/log/cassandra
 
 COPY logback.xml ${pkg.name}.conf start-db.sh stop-db.sh start-tb.sh upgrade-tb.sh install-tb.sh ${pkg.name}.deb /tmp/
 
+# Keep base image's customized conffiles (e.g. /etc/java-17-openjdk/security/java.security)
+# when apt upgrades openjdk-17-jre-headless transitively as cassandra's java11-runtime provider;
+# without this dpkg blocks on a non-interactive conffile prompt and the build fails.
+ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update \
     && apt-get install -y --no-install-recommends wget nmap procps gnupg2 \
     && echo "deb http://apt.postgresql.org/pub/repos/apt/ $(. /etc/os-release && echo -n $VERSION_CODENAME)-pgdg main" | tee --append /etc/apt/sources.list.d/pgdg.list > /dev/null \
@@ -49,7 +53,9 @@ RUN apt-get update \
     && echo "deb https://debian.cassandra.apache.org 40x main" | tee -a /etc/apt/sources.list.d/cassandra.sources.list > /dev/null \
     && wget -q https://downloads.apache.org/cassandra/KEYS -O- | apt-key add - \
     && apt-get update \
-    && apt-get install -y --no-install-recommends cassandra cassandra-tools postgresql-${PG_MAJOR} \
+    && apt-get install -y --no-install-recommends \
+         -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" \
+         cassandra cassandra-tools postgresql-${PG_MAJOR} \
     && rm -rf /var/lib/apt/lists/* \
     && update-rc.d cassandra disable \
     && update-rc.d postgresql disable \

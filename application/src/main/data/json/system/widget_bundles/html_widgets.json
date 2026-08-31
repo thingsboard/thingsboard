@@ -11,6 +11,7 @@
   "widgetTypeFqns": [
     "cards.html_card",
     "cards.html_value_card",
-    "cards.markdown_card"
+    "cards.markdown_card",
+    "html_container"
   ]
 }

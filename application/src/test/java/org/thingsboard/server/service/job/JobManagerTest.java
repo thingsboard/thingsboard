@@ -21,7 +21,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.rule.engine.api.JobManager;
 import org.thingsboard.server.common.data.Device;
@@ -64,10 +64,10 @@ public class JobManagerTest extends AbstractControllerTest {
     @Autowired
     private JobManager jobManager;
 
-    @SpyBean
+    @MockitoSpyBean
     private TestTaskProcessor taskProcessor;
 
-    @SpyBean
+    @MockitoSpyBean
     private JobStatsService jobStatsService;
 
     @Autowired

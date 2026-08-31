@@ -30,6 +30,7 @@ export interface MenuSection {
   pages?: Array<MenuSection>;
   opened?: boolean;
   rootOnly?: boolean;
+  isNew?: boolean;
   customTranslate?: boolean;
 }
 
@@ -106,7 +107,8 @@ export enum MenuId {
   version_control = 'version_control',
   api_usage = 'api_usage',
   trendz_settings = 'trendz_settings',
-  ai_models = 'ai_models'
+  ai_models = 'ai_models',
+  iot_hub = 'iot_hub'
 }
 
 declare type MenuFilter = (authState: AuthState) => boolean;
@@ -707,6 +709,17 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
       path: '/settings/trendz',
       icon: 'trendz-settings'
     }
+  ],
+  [
+    MenuId.iot_hub,
+    {
+      id: MenuId.iot_hub,
+      name: 'iot-hub.iot-hub',
+      type: 'link',
+      path: '/iot-hub',
+      icon: 'hub',
+      isNew: true
+    }
   ]
 ]);
 
@@ -794,6 +807,7 @@ const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
       {id: MenuId.home},
       {id: MenuId.alarms},
       {id: MenuId.dashboards},
+      {id: MenuId.iot_hub},
       {
         id: MenuId.entities,
         pages: [

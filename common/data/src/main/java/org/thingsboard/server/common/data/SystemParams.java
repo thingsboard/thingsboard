@@ -40,4 +40,7 @@ public class SystemParams {
     long maxDataPointsPerRollingArg;
     int maxActivationLinkTtl;
     TrendzSettings trendzSettings;
+    String nullsOrderStrategy;
+    boolean edqsEnabled;
+    String iotHubBaseUrl;
 }

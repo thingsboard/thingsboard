@@ -22,7 +22,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.SmsService;
@@ -85,10 +85,10 @@ public class HomePageApiTest extends AbstractControllerTest {
     @Autowired
     private OAuth2ClientService oAuth2ClientService;
 
-    @MockBean
+    @MockitoBean
     private MailService mailService;
 
-    @MockBean
+    @MockitoBean
     private SmsService smsService;
 
     private static final int DEFAULT_DASHBOARDS_COUNT = 0;
@@ -410,7 +410,7 @@ public class HomePageApiTest extends AbstractControllerTest {
         Assert.assertEquals(1, usageInfo.getCustomers());
         Assert.assertEquals(configuration.getMaxCustomers(), usageInfo.getMaxCustomers());
 
-        Assert.assertEquals(2, usageInfo.getUsers());
+        Assert.assertEquals(3, usageInfo.getUsers());
         Assert.assertEquals(configuration.getMaxUsers(), usageInfo.getMaxUsers());
 
         Assert.assertEquals(DEFAULT_DASHBOARDS_COUNT, usageInfo.getDashboards());
@@ -476,7 +476,7 @@ public class HomePageApiTest extends AbstractControllerTest {
         }
 
         usageInfo = doGet("/api/usage", UsageInfo.class);
-        Assert.assertEquals(users.size() + 2, usageInfo.getUsers());
+        Assert.assertEquals(users.size() + 3, usageInfo.getUsers());
 
         List<Dashboard> dashboards = new ArrayList<>();
         for (int i = 0; i < 97; i++) {

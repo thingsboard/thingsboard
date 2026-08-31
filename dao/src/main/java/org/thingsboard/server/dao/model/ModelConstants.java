@@ -760,6 +760,18 @@ public class ModelConstants {
     public static final String AI_MODEL_NAME_COLUMN_NAME = NAME_PROPERTY;
     public static final String AI_MODEL_CONFIGURATION_COLUMN_NAME = "configuration";
 
+    /**
+     * IoT Hub installed item constants.
+     */
+    public static final String IOT_HUB_INSTALLED_ITEM_TABLE_NAME = "iot_hub_installed_item";
+    public static final String IOT_HUB_INSTALLED_ITEM_TENANT_ID_COLUMN = TENANT_ID_COLUMN;
+    public static final String IOT_HUB_INSTALLED_ITEM_ITEM_ID_COLUMN = "item_id";
+    public static final String IOT_HUB_INSTALLED_ITEM_ITEM_VERSION_ID_COLUMN = "item_version_id";
+    public static final String IOT_HUB_INSTALLED_ITEM_ITEM_NAME_COLUMN = "item_name";
+    public static final String IOT_HUB_INSTALLED_ITEM_ITEM_TYPE_COLUMN = "item_type";
+    public static final String IOT_HUB_INSTALLED_ITEM_VERSION_COLUMN = "version";
+    public static final String IOT_HUB_INSTALLED_ITEM_DESCRIPTOR_COLUMN = "descriptor";
+
     protected static final String[] NONE_AGGREGATION_COLUMNS = new String[]{LONG_VALUE_COLUMN, DOUBLE_VALUE_COLUMN, BOOLEAN_VALUE_COLUMN, STRING_VALUE_COLUMN, JSON_VALUE_COLUMN, KEY_COLUMN, TS_COLUMN};
 
     protected static final String[] COUNT_AGGREGATION_COLUMNS = new String[]{count(LONG_VALUE_COLUMN), count(DOUBLE_VALUE_COLUMN), count(BOOLEAN_VALUE_COLUMN), count(STRING_VALUE_COLUMN), count(JSON_VALUE_COLUMN), max(TS_COLUMN)};

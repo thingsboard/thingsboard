@@ -91,9 +91,15 @@
         {{ 'rule-node-config.ai.response-format' | translate }}
       </div>
       <tb-toggle-select formControlName="type">
-        <tb-toggle-option [value]="responseFormat.TEXT">{{ 'rule-node-config.ai.response-text' | translate }}</tb-toggle-option>
-        <tb-toggle-option [value]="responseFormat.JSON">{{ 'rule-node-config.ai.response-json' | translate }}</tb-toggle-option>
-        <tb-toggle-option [value]="responseFormat.JSON_SCHEMA">{{ 'rule-node-config.ai.response-json-schema' | translate }}</tb-toggle-option>
+        @if (allowedResponseFormats.includes(responseFormat.TEXT)) {
+          <tb-toggle-option [value]="responseFormat.TEXT">{{ 'rule-node-config.ai.response-text' | translate }}</tb-toggle-option>
+        }
+        @if (allowedResponseFormats.includes(responseFormat.JSON)) {
+          <tb-toggle-option [value]="responseFormat.JSON">{{ 'rule-node-config.ai.response-json' | translate }}</tb-toggle-option>
+        }
+        @if (allowedResponseFormats.includes(responseFormat.JSON_SCHEMA)) {
+          <tb-toggle-option [value]="responseFormat.JSON_SCHEMA">{{ 'rule-node-config.ai.response-json-schema' | translate }}</tb-toggle-option>
+        }
       </tb-toggle-select>
     </div>
     <tb-json-object-edit
