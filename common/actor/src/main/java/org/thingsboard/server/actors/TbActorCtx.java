@@ -42,5 +42,7 @@ public interface TbActorCtx extends TbActorRef {
 
     void broadcastToChildren(TbActorMsg msg, Predicate<TbActorId> childFilter);
 
+    void broadcastToChildren(TbActorMsg msg, Predicate<TbActorId> childFilter, boolean highPriority);
+
     List<TbActorId> filterChildren(Predicate<TbActorId> childFilter);
 }

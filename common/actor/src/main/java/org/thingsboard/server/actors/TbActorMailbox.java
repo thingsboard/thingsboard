@@ -210,6 +210,11 @@ public final class TbActorMailbox implements TbActorCtx {
     }
 
     @Override
+    public void broadcastToChildren(TbActorMsg msg, Predicate<TbActorId> childFilter, boolean highPriority) {
+        system.broadcastToChildren(selfId, childFilter, msg, highPriority);
+    }
+
+    @Override
     public List<TbActorId> filterChildren(Predicate<TbActorId> childFilter) {
         return system.filterChildren(selfId, childFilter);
     }
