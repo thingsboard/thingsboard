@@ -43,7 +43,8 @@ public class Lwm2mTestHelper {
     public static final int RESOURCE_ID_14 = 14;
     public static final int RESOURCE_ID_15 = 15;
     public static final int RESOURCE_ID_120 = 120;  // INTEGER_VALUE
-    public static final int RESOURCE_ID_125 = 125;  // UNSIGNED_INTEGER_VALUE
+    public static final int RESOURCE_ID_125 = 125;  // UNSIGNED_INTEGER_VALUE single-ресурс
+    public static final int RESOURCE_ID_1125 = 1125;  // UNSIGNED_INTEGER_VALUE multi-instance
     public static final int RESOURCE_ID_5700 = 5700;
     public static final int RESOURCE_INSTANCE_ID_0 = 0;
     public static final int RESOURCE_INSTANCE_ID_2 = 2;

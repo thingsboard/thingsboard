@@ -82,22 +82,112 @@ public class RpcLwm2mIntegrationWriteTest extends AbstractRpcLwM2MIntegrationTes
     }
 
     /**
-     * update SingleResource:
-     * WriteReplace {"id":"3442/0/120","value":"18446744073709551615}    // ULong.MAX
+     * UnsignedInteger -> SingleResource (WriteReplace):
+     * {"method": "WriteReplace", "params": {"id": "/3442_1.0/0/125", "value": 18446744073709551615 }} // ULong.MAX
      * {"result":"CHANGED"}
      */
     @Test
     public void testWriteReplaceUnIntegerValuesSingleResourceById_Result_CHANGED() throws Exception {
-        String expectedPath = objectInstanceIdVer_3442 + "/" + RESOURCE_ID_125;
-        ULong expectedValue = ULong.MAX;
-        String actualResult = sendRPCWriteObjectById("WriteReplace", expectedPath, expectedValue);
-        ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
-        assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
-        actualResult = sendRPCReadById(expectedPath);
-        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
-        String actualValues = rpcActualResult.get("value").asText();
-        String expected = "LwM2mSingleResource [id=" + RESOURCE_ID_125 + ", value=" + expectedValue + ", type=" + UNSIGNED_INTEGER.name() + "]";
-        assertTrue(actualValues.contains(expected));
+        ULong expectedValueId125 = ULong.valueOf(0);
+        sendRPC_3442_ResourceId_125_WriteReplace(expectedValueId125);
+        expectedValueId125 = ULong.valueOf(-1);
+        sendRPC_3442_ResourceId_125_WriteReplace(expectedValueId125);
+        expectedValueId125 = ULong.valueOf(-100);
+        sendRPC_3442_ResourceId_125_WriteReplace(expectedValueId125);
+        expectedValueId125 = ULong.valueOf(Integer.MIN_VALUE);
+        sendRPC_3442_ResourceId_125_WriteReplace(expectedValueId125);
+        expectedValueId125 = ULong.valueOf(Integer.MAX_VALUE);
+        sendRPC_3442_ResourceId_125_WriteReplace(expectedValueId125);
+        expectedValueId125 = ULong.valueOf(Long.MIN_VALUE);
+        sendRPC_3442_ResourceId_125_WriteReplace(expectedValueId125);
+        expectedValueId125 = ULong.valueOf(Long.MAX_VALUE);
+        sendRPC_3442_ResourceId_125_WriteReplace(expectedValueId125);
+        expectedValueId125 = ULong.MIN;
+        sendRPC_3442_ResourceId_125_WriteReplace(expectedValueId125);
+        expectedValueId125 = ULong.MAX;
+        sendRPC_3442_ResourceId_125_WriteReplace(expectedValueId125);
+    }
+
+    /**
+     * UnsignedInteger -> SingleResource (WriteUpdate):
+     * {"method": "WriteUpdate", "params": {"id": "/3442_1.0/0", "value": {"125":18446744073709551615} }} // ULong.MAX
+     * {"result":"CHANGED"}
+     */
+    @Test
+    public void testWriteUpdateUnsignedIntegerValuesSingleResourceById_Result_CHANGED() throws Exception {
+        ULong expectedValueId125 = ULong.valueOf(0);
+        sendRPC_3442_ResourceId_125_WriteUpdate(expectedValueId125);
+        expectedValueId125 = ULong.valueOf(-1);
+        sendRPC_3442_ResourceId_125_WriteUpdate(expectedValueId125);
+        expectedValueId125 = ULong.valueOf(-100);
+        sendRPC_3442_ResourceId_125_WriteUpdate(expectedValueId125);
+        expectedValueId125 = ULong.valueOf(Integer.MIN_VALUE);
+        sendRPC_3442_ResourceId_125_WriteUpdate(expectedValueId125);
+        expectedValueId125 = ULong.valueOf(Integer.MAX_VALUE);
+        sendRPC_3442_ResourceId_125_WriteUpdate(expectedValueId125);
+         expectedValueId125 = ULong.valueOf(Long.MIN_VALUE);
+        sendRPC_3442_ResourceId_125_WriteUpdate(expectedValueId125);
+        expectedValueId125 = ULong.valueOf(Long.MAX_VALUE);
+        sendRPC_3442_ResourceId_125_WriteUpdate(expectedValueId125);
+        expectedValueId125 = ULong.MAX;
+        sendRPC_3442_ResourceId_125_WriteUpdate(expectedValueId125);
+        expectedValueId125 = ULong.MIN;
+        sendRPC_3442_ResourceId_125_WriteUpdate(expectedValueId125);
+    }
+
+    /**
+     * UnsignedInteger -> MultipleResource (WriteReplace):
+     * {"method": "WriteReplace", "params": {"id": "/3442_1.0/0/1125/0", "value": 18446744073709551615 }} // ULong.MAX
+     * {"result":"CHANGED"}
+     */
+    @Test
+    public void testWriteReplaceUnsignedIntegerValuesMultipleResourceById_Result_CHANGED() throws Exception {
+        ULong expectedValueId125 = ULong.valueOf(0);
+        sendRPC_3442_ResourceId_1125_WriteReplace(expectedValueId125);
+        expectedValueId125 = ULong.valueOf(-1);
+        sendRPC_3442_ResourceId_1125_WriteReplace(expectedValueId125);
+        expectedValueId125 = ULong.valueOf(-100);
+        sendRPC_3442_ResourceId_1125_WriteReplace(expectedValueId125);
+        expectedValueId125 = ULong.valueOf(Integer.MIN_VALUE);
+        sendRPC_3442_ResourceId_1125_WriteReplace(expectedValueId125);
+        expectedValueId125 = ULong.valueOf(Integer.MAX_VALUE);
+        sendRPC_3442_ResourceId_1125_WriteReplace(expectedValueId125);
+        expectedValueId125 = ULong.valueOf(Long.MIN_VALUE);
+        sendRPC_3442_ResourceId_1125_WriteReplace(expectedValueId125);
+        expectedValueId125 = ULong.valueOf(Long.MAX_VALUE);
+        sendRPC_3442_ResourceId_1125_WriteReplace(expectedValueId125);
+        expectedValueId125 = ULong.MAX;
+        sendRPC_3442_ResourceId_1125_WriteReplace(expectedValueId125);
+        expectedValueId125 = ULong.MIN;
+        sendRPC_3442_ResourceId_1125_WriteReplace(expectedValueId125);
+    }
+
+    /**
+     * UnsignedInteger -> MultipleResource (WriteUpdate):
+     * {"method": "WriteUpdate", "params": {"id": "/3442_1.0/0", "value": {"1125":{"0":"18446744073709551615"}} }} // 0 ->ULong.MAX
+     * {"method": "WriteUpdate", "params": {"id": "/3442_1.0/0", "value": {"1125":{"0":"18446744073709551615", "12":"0"}} }} // 0 ->ULong.MAX, 12 - > 0
+     * {"result":"CHANGED"}
+     */
+    @Test
+    public void testWriteUpdateUnsignedIntegerValuesMultipleResourceById_Result_CHANGED() throws Exception {
+        ULong expectedValueId1125 = ULong.valueOf(0);
+        sendRPC_3442_ResourceId_1125_WriteUpdate(expectedValueId1125);
+        expectedValueId1125 = ULong.valueOf(-1);
+        sendRPC_3442_ResourceId_1125_WriteUpdate(expectedValueId1125);
+        expectedValueId1125 = ULong.valueOf(-100);
+        sendRPC_3442_ResourceId_1125_WriteUpdate(expectedValueId1125);
+        expectedValueId1125 = ULong.valueOf(Integer.MIN_VALUE);
+        sendRPC_3442_ResourceId_1125_WriteUpdate(expectedValueId1125);
+        expectedValueId1125 = ULong.valueOf(Integer.MAX_VALUE);
+        sendRPC_3442_ResourceId_1125_WriteUpdate(expectedValueId1125);
+        expectedValueId1125 = ULong.valueOf(Long.MIN_VALUE);
+        sendRPC_3442_ResourceId_1125_WriteUpdate(expectedValueId1125);
+        expectedValueId1125 = ULong.valueOf(Long.MAX_VALUE);
+        sendRPC_3442_ResourceId_1125_WriteUpdate(expectedValueId1125);
+        expectedValueId1125 = ULong.MAX;
+        sendRPC_3442_ResourceId_1125_WriteUpdate(expectedValueId1125);
+        expectedValueId1125 = ULong.MIN;
+        sendRPC_3442_ResourceId_1125_WriteUpdate(expectedValueId1125);
     }
 
     /**
@@ -646,4 +736,59 @@ public class RpcLwm2mIntegrationWriteTest extends AbstractRpcLwM2MIntegrationTes
         String expected = "LwM2mSingleResource [id=" + RESOURCE_ID_120 + ", value=" + expectedValue + ", type=" + INTEGER.name() + "]";
         assertTrue(actualValues.contains(expected));
     }
+
+    private void sendRPC_3442_ResourceId_125_WriteReplace (ULong expectedValue)  throws Exception {
+        String expectedPath = objectInstanceIdVer_3442 + "/" + RESOURCE_ID_125;
+        String actualResult = sendRPCWriteObjectById("WriteReplace", expectedPath, expectedValue);
+        ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
+        actualResult = sendRPCReadById(expectedPath);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        String actualValues = rpcActualResult.get("value").asText();
+        String expected = "LwM2mSingleResource [id=" + RESOURCE_ID_125 + ", value=" + expectedValue + ", type=" + UNSIGNED_INTEGER.name() + "]";
+        assertTrue(actualValues.contains(expected));
+    }
+
+    private void sendRPC_3442_ResourceId_125_WriteUpdate(ULong expectedValueId125)  throws Exception {
+        String expectedPath = objectInstanceIdVer_3442;
+        String expectedValue = "{\"" + RESOURCE_ID_125 + "\":" + expectedValueId125 + "}";
+        String actualResult = sendRPCWriteObjectById("WriteUpdate", expectedPath, expectedValue);
+        ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
+        String expectedPath125 = objectInstanceIdVer_3442 + "/" + RESOURCE_ID_125;
+        actualResult = sendRPCReadById(expectedPath125);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        String actualValues = rpcActualResult.get("value").asText();
+        String expected = "LwM2mSingleResource [id=" + RESOURCE_ID_125 + ", value=" + expectedValueId125 + ", type=" + UNSIGNED_INTEGER.name() + "]";
+        assertTrue(actualValues.contains(expected));
+    }
+
+    private void sendRPC_3442_ResourceId_1125_WriteReplace(ULong expectedValue)  throws Exception {
+        int resourceInstanceId0 = 0;
+        String expectedPath = objectInstanceIdVer_3442 + "/" + RESOURCE_ID_1125 + "/" + resourceInstanceId0;
+        String actualResult = sendRPCWriteObjectById("WriteReplace", expectedPath, expectedValue);
+        ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
+        actualResult = sendRPCReadById(expectedPath);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        String actualValues = rpcActualResult.get("value").asText();
+        String expected = "LwM2mResourceInstance [id=" + resourceInstanceId0 + ", value=" + expectedValue + ", type=" + UNSIGNED_INTEGER.name() + "]";
+        assertTrue(actualValues.contains(expected));
+    }
+
+    private void sendRPC_3442_ResourceId_1125_WriteUpdate(ULong expectedValueId1125)  throws Exception {
+        String expectedPath = objectInstanceIdVer_3442;
+        int resourceInstanceId0 = 0;
+        String expectedValue = "{\"" + RESOURCE_ID_1125 + "\":{\"" + RESOURCE_ID_0 + "\":" + expectedValueId1125 + "}}";
+        String actualResult = sendRPCWriteObjectById("WriteUpdate", expectedPath, expectedValue);
+        ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
+        String expectedPath1125 = objectInstanceIdVer_3442 + "/" + RESOURCE_ID_1125 + "/" + resourceInstanceId0;
+        actualResult = sendRPCReadById(expectedPath1125);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        String actualValues = rpcActualResult.get("value").asText();
+        String expected = "LwM2mResourceInstance [id=" + resourceInstanceId0 + ", value=" + expectedValueId1125 + ", type=" + UNSIGNED_INTEGER.name() + "]";
+        assertTrue(actualValues.contains(expected));
+    }
 }
+
