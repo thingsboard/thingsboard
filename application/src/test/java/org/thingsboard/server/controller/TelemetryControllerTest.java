@@ -16,25 +16,35 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.awaitility.Awaitility;
 import org.junit.Assert;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
+import org.thingsboard.server.common.data.asset.AssetProfile;
+import org.thingsboard.server.common.data.id.ApiUsageStateId;
+import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.query.AliasEntityId;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.SingleEntityFilter;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -47,6 +57,9 @@ import static org.thingsboard.server.common.data.query.EntityKeyType.TIME_SERIES
         "sql.ts.value_no_xss_validation=true"
 })
 public class TelemetryControllerTest extends AbstractControllerTest {
+
+    @Autowired
+    private ApiUsageStateService apiUsageStateService;
 
     @Test
     public void testConstraintValidator() throws Exception {
@@ -302,6 +315,61 @@ public class TelemetryControllerTest extends AbstractControllerTest {
         ObjectNode tsDataAfterDeletion = readResponse(doGetAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/values/timeseries", params), ObjectNode.class);
         Assert.assertTrue(tsDataAfterDeletion.get("key1,key2").get(0).get("value").isNull());
         Assert.assertTrue(tsDataAfterDeletion.get("key3").get(0).get("value").isNull());
+    }
+
+    @Test
+    public void testSaveTelemetryForDeviceProfileIsRejectedAndNotPersisted() throws Exception {
+        loginTenantAdmin();
+        DeviceProfile deviceProfile = doPost("/api/deviceProfile", createDeviceProfile("Refrigerated Delivery Truck"), DeviceProfile.class);
+
+        doPostAsync("/api/plugins/telemetry/DEVICE_PROFILE/" + deviceProfile.getId().getId() + "/timeseries/ANY",
+                "{\"temperature\":25}", String.class, status().isBadRequest());
+
+        loginCustomerUser();
+        doPostAsync("/api/plugins/telemetry/DEVICE_PROFILE/" + deviceProfile.getId().getId() + "/timeseries/ANY",
+                "{\"temperature\":25}", String.class, status().isBadRequest());
+
+        loginTenantAdmin();
+        Awaitility.await("no time series saved for the device profile")
+                .atMost(10, TimeUnit.SECONDS).during(2, TimeUnit.SECONDS)
+                .until(() -> tsService.findAllLatest(tenantId, deviceProfile.getId()).get().isEmpty());
+    }
+
+    @Test
+    public void testSaveTelemetryForApiUsageStateIsRejectedAndNotPersisted() throws Exception {
+        loginTenantAdmin();
+        ApiUsageStateId apiUsageStateId = apiUsageStateService.findTenantApiUsageState(tenantId).getId();
+
+        doPostAsync("/api/plugins/telemetry/API_USAGE_STATE/" + apiUsageStateId.getId() + "/timeseries/ANY",
+                "{\"injected\":25}", String.class, status().isForbidden());
+
+        Awaitility.await("no injected time series saved for the api usage state")
+                .atMost(10, TimeUnit.SECONDS).during(2, TimeUnit.SECONDS)
+                .until(() -> tsService.findLatest(tenantId, apiUsageStateId, "injected").get().isEmpty());
+    }
+
+    @Test
+    public void testSaveTelemetryForEntityTypeNotSupportedByTelemetryApiIsRejected() throws Exception {
+        loginTenantAdmin();
+
+        doPostAsync("/api/plugins/telemetry/DASHBOARD/" + UUID.randomUUID() + "/timeseries/ANY",
+                "{\"temperature\":25}", String.class, status().isBadRequest());
+    }
+
+    @Test
+    public void testDeleteAttributesOfAssetProfileIsRejectedAndDataIsKept() throws Exception {
+        loginTenantAdmin();
+        AssetProfile assetProfile = doPost("/api/assetProfile", createAssetProfile("Refrigerated Container"), AssetProfile.class);
+        attributesService.save(tenantId, assetProfile.getId(), AttributeScope.SERVER_SCOPE,
+                new BaseAttributeKvEntry(new StringDataEntry("leftover", "value"), System.currentTimeMillis())).get();
+
+        loginCustomerUser();
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("keys", "leftover");
+        doDeleteAsync("/api/plugins/telemetry/ASSET_PROFILE/" + assetProfile.getId().getId() + "/SERVER_SCOPE", params)
+                .andExpect(status().isBadRequest());
+
+        assertThat(attributesService.find(tenantId, assetProfile.getId(), AttributeScope.SERVER_SCOPE, "leftover").get()).isPresent();
     }
 
     private Device createDevice() throws Exception {

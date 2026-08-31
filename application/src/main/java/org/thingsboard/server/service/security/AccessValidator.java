@@ -31,6 +31,7 @@ import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.TbResourceInfo;
@@ -84,6 +85,9 @@ import org.thingsboard.server.service.security.permission.AccessControlService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.BiConsumer;
@@ -100,6 +104,14 @@ public class AccessValidator {
     public static final String DEVICE_WITH_REQUESTED_ID_NOT_FOUND = "Device with requested id wasn't found!";
     public static final String EDGE_WITH_REQUESTED_ID_NOT_FOUND = "Edge with requested id wasn't found!";
     public static final String ENTITY_VIEW_WITH_REQUESTED_ID_NOT_FOUND = "Entity-view with requested id wasn't found!";
+
+    private static final Set<Operation> TELEMETRY_OPERATIONS = EnumSet.of(
+            Operation.READ_TELEMETRY, Operation.WRITE_TELEMETRY, Operation.READ_ATTRIBUTES, Operation.WRITE_ATTRIBUTES);
+
+    // Entity types in scope of the telemetry API. The rest own neither time series nor attributes, or are not supported by the API at all.
+    static final Set<EntityType> TELEMETRY_API_ENTITY_TYPES = Collections.unmodifiableSet(EnumSet.of(
+            EntityType.DEVICE, EntityType.ASSET, EntityType.ENTITY_VIEW, EntityType.CUSTOMER, EntityType.TENANT,
+            EntityType.TENANT_PROFILE, EntityType.USER, EntityType.EDGE, EntityType.RULE_CHAIN, EntityType.API_USAGE_STATE));
 
     @Autowired
     protected TenantService tenantService;
@@ -207,7 +219,12 @@ public class AccessValidator {
     }
 
     public void validate(SecurityUser currentUser, Operation operation, EntityId entityId, FutureCallback<ValidationResult> callback) {
-        switch (entityId.getEntityType()) {
+        EntityType entityType = entityId.getEntityType();
+        if (TELEMETRY_OPERATIONS.contains(operation) && !TELEMETRY_API_ENTITY_TYPES.contains(entityType)) {
+            callback.onFailure(new IncorrectParameterException("Telemetry is not supported for entity type '" + entityType + "'!"));
+            return;
+        }
+        switch (entityType) {
             case DEVICE -> validateDevice(currentUser, operation, entityId, callback);
             case DEVICE_PROFILE -> validateDeviceProfile(currentUser, operation, entityId, callback);
             case ASSET -> validateAsset(currentUser, operation, entityId, callback);
@@ -276,6 +293,7 @@ public class AccessValidator {
                     accessControlService.checkPermission(currentUser, Resource.DEVICE_PROFILE, operation, entityId, deviceProfile);
                 } catch (ThingsboardException e) {
                     callback.onSuccess(ValidationResult.accessDenied(e.getMessage()));
+                    return;
                 }
                 callback.onSuccess(ValidationResult.ok(deviceProfile));
             }
@@ -294,6 +312,7 @@ public class AccessValidator {
                     accessControlService.checkPermission(currentUser, Resource.ASSET_PROFILE, operation, entityId, assetProfile);
                 } catch (ThingsboardException e) {
                     callback.onSuccess(ValidationResult.accessDenied(e.getMessage()));
+                    return;
                 }
                 callback.onSuccess(ValidationResult.ok(assetProfile));
             }
@@ -306,6 +325,7 @@ public class AccessValidator {
         } else {
             if (!operation.equals(Operation.READ_TELEMETRY)) {
                 callback.onSuccess(ValidationResult.accessDenied("Allowed only READ_TELEMETRY operation!"));
+                return;
             }
             ApiUsageState apiUsageState = apiUsageStateService.findApiUsageStateById(currentUser.getTenantId(), new ApiUsageStateId(entityId.getId()));
             if (apiUsageState == null) {
@@ -315,6 +335,7 @@ public class AccessValidator {
                     accessControlService.checkPermission(currentUser, Resource.API_USAGE_STATE, operation, entityId, apiUsageState);
                 } catch (ThingsboardException e) {
                     callback.onSuccess(ValidationResult.accessDenied(e.getMessage()));
+                    return;
                 }
                 callback.onSuccess(ValidationResult.ok(apiUsageState));
             }
@@ -333,6 +354,7 @@ public class AccessValidator {
                     accessControlService.checkPermission(currentUser, Resource.OTA_PACKAGE, operation, entityId, otaPackage);
                 } catch (ThingsboardException e) {
                     callback.onSuccess(ValidationResult.accessDenied(e.getMessage()));
+                    return;
                 }
                 callback.onSuccess(ValidationResult.ok(otaPackage));
             }
