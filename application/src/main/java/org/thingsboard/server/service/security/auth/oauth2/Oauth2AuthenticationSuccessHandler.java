@@ -90,7 +90,10 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             baseUrl = this.systemSecurityService.getBaseUrl(TenantId.SYS_TENANT_ID, new CustomerId(EntityId.NULL_UUID), request);
             Optional<Cookie> prevUrlOpt = CookieUtils.getCookie(request, PREV_URI_COOKIE_NAME);
             if (prevUrlOpt.isPresent()) {
-                baseUrl += prevUrlOpt.get().getValue();
+                String prevUri = prevUrlOpt.get().getValue();
+                if (PrevUriValidator.isValid(prevUri)) {
+                    baseUrl += prevUri;
+                }
                 CookieUtils.deleteCookie(request, response, PREV_URI_COOKIE_NAME);
             }
         }
