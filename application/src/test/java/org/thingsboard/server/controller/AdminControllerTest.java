@@ -17,6 +17,7 @@ package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import jakarta.servlet.http.Cookie;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Test;
@@ -109,6 +110,28 @@ public class AdminControllerTest extends AbstractControllerTest {
         doPost("/api/admin/settings", adminSettings)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString("is prohibited")));
+    }
+
+    @Test
+    public void testMailOAuth2AuthorizationStoresOnlyInAppPrevUri() throws Exception {
+        loginSysAdmin();
+        AdminSettings mailSettings = doGet("/api/admin/settings/mail", AdminSettings.class);
+        ObjectNode jsonValue = JacksonUtil.fromString(mailSettings.getJsonValue().toString(), ObjectNode.class);
+        jsonValue.put("clientId", "clientId");
+        jsonValue.put("authUri", "https://accounts.google.com/o/oauth2/v2/auth");
+        jsonValue.put("redirectUri", "https://thingsboard.io/api/admin/mail/oauth2/code");
+        jsonValue.set("scope", JacksonUtil.newArrayNode().add("https://mail.google.com/"));
+        mailSettings.setJsonValue(jsonValue);
+        doPost("/api/admin/settings", mailSettings, AdminSettings.class);
+
+        Cookie prevUriCookie = doGet("/api/admin/mail/oauth2/authorize?prevUri=@evil.com/")
+                .andExpect(status().isOk()).andReturn().getResponse().getCookie("prev_uri");
+        assertThat(prevUriCookie).isNull();
+
+        prevUriCookie = doGet("/api/admin/mail/oauth2/authorize?prevUri=/settings/outgoing-mail")
+                .andExpect(status().isOk()).andReturn().getResponse().getCookie("prev_uri");
+        assertThat(prevUriCookie).isNotNull();
+        assertThat(prevUriCookie.getValue()).isEqualTo("/settings/outgoing-mail");
     }
 
     @Test

@@ -76,6 +76,7 @@ import org.thingsboard.server.dao.settings.SecuritySettingsService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 import org.thingsboard.server.service.security.auth.oauth2.CookieUtils;
+import org.thingsboard.server.service.security.auth.oauth2.PrevUriValidator;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 import org.thingsboard.server.service.security.permission.Operation;
@@ -419,8 +420,9 @@ public class AdminController extends BaseController {
     @GetMapping(value = "/mail/oauth2/authorize", produces = "application/text")
     public String getAuthorizationUrl(HttpServletRequest request, HttpServletResponse response) throws ThingsboardException {
         String state = StringUtils.generateSafeToken();
-        if (request.getParameter(PREV_URI_PATH_PARAMETER) != null) {
-            CookieUtils.addCookie(response, PREV_URI_COOKIE_NAME, request.getParameter(PREV_URI_PATH_PARAMETER), 180);
+        String prevUriParam = request.getParameter(PREV_URI_PATH_PARAMETER);
+        if (PrevUriValidator.isValid(prevUriParam)) {
+            CookieUtils.addCookie(response, PREV_URI_COOKIE_NAME, prevUriParam, 180);
         }
         CookieUtils.addCookie(response, STATE_COOKIE_NAME, state, 180);
 
@@ -449,7 +451,7 @@ public class AdminController extends BaseController {
         Optional<Cookie> cookieState = CookieUtils.getCookie(request, STATE_COOKIE_NAME);
 
         String baseUrl = this.systemSecurityService.getBaseUrl(TenantId.SYS_TENANT_ID, new CustomerId(EntityId.NULL_UUID), request);
-        String prevUri = baseUrl + (prevUrlOpt.isPresent() ? prevUrlOpt.get().getValue() : "/settings/outgoing-mail");
+        String prevUri = baseUrl + prevUrlOpt.map(Cookie::getValue).filter(PrevUriValidator::isValid).orElse("/settings/outgoing-mail");
 
         if (cookieState.isEmpty() || !cookieState.get().getValue().equals(state)) {
             CookieUtils.deleteCookie(request, response, STATE_COOKIE_NAME);

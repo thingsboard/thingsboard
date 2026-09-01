@@ -64,5 +64,10 @@ public class Oauth2AuthenticationSuccessHandlerTest extends AbstractControllerTe
         redirectUrl = oauth2AuthenticationSuccessHandler.getRedirectUrl(urlWithParams, jwtPair);
         expectedUrl = urlWithParams + "&accessToken=" + jwtPair.getToken() + "&refreshToken=" + jwtPair.getRefreshToken();
         assertEquals(expectedUrl, redirectUrl);
+
+        String urlWithTrailingSlash = "http://localhost:8080/";
+        redirectUrl = oauth2AuthenticationSuccessHandler.getRedirectUrl(urlWithTrailingSlash, jwtPair);
+        expectedUrl = urlWithTrailingSlash + "?accessToken=" + jwtPair.getToken() + "&refreshToken=" + jwtPair.getRefreshToken();
+        assertEquals(expectedUrl, redirectUrl);
     }
 }

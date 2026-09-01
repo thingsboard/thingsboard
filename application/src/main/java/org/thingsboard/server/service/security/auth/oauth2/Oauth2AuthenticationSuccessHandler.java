@@ -83,17 +83,7 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                                         Authentication authentication) throws IOException {
         OAuth2AuthorizationRequest authorizationRequest = httpCookieOAuth2AuthorizationRequestRepository.loadAuthorizationRequest(request);
         String callbackUrlScheme = authorizationRequest.getAttribute(TbOAuth2ParameterNames.CALLBACK_URL_SCHEME);
-        String baseUrl;
-        if (!StringUtils.isEmpty(callbackUrlScheme)) {
-            baseUrl = callbackUrlScheme + ":";
-        } else {
-            baseUrl = this.systemSecurityService.getBaseUrl(TenantId.SYS_TENANT_ID, new CustomerId(EntityId.NULL_UUID), request);
-            Optional<Cookie> prevUrlOpt = CookieUtils.getCookie(request, PREV_URI_COOKIE_NAME);
-            if (prevUrlOpt.isPresent()) {
-                baseUrl += prevUrlOpt.get().getValue();
-                CookieUtils.deleteCookie(request, response, PREV_URI_COOKIE_NAME);
-            }
-        }
+        String baseUrl = getBaseUrl(request, response, callbackUrlScheme);
         try {
             OAuth2AuthenticationToken token = (OAuth2AuthenticationToken) authentication;
 
@@ -125,6 +115,22 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         }
     }
 
+    String getBaseUrl(HttpServletRequest request, HttpServletResponse response, String callbackUrlScheme) {
+        if (!StringUtils.isEmpty(callbackUrlScheme)) {
+            return callbackUrlScheme + ":";
+        }
+        String baseUrl = this.systemSecurityService.getBaseUrl(TenantId.SYS_TENANT_ID, new CustomerId(EntityId.NULL_UUID), request);
+        Optional<Cookie> prevUrlOpt = CookieUtils.getCookie(request, PREV_URI_COOKIE_NAME);
+        if (prevUrlOpt.isPresent()) {
+            String prevUri = prevUrlOpt.get().getValue();
+            if (PrevUriValidator.isValid(prevUri)) {
+                baseUrl += prevUri;
+            }
+            CookieUtils.deleteCookie(request, response, PREV_URI_COOKIE_NAME);
+        }
+        return baseUrl;
+    }
+
     protected void clearAuthenticationAttributes(HttpServletRequest request, HttpServletResponse response) {
         super.clearAuthenticationAttributes(request);
         httpCookieOAuth2AuthorizationRequestRepository.removeAuthorizationRequestCookies(request, response);
@@ -133,6 +139,8 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     String getRedirectUrl(String baseUrl, JwtPair tokenPair) {
         if (baseUrl.indexOf("?") > 0) {
             baseUrl += "&";
+        } else if (baseUrl.endsWith("/")) {
+            baseUrl += "?";
         } else {
             baseUrl += "/?";
         }
