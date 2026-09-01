@@ -20,11 +20,11 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 
 @Component
 @TbCoreComponent
-public class V4_3_1_4Migration implements LtsMigration {
+public class V4_3_1_5Migration implements LtsMigration {
 
     @Override
     public String getVersion() {
-        return "4.3.1.4";
+        return "4.3.1.5";
     }
 
 }
