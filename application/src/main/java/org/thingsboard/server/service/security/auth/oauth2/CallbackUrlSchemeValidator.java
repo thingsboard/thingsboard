@@ -26,7 +26,8 @@ import java.util.regex.Pattern;
 @Slf4j
 public class CallbackUrlSchemeValidator {
 
-    private static final Pattern SCHEME_PATTERN = Pattern.compile("[a-zA-Z][a-zA-Z0-9+.-]*");
+    // RFC 3986 scheme grammar, plus '_': mobile apps derive the scheme from their package name, which may contain one
+    private static final Pattern SCHEME_PATTERN = Pattern.compile("[a-zA-Z][a-zA-Z0-9+.\\-_]*");
     private static final Set<String> FORBIDDEN_SCHEMES = Set.of("http", "https", "javascript", "data", "file", "vbscript");
     private static final int MAX_LOGGED_LENGTH = 128;
 

@@ -26,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class CallbackUrlSchemeValidatorTest {
 
     @ParameterizedTest
-    @ValueSource(strings = {"tbmobile", "tb-mobile.app1", "TbMobile+1"})
+    @ValueSource(strings = {"tbmobile", "tb-mobile.app1", "TbMobile+1", "org.mycompany.myapp.auth", "com.my_company.app.auth"})
     public void testMobileAppSchemeIsValid(String callbackUrlScheme) {
         assertThat(CallbackUrlSchemeValidator.isValid(callbackUrlScheme)).isTrue();
     }
