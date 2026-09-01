@@ -76,6 +76,7 @@ import org.thingsboard.server.dao.settings.SecuritySettingsService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 import org.thingsboard.server.service.security.auth.oauth2.CookieUtils;
+import org.thingsboard.server.service.security.auth.oauth2.PrevUriValidator;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 import org.thingsboard.server.service.security.permission.Operation;
@@ -92,6 +93,8 @@ import java.util.Optional;
 
 import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.service.security.auth.oauth2.HttpCookieOAuth2AuthorizationRequestRepository.PREV_URI_COOKIE_NAME;
+import static org.thingsboard.server.service.security.auth.oauth2.HttpCookieOAuth2AuthorizationRequestRepository.PREV_URI_PARAMETER;
 
 @RestController
 @TbCoreComponent
@@ -100,8 +103,7 @@ import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHO
 @RequiredArgsConstructor
 public class AdminController extends BaseController {
 
-    private static final String PREV_URI_PATH_PARAMETER = "prevUri";
-    private static final String PREV_URI_COOKIE_NAME = "prev_uri";
+    private static final String DEFAULT_PREV_URI = "/settings/outgoing-mail";
     private static final String STATE_COOKIE_NAME = "state";
     private static final String MAIL_SETTINGS_KEY = "mail";
 
@@ -419,8 +421,9 @@ public class AdminController extends BaseController {
     @GetMapping(value = "/mail/oauth2/authorize", produces = "application/text")
     public String getAuthorizationUrl(HttpServletRequest request, HttpServletResponse response) throws ThingsboardException {
         String state = StringUtils.generateSafeToken();
-        if (request.getParameter(PREV_URI_PATH_PARAMETER) != null) {
-            CookieUtils.addCookie(response, PREV_URI_COOKIE_NAME, request.getParameter(PREV_URI_PATH_PARAMETER), 180);
+        String prevUriParam = request.getParameter(PREV_URI_PARAMETER);
+        if (PrevUriValidator.isValid(prevUriParam)) {
+            CookieUtils.addCookie(response, PREV_URI_COOKIE_NAME, prevUriParam, 180);
         }
         CookieUtils.addCookie(response, STATE_COOKIE_NAME, state, 180);
 
@@ -445,11 +448,8 @@ public class AdminController extends BaseController {
     public void codeProcessingUrl(
             @RequestParam(value = "code") String code, @RequestParam(value = "state") String state,
             HttpServletRequest request, HttpServletResponse response) throws ThingsboardException, IOException {
-        Optional<Cookie> prevUrlOpt = CookieUtils.getCookie(request, PREV_URI_COOKIE_NAME);
+        String redirectUrl = getMailOAuth2RedirectUrl(request);
         Optional<Cookie> cookieState = CookieUtils.getCookie(request, STATE_COOKIE_NAME);
-
-        String baseUrl = this.systemSecurityService.getBaseUrl(TenantId.SYS_TENANT_ID, new CustomerId(EntityId.NULL_UUID), request);
-        String prevUri = baseUrl + (prevUrlOpt.isPresent() ? prevUrlOpt.get().getValue() : "/settings/outgoing-mail");
 
         if (cookieState.isEmpty() || !cookieState.get().getValue().equals(state)) {
             CookieUtils.deleteCookie(request, response, STATE_COOKIE_NAME);
@@ -480,7 +480,16 @@ public class AdminController extends BaseController {
         ((ObjectNode) jsonValue).put("tokenGenerated", true);
 
         adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, adminSettings);
-        response.sendRedirect(prevUri);
+        response.sendRedirect(redirectUrl);
+    }
+
+    String getMailOAuth2RedirectUrl(HttpServletRequest request) {
+        String baseUrl = this.systemSecurityService.getBaseUrl(TenantId.SYS_TENANT_ID, new CustomerId(EntityId.NULL_UUID), request);
+        String prevUri = CookieUtils.getCookie(request, PREV_URI_COOKIE_NAME)
+                .map(Cookie::getValue)
+                .filter(PrevUriValidator::isValid)
+                .orElse(DEFAULT_PREV_URI);
+        return baseUrl + prevUri;
     }
 
 }
