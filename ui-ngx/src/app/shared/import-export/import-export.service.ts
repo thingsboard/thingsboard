@@ -37,7 +37,7 @@ import { forkJoin, Observable, of, Subject } from 'rxjs';
 import { catchError, map, mergeMap, switchMap, take, tap } from 'rxjs/operators';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { EntityService } from '@core/http/entity.service';
-import { Widget, WidgetSize, WidgetTypeDetails } from '@shared/models/widget.models';
+import { Widget, WidgetActionsMap, WidgetActionType, WidgetSize, WidgetTypeDetails } from '@shared/models/widget.models';
 import { ItemBufferService, WidgetItem } from '@core/services/item-buffer.service';
 import {
   BulkImportRequest,
@@ -140,6 +140,27 @@ export class ImportExportService {
           throw new Error('Invalid form JSON file');
         } else {
           return properties;
+        }
+      }),
+      catchError(() => of(null))
+    );
+  }
+
+  public exportWidgetActions(actionsMap: WidgetActionsMap, fileName: string) {
+    this.exportToPc(actionsMap, fileName, true);
+  }
+
+  public importWidgetActions(): Observable<WidgetActionsMap> {
+    return this.openImportDialog('widget-config.import-actions', 'widget-config.actions-file',
+      true, 'widget-config.actions-json-content').pipe(
+      map((actionsMap: WidgetActionsMap) => {
+        if (!this.validateImportedWidgetActions(actionsMap)) {
+          this.store.dispatch(new ActionNotificationShow(
+            {message: this.translate.instant('widget-config.invalid-actions-file-error'),
+              type: 'error'}));
+          throw new Error('Invalid widget actions file');
+        } else {
+          return actionsMap;
         }
       }),
       catchError(() => of(null))
@@ -992,6 +1013,22 @@ export class ImportExportService {
     } else {
       return !properties.some(p => !propertyValid(p));
     }
+  }
+
+  private validateImportedWidgetActions(actionsMap: WidgetActionsMap): boolean {
+    if (!isObject(actionsMap) || Array.isArray(actionsMap)) {
+      return false;
+    }
+    const actionSourceIds = Object.keys(actionsMap);
+    if (!actionSourceIds.some(actionSourceId => Array.isArray(actionsMap[actionSourceId]) && actionsMap[actionSourceId].length)) {
+      return false;
+    }
+    return !actionSourceIds.some(actionSourceId => {
+      const actions = actionsMap[actionSourceId];
+      return !Array.isArray(actions) || actions.some(action => !isObject(action)
+        || !isNotEmptyStr(action.name)
+        || !Object.values(WidgetActionType).includes(action.type));
+    });
   }
 
   private validateImportedImage(image: ImageExportData): boolean {

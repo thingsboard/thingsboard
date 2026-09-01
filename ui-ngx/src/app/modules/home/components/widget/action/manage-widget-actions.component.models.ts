@@ -18,6 +18,9 @@ import {
   CellClickColumnInfo,
   WidgetActionDescriptor,
   WidgetActionSource,
+  WidgetActionsMap,
+  WidgetActionType,
+  widgetActionTypes,
   widgetActionTypeTranslationMap
 } from '@app/shared/models/widget.models';
 import { CollectionViewer, DataSource } from '@angular/cdk/collections';
@@ -27,7 +30,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { PageLink } from '@shared/models/page/page-link';
 import { catchError, map } from 'rxjs/operators';
 import { UtilsService } from '@core/services/utils.service';
-import { deepClone } from '@core/utils';
+import { deepClone, guid, isDefinedAndNotNull } from '@core/utils';
 
 export interface WidgetActionCallbacks {
   fetchDashboardStates: (query: string) => Array<string>;
@@ -35,7 +38,7 @@ export interface WidgetActionCallbacks {
 }
 
 export interface WidgetActionsData {
-  actionsMap: {[actionSourceId: string]: Array<WidgetActionDescriptor>};
+  actionsMap: WidgetActionsMap;
   actionSources: {[actionSourceId: string]: WidgetActionSource};
 }
 
@@ -53,6 +56,68 @@ export const toWidgetActionDescriptor = (action: WidgetActionDescriptorInfo): Wi
   return copy;
 };
 
+export interface WidgetActionsImportResult {
+  imported: number;
+  skipped: number;
+  columnIndexesReset: number;
+}
+
+export const mergeWidgetActionsMap = (targetMap: WidgetActionsMap, importedMap: WidgetActionsMap,
+                                      actionSources: {[actionSourceId: string]: WidgetActionSource},
+                                      additionalWidgetActionTypes: WidgetActionType[],
+                                      fetchCellClickColumnsCount: () => number): WidgetActionsImportResult => {
+  const result: WidgetActionsImportResult = {imported: 0, skipped: 0, columnIndexesReset: 0};
+  const allowedActionTypes = widgetActionTypes.concat(additionalWidgetActionTypes || []);
+  let cellClickColumnsCount: number;
+  for (const actionSourceId of Object.keys(importedMap)) {
+    const actionSource = Object.prototype.hasOwnProperty.call(actionSources, actionSourceId) ?
+      actionSources[actionSourceId] : null;
+    const importedActions = importedMap[actionSourceId];
+    if (!actionSource) {
+      result.skipped += importedActions.length;
+      continue;
+    }
+    for (const importedAction of importedActions) {
+      let targetActions = targetMap[actionSourceId];
+      if (!allowedActionTypes.includes(importedAction.type) ||
+          (!actionSource.multiple && targetActions?.length)) {
+        result.skipped++;
+        continue;
+      }
+      const action = deepClone(importedAction);
+      action.id = guid();
+      delete action.displayName;
+      delete action.customImports;
+      if (actionSourceId === 'cellClick' && isDefinedAndNotNull(action.columnIndex)) {
+        cellClickColumnsCount ??= fetchCellClickColumnsCount();
+        if (!Number.isInteger(action.columnIndex) || action.columnIndex < 0 ||
+            cellClickColumnsCount - 1 < action.columnIndex ||
+            targetActions?.some(targetAction => targetAction.columnIndex === action.columnIndex)) {
+          action.columnIndex = null;
+          result.columnIndexesReset++;
+        }
+      }
+      if (!targetActions) {
+        targetActions = [];
+        targetMap[actionSourceId] = targetActions;
+      }
+      action.name = uniqueWidgetActionName(action.name, targetActions);
+      targetActions.push(action);
+      result.imported++;
+    }
+  }
+  return result;
+};
+
+const uniqueWidgetActionName = (name: string, actions: Array<WidgetActionDescriptor>): string => {
+  let result = name;
+  let index = 2;
+  while (actions.some(action => action.name === result)) {
+    result = `${name} (${index++})`;
+  }
+  return result;
+};
+
 export class WidgetActionsDatasource implements DataSource<WidgetActionDescriptorInfo> {
 
   private actionsSubject = new BehaviorSubject<WidgetActionDescriptorInfo[]>([]);
@@ -62,7 +127,7 @@ export class WidgetActionsDatasource implements DataSource<WidgetActionDescripto
 
   private allActions: Observable<Array<WidgetActionDescriptorInfo>>;
 
-  private actionsMap: {[actionSourceId: string]: Array<WidgetActionDescriptor>};
+  private actionsMap: WidgetActionsMap;
   private actionSources: {[actionSourceId: string]: WidgetActionSource};
 
   constructor(private translate: TranslateService,

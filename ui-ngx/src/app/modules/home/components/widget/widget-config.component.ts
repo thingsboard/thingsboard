@@ -938,7 +938,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
   private fetchCellClickColumns(): Array<CellClickColumnInfo> {
     if (this.modelValue) {
       const configuredColumns = new Array<CellClickColumnInfo>();
-      if (this.modelValue.config?.datasources[0]?.dataKeys?.length) {
+      if (this.modelValue.config?.datasources?.[0]?.dataKeys?.length) {
         const {
           displayEntityLabel,
           displayEntityName,
