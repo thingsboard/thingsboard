@@ -26,6 +26,7 @@ import io.jsonwebtoken.security.SignatureException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.service.security.auth.oauth2.CallbackUrlSchemeValidator;
 
 import java.util.Base64;
 import java.util.Date;
@@ -57,12 +58,15 @@ public class OAuth2AppTokenFactory {
         if (timeDiff > MAX_EXPIRATION_TIME_DIFF_MS) {
             throw new IllegalArgumentException("Application token expiration time can't be longer than 5 minutes");
         }
-        if (!claims.getIssuer().equals(appPackage)) {
+        if (!appPackage.equals(claims.getIssuer())) {
             throw new IllegalArgumentException("Application token issuer doesn't match application package");
         }
         String callbackUrlScheme = claims.get(CALLBACK_URL_SCHEME, String.class);
         if (StringUtils.isEmpty(callbackUrlScheme)) {
             throw new IllegalArgumentException("Application token doesn't have callbackUrlScheme");
+        }
+        if (!CallbackUrlSchemeValidator.isValid(callbackUrlScheme)) {
+            throw new IllegalArgumentException("Application token has invalid callbackUrlScheme");
         }
         return callbackUrlScheme;
     }
