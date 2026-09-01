@@ -181,8 +181,8 @@ public abstract class AbstractOAuth2ClientMapper {
         if (user.getTenantId().equals(oAuth2Client.getTenantId())) {
             return user;
         }
-        log.warn("OAuth2 client [{}] of tenant [{}] attempted to log in as user [{}] of tenant [{}]",
-                oAuth2Client.getId(), oAuth2Client.getTenantId(), user.getId(), user.getTenantId());
+        log.warn("OAuth2 client [{}] of tenant [{}] cannot resolve user [{}] [{}] of tenant [{}]: outside of the client tenant",
+                oAuth2Client.getId(), oAuth2Client.getTenantId(), user.getId(), email, user.getTenantId());
         throw new UsernameNotFoundException("User not found: " + email);
     }
 
