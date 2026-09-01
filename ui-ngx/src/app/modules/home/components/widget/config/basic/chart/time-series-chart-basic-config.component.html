@@ -247,6 +247,19 @@
             </tb-color-input>
           </div>
         </div>
+        <div class="tb-form-row space-between">
+          <div>{{ 'legend.items-direction' | translate }}</div>
+          <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
+            <mat-select formControlName="legendItemsDirection">
+              <mat-option [value]="null">{{ 'legend.items-direction-auto' | translate }}</mat-option>
+              @for (direction of legendDirections; track direction) {
+                <mat-option [value]="direction">
+                  {{ legendDirectionTranslationMap.get(legendDirection[direction]) | translate }}
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
         <tb-legend-config hideDirection
                           formControlName="legendConfig">
         </tb-legend-config>

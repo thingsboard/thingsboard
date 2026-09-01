@@ -4,6 +4,8 @@ import { Component, Injector } from '@angular/core';
 import {
   DataKey,
   Datasource,
+  LegendDirection,
+  legendDirectionTranslationMap,
   legendPositions,
   legendPositionTranslationMap,
   WidgetSettings,
@@ -56,6 +58,12 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
   legendPositions = legendPositions;
 
   legendPositionTranslationMap = legendPositionTranslationMap;
+
+  legendDirection = LegendDirection;
+
+  legendDirections = Object.keys(LegendDirection);
+
+  legendDirectionTranslationMap = legendDirectionTranslationMap;
 
   timeSeriesChartWidgetSettingsForm: UntypedFormGroup;
 
@@ -138,6 +146,7 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
       legendValueFont: [settings.legendValueFont, []],
       legendValueColor: [settings.legendValueColor, []],
       legendConfig: [settings.legendConfig, []],
+      legendItemsDirection: [settings.legendItemsDirection, []],
 
       showTooltip: [settings.showTooltip, []],
       tooltipTrigger: [settings.tooltipTrigger, []],
@@ -203,6 +212,7 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
       this.timeSeriesChartWidgetSettingsForm.get('legendValueFont').enable();
       this.timeSeriesChartWidgetSettingsForm.get('legendValueColor').enable();
       this.timeSeriesChartWidgetSettingsForm.get('legendConfig').enable();
+      this.timeSeriesChartWidgetSettingsForm.get('legendItemsDirection').enable();
     } else {
       this.timeSeriesChartWidgetSettingsForm.get('legendColumnTitleFont').disable();
       this.timeSeriesChartWidgetSettingsForm.get('legendColumnTitleColor').disable();
@@ -211,6 +221,7 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
       this.timeSeriesChartWidgetSettingsForm.get('legendValueFont').disable();
       this.timeSeriesChartWidgetSettingsForm.get('legendValueColor').disable();
       this.timeSeriesChartWidgetSettingsForm.get('legendConfig').disable();
+      this.timeSeriesChartWidgetSettingsForm.get('legendItemsDirection').disable();
     }
 
     if (showTooltip) {

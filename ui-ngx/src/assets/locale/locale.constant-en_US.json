@@ -6606,6 +6606,8 @@
     },
     "legend": {
         "direction": "Direction",
+        "items-direction": "Direction",
+        "items-direction-auto": "Auto",
         "position": "Position",
         "show-values": "Show values",
         "min-option": "Min",

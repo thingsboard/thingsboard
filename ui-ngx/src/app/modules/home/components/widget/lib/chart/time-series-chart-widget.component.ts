@@ -23,7 +23,7 @@ import { Observable } from 'rxjs';
 import { backgroundStyle, ComponentStyle, overlayStyle, textStyle } from '@shared/models/widget-settings.models';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
-import { LegendConfig, LegendData, LegendKey, LegendPosition } from '@shared/models/widget.models';
+import { LegendConfig, LegendData, LegendDirection, LegendKey, LegendPosition } from '@shared/models/widget.models';
 import { TbTimeSeriesChart } from '@home/components/widget/lib/chart/time-series-chart';
 import {
   timeSeriesChartWidgetDefaultSettings,
@@ -114,8 +114,9 @@ export class TimeSeriesChartWidgetComponent implements ChartWidgetComponent, OnI
     }
 
     if (this.showLegend) {
-      this.horizontalLegendPosition = [LegendPosition.left, LegendPosition.right].includes(this.legendConfig.position);
-      this.legendClass = `legend-${this.legendConfig.position}`;
+      const legendItemsDirection = this.resolveLegendItemsDirection();
+      this.horizontalLegendPosition = legendItemsDirection === LegendDirection.row;
+      this.legendClass = `legend-${this.legendConfig.position} legend-direction-${legendItemsDirection}`;
       this.legendColumnTitleStyle = textStyle(this.settings.legendColumnTitleFont);
       this.legendColumnTitleStyle.color = this.settings.legendColumnTitleColor;
       this.legendLabelStyle = textStyle(this.settings.legendLabelFont);
@@ -161,6 +162,15 @@ export class TimeSeriesChartWidgetComponent implements ChartWidgetComponent, OnI
     if (this.reportMode) {
       this.cd.detectChanges();
     }
+  }
+
+  private resolveLegendItemsDirection(): LegendDirection {
+    const configured = this.settings.legendItemsDirection;
+    if (configured === LegendDirection.row || configured === LegendDirection.column) {
+      return configured;
+    }
+    return [LegendPosition.left, LegendPosition.right].includes(this.legendConfig.position) ?
+      LegendDirection.column : LegendDirection.row;
   }
 
   public onLegendKeyEnter(legendKey: LegendKey) {

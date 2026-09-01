@@ -50,9 +50,6 @@ $maxLegendHeight: 35%;
     }
     &.legend-right, &.legend-left {
       .tb-time-series-chart-legend {
-        display: inline-grid;
-        grid-auto-flow: column;
-        grid-template-rows: repeat(auto-fit, minmax(16px, min-content));
         max-width: calc($maxLegendWidth - 8px);
         height: fit-content;
         max-height: 100%;
@@ -69,21 +66,32 @@ $maxLegendHeight: 35%;
         }
       }
     }
+    &.legend-direction-column {
+      .tb-time-series-chart-legend {
+        display: inline-grid;
+        grid-auto-flow: column;
+      }
+    }
+    &.legend-direction-row {
+      .tb-time-series-chart-legend {
+        display: flex;
+        flex-wrap: wrap;
+      }
+    }
     .tb-time-series-chart-legend {
-      display: flex;
       align-items: flex-start;
       align-self: stretch;
       column-gap: 16px;
       row-gap: 8px;
-      flex-wrap: wrap;
       overflow: auto;
       width: fit-content;
       max-width: 100%;
       max-height: calc($maxLegendHeight - 8px);
+      grid-template-rows: repeat(auto-fit, minmax(16px, min-content));
       .tb-time-series-chart-legend-table {
         border-spacing: 0;
         table-layout: fixed;
-        &.vertical {
+        &.vertical, &.horizontal {
           width: 100%;
           table-layout: auto;
           tbody {

@@ -5,7 +5,7 @@ import {
   TimeSeriesChartSettings
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { BackgroundSettings, BackgroundType, Font } from '@shared/models/widget-settings.models';
-import { defaultLegendConfig, LegendConfig, LegendPosition, widgetType } from '@shared/models/widget.models';
+import { defaultLegendConfig, LegendConfig, LegendDirection, LegendPosition, widgetType } from '@shared/models/widget.models';
 import { mergeDeep } from '@core/utils';
 
 export interface TimeSeriesChartWidgetSettings extends TimeSeriesChartSettings {
@@ -17,6 +17,9 @@ export interface TimeSeriesChartWidgetSettings extends TimeSeriesChartSettings {
   legendValueFont: Font;
   legendValueColor: string;
   legendConfig: LegendConfig;
+  // Arrangement of legend items independent of legendConfig.position. Undefined ('auto') preserves the
+  // legacy behavior: horizontal (row) for top/bottom positions, vertical (column) for left/right positions.
+  legendItemsDirection?: LegendDirection;
   background: BackgroundSettings;
   padding: string;
 }

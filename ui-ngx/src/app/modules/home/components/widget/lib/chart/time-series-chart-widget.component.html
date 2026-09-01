@@ -91,12 +91,12 @@
       </div>
     }
     <ng-template #horizontalLegend>
-      <table class="tb-time-series-chart-legend-table">
+      <table class="tb-time-series-chart-legend-table horizontal">
         <thead>
           <tr>
             <th></th>
             @for (legendKey of legendKeys; track legendKey) {
-              <th>
+              <th class="tb-time-series-chart-legend-type-label right">
                 <ng-container *ngTemplateOutlet="legendItem; context:{legendKey: legendKey}"></ng-container>
               </th>
             }
