@@ -15,59 +15,104 @@
  */
 package org.thingsboard.server.service.security.auth.oauth2;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.thingsboard.server.common.data.id.UserId;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.model.JwtPair;
-import org.thingsboard.server.controller.AbstractControllerTest;
-import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.dao.oauth2.OAuth2ClientService;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
+import org.thingsboard.server.service.security.system.SystemSecurityService;
 
-import java.util.UUID;
-
-import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.thingsboard.server.service.security.auth.oauth2.HttpCookieOAuth2AuthorizationRequestRepository.PREV_URI_COOKIE_NAME;
 
-@DaoSqlTest
-public class Oauth2AuthenticationSuccessHandlerTest extends AbstractControllerTest {
+public class Oauth2AuthenticationSuccessHandlerTest {
 
-    @Autowired
-    private Oauth2AuthenticationSuccessHandler oauth2AuthenticationSuccessHandler;
+    private static final String BASE_URL = "https://thingsboard.example.com";
 
-    @Mock
-    private JwtTokenFactory jwtTokenFactory;
+    private final SystemSecurityService systemSecurityService = mock(SystemSecurityService.class);
+    private final Oauth2AuthenticationSuccessHandler successHandler = new Oauth2AuthenticationSuccessHandler(
+            mock(JwtTokenFactory.class), mock(OAuth2ClientMapperProvider.class), mock(OAuth2ClientService.class),
+            mock(OAuth2AuthorizedClientService.class), mock(HttpCookieOAuth2AuthorizationRequestRepository.class),
+            systemSecurityService);
 
-    private SecurityUser securityUser;
+    private HttpServletRequest request;
+    private HttpServletResponse response;
 
-    @Before
+    @BeforeEach
     public void before() {
-        UserId userId = new UserId(UUID.randomUUID());
-        securityUser = new SecurityUser(userId);
-        when(jwtTokenFactory.createTokenPair(eq(securityUser))).thenReturn(new JwtPair("testAccessToken", "testRefreshToken"));
+        request = mock(HttpServletRequest.class);
+        response = mock(HttpServletResponse.class);
+        when(systemSecurityService.getBaseUrl(any(TenantId.class), any(CustomerId.class), any(HttpServletRequest.class))).thenReturn(BASE_URL);
     }
 
     @Test
-    public void testGetRedirectUrl() {
-        JwtPair jwtPair = jwtTokenFactory.createTokenPair(securityUser);
-
-        String urlWithoutParams = "http://localhost:8080/dashboardGroups/3fa13530-6597-11ed-bd76-8bd591f0ec3e";
-        String urlWithParams = "http://localhost:8080/dashboardGroups/3fa13530-6597-11ed-bd76-8bd591f0ec3e?state=someState&page=1";
-
-        String redirectUrl = oauth2AuthenticationSuccessHandler.getRedirectUrl(urlWithoutParams, jwtPair);
-        String expectedUrl = urlWithoutParams + "/?accessToken=" + jwtPair.getToken() + "&refreshToken=" + jwtPair.getRefreshToken();
-        assertEquals(expectedUrl, redirectUrl);
-
-        redirectUrl = oauth2AuthenticationSuccessHandler.getRedirectUrl(urlWithParams, jwtPair);
-        expectedUrl = urlWithParams + "&accessToken=" + jwtPair.getToken() + "&refreshToken=" + jwtPair.getRefreshToken();
-        assertEquals(expectedUrl, redirectUrl);
-
-        String urlWithTrailingSlash = "http://localhost:8080/";
-        redirectUrl = oauth2AuthenticationSuccessHandler.getRedirectUrl(urlWithTrailingSlash, jwtPair);
-        expectedUrl = urlWithTrailingSlash + "?accessToken=" + jwtPair.getToken() + "&refreshToken=" + jwtPair.getRefreshToken();
-        assertEquals(expectedUrl, redirectUrl);
+    public void testInAppPathIsTakenFromPrevUriCookie() {
+        givenPrevUriCookie("/dashboards/3fa13530-6597-11ed-bd76-8bd591f0ec3e?state=someState");
+        assertThat(successHandler.getBaseUrl(request, null)).isEqualTo(BASE_URL);
+        assertThat(successHandler.getPrevUri(request, response, null))
+                .isEqualTo("/dashboards/3fa13530-6597-11ed-bd76-8bd591f0ec3e?state=someState");
     }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"@evil.com/", "//evil.com", "https://evil.com", "/\\evil.com", "/dashboards#fragment"})
+    public void testForgedPrevUriCookieIsIgnored(String prevUri) {
+        givenPrevUriCookie(prevUri);
+        assertThat(successHandler.getPrevUri(request, response, null)).isEmpty();
+    }
+
+    @Test
+    public void testForgedPrevUriCookieIsDeleted() {
+        givenPrevUriCookie("@evil.com/");
+
+        successHandler.getPrevUri(request, response, null);
+
+        ArgumentCaptor<Cookie> cookieCaptor = ArgumentCaptor.forClass(Cookie.class);
+        verify(response).addCookie(cookieCaptor.capture());
+        assertThat(cookieCaptor.getValue().getName()).isEqualTo(PREV_URI_COOKIE_NAME);
+        assertThat(cookieCaptor.getValue().getMaxAge()).isZero();
+    }
+
+    @Test
+    public void testBaseUrlWithoutPrevUriCookie() {
+        when(request.getCookies()).thenReturn(null);
+        assertThat(successHandler.getBaseUrl(request, null)).isEqualTo(BASE_URL);
+        assertThat(successHandler.getPrevUri(request, response, null)).isEmpty();
+    }
+
+    @Test
+    public void testCallbackUrlSchemeIgnoresPrevUri() {
+        givenPrevUriCookie("/dashboards/3fa13530-6597-11ed-bd76-8bd591f0ec3e");
+        assertThat(successHandler.getBaseUrl(request, "tbmobile")).isEqualTo("tbmobile:");
+        assertThat(successHandler.getPrevUri(request, response, "tbmobile")).isEmpty();
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "https://thingsboard.example.com/dashboards/3fa13530-6597-11ed-bd76-8bd591f0ec3e, https://thingsboard.example.com/dashboards/3fa13530-6597-11ed-bd76-8bd591f0ec3e/?",
+            "https://thingsboard.example.com/dashboards/3fa13530-6597-11ed-bd76-8bd591f0ec3e?state=someState&page=1, https://thingsboard.example.com/dashboards/3fa13530-6597-11ed-bd76-8bd591f0ec3e?state=someState&page=1&",
+            "https://thingsboard.example.com/, https://thingsboard.example.com/?"
+    })
+    public void testGetRedirectUrl(String baseUrl, String expectedPrefix) {
+        assertThat(successHandler.getRedirectUrl(baseUrl, new JwtPair("testAccessToken", "testRefreshToken")))
+                .isEqualTo(expectedPrefix + "accessToken=testAccessToken&refreshToken=testRefreshToken");
+    }
+
+    private void givenPrevUriCookie(String prevUri) {
+        when(request.getCookies()).thenReturn(new Cookie[]{new Cookie(PREV_URI_COOKIE_NAME, prevUri)});
+    }
+
 }

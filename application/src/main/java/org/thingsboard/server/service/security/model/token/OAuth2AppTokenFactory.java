@@ -26,13 +26,11 @@ import io.jsonwebtoken.security.SignatureException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.service.security.auth.oauth2.CallbackUrlSchemeValidator;
 
 import java.util.Base64;
 import java.util.Date;
-import java.util.Locale;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Pattern;
 
 @Component
 @Slf4j
@@ -41,9 +39,6 @@ public class OAuth2AppTokenFactory {
     private static final String CALLBACK_URL_SCHEME = "callbackUrlScheme";
 
     private static final long MAX_EXPIRATION_TIME_DIFF_MS = TimeUnit.MINUTES.toMillis(5);
-
-    private static final Pattern CALLBACK_URL_SCHEME_PATTERN = Pattern.compile("[a-zA-Z][a-zA-Z0-9+.-]*");
-    private static final Set<String> FORBIDDEN_CALLBACK_URL_SCHEMES = Set.of("http", "https", "javascript", "data", "file", "vbscript");
 
     public String validateTokenAndGetCallbackUrlScheme(String appPackage, String appToken, String appSecret) {
         Jws<Claims> jwsClaims;
@@ -64,17 +59,14 @@ public class OAuth2AppTokenFactory {
         if (timeDiff > MAX_EXPIRATION_TIME_DIFF_MS) {
             throw new IllegalArgumentException("Application token expiration time can't be longer than 5 minutes");
         }
-        if (!claims.getIssuer().equals(appPackage)) {
+        if (!appPackage.equals(claims.getIssuer())) {
             throw new IllegalArgumentException("Application token issuer doesn't match application package");
         }
         String callbackUrlScheme = claims.get(CALLBACK_URL_SCHEME, String.class);
         if (StringUtils.isEmpty(callbackUrlScheme)) {
             throw new IllegalArgumentException("Application token doesn't have callbackUrlScheme");
         }
-        // the redirect carrying the access token is built as callbackUrlScheme + ":", so only a mobile app scheme
-        // may pass: a web scheme would send the token to whatever host follows it
-        if (!CALLBACK_URL_SCHEME_PATTERN.matcher(callbackUrlScheme).matches()
-                || FORBIDDEN_CALLBACK_URL_SCHEMES.contains(callbackUrlScheme.toLowerCase(Locale.ROOT))) {
+        if (!CallbackUrlSchemeValidator.isValid(callbackUrlScheme)) {
             throw new IllegalArgumentException("Application token has invalid callbackUrlScheme");
         }
         return callbackUrlScheme;

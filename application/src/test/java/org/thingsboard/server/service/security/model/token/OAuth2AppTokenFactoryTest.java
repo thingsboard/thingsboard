@@ -15,11 +15,10 @@
  */
 package org.thingsboard.server.service.security.model.token;
 
+import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 
 import javax.crypto.SecretKey;
 import java.util.Base64;
@@ -38,38 +37,35 @@ public class OAuth2AppTokenFactoryTest {
 
     @Test
     public void testMobileAppSchemeIsAccepted() {
-        assertThat(validate("tb-mobile.app1")).isEqualTo("tb-mobile.app1");
+        assertThat(validate(appToken("tb-mobile.app1", APP_PACKAGE))).isEqualTo("tb-mobile.app1");
     }
 
-    @ParameterizedTest
-    @ValueSource(strings = {
-            "https://evil.com",
-            "http://evil.com",
-            "https",
-            "HTTPS",
-            "javascript",
-            "data",
-            "//evil.com",
-            "tbmobile/evil.com",
-            "tbmobile:evil.com",
-            "tbmobile evil",
-            "1tbmobile",
-            "tbmobile@evil.com"
-    })
-    public void testInvalidCallbackUrlSchemeIsRejected(String callbackUrlScheme) {
-        assertThatThrownBy(() -> validate(callbackUrlScheme))
+    @Test
+    public void testInvalidCallbackUrlSchemeIsRejected() {
+        assertThatThrownBy(() -> validate(appToken("https://evil.com", APP_PACKAGE)))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("callbackUrlScheme");
     }
 
-    private String validate(String callbackUrlScheme) {
-        SecretKey key = Keys.hmacShaKeyFor(KEY_BYTES);
-        String appToken = Jwts.builder()
-                .issuer(APP_PACKAGE)
+    @Test
+    public void testTokenWithoutIssuerIsRejected() {
+        assertThatThrownBy(() -> validate(appToken("tbmobile", null)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("issuer");
+    }
+
+    private String appToken(String callbackUrlScheme, String issuer) {
+        JwtBuilder builder = Jwts.builder()
                 .expiration(new Date(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(1)))
-                .claim("callbackUrlScheme", callbackUrlScheme)
-                .signWith(key)
-                .compact();
+                .claim("callbackUrlScheme", callbackUrlScheme);
+        if (issuer != null) {
+            builder.issuer(issuer);
+        }
+        SecretKey key = Keys.hmacShaKeyFor(KEY_BYTES);
+        return builder.signWith(key).compact();
+    }
+
+    private String validate(String appToken) {
         return tokenFactory.validateTokenAndGetCallbackUrlScheme(APP_PACKAGE, appToken, Base64.getEncoder().encodeToString(KEY_BYTES));
     }
 
