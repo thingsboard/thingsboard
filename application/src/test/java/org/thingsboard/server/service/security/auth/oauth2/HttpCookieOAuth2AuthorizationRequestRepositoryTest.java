@@ -46,7 +46,7 @@ public class HttpCookieOAuth2AuthorizationRequestRepositoryTest {
     @ParameterizedTest
     @NullAndEmptySource
     @ValueSource(strings = {"@evil.com/"})
-    public void testPrevUriNotSavedForExternalUri(String prevUri) {
+    public void testPrevUriNotSavedForInvalidValue(String prevUri) {
         assertThat(savePrevUri(prevUri)).isNull();
     }
 

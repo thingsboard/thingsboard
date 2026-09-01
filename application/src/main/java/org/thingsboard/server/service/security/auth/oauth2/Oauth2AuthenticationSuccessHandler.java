@@ -124,9 +124,9 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     }
 
     /**
-     * The in-app path the user was on before the login, or an empty string. The cookie is dropped either way - it is
-     * only meant to survive a single login round trip. It is kept out of the base URL so that the error redirect,
-     * which appends its own path, stays routable.
+     * The in-app path the user was on before the login, or an empty string. A present cookie is dropped whether or
+     * not its value passes validation - it is only meant to survive a single login round trip. The path is kept out
+     * of the base URL so that the error redirect, which appends its own path, stays routable.
      */
     String getPrevUri(HttpServletRequest request, HttpServletResponse response, String callbackUrlScheme) {
         if (!StringUtils.isEmpty(callbackUrlScheme)) {
