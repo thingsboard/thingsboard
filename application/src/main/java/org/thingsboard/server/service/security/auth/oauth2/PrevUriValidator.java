@@ -15,13 +15,27 @@
  */
 package org.thingsboard.server.service.security.auth.oauth2;
 
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.StringUtils;
 
 import java.util.Locale;
 
+@Slf4j
 public class PrevUriValidator {
 
     private static final int MAX_LENGTH = 2048;
+    private static final int MAX_LOGGED_LENGTH = 128;
+
+    public static boolean isValid(String prevUri) {
+        if (StringUtils.isEmpty(prevUri)) {
+            return false;
+        }
+        if (!isInAppPath(prevUri)) {
+            log.debug("Ignoring prevUri that is not an in-app path: [{}]", forLog(prevUri));
+            return false;
+        }
+        return true;
+    }
 
     /**
      * prevUri is appended to the platform base URL, which ends right after the authority, so the single leading '/'
@@ -30,8 +44,8 @@ public class PrevUriValidator {
      * characters nor '"', ',', ';', '\' or non-ASCII) and to pass StrictHttpFirewall, which rejects '//', '%2f'
      * and '%5c' in the path; a fragment would swallow the access token.
      */
-    public static boolean isValid(String prevUri) {
-        if (StringUtils.isEmpty(prevUri) || prevUri.length() > MAX_LENGTH || prevUri.charAt(0) != '/') {
+    private static boolean isInAppPath(String prevUri) {
+        if (prevUri.length() > MAX_LENGTH || prevUri.charAt(0) != '/') {
             return false;
         }
         for (int i = 0; i < prevUri.length(); i++) {
@@ -42,6 +56,11 @@ public class PrevUriValidator {
         }
         String path = StringUtils.substringBefore(prevUri, "?").toLowerCase(Locale.ROOT);
         return !path.contains("//") && !path.contains("%2f") && !path.contains("%5c");
+    }
+
+    // a rejected value is attacker-controlled: it must not be able to forge log lines
+    private static String forLog(String prevUri) {
+        return prevUri.substring(0, Math.min(prevUri.length(), MAX_LOGGED_LENGTH)).replaceAll("[^\\x20-\\x7E]", "?");
     }
 
 }

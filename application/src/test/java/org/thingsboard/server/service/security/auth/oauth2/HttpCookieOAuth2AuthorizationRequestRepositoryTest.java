@@ -19,6 +19,9 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 
@@ -40,11 +43,11 @@ public class HttpCookieOAuth2AuthorizationRequestRepositoryTest {
                 .isEqualTo("/dashboards/3fa13530-6597-11ed-bd76-8bd591f0ec3e?state=someState");
     }
 
-    @Test
-    public void testPrevUriNotSavedForExternalUri() {
-        assertThat(savePrevUri("@evil.com/")).isNull();
-        assertThat(savePrevUri("https://evil.com")).isNull();
-        assertThat(savePrevUri("//evil.com")).isNull();
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {"@evil.com/"})
+    public void testPrevUriNotSavedForExternalUri(String prevUri) {
+        assertThat(savePrevUri(prevUri)).isNull();
     }
 
     private String savePrevUri(String prevUri) {

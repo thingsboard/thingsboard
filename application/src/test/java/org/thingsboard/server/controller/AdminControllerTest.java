@@ -39,6 +39,8 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.service.security.auth.oauth2.HttpCookieOAuth2AuthorizationRequestRepository.PREV_URI_COOKIE_NAME;
+import static org.thingsboard.server.service.security.auth.oauth2.HttpCookieOAuth2AuthorizationRequestRepository.PREV_URI_PARAMETER;
 
 @Slf4j
 @DaoSqlTest
@@ -116,22 +118,30 @@ public class AdminControllerTest extends AbstractControllerTest {
     public void testMailOAuth2AuthorizationStoresOnlyInAppPrevUri() throws Exception {
         loginSysAdmin();
         AdminSettings mailSettings = doGet("/api/admin/settings/mail", AdminSettings.class);
-        ObjectNode jsonValue = JacksonUtil.fromString(mailSettings.getJsonValue().toString(), ObjectNode.class);
-        jsonValue.put("clientId", "clientId");
-        jsonValue.put("authUri", "https://accounts.google.com/o/oauth2/v2/auth");
-        jsonValue.put("redirectUri", "https://thingsboard.io/api/admin/mail/oauth2/code");
-        jsonValue.set("scope", JacksonUtil.newArrayNode().add("https://mail.google.com/"));
-        mailSettings.setJsonValue(jsonValue);
-        doPost("/api/admin/settings", mailSettings, AdminSettings.class);
+        JsonNode originalJsonValue = mailSettings.getJsonValue();
+        try {
+            ObjectNode jsonValue = JacksonUtil.fromString(originalJsonValue.toString(), ObjectNode.class);
+            jsonValue.put("clientId", "clientId");
+            jsonValue.put("authUri", "https://accounts.google.com/o/oauth2/v2/auth");
+            jsonValue.put("redirectUri", "https://thingsboard.io/api/admin/mail/oauth2/code");
+            jsonValue.set("scope", JacksonUtil.newArrayNode().add("https://mail.google.com/"));
+            mailSettings.setJsonValue(jsonValue);
+            doPost("/api/admin/settings", mailSettings, AdminSettings.class);
 
-        Cookie prevUriCookie = doGet("/api/admin/mail/oauth2/authorize?prevUri=@evil.com/")
-                .andExpect(status().isOk()).andReturn().getResponse().getCookie("prev_uri");
-        assertThat(prevUriCookie).isNull();
+            Cookie prevUriCookie = doGet("/api/admin/mail/oauth2/authorize?" + PREV_URI_PARAMETER + "=@evil.com/")
+                    .andExpect(status().isOk()).andReturn().getResponse().getCookie(PREV_URI_COOKIE_NAME);
+            assertThat(prevUriCookie).isNull();
 
-        prevUriCookie = doGet("/api/admin/mail/oauth2/authorize?prevUri=/settings/outgoing-mail")
-                .andExpect(status().isOk()).andReturn().getResponse().getCookie("prev_uri");
-        assertThat(prevUriCookie).isNotNull();
-        assertThat(prevUriCookie.getValue()).isEqualTo("/settings/outgoing-mail");
+            prevUriCookie = doGet("/api/admin/mail/oauth2/authorize?" + PREV_URI_PARAMETER + "=/settings/outgoing-mail")
+                    .andExpect(status().isOk()).andReturn().getResponse().getCookie(PREV_URI_COOKIE_NAME);
+            assertThat(prevUriCookie).isNotNull();
+            assertThat(prevUriCookie.getValue()).isEqualTo("/settings/outgoing-mail");
+        } finally {
+            // the mail settings are shared by the whole test context
+            AdminSettings currentSettings = doGet("/api/admin/settings/mail", AdminSettings.class);
+            currentSettings.setJsonValue(originalJsonValue);
+            doPost("/api/admin/settings", currentSettings, AdminSettings.class);
+        }
     }
 
     @Test
