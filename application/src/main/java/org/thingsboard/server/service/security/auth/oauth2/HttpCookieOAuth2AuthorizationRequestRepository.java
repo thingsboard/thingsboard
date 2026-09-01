@@ -43,8 +43,9 @@ public class HttpCookieOAuth2AuthorizationRequestRepository implements Authoriza
             CookieUtils.deleteCookie(request, response, OAUTH2_AUTHORIZATION_REQUEST_COOKIE_NAME);
             return;
         }
-        if (request.getParameter(PREV_URI_PARAMETER) != null) {
-            CookieUtils.addCookie(response, PREV_URI_COOKIE_NAME, request.getParameter(PREV_URI_PARAMETER), cookieExpireSeconds);
+        String prevUri = request.getParameter(PREV_URI_PARAMETER);
+        if (PrevUriValidator.isValid(prevUri)) {
+            CookieUtils.addCookie(response, PREV_URI_COOKIE_NAME, prevUri, cookieExpireSeconds);
         }
         CookieUtils.addCookie(response, OAUTH2_AUTHORIZATION_REQUEST_COOKIE_NAME, CookieUtils.serialize(authorizationRequest), cookieExpireSeconds);
     }
