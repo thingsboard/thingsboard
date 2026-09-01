@@ -124,6 +124,7 @@ public class ThingsboardInstallService {
                     systemDataLoaderService.loadSystemWidgets();
                     installScripts.loadSystemLwm2mResources();
                     installScripts.loadSystemImagesAndResources();
+                    systemDataLoaderService.createOAuth2Templates();
                     databaseSchemaVersionService.updateSchemaVersion();
                 }
                 log.info("Upgrade finished successfully!");

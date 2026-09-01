@@ -170,6 +170,10 @@ public class CustomOAuth2AuthorizationRequestResolver implements OAuth2Authoriza
             if (ClientAuthenticationMethod.NONE.equals(clientRegistration.getClientAuthenticationMethod())) {
                 addPkceParameters(attributes, additionalParameters);
             }
+            String authorizationUri = clientRegistration.getProviderDetails().getAuthorizationUri();
+            if (authorizationUri != null && authorizationUri.contains("login.dingtalk.com")) {
+                additionalParameters.put("prompt", "consent");
+            }
             builder.additionalParameters(additionalParameters);
         } else {
             throw new IllegalArgumentException("Invalid Authorization Grant Type ("  +

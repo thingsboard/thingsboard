@@ -177,7 +177,7 @@ public class OAuth2ClientEntity extends BaseSqlEntity<OAuth2Client> {
                         .activateUser(activateUser)
                         .type(type)
                         .basic(
-                                (type == MapperType.BASIC || type == MapperType.GITHUB || type == MapperType.APPLE) ?
+                                (type == MapperType.BASIC || type == MapperType.GITHUB || type == MapperType.APPLE || type == MapperType.DINGTALK) ?
                                         OAuth2BasicMapperConfig.builder()
                                                 .emailAttributeKey(emailAttributeKey)
                                                 .firstNameAttributeKey(firstNameAttributeKey)

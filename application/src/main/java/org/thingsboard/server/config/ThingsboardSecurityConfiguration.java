@@ -33,6 +33,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.RequestCacheConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationCodeGrantFilter;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
@@ -53,6 +54,9 @@ import org.thingsboard.server.service.security.auth.jwt.JwtTokenAuthenticationPr
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenAuthenticationProvider;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenProcessingFilter;
 import org.thingsboard.server.service.security.auth.jwt.SkipPathRequestMatcher;
+import org.thingsboard.server.service.security.auth.oauth2.DingTalkAuthCodeFilter;
+import org.thingsboard.server.service.security.auth.oauth2.DingTalkOAuth2UserService;
+import org.thingsboard.server.service.security.auth.oauth2.DingTalkTokenResponseClient;
 import org.thingsboard.server.service.security.auth.oauth2.HttpCookieOAuth2AuthorizationRequestRepository;
 import org.thingsboard.server.service.security.auth.pat.ApiKeyAuthenticationProvider;
 import org.thingsboard.server.service.security.auth.pat.ApiKeyTokenAuthenticationProcessingFilter;
@@ -125,6 +129,15 @@ public class ThingsboardSecurityConfiguration {
 
     @Autowired(required = false)
     OAuth2Configuration oauth2Configuration;
+
+    @Autowired(required = false)
+    private DingTalkTokenResponseClient dingTalkTokenResponseClient;
+
+    @Autowired(required = false)
+    private DingTalkOAuth2UserService dingTalkOAuth2UserService;
+
+    @Autowired(required = false)
+    private DingTalkAuthCodeFilter dingTalkAuthCodeFilter;
 
     @Autowired
     @Qualifier("jwtHeaderTokenExtractor")
@@ -279,12 +292,17 @@ public class ThingsboardSecurityConfiguration {
                 .addFilterAfter(rateLimitProcessingFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(authExceptionHandler, buildRestLoginProcessingFilter().getClass());
         if (oauth2Configuration != null) {
+            http.addFilterBefore(dingTalkAuthCodeFilter, OAuth2AuthorizationCodeGrantFilter.class);
             http.oauth2Login(login -> login
                     .authorizationEndpoint(config -> config
                             .authorizationRequestRepository(httpCookieOAuth2AuthorizationRequestRepository)
                             .authorizationRequestResolver(oAuth2AuthorizationRequestResolver))
                     .loginPage("/oauth2Login")
                     .loginProcessingUrl(oauth2Configuration.getLoginProcessingUrl())
+                    .tokenEndpoint(config -> config.accessTokenResponseClient(dingTalkTokenResponseClient))
+                    .userInfoEndpoint(config -> {
+                        config.userService(dingTalkOAuth2UserService);
+                    })
                     .successHandler(oauth2AuthenticationSuccessHandler)
                     .failureHandler(oauth2AuthenticationFailureHandler));
         }

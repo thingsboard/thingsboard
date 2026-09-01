@@ -67,7 +67,11 @@ public class Oauth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
             errorPrefix = "/login?loginError=";
         }
         httpCookieOAuth2AuthorizationRequestRepository.removeAuthorizationRequestCookies(request, response);
+        String errorMessage = exception.getMessage();
+        if (errorMessage == null) {
+            errorMessage = "Unknown error";
+        }
         getRedirectStrategy().sendRedirect(request, response, baseUrl + errorPrefix +
-                URLEncoder.encode(exception.getMessage(), StandardCharsets.UTF_8.toString()));
+                URLEncoder.encode(errorMessage, StandardCharsets.UTF_8));
     }
 }
