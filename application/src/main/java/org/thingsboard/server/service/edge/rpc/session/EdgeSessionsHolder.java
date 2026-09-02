@@ -29,6 +29,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 @Data
@@ -65,6 +66,24 @@ public class EdgeSessionsHolder {
 
     public EdgeGrpcSessionManager removeByEdgeId(EdgeId id) {
         return sessions.remove(id);
+    }
+
+    /**
+     * Removes the edge's registered session and returns it, but only if it is still the given session.
+     * Returns null when another session has taken the edge over in the meantime, so that a teardown
+     * racing with a reconnect cannot act on behalf of a session it no longer owns. The check and the
+     * removal are one atomic step.
+     */
+    public EdgeGrpcSessionManager removeByEdgeIdIfCurrent(EdgeId id, UUID sessionId) {
+        AtomicReference<EdgeGrpcSessionManager> removed = new AtomicReference<>();
+        sessions.compute(id, (edgeId, current) -> {
+            if (current == null || !sessionId.equals(current.getState().getSessionId())) {
+                return current;
+            }
+            removed.set(current);
+            return null;
+        });
+        return removed.get();
     }
 
     public EdgeGrpcSessionManager removeBySessionId(UUID sessionId) {
