@@ -29,6 +29,9 @@
   .mdc-slider {
     height: 40px;
 
+    .mdc-slider__input {
+      top: 0;
+    }
     ::ng-deep {
       .mdc-slider__thumb {
         left: -20px;

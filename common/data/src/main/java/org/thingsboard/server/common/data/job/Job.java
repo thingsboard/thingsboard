@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.job;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -29,6 +30,7 @@ import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.JobId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.job.task.TaskResult;
 
 import java.util.Set;
 import java.util.UUID;
@@ -80,6 +82,38 @@ public class Job extends BaseData<JobId> implements HasTenantId {
     @SuppressWarnings("unchecked")
     public <C extends JobConfiguration> C getConfiguration() {
         return (C) configuration;
+    }
+
+    @JsonIgnore
+    public String getError() {
+        if (status == JobStatus.CANCELLED) {
+            return "The task was cancelled";
+        }
+        if (result.getGeneralError() != null) {
+            return result.getGeneralError();
+        }
+        if (result.getFailedCount() > 0 && result.getResults() != null) {
+            StringBuilder errorMessage = new StringBuilder();
+            for (TaskResult taskResult : result.getResults()) {
+                if (taskResult.isSuccess() || taskResult.isDiscarded()) {
+                    continue;
+                }
+                String error = taskResult.getError();
+                if (error == null) {
+                    continue;
+                }
+                if (!errorMessage.isEmpty()) {
+                    if (errorMessage.length() + 2 + error.length() > 256) {
+                        errorMessage.append("...");
+                        break;
+                    }
+                    errorMessage.append("; ");
+                }
+                errorMessage.append(error);
+            }
+            return errorMessage.toString();
+        }
+        return "Task failed";
     }
 
 }

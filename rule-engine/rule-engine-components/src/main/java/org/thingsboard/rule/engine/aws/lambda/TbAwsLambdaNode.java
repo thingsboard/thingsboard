@@ -35,7 +35,7 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.exception.DataValidationException;
 
 import java.nio.ByteBuffer;
 import java.util.concurrent.TimeUnit;

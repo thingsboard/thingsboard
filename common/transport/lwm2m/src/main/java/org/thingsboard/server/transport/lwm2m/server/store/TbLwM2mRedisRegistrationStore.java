@@ -423,7 +423,7 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
     }
 
     private void addOrUpdateExpiration(RedisConnection connection, Registration registration) {
-        connection.zAdd(EXP_EP, registration.getExpirationTimeStamp(gracePeriod), registration.getEndpoint().getBytes(UTF_8));
+        connection.zSetCommands().zAdd(EXP_EP, registration.getExpirationTimeStamp(gracePeriod), registration.getEndpoint().getBytes(UTF_8));
     }
 
     private void removeExpiration(RedisConnection connection, Registration registration) {

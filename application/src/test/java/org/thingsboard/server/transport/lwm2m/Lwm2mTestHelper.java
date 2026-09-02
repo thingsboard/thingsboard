@@ -17,15 +17,14 @@ package org.thingsboard.server.transport.lwm2m;
 
 public class Lwm2mTestHelper {
 
-    public static final String[] lwm2mClientResources = new String[]{"3-1_2.xml", "5.xml", "6.xml", "9.xml", "19.xml", "3303.xml"};
+    public static final String[] lwm2mClientResources = new String[]{"3-1_2.xml", "5.xml", "6.xml", "9.xml", "19.xml", "3303.xml", "3442.xml"};
 
     // Models
     public static final int BINARY_APP_DATA_CONTAINER = 19;
     public static final int TEMPERATURE_SENSOR = 3303;
+    public  static final int OBJECT_ID_LWM2M_TEST_OBJECT = 3442;
 
     // Ids in Client
-    public static final int OBJECT_ID_0 = 0;
-    public static final int OBJECT_ID_1 = 1;
     public static final int OBJECT_INSTANCE_ID_0 = 0;
     public static final int OBJECT_INSTANCE_ID_1 = 1;
     public static final int OBJECT_INSTANCE_ID_2 = 2;
@@ -43,6 +42,9 @@ public class Lwm2mTestHelper {
     public static final int RESOURCE_ID_11 = 11;
     public static final int RESOURCE_ID_14 = 14;
     public static final int RESOURCE_ID_15 = 15;
+    public static final int RESOURCE_ID_120 = 120;  // INTEGER_VALUE
+    public static final int RESOURCE_ID_125 = 125;  // UNSIGNED_INTEGER_VALUE single-ресурс
+    public static final int RESOURCE_ID_1125 = 1125;  // UNSIGNED_INTEGER_VALUE multi-instance
     public static final int RESOURCE_ID_5700 = 5700;
     public static final int RESOURCE_INSTANCE_ID_0 = 0;
     public static final int RESOURCE_INSTANCE_ID_2 = 2;

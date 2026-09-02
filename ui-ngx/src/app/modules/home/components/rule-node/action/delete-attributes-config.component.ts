@@ -33,7 +33,7 @@ export class DeleteAttributesConfigComponent extends RuleNodeConfigurationCompon
 
   deleteAttributesConfigForm: UntypedFormGroup;
   attributeScopeMap = AttributeScope;
-  attributeScopes = Object.keys(AttributeScope);
+  attributeScopes = Object.values(AttributeScope);
   telemetryTypeTranslationsMap = telemetryTypeTranslations;
   separatorKeysCodes = [ENTER, COMMA, SEMICOLON];
 

@@ -158,6 +158,12 @@ export class UsersTableConfigResolver  {
     user.tenantId = new TenantId(this.tenantId);
     user.customerId = new CustomerId(this.customerId);
     user.authority = this.authority;
+    if (!user.additionalInfo.lang) {
+      delete user.additionalInfo.lang;
+    }
+    if (!user.additionalInfo.unitSystem) {
+      delete user.additionalInfo.unitSystem;
+    }
     return this.userService.saveUser(user);
   }
 

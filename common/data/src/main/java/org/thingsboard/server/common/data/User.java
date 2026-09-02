@@ -91,7 +91,7 @@ public class User extends BaseDataWithAdditionalInfo<UserId> implements HasName,
         return super.getCreatedTime();
     }
 
-    @Schema(description = "JSON object with the Tenant Id.", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(description = "JSON object with the Tenant Id.")
     public TenantId getTenantId() {
         return tenantId;
     }
@@ -100,7 +100,7 @@ public class User extends BaseDataWithAdditionalInfo<UserId> implements HasName,
         this.tenantId = tenantId;
     }
 
-    @Schema(description = "JSON object with the Customer Id.", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(description = "JSON object with the Customer Id.")
     public CustomerId getCustomerId() {
         return customerId;
     }
@@ -161,7 +161,16 @@ public class User extends BaseDataWithAdditionalInfo<UserId> implements HasName,
         this.phone = phone;
     }
 
-    @Schema(description = "Additional parameters of the user", implementation = com.fasterxml.jackson.databind.JsonNode.class)
+    @Schema(description = "Additional parameters of the user. " +
+            "May include: 'defaultDashboardId' (string, UUID of the default dashboard), " +
+            "'defaultDashboardFullscreen' (boolean), " +
+            "'homeDashboardId' (string, UUID of the home dashboard), " +
+            "'homeDashboardHideToolbar' (boolean), " +
+            "'lang' (string, user locale, e.g. 'en_US'), " +
+            "'authProviderName' (string, name of the authentication provider).",
+            implementation = com.fasterxml.jackson.databind.JsonNode.class,
+            example = "{\"defaultDashboardId\":\"784f394c-42b6-435a-983c-b7beff2784f9\",\"defaultDashboardFullscreen\":false," +
+                    "\"homeDashboardId\":\"784f394c-42b6-435a-983c-b7beff2784f9\",\"homeDashboardHideToolbar\":true,\"lang\":\"en_US\"}")
     @Override
     public JsonNode getAdditionalInfo() {
         return super.getAdditionalInfo();

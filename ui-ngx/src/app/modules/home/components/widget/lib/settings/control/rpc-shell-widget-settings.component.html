@@ -18,7 +18,7 @@
 <section class="tb-widget-settings flex flex-col" [formGroup]="rpcShellWidgetSettingsForm">
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.rpc.rpc-settings</legend>
-    <mat-form-field class="mat-block flex-1">
+    <mat-form-field class="mat-block flex-1" appearance="outline">
       <mat-label translate>widgets.rpc.request-timeout</mat-label>
       <input required matInput type="number" min="0" formControlName="requestTimeout">
     </mat-form-field>

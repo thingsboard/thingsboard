@@ -16,13 +16,19 @@
 
 -->
 <mat-form-field [formGroup]="subTypeFormGroup" class="mat-block" subscriptSizing="{{ subscriptSizing }}">
-  <mat-label *ngIf="showLabel">{{ entitySubtypeTitle | translate }}</mat-label>
+  @if (showLabel) {
+    <mat-label>{{ entitySubtypeTitle | translate }}</mat-label>
+  }
   <mat-select [class.!hidden]="!subTypesLoaded" class="tb-entity-subtype-select" formControlName="subType">
-    <mat-option *ngFor="let subType of subTypesOptions | async" [value]="subType">
-      {{ displaySubTypeFn(subType) }}
-    </mat-option>
+    @for (subType of subTypesOptions | async; track subType) {
+      <mat-option [value]="subType">
+        {{ displaySubTypeFn(subType) }}
+      </mat-option>
+    }
   </mat-select>
-  <mat-error *ngIf="subTypeFormGroup.get('subType').hasError('required')">
-    {{ entitySubtypeRequiredText | translate }}
-  </mat-error>
+  @if (subTypeFormGroup.get('subType').hasError('required')) {
+    <mat-error>
+      {{ entitySubtypeRequiredText | translate }}
+    </mat-error>
+  }
 </mat-form-field>

@@ -41,7 +41,7 @@
           <mat-checkbox formControlName="showTemplate">
             {{ 'widgets.date-range-navigator.picker-show-template' | translate }}
           </mat-checkbox>
-          <mat-form-field class="mat-block flex-1">
+          <mat-form-field class="mat-block flex-1" appearance="outline">
             <mat-label translate>widgets.date-range-navigator.first-day-of-week</mat-label>
             <input matInput type="number" min="1" max="7" step="1" formControlName="firstDayOfWeek">
           </mat-form-field>
@@ -64,7 +64,7 @@
         </mat-panel-description>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
-        <mat-form-field class="mat-block flex-1">
+        <mat-form-field class="mat-block flex-1" appearance="outline">
           <mat-label translate>widgets.date-range-navigator.initial-interval</mat-label>
           <mat-select formControlName="initialInterval">
             <mat-option [value]="'hour'">
@@ -108,7 +108,7 @@
         </mat-panel-description>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
-        <mat-form-field class="mat-block flex-1">
+        <mat-form-field class="mat-block flex-1" appearance="outline">
           <mat-label translate>widgets.date-range-navigator.initial-step-size</mat-label>
           <mat-select formControlName="stepSize">
             <mat-option [value]="'hour'">

@@ -16,6 +16,7 @@
 package org.thingsboard.server.transport.lwm2m.bootstrap.secure;
 
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.californium.core.coap.Request;
 import org.eclipse.leshan.core.peer.IpPeer;
 import org.eclipse.leshan.core.peer.LwM2mPeer;
 import org.eclipse.leshan.core.peer.PskIdentity;
@@ -112,8 +113,10 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
             } catch (InvalidConfigurationException e){
                 log.error("Failed put to lwM2MBootstrapSessionClients by endpoint [{}]", request.getEndpointName(), e);
             }
+            String msg = String.format("Bootstrap session started... %s", ((Request) request.getCoapRequest()).getLocalAddress().toString());
+            log.warn(String.format("%s: %s", request.getEndpointName(), msg));
             this.sendLogs(request.getEndpointName(),
-                    String.format("%s: Bootstrap session started...", LOG_LWM2M_INFO, request.getEndpointName()));
+                    String.format("%s: %s", LOG_LWM2M_INFO, msg));
         }
         return session;
     }
@@ -135,7 +138,7 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
             session.setModel(modelProvider.getObjectModel(session, tasks.supportedObjects));
 
         // set Requests to Send
-        log.info("tasks.requestsToSend = [{}]", tasks.requestsToSend);
+        log.warn("tasks.requestsToSend = [{}]", tasks.requestsToSend);
         session.setRequests(tasks.requestsToSend);
 
         // prepare list where we will store Responses
@@ -182,14 +185,16 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
             session.getResponses().add(response);
             String msg = String.format("%s: receives success response for:  %s  %s %s", LOG_LWM2M_INFO,
                     request.getClass().getSimpleName(), request.getPath().toString(), response.toString());
+            log.warn(msg);
             this.sendLogs(bsSession.getEndpoint(), msg);
 
             // on success for NOT bootstrap finish request we send next request
             return BootstrapPolicy.continueWith(nextRequest(bsSession));
         } else {
             // on success for bootstrap finish request we stop the session
-            this.sendLogs(bsSession.getEndpoint(),
-                    String.format("%s: receives success response for bootstrap finish.", LOG_LWM2M_INFO));
+            String msg = String.format("%s: receives success response for bootstrap finish.", LOG_LWM2M_INFO);
+            log.info(msg);
+            this.sendLogs(bsSession.getEndpoint(), msg);
             this.tasksProvider.remove(bsSession.getEndpoint());
             return BootstrapPolicy.finished();
         }
@@ -228,7 +233,9 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
 
     @Override
     public void end(BootstrapSession bsSession) {
-        this.sendLogs(bsSession.getEndpoint(), String.format("%s: Bootstrap session finished.", LOG_LWM2M_INFO));
+        String msg = String.format("%s: Bootstrap session finished.", LOG_LWM2M_INFO);
+        log.warn(msg);
+        this.sendLogs(bsSession.getEndpoint(), msg);
         this.tasksProvider.remove(bsSession.getEndpoint());
     }
 

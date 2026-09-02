@@ -18,7 +18,6 @@ import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { SharedModule } from '@shared/shared.module';
 import { ImportExportService } from '@shared/import-export/import-export.service';
-import { CommonModule } from '@angular/common';
 import { entityTypeTranslations } from '@shared/models/entity-type.models';
 import { EntityInfoData, VersionedEntity } from '@shared/models/entity.models';
 import { EntityId } from '@shared/models/id/entity-id';
@@ -34,9 +33,8 @@ interface EntityConflictDialogData {
     templateUrl: 'entity-conflict-dialog.component.html',
     styleUrls: ['./entity-conflict-dialog.component.scss'],
     imports: [
-        CommonModule,
-        SharedModule,
-    ]
+    SharedModule
+]
 })
 export class EntityConflictDialogComponent {
 

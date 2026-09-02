@@ -19,15 +19,17 @@
   <div class="tb-form-panel-title tb-required" translate>rule-node-config.relations-query</div>
   <section>
     <div class="flex flex-row gap-4">
-      <mat-form-field class="mat-block max-w-50% flex-full" style="min-width: 100px;" hideRequiredMarker>
+      <mat-form-field class="mat-block max-w-50% flex-full" style="min-width: 100px;" hideRequiredMarker appearance="outline">
         <mat-label translate>relation.direction</mat-label>
         <mat-select required formControlName="direction">
-          <mat-option *ngFor="let type of directionTypes" [value]="type">
-            {{ directionTypeTranslations.get(type) | translate }} <span translate>rule-node-config.relations-query-config-direction-suffix</span>
-          </mat-option>
+          @for (type of directionTypes; track type) {
+            <mat-option [value]="type">
+              {{ directionTypeTranslations.get(type) | translate }} <span translate>rule-node-config.relations-query-config-direction-suffix</span>
+            </mat-option>
+          }
         </mat-select>
       </mat-form-field>
-      <mat-form-field floatLabel="always" class="mat-block max-w-50% flex-full">
+      <mat-form-field floatLabel="always" class="mat-block max-w-50% flex-full" appearance="outline">
         <mat-label translate>rule-node-config.max-relation-level</mat-label>
         <input matInput
                type="text"
@@ -36,21 +38,26 @@
                inputmode="numeric"
                placeholder="{{ 'rule-node-config.unlimited-level' | translate }}"
                formControlName="maxLevel">
-        <mat-error *ngIf="relationsQueryFormGroup.get('maxLevel').hasError('min')">
-          {{ 'rule-node-config.max-relation-level-error' | translate }}
-        </mat-error>
-        <mat-error *ngIf="relationsQueryFormGroup.get('maxLevel').invalid">
-          {{ 'rule-node-config.max-relation-level-invalid' | translate }}
-        </mat-error>
+        @if (relationsQueryFormGroup.get('maxLevel').hasError('min')) {
+          <mat-error>
+            {{ 'rule-node-config.max-relation-level-error' | translate }}
+          </mat-error>
+        }
+        @if (relationsQueryFormGroup.get('maxLevel').invalid) {
+          <mat-error>
+            {{ 'rule-node-config.max-relation-level-invalid' | translate }}
+          </mat-error>
+        }
       </mat-form-field>
     </div>
-    <div tb-hint-tooltip-icon="{{ 'rule-node-config.last-level-relation-tooltip' | translate }}"
-         *ngIf="relationsQueryFormGroup.get('maxLevel').value > 1"
-         class="tb-form-row no-border no-padding last-level-slide-toggle">
-      <mat-slide-toggle class="mat-slide" formControlName="fetchLastLevelOnly">
-        {{ 'alias.last-level-relation' | translate }}
-      </mat-slide-toggle>
-    </div>
+    @if (relationsQueryFormGroup.get('maxLevel').value > 1) {
+      <div tb-hint-tooltip-icon="{{ 'rule-node-config.last-level-relation-tooltip' | translate }}"
+           class="tb-form-row no-border no-padding last-level-slide-toggle">
+        <mat-slide-toggle class="mat-slide" formControlName="fetchLastLevelOnly">
+          {{ 'alias.last-level-relation' | translate }}
+        </mat-slide-toggle>
+      </div>
+    }
   </section>
   <section [formGroup]="relationsQueryFormGroup" class="tb-form-panel stroked">
     <div class="tb-form-panel-title" translate>relation.relation-filters</div>

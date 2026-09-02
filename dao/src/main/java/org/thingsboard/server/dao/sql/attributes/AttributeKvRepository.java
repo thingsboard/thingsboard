@@ -20,6 +20,14 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BooleanDataEntry;
+import org.thingsboard.server.common.data.kv.DoubleDataEntry;
+import org.thingsboard.server.common.data.kv.JsonDataEntry;
+import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.dao.model.sql.AttributeKvCompositeKey;
 import org.thingsboard.server.dao.model.sql.AttributeKvEntity;
 
@@ -60,11 +68,60 @@ public interface AttributeKvRepository extends JpaRepository<AttributeKvEntity, 
     List<Integer> findAllKeysByEntityIdsAndAttributeType(@Param("entityIds") List<UUID> entityIds,
                                                          @Param("attributeType") int attributeType);
 
+    @Query(value = """
+            SELECT DISTINCT ON (a.attribute_key)
+                kd.key AS strKey,
+                a.bool_v AS boolV, a.str_v AS strV, a.long_v AS longV,
+                a.dbl_v AS dblV, a.json_v AS jsonV,
+                a.last_update_ts AS lastUpdateTs, a.version AS version
+            FROM attribute_kv a
+            INNER JOIN key_dictionary kd ON a.attribute_key = kd.key_id
+            WHERE a.entity_id IN :entityIds AND a.attribute_type = :attributeType
+            ORDER BY a.attribute_key, a.last_update_ts DESC""", nativeQuery = true)
+    List<AttributeKvProjection> findLatestByEntityIdsAndAttributeType(@Param("entityIds") List<UUID> entityIds,
+                                                                      @Param("attributeType") int attributeType);
+
     @Query(value = "SELECT attribute_key, attribute_type, entity_id, bool_v, dbl_v, json_v, last_update_ts, long_v, str_v, version FROM attribute_kv WHERE (entity_id, attribute_type, attribute_key) > " +
             "(:entityId, :attributeType, :attributeKey) ORDER BY entity_id, attribute_type, attribute_key LIMIT :batchSize", nativeQuery = true)
     List<AttributeKvEntity> findNextBatch(@Param("entityId") UUID entityId,
                                           @Param("attributeType") int attributeType,
                                           @Param("attributeKey") int attributeKey,
                                           @Param("batchSize") int batchSize);
+
+    interface AttributeKvProjection {
+
+        String getStrKey();
+
+        Boolean getBoolV();
+
+        String getStrV();
+
+        Long getLongV();
+
+        Double getDblV();
+
+        String getJsonV();
+
+        Long getLastUpdateTs();
+
+        Long getVersion();
+
+        static AttributeKvEntry toAttributeKvEntry(AttributeKvProjection p) {
+            KvEntry kvEntry = null;
+            if (p.getStrV() != null) {
+                kvEntry = new StringDataEntry(p.getStrKey(), p.getStrV());
+            } else if (p.getBoolV() != null) {
+                kvEntry = new BooleanDataEntry(p.getStrKey(), p.getBoolV());
+            } else if (p.getDblV() != null) {
+                kvEntry = new DoubleDataEntry(p.getStrKey(), p.getDblV());
+            } else if (p.getLongV() != null) {
+                kvEntry = new LongDataEntry(p.getStrKey(), p.getLongV());
+            } else if (p.getJsonV() != null) {
+                kvEntry = new JsonDataEntry(p.getStrKey(), p.getJsonV());
+            }
+            return new BaseAttributeKvEntry(kvEntry, p.getLastUpdateTs(), p.getVersion());
+        }
+
+    }
 
 }

@@ -62,6 +62,9 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.thingsboard.server.common.data.alarm.AlarmCommentSubType.ASSIGNED_TO_USER;
+import static org.thingsboard.server.common.data.alarm.AlarmCommentSubType.UNASSIGNED_BY_USER;
+import static org.thingsboard.server.common.data.alarm.AlarmCommentSubType.UNASSIGNED_FROM_DELETED_USER;
 
 @SpringJUnitConfig(DefaultTbAlarmService.class)
 class DefaultTbAlarmServiceTest {
@@ -217,9 +220,10 @@ class DefaultTbAlarmServiceTest {
         service.unassign(new Alarm(), 0L, user);
 
         ObjectNode commentNode = JacksonUtil.newObjectNode();
-        commentNode.put("subtype", "ASSIGN");
-        commentNode.put("text", "Alarm was unassigned by user " + user.getTitle());
-        commentNode.put("userId", user.getId().getId().toString());
+        commentNode.put("text", String.format(UNASSIGNED_BY_USER.getText(), user.getTitle()));
+        commentNode.put("subtype", UNASSIGNED_BY_USER.name());
+        commentNode.put("userName", user.getTitle());
+
         AlarmComment expectedAlarmComment = AlarmComment.builder()
                 .alarmId(alarm.getId())
                 .type(AlarmCommentType.SYSTEM)
@@ -243,8 +247,10 @@ class DefaultTbAlarmServiceTest {
         service.unassignDeletedUserAlarms(tenantId, user.getId(), user.getTitle(), List.of(alarm.getUuidId()), System.currentTimeMillis());
 
         ObjectNode commentNode = JacksonUtil.newObjectNode();
-        commentNode.put("subtype", "ASSIGN");
-        commentNode.put("text", String.format("Alarm was unassigned because user %s - was deleted", user.getTitle()));
+        commentNode.put("text", String.format(UNASSIGNED_FROM_DELETED_USER.getText(), user.getTitle()));
+        commentNode.put("subtype", UNASSIGNED_FROM_DELETED_USER.name());
+        commentNode.put("userName", user.getTitle());
+
         AlarmComment expectedAlarmComment = AlarmComment.builder()
                 .alarmId(alarm.getId())
                 .type(AlarmCommentType.SYSTEM)

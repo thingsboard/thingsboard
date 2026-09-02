@@ -19,6 +19,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -81,8 +82,7 @@ public class ComponentDescriptorController extends BaseController {
             notes = "Gets the Component Descriptors using coma separated list of rule node types and optional rule chain type request parameters. " +
                     COMPONENT_DESCRIPTOR_DEFINITION + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN','TENANT_ADMIN')")
-    @RequestMapping(value = "/components", params = {"componentTypes"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/components")
     public List<ComponentDescriptor> getComponentDescriptorsByTypes(
             @Parameter(description = "List of types of the Rule Nodes, (ENRICHMENT, FILTER, TRANSFORMATION, ACTION or EXTERNAL)", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
             @RequestParam("componentTypes") String[] strComponentTypes,

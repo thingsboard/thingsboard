@@ -40,7 +40,7 @@ export class DatetimeComponent implements OnInit, ControlValueAccessor {
     return this.requiredValue;
   }
   @Input()
-  set required(value: boolean) {
+  set required(value: unknown) {
     this.requiredValue = coerceBooleanProperty(value);
   }
 

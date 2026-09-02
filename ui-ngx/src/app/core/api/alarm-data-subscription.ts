@@ -23,6 +23,7 @@ import { DatasourceType } from '@shared/models/widget.models';
 import {
   AlarmData,
   AlarmDataPageLink,
+  ComplexOperation,
   EntityFilter,
   EntityKey,
   EntityKeyType,
@@ -47,6 +48,7 @@ export interface AlarmDataSubscriptionOptions {
   pageLink?: AlarmDataPageLink;
   keyFilters?: Array<KeyFilter>;
   additionalKeyFilters?: Array<KeyFilter>;
+  keyFiltersOperation?: ComplexOperation;
   subscriptionTimewindow?: SubscriptionTimewindow;
 }
 
@@ -120,6 +122,7 @@ export class AlarmDataSubscription {
         entityFilter: this.alarmDataSubscriptionOptions.entityFilter,
         pageLink: deepClone(this.alarmDataSubscriptionOptions.pageLink),
         keyFilters,
+        keyFiltersOperation: this.alarmDataSubscriptionOptions.keyFiltersOperation,
         alarmFields,
         entityFields,
         latestValues

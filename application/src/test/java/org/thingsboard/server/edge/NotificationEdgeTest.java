@@ -266,7 +266,6 @@ public class NotificationEdgeTest extends AbstractEdgeTest {
         notificationRule.setTriggerConfig(triggerConfig);
 
         EscalatedNotificationRuleRecipientsConfig recipientsConfig = new EscalatedNotificationRuleRecipientsConfig();
-        recipientsConfig.setTriggerType(NotificationRuleTriggerType.ALARM);
         Map<Integer, List<UUID>> escalationTable = new HashMap<>();
         escalationTable.put(Integer.valueOf("1"), new ArrayList<>());
         recipientsConfig.setEscalationTable(escalationTable);

@@ -271,10 +271,6 @@ export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterView
     }
   }
 
-  public trackBySection(index: number): number {
-    return index;
-  }
-
   public cardClick($event: Event) {
     this.ctx.actionsApi.cardClick($event);
   }

@@ -87,4 +87,10 @@ public interface AssetProfileRepository extends JpaRepository<AssetProfileEntity
             "a.name, a.version, a.isDefault) FROM AssetProfileEntity a WHERE a.id > :id ORDER BY a.id")
     List<AssetProfileFields> findNextBatch(@Param("id") UUID id, Limit limit);
 
+    @Query("SELECT new org.thingsboard.server.common.data.asset.AssetProfileInfo(a.id, a.tenantId, a.name, a.image, a.defaultDashboardId) " +
+            "FROM AssetProfileEntity a WHERE " +
+            "a.tenantId = :tenantId AND a.id IN :assetProfileIds")
+    List<AssetProfileInfo> findAssetProfileInfosByTenantIdAndIdIn(@Param("tenantId") UUID tenantId,
+                                                                  @Param("assetProfileIds") List<UUID> assetProfileIds);
+
 }

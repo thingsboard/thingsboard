@@ -18,6 +18,7 @@ package org.thingsboard.server.common.data.notification;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.thingsboard.server.common.data.notification.targets.NotificationRecipient;
 
@@ -27,14 +28,19 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@Schema(description = "Notification request processing statistics")
 @Data
 public class NotificationRequestStats {
 
+    @Schema(description = "Number of successfully sent notifications per delivery method", example = "{\"WEB\": 10, \"EMAIL\": 5}")
     private final Map<NotificationDeliveryMethod, AtomicInteger> sent;
     @JsonIgnore
     private final AtomicInteger totalSent;
+    @Schema(description = "Errors per delivery method. Each entry maps recipient name to error message")
     private final Map<NotificationDeliveryMethod, Map<String, String>> errors;
+    @Schema(description = "Total number of errors across all delivery methods")
     private final AtomicInteger totalErrors;
+    @Schema(description = "General error message if the entire request failed")
     private String error;
     @JsonIgnore
     private final Map<NotificationDeliveryMethod, Set<Object>> processedRecipients;

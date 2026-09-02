@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.page;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 @Data
@@ -36,6 +37,7 @@ public class SortOrder {
         return new SortOrder(property, direction);
     }
 
+    @Schema(name = "SortOrderDirection")
     public static enum Direction {
         ASC, DESC
     }

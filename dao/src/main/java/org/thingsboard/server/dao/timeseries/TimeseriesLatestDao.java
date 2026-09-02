@@ -22,12 +22,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvLatestRemovingResult;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestEntity;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 public interface TimeseriesLatestDao {
@@ -53,5 +49,16 @@ public interface TimeseriesLatestDao {
     List<String> findAllKeysByDeviceProfileId(TenantId tenantId, DeviceProfileId deviceProfileId);
 
     List<String> findAllKeysByEntityIds(TenantId tenantId, List<EntityId> entityIds);
+
+    ListenableFuture<List<String>> findAllKeysByEntityIdsAsync(TenantId tenantId, List<EntityId> entityIds);
+
+    /**
+     * For each unique timeseries key across the given entities, returns the single most recent {@link TsKvEntry}
+     * (i.e. the entry with the highest timestamp). If the same key exists on multiple entities,
+     * only the freshest value is kept. Useful for discovering available keys together with a representative sample value.
+     */
+    List<TsKvEntry> findLatestByEntityIds(TenantId tenantId, List<EntityId> entityIds);
+
+    ListenableFuture<List<TsKvEntry>> findLatestByEntityIdsAsync(TenantId tenantId, List<EntityId> entityIds);
 
 }

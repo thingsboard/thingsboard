@@ -19,6 +19,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.NameConflictStrategy;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -32,10 +33,15 @@ public class DefaultTbCustomerService extends AbstractTbEntityService implements
 
     @Override
     public Customer save(Customer customer, SecurityUser user) throws Exception {
+        return save(customer, NameConflictStrategy.DEFAULT, user);
+    }
+
+    @Override
+    public Customer save(Customer customer, NameConflictStrategy nameConflictStrategy, SecurityUser user) throws Exception {
         ActionType actionType = customer.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = customer.getTenantId();
         try {
-            Customer savedCustomer = checkNotNull(customerService.saveCustomer(customer));
+            Customer savedCustomer = checkNotNull(customerService.saveCustomer(customer, nameConflictStrategy));
             autoCommit(user, savedCustomer.getId());
             logEntityActionService.logEntityAction(tenantId, savedCustomer.getId(), savedCustomer, null, actionType, user);
             return savedCustomer;

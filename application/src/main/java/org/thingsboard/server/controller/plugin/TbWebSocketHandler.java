@@ -52,6 +52,7 @@ import org.thingsboard.server.config.WebSocketConfiguration;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.jwt.JwtAuthenticationProvider;
+import org.thingsboard.server.service.security.auth.pat.ApiKeyAuthenticationProvider;
 import org.thingsboard.server.service.security.exception.JwtExpiredTokenException;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
@@ -100,6 +101,8 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
     private RateLimitService rateLimitService;
     @Autowired
     private JwtAuthenticationProvider authenticationProvider;
+    @Autowired
+    private ApiKeyAuthenticationProvider apiKeyAuthenticationProvider;
 
     @Value("${server.ws.send_timeout:5000}")
     private long sendTimeout;
@@ -194,7 +197,11 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
             log.trace("{} Authenticating session", sessionRef);
             SecurityUser securityCtx;
             try {
-                securityCtx = authenticationProvider.authenticate(authCmd.getToken());
+                if (StringUtils.isNotEmpty(authCmd.getApiKey())) {
+                    securityCtx = apiKeyAuthenticationProvider.authenticate(authCmd.getApiKey());
+                } else {
+                    securityCtx = authenticationProvider.authenticate(authCmd.getToken());
+                }
             } catch (Exception e) {
                 close(sessionRef, CloseStatus.BAD_DATA.withReason(e.getMessage()));
                 return;
@@ -328,9 +335,12 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
         }
 
         SecurityUser securityCtx = null;
-        String token = StringUtils.substringAfter(session.getUri().getQuery(), "token=");
-        if (StringUtils.isNotEmpty(token)) {
-            securityCtx = authenticationProvider.authenticate(token);
+        String query = session.getUri().getQuery();
+        if (query != null) {
+            String token = extractQueryParam(query, "token");
+            if (StringUtils.isNotEmpty(token)) {
+                securityCtx = authenticationProvider.authenticate(token);
+            }
         }
         return WebSocketSessionRef.builder()
                 .sessionId(UUID.randomUUID().toString())
@@ -339,6 +349,15 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
                 .remoteAddress(session.getRemoteAddress())
                 .sessionType(sessionType)
                 .build();
+    }
+
+    private String extractQueryParam(String query, String paramName) {
+        for (String param : query.split("&")) {
+            if (param.startsWith(paramName + "=")) {
+                return param.substring(paramName.length() + 1);
+            }
+        }
+        return null;
     }
 
     private SessionMetaData getSessionMd(String internalSessionId) {
@@ -482,6 +501,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
                 }
             }
         }
+
     }
 
     @Override

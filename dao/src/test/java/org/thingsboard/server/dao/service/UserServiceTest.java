@@ -33,7 +33,7 @@ import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.settings.UserSettings;
 import org.thingsboard.server.dao.customer.CustomerService;
-import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.user.UserService;
 
 import java.util.ArrayList;

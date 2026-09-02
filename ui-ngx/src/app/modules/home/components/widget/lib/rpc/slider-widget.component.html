@@ -17,18 +17,24 @@
 -->
 <div class="tb-slider-panel" [class.no-pointer-events]="ctx.isEdit" [style.padding]="padding" [style]="backgroundStyle$ | async">
   <div class="tb-slider-overlay" [style]="overlayStyle"></div>
-  <div *ngIf="showWidgetTitlePanel" class="tb-slider-title-panel">
-    <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
-  </div>
-  <div #sliderContent class="tb-slider-content">
-    <div #sliderValueContainer class="tb-slider-value-container" *ngIf="showValue" >
-      <div #sliderValue class="tb-slider-value" [style]="valueStyle">{{ valueText }}</div>
+  @if (showWidgetTitlePanel) {
+    <div class="tb-slider-title-panel">
+      <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
     </div>
-    <div class="tb-slider-container" [class.tb-min-height]="!showValue">
-      <div #leftSliderIconContainer *ngIf="showLeftRightIcon" >
-        <tb-icon #leftSliderIcon [style]="leftIconStyle"
-                 [style.color]="(disabled || (loading$ | async)) ? settings.mainColorDisabled : settings.leftIconColor">{{ leftIcon }}</tb-icon>
+  }
+  <div #sliderContent class="tb-slider-content">
+    @if (showValue) {
+      <div #sliderValueContainer class="tb-slider-value-container" >
+        <div #sliderValue class="tb-slider-value" [style]="valueStyle">{{ valueText }}</div>
       </div>
+    }
+    <div class="tb-slider-container" [class.tb-min-height]="!showValue">
+      @if (showLeftRightIcon) {
+        <div #leftSliderIconContainer >
+          <tb-icon #leftSliderIcon [style]="leftIconStyle"
+          [style.color]="(disabled || (loading$ | async)) ? settings.mainColorDisabled : settings.leftIconColor">{{ leftIcon }}</tb-icon>
+        </div>
+      }
       <div class="tb-slider-column">
         <mat-slider class="tb-slider"
                     [disabled]="disabled || (loading$ | async)"
@@ -40,20 +46,26 @@
                     discrete>
           <input matSliderThumb [(ngModel)]="value" (valueChange)="onSliderChange()">
         </mat-slider>
-        <div *ngIf="showTicks" class="tb-slider-ticks" [style]="ticksStyle">
-          <div #sliderTickMinContainer>
-            <div #sliderTickMin>{{ tickMinText }}</div>
+        @if (showTicks) {
+          <div class="tb-slider-ticks" [style]="ticksStyle">
+            <div #sliderTickMinContainer>
+              <div #sliderTickMin>{{ tickMinText }}</div>
+            </div>
+            <div #sliderTickMaxContainer>
+              <div #sliderTickMax>{{ tickMaxText }}</div>
+            </div>
           </div>
-          <div #sliderTickMaxContainer>
-            <div #sliderTickMax>{{ tickMaxText }}</div>
-          </div>
+        }
+      </div>
+      @if (showLeftRightIcon) {
+        <div #rightSliderIconContainer >
+          <tb-icon #rightSliderIcon [style]="rightIconStyle"
+          [style.color]="(disabled || (loading$ | async)) ? settings.mainColorDisabled : settings.rightIconColor">{{ rightIcon }}</tb-icon>
         </div>
-      </div>
-      <div #rightSliderIconContainer *ngIf="showLeftRightIcon" >
-        <tb-icon #rightSliderIcon [style]="rightIconStyle"
-                 [style.color]="(disabled || (loading$ | async)) ? settings.mainColorDisabled : settings.rightIconColor">{{ rightIcon }}</tb-icon>
-      </div>
+      }
     </div>
   </div>
-  <mat-progress-bar class="tb-action-widget-progress" style="height: 4px;" color="accent" mode="indeterminate" *ngIf="loading$ | async"></mat-progress-bar>
+  @if (loading$ | async) {
+    <mat-progress-bar class="tb-action-widget-progress" style="height: 4px;" color="accent" mode="indeterminate"></mat-progress-bar>
+  }
 </div>

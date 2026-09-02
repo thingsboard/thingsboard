@@ -59,6 +59,11 @@ public interface DeviceProfileRepository extends JpaRepository<DeviceProfileEnti
                                                    @Param("transportType") DeviceTransportType transportType,
                                                    Pageable pageable);
 
+    @Query("SELECT new org.thingsboard.server.common.data.DeviceProfileInfo(d.id, d.tenantId, d.name, d.image, d.defaultDashboardId, d.type, d.transportType) " +
+            "FROM DeviceProfileEntity d WHERE " +
+            "d.tenantId = :tenantId AND d.id IN :deviceProfileIds")
+    List<DeviceProfileInfo> findDeviceProfileInfosByTenantIdAndIdIn(@Param("tenantId") UUID tenantId, @Param("deviceProfileIds") List<UUID> deviceProfileIds);
+
     @Query("SELECT d FROM DeviceProfileEntity d " +
             "WHERE d.tenantId = :tenantId AND d.isDefault = true")
     DeviceProfileEntity findByDefaultTrueAndTenantId(@Param("tenantId") UUID tenantId);

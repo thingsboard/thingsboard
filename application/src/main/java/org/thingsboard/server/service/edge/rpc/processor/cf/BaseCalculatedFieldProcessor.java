@@ -53,7 +53,7 @@ public abstract class BaseCalculatedFieldProcessor extends BaseEdgeProcessor {
             }
 
             String calculatedFieldName = calculatedField.getName();
-            CalculatedField calculatedFieldByName = edgeCtx.getCalculatedFieldService().findByEntityIdAndName(calculatedField.getEntityId(), calculatedFieldName);
+            CalculatedField calculatedFieldByName = edgeCtx.getCalculatedFieldService().findByEntityIdAndTypeAndName(calculatedField.getEntityId(), calculatedField.getType(), calculatedFieldName);
             if (calculatedFieldByName != null && !calculatedFieldByName.getId().equals(calculatedFieldId)) {
                 calculatedFieldName = calculatedFieldName + "_" + StringUtils.randomAlphabetic(15);
                 log.warn("[{}] calculatedField with name {} already exists. Renaming calculatedField name to {}",

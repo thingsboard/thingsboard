@@ -314,7 +314,15 @@ export class AliasController implements IAliasController {
       || newDatasource.type === DatasourceType.entityCount
       || newDatasource.type === DatasourceType.alarmCount) {
       if (newDatasource.filterId) {
-        newDatasource.keyFilters = this.getKeyFilters(newDatasource.filterId);
+        const filterInfo = this.getFilterInfo(newDatasource.filterId);
+        if (filterInfo) {
+          newDatasource.keyFilters = filterInfoToKeyFilters(filterInfo);
+          if (filterInfo.keyFiltersOperation) {
+            newDatasource.keyFiltersOperation = filterInfo.keyFiltersOperation;
+          }
+        } else {
+          newDatasource.keyFilters = [];
+        }
       }
       if (newDatasource.type === DatasourceType.alarmCount) {
         newDatasource.alarmFilter = this.entityService.resolveAlarmFilter(newDatasource.alarmFilterConfig, false);

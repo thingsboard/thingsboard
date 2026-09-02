@@ -51,7 +51,6 @@ class QueueConsumerManagerTest {
     private final AtomicBoolean readyToProcess = new AtomicBoolean(false);
     private final AtomicInteger readinessChecks = new AtomicInteger();
     private final TestQueueConsumer consumer = new TestQueueConsumer();
-
     private ExecutorService consumerExecutor;
     private QueueConsumerManager<TbQueueMsg> manager;
 
@@ -235,6 +234,11 @@ class QueueConsumerManagerTest {
         @Override
         public boolean isStopped() {
             return stopped;
+        }
+
+        @Override
+        public Set<TopicPartitionInfo> getPartitions() {
+            return Collections.emptySet();
         }
 
         @Override

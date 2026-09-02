@@ -22,6 +22,7 @@ import org.thingsboard.server.common.data.edqs.DataPoint;
 import org.thingsboard.server.common.data.permission.QueryContext;
 import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
 import org.thingsboard.server.common.data.query.ComplexFilterPredicate;
+import org.thingsboard.server.common.data.query.ComplexOperation;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.EntityDataSortOrder;
@@ -60,8 +61,8 @@ import java.util.stream.Stream;
 import static org.apache.commons.lang3.StringUtils.containsIgnoreCase;
 import static org.thingsboard.server.common.data.StringUtils.equalsAny;
 import static org.thingsboard.server.common.data.StringUtils.splitByCommaWithoutQuotes;
-import static org.thingsboard.server.common.data.query.ComplexFilterPredicate.ComplexOperation.AND;
-import static org.thingsboard.server.common.data.query.ComplexFilterPredicate.ComplexOperation.OR;
+import static org.thingsboard.server.common.data.query.ComplexOperation.AND;
+import static org.thingsboard.server.common.data.query.ComplexOperation.OR;
 
 @Slf4j
 public class RepositoryUtils {
@@ -139,6 +140,7 @@ public class RepositoryUtils {
         }
         query.entityFilter(oldQuery.getEntityFilter());
         query.keyFilters(toKeyFilters(oldQuery.getKeyFilters()));
+        query.keyFiltersOperation(oldQuery.getKeyFiltersOperationOrDefault());
         query.entityFields(toNewKeys(oldQuery.getEntityFields()));
         query.latestValues(toNewKeys(oldQuery.getLatestValues()));
         return query.build();
@@ -149,6 +151,7 @@ public class RepositoryUtils {
                 .entityFilter(oldQuery.getEntityFilter())
                 .hasKeyFilters(CollectionsUtil.isNotEmpty(oldQuery.getKeyFilters()))
                 .keyFilters(toKeyFilters(oldQuery.getKeyFilters()))
+                .keyFiltersOperation(oldQuery.getKeyFiltersOperationOrDefault())
                 .build();
     }
 
@@ -196,38 +199,57 @@ public class RepositoryUtils {
     }
 
     public static boolean checkKeyFilters(EntityData entity, List<EdqsFilter> keyFilters) {
-        for (EdqsFilter keyFilter : keyFilters) {
-            EntityKeyValueType valueType = keyFilter.valueType();
-            if (valueType == null) {
-                valueType = switch (keyFilter.predicate().getType()) {
-                    case STRING -> EntityKeyValueType.STRING;
-                    case NUMERIC -> EntityKeyValueType.NUMERIC;
-                    case BOOLEAN -> EntityKeyValueType.BOOLEAN;
-                    default -> throw new IllegalStateException();
-                };
+        return checkKeyFilters(entity, keyFilters, ComplexOperation.AND);
+    }
+
+    public static boolean checkKeyFilters(EntityData entity, List<EdqsFilter> keyFilters, ComplexOperation operation) {
+        ComplexOperation op = operation != null ? operation : ComplexOperation.AND;
+        if (op == ComplexOperation.OR) {
+            for (EdqsFilter keyFilter : keyFilters) {
+                if (evaluateSingleFilter(entity, keyFilter)) {
+                    return true;
+                }
             }
-            DataKey dataKey = keyFilter.key();
-            DataPoint dp = entity.getDataPoint(dataKey, null);
-            boolean checkResult = switch (valueType) {
-                case STRING -> {
-                    String str = dp != null ? dp.valueToString() : null;
-                    yield (dataKey.type() == EntityKeyType.ENTITY_FIELD) ? (str == null || checkKeyFilter(str, keyFilter.predicate())) :
-                            (str != null && checkKeyFilter(str, keyFilter.predicate()));
+            // Vacuously true when OR is called with an empty filter list. Unreachable via checkFilters
+            // (which guards on isHasKeyFilters()), but kept defensive for any future direct caller.
+            return keyFilters.isEmpty();
+        } else {
+            for (EdqsFilter keyFilter : keyFilters) {
+                if (!evaluateSingleFilter(entity, keyFilter)) {
+                    return false;
                 }
-                case BOOLEAN -> {
-                    Boolean booleanValue = dp != null ? dp.getBool() : null;
-                    yield booleanValue != null && checkKeyFilter(booleanValue, keyFilter.predicate());
-                }
-                case DATE_TIME, NUMERIC -> {
-                    Double doubleValue = dp != null ? dp.getDouble() : null;
-                    yield doubleValue != null && checkKeyFilter(doubleValue, keyFilter.predicate());
-                }
-            };
-            if (!checkResult) {
-                return false;
             }
+            return true;
         }
-        return true;
+    }
+
+    private static boolean evaluateSingleFilter(EntityData entity, EdqsFilter keyFilter) {
+        EntityKeyValueType valueType = keyFilter.valueType();
+        if (valueType == null) {
+            valueType = switch (keyFilter.predicate().getType()) {
+                case STRING -> EntityKeyValueType.STRING;
+                case NUMERIC -> EntityKeyValueType.NUMERIC;
+                case BOOLEAN -> EntityKeyValueType.BOOLEAN;
+                default -> throw new IllegalStateException();
+            };
+        }
+        DataKey dataKey = keyFilter.key();
+        DataPoint dp = entity.getDataPoint(dataKey, null);
+        return switch (valueType) {
+            case STRING -> {
+                String str = dp != null ? dp.valueToString() : null;
+                yield (dataKey.type() == EntityKeyType.ENTITY_FIELD) ? (str == null || checkKeyFilter(str, keyFilter.predicate())) :
+                        (str != null && checkKeyFilter(str, keyFilter.predicate()));
+            }
+            case BOOLEAN -> {
+                Boolean booleanValue = dp != null ? dp.getBool() : null;
+                yield booleanValue != null && checkKeyFilter(booleanValue, keyFilter.predicate());
+            }
+            case DATE_TIME, NUMERIC -> {
+                Double doubleValue = dp != null ? dp.getDouble() : null;
+                yield doubleValue != null && checkKeyFilter(doubleValue, keyFilter.predicate());
+            }
+        };
     }
 
     public static boolean checkKeyFilter(String value, KeyFilterPredicate keyFilterPredicate) {
@@ -376,7 +398,7 @@ public class RepositoryUtils {
         if (entity == null || entity.getFields() == null) {
             return false; // Entity was already removed or not arrived yet;
         }
-        if (query.isHasKeyFilters() && !checkKeyFilters(entity, query.getKeyFilters())) {
+        if (query.isHasKeyFilters() && !checkKeyFilters(entity, query.getKeyFilters(), query.getKeyFiltersOperation())) {
             return false;
         }
         if (query instanceof EdqsDataQuery dataQuery) {

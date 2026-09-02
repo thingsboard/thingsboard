@@ -19,6 +19,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityTabsComponent } from '../../components/entity/entity-tabs.component';
 import { AssetInfo } from '@app/shared/models/asset.models';
+import { EntityId } from "@shared/models/id/entity-id";
 
 @Component({
     selector: 'tb-asset-tabs',
@@ -27,6 +28,8 @@ import { AssetInfo } from '@app/shared/models/asset.models';
     standalone: false
 })
 export class AssetTabsComponent extends EntityTabsComponent<AssetInfo> {
+
+  ownerId: EntityId;
 
   constructor(protected store: Store<AppState>) {
     super(store);
@@ -42,6 +45,11 @@ export class AssetTabsComponent extends EntityTabsComponent<AssetInfo> {
     } else {
       return super.resolveTabIndex(tab);
     }
+  }
+
+  protected setEntity(entity: AssetInfo) {
+    this.ownerId = entity.customerId.id !== this.nullUid ? entity.customerId : entity.tenantId;
+    super.setEntity(entity);
   }
 
 }

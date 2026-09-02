@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, DestroyRef, EventEmitter, forwardRef, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -26,6 +26,8 @@ import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatFormFieldAppearance } from '@angular/material/form-field';
+import { BaseData } from '@shared/models/base-data';
+import { EntityAutocompleteComponent } from '@shared/components/entity/entity-autocomplete.component';
 
 @Component({
     selector: 'tb-entity-select',
@@ -38,7 +40,9 @@ import { MatFormFieldAppearance } from '@angular/material/form-field';
         }],
     standalone: false
 })
-export class EntitySelectComponent implements ControlValueAccessor, OnInit, AfterViewInit {
+export class EntitySelectComponent implements ControlValueAccessor, OnInit {
+
+  @ViewChild('entityAutocompleteComponent') entityAutocompleteComponent!: EntityAutocompleteComponent;
 
   entitySelectFormGroup: UntypedFormGroup;
 
@@ -64,16 +68,26 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit, Afte
   appearance: MatFormFieldAppearance = 'fill';
 
   @Input()
+  @coerceBoolean()
+  useEntityDisplayName = false;
+
+  @Input()
   filterAllowedEntityTypes = true;
 
   @Input()
   defaultEntityType: AliasEntityType | EntityType;
 
+  @Input()
+  entityTypeLabel: string;
+
+  @Output()
+  entityChanged = new EventEmitter<BaseData<EntityId>>();
+
   displayEntityTypeSelect: boolean;
 
   AliasEntityType = AliasEntityType;
 
-  entityTypeNullUUID: Set<AliasEntityType | EntityType | string> = new Set([
+  entityTypeNullUUID = new Set<AliasEntityType | EntityType | string>([
     AliasEntityType.CURRENT_TENANT, AliasEntityType.CURRENT_USER, AliasEntityType.CURRENT_USER_OWNER
   ]);
 
@@ -144,9 +158,6 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit, Afte
     }
   }
 
-  ngAfterViewInit(): void {
-  }
-
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     if (this.disabled) {
@@ -191,5 +202,13 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit, Afte
         this.propagateChange(null);
       }
     }
+  }
+
+  changeEntity(entity: BaseData<EntityId>): void {
+    this.entityChanged.emit(entity);
+  }
+
+  entityAutocompleteMarkAsTouched() {
+    this.entityAutocompleteComponent.markAsTouched();
   }
 }

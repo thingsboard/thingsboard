@@ -23,12 +23,14 @@
        [class.horizontal-fill]="horizontalFill"
        [class.vertical-fill]="verticalFill">
     <tb-widget-button
-        [appearance]="appearance"
-        [autoScale]="autoScale"
-        [disabled]="disabled || (loading$ | async)"
-        [ctx]="ctx"
-        (clicked)="onClick($event)">
+      [appearance]="appearance"
+      [autoScale]="autoScale"
+      [disabled]="disabled || (loading$ | async)"
+      [ctx]="ctx"
+      (clicked)="onClick($event)">
     </tb-widget-button>
   </div>
-  <mat-progress-bar class="tb-action-widget-progress" style="height: 4px;" color="accent" mode="indeterminate" *ngIf="loading$ | async"></mat-progress-bar>
+  @if (loading$ | async) {
+    <mat-progress-bar class="tb-action-widget-progress" style="height: 4px;" color="accent" mode="indeterminate"></mat-progress-bar>
+  }
 </div>

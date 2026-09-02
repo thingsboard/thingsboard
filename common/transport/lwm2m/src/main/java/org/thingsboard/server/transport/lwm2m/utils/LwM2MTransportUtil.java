@@ -45,6 +45,7 @@ import org.thingsboard.server.transport.lwm2m.server.ota.firmware.FirmwareUpdate
 import org.thingsboard.server.transport.lwm2m.server.ota.software.SoftwareUpdateResult;
 import org.thingsboard.server.transport.lwm2m.server.ota.software.SoftwareUpdateState;
 
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -81,7 +82,8 @@ public class LwM2MTransportUtil {
     public static final String LOG_LWM2M_INFO = "info";
     public static final String LOG_LWM2M_ERROR = "error";
     public static final String LOG_LWM2M_WARN = "warn";
-    public static final int BOOTSTRAP_DEFAULT_SHORT_ID_0 = 0;
+    public static final String REGISTRATION_TRIGGER_PARAMS_ID = "/1/0/8";
+    public static final String BOOTSTRAP_TRIGGER_PARAMS_ID = "/1/0/9";;
 
     public static LwM2mOtaConvert convertOtaUpdateValueToString(String pathIdVer, Object value, ResourceModel.Type currentType) {
         String path = fromVersionedIdToObjectId(pathIdVer);
@@ -185,6 +187,7 @@ public class LwM2MTransportUtil {
                 return FLOAT;
             case "Integer":
             case "Long":
+            case "BigInteger":
                 return INTEGER;
             case "String":
                 return STRING;
@@ -211,10 +214,14 @@ public class LwM2MTransportUtil {
                 try {
                     return Long.valueOf(value.toString());
                 } catch (NumberFormatException l) {
-                    if (value.getAsFloat() >= Float.MIN_VALUE && value.getAsFloat() <= Float.MAX_VALUE) {
-                        return value.getAsFloat();
-                    } else {
-                        return value.getAsDouble();
+                    try {
+                        return new BigInteger(value.toString());
+                    } catch (NumberFormatException k) {
+                        if (value.getAsFloat() >= Float.MIN_VALUE && value.getAsFloat() <= Float.MAX_VALUE) {
+                            return value.getAsFloat();
+                        } else {
+                            return value.getAsDouble();
+                        }
                     }
                 }
             }

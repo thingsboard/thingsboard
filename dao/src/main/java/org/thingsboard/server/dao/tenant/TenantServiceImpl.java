@@ -54,7 +54,9 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
+import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
 import static org.thingsboard.server.dao.service.Validator.validateId;
+import static org.thingsboard.server.dao.service.Validator.validateIds;
 
 @Service("TenantDaoService")
 @Slf4j
@@ -78,6 +80,7 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
     @Autowired
     private ApiUsageStateService apiUsageStateService;
     @Autowired
+    @Lazy
     private NotificationSettingsService notificationSettingsService;
     @Autowired
     private QrCodeSettingService qrCodeSettingService;
@@ -177,7 +180,7 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
         publishEvictEvent(new TenantEvictEvent(tenantId, true));
         eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(tenantId).entity(tenant).build());
 
-        cleanUpService.removeTenantEntities(tenantId, // don't forget to implement deleteEntity from EntityDaoService when adding entity type to this list
+        cleanUpService.removeTenantEntities(tenantId, // remember to implement deleteEntity from EntityDaoService when adding an entity type to this list
                 EntityType.ADMIN_SETTINGS, EntityType.JOB, EntityType.ENTITY_VIEW, EntityType.WIDGETS_BUNDLE, EntityType.WIDGET_TYPE,
                 EntityType.ASSET, EntityType.ASSET_PROFILE, EntityType.DEVICE, EntityType.DEVICE_PROFILE,
                 EntityType.DASHBOARD, EntityType.EDGE, EntityType.RULE_CHAIN, EntityType.API_USAGE_STATE,
@@ -226,6 +229,12 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
         log.trace("Executing findTenantsIds");
         Validator.validatePageLink(pageLink);
         return tenantDao.findTenantsIds(pageLink);
+    }
+
+    @Override
+    public List<Tenant> findTenantsByIds(TenantId callerId, List<TenantId> tenantIds) {
+        log.trace("Executing findTenantsByIds, callerId [{}], tenantIds [{}]", callerId, tenantIds);
+        return tenantDao.findTenantsByIds(callerId.getId(), toUUIDs(tenantIds));
     }
 
     @Override

@@ -252,4 +252,8 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
     }
     return null;
   }
+
+  getTransportPayloadType(type: string): string {
+    return this.transportPayloadTypeTranslations.get(type as TransportPayloadType);
+  }
 }

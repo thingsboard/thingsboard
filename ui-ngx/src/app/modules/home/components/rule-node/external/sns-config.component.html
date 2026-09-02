@@ -16,33 +16,41 @@
 
 -->
 <section [formGroup]="snsConfigForm" class="flex flex-col">
-  <mat-form-field class="mat-block" subscriptSizing="dynamic">
+  <mat-form-field class="mat-block" subscriptSizing="dynamic" appearance="outline">
     <mat-label translate>rule-node-config.topic-arn-pattern</mat-label>
     <input required matInput formControlName="topicArnPattern">
-    <mat-error *ngIf="snsConfigForm.get('topicArnPattern').hasError('required')">
-      {{ 'rule-node-config.topic-arn-pattern-required' | translate }}
-    </mat-error>
+    @if (snsConfigForm.get('topicArnPattern').hasError('required')) {
+      <mat-error>
+        {{ 'rule-node-config.topic-arn-pattern-required' | translate }}
+      </mat-error>
+    }
     <mat-hint translate>rule-node-config.general-pattern-hint</mat-hint>
   </mat-form-field>
-  <mat-form-field class="mat-block">
+  <mat-form-field class="mat-block" appearance="outline">
     <mat-label translate>rule-node-config.aws-access-key-id</mat-label>
     <input required matInput formControlName="accessKeyId">
-    <mat-error *ngIf="snsConfigForm.get('accessKeyId').hasError('required')">
-      {{ 'rule-node-config.aws-access-key-id-required' | translate }}
-    </mat-error>
+    @if (snsConfigForm.get('accessKeyId').hasError('required')) {
+      <mat-error>
+        {{ 'rule-node-config.aws-access-key-id-required' | translate }}
+      </mat-error>
+    }
   </mat-form-field>
-  <mat-form-field class="mat-block">
+  <mat-form-field class="mat-block" appearance="outline">
     <mat-label translate>rule-node-config.aws-secret-access-key</mat-label>
     <input required matInput formControlName="secretAccessKey">
-    <mat-error *ngIf="snsConfigForm.get('secretAccessKey').hasError('required')">
-      {{ 'rule-node-config.aws-secret-access-key-required' | translate }}
-    </mat-error>
+    @if (snsConfigForm.get('secretAccessKey').hasError('required')) {
+      <mat-error>
+        {{ 'rule-node-config.aws-secret-access-key-required' | translate }}
+      </mat-error>
+    }
   </mat-form-field>
-  <mat-form-field class="mat-block">
+  <mat-form-field class="mat-block" appearance="outline">
     <mat-label translate>rule-node-config.aws-region</mat-label>
     <input required matInput formControlName="region">
-    <mat-error *ngIf="snsConfigForm.get('region').hasError('required')">
-      {{ 'rule-node-config.aws-region-required' | translate }}
-    </mat-error>
+    @if (snsConfigForm.get('region').hasError('required')) {
+      <mat-error>
+        {{ 'rule-node-config.aws-region-required' | translate }}
+      </mat-error>
+    }
   </mat-form-field>
 </section>

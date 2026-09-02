@@ -30,6 +30,7 @@ import { InstallFormRendererComponent } from './device-install-dialog/install-fo
 import { TbIotHubSearchComponent } from './iot-hub-search.component';
 import { TbIotHubInstalledItemsTableComponent } from './iot-hub-installed-items-table.component';
 import { TbIotHubInstalledItemsDialogComponent } from './iot-hub-installed-items-dialog.component';
+import { TbIotHubSelectCfEntityDialogComponent } from './iot-hub-select-cf-entity-dialog.component';
 import { TbPeConnectivityMethodPromptComponent } from './pe-connectivity-method-prompt.component';
 import { TbIotHubPeRequiredDialogComponent } from './iot-hub-pe-required-dialog.component';
 import { TbIotHubUpgradeRequiredDialogComponent } from './iot-hub-upgrade-required-dialog.component';
@@ -52,6 +53,7 @@ import { IotHubItemLinkModule } from './iot-hub-item-link-card/iot-hub-item-link
     TbIotHubSearchComponent,
     TbIotHubInstalledItemsTableComponent,
     TbIotHubInstalledItemsDialogComponent,
+    TbIotHubSelectCfEntityDialogComponent,
     TbPeConnectivityMethodPromptComponent,
     TbIotHubMarkdownComponent,
     SolutionInstallDialogComponent,
@@ -80,6 +82,7 @@ import { IotHubItemLinkModule } from './iot-hub-item-link-card/iot-hub-item-link
     TbIotHubSearchComponent,
     TbIotHubInstalledItemsTableComponent,
     TbIotHubInstalledItemsDialogComponent,
+    TbIotHubSelectCfEntityDialogComponent,
     TbPeConnectivityMethodPromptComponent,
     TbIotHubMarkdownComponent,
     SolutionInstallDialogComponent,

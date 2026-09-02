@@ -23,6 +23,7 @@ import org.thingsboard.server.common.data.EntityType;
 import java.io.Serial;
 import java.util.UUID;
 
+@Schema(allOf = EntityId.class)
 public class JobId extends UUIDBased implements EntityId {
 
     @Serial
@@ -33,7 +34,7 @@ public class JobId extends UUIDBased implements EntityId {
         super(id);
     }
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "string", example = "JOB", allowableValues = "JOB")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, accessMode = Schema.AccessMode.READ_ONLY, description = "string", example = "JOB", allowableValues = "JOB")
     @Override
     public EntityType getEntityType() {
         return EntityType.JOB;

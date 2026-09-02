@@ -36,6 +36,8 @@ import { ImportExportService } from '@shared/import-export/import-export.service
 import { EntityDebugSettingsService } from '@home/components/entity/debug/entity-debug-settings.service';
 import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
 import { DatePipe } from '@angular/common';
+import { UtilsService } from "@core/services/utils.service";
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
     selector: 'tb-calculated-fields-table',
@@ -52,8 +54,11 @@ export class CalculatedFieldsTableComponent {
   active = input<boolean>();
   entityId = input<EntityId>();
   entityName = input<string>();
+  ownerId = input<EntityId>();
 
   calculatedFieldsTableConfig: CalculatedFieldsTableConfig;
+
+  pageMode: boolean = false;
 
   constructor(private calculatedFieldsService: CalculatedFieldsService,
               private translate: TranslateService,
@@ -64,11 +69,15 @@ export class CalculatedFieldsTableComponent {
               private renderer: Renderer2,
               private importExportService: ImportExportService,
               private entityDebugSettingsService: EntityDebugSettingsService,
-              private iotHubActions: IotHubActionsService,
-              private destroyRef: DestroyRef) {
-
+              private utilsService: UtilsService,
+              private destroyRef: DestroyRef,
+              private route: ActivatedRoute,
+              private router: Router,
+              private iotHubActions: IotHubActionsService
+  ) {
+    this.pageMode = !!this.route.snapshot.data.isPage;
     effect(() => {
-      if (this.active()) {
+      if (this.active() || this.pageMode) {
         this.calculatedFieldsTableConfig = new CalculatedFieldsTableConfig(
           this.calculatedFieldsService,
           this.translate,
@@ -79,9 +88,13 @@ export class CalculatedFieldsTableComponent {
           this.destroyRef,
           this.renderer,
           this.entityName(),
+          this.ownerId(),
           this.importExportService,
           this.entityDebugSettingsService,
+          this.utilsService,
+          this.router,
           this.iotHubActions,
+          this.pageMode,
         );
         this.cd.markForCheck();
       }

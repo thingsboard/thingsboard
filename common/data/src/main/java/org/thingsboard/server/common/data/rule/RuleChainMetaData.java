@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.rule;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.thingsboard.server.common.data.HasVersion;
@@ -47,6 +48,10 @@ public class RuleChainMetaData implements HasVersion {
 
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "List of JSON objects that represent connections between rule nodes and other rule chains.")
     private List<RuleChainConnectionInfo> ruleChainConnections;
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, description = "List of sticky notes placed on the rule chain canvas")
+    private List<RuleChainNote> notes;
 
     public void addConnectionInfo(int fromIndex, int toIndex, String type) {
         NodeConnectionInfo connectionInfo = new NodeConnectionInfo();

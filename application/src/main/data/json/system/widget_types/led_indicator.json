@@ -12,10 +12,9 @@
     "templateHtml": "<tb-led-indicator [ctx]='ctx'></tb-led-indicator>",
     "templateCss": "",
     "controllerScript": "self.onInit = function() {\n}\n\nself.onResize = function() {\n}\n\nself.onDestroy = function() {\n}\n",
-    "settingsSchema": "",
     "dataKeySettingsSchema": "{}\n",
     "settingsDirective": "tb-led-indicator-widget-settings",
-    "defaultConfig": "{\"targetDeviceAliases\":[],\"showTitle\":false,\"backgroundColor\":\"#e6e7e8\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"requestTimeout\":500,\"initialValue\":true,\"title\":\"Led indicator\",\"ledColor\":\"#4caf50\",\"valueAttribute\":\"value\",\"retrieveValueMethod\":\"attribute\",\"parseValueFunction\":\"return data ? true : false;\",\"performCheckStatus\":true,\"checkStatusMethod\":\"checkStatus\"},\"title\":\"Led indicator\",\"dropShadow\":true,\"enableFullscreen\":false,\"widgetStyle\":{},\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"useDashboardTimewindow\":true,\"showLegend\":false,\"actions\":{},\"decimals\":2}"
+    "defaultConfig": "{\"targetDeviceAliases\":[],\"showTitle\":false,\"backgroundColor\":\"#e6e7e8\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"requestTimeout\":500,\"initialValue\":true,\"title\":\"Led indicator\",\"ledColor\":\"#4caf50\",\"valueAttribute\":\"value\",\"retrieveValueMethod\":\"attribute\",\"parseValueFunction\":\"return data ? true : false;\",\"performCheckStatus\":true,\"checkStatusMethod\":\"checkStatus\"},\"title\":\"Led indicator\",\"dropShadow\":true,\"enableFullscreen\":false,\"widgetStyle\":{},\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"showLegend\":false,\"actions\":{},\"decimals\":2}"
   },
   "resources": [
     {

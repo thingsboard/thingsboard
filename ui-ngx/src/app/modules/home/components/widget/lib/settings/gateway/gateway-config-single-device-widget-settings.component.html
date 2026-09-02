@@ -16,10 +16,15 @@
 
 -->
 <section class="tb-widget-settings flex flex-col" [formGroup]="gatewayConfigSingleDeviceWidgetSettingsForm">
-  <mat-form-field class="mat-block flex-1">
-    <mat-label translate>widgets.gateway.gateway-title</mat-label>
-    <input matInput formControlName="gatewayTitle">
-  </mat-form-field>
+  <tb-string-pattern-autocomplete class="mat-block flex-1" 
+                                  brackets="curly" 
+                                  subscriptSizing="fixed"
+                                  predefinedValuesButton="true"
+                                  label="{{ 'widgets.gateway.gateway-title' | translate }}"
+                                  [predefinedValues]="predefinedValues"
+                                  placeholderText="{{ 'widget-config.set' | translate }}"
+                                  formControlName="gatewayTitle"
+  ></tb-string-pattern-autocomplete>
   <mat-slide-toggle formControlName="readOnly" class="slide-block">
     {{ 'widgets.gateway.read-only' | translate }}
   </mat-slide-toggle>

@@ -25,54 +25,70 @@
     </div>
   </div>
   <mat-divider></mat-divider>
-  <div *ngFor="let mappingConfig of mappingsConfigFormArray.controls; let $index = index;
-               last as isLast;"
-       [formGroup]="mappingConfig" class="mapping-list flex flex-row items-center justify-start gap-2">
-    <div class="tb-layout-fill flex flex-1 flex-row items-stretch justify-start gap-2">
-      <mat-form-field class="max-w-26% flex-full">
-        <mat-select formControlName="dataType" required>
-          <mat-option *ngFor="let dataType of dataTypes" [value]="dataType">
-            {{ dataTypesTranslationMap.get(dataType) | translate }}
-          </mat-option>
-        </mat-select>
-        <mat-error *ngIf="mappingConfig.get('dataType').hasError('required')">
-          {{ 'device-profile.snmp.data-type-required' | translate }}
-        </mat-error>
-      </mat-form-field>
-      <mat-form-field class="max-w-37% flex-full">
-        <input matInput formControlName="key" required/>
-        <mat-error *ngIf="mappingConfig.get('key').hasError('required')">
-          {{ 'device-profile.snmp.data-key-required' | translate }}
-        </mat-error>
-      </mat-form-field>
-      <mat-form-field class="max-w-37% flex-full">
-        <input matInput formControlName="oid" required/>
-        <mat-error *ngIf="mappingConfig.get('oid').hasError('required')">
-          {{ 'device-profile.snmp.oid-required' | translate }}
-        </mat-error>
-        <mat-error *ngIf="mappingConfig.get('oid').hasError('pattern')">
-          {{ 'device-profile.snmp.oid-pattern' | translate }}
-        </mat-error>
-      </mat-form-field>
-      <button *ngIf="!disabled"
-              mat-icon-button color="primary"
+  @for (mappingConfig of mappingsConfigFormArray.controls; track mappingConfig; let isLast = $last) {
+    <div [formGroup]="mappingConfig" class="mapping-list flex flex-row items-center justify-start gap-2">
+      <div class="tb-layout-fill flex flex-1 flex-row items-stretch justify-start gap-2">
+        <mat-form-field class="max-w-26% flex-full" appearance="outline">
+          <mat-select formControlName="dataType" required>
+            @for (dataType of dataTypes; track dataType) {
+              <mat-option [value]="dataType">
+                {{ dataTypesTranslationMap.get(dataType) | translate }}
+              </mat-option>
+            }
+          </mat-select>
+          @if (mappingConfig.get('dataType').hasError('required')) {
+            <mat-error>
+              {{ 'device-profile.snmp.data-type-required' | translate }}
+            </mat-error>
+          }
+        </mat-form-field>
+        <mat-form-field class="max-w-37% flex-full" appearance="outline">
+          <input matInput formControlName="key" required/>
+          @if (mappingConfig.get('key').hasError('required')) {
+            <mat-error>
+              {{ 'device-profile.snmp.data-key-required' | translate }}
+            </mat-error>
+          }
+        </mat-form-field>
+        <mat-form-field class="max-w-37% flex-full" appearance="outline">
+          <input matInput formControlName="oid" required/>
+          @if (mappingConfig.get('oid').hasError('required')) {
+            <mat-error>
+              {{ 'device-profile.snmp.oid-required' | translate }}
+            </mat-error>
+          }
+          @if (mappingConfig.get('oid').hasError('pattern')) {
+            <mat-error>
+              {{ 'device-profile.snmp.oid-pattern' | translate }}
+            </mat-error>
+          }
+        </mat-form-field>
+        @if (!disabled) {
+          <button
+            mat-icon-button color="primary"
+            type="button"
+            (click)="removeMappingConfig($index)"
+            matTooltip="{{ 'action.remove' | translate }}"
+            matTooltipPosition="above">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </div>
+    </div>
+  }
+  @if (!mappingsConfigFormArray.controls.length && !disabled) {
+    <div>
+      <span class="tb-prompt required required-text flex items-center justify-center" translate>device-profile.snmp.please-add-mapping-config</span>
+    </div>
+  }
+  @if (!disabled) {
+    <div>
+      <button mat-stroked-button color="primary"
               type="button"
-              (click)="removeMappingConfig($index)"
-              matTooltip="{{ 'action.remove' | translate }}"
-              matTooltipPosition="above">
-        <mat-icon>close</mat-icon>
+              (click)="addMappingConfig()">
+        <mat-icon class="button-icon">add_circle_outline</mat-icon>
+        {{ 'device-profile.snmp.add-mapping' | translate }}
       </button>
     </div>
-  </div>
-  <div *ngIf="!mappingsConfigFormArray.controls.length && !disabled">
-      <span class="tb-prompt required required-text flex items-center justify-center" translate>device-profile.snmp.please-add-mapping-config</span>
-  </div>
-  <div *ngIf="!disabled">
-    <button mat-stroked-button color="primary"
-            type="button"
-            (click)="addMappingConfig()">
-      <mat-icon class="button-icon">add_circle_outline</mat-icon>
-      {{ 'device-profile.snmp.add-mapping' | translate }}
-    </button>
-  </div>
+  }
 </div>

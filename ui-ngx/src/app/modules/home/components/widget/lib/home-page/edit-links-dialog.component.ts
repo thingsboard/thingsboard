@@ -73,10 +73,6 @@ export class EditLinksDialogComponent extends
     return this.editLinksFormGroup.get('links') as UntypedFormArray;
   }
 
-  trackByLink(index: number, linkControl: AbstractControl): any {
-    return linkControl;
-  }
-
   linkDrop(event: CdkDragDrop<string[]>) {
     const linksArray = this.editLinksFormGroup.get('links') as UntypedFormArray;
     const link = linksArray.at(event.previousIndex);

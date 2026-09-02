@@ -17,9 +17,10 @@ package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.servlet.http.HttpServletResponse;
@@ -35,9 +36,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.common.util.JacksonUtil;
@@ -64,6 +63,7 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -119,8 +119,8 @@ public class DashboardController extends BaseController {
                     "Used to adjust view of the dashboards according to the difference between browser and server time.")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/dashboard/serverTime")
-    @ApiResponse(responseCode = "200", description = "OK", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "1636023857137")))
-    public long getServerTime() throws ThingsboardException {
+    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(type = "integer", format = "int64", example = "1636023857137")))
+    public long getServerTime() {
         return System.currentTimeMillis();
     }
 
@@ -131,8 +131,8 @@ public class DashboardController extends BaseController {
                     "The actual value of the limit is configurable in the system configuration file.")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/dashboard/maxDatapointsLimit")
-    @ApiResponse(responseCode = "200", description = "OK", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "5000")))
-    public long getMaxDatapointsLimit() throws ThingsboardException {
+    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(type = "integer", format = "int64", example = "5000")))
+    public long getMaxDatapointsLimit() {
         return maxDatapointsLimit;
     }
 
@@ -151,14 +151,16 @@ public class DashboardController extends BaseController {
     @ApiOperation(value = "Get Dashboard (getDashboardById)",
             notes = "Get the dashboard based on 'dashboardId' parameter. " + DASHBOARD_DEFINITION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH
     )
+    @ApiResponse(responseCode = "200", description = "OK",
+            content = @Content(schema = @Schema(implementation = Dashboard.class)))
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/dashboard/{dashboardId}")
     public void getDashboardById(@Parameter(description = DASHBOARD_ID_PARAM_DESCRIPTION)
-                                      @PathVariable(DASHBOARD_ID) String strDashboardId,
-                                      @Parameter(description = INCLUDE_RESOURCES_DESCRIPTION)
-                                      @RequestParam(value = INCLUDE_RESOURCES, required = false) boolean includeResources,
-                                      @RequestHeader(name = HttpHeaders.ACCEPT_ENCODING, required = false) String acceptEncodingHeader,
-                                      HttpServletResponse response) throws Exception {
+                                 @PathVariable(DASHBOARD_ID) String strDashboardId,
+                                 @Parameter(description = INCLUDE_RESOURCES_DESCRIPTION)
+                                 @RequestParam(value = INCLUDE_RESOURCES, required = false) boolean includeResources,
+                                 @RequestHeader(name = HttpHeaders.ACCEPT_ENCODING, required = false) String acceptEncodingHeader,
+                                 HttpServletResponse response) throws Exception {
         checkParameter(DASHBOARD_ID, strDashboardId);
         DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
         Dashboard dashboard = checkDashboardId(dashboardId, Operation.READ);
@@ -176,12 +178,14 @@ public class DashboardController extends BaseController {
                     "Referencing non-existing dashboard Id will cause 'Not Found' error. " +
                     "Remove 'id', 'tenantId' and optionally 'customerId' from the request body example (below) to create new Dashboard entity. " +
                     TENANT_AUTHORITY_PARAGRAPH)
+    @ApiResponse(responseCode = "200", description = "OK",
+            content = @Content(schema = @Schema(implementation = Dashboard.class)))
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @PostMapping(value = "/dashboard")
     public void saveDashboard(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON value representing the dashboard.")
-                                   @RequestBody Dashboard dashboard,
-                                   @RequestHeader(name = HttpHeaders.ACCEPT_ENCODING, required = false) String acceptEncodingHeader,
-                                   HttpServletResponse response) throws Exception {
+                              @RequestBody Dashboard dashboard,
+                              @RequestHeader(name = HttpHeaders.ACCEPT_ENCODING, required = false) String acceptEncodingHeader,
+                              HttpServletResponse response) throws Exception {
         dashboard.setTenantId(getTenantId());
         checkEntity(dashboard.getId(), dashboard, Resource.DASHBOARD);
         var savedDashboard = tbDashboardService.save(dashboard, getCurrentUser());
@@ -301,8 +305,7 @@ public class DashboardController extends BaseController {
                     "[assign Device to Public Customer](#!/device-controller/assignDeviceToPublicCustomerUsingPOST) for this purpose. " +
                     "Returns the Dashboard object." + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/customer/public/dashboard/{dashboardId}", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/customer/public/dashboard/{dashboardId}")
     public Dashboard assignDashboardToPublicCustomer(
             @Parameter(description = DASHBOARD_ID_PARAM_DESCRIPTION)
             @PathVariable(DASHBOARD_ID) String strDashboardId) throws ThingsboardException {
@@ -316,8 +319,7 @@ public class DashboardController extends BaseController {
             notes = "Unassigns the dashboard from a special, auto-generated 'Public' Customer. Once unassigned, unauthenticated users may no longer browse the dashboard. " +
                     "Returns the Dashboard object." + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/customer/public/dashboard/{dashboardId}", method = RequestMethod.DELETE)
-    @ResponseBody
+    @DeleteMapping(value = "/customer/public/dashboard/{dashboardId}")
     public Dashboard unassignDashboardFromPublicCustomer(
             @Parameter(description = DASHBOARD_ID_PARAM_DESCRIPTION)
             @PathVariable(DASHBOARD_ID) String strDashboardId) throws ThingsboardException {
@@ -327,13 +329,12 @@ public class DashboardController extends BaseController {
         return tbDashboardService.unassignDashboardFromPublicCustomer(dashboard, getCurrentUser());
     }
 
-    @ApiOperation(value = "Get Tenant Dashboards by System Administrator (getTenantDashboards)",
+    @ApiOperation(value = "Get Tenant Dashboards by System Administrator (getTenantDashboardsByTenantId)",
             notes = "Returns a page of dashboard info objects owned by tenant. " + DASHBOARD_INFO_DEFINITION + " " + PAGE_DATA_PARAMETERS +
                     SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/tenant/{tenantId}/dashboards", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
-    public PageData<DashboardInfo> getTenantDashboards(
+    @GetMapping(value = "/tenant/{tenantId}/dashboards")
+    public PageData<DashboardInfo> getTenantDashboardsByTenantId(
             @Parameter(description = TENANT_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable(TENANT_ID) String strTenantId,
             @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
@@ -356,8 +357,7 @@ public class DashboardController extends BaseController {
             notes = "Returns a page of dashboard info objects owned by the tenant of a current user. "
                     + DASHBOARD_INFO_DEFINITION + " " + PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/dashboards", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/tenant/dashboards")
     public PageData<DashboardInfo> getTenantDashboards(
             @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
@@ -384,8 +384,7 @@ public class DashboardController extends BaseController {
             notes = "Returns a page of dashboard info objects owned by the specified customer. "
                     + DASHBOARD_INFO_DEFINITION + " " + PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/customer/{customerId}/dashboards", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/customer/{customerId}/dashboards")
     public PageData<DashboardInfo> getCustomerDashboards(
             @Parameter(description = CUSTOMER_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable(CUSTOMER_ID) String strCustomerId,
@@ -418,6 +417,8 @@ public class DashboardController extends BaseController {
                     "If 'homeDashboardId' parameter is not set on the User level and the User has authority 'CUSTOMER_USER', check the same parameter for the corresponding Customer. " +
                     "If 'homeDashboardId' parameter is not set on the User and Customer levels then checks the same parameter for the Tenant that owns the user. "
                     + DASHBOARD_DEFINITION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @ApiResponse(responseCode = "200", description = "OK",
+            content = @Content(schema = @Schema(implementation = HomeDashboard.class)))
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/dashboard/home")
     public void getHomeDashboard(@RequestHeader(name = HttpHeaders.ACCEPT_ENCODING, required = false) String acceptEncodingHeader,
@@ -454,8 +455,7 @@ public class DashboardController extends BaseController {
                     "If 'homeDashboardId' parameter is not set on the User and Customer levels then checks the same parameter for the Tenant that owns the user. " +
                     TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/dashboard/home/info", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/dashboard/home/info")
     public HomeDashboardInfo getHomeDashboardInfo() throws ThingsboardException {
         SecurityUser securityUser = getCurrentUser();
         if (securityUser.isSystemAdmin()) {
@@ -470,8 +470,7 @@ public class DashboardController extends BaseController {
             notes = "Returns the home dashboard info object that is configured as 'homeDashboardId' parameter in the 'additionalInfo' of the corresponding tenant. " +
                     TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/dashboard/home/info", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/tenant/dashboard/home/info")
     public HomeDashboardInfo getTenantHomeDashboardInfo() throws ThingsboardException {
         Tenant tenant = tenantService.findTenantById(getTenantId());
         JsonNode additionalInfo = tenant.getAdditionalInfo();
@@ -491,7 +490,7 @@ public class DashboardController extends BaseController {
             notes = "Update the home dashboard assignment for the current tenant. " +
                     TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/dashboard/home/info", method = RequestMethod.POST)
+    @PostMapping(value = "/tenant/dashboard/home/info")
     @ResponseStatus(value = HttpStatus.OK)
     public void setTenantHomeDashboardInfo(
             @Parameter(description = "A JSON object that represents home dashboard id and other parameters", required = true)
@@ -540,8 +539,7 @@ public class DashboardController extends BaseController {
                     "Third, once dashboard will be delivered to edge service, it's going to be available for usage on remote edge instance." +
                     TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/edge/{edgeId}/dashboard/{dashboardId}", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/edge/{edgeId}/dashboard/{dashboardId}")
     public Dashboard assignDashboardToEdge(@PathVariable("edgeId") String strEdgeId,
                                            @PathVariable(DASHBOARD_ID) String strDashboardId) throws ThingsboardException {
         checkParameter("edgeId", strEdgeId);
@@ -563,8 +561,7 @@ public class DashboardController extends BaseController {
                     "Third, once 'unassign' command will be delivered to edge service, it's going to remove dashboard locally." +
                     TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/edge/{edgeId}/dashboard/{dashboardId}", method = RequestMethod.DELETE)
-    @ResponseBody
+    @DeleteMapping(value = "/edge/{edgeId}/dashboard/{dashboardId}")
     public Dashboard unassignDashboardFromEdge(@PathVariable("edgeId") String strEdgeId,
                                                @PathVariable(DASHBOARD_ID) String strDashboardId) throws ThingsboardException {
         checkParameter(EDGE_ID, strEdgeId);
@@ -583,8 +580,7 @@ public class DashboardController extends BaseController {
             notes = "Returns a page of dashboard info objects assigned to the specified edge. "
                     + DASHBOARD_INFO_DEFINITION + " " + PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/edge/{edgeId}/dashboards", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/edge/{edgeId}/dashboards")
     public PageData<DashboardInfo> getEdgeDashboards(
             @Parameter(description = EDGE_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable(EDGE_ID) String strEdgeId,
@@ -604,19 +600,35 @@ public class DashboardController extends BaseController {
         checkEdgeId(edgeId, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         PageData<DashboardInfo> nonFilteredResult = dashboardService.findDashboardsByTenantIdAndEdgeId(tenantId, edgeId, pageLink);
-        List<DashboardInfo> filteredDashboards = nonFilteredResult.getData().stream().filter(dashboardInfo -> {
-            try {
-                accessControlService.checkPermission(getCurrentUser(), Resource.DASHBOARD, Operation.READ, dashboardInfo.getId(), dashboardInfo);
-                return true;
-            } catch (ThingsboardException e) {
-                return false;
-            }
-        }).collect(Collectors.toList());
+        List<DashboardInfo> filteredDashboards = filterDashboardsByReadPermission(nonFilteredResult.getData());
         PageData<DashboardInfo> filteredResult = new PageData<>(filteredDashboards,
                 nonFilteredResult.getTotalPages(),
                 nonFilteredResult.getTotalElements(),
                 nonFilteredResult.hasNext());
         return checkNotNull(filteredResult);
+    }
+
+    @Hidden
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @GetMapping(value = "/dashboards", params = {"dashboardIds"})
+    public List<DashboardInfo> getDashboardsByIdsV1(@RequestParam("dashboardIds") Set<UUID> dashboardUUIDs) throws ThingsboardException {
+        TenantId tenantId = getCurrentUser().getTenantId();
+        List<DashboardId> dashboardIds = new ArrayList<>();
+        for (UUID dashboardUUID : dashboardUUIDs) {
+            dashboardIds.add(new DashboardId(dashboardUUID));
+        }
+        List<DashboardInfo> dashboards = dashboardService.findDashboardInfoByIds(tenantId, dashboardIds);
+        return filterDashboardsByReadPermission(dashboards);
+    }
+
+    @ApiOperation(value = "Get dashboards by Dashboard Ids (getDashboardsByIds)",
+            notes = "Returns a list of DashboardInfo objects based on the provided ids. " +
+                    TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @GetMapping(value = "/dashboards/list")
+    public List<DashboardInfo> getDashboardsByIds(@Parameter(description = "A list of dashboard ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
+                                                  @RequestParam("dashboardIds") Set<UUID> dashboardUUIDs) throws ThingsboardException {
+        return getDashboardsByIdsV1(dashboardUUIDs);
     }
 
     private Set<CustomerId> customerIdFromStr(String[] strCustomerIds) {
@@ -627,6 +639,16 @@ public class DashboardController extends BaseController {
             }
         }
         return customerIds;
+    }
+
+    private List<DashboardInfo> filterDashboardsByReadPermission(List<DashboardInfo> dashboards) {
+        return dashboards.stream().filter(dashboard -> {
+            try {
+                return accessControlService.hasPermission(getCurrentUser(), Resource.DASHBOARD, Operation.READ, dashboard.getId(), dashboard);
+            } catch (ThingsboardException e) {
+                return false;
+            }
+        }).collect(Collectors.toList());
     }
 
 }

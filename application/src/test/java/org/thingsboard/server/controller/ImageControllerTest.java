@@ -189,7 +189,7 @@ public class ImageControllerTest extends AbstractControllerTest {
         assertThat(newImageInfo.getTitle()).isEqualTo(newTitle);
         assertThat(newImageInfo.getDescriptor(ImageDescriptor.class)).isEqualTo(imageDescriptor);
         assertThat(newImageInfo.getResourceKey()).isEqualTo(imageInfo.getResourceKey());
-        assertThat(newImageInfo.getPublicResourceKey()).isEqualTo(newImageInfo.getPublicResourceKey());
+        assertThat(newImageInfo.getPublicResourceKey()).isEqualTo(imageInfo.getPublicResourceKey());
     }
 
     @Test

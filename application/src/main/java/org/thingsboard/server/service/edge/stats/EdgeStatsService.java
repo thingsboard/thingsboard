@@ -54,7 +54,7 @@ import static org.thingsboard.server.dao.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_P
 import static org.thingsboard.server.dao.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_TMP_FAILED;
 
 @TbCoreComponent
-@ConditionalOnProperty(prefix = "edges.stats", name = "enabled", havingValue = "true", matchIfMissing = false)
+@ConditionalOnProperty(prefix = "edges.stats", name = "enabled", havingValue = "true")
 @RequiredArgsConstructor
 @Service
 @Slf4j
@@ -70,7 +70,6 @@ public class EdgeStatsService {
     @Value("${edges.stats.report-interval-millis:600000}")
     private long reportIntervalMillis;
 
-
     @Scheduled(
             fixedDelayString = "${edges.stats.report-interval-millis:600000}",
             initialDelayString = "${edges.stats.report-interval-millis:600000}"
@@ -80,13 +79,13 @@ public class EdgeStatsService {
         long now = System.currentTimeMillis();
         long ts = now - (now % reportIntervalMillis);
 
-        Map<EdgeId, MsgCounters> countersByEdge = statsCounterService.getCounterByEdge();
-        Map<EdgeId, Long> lagByEdgeId = kafkaAdmin.isPresent() ? getEdgeLagByEdgeId(countersByEdge) : Collections.emptyMap();
-        Map<EdgeId, MsgCounters> countersByEdgeSnapshot = new HashMap<>(statsCounterService.getCounterByEdge());
+        Map<EdgeId, MsgCounters> countersByEdgeSnapshot = new HashMap<>(statsCounterService.getMsgCountersByEdge());
+        boolean isKafkaStats = kafkaAdmin.isPresent();
+        Map<EdgeId, Long> lagByEdgeId = isKafkaStats ? getLagByEdgeId(countersByEdgeSnapshot) : Collections.emptyMap();
         countersByEdgeSnapshot.forEach((edgeId, counters) -> {
             TenantId tenantId = counters.getTenantId();
 
-            if (kafkaAdmin.isPresent()) {
+            if (isKafkaStats) {
                 counters.getMsgsLag().set(lagByEdgeId.getOrDefault(edgeId, 0L));
             }
             List<TsKvEntry> statsEntries = List.of(
@@ -102,7 +101,7 @@ public class EdgeStatsService {
         });
     }
 
-    private Map<EdgeId, Long> getEdgeLagByEdgeId(Map<EdgeId, MsgCounters> countersByEdge) {
+    private Map<EdgeId, Long> getLagByEdgeId(Map<EdgeId, MsgCounters> countersByEdge) {
         Map<EdgeId, String> edgeToTopicMap = countersByEdge.entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,

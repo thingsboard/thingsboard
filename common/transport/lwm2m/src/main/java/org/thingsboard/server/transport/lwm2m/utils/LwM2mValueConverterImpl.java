@@ -22,6 +22,7 @@ import org.eclipse.leshan.core.node.ObjectLink;
 import org.eclipse.leshan.core.node.codec.CodecException;
 import org.eclipse.leshan.core.node.codec.LwM2mValueConverter;
 import org.eclipse.leshan.core.util.Hex;
+import org.eclipse.leshan.core.util.datatype.ULong;
 import org.thingsboard.server.common.data.StringUtils;
 
 import java.math.BigInteger;
@@ -33,6 +34,7 @@ import java.util.Date;
 
 import static org.eclipse.leshan.core.model.ResourceModel.Type.NONE;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.OPAQUE;
+import static org.eclipse.leshan.core.model.ResourceModel.Type.TIME;
 
 @Slf4j
 public class LwM2mValueConverterImpl implements LwM2mValueConverter {
@@ -58,7 +60,7 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
             currentType = OPAQUE;
         }
 
-        if (currentType == expectedType || currentType == NONE) {
+        if (currentType == expectedType || currentType == NONE || currentType == TIME) {
             /** expected type */
             return value;
         }
@@ -72,6 +74,7 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
                         if ((double) value == longValue.doubleValue()) {
                             return longValue;
                         }
+                        break;
                     case STRING:
                         log.debug("Trying to convert String value [{}] to Integer", value);
                         return Long.parseLong((String) value);
@@ -79,6 +82,28 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
                         break;
                 }
                 break;
+            case UNSIGNED_INTEGER:
+                    switch (currentType) {
+                        case INTEGER:
+                            if (value instanceof Integer) {
+                                log.debug("Trying to convert Integer value [{}] to Unsigned Integer", value);
+                                return ULong.valueOf(Integer.toUnsignedLong((Integer) value));
+                            } else if (value instanceof Long) {
+                                log.debug("Trying to convert Long value [{}] to Unsigned Integer", value);
+                                return ULong.valueOf((Long) value);
+                            } else if (value instanceof BigInteger) {
+                                log.debug("Trying to convert Biginteger value [{}] to Unsigned Integer", value);
+                                return ULong.valueOf((BigInteger) value);
+                            }
+                            throw new IllegalArgumentException("Trying to convert value [" + value + "] to Unsigned Integer. Unsupported value type: " + value.getClass());
+                        case FLOAT:
+                            log.debug("Trying to convert float value [{}] to Unsigned Integer", value);
+                            return ULong.valueOf(((Float) value).longValue());
+                        case STRING:
+                            log.debug("Trying to convert string value [{}] to Unsigned Integer", value);
+                            return ULong.valueOf((String) value);
+                    }
+                    break;
             case FLOAT:
                 switch (currentType) {
                     case INTEGER:
@@ -135,7 +160,7 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
                              **/
                         } catch (IllegalArgumentException e) {
                             log.debug("Unable to convert string to date", e);
-                            throw new CodecException("Unable to convert string (%s) to date for resource %s", value,
+                            throw new CodecException("Unable to convert string (%s) to %s for resource %s", value, TIME.name(),
                                     resourcePath);
                         }
                     default:
@@ -149,7 +174,7 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
                     case FLOAT:
                         return String.valueOf(value);
                     case TIME:
-                        String DATE_FORMAT = "MMM d, yyyy HH:mm a";
+                        String DATE_FORMAT = "yyyy-MM-dd[[ ]['T']HH:mm[:ss[.SSS]][ ][XXX][Z][z][VV][O]]";
                         Long timeValue;
                         try {
                             timeValue = ((Date) value).getTime();

@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.query;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -33,6 +34,7 @@ import java.util.List;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @ToString
+@Schema
 public class AlarmCountQuery extends EntityCountQuery {
     private long startTs;
     private long endTs;
@@ -49,6 +51,10 @@ public class AlarmCountQuery extends EntityCountQuery {
 
     public AlarmCountQuery(EntityFilter entityFilter, List<KeyFilter> keyFilters) {
         super(entityFilter, keyFilters);
+    }
+
+    public AlarmCountQuery(EntityFilter entityFilter, List<KeyFilter> keyFilters, ComplexOperation keyFiltersOperation) {
+        super(entityFilter, keyFilters, keyFiltersOperation);
     }
 
 }

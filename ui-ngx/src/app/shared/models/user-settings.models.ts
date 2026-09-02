@@ -16,6 +16,7 @@
 
 export interface UserSettings {
   openedMenuSections?: string[];
+  menuCollapsed?: boolean;
   notDisplayConnectivityAfterAddDevice?: boolean;
   notDisplayInstructionsAfterAddEdge?: boolean;
   notDisplayConfigurationAfterAddMobileBundle?: boolean;

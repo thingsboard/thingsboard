@@ -37,15 +37,7 @@ import { DataKey, WidgetActionDescriptor, WidgetConfig } from '@shared/models/wi
 import { IWidgetSubscription } from '@core/api/widget-api.models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
-import {
-  deepClone,
-  hashCode,
-  isDefined,
-  isDefinedAndNotNull,
-  isNotEmptyStr,
-  isObject,
-  isUndefined
-} from '@core/utils';
+import { deepClone, hashCode, isDefined, isDefinedAndNotNull, isNotEmptyStr, isObject, isUndefined } from '@core/utils';
 import cssjs from '@core/css/css';
 import { SortColumnType, sortItems } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
@@ -452,7 +444,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     if (this.subscription.alarmSource) {
       this.subscription.alarmSource.dataKeys.forEach((alarmDataKey) => {
         const dataKey: EntityColumn = deepClone(alarmDataKey) as EntityColumn;
-        const keySettings: TableWidgetDataKeySettings = dataKey.settings;
+        const keySettings: TableWidgetDataKeySettings = dataKey.settings ?? {};
         dataKey.entityKey = dataKeyToEntityKey(alarmDataKey);
         dataKey.label = this.utils.customTranslation(dataKey.label, dataKey.label);
         dataKey.title = getHeaderTitle(dataKey, keySettings, this.utils);
@@ -740,16 +732,8 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     this.ctx.detectChanges();
   }
 
-  public trackByColumnDef(index, column: EntityColumn) {
-    return column.def;
-  }
-
   public trackByAlarmId(index: number, alarm: AlarmData) {
     return alarm.id.id;
-  }
-
-  public trackByActionCellDescriptionId(index: number, action: WidgetActionDescriptor) {
-    return action.id;
   }
 
   public headerStyle(key: EntityColumn): any {
@@ -866,6 +850,9 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
               content = this.defaultContent(key, contentInfo, value);
             }
             if (isDefined(content)) {
+              if (typeof content === 'object') {
+                content = JSON.stringify(content);
+              }
               content = this.utils.customTranslation(content, content);
               switch (typeof content) {
                 case 'string':
@@ -979,7 +966,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
       (AlarmDetailsDialogComponent,
         {
           disableClose: true,
-          panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+          panelClass: ['tb-dialog', 'tb-fullscreen-dialog', this.ctx.stateController.dashboardCtrl.dashboardCtx.dashboardCssClass, this.ctx.widgetCssClass],
           data: {
             alarmId: alarm.id.id,
             allowAcknowledgment: this.allowAcknowledgment,

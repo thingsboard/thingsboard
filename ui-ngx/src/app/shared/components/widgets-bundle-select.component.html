@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<mat-form-field class="mat-block">
+<mat-form-field class="mat-block" [appearance]="appearance">
   <mat-select [required]="required"
               [disabled]="disabled"
               [(ngModel)]="widgetsBundle"
@@ -27,20 +27,29 @@
     <mat-select-trigger>
       <div class="tb-bundle-item">
         <span>{{widgetsBundle?.title}}</span>
-        <span translate class="tb-bundle-system" *ngIf="isSystem(widgetsBundle)">widgets-bundle.system</span>
+        @if (isSystem(widgetsBundle)) {
+          <span translate class="tb-bundle-system">widgets-bundle.system</span>
+        }
       </div>
     </mat-select-trigger>
-    <mat-option *ngIf="createNew; else empty" [value]="null" (click)="openWidgetsBundleDialog($event)">
-      <a translate>widgets-bundle.create-new</a>
-    </mat-option>
-    <ng-template #empty>
-      <mat-option [value]="null" *ngIf="!required"></mat-option>
-    </ng-template>
-    <mat-option *ngFor="let widgetsBundle of widgetsBundles$ | async" [value]="widgetsBundle">
-      <div class="tb-bundle-item">
-        <span>{{widgetsBundle.title}}</span>
-        <span translate class="tb-bundle-system" *ngIf="isSystem(widgetsBundle)">widgets-bundle.system</span>
-      </div>
-    </mat-option>
+    @if (createNew) {
+      <mat-option [value]="null" (click)="openWidgetsBundleDialog($event)">
+        <a translate>widgets-bundle.create-new</a>
+      </mat-option>
+    } @else {
+      @if (!required) {
+        <mat-option [value]="null"></mat-option>
+      }
+    }
+    @for (widgetsBundle of widgetsBundles$ | async; track widgetsBundle) {
+      <mat-option [value]="widgetsBundle">
+        <div class="tb-bundle-item">
+          <span>{{widgetsBundle.title}}</span>
+          @if (isSystem(widgetsBundle)) {
+            <span translate class="tb-bundle-system">widgets-bundle.system</span>
+          }
+        </div>
+      </mat-option>
+    }
   </mat-select>
 </mat-form-field>

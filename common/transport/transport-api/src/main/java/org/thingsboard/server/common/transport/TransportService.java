@@ -158,6 +158,6 @@ public interface TransportService {
 
     boolean hasSession(SessionInfoProto sessionInfo);
 
-    void createGaugeStats(String openConnections, AtomicInteger connectionsCounter);
+    void createGaugeStats(String statsName, AtomicInteger number, String... tags);
 
 }

@@ -44,7 +44,7 @@ import { MarkerDataProcessor } from '@home/components/widget/lib/maps/data-layer
 
 type TripRouteData = {[time: number]: FormattedData<TbMapDatasource>};
 
-interface PointItem {
+export interface PointItem {
   point: L.CircleMarker;
   tooltip?: L.Popup;
 }

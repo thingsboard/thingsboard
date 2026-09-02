@@ -17,35 +17,45 @@
 -->
 <mat-form-field [formGroup]="selectTimezoneFormGroup" class="mat-block flex flex-1"
                 [subscriptSizing]="subscriptSizing" [appearance]="appearance">
-  <mat-label *ngIf="displayLabel" translate>timezone.timezone</mat-label>
+  @if (displayLabel) {
+    <mat-label translate>timezone.timezone</mat-label>
+  }
   <input matInput type="text" placeholder="{{ 'timezone.select-timezone' | translate }}"
          #timezoneInput
          formControlName="timezone"
          (focusin)="onFocus()"
          [required]="required"
          [matAutocomplete]="timezoneAutocomplete">
-  <button *ngIf="selectTimezoneFormGroup.get('timezone').value && !disabled"
-          type="button" style="margin-right: 1px"
-          matSuffix mat-icon-button aria-label="Clear"
-          (mousedown)="ignoreClosePanel = true"
-          (click)="clear()">
-    <mat-icon class="material-icons">close</mat-icon>
-  </button>
+  @if (selectTimezoneFormGroup.get('timezone').value && !disabled) {
+    <button
+      type="button" style="margin-right: 1px"
+      matSuffix mat-icon-button aria-label="Clear"
+      (mousedown)="ignoreClosePanel = true"
+      (click)="clear()">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  }
   <mat-autocomplete class="tb-autocomplete"
                     #timezoneAutocomplete="matAutocomplete"
                     (closed)="onPanelClosed()"
                     (optionSelected)="ignoreClosePanel = true"
                     [displayWith]="displayTimezoneFn">
-    <mat-option *ngFor="let timezone of filteredTimezones | async" [value]="timezone">
-      <span [innerHTML]="displayTimezoneFn(timezone) | highlight:searchText"></span>
-    </mat-option>
-    <mat-option *ngIf="!(filteredTimezones | async)?.length" [value]="null">
-      <span>
+    @for (timezone of filteredTimezones | async; track timezone) {
+      <mat-option [value]="timezone">
+        <span [innerHTML]="displayTimezoneFn(timezone) | highlight:searchText"></span>
+      </mat-option>
+    }
+    @if (!(filteredTimezones | async)?.length) {
+      <mat-option [value]="null">
+        <span>
           {{ translate.get('timezone.no-timezones-matching', {timezone: searchText}) | async }}
-      </span>
-    </mat-option>
+        </span>
+      </mat-option>
+    }
   </mat-autocomplete>
-  <mat-error *ngIf="selectTimezoneFormGroup.get('timezone').hasError('required')">
-    {{ 'timezone.timezone-required' | translate }}
-  </mat-error>
+  @if (selectTimezoneFormGroup.get('timezone').hasError('required')) {
+    <mat-error>
+      {{ 'timezone.timezone-required' | translate }}
+    </mat-error>
+  }
 </mat-form-field>

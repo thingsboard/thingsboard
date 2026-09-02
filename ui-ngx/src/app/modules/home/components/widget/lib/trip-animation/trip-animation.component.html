@@ -16,32 +16,40 @@
 
 -->
 <div class="trip-animation-widget">
-    <div class="trip-animation-label-container" *ngIf="settings.showLabel" [innerHTML]="label"></div>
-    <div class="trip-animation-container flex flex-col">
-        <div class="map" #map></div>
-        <div class="trip-animation-info-panel flex flex-row">
-            <button class="tooltip-button" mat-mini-fab color="primary" aria-label="tooltip"
-                *ngIf="settings.showTooltip" (click)="visibleTooltip = !visibleTooltip">
-                <mat-icon>info_outline</mat-icon>
-            </button>
-        </div>
-        <div class="trip-animation-tooltip md-whiteframe-z4 flex flex-col"
-             [class.trip-animation-tooltip-hidden]="!visibleTooltip"
-             [style.background-color]="settings.tooltipColor"
-             [style.opacity]="settings.tooltipOpacity"
-             [style.color]="settings.tooltipFontColor">
-          <div *ngFor="let mainTooltip of mainTooltips"
-               [innerHTML]="mainTooltip"
-               style="padding: 10px 0">
-          </div>
-        </div>
+  @if (settings.showLabel) {
+    <div class="trip-animation-label-container" [innerHTML]="label"></div>
+  }
+  <div class="trip-animation-container flex flex-col">
+    <div class="map" #map></div>
+    <div class="trip-animation-info-panel flex flex-row">
+      @if (settings.showTooltip) {
+        <button class="tooltip-button" mat-mini-fab color="primary" aria-label="tooltip"
+                (click)="visibleTooltip = !visibleTooltip">
+          <mat-icon>info_outline</mat-icon>
+        </button>
+      }
     </div>
-  <tb-history-selector *ngIf="historicalData"
-                       [settings]="settings"
-                       [minTime]="minTime"
-                       [maxTime]="maxTime"
-                       [step]="normalizationStep"
-                       [anchors]="anchors"
-                       [useAnchors]="useAnchors"
-                       (timeUpdated)="timeUpdated($event)"></tb-history-selector>
+    <div class="trip-animation-tooltip md-whiteframe-z4 flex flex-col"
+         [class.trip-animation-tooltip-hidden]="!visibleTooltip"
+         [style.background-color]="settings.tooltipColor"
+         [style.opacity]="settings.tooltipOpacity"
+         [style.color]="settings.tooltipFontColor">
+      @for (mainTooltip of mainTooltips; track mainTooltip) {
+        <div
+          [innerHTML]="mainTooltip"
+          style="padding: 10px 0">
+        </div>
+      }
+    </div>
+  </div>
+  @if (historicalData) {
+    <tb-history-selector
+      [settings]="settings"
+      [minTime]="minTime"
+      [maxTime]="maxTime"
+      [step]="normalizationStep"
+      [anchors]="anchors"
+      [useAnchors]="useAnchors"
+    (timeUpdated)="timeUpdated($event)"></tb-history-selector>
+  }
 </div>

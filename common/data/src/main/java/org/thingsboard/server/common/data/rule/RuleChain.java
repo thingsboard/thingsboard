@@ -41,7 +41,7 @@ public class RuleChain extends BaseDataWithAdditionalInfo<RuleChainId> implement
 
     private static final long serialVersionUID = -5656679015121935465L;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "JSON object with Tenant Id.", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(description = "JSON object with Tenant Id.", accessMode = Schema.AccessMode.READ_ONLY)
     private TenantId tenantId;
     @NoXss
     @Length(fieldName = "name")

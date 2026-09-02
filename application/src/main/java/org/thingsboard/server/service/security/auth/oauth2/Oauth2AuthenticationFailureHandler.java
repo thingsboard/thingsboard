@@ -54,11 +54,8 @@ public class Oauth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
             throws IOException, ServletException {
         String baseUrl;
         String errorPrefix;
-        String callbackUrlScheme = null;
         OAuth2AuthorizationRequest authorizationRequest = httpCookieOAuth2AuthorizationRequestRepository.loadAuthorizationRequest(request);
-        if (authorizationRequest != null) {
-            callbackUrlScheme = authorizationRequest.getAttribute(TbOAuth2ParameterNames.CALLBACK_URL_SCHEME);
-        }
+        String callbackUrlScheme = CallbackUrlSchemeValidator.getCallbackUrlScheme(authorizationRequest);
         if (!StringUtils.isEmpty(callbackUrlScheme)) {
             baseUrl = callbackUrlScheme + ":";
             errorPrefix = "/?error=";

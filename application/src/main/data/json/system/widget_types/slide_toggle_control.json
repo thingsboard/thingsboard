@@ -12,10 +12,9 @@
     "templateHtml": "<tb-switch [ctx]='ctx' switchType='slide-toggle'></tb-switch>",
     "templateCss": "",
     "controllerScript": "self.onInit = function() {\n}\n\nself.onResize = function() {\n}\n\nself.onDestroy = function() {\n}\n",
-    "settingsSchema": "",
     "dataKeySettingsSchema": "{}\n",
     "settingsDirective": "tb-slide-toggle-widget-settings",
-    "defaultConfig": "{\"targetDeviceAliases\":[],\"showTitle\":false,\"backgroundColor\":\"#ffffff\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"requestTimeout\":500,\"initialValue\":false,\"getValueMethod\":\"getValue\",\"setValueMethod\":\"setValue\",\"title\":\"Slide toggle control\",\"retrieveValueMethod\":\"rpc\",\"valueKey\":\"value\",\"parseValueFunction\":\"return data ? true : false;\",\"convertValueFunction\":\"return value;\",\"requestPersistent\":false,\"labelPosition\":\"after\",\"sliderColor\":\"accent\"},\"title\":\"Slide Toggle Control\",\"dropShadow\":true,\"enableFullscreen\":false,\"widgetStyle\":{},\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"useDashboardTimewindow\":true,\"showLegend\":false,\"actions\":{},\"decimals\":2,\"widgetCss\":\"\",\"noDataDisplayMessage\":\"\"}"
+    "defaultConfig": "{\"targetDeviceAliases\":[],\"showTitle\":false,\"backgroundColor\":\"#ffffff\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"requestTimeout\":500,\"initialValue\":false,\"getValueMethod\":\"getValue\",\"setValueMethod\":\"setValue\",\"title\":\"Slide toggle control\",\"retrieveValueMethod\":\"rpc\",\"valueKey\":\"value\",\"parseValueFunction\":\"return data ? true : false;\",\"convertValueFunction\":\"return value;\",\"requestPersistent\":false,\"labelPosition\":\"after\",\"sliderColor\":\"accent\"},\"title\":\"Slide Toggle Control\",\"dropShadow\":true,\"enableFullscreen\":false,\"widgetStyle\":{},\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"showLegend\":false,\"actions\":{},\"decimals\":2,\"widgetCss\":\"\",\"noDataDisplayMessage\":\"\"}"
   },
   "tags": [
     "command",

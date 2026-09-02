@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -113,13 +114,13 @@ public class EventController extends BaseController {
     @Autowired
     private EventService eventService;
 
-    @ApiOperation(value = "Get Events by type (getEvents)",
+    @ApiOperation(value = "Get Events by type (getEventsByType)",
             notes = "Returns a page of events for specified entity by specifying event type. " +
                     PAGE_DATA_PARAMETERS)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/events/{entityType}/{entityId}/{eventType}", method = RequestMethod.GET)
     @ResponseBody
-    public PageData<EventInfo> getEvents(
+    public PageData<EventInfo> getEventsByType(
             @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
             @PathVariable(ENTITY_TYPE) String strEntityType,
             @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true)
@@ -152,16 +153,12 @@ public class EventController extends BaseController {
         return checkNotNull(eventService.findEvents(tenantId, entityId, resolveEventType(eventType), pageLink));
     }
 
-    @ApiOperation(value = "Get Events (Deprecated)",
-            notes = "Returns a page of events for specified entity. Deprecated and will be removed in next minor release. " +
-                    "The call was deprecated to improve the performance of the system. " +
-                    "Current implementation will return 'Lifecycle' events only. " +
-                    "Use 'Get events by type' or 'Get events by filter' instead. " +
-                    PAGE_DATA_PARAMETERS)
+
+    @Hidden
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/events/{entityType}/{entityId}", method = RequestMethod.GET)
     @ResponseBody
-    public PageData<EventInfo> getEvents(
+    public PageData<EventInfo> getEventsDeprecated(
             @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
             @PathVariable(ENTITY_TYPE) String strEntityType,
             @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true)
@@ -194,14 +191,14 @@ public class EventController extends BaseController {
         return checkNotNull(eventService.findEvents(tenantId, entityId, EventType.LC_EVENT, pageLink));
     }
 
-    @ApiOperation(value = "Get Events by event filter (getEvents)",
+    @ApiOperation(value = "Get Events by event filter (getEventsByFilter)",
             notes = "Returns a page of events for the chosen entity by specifying the event filter. " +
                     PAGE_DATA_PARAMETERS + NEW_LINE +
                     EVENT_FILTER_DEFINITION)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/events/{entityType}/{entityId}", method = RequestMethod.POST)
     @ResponseBody
-    public PageData<EventInfo> getEvents(
+    public PageData<EventInfo> getEventsByFilter(
             @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
             @PathVariable(ENTITY_TYPE) String strEntityType,
             @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true)

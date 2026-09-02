@@ -21,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.edqs.fields.AssetFields;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.dao.ExportableEntityRepository;
@@ -99,6 +100,10 @@ public interface AssetRepository extends JpaRepository<AssetEntity, UUID>, Expor
     List<AssetEntity> findByTenantIdAndCustomerIdAndIdIn(UUID tenantId, UUID customerId, List<UUID> assetIds);
 
     AssetEntity findByTenantIdAndName(UUID tenantId, String name);
+
+    @Query("SELECT new org.thingsboard.server.common.data.EntityInfo(a.id, 'ASSET', a.name) " +
+            "FROM AssetEntity a WHERE a.tenantId = :tenantId AND a.name LIKE CONCAT(:prefix, '%')")
+    List<EntityInfo> findEntityInfosByNamePrefix(UUID tenantId, String prefix);
 
     @Query("SELECT a FROM AssetEntity a WHERE a.tenantId = :tenantId " +
             "AND a.type = :type " +

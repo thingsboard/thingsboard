@@ -53,8 +53,16 @@ export class EntityTypeSelectComponent implements ControlValueAccessor, OnInit, 
   @coerceBoolean()
   showLabel: boolean;
 
+  private labelValue = this.translate.instant('entity.type');
+
+  get label(): string {
+    return this.labelValue;
+  }
+
   @Input()
-  label = this.translate.instant('entity.type');
+  set label(value: string) {
+    this.labelValue = value ?? this.translate.instant('entity.type');
+  }
 
   @Input()
   @coerceBoolean()
@@ -165,13 +173,17 @@ export class EntityTypeSelectComponent implements ControlValueAccessor, OnInit, 
     }
   }
 
-  displayEntityTypeFn(entityType?: EntityType | AliasEntityType | null): string | undefined {
-    if (this.additionEntityTypes[entityType]) {
-      return this.additionEntityTypes[entityType];
+  displayEntityTypeFn(entityType?: EntityType | AliasEntityType | string | null): string | undefined {
+    if (this.additionEntityTypes[entityType as EntityType]) {
+      return this.additionEntityTypes[entityType as EntityType];
     } else if (entityType) {
       return this.translate.instant(entityTypeTranslations.get(entityType as EntityType).type);
     } else {
       return '';
     }
+  }
+
+  markAsTouched(): void {
+    this.entityTypeFormGroup.get('entityType').markAsTouched();
   }
 }

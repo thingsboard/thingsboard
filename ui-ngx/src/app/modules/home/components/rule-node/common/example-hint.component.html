@@ -18,12 +18,14 @@
 <div [hidden]="!hintText" class="tb-form-hint tb-primary-fill flex justify-between gap-5">
   <div [innerHTML]=" hintText | translate | safe: 'html'"
        [style.text-align]="textAlign"
-       class="w-full"></div>
-  <div *ngIf="popupHelpLink" class="flex shrink-0" tb-help-popup="{{ popupHelpLink }}"
-       hintMode
-       tb-help-popup-placement="right"
-       trigger-style="letter-spacing:0.25px; font-size:12px"
-       [tb-help-popup-style]="{maxWidth: '820px'}"
-       trigger-text="{{ 'rule-node-config.key-val.see-examples' | translate }}">
-  </div>
+  class="w-full"></div>
+  @if (popupHelpLink) {
+    <div class="flex shrink-0" tb-help-popup="{{ popupHelpLink }}"
+         hintMode
+         tb-help-popup-placement="right"
+         trigger-style="letter-spacing:0.25px; font-size:12px"
+         [tb-help-popup-style]="{maxWidth: '820px'}"
+         trigger-text="{{ 'rule-node-config.key-val.see-examples' | translate }}">
+    </div>
+  }
 </div>

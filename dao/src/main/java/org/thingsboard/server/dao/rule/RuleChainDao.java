@@ -21,13 +21,13 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainType;
-import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.ExportableEntityDao;
 import org.thingsboard.server.dao.ResourceContainerDao;
 import org.thingsboard.server.dao.TenantEntityDao;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -82,5 +82,7 @@ public interface RuleChainDao extends Dao<RuleChain>, TenantEntityDao<RuleChain>
     PageData<RuleChain> findAutoAssignToEdgeRuleChainsByTenantId(UUID tenantId, PageLink pageLink);
 
     Collection<RuleChain> findByTenantIdAndTypeAndName(TenantId tenantId, RuleChainType type, String name);
+
+    List<RuleChain> findRuleChainsByTenantIdAndIds(UUID tenantId, List<UUID> ruleChainIds);
 
 }

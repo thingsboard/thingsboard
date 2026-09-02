@@ -23,12 +23,14 @@
                                     breakpoints: {
                                       'lt-md': 2
                                     }}"
-                           label="{{ 'widgets.wind-speed-direction.layout' | translate }}" formControlName="layout">
-      <tb-image-cards-select-option *ngFor="let layout of windSpeedDirectionLayouts"
-                                    [value]="layout"
-                                    [image]="windSpeedDirectionLayoutImageMap.get(layout)">
-        {{ windSpeedDirectionLayoutTranslationMap.get(layout) | translate }}
-      </tb-image-cards-select-option>
+      label="{{ 'widgets.wind-speed-direction.layout' | translate }}" formControlName="layout">
+      @for (layout of windSpeedDirectionLayouts; track layout) {
+        <tb-image-cards-select-option
+          [value]="layout"
+          [image]="windSpeedDirectionLayoutImageMap.get(layout)">
+          {{ windSpeedDirectionLayoutTranslationMap.get(layout) | translate }}
+        </tb-image-cards-select-option>
+      }
     </tb-image-cards-select>
     <div class="tb-form-row space-between">
       <div>{{ (hasCenterValue ? 'widgets.wind-speed-direction.center-value' : 'widgets.wind-speed-direction.wind-direction') | translate }}</div>

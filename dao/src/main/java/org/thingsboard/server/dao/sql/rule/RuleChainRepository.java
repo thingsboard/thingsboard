@@ -90,4 +90,7 @@ public interface RuleChainRepository extends JpaRepository<RuleChainEntity, UUID
     @Query("SELECT new org.thingsboard.server.common.data.edqs.fields.RuleChainFields(r.id, r.createdTime, r.tenantId," +
             "r.name, r.version, r.additionalInfo) FROM RuleChainEntity r WHERE r.id > :id ORDER BY r.id")
     List<RuleChainFields> findNextBatch(@Param("id") UUID id, Limit limit);
+
+    List<RuleChainEntity> findRuleChainsByTenantIdAndIdIn(UUID tenantId, List<UUID> ruleChainIds);
+
 }

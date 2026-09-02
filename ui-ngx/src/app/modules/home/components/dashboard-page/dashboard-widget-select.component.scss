@@ -35,15 +35,12 @@ tb-dashboard-widget-select {
     width: 100%;
     height: auto;
     gap: 16px;
-    color: #fff;
     padding: 12px 12px 12px 24px;
 
     button.mat-mdc-icon-button.mat-mdc-button-base {
       --mdc-icon-button-state-layer-size: 40px;
       --mat-icon-button-state-layer-size: 40px;
-      --mdc-icon-button-icon-color: #fff;
       padding: 8px;
-      color: #fff;
     }
   }
 
@@ -56,7 +53,6 @@ tb-dashboard-widget-select {
       font-size: 24px;
       line-height: 32px;
       font-weight: 400;
-      color: #fff;
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
@@ -90,11 +86,6 @@ tb-dashboard-widget-select {
             }
           }
         }
-        &.tb-fill.tb-invert {
-          .mat-button-toggle.mat-button-toggle-appearance-standard {
-            color: #FFF;
-          }
-        }
       }
     }
   }
@@ -106,14 +97,14 @@ tb-dashboard-widget-select {
     .tb-widget-select-search {
       height: 40px;
       padding: 8px 12px;
-      background: rgba(255, 255, 255, 0.16);
-      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(0, 0, 0, 0.03);
+      border: 1px solid rgba(0, 0, 0, 0.15);
       border-radius: 8px;
       caret-color: $tb-primary-color;
-      color: rgba(255, 255, 255, 0.84);
+      color: rgba(0, 0, 0, 0.54);
 
       mat-icon {
-        color: rgba(255, 255, 255, 0.8);
+        color: rgba(0, 0, 0, 0.54);
       }
 
       input {
@@ -124,23 +115,22 @@ tb-dashboard-widget-select {
         font-size: 16px;
         line-height: 24px;
         background: transparent;
-        color: #fff;
         border: none;
         outline: none;
 
         &::placeholder {
-          color: rgba(255, 255, 255, 0.8);
+          color: rgba(0, 0, 0, 0.54);
           opacity: 1;
         }
       }
 
       button.mat-mdc-icon-button mat-icon {
-        color: rgba(255, 255, 255, 0.8);
+        color: rgba(0, 0, 0, 0.54);
       }
 
       &.focus {
         background: #fff;
-        border-color: rgba(255, 255, 255, 0.15);
+        border-color: rgba(0, 0, 0, 0.15);
         caret-color: $tb-primary-color;
 
         mat-icon {
@@ -165,14 +155,9 @@ tb-dashboard-widget-select {
     }
 
     .tb-widget-select-sort {
-      color: #fff;
       font-weight: 500;
       font-size: 14px;
       letter-spacing: 0.25px;
-
-      mat-icon {
-        color: #fff;
-      }
     }
   }
 

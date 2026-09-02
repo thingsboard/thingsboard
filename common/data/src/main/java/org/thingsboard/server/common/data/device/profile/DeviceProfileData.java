@@ -36,7 +36,7 @@ public class DeviceProfileData implements Serializable {
     @Schema(description = "JSON object of provisioning strategy type per device profile")
     private DeviceProfileProvisionConfiguration provisionConfiguration;
     @Valid
-    @Schema(description = "JSON array of alarm rules configuration per device profile")
+    @Schema(hidden = true)
     private List<DeviceProfileAlarm> alarms;
 
 }

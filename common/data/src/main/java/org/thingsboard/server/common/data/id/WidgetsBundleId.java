@@ -22,6 +22,7 @@ import org.thingsboard.server.common.data.EntityType;
 
 import java.util.UUID;
 
+@Schema(allOf = EntityId.class)
 public final class WidgetsBundleId extends UUIDBased implements EntityId {
 
     private static final long serialVersionUID = 1L;
@@ -31,7 +32,7 @@ public final class WidgetsBundleId extends UUIDBased implements EntityId {
         super(id);
     }
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "string", example = "WIDGETS_BUNDLE", allowableValues = "WIDGETS_BUNDLE")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, accessMode = Schema.AccessMode.READ_ONLY, description = "string", example = "WIDGETS_BUNDLE", allowableValues = "WIDGETS_BUNDLE")
     @Override
     public EntityType getEntityType() {
         return EntityType.WIDGETS_BUNDLE;

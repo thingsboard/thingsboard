@@ -182,10 +182,6 @@ export class Lwm2mObserveAttrTelemetryResourcesComponent implements ControlValue
     }
   }
 
-  trackByParams(index: number, resource: ResourceLwM2M): number {
-    return resource.id;
-  }
-
   isDisabledObserve(index: number): boolean{
     return this.resourcesFormArray.at(index).get('observe').disabled;
   }

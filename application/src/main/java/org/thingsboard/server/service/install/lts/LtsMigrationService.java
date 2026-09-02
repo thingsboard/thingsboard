@@ -114,19 +114,21 @@ public class LtsMigrationService {
     private List<VersionedMigration> select(String fromVersion, String toVersion) {
         LtsVersion from = LtsVersion.parse(fromVersion);
         LtsVersion to = LtsVersion.parse(toVersion);
+        // Select every migration in the (from, to] range, regardless of family. On a cross-family offline
+        // upgrade (e.g. 4.3.x -> 4.4) this is what makes the real in-range older-family beans run: it picks the
+        // 4.3.1.x schema/data changes the source has not yet passed AND the new target-family beans, each exactly
+        // once -- the half-open (from, to] range skips anything the source already applied. One logical migration
+        // is thus authored once (one bean + one lts/<version>/schema_update.sql) and reused by both the offline
+        // and no-downtime paths; nothing is reproduced into a newer family.
+        //
+        // Load-bearing invariant: no two beans may reproduce the same change within a single supported upgrade
+        // range. A reproduction-duplicate bean (one that re-does an older bean's work on a newer-family branch)
+        // must sit STRICTLY BELOW the minimum supported upgrade source, so it can never be selected together with
+        // the bean it duplicates. The only such pair today is 4.2.2.3 <-> 4.3.1.3, and the supported-source floor
+        // is 4.3.0.0 (SUPPORTED_VERSIONS_FOR_UPGRADE), well above 4.2.2.3. LtsMigrationServiceTest guards this.
         return migrations.stream()
-                .filter(vm -> isInRangeForTargetFamily(vm.version(), from, to))
+                .filter(vm -> vm.version().isInRange(from, to))
                 .toList();
-    }
-
-    // Run only migrations whose family matches the target version. Older-family
-    // migrations (e.g. 4.2.x) ride onto newer-family branches (e.g. 4.3.x) via the
-    // release-merge cascade, but each branch's own family of migrations is
-    // self-contained (newer-family copies reproduce the older schema/data changes),
-    // so a cross-family upgrade is fully handled by the target-family migrations.
-    // Excluding the dormant older-family beans avoids double-processing.
-    static boolean isInRangeForTargetFamily(LtsVersion version, LtsVersion from, LtsVersion to) {
-        return version.sameFamily(to) && version.isInRange(from, to);
     }
 
     private void runSchemaUpdate(String version) {

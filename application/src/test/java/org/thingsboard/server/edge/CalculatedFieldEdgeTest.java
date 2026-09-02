@@ -26,10 +26,9 @@ import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
-import org.thingsboard.server.common.data.cf.configuration.Output;
-import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.TimeSeriesOutput;
 import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.dao.service.DaoSqlTest;
@@ -74,6 +73,7 @@ public class CalculatedFieldEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(DEFAULT_CF_NAME, calculatedFieldFromMsg.getName());
         Assert.assertEquals(savedDevice.getId(), calculatedFieldFromMsg.getEntityId());
         Assert.assertEquals(config, calculatedFieldFromMsg.getConfiguration());
+        Assert.assertEquals(calculatedField.getAdditionalInfo(), calculatedFieldFromMsg.getAdditionalInfo());
 
         edgeImitator.expectMessageAmount(1);
         savedCalculatedField.setName(UPDATED_CF_NAME);
@@ -148,7 +148,7 @@ public class CalculatedFieldEdgeTest extends AbstractEdgeTest {
         CalculatedFieldUpdateMsg calculatedFieldUpdateMsg = (CalculatedFieldUpdateMsg) latestMessage;
         CalculatedField calculatedFieldFromEdge = JacksonUtil.fromString(calculatedFieldUpdateMsg.getEntity(), CalculatedField.class, true);
         Assert.assertNotNull(calculatedFieldFromEdge);
-        Assert.assertEquals(savedCalculatedField, calculatedFieldFromEdge);
+        compareHasVersionEntities(savedCalculatedField, calculatedFieldFromEdge);
         Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, calculatedFieldUpdateMsg.getMsgType());
     }
 
@@ -224,13 +224,13 @@ public class CalculatedFieldEdgeTest extends AbstractEdgeTest {
 
         config.setExpression("(T * 9/5) + 32");
 
-        Output output = new Output();
+        TimeSeriesOutput output = new TimeSeriesOutput();
         output.setName("fahrenheitTemp");
-        output.setType(OutputType.TIME_SERIES);
         output.setDecimalsByDefault(2);
         config.setOutput(output);
 
         calculatedField.setConfiguration(config);
+        calculatedField.setAdditionalInfo(JacksonUtil.newObjectNode());
 
         return calculatedField;
     }
@@ -262,6 +262,7 @@ public class CalculatedFieldEdgeTest extends AbstractEdgeTest {
         CalculatedField calculatedField = doGet("/api/calculatedField/" + uuid, CalculatedField.class);
         Assert.assertNotNull(calculatedField);
         Assert.assertEquals(resourceTitle, calculatedField.getName());
+        Assert.assertEquals(JacksonUtil.newObjectNode(), calculatedField.getAdditionalInfo());
     }
 
 }

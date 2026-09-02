@@ -16,7 +16,13 @@
 
 import { Injectable } from '@angular/core';
 import { BreakpointId, Dashboard, DashboardLayoutId } from '@app/shared/models/dashboard.models';
-import { AliasesInfo, EntityAlias, EntityAliases, EntityAliasInfo, getEntityAliasId } from '@shared/models/alias.models';
+import {
+  AliasesInfo,
+  EntityAlias,
+  EntityAliases,
+  EntityAliasInfo,
+  getEntityAliasId
+} from '@shared/models/alias.models';
 import {
   Datasource,
   DatasourceType,
@@ -31,7 +37,7 @@ import { deepClone, isDefinedAndNotNull, isEqual } from '@core/utils';
 import { UtilsService } from '@core/services/utils.service';
 import { Observable, of, throwError } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { FcRuleNode, ruleNodeTypeDescriptors } from '@shared/models/rule-node.models';
+import { FcRuleNode, FcRuleNote, ruleNodeTypeDescriptors } from '@shared/models/rule-node.models';
 import { RuleChainService } from '@core/http/rule-chain.service';
 import { RuleChainImport } from '@shared/models/rule-chain.models';
 import { Filter, FilterInfo, Filters, FiltersInfo, getFilterId } from '@shared/models/query/query.models';
@@ -72,8 +78,11 @@ export interface RuleNodeConnection {
 export interface RuleNodesReference {
   nodes: FcRuleNode[];
   connections: RuleNodeConnection[];
+  notes?: FcRuleNote[];
   originX?: number;
   originY?: number;
+  minX?: number;
+  minY?: number;
 }
 
 @Injectable({
@@ -312,10 +321,11 @@ export class ItemBufferService {
     return of(theDashboard);
   }
 
-  public copyRuleNodes(nodes: FcRuleNode[], connections: RuleNodeConnection[]) {
+  public copyRuleChainObjects(nodes: FcRuleNode[], connections: RuleNodeConnection[], notes: FcRuleNote[] = []) {
     const ruleNodes: RuleNodesReference = {
       nodes: [],
-      connections: []
+      connections: [],
+      notes: []
     };
     let top = -1;
     let left = -1;
@@ -364,23 +374,51 @@ export class ItemBufferService {
         right = Math.max(right, node.x + 170);
       }
     }
+    for (const origNote of notes) {
+      ruleNodes.notes.push({
+        id: '',
+        x: origNote.x,
+        y: origNote.y,
+        width: origNote.width,
+        height: origNote.height,
+        content: origNote.content,
+        backgroundColor: origNote.backgroundColor,
+        borderWidth: origNote.borderWidth,
+        borderColor: origNote.borderColor,
+        applyDefaultMarkdownStyle: origNote.applyDefaultMarkdownStyle,
+        markdownCss: origNote.markdownCss
+      });
+      if (top === -1) {
+        top = origNote.y;
+        left = origNote.x;
+        bottom = origNote.y + (origNote.height || 120);
+        right = origNote.x + (origNote.width || 200);
+      } else {
+        top = Math.min(top, origNote.y);
+        left = Math.min(left, origNote.x);
+        bottom = Math.max(bottom, origNote.y + (origNote.height || 120));
+        right = Math.max(right, origNote.x + (origNote.width || 200));
+      }
+    }
     ruleNodes.originX = left + (right - left) / 2;
     ruleNodes.originY = top + (bottom - top) / 2;
+    ruleNodes.minX = left;
+    ruleNodes.minY = top;
     connections.forEach(connection => {
       ruleNodes.connections.push(connection);
     });
     this.storeSet(RULE_NODES, ruleNodes);
   }
 
-  public hasRuleNodes(): boolean {
+  public hasRuleChainObjects(): boolean {
     return this.storeHas(RULE_NODES);
   }
 
-  public pasteRuleNodes(x: number, y: number): RuleNodesReference {
+  public pasteRuleChainObjects(x: number, y: number): RuleNodesReference {
     const ruleNodes: RuleNodesReference = this.storeGet(RULE_NODES);
     if (ruleNodes) {
-      const deltaX = x - ruleNodes.originX;
-      const deltaY = y - ruleNodes.originY;
+      const deltaX = isDefinedAndNotNull(ruleNodes.minX) ? Math.max(x - ruleNodes.originX, -ruleNodes.minX) : x - ruleNodes.originX;
+      const deltaY = isDefinedAndNotNull(ruleNodes.minY) ? Math.max(y - ruleNodes.originY, -ruleNodes.minY) : y - ruleNodes.originY;
       for (const node of ruleNodes.nodes) {
         const component = this.ruleChainService.getRuleNodeComponentByClazz(node.ruleChainType, node.componentClazz);
         if (component) {
@@ -403,6 +441,10 @@ export class ItemBufferService {
         } else {
           return null;
         }
+      }
+      for (const note of (ruleNodes.notes || [])) {
+        note.x = Math.round(note.x + deltaX);
+        note.y = Math.round(note.y + deltaY);
       }
       return ruleNodes;
     }

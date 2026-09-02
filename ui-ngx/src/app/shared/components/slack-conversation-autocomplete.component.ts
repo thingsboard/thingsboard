@@ -27,6 +27,7 @@ import { TruncatePipe } from '@shared/pipe/truncate.pipe';
 import { SlackChanelType, SlackConversation } from '@shared/models/notification.models';
 import { NotificationService } from '@core/http/notification.service';
 import { isEqual } from '@core/utils';
+import { MatFormFieldAppearance } from '@angular/material/form-field';
 
 @Component({
     selector: 'tb-slack-conversation-autocomplete',
@@ -66,6 +67,9 @@ export class SlackConversationAutocompleteComponent implements ControlValueAcces
 
   @Input()
   token: string;
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
   @ViewChild('slackInput', {static: true}) slackInput: ElementRef;
 

@@ -17,7 +17,9 @@
 -->
 <mat-form-field [formGroup]="relationTypeFormGroup" [appearance]="appearance" [floatLabel]="required ? 'auto' : 'always'"
                 class="mat-block" [class]="additionalClasses" subscriptSizing="{{ subscriptSizing }}">
-  <mat-label *ngIf="showLabel">{{ 'relation.relation-type' | translate }}</mat-label>
+  @if (showLabel) {
+    <mat-label>{{ 'relation.relation-type' | translate }}</mat-label>
+  }
   <input matInput type="text"
          #relationTypeInput
          formControlName="relationType"
@@ -25,25 +27,33 @@
          (focusin)="onFocus()"
          [required]="required"
          [matAutocomplete]="relationTypeAutocomplete">
-  <button *ngIf="relationTypeFormGroup.get('relationType').value && !disabled"
-          type="button" color="primary"
-          matTooltip="{{ 'relation.clear-relation-type' | translate}}"
-          matSuffix mat-icon-button aria-label="Clear"
-          (click)="clear()">
-    <mat-icon class="material-icons">close</mat-icon>
-  </button>
+  @if (relationTypeFormGroup.get('relationType').value && !disabled) {
+    <button
+      type="button" color="primary"
+      matTooltip="{{ 'relation.clear-relation-type' | translate}}"
+      matSuffix mat-icon-button aria-label="Clear"
+      (click)="clear()">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  }
   <mat-autocomplete
     class="tb-autocomplete"
     #relationTypeAutocomplete="matAutocomplete"
     [displayWith]="displayRelationTypeFn">
-    <mat-option *ngFor="let relationType of filteredRelationTypes | async" [value]="relationType">
-      <span [innerHTML]="relationType | highlight:searchText"></span>
-    </mat-option>
+    @for (relationType of filteredRelationTypes | async; track relationType) {
+      <mat-option [value]="relationType">
+        <span [innerHTML]="relationType | highlight:searchText"></span>
+      </mat-option>
+    }
   </mat-autocomplete>
-  <mat-error *ngIf="relationTypeFormGroup.get('relationType').hasError('required')">
-    {{ 'relation.relation-type-required' | translate }}
-  </mat-error>
-  <mat-error *ngIf="relationTypeFormGroup.get('relationType').hasError('maxlength')">
-    {{ 'relation.relation-type-max-length' | translate }}
-  </mat-error>
+  @if (relationTypeFormGroup.get('relationType').hasError('required')) {
+    <mat-error>
+      {{ 'relation.relation-type-required' | translate }}
+    </mat-error>
+  }
+  @if (relationTypeFormGroup.get('relationType').hasError('maxlength')) {
+    <mat-error>
+      {{ 'relation.relation-type-max-length' | translate }}
+    </mat-error>
+  }
 </mat-form-field>

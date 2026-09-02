@@ -10,27 +10,9 @@
     "externalId": null
   },
   "metadata": {
-    "firstNodeIndex": 0,
+    "firstNodeIndex": 2,
     "nodes": [
       {
-        "additionalInfo": {
-          "description": "Process incoming messages from devices with the alarm rules defined in the device profile. Dispatch all incoming messages with \"Success\" relation type.",
-          "layoutX": 187,
-          "layoutY": 468
-        },
-        "type": "org.thingsboard.rule.engine.profile.TbDeviceProfileNode",
-        "name": "Device Profile Node",
-        "configuration": {
-          "persistAlarmRulesState": false,
-          "fetchAlarmRulesStateOnStart": false
-        },
-        "externalId": null
-      },
-      {
-        "additionalInfo": {
-          "layoutX": 823,
-          "layoutY": 157
-        },
         "type": "org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode",
         "name": "Save Timeseries",
         "configurationVersion": 1,
@@ -41,13 +23,12 @@
             "type": "ON_EVERY_MESSAGE"
           }
         },
-        "externalId": null
+        "additionalInfo": {
+          "layoutX": 823,
+          "layoutY": 157
+        }
       },
       {
-        "additionalInfo": {
-          "layoutX": 824,
-          "layoutY": 52
-        },
         "type": "org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode",
         "name": "Save Client Attributes",
         "configurationVersion": 3,
@@ -60,25 +41,23 @@
           "sendAttributesUpdatedNotification": false,
           "updateAttributesOnlyOnValueChange": true
         },
-        "externalId": null
+        "additionalInfo": {
+          "layoutX": 824,
+          "layoutY": 52
+        }
       },
       {
-        "additionalInfo": {
-          "layoutX": 347,
-          "layoutY": 149
-        },
         "type": "org.thingsboard.rule.engine.filter.TbMsgTypeSwitchNode",
         "name": "Message Type Switch",
         "configuration": {
           "version": 0
         },
-        "externalId": null
+        "additionalInfo": {
+          "layoutX": 347,
+          "layoutY": 149
+        }
       },
       {
-        "additionalInfo": {
-          "layoutX": 825,
-          "layoutY": 266
-        },
         "type": "org.thingsboard.rule.engine.action.TbLogNode",
         "name": "Log RPC from Device",
         "configuration": {
@@ -86,13 +65,12 @@
           "jsScript": "return '\\nIncoming message:\\n' + JSON.stringify(msg) + '\\nIncoming metadata:\\n' + JSON.stringify(metadata);",
           "tbelScript": "return '\\nIncoming message:\\n' + JSON.stringify(msg) + '\\nIncoming metadata:\\n' + JSON.stringify(metadata);"
         },
-        "externalId": null
+        "additionalInfo": {
+          "layoutX": 825,
+          "layoutY": 266
+        }
       },
       {
-        "additionalInfo": {
-          "layoutX": 824,
-          "layoutY": 378
-        },
         "type": "org.thingsboard.rule.engine.action.TbLogNode",
         "name": "Log Other",
         "configuration": {
@@ -100,94 +78,89 @@
           "jsScript": "return '\\nIncoming message:\\n' + JSON.stringify(msg) + '\\nIncoming metadata:\\n' + JSON.stringify(metadata);",
           "tbelScript": "return '\\nIncoming message:\\n' + JSON.stringify(msg) + '\\nIncoming metadata:\\n' + JSON.stringify(metadata);"
         },
-        "externalId": null
-      },
-      {
         "additionalInfo": {
           "layoutX": 824,
-          "layoutY": 466
-        },
+          "layoutY": 378
+        }
+      },
+      {
         "type": "org.thingsboard.rule.engine.rpc.TbSendRPCRequestNode",
         "name": "RPC Call Request",
         "configuration": {
           "timeoutInSeconds": 60
         },
-        "externalId": null
+        "additionalInfo": {
+          "layoutX": 824,
+          "layoutY": 466
+        }
       },
       {
-        "additionalInfo": {
-          "layoutX": 1126,
-          "layoutY": 104
-        },
         "type": "org.thingsboard.rule.engine.edge.TbMsgPushToCloudNode",
         "name": "Push to cloud",
         "configuration": {
           "scope": "CLIENT_SCOPE"
         },
-        "externalId": null
+        "additionalInfo": {
+          "layoutX": 1126,
+          "layoutY": 104
+        }
       },
       {
-        "additionalInfo": {
-          "layoutX": 826,
-          "layoutY": 601
-        },
         "type": "org.thingsboard.rule.engine.edge.TbMsgPushToCloudNode",
         "name": "Push to cloud",
         "configuration": {
           "scope": "SERVER_SCOPE"
         },
-        "externalId": null
+        "additionalInfo": {
+          "layoutX": 826,
+          "layoutY": 601
+        }
       }
     ],
     "connections": [
       {
         "fromIndex": 0,
-        "toIndex": 3,
+        "toIndex": 6,
         "type": "Success"
       },
       {
         "fromIndex": 1,
-        "toIndex": 7,
+        "toIndex": 6,
         "type": "Success"
       },
       {
         "fromIndex": 2,
-        "toIndex": 7,
-        "type": "Success"
-      },
-      {
-        "fromIndex": 3,
-        "toIndex": 1,
+        "toIndex": 0,
         "type": "Post telemetry"
       },
       {
-        "fromIndex": 3,
-        "toIndex": 2,
+        "fromIndex": 2,
+        "toIndex": 1,
         "type": "Post attributes"
       },
       {
-        "fromIndex": 3,
-        "toIndex": 4,
+        "fromIndex": 2,
+        "toIndex": 3,
         "type": "RPC Request from Device"
       },
       {
-        "fromIndex": 3,
-        "toIndex": 5,
+        "fromIndex": 2,
+        "toIndex": 4,
         "type": "Other"
       },
       {
-        "fromIndex": 3,
-        "toIndex": 6,
+        "fromIndex": 2,
+        "toIndex": 5,
         "type": "RPC Request to Device"
       },
       {
-        "fromIndex": 3,
-        "toIndex": 8,
+        "fromIndex": 2,
+        "toIndex": 7,
         "type": "Attributes Deleted"
       },
       {
-        "fromIndex": 3,
-        "toIndex": 8,
+        "fromIndex": 2,
+        "toIndex": 7,
         "type": "Attributes Updated"
       }
     ],

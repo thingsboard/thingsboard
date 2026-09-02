@@ -5,7 +5,7 @@
 
 *function (data, dsData): string*
 
-A JavaScript function used to compute color of the trip path point.
+A JavaScript function used to compute color of the path point.
 
 **Parameters:**
 
@@ -15,7 +15,7 @@ A JavaScript function used to compute color of the trip path point.
 
 **Returns:**
 
-Should return string value presenting color of the trip path point.
+Should return string value presenting color of the path point.
 
 In case no data is returned, color value from **Color** settings field will be used.
 

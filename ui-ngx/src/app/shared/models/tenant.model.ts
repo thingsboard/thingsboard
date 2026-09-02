@@ -19,6 +19,11 @@ import { TenantId } from './id/tenant-id';
 import { TenantProfileId } from '@shared/models/id/tenant-profile-id';
 import { BaseData, ExportableEntity } from '@shared/models/base-data';
 import { QueueInfo } from '@shared/models/queue.models';
+import { FormControl } from '@angular/forms';
+
+export type FormControlsFrom<T> = {
+  [K in keyof T]-?: FormControl<T[K] | null>;
+};
 
 export enum TenantProfileType {
   DEFAULT = 'DEFAULT'
@@ -101,6 +106,15 @@ export interface DefaultTenantProfileConfiguration {
 
   maxCalculatedFieldsPerEntity: number;
   maxArgumentsPerCF: number;
+  maxRelationLevelPerCfArgument: number;
+  minAllowedDeduplicationIntervalInSecForCF: number;
+  minAllowedAggregationIntervalInSecForCF: number;
+  maxRelatedEntitiesToReturnPerCfArgument: number;
+  minAllowedScheduledUpdateIntervalInSecForCF: number;
+  intermediateAggregationIntervalInSecForCF: number;
+  cfReevaluationCheckInterval: number;
+  alarmsReevaluationInterval: number;
+
   maxDataPointsPerRollingArg: number;
   maxStateSizeInKBytes: number;
   maxSingleValueArgumentSizeInKBytes: number;
@@ -165,6 +179,14 @@ export function createTenantProfileConfiguration(type: TenantProfileType): Tenan
           maxCalculatedFieldsPerEntity: 5,
           maxArgumentsPerCF: 10,
           maxDataPointsPerRollingArg: 1000,
+          maxRelationLevelPerCfArgument: 2,
+          minAllowedDeduplicationIntervalInSecForCF: 10,
+          minAllowedAggregationIntervalInSecForCF: 60,
+          maxRelatedEntitiesToReturnPerCfArgument: 100,
+          minAllowedScheduledUpdateIntervalInSecForCF: 10,
+          intermediateAggregationIntervalInSecForCF: 300,
+          cfReevaluationCheckInterval: 60,
+          alarmsReevaluationInterval: 60,
           maxStateSizeInKBytes: 32,
           maxSingleValueArgumentSizeInKBytes: 2,
           calculatedFieldDebugEventsRateLimit: ''

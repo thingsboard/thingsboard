@@ -18,11 +18,10 @@ package org.thingsboard.server.controller;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.audit.ActionType;
@@ -50,6 +49,7 @@ import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PA
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.USER_ID_PARAM_DESCRIPTION;
 
@@ -73,8 +73,7 @@ public class AuditLogController extends BaseController {
                     "and users actions (login, logout, etc.) that belong to this customer. " +
                     PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/audit/logs/customer/{customerId}", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/audit/logs/customer/{customerId}")
     public PageData<AuditLog> getAuditLogsByCustomerId(
             @Parameter(description = CUSTOMER_ID_PARAM_DESCRIPTION)
             @PathVariable("customerId") String strCustomerId,
@@ -106,8 +105,7 @@ public class AuditLogController extends BaseController {
                     "For example, RPC call to a particular device, or alarm acknowledgment for a specific device, etc. " +
                     PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/audit/logs/user/{userId}", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/audit/logs/user/{userId}")
     public PageData<AuditLog> getAuditLogsByUserId(
             @Parameter(description = USER_ID_PARAM_DESCRIPTION)
             @PathVariable("userId") String strUserId,
@@ -138,10 +136,9 @@ public class AuditLogController extends BaseController {
             notes = "Returns a page of audit logs related to the actions on the targeted entity. " +
                     "Basically, this API call is used to get the full lifecycle of some specific entity. " +
                     "For example to see when a device was created, updated, assigned to some customer, or even deleted from the system. " +
-                    PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/audit/logs/entity/{entityType}/{entityId}", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+                    PAGE_DATA_PARAMETERS + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @GetMapping(value = "/audit/logs/entity/{entityType}/{entityId}")
     public PageData<AuditLog> getAuditLogsByEntityId(
             @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "DEVICE"))
             @PathVariable("entityType") String strEntityType,
@@ -173,10 +170,9 @@ public class AuditLogController extends BaseController {
 
     @ApiOperation(value = "Get all audit logs (getAuditLogs)",
             notes = "Returns a page of audit logs related to all entities in the scope of the current user's Tenant. " +
-                    PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/audit/logs", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+                    PAGE_DATA_PARAMETERS + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @GetMapping(value = "/audit/logs")
     public PageData<AuditLog> getAuditLogs(
             @Parameter(description = PAGE_SIZE_DESCRIPTION)
             @RequestParam int pageSize,

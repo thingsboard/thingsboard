@@ -18,16 +18,21 @@
 <mat-form-field [formGroup]="entitySubtypeListFormGroup" [floatLabel]="floatLabel"
                 [appearance]="appearance" [subscriptSizing]="subscriptSizing"
                 [class.tb-chip-list]="!label" [class]="additionalClasses" class="mat-block">
-  <mat-label *ngIf="label">{{ label }}</mat-label>
+  @if (label) {
+    <mat-label>{{ label }}</mat-label>
+  }
   <mat-chip-grid #chipList formControlName="entitySubtypeList">
-    <mat-chip-row
-      *ngFor="let entitySubtype of entitySubtypeList"
-      class="tb-chip-row-ellipsis"
-      [removable]="!disabled"
-      (removed)="remove(entitySubtype)">
-      {{customTranslate(entitySubtype)}}
-      <mat-icon matChipRemove *ngIf="!disabled">close</mat-icon>
-    </mat-chip-row>
+    @for (entitySubtype of entitySubtypeList; track entitySubtype) {
+      <mat-chip-row
+        class="tb-chip-row-ellipsis"
+        [removable]="!disabled"
+        (removed)="remove(entitySubtype)">
+        {{customTranslate(entitySubtype)}}
+        @if (!disabled) {
+          <mat-icon matChipRemove>close</mat-icon>
+        }
+      </mat-chip-row>
+    }
     <input matInput type="text" placeholder="{{ !disabled ? ((!entitySubtypeList || !entitySubtypeList.length) ? placeholder : secondaryPlaceholder) : '' }}"
            style="max-width: 200px;"
            #entitySubtypeInput
@@ -46,14 +51,18 @@
                     class="tb-autocomplete"
                     (optionSelected)="selected($event)"
                     [displayWith]="displayEntitySubtypeFn">
-    <mat-option *ngFor="let entitySubtype of filteredEntitySubtypeList | async" [value]="entitySubtype">
-      <span [innerHTML]="entitySubtype | customTranslate | highlight:searchText"></span>
-    </mat-option>
+    @for (entitySubtype of filteredEntitySubtypeList | async; track entitySubtype) {
+      <mat-option [value]="entitySubtype">
+        <span [innerHTML]="entitySubtype | customTranslate | highlight:searchText"></span>
+      </mat-option>
+    }
   </mat-autocomplete>
   <div matSuffix>
     <ng-content select="[matSuffix]"></ng-content>
   </div>
-  <mat-error *ngIf="entitySubtypeListFormGroup.get('entitySubtypeList').hasError('required')">
-    {{ subtypeListEmptyText | translate }}
-  </mat-error>
+  @if (entitySubtypeListFormGroup.get('entitySubtypeList').hasError('required')) {
+    <mat-error>
+      {{ subtypeListEmptyText | translate }}
+    </mat-error>
+  }
 </mat-form-field>

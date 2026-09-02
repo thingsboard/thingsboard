@@ -30,25 +30,27 @@
       </div>
       <div class="tb-help" [tb-help]="helpLinkId()"></div>
       <span class="flex-1"></span>
-      <section *ngIf="!isReadOnly" class="tb-header-button flex flex-row gap-2">
-        <button [disabled]="(isLoading$ | async) || detailsForm.invalid || !detailsForm.dirty"
-                mat-fab
-                matTooltip="{{ 'action.apply-changes' | translate }}"
-                matTooltipPosition="above"
-                color="accent" class="tb-btn-header"
-                [class.tb-hide]="!isEdit"
-                (click)="onApplyDetails()">
-          <mat-icon class="material-icons">done</mat-icon>
-        </button>
-        <button [disabled]="(isLoading$ | async)"
-                mat-fab
-                matTooltip="{{ (isEdit ? 'action.decline-changes' : 'details.toggle-edit-mode') | translate }}"
-                matTooltipPosition="above"
-                color="accent" class="tb-btn-header"
-                (click)="onToggleDetailsEditMode()">
-          <mat-icon class="material-icons">{{isEdit ? 'close' : 'edit'}}</mat-icon>
-        </button>
-      </section>
+      @if (!isReadOnly) {
+        <section class="tb-header-button flex flex-row gap-2">
+          <button [disabled]="(isLoading$ | async) || detailsForm.invalid || !detailsForm.dirty"
+                  mat-fab
+                  matTooltip="{{ 'action.apply-changes' | translate }}"
+                  matTooltipPosition="above"
+                  color="accent" class="tb-btn-header"
+                  [class.tb-hide]="!isEdit"
+                  (click)="onApplyDetails()">
+            <mat-icon class="material-icons">done</mat-icon>
+          </button>
+          <button [disabled]="(isLoading$ | async)"
+                  mat-fab
+                  matTooltip="{{ (isEdit ? 'action.decline-changes' : 'details.toggle-edit-mode') | translate }}"
+                  matTooltipPosition="above"
+                  color="accent" class="tb-btn-header"
+                  (click)="onToggleDetailsEditMode()">
+            <mat-icon class="material-icons">{{isEdit ? 'close' : 'edit'}}</mat-icon>
+          </button>
+        </section>
+      }
     </div>
   </mat-toolbar>
   <mat-card-content class="flex-full">

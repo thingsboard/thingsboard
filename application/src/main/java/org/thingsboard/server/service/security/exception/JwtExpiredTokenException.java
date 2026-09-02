@@ -17,7 +17,11 @@ package org.thingsboard.server.service.security.exception;
 
 import org.springframework.security.core.AuthenticationException;
 
+import java.io.Serial;
+
 public class JwtExpiredTokenException extends AuthenticationException {
+
+    @Serial
     private static final long serialVersionUID = -5959543783324224864L;
 
     private String token;
@@ -34,4 +38,5 @@ public class JwtExpiredTokenException extends AuthenticationException {
     public String token() {
         return this.token;
     }
+
 }

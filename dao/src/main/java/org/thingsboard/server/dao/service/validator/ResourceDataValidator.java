@@ -17,14 +17,16 @@ package org.thingsboard.server.dao.service.validator;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
-import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.resource.TbResourceDao;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
@@ -54,8 +56,8 @@ public class ResourceDataValidator extends DataValidator<TbResource> {
 
     @Override
     protected TbResource validateUpdate(TenantId tenantId, TbResource resource) {
-        if (resource.getData() != null && !resource.getResourceType().isUpdatable() &&
-                tenantId != null && !tenantId.isSysTenantId()) {
+        if ((resource.getData() != null && !resource.getResourceType().isUpdatable() && tenantId != null && !tenantId.isSysTenantId())
+                || resource.getResourceType().equals(ResourceType.LWM2M_MODEL)) {
             throw new DataValidationException("This type of resource can't be updated");
         }
         return resource;
@@ -81,7 +83,7 @@ public class ResourceDataValidator extends DataValidator<TbResource> {
         if (StringUtils.isEmpty(resource.getFileName())) {
             throw new DataValidationException("Resource file name should be specified!");
         }
-        if (StringUtils.containsAny(resource.getFileName(), "/", "\\")) {
+        if (Strings.CS.containsAny(resource.getFileName(), "/", "\\")) {
             throw new DataValidationException("File name contains forbidden symbols");
         }
         if (StringUtils.isEmpty(resource.getResourceKey())) {
@@ -104,4 +106,5 @@ public class ResourceDataValidator extends DataValidator<TbResource> {
             validateMaxSumDataSizePerTenant(tenantId, resourceDao, maxSumResourcesDataInBytes, dataSize, TB_RESOURCE);
         }
     }
+
 }

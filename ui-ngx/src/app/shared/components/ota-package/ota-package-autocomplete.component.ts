@@ -35,6 +35,7 @@ import { getEntityDetailsPageURL, isDefinedAndNotNull } from '@core/utils';
 import { AuthUser } from '@shared/models/user.model';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
+import { MatFormFieldAppearance } from '@angular/material/form-field';
 
 @Component({
     selector: 'tb-ota-package-autocomplete',
@@ -92,6 +93,9 @@ export class OtaPackageAutocompleteComponent implements ControlValueAccessor, On
 
   @Input()
   showDetailsPageLink = false;
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
   private requiredValue: boolean;
 

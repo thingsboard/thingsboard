@@ -18,6 +18,8 @@ package org.thingsboard.monitoring.data.notification;
 import org.thingsboard.monitoring.data.Latency;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class HighLatencyNotification implements Notification {
 
@@ -37,6 +39,13 @@ public class HighLatencyNotification implements Notification {
             text.append(String.format("[%s] *%s*\n", latency.getKey(), latency.getFormattedValue()));
         });
         return text.toString();
+    }
+
+    @Override
+    public List<AffectedService> getAffectedServices() {
+        return highLatencies.stream()
+                .map(latency -> AffectedService.highLatency(latency.getKey()))
+                .collect(Collectors.toList());
     }
 
 }

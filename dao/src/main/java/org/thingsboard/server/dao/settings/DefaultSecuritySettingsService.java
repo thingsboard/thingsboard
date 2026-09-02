@@ -25,8 +25,8 @@ import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.model.SecuritySettings;
 import org.thingsboard.server.common.data.security.model.UserPasswordPolicy;
-import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.ConstraintValidator;
+import org.thingsboard.server.exception.DataValidationException;
 
 import static org.thingsboard.server.common.data.CacheConstants.SECURITY_SETTINGS_CACHE;
 

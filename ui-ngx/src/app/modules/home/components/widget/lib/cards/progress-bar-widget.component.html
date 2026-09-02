@@ -18,24 +18,30 @@
 <div #progressBarPanel class="tb-progress-bar-panel" [style.padding]="padding" [style]="backgroundStyle$ | async">
   <div class="tb-progress-bar-overlay" [style]="overlayStyle"></div>
   <div #progressBarContainer class="tb-progress-bar-container" [class]="layoutClass">
-    <ng-container *ngIf="layout === progressBarLayout.default">
+    @if (layout === progressBarLayout.default) {
       <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
-    </ng-container>
+    }
     <div class="tb-progress-bar-content">
-      <div *ngIf="showTitleValueRow" class="tb-progress-bar-title-value-row" [class]="titleValueRowClass">
-        <ng-container *ngIf="layout === progressBarLayout.simplified">
-          <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
-        </ng-container>
-        <div *ngIf="showValue" class="tb-progress-bar-value" [style]="valueStyle" [style.color]="valueColor.color">{{ valueText }}</div>
-      </div>
+      @if (showTitleValueRow) {
+        <div class="tb-progress-bar-title-value-row" [class]="titleValueRowClass">
+          @if (layout === progressBarLayout.simplified) {
+            <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
+          }
+          @if (showValue) {
+            <div class="tb-progress-bar-value" [style]="valueStyle" [style.color]="valueColor.color">{{ valueText }}</div>
+          }
+        </div>
+      }
       <div class="tb-progress-bar">
         <div class="tb-progress-bar-background" [style.background-color]="settings.barBackground">
           <div class="tb-progress-bar-progress" [style.background-color]="barColor.color" [style.width]="barWidth"></div>
         </div>
-        <div *ngIf="showTicks" class="tb-progress-bar-ticks" [style]="ticksStyle">
-          <div>{{ settings.tickMin }}</div>
-          <div>{{ settings.tickMax }}</div>
-        </div>
+        @if (showTicks) {
+          <div class="tb-progress-bar-ticks" [style]="ticksStyle">
+            <div>{{ settings.tickMin }}</div>
+            <div>{{ settings.tickMax }}</div>
+          </div>
+        }
       </div>
     </div>
   </div>

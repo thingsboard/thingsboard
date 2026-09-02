@@ -17,6 +17,7 @@ package org.thingsboard.server.common.data;
 
 import com.google.common.base.Splitter;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.Strings;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -139,7 +140,7 @@ public class StringUtils {
     }
 
     public static boolean endsWith(String str, String suffix) {
-        return org.apache.commons.lang3.StringUtils.endsWith(str, suffix);
+        return Strings.CS.endsWith(str, suffix);
     }
 
     public static boolean hasLength(String str) {
@@ -155,7 +156,7 @@ public class StringUtils {
     }
 
     public static String defaultString(String s, String defaultValue) {
-        return org.apache.commons.lang3.StringUtils.defaultString(s, defaultValue);
+        return Objects.toString(s, defaultValue);
     }
 
     public static boolean isNumeric(String str) {
@@ -207,7 +208,7 @@ public class StringUtils {
     }
 
     public static boolean contains(final CharSequence seq, final CharSequence searchSeq) {
-        return org.apache.commons.lang3.StringUtils.contains(seq, searchSeq);
+        return Strings.CS.contains(seq, searchSeq);
     }
 
     /**

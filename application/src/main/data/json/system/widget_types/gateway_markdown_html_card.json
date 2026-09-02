@@ -1,0 +1,29 @@
+{
+  "fqn": "gateway_widgets.markdown_card",
+  "name": "Gateway Markdown/HTML Card",
+  "deprecated": false,
+  "image": "tb-image;/api/images/system/markdown_html_card_system_widget_image.png",
+  "description": "Renders markdown/HTML using the configurable pattern or function with applied attributes or time series values.",
+  "descriptor": {
+    "type": "latest",
+    "sizeX": 5,
+    "sizeY": 3.5,
+    "resources": [
+      {
+        "url": "tb-resource;/api/resource/js_module/system/gateway-management-extension.js",
+        "isModule": true
+      }
+    ],
+    "templateHtml": "<tb-markdown-widget \n    [ctx]=\"ctx\">\n</tb-markdown-widget>",
+    "templateCss": "#container tb-markdown-widget {\n    height: 100%;\n    display: block;\n}\n\n#container tb-markdown-widget .tb-markdown-view {\n    height: 100%;\n    overflow: auto;\n}\n",
+    "controllerScript": "self.onInit = function() {\n}\n\nself.onDataUpdated = function() {\n   self.ctx.$scope.markdownWidget.onDataUpdated();\n}\n\nself.actionSources = function() {\n    return {\n        'elementClick': {\n            name: 'widget-action.element-click',\n            multiple: true\n        }\n    };\n}\n\nself.typeParameters = function() {\n    return {\n        dataKeysOptional: true,\n        datasourcesOptional: true,\n        hasDataPageLink: true\n    };\n}\n\nself.onDestroy = function() {\n}\n\n",
+    "settingsDirective": "tb-markdown-widget-settings",
+    "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Random\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.15479322438769105,\"funcBody\":\"var value = prevValue + Math.random() * 100 - 50;\\nvar multiplier = Math.pow(10, 2 || 0);\\nvar value = Math.round(value * multiplier) / multiplier;\\nif (value < -1000) {\\n\\tvalue = -1000;\\n} else if (value > 1000) {\\n\\tvalue = 1000;\\n}\\nreturn value;\"}]}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":false,\"backgroundColor\":\"#fff\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"markdownTextPattern\":\"### Markdown/HTML card\\n - **Current entity**: ${entityName}.\\n - **Current value**: ${Random}.\",\"markdownTextFunction\":\"return '# Some title\\\\n - Entity name: ' + data[0]['entityName'];\",\"useMarkdownTextFunction\":false},\"title\":\"Markdown/HTML Card\",\"showTitleIcon\":false,\"iconColor\":\"rgba(0, 0, 0, 0.87)\",\"iconSize\":\"24px\",\"titleTooltip\":\"\",\"dropShadow\":true,\"enableFullscreen\":true,\"widgetStyle\":{},\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"showLegend\":false}"
+  },
+  "resources": null,
+  "scada": false,
+  "tags": [
+    "web",
+    "markup"
+  ]
+}

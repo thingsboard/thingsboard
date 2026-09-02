@@ -31,7 +31,6 @@ import org.thingsboard.rule.engine.telemetry.strategy.ProcessingStrategy;
 import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TenantProfile;
-import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentType;
@@ -39,7 +38,6 @@ import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileCon
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -50,6 +48,7 @@ import static org.thingsboard.rule.engine.telemetry.settings.TimeseriesProcessin
 import static org.thingsboard.rule.engine.telemetry.settings.TimeseriesProcessingSettings.OnEveryMessage;
 import static org.thingsboard.rule.engine.telemetry.settings.TimeseriesProcessingSettings.WebSocketsOnly;
 import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_REQUEST;
+import static org.thingsboard.server.dao.util.KvUtils.toTsKvEntryList;
 
 @RuleNode(
         type = ComponentType.ACTION,
@@ -148,12 +147,7 @@ public class TbMsgTimeseriesNode implements TbNode {
             ctx.tellFailure(msg, new IllegalArgumentException("Msg body is empty: " + src));
             return;
         }
-        List<TsKvEntry> tsKvEntryList = new ArrayList<>();
-        for (Map.Entry<Long, List<KvEntry>> tsKvEntry : tsKvMap.entrySet()) {
-            for (KvEntry kvEntry : tsKvEntry.getValue()) {
-                tsKvEntryList.add(new BasicTsKvEntry(tsKvEntry.getKey(), kvEntry));
-            }
-        }
+        List<TsKvEntry> tsKvEntryList = toTsKvEntryList(tsKvMap);
         String ttlValue = msg.getMetaData().getValue("TTL");
         long ttl = !StringUtils.isEmpty(ttlValue) ? Long.parseLong(ttlValue) : config.getDefaultTTL();
         if (ttl == 0L) {

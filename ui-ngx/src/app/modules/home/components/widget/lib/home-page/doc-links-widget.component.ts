@@ -40,7 +40,7 @@ const defaultDocLinksMap = new Map<Authority, DocumentationLinks>(
         {
           icon: 'rocket',
           name: 'Getting started',
-          link: 'https://thingsboard.io/docs/getting-started-guides/helloworld/'
+          link: 'https://thingsboard.io/docs/getting-started/'
         },
         {
           icon: 'title',
@@ -50,12 +50,12 @@ const defaultDocLinksMap = new Map<Authority, DocumentationLinks>(
         {
           icon: 'insert_chart',
           name: 'API',
-          link: 'https://thingsboard.io/docs/api/'
+          link: 'https://thingsboard.io/docs/apis-and-sdks/'
         },
         {
           icon: 'now_widgets',
           name: 'Widgets Library',
-          link: 'https://thingsboard.io/docs/user-guide/ui/widget-library/'
+          link: 'https://thingsboard.io/docs/reference/widgets/widget-library/'
         }
       ]
     }],
@@ -64,17 +64,17 @@ const defaultDocLinksMap = new Map<Authority, DocumentationLinks>(
         {
           icon: 'rocket',
           name: 'Getting started',
-          link: 'https://thingsboard.io/docs/getting-started-guides/helloworld/'
+          link: 'https://thingsboard.io/docs/getting-started/'
         },
         {
           icon: 'settings_ethernet',
           name: 'Rule engine',
-          link: 'https://thingsboard.io/docs/user-guide/rule-engine-2-0/re-getting-started/'
+          link: 'https://thingsboard.io/docs/user-guide/rule-engine/'
         },
         {
           icon: 'insert_chart',
           name: 'API',
-          link: 'https://thingsboard.io/docs/api/'
+          link: 'https://thingsboard.io/docs/apis-and-sdks/'
         },
         {
           icon: 'devices',
@@ -88,7 +88,7 @@ const defaultDocLinksMap = new Map<Authority, DocumentationLinks>(
         {
           icon: 'rocket',
           name: 'Getting started',
-          link: 'https://thingsboard.io/docs/getting-started-guides/helloworld/'
+          link: 'https://thingsboard.io/docs/getting-started/'
         }
       ]
     }]

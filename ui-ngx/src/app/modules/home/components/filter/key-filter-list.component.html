@@ -15,78 +15,86 @@
     limitations under the License.
 
 -->
-<section class="flex flex-col" [formGroup]="keyFilterListFormGroup">
-  <mat-accordion [multi]="true">
-    <mat-expansion-panel [expanded]="true">
-      <mat-expansion-panel-header>
-        <mat-panel-title>
-          <div translate>filter.key-filters</div>
-        </mat-panel-title>
-      </mat-expansion-panel-header>
-      <div class="flex flex-row">
-        <span class="max-w-8% flex-full"></span>
-        <div class="flex max-w-92% flex-full flex-row items-center justify-start">
-          <label translate class="tb-title no-padding flex-1">filter.key-name</label>
-          <label translate class="tb-title no-padding flex-1">filter.key-type.key-type</label>
-          <span [class.!hidden]="disabled" style="min-width: 80px;">&nbsp;</span>
-          <span [class.!hidden]="!disabled" style="min-width: 40px;">&nbsp;</span>
-        </div>
-      </div>
-      <mat-divider></mat-divider>
-      <div class="key-filter-list">
-        <div class="flex flex-row items-stretch justify-start" style="max-height: 76px;"
-             formArrayName="keyFilters"
-             *ngFor="let keyFilterControl of keyFiltersFormArray.controls; let $index = index">
-          <div class="filters-operation max-w-8% flex-full">
-            <span *ngIf="$index > 0" translate>filter.operation.and</span>
+<section class="tb-form-panel no-padding no-border">
+  <div class="tb-form-panel stroked">
+    <div class="flex flex-row items-center justify-between">
+      <div class="tb-form-panel-title" translate>filter.key-filters</div>
+      <ng-content select="[keyFilterHeaderActions]"></ng-content>
+    </div>
+    @if (keyFiltersFormArray.length) {
+      <section class="tb-form-panel no-padding no-gap stroked">
+        <div class="flex flex-row">
+          <span class="min-w-16"></span>
+          <div class="flex flex-1 flex-row items-center justify-start">
+            <div translate class="filter-title flex-1">filter.key-name</div>
+            <div translate class="filter-title flex-1">filter.key-type.key-type</div>
+            <span [class.!hidden]="disabled" style="min-width: 96px;">&nbsp;</span>
+            <span [class.!hidden]="!disabled" style="min-width: 48px;">&nbsp;</span>
           </div>
-          <div class="flex max-w-92% flex-full flex-col">
-            <div class="flex flex-row items-center justify-start">
-              <div class="flex-1">{{ keyFilterControl.value.key.key }}</div>
-              <div class="flex-1">{{ entityKeyTypeTranslations.get(keyFilterControl.value.key.type) | translate }}</div>
-              <button mat-icon-button color="primary"
-                      type="button"
-                      (click)="editKeyFilter($index)"
-                      matTooltip="{{ (disabled ? 'filter.key-filter' : 'filter.edit-key-filter') | translate }}"
-                      matTooltipPosition="above">
-                <mat-icon>{{disabled ? 'more_vert' : 'edit'}}</mat-icon>
-              </button>
-              <button mat-icon-button color="primary"
-                      [class.!hidden]="disabled"
-                      type="button"
-                      (click)="removeKeyFilter($index)"
-                      matTooltip="{{ 'filter.remove-key-filter' | translate }}"
-                      matTooltipPosition="above">
-                <mat-icon>close</mat-icon>
-              </button>
+        </div>
+        <mat-divider></mat-divider>
+        <div class="filter-list">
+          @for (keyFilterControl of keyFiltersFormArray.controls; track keyFilterControl; let index = $index) {
+            <div class="flex flex-row items-stretch justify-start"
+                 [class.filter-list-divider]="index">
+              <div class="filters-operation min-w-16">
+                @if (index) {
+                  <div class="filters-operation-container">
+                    <span class="filters-operation-label">{{ complexOperationTranslationMap.get(operation) | translate }}</span>
+                  </div>
+                }
+              </div>
+              <div class="flex flex-1 flex-col">
+                <div class="flex flex-row items-center justify-start">
+                  <div class="filters-text flex-1" tbTruncateWithTooltip>{{ keyFilterControl.value.key.key }}</div>
+                  <div class="filters-text flex-1" tbTruncateWithTooltip>{{ entityKeyTypeTranslations.get(keyFilterControl.value.key.type) | translate }}</div>
+                  <button mat-icon-button color="primary"
+                          type="button"
+                          (click)="editKeyFilter(index)"
+                          matTooltip="{{ (disabled ? 'filter.key-filter' : 'filter.edit-key-filter') | translate }}"
+                          matTooltipPosition="above">
+                    <mat-icon>{{disabled ? 'visibility' : 'edit'}}</mat-icon>
+                  </button>
+                  <button mat-icon-button color="primary"
+                          [class.!hidden]="disabled"
+                          type="button"
+                          (click)="removeKeyFilter(index)"
+                          matTooltip="{{ 'filter.remove-key-filter' | translate }}"
+                          matTooltipPosition="above">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                </div>
+              </div>
             </div>
-            <mat-divider></mat-divider>
-          </div>
+          }
         </div>
-        <span [class.!hidden]="!!keyFiltersFormArray.length"
-              [class.disabled]="disabled"
-              class="no-data-found flex items-center justify-center" translate>filter.no-key-filters</span>
-      </div>
-      <div style="margin-top: 16px;">
-        <button mat-button mat-raised-button color="primary"
-                [class.!hidden]="disabled"
-                (click)="addKeyFilter()"
-                type="button"
-                matTooltip="{{ 'filter.add-key-filter' | translate }}"
-                matTooltipPosition="above">
-          {{ 'filter.add-key-filter' | translate }}
-        </button>
-      </div>
-    </mat-expansion-panel>
-    <mat-expansion-panel [expanded]="true">
+      </section>
+    } @else {
+      <span class="no-data-found tb-prompt flex items-center justify-center"
+            [class.required]="!disabled"
+            translate>filter.no-key-filters</span>
+    }
+    <div>
+      <button mat-button mat-stroked-button color="primary"
+              [class.!hidden]="disabled"
+              (click)="addKeyFilter()"
+              type="button">
+        {{ 'filter.add-key-filter' | translate }}
+      </button>
+    </div>
+  </div>
+  <div class="tb-form-panel no-gap stroked">
+    <mat-expansion-panel class="tb-settings" [expanded]="true">
       <mat-expansion-panel-header>
-        <mat-panel-title>
-          <div translate>filter.preview</div>
-        </mat-panel-title>
+        {{ 'filter.preview' | translate }}
       </mat-expansion-panel-header>
-      <div class="tb-filter-preview">
-        <tb-filter-text [formControl]="keyFiltersControl"></tb-filter-text>
-      </div>
+      <ng-template matExpansionPanelContent>
+        @if (keyFiltersFormArray.length) {
+          <tb-filter-text [formControl]="keyFiltersControl" [operation]="operation"></tb-filter-text>
+        } @else {
+          <span class="tb-prompt justify-center text-base" translate>filter.no-filter-text</span>
+        }
+      </ng-template>
     </mat-expansion-panel>
-  </mat-accordion>
+  </div>
 </section>

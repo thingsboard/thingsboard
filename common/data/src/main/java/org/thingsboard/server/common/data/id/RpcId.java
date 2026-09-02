@@ -22,6 +22,7 @@ import org.thingsboard.server.common.data.EntityType;
 
 import java.util.UUID;
 
+@Schema(allOf = EntityId.class)
 public final class RpcId extends UUIDBased implements EntityId {
 
     private static final long serialVersionUID = 1L;
@@ -31,7 +32,7 @@ public final class RpcId extends UUIDBased implements EntityId {
         super(id);
     }
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "string", example = "RPC", allowableValues = "RPC")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, accessMode = Schema.AccessMode.READ_ONLY, description = "string", example = "RPC", allowableValues = "RPC")
     @Override
     public EntityType getEntityType() {
         return EntityType.RPC;

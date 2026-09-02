@@ -27,7 +27,7 @@ $tb-mat-indigo: (
   50: #e8eaf6,
   100: #c5cae9,
   200: #9fa8da,
-  300: #7986cb,
+  300: $tb-primary-color-light,
   400: #5c6bc0,
   500: $tb-primary-color,
   600: $tb-secondary-color,
@@ -134,8 +134,8 @@ $tb-dark-theme: map_merge($tb-dark-theme, (_mat-system: $tb-dark-theme-system));
 
   mat-fab-toolbar {
     .mat-fab-toolbar-background {
-      background: mat.m2-get-color-from-palette($background, app-bar);
-      color: mat.m2-get-color-from-palette($foreground, text);
+      background: var(--mat-toolbar-container-background-color, var(--mat-sys-surface));
+      color: var(--mat-toolbar-container-text-color, var(--mat-sys-on-surface));
     }
     &.mat-primary {
       .mat-fab-toolbar-background {

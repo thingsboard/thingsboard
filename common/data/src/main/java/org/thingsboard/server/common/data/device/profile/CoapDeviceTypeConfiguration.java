@@ -19,10 +19,20 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.thingsboard.server.common.data.CoapDeviceType;
 
 import java.io.Serializable;
 
+@Schema(
+        description = "CoAP device type configuration",
+        discriminatorProperty = "coapDeviceType",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "DEFAULT", schema = DefaultCoapDeviceTypeConfiguration.class),
+                @DiscriminatorMapping(value = "EFENTO", schema = EfentoCoapDeviceTypeConfiguration.class)
+        }
+)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,

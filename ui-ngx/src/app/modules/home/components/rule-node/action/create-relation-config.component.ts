@@ -28,7 +28,7 @@ import { EntityType } from '@app/shared/models/entity-type.models';
 })
 export class CreateRelationConfigComponent extends RuleNodeConfigurationComponent {
 
-  directionTypes = Object.keys(EntitySearchDirection);
+  directionTypes = Object.values(EntitySearchDirection);
   directionTypeTranslations  = new Map<EntitySearchDirection, string>(
     [
       [EntitySearchDirection.FROM, 'rule-node-config.search-direction-from'],

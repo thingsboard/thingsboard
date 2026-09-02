@@ -49,6 +49,8 @@ kafka:
   confluent:
     sasl:
       mechanism: "PLAIN" # SASL mechanism for Confluent Cloud authentication: PLAIN, SCRAM-SHA-256, or SCRAM-SHA-512
+    oauth:
+      refresh_threshold: "60000" # How many ms before token expiry to proactively refresh it (default: 60 s)
 
 # Logging configuration
 # Controls log verbosity, output directory, and log file naming pattern for the JS executor service.

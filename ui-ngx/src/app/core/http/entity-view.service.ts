@@ -15,13 +15,14 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
+import { createDefaultHttpOptions, defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
 import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { PageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
 import { EntitySubtype } from '@app/shared/models/entity-type.models';
 import { EntityView, EntityViewInfo, EntityViewSearchQuery } from '@app/shared/models/entity-view.models';
+import { SaveEntityParams } from '@shared/models/entity.models';
 
 @Injectable({
   providedIn: 'root'
@@ -47,12 +48,19 @@ export class EntityViewService {
     return this.http.get<EntityView>(`/api/entityView/${entityViewId}`, defaultHttpOptionsFromConfig(config));
   }
 
+  public getEntityViews(entityViewIds: Array<string>, config?: RequestConfig): Observable<Array<EntityView>> {
+    return this.http.get<Array<EntityView>>(`/api/entityViews?entityViewIds=${entityViewIds.join(',')}`,
+      defaultHttpOptionsFromConfig(config));
+  }
+
   public getEntityViewInfo(entityViewId: string, config?: RequestConfig): Observable<EntityViewInfo> {
     return this.http.get<EntityViewInfo>(`/api/entityView/info/${entityViewId}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public saveEntityView(entityView: EntityView, config?: RequestConfig): Observable<EntityView> {
-    return this.http.post<EntityView>('/api/entityView', entityView, defaultHttpOptionsFromConfig(config));
+  public saveEntityView(entityView: EntityView, config?: RequestConfig): Observable<EntityView>;
+  public saveEntityView(entityView: EntityView, saveParams: SaveEntityParams, config?: RequestConfig): Observable<EntityView>;
+  public saveEntityView(entityView: EntityView, saveParamsOrConfig?: SaveEntityParams | RequestConfig, config?: RequestConfig): Observable<EntityView> {
+    return this.http.post<EntityView>('/api/entityView', entityView,  createDefaultHttpOptions(saveParamsOrConfig, config));
   }
 
   public deleteEntityView(entityViewId: string, config?: RequestConfig) {

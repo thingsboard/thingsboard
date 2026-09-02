@@ -22,12 +22,14 @@
                             [dataKeyCallbacks]="dataKeyCallbacks"
                             [datasource]="datasource">
   </tb-value-source-data-key>
-  <button *ngIf="!disabled" mat-icon-button
-          class="tb-box-button"
-          type="button"
-          (click)="removeTickValue.emit()"
-          matTooltip="{{ 'action.remove' | translate }}"
-          matTooltipPosition="above">
-    <mat-icon>delete</mat-icon>
-  </button>
+  @if (!disabled) {
+    <button mat-icon-button
+            class="tb-box-button"
+            type="button"
+            (click)="removeTickValue.emit()"
+            matTooltip="{{ 'action.remove' | translate }}"
+            matTooltipPosition="above">
+      <mat-icon>delete</mat-icon>
+    </button>
+  }
 </div>

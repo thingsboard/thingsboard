@@ -16,6 +16,8 @@
 package org.thingsboard.server.controller;
 
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -43,26 +45,28 @@ import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CU
 @Slf4j
 public class RpcV1Controller extends AbstractRpcController {
 
-    @ApiOperation(value = "Send one-way RPC request (handleOneWayDeviceRPCRequest)", notes = "Deprecated. See 'Rpc V 2 Controller' instead." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @ApiOperation(value = "Send one-way RPC request (handleOneWayDeviceRPCRequestV1)", notes = "Deprecated. See 'Rpc V 2 Controller' instead." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/oneway/{deviceId}", method = RequestMethod.POST)
     @ResponseBody
-    public DeferredResult<ResponseEntity> handleOneWayDeviceRPCRequest(
+    public DeferredResult<ResponseEntity> handleOneWayDeviceRPCRequestV1(
             @Parameter(description = DEVICE_ID_PARAM_DESCRIPTION)
             @PathVariable("deviceId") String deviceIdStr,
-            @Parameter(description = "A JSON value representing the RPC request.")
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON object representing the RPC request.",
+                    content = @Content(mediaType = "text/plain", schema = @Schema(type = "string")))
             @RequestBody String requestBody) throws ThingsboardException {
         return handleDeviceRPCRequest(true, new DeviceId(UUID.fromString(deviceIdStr)), requestBody, HttpStatus.REQUEST_TIMEOUT, HttpStatus.CONFLICT);
     }
 
-    @ApiOperation(value = "Send two-way RPC request (handleTwoWayDeviceRPCRequest)", notes = "Deprecated. See 'Rpc V 2 Controller' instead." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @ApiOperation(value = "Send two-way RPC request (handleTwoWayDeviceRPCRequestV1)", notes = "Deprecated. See 'Rpc V 2 Controller' instead." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/twoway/{deviceId}", method = RequestMethod.POST)
     @ResponseBody
-    public DeferredResult<ResponseEntity> handleTwoWayDeviceRPCRequest(
+    public DeferredResult<ResponseEntity> handleTwoWayDeviceRPCRequestV1(
             @Parameter(description = DEVICE_ID_PARAM_DESCRIPTION)
             @PathVariable("deviceId") String deviceIdStr,
-            @Parameter(description = "A JSON value representing the RPC request.")
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON object representing the RPC request.",
+                    content = @Content(mediaType = "text/plain", schema = @Schema(type = "string")))
             @RequestBody String requestBody) throws ThingsboardException {
         return handleDeviceRPCRequest(false, new DeviceId(UUID.fromString(deviceIdStr)), requestBody, HttpStatus.REQUEST_TIMEOUT, HttpStatus.CONFLICT);
     }

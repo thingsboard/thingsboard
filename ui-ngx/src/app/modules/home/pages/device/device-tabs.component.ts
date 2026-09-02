@@ -19,6 +19,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { DeviceInfo } from '@shared/models/device.models';
 import { EntityTabsComponent } from '../../components/entity/entity-tabs.component';
+import { EntityId } from "@shared/models/id/entity-id";
 
 @Component({
     selector: 'tb-device-tabs',
@@ -27,6 +28,8 @@ import { EntityTabsComponent } from '../../components/entity/entity-tabs.compone
     standalone: false
 })
 export class DeviceTabsComponent extends EntityTabsComponent<DeviceInfo> {
+
+  ownerId: EntityId;
 
   constructor(protected store: Store<AppState>) {
     super(store);
@@ -42,6 +45,11 @@ export class DeviceTabsComponent extends EntityTabsComponent<DeviceInfo> {
     } else {
       return super.resolveTabIndex(tab);
     }
+  }
+
+  protected setEntity(entity: DeviceInfo) {
+    this.ownerId = entity.customerId.id !== this.nullUid ? entity.customerId : entity.tenantId;
+    super.setEntity(entity);
   }
 
 }

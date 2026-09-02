@@ -78,6 +78,9 @@ public class SystemInfoController extends BaseController {
     @Value("${debug.settings.default_duration:15}")
     private int defaultDebugDurationMinutes;
 
+    @Value("${sql.query.key-filters-or-conditions.enabled:true}")
+    private boolean keyFiltersOrConditionsEnabled;
+
     @Value("${security.user_activation_link_max_ttl:720}")
     private int maxActivationLinkTtl;
 
@@ -182,12 +185,19 @@ public class SystemInfoController extends BaseController {
             }
             systemParams.setMaxArgumentsPerCF(tenantProfileConfiguration.getMaxArgumentsPerCF());
             systemParams.setMaxDataPointsPerRollingArg(tenantProfileConfiguration.getMaxDataPointsPerRollingArg());
+            systemParams.setMinAllowedScheduledUpdateIntervalInSecForCF(tenantProfileConfiguration.getMinAllowedScheduledUpdateIntervalInSecForCF());
+            systemParams.setMaxRelationLevelPerCfArgument(tenantProfileConfiguration.getMaxRelationLevelPerCfArgument());
+            systemParams.setMaxRelatedEntitiesToReturnPerCfArgument(tenantProfileConfiguration.getMaxRelatedEntitiesToReturnPerCfArgument());
+            systemParams.setMinAllowedDeduplicationIntervalInSecForCF(tenantProfileConfiguration.getMinAllowedDeduplicationIntervalInSecForCF());
+            systemParams.setMinAllowedAggregationIntervalInSecForCF(tenantProfileConfiguration.getMinAllowedAggregationIntervalInSecForCF());
+            systemParams.setIntermediateAggregationIntervalInSecForCF(tenantProfileConfiguration.getIntermediateAggregationIntervalInSecForCF());
             systemParams.setTrendzSettings(trendzSettingsService.findTrendzSettings(currentUser.getTenantId()));
         }
         systemParams.setIotHubBaseUrl(iotHubBaseUrl);
         systemParams.setMobileQrEnabled(Optional.ofNullable(qrCodeSettingService.findQrCodeSettings(TenantId.SYS_TENANT_ID))
                 .map(QrCodeSettings::getQrCodeConfig).map(QRCodeConfig::isShowOnHomePage)
                 .orElse(false));
+        systemParams.setAllowKeyFiltersOrConditions(keyFiltersOrConditionsEnabled);
         return systemParams;
     }
 

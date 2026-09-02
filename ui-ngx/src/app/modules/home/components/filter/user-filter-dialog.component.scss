@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 :host ::ng-deep {
-  .user-filter-dialog {
-    .mat-mdc-form-field.mat-mdc-form-field-has-icon-suffix.mat-form-field-hide-placeholder {
+  .numeric-field {
+    &.mat-mdc-form-field-has-icon-suffix.mat-form-field-hide-placeholder {
       .mat-mdc-form-field-icon-suffix {
         place-self: center;
       }
     }
 
-    .mat-mdc-form-field.mat-mdc-form-field-has-icon-suffix {
+    &.mat-mdc-form-field-has-icon-suffix {
       .mat-mdc-form-field-icon-suffix {
         place-self: baseline;
       }

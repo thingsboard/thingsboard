@@ -256,8 +256,8 @@ export class UpdateMultipleAttributesKeySettingsComponent extends WidgetSettings
     return this.updateMultipleAttributesKeySettingsForm.get('selectOptions') as UntypedFormArray;
   }
 
-  public trackBySelectOption(index: number, selectOptionControl: AbstractControl): any {
-    return selectOptionControl;
+  get typedSelectOptions() {
+    return this.selectOptionsFormArray().controls as (AbstractControl & { new?: boolean })[];
   }
 
   public removeSelectOption(index: number) {

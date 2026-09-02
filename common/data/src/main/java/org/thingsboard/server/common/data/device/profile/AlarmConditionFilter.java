@@ -24,8 +24,9 @@ import org.thingsboard.server.common.data.validation.NoXss;
 
 import java.io.Serializable;
 
-@Schema
+@Schema(hidden = true)
 @Data
+@Deprecated
 public class AlarmConditionFilter implements Serializable {
 
     @Valid

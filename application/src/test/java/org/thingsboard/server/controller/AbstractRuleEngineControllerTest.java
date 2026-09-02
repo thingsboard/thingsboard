@@ -15,19 +15,13 @@
  */
 package org.thingsboard.server.controller;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EventInfo;
-import org.thingsboard.server.common.data.event.EventType;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.dao.rule.RuleChainService;
@@ -60,18 +54,6 @@ public abstract class AbstractRuleEngineControllerTest extends AbstractControlle
     protected RuleChainMetaData getRuleChainMetaData(RuleChainId ruleChainId) throws Exception {
         return doGet("/api/ruleChain/metadata/" + ruleChainId.getId().toString(), RuleChainMetaData.class);
     }
-
-    protected PageData<EventInfo> getDebugEvents(TenantId tenantId, EntityId entityId, int limit) throws Exception {
-        return getEvents(tenantId, entityId, EventType.DEBUG_RULE_NODE.getOldName(), limit);
-    }
-
-    protected PageData<EventInfo> getEvents(TenantId tenantId, EntityId entityId, String eventType, int limit) throws Exception {
-        TimePageLink pageLink = new TimePageLink(limit);
-        return doGetTypedWithTimePageLink("/api/events/{entityType}/{entityId}/{eventType}?tenantId={tenantId}&",
-                new TypeReference<PageData<EventInfo>>() {
-                }, pageLink, entityId.getEntityType(), entityId.getId(), eventType, tenantId.getId());
-    }
-
 
     protected JsonNode getMetadata(EventInfo outEvent) {
         String metaDataStr = outEvent.getBody().get("metadata").asText();

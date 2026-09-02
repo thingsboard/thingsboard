@@ -18,86 +18,90 @@
 <fieldset [formGroup]="entityTypesVersionCreateFormGroup" class="fields-group flex flex-col">
   <legend class="group-title" translate>version-control.entities-to-export</legend>
   <div class="flex flex-col" style="flex: 1; overflow: auto;">
-    <div *ngFor="let entityTypeFormGroup of entityTypesFormGroupArray(); trackBy: trackByEntityType;
-             let $index = index; last as isLast;"
-         class="flex flex-row items-center justify-start" [class.pb-2]="!isLast">
-      <mat-expansion-panel class="entity-type-config flex-1" [class.load]="loading" [formGroup]="entityTypeFormGroup"
-                           [expanded]="entityTypesFormGroupExpanded(entityTypeFormGroup)" (opened)="loading = false">
-        <mat-expansion-panel-header>
-          <div class="flex flex-1 flex-row items-center justify-start">
-            <mat-panel-title>
-              <div class="flex flex-1 flex-row items-center justify-start">
-                <div>{{ entityTypeText(entityTypeFormGroup) }}</div>
-              </div>
-            </mat-panel-title>
-            <span class="flex-1"></span>
-            <button *ngIf="!disabled" mat-icon-button style="min-width: 40px;"
-                    type="button"
-                    (click)="removeEntityType($index)"
-                    matTooltip="{{ 'action.remove' | translate }}"
-                    matTooltipPosition="above">
-              <mat-icon>delete</mat-icon>
-            </button>
-          </div>
-        </mat-expansion-panel-header>
-        <div class="entity-type-config-content flex flex-col gap-2">
-          <mat-divider></mat-divider>
-          <div class="flex flex-row xs:flex-col gt-xs:gap-4">
-            <tb-entity-type-select
-              showLabel
-              formControlName="entityType"
-              required
-              [filterAllowedEntityTypes]="false"
-              [allowedEntityTypes]="allowedEntityTypes(entityTypeFormGroup)">
-            </tb-entity-type-select>
-            <div class="flex flex-1 flex-row xs:flex-col gt-xs:gap-4" formGroupName="config">
-              <mat-form-field class="mat-block flex-1">
-                <mat-label translate>version-control.sync-strategy</mat-label>
-                <mat-select formControlName="syncStrategy">
-                  <mat-option [value]="'default'">
-                    {{ 'version-control.default' | translate }}
-                  </mat-option>
-                  <mat-option *ngFor="let strategy of syncStrategies" [value]="strategy">
-                    {{syncStrategyTranslations.get(strategy) | translate}}
-                  </mat-option>
-                </mat-select>
-              </mat-form-field>
-              <div class="flex flex-1 flex-col">
-                <mat-checkbox *ngIf="entityTypeFormGroup.get('entityType').value === entityTypes.DEVICE" formControlName="saveCredentials">
-                  {{ 'version-control.export-credentials' | translate }}
-                </mat-checkbox>
-                <mat-checkbox *ngIf="!entityTypesWithoutRelatedData.has(entityTypeFormGroup.get('entityType').value)" formControlName="saveAttributes">
-                  {{ 'version-control.export-attributes' | translate }}
-                </mat-checkbox>
-                <mat-checkbox *ngIf="!entityTypesWithoutRelatedData.has(entityTypeFormGroup.get('entityType').value)" formControlName="saveRelations">
-                  {{ 'version-control.export-relations' | translate }}
-                </mat-checkbox>
-                <mat-checkbox *ngIf="typesWithCalculatedFields.has(entityTypeFormGroup.get('entityType').value)" formControlName="saveCalculatedFields">
-                  {{ 'version-control.export-calculated-fields' | translate }}
-                </mat-checkbox>
+    @for (entityTypeFormGroup of entityTypesFormGroupArray(); track entityTypeFormGroup; let index = $index, isLast = $last) {
+      <div class="flex flex-row items-center justify-start" [class.pb-2]="!isLast">
+        <mat-expansion-panel class="entity-type-config flex-1" [class.load]="loading" [formGroup]="entityTypeFormGroup"
+                             [expanded]="entityTypesFormGroupExpanded(entityTypeFormGroup)" (opened)="loading = false">
+          <mat-expansion-panel-header>
+            <div class="flex flex-1 flex-row items-center justify-start">
+              <mat-panel-title>
+                <div class="flex flex-1 flex-row items-center justify-start">
+                  <div>{{ entityTypeText(entityTypeFormGroup) }}</div>
+                </div>
+              </mat-panel-title>
+              <span class="flex-1"></span>
+              <button [class.hidden]="disabled" mat-icon-button style="min-width: 40px;"
+                      type="button"
+                      (click)="removeEntityType(index)"
+                      matTooltip="{{ 'action.remove' | translate }}"
+                      matTooltipPosition="above">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </mat-expansion-panel-header>
+          <div class="entity-type-config-content flex flex-col gap-2">
+            <mat-divider></mat-divider>
+            <div class="flex flex-row xs:flex-col gt-xs:gap-4">
+              <tb-entity-type-select
+                showLabel
+                formControlName="entityType"
+                appearance="outline"
+                required
+                [filterAllowedEntityTypes]="false"
+                [allowedEntityTypes]="allowedEntityTypes(entityTypeFormGroup)">
+              </tb-entity-type-select>
+              <div class="flex flex-1 flex-row xs:flex-col gt-xs:gap-4" formGroupName="config">
+                <mat-form-field class="mat-block flex-1" appearance="outline">
+                  <mat-label translate>version-control.sync-strategy</mat-label>
+                  <mat-select formControlName="syncStrategy">
+                    <mat-option [value]="'default'">
+                      {{ 'version-control.default' | translate }}
+                    </mat-option>
+                    @for (strategy of syncStrategies; track strategy) {
+                      <mat-option [value]="strategy">
+                        {{syncStrategyTranslations.get(strategy) | translate}}
+                      </mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                <div class="flex flex-1 flex-col">
+                  <mat-checkbox [class.hidden]="entityTypeFormGroup.get('entityType').value !== entityTypes.DEVICE" formControlName="saveCredentials">
+                    {{ 'version-control.export-credentials' | translate }}
+                  </mat-checkbox>
+                  <mat-checkbox [class.hidden]="entityTypesWithoutRelatedData.has(entityTypeFormGroup.get('entityType').value)" formControlName="saveAttributes">
+                    {{ 'version-control.export-attributes' | translate }}
+                  </mat-checkbox>
+                  <mat-checkbox [class.hidden]="entityTypesWithoutRelatedData.has(entityTypeFormGroup.get('entityType').value)" formControlName="saveRelations">
+                    {{ 'version-control.export-relations' | translate }}
+                  </mat-checkbox>
+                  <mat-checkbox [class.hidden]="!typesWithCalculatedFields.has(entityTypeFormGroup.get('entityType').value)" formControlName="saveCalculatedFields" class="checkbox-pre-line">
+                    {{ (entityTypeFormGroup.get('entityType').value === entityTypes.CUSTOMER ? 'version-control.export-alarm-rules' : 'version-control.export-calculated-fields') | translate }}
+                  </mat-checkbox>
+                </div>
               </div>
             </div>
+            <div class="flex flex-row xs:flex-col gt-xs:min-h-19 gt-xs:items-center gt-xs:justify-start gt-xs:gap-4"
+                 formGroupName="config">
+              <mat-slide-toggle formControlName="allEntities">
+                {{ 'version-control.all-entities' | translate }}
+              </mat-slide-toggle>
+              @if (!entityTypeFormGroup.get('config').get('allEntities').value) {
+                <tb-entity-list
+                  class="flex-1"
+                  appearance="outline"
+                  subscriptSizing="dynamic"
+                  [entityType]="entityTypeFormGroup.get('entityType').value"
+                  required
+                  formControlName="entityIds">
+                </tb-entity-list>
+              }
+            </div>
           </div>
-          <div class="flex flex-row xs:flex-col gt-xs:min-h-19 gt-xs:items-center gt-xs:justify-start gt-xs:gap-4"
-               formGroupName="config">
-            <mat-slide-toggle formControlName="allEntities">
-              {{ 'version-control.all-entities' | translate }}
-            </mat-slide-toggle>
-            <tb-entity-list
-              class="flex-1"
-              [class.!hidden]="entityTypeFormGroup.get('config').get('allEntities').value"
-              [entityType]="entityTypeFormGroup.get('entityType').value"
-              required
-              formControlName="entityIds">
-            </tb-entity-list>
-          </div>
-        </div>
-      </mat-expansion-panel>
-    </div>
-    <div *ngIf="!entityTypesFormGroupArray().length">
-          <span translate
-                class="tb-prompt flex items-center justify-center">version-control.no-entities-to-export-prompt</span>
-    </div>
+        </mat-expansion-panel>
+      </div>
+    } @empty {
+      <span translate class="tb-prompt flex items-center justify-center">version-control.no-entities-to-export-prompt</span>
+    }
   </div>
   <div style="padding-top: 16px;" class="flex flex-row">
     <button mat-raised-button color="primary"

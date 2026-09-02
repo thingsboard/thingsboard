@@ -18,9 +18,11 @@ package org.thingsboard.server.common.data.util;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 
 public class CollectionsUtil {
@@ -96,6 +98,33 @@ public class CollectionsUtil {
         return false;
     }
 
+    public static <T> boolean elementsEqual(Iterable<T> iterable1, Iterable<T> iterable2, BiPredicate<T, T> equalityCheck) {
+        if (iterable1 instanceof Collection<?> collection1 && iterable2 instanceof Collection<?> collection2) {
+            if (collection1.size() != collection2.size()) {
+                return false;
+            }
+        }
+
+        Iterator<T> iterator1 = iterable1.iterator();
+        Iterator<T> iterator2 = iterable2.iterator();
+        while (true) {
+            if (iterator1.hasNext()) {
+                if (!iterator2.hasNext()) {
+                    return false;
+                }
+
+                T o1 = iterator1.next();
+                T o2 = iterator2.next();
+                if (equalityCheck.test(o1, o2)) {
+                    continue;
+                } else {
+                    return false;
+                }
+            }
+            return !iterator2.hasNext();
+        }
+    }
+
     public static <T> Set<T> addToSet(Set<T> existing, T value) {
         if (existing == null || existing.isEmpty()) {
             return Set.of(value);
@@ -107,6 +136,14 @@ public class CollectionsUtil {
         newSet.addAll(existing);
         newSet.add(value);
         return Set.copyOf(newSet);
+    }
+
+    public static boolean isEmpty(Map<?, ?> map) {
+        return map == null || map.isEmpty();
+    }
+
+    public static boolean isNotEmpty(Map<?, ?> map) {
+        return !isEmpty(map);
     }
 
 }

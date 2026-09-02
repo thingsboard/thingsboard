@@ -63,8 +63,10 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
     private boolean enabled;
     @Value("${usage.stats.report.enabled_per_customer:false}")
     private boolean enabledPerCustomer;
-    @Value("${usage.stats.report.interval:10}")
+    @Value("${usage.stats.report.interval:60}")
     private int interval;
+    @Value("${usage.stats.report.urgent_interval:10}")
+    private int urgentInterval;
     @Value("${usage.stats.report.pack_size:1024}")
     private int packSize;
 
@@ -83,20 +85,30 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
             for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {
                 stats.put(key, new ConcurrentHashMap<>());
             }
+            Random random = new Random();
             scheduler.scheduleWithFixedDelay(() -> {
                 try {
-                    reportStats();
+                    reportStats(false);
                 } catch (Exception e) {
                     log.warn("Failed to report statistics: ", e);
                 }
-            }, new Random().nextInt(interval), interval, TimeUnit.SECONDS);
+            }, random.nextInt(interval), interval, TimeUnit.SECONDS);
+            scheduler.scheduleWithFixedDelay(() -> {
+                try {
+                    reportStats(true);
+                } catch (Exception e) {
+                    log.warn("Failed to report urgent statistics: ", e);
+                }
+            }, random.nextInt(urgentInterval), urgentInterval, TimeUnit.SECONDS);
         }
     }
 
-    private void reportStats() {
+    private void reportStats(boolean urgent) {
         ConcurrentMap<ParentEntity, UsageStatsServiceMsg.Builder> report = new ConcurrentHashMap<>();
 
         for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {
+            if (key.isUrgent() != urgent) continue;
+
             ConcurrentMap<ReportLevel, AtomicLong> statsForKey = stats.get(key);
             statsForKey.forEach((reportLevel, statsValue) -> {
                 long value = statsValue.get();

@@ -108,12 +108,13 @@ export class AiConfigComponent extends RuleNodeConfigurationComponent {
     return this.translate.instant(`rule-node-config.ai.response-format-hint-${this.aiConfigForm.get('responseFormat.type').value}`);
   }
 
-  createModelAi(formControl: string) {
+  createModelAi(name: string, formControl: string) {
     this.dialog.open<AIModelDialogComponent, AIModelDialogData, AiModel>(AIModelDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
-        isAdd: true
+        isAdd: true,
+        name
       }
     }).afterClosed()
       .subscribe((model) => {

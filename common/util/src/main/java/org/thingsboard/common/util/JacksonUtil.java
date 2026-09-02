@@ -115,10 +115,15 @@ public class JacksonUtil {
 
     @Contract("null, _ -> null") // so that IDE doesn't show NPE warning when input is not null
     public static <T> T fromString(String string, Class<T> clazz) {
+        return fromString(string, clazz, "The given string value cannot be transformed to Json object: " + string);
+    }
+
+    @Contract("null, _, _ -> null") // so that IDE doesn't show NPE warning when input is not null
+    public static <T> T fromString(String string, Class<T> clazz, String errorMsg) {
         try {
             return string != null ? OBJECT_MAPPER.readValue(string, clazz) : null;
         } catch (IOException e) {
-            throw new IllegalArgumentException("The given string value cannot be transformed to Json object: " + string, e);
+            throw new IllegalArgumentException(errorMsg, e);
         }
     }
 
@@ -233,6 +238,14 @@ public class JacksonUtil {
     public static <T> T treeToValue(JsonNode node, Class<T> clazz) {
         try {
             return OBJECT_MAPPER.treeToValue(node, clazz);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Can't convert value: " + node.toString(), e);
+        }
+    }
+
+    public static <T> T treeToValue(JsonNode node, TypeReference<T> type) {
+        try {
+            return OBJECT_MAPPER.treeToValue(node, type);
         } catch (IOException e) {
             throw new IllegalArgumentException("Can't convert value: " + node.toString(), e);
         }

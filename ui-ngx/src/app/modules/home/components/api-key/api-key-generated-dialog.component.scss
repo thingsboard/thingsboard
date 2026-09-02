@@ -1,0 +1,108 @@
+/**
+ * Copyright © 2016-2026 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+@import '../../src/scss/constants';
+
+:host {
+  display: grid;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100vh;
+  grid-template-rows: min-content minmax(auto, 1fr) min-content;
+
+  .tb-install-instruction-text {
+    min-height: 42px;
+  }
+
+  .insecure-url-warning {
+    .mat-icon {
+      color: #FAA405;
+    }
+  }
+
+  @media #{$mat-sm} {
+    width: 470px;
+  }
+
+  @media #{$mat-gt-sm} {
+    width: 720px;
+  }
+}
+
+:host ::ng-deep {
+  .tb-markdown-view {
+    .tb-command-code {
+      .code-wrapper {
+        padding: 0;
+        pre[class*=language-] {
+          margin: 0;
+          background: #F3F6FA;
+          border-color: $tb-primary-color;
+          padding-right: 38px;
+          overflow: hidden;
+          overflow-x: auto;
+          padding-bottom: 4px;
+          min-height: 42px;
+          scrollbar-width: thin;
+
+          &::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+          }
+        }
+      }
+      button.clipboard-btn {
+        right: -2px;
+        p {
+          color: $tb-primary-color;
+        }
+        p, div {
+          background-color: #F3F6FA;
+        }
+        div {
+          img {
+            display: none;
+          }
+          &:after {
+            content: "";
+            position: initial;
+            display: block;
+            width: 18px;
+            height: 18px;
+            background: $tb-primary-color;
+            mask-image: url(/assets/copy-code-icon.svg);
+            -webkit-mask-image: url(/assets/copy-code-icon.svg);
+            mask-repeat: no-repeat;
+            -webkit-mask-repeat: no-repeat;
+          }
+        }
+      }
+    }
+  }
+  .mdc-button__label > span {
+    .mat-icon {
+      vertical-align: text-bottom;
+      box-sizing: initial;
+    }
+  }
+
+  .tabs-icon {
+    margin-right: 8px;
+  }
+
+  .tb-form-panel.tb-tab-body {
+    padding: 16px 0 0;
+  }
+}

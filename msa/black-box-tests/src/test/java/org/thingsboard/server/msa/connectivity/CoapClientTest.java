@@ -71,7 +71,7 @@ public class CoapClientTest extends AbstractCoapClientTest{
         assertThat(provisionResponse2.get("status").asText()).isEqualTo("FAILURE");
 
         // update provision attribute to non-valid value
-        testRestClient.postTelemetryAttribute(device.getId(), AttributeScope.SERVER_SCOPE.name(), JacksonUtil.valueToTree(Map.of("provisionState", "non-valid")));
+        testRestClient.postTelemetryAttribute(device.getId(), AttributeScope.SERVER_SCOPE, JacksonUtil.valueToTree(Map.of("provisionState", "non-valid")));
 
         JsonNode provisionResponse3 = JacksonUtil.fromBytes(createCoapClientAndPublish(device.getName()));
         assertThat(provisionResponse3.get("status").asText()).isEqualTo("FAILURE");

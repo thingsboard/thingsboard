@@ -60,7 +60,7 @@ import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.ai.AiModelService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
-import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.DaoSqlTest;

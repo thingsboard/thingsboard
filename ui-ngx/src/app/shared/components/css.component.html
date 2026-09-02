@@ -21,9 +21,11 @@
   <div style="height: 40px;" class="tb-css-toolbar flex flex-row items-center justify-start">
     <label class="tb-title no-padding" [class]="{'tb-error': !disabled && (hasErrors || required && !modelValue), 'tb-required': !disabled && required}">{{ label }}</label>
     <span class="flex-1"></span>
-    <button type='button' *ngIf="!disabled" mat-button class="tidy" (click)="beautifyCss()">
-      {{'js-func.tidy' | translate }}
-    </button>
+    @if (!disabled) {
+      <button type='button' mat-button class="tidy" (click)="beautifyCss()">
+        {{'js-func.tidy' | translate }}
+      </button>
+    }
     <fieldset style="width: initial">
       <div matTooltip="{{(fullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
            matTooltipPosition="above"

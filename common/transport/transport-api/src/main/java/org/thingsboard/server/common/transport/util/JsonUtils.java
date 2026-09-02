@@ -21,6 +21,7 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import org.thingsboard.server.gen.transport.TransportProtos.KeyValueProto;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -58,6 +59,8 @@ public class JsonUtils {
             return new JsonPrimitive((Integer) value);
         } else if (value instanceof Long) {
             return new JsonPrimitive((Long) value);
+        } else if (value instanceof BigInteger) {
+            return new JsonPrimitive((BigInteger) value);
         } else if (value instanceof String) {
             try {
                 return JsonParser.parseString((String) value);

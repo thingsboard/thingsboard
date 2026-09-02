@@ -25,6 +25,8 @@ import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.DashboardId;
@@ -34,6 +36,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.IotHubInstalledItemId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.iot_hub.AlarmRuleInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.CalculatedFieldInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.DashboardInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.DeviceInstalledItemDescriptor;
@@ -42,6 +45,7 @@ import org.thingsboard.server.common.data.iot_hub.IotHubInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.RuleChainInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.SolutionTemplateInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.WidgetInstalledItemDescriptor;
+import org.thingsboard.server.exception.EntitiesLimitExceededException;
 import org.thingsboard.server.service.solutions.SolutionService;
 import org.thingsboard.server.service.solutions.data.solution.SolutionInstallResponse;
 import org.thingsboard.server.common.data.rule.RuleChain;
@@ -93,6 +97,7 @@ public class DefaultIotHubService implements IotHubService {
     private static final String ITEM_TYPE_WIDGET = "widget";
     private static final String ITEM_TYPE_DASHBOARD = "dashboard";
     private static final String ITEM_TYPE_CALCULATED_FIELD = "calculated field";
+    private static final String ITEM_TYPE_ALARM_RULE = "alarm rule";
     private static final String ITEM_TYPE_RULE_CHAIN = "rule chain";
     private static final String ITEM_TYPE_DEVICE_PROFILE = "device profile";
 
@@ -139,6 +144,9 @@ public class DefaultIotHubService implements IotHubService {
             return InstallItemVersionResult.success(installedItem.getDescriptor());
         } catch (Exception e) {
             log.error("[{}] Failed to install IoT Hub item version: {}", tenantId, versionId, e);
+            if (e instanceof EntitiesLimitExceededException el) {
+                throw el;
+            }
             return InstallItemVersionResult.error(e.getMessage());
         }
     }
@@ -164,8 +172,7 @@ public class DefaultIotHubService implements IotHubService {
             case "WIDGET" -> installWidget(user, tenantId, fileData);
             case "DASHBOARD" -> installDashboard(user, tenantId, fileData);
             case "CALCULATED_FIELD" -> installCalculatedField(user, tenantId, fileData, data);
-            case "ALARM_RULE" -> throw new IllegalArgumentException(
-                    "Alarm Rules require ThingsBoard 4.3 or later. Please update your platform instance to install Alarm Rule packages.");
+            case "ALARM_RULE" -> installAlarmRule(user, tenantId, fileData, data);
             case "RULE_CHAIN" -> installRuleChain(user, tenantId, fileData, data);
             case "DEVICE" -> installDeviceProfile(user, tenantId, fileData);
             case "SOLUTION_TEMPLATE" -> installSolution(user, tenantId, fileData, request);
@@ -256,6 +263,30 @@ public class DefaultIotHubService implements IotHubService {
         CalculatedField saved = tbCalculatedFieldService.save(calculatedField, user);
         log.debug("[{}] Calculated field installed: {}", tenantId, saved.getName());
         CalculatedFieldInstalledItemDescriptor descriptor = new CalculatedFieldInstalledItemDescriptor();
+        descriptor.setCalculatedFieldId(saved.getId());
+        descriptor.setEntityId(saved.getEntityId());
+        return descriptor;
+    }
+
+    private AlarmRuleInstalledItemDescriptor installAlarmRule(SecurityUser user, TenantId tenantId, byte[] fileData, JsonNode data) throws Exception {
+        CalculatedField alarmRule;
+        try {
+            alarmRule = JacksonUtil.fromString(new String(fileData), CalculatedField.class, true);
+        } catch (Exception e) {
+            throw parseFailure(ACTION_INSTALL, ITEM_TYPE_ALARM_RULE, e);
+        }
+        if (alarmRule.getType() != CalculatedFieldType.ALARM) {
+            throw new Exception("Expected ALARM-type calculated field for ALARM_RULE install; got: " + alarmRule.getType());
+        }
+        alarmRule.setId(null);
+        alarmRule.setTenantId(tenantId);
+        if (data != null && data.has("entityId")) {
+            EntityId entityId = JacksonUtil.treeToValue(data.get("entityId"), EntityId.class);
+            alarmRule.setEntityId(entityId);
+        }
+        CalculatedField saved = tbCalculatedFieldService.save(alarmRule, user);
+        log.debug("[{}] Alarm rule installed: {}", tenantId, saved.getName());
+        AlarmRuleInstalledItemDescriptor descriptor = new AlarmRuleInstalledItemDescriptor();
         descriptor.setCalculatedFieldId(saved.getId());
         descriptor.setEntityId(saved.getEntityId());
         return descriptor;
@@ -419,6 +450,7 @@ public class DefaultIotHubService implements IotHubService {
                 case "WIDGET" -> updateWidget(user, tenantId, (WidgetInstalledItemDescriptor) descriptor, fileData);
                 case "DASHBOARD" -> updateDashboard(user, tenantId, (DashboardInstalledItemDescriptor) descriptor, fileData);
                 case "CALCULATED_FIELD" -> updateCalculatedField(user, tenantId, (CalculatedFieldInstalledItemDescriptor) descriptor, fileData);
+                case "ALARM_RULE" -> updateAlarmRule(user, tenantId, (AlarmRuleInstalledItemDescriptor) descriptor, fileData);
                 case "RULE_CHAIN" -> updateRuleChain(tenantId, (RuleChainInstalledItemDescriptor) descriptor, fileData);
                 case "DEVICE" -> {
                     DeviceInstalledItemDescriptor dd = (DeviceInstalledItemDescriptor) descriptor;
@@ -507,6 +539,26 @@ public class DefaultIotHubService implements IotHubService {
         tbCalculatedFieldService.save(existing, user);
     }
 
+    private void updateAlarmRule(SecurityUser user, TenantId tenantId, AlarmRuleInstalledItemDescriptor descriptor, byte[] fileData) throws Exception {
+        CalculatedField newCf;
+        try {
+            newCf = JacksonUtil.fromString(new String(fileData), CalculatedField.class, true);
+        } catch (Exception e) {
+            throw parseFailure(ACTION_UPDATE, ITEM_TYPE_ALARM_RULE, e);
+        }
+        if (newCf.getType() != CalculatedFieldType.ALARM) {
+            throw new Exception("Expected ALARM-type calculated field for ALARM_RULE update; got: " + newCf.getType());
+        }
+        CalculatedField existing = calculatedFieldService.findById(tenantId, descriptor.getCalculatedFieldId());
+        if (existing == null) {
+            throw new Exception("Alarm rule not found for update");
+        }
+        existing.setName(newCf.getName());
+        existing.setType(newCf.getType());
+        existing.setConfiguration(newCf.getConfiguration());
+        tbCalculatedFieldService.save(existing, user);
+    }
+
     private void updateRuleChain(TenantId tenantId, RuleChainInstalledItemDescriptor descriptor, byte[] fileData) throws Exception {
         JsonNode json = JacksonUtil.toJsonNode(new String(fileData));
         RuleChainMetaData metadata;
@@ -539,15 +591,17 @@ public class DefaultIotHubService implements IotHubService {
         } else if (descriptor instanceof DashboardInstalledItemDescriptor dd) {
             return calculateDashboardChecksum(tenantId, dd);
         } else if (descriptor instanceof CalculatedFieldInstalledItemDescriptor cd) {
-            return calculateCalculatedFieldChecksum(tenantId, cd);
+            return calculateCalculatedFieldChecksum(tenantId, cd.getCalculatedFieldId());
+        } else if (descriptor instanceof AlarmRuleInstalledItemDescriptor ad) {
+            return calculateCalculatedFieldChecksum(tenantId, ad.getCalculatedFieldId());
         } else if (descriptor instanceof RuleChainInstalledItemDescriptor rd) {
             return calculateRuleChainChecksum(tenantId, rd);
         }
         return null;
     }
 
-    private String calculateCalculatedFieldChecksum(TenantId tenantId, CalculatedFieldInstalledItemDescriptor descriptor) {
-        CalculatedField cf = calculatedFieldService.findById(tenantId, descriptor.getCalculatedFieldId());
+    private String calculateCalculatedFieldChecksum(TenantId tenantId, CalculatedFieldId calculatedFieldId) {
+        CalculatedField cf = calculatedFieldService.findById(tenantId, calculatedFieldId);
         if (cf == null) {
             return null;
         }
@@ -748,6 +802,11 @@ public class DefaultIotHubService implements IotHubService {
             CalculatedField calculatedField = calculatedFieldService.findById(tenantId, cd.getCalculatedFieldId());
             if (calculatedField != null) {
                 tbCalculatedFieldService.delete(calculatedField, user);
+            }
+        } else if (descriptor instanceof AlarmRuleInstalledItemDescriptor ad) {
+            CalculatedField alarmRule = calculatedFieldService.findById(tenantId, ad.getCalculatedFieldId());
+            if (alarmRule != null) {
+                tbCalculatedFieldService.delete(alarmRule, user);
             }
         } else if (descriptor instanceof RuleChainInstalledItemDescriptor rd) {
             if (rd.getRuleChainId() != null) {

@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.common.data.notification.rule.trigger.config;
 
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -28,9 +30,12 @@ import java.util.Set;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@Schema
 public class ApiUsageLimitNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
 
+    @ArraySchema(schema = @Schema(implementation = ApiFeature.class))
     private Set<ApiFeature> apiFeatures;
+    @ArraySchema(schema = @Schema(implementation = ApiUsageStateValue.class))
     private Set<ApiUsageStateValue> notifyOn;
 
     @Override

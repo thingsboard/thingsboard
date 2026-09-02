@@ -38,6 +38,7 @@ import { UtilsService } from '@core/services/utils.service';
 import { DialogService } from '@core/services/dialog.service';
 import { FileSizePipe } from '@shared/pipe/file-size.pipe';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { bytesToString } from '@core/utils';
 
 @Component({
     selector: 'tb-file-input',
@@ -181,17 +182,18 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
 
         if (readers.length) {
           Promise.all(readers).then((files) => {
-            files = files.filter(file => file.fileContent != null || file.files != null);
-            if (files.length === 1) {
-              this.fileContent = files[0].fileContent;
-              this.fileName = files[0].fileName;
-              this.files = files[0].files;
-              this.mediaType = files[0].mediaType;
+            const validResults = files.filter(file => file.fileContent != null || file.files != null);
+
+            if (validResults.length === 1) {
+              this.fileContent = validResults[0].fileContent;
+              this.fileName = validResults[0].fileName;
+              this.files = validResults[0].files;
+              this.mediaType = validResults[0].mediaType;
               this.updateModel();
-            } else if (files.length > 1) {
-              this.fileContent = files.map(content => content.fileContent);
-              this.fileName = files.map(content => content.fileName);
-              this.files = files.map(content => content.files);
+            } else if (validResults.length > 1) {
+              this.fileContent = validResults.map(content => content.fileContent);
+              this.fileName = validResults.map(content => content.fileName);
+              this.files = validResults.map(content => content.files);
               this.updateModel();
             }
           });
@@ -205,39 +207,47 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
 
   private readerAsFile(file: flowjs.FlowFile): Promise<any> {
     return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        let fileName = null;
-        let fileContent = null;
-        let files = null;
-        let mediaType = null;
-        if (reader.readyState === reader.DONE) {
-          if (!this.workFromFileObj) {
-            fileContent = reader.result;
-            if (fileContent && fileContent.length > 0) {
-              if (this.contentConvertFunction) {
-                fileContent = this.contentConvertFunction(fileContent);
-              }
-              fileName = fileContent ? file.name : null;
-              mediaType = file?.file?.type || null;
-            }
-          } else if (file.name || file.file){
-            files = file.file;
-            fileName = file.name;
-            mediaType = file.file.type || null;
-          }
-        }
-        resolve({fileContent, fileName, files, mediaType});
-      };
-      reader.onerror = () => {
-        resolve({fileContent: null, fileName: null, files: null, mediaType: null});
-      };
+      if (this.workFromFileObj) {
+        resolve({
+          fileContent: null,
+          fileName: file.name,
+          files: file.file,
+          mediaType: file.file.type || null
+        });
+        return;
+      }
+
+      const onReadError = () => resolve({fileContent: null, fileName: null, files: null, mediaType: null});
+
       if (this.readAsBinary) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const content = reader.readyState === reader.DONE ? reader.result : null;
+          resolve(this.buildResult(file, content));
+        };
+        reader.onerror = onReadError;
         reader.readAsBinaryString(file.file);
       } else {
-        reader.readAsText(file.file);
+        file.file.arrayBuffer().then(
+          buf => resolve(this.buildResult(file, bytesToString(new Uint8Array(buf)))),
+          onReadError
+        );
       }
     });
+  }
+
+  private buildResult(file: flowjs.FlowFile, content: string | ArrayBuffer): any {
+    let fileContent: any = content;
+    let fileName = null;
+    let mediaType = null;
+    if (fileContent && fileContent.length > 0) {
+      if (this.contentConvertFunction) {
+        fileContent = this.contentConvertFunction(fileContent);
+      }
+      fileName = fileContent ? file.name : null;
+      mediaType = file?.file?.type || null;
+    }
+    return {fileContent, fileName, files: null, mediaType};
   }
 
   private checkMaxSize(file: flowjs.FlowFile): boolean {

@@ -115,9 +115,11 @@ export class AttributeDatasource implements DataSource<AttributeData> {
   }
 
   isAllSelected(): Observable<boolean> {
-    const numSelected = this.selection.selected.length;
     return this.attributesSubject.pipe(
-      map((attributes) => numSelected === attributes.length)
+      map((attributes) => {
+        const numSelected = this.selection.selected.length;
+        return attributes.length > 0 && numSelected === attributes.length
+      })
     );
   }
 

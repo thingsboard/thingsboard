@@ -27,7 +27,7 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.dao.asset.AssetProfileDao;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
-import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.DataValidator;

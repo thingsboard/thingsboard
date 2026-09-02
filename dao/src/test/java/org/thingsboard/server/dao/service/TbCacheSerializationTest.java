@@ -37,7 +37,7 @@ public class TbCacheSerializationTest extends AbstractServiceTest {
     @Test
     public void AlarmTypesSerializationTest() {
         var typesCount = 13;
-        TenantId tenantId = new TenantId(UUID.randomUUID());
+        TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());
         List<EntitySubtype> types = new ArrayList<>(typesCount);
         for (int i = 0; i < typesCount; i++) {
             types.add(new EntitySubtype(tenantId, EntityType.ALARM, "alarm_type_" + i));

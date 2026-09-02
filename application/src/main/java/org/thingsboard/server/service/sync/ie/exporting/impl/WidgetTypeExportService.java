@@ -39,11 +39,6 @@ public class WidgetTypeExportService extends BaseEntityExportService<WidgetTypeI
     }
 
     @Override
-    protected WidgetTypeExportData newExportData() {
-        return new WidgetTypeExportData();
-    }
-
-    @Override
     public Set<EntityType> getSupportedEntityTypes() {
         return Set.of(EntityType.WIDGET_TYPE);
     }

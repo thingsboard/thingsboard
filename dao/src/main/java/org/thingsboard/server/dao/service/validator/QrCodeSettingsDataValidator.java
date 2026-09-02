@@ -24,7 +24,7 @@ import org.thingsboard.server.common.data.mobile.app.MobileApp;
 import org.thingsboard.server.common.data.mobile.app.MobileAppStatus;
 import org.thingsboard.server.common.data.mobile.qrCodeSettings.QrCodeSettings;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
-import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.mobile.MobileAppDao;
 import org.thingsboard.server.dao.service.DataValidator;
 

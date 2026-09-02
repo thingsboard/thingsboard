@@ -22,6 +22,7 @@ import org.thingsboard.server.common.data.EntityType;
 
 import java.util.UUID;
 
+@Schema(allOf = EntityId.class)
 public class NotificationTemplateId extends UUIDBased implements EntityId {
 
     @JsonCreator
@@ -29,7 +30,7 @@ public class NotificationTemplateId extends UUIDBased implements EntityId {
         super(id);
     }
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "string", example = "NOTIFICATION_TEMPLATE", allowableValues = "NOTIFICATION_TEMPLATE")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, accessMode = Schema.AccessMode.READ_ONLY, description = "string", example = "NOTIFICATION_TEMPLATE", allowableValues = "NOTIFICATION_TEMPLATE")
     @Override
     public EntityType getEntityType() {
         return EntityType.NOTIFICATION_TEMPLATE;

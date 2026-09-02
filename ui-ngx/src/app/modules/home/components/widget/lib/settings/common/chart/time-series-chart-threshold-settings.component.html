@@ -15,18 +15,19 @@
     limitations under the License.
 
 -->
-<button *ngIf="boxButton; else iconButton"
-        type="button"
-        mat-stroked-button
-        class="tb-box-button"
-        [disabled]="disabled"
-        #matButton
-        (click)="openThresholdSettingsPopup($event, matButton)"
-        matTooltip="{{ title | translate }}"
-        matTooltipPosition="above">
-  <tb-icon matButtonIcon>{{icon}}</tb-icon>
-</button>
-<ng-template #iconButton>
+@if (boxButton) {
+  <button
+    type="button"
+    mat-stroked-button
+    class="tb-box-button"
+    [disabled]="disabled"
+    #matButton
+    (click)="openThresholdSettingsPopup($event, matButton)"
+    matTooltip="{{ title | translate }}"
+    matTooltipPosition="above">
+    <tb-icon matButtonIcon>{{icon}}</tb-icon>
+  </button>
+} @else {
   <button type="button"
           mat-icon-button
           [disabled]="disabled"
@@ -36,4 +37,4 @@
           matTooltipPosition="above">
     <tb-icon>{{icon}}</tb-icon>
   </button>
-</ng-template>
+}

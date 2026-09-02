@@ -24,8 +24,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.HttpEntity;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.web.client.RestTemplate;
 import org.thingsboard.common.util.JacksonUtil;
@@ -988,7 +988,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
 
         String expectedSubject = "Comment on 'test' alarm";
         String expectedBody = TENANT_ADMIN_EMAIL + " added comment: text";
-        ArgumentCaptor<Map<String, String>> msgCaptor = ArgumentCaptor.forClass(Map.class);
+        ArgumentCaptor<Map<String, String>> msgCaptor = ArgumentCaptor.captor();
         await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
             verify(firebaseService).sendMessage(eq(tenantId), eq("testCredentials"),
                     eq(TEST_MOBILE_TOKEN), eq(expectedSubject),

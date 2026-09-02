@@ -26,7 +26,7 @@ import org.thingsboard.server.common.data.lwm2m.LwM2mInstance;
 import org.thingsboard.server.common.data.lwm2m.LwM2mObject;
 import org.thingsboard.server.common.data.lwm2m.LwM2mResourceObserve;
 import org.thingsboard.server.common.data.util.TbDDFFileParser;
-import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.exception.DataValidationException;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -73,7 +73,7 @@ public class LwM2mObjectModelUtils {
         try {
             List<ObjectModel> objectModels =
                     ddfFileParser.parse(new ByteArrayInputStream(resource.getData()), resource.getSearchText());
-            if (objectModels.size() == 0) {
+            if (objectModels.isEmpty()) {
                 return null;
             } else {
                 ObjectModel obj = objectModels.get(0);
@@ -95,7 +95,7 @@ public class LwM2mObjectModelUtils {
                         resources.add(lwM2MResourceObserve);
                     }
                 });
-                if (isSave || resources.size() > 0) {
+                if (isSave || !resources.isEmpty()) {
                     instance.setResources(resources.toArray(LwM2mResourceObserve[]::new));
                     lwM2mObject.setInstances(new LwM2mInstance[]{instance});
                     return lwM2mObject;

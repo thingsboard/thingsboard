@@ -41,10 +41,7 @@ import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.rule.engine.telemetry.settings.AttributesProcessingSettings.Advanced;
@@ -54,6 +51,7 @@ import static org.thingsboard.rule.engine.telemetry.settings.AttributesProcessin
 import static org.thingsboard.server.common.data.DataConstants.NOTIFY_DEVICE_METADATA_KEY;
 import static org.thingsboard.server.common.data.DataConstants.SCOPE;
 import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_REQUEST;
+import static org.thingsboard.server.dao.util.KvUtils.filterChangedAttr;
 
 @RuleNode(
         type = ComponentType.ACTION,
@@ -214,24 +212,6 @@ public class TbMsgAttributesNode implements TbNode {
                 .tbMsgType(msg.getInternalType())
                 .callback(callback)
                 .build());
-    }
-
-    private List<AttributeKvEntry> filterChangedAttr(List<AttributeKvEntry> currentAttributes, List<AttributeKvEntry> newAttributes) {
-        if (currentAttributes == null || currentAttributes.isEmpty()) {
-            return newAttributes;
-        }
-
-        Map<String, AttributeKvEntry> currentAttrMap = currentAttributes.stream()
-                .collect(Collectors.toMap(AttributeKvEntry::getKey, Function.identity(), (existing, replacement) -> existing));
-
-        return newAttributes.stream()
-                .filter(item -> {
-                    AttributeKvEntry cacheAttr = currentAttrMap.get(item.getKey());
-                    return cacheAttr == null
-                            || !Objects.equals(item.getValue(), cacheAttr.getValue()) //JSON and String can be equals by value, but different by type
-                            || !Objects.equals(item.getDataType(), cacheAttr.getDataType());
-                })
-                .collect(Collectors.toList());
     }
 
     private boolean checkSendNotification(AttributeScope scope) {

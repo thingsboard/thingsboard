@@ -472,7 +472,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
         }
         dataKeys.push(dataKey);
 
-        const keySettings: TableWidgetDataKeySettings = dataKey.settings;
+        const keySettings: TableWidgetDataKeySettings = dataKey.settings ?? {};
         dataKey.label = this.utils.customTranslation(dataKey.label, dataKey.label);
         dataKey.title = getHeaderTitle(dataKey, keySettings, this.utils);
         dataKey.def = 'def' + this.columns.length;
@@ -626,16 +626,8 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     this.ctx.detectChanges();
   }
 
-  public trackByColumnDef(index, column: EntityColumn) {
-    return column.def;
-  }
-
   public trackByEntityId(index: number, entity: EntityData) {
     return entity.id.id;
-  }
-
-  public trackByActionCellDescriptionId(index: number, action: WidgetActionDescriptor) {
-    return action.id;
   }
 
   public headerStyle(key: EntityColumn): any {

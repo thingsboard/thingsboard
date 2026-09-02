@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ProfileEntityIdInfo;
@@ -265,6 +266,12 @@ public class JpaAssetDao extends JpaAbstractDao<AssetEntity, Asset> implements A
     public PageData<ProfileEntityIdInfo> findProfileEntityIdInfosByTenantId(UUID tenantId, PageLink pageLink) {
         log.debug("Find profile asset id infos by pageLink [{}]", pageLink);
         return nativeAssetRepository.findProfileEntityIdInfosByTenantId(tenantId, DaoUtil.toPageable(pageLink));
+    }
+
+    @Override
+    public List<EntityInfo> findEntityInfosByNamePrefix(TenantId tenantId, String name) {
+        log.debug("Find asset entity infos by name [{}]", name);
+        return assetRepository.findEntityInfosByNamePrefix(tenantId.getId(), name);
     }
 
     @Override

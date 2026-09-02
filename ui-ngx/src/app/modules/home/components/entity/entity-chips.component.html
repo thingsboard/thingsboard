@@ -15,7 +15,9 @@
     limitations under the License.
 
 -->
-<a *ngFor="let subEntity of subEntities" class="tb-entity-chip"
-   routerLink="{{entityDetailsPrefixUrl}}/{{subEntity.id.id}}" (click)="$event.stopPropagation();">
-  {{ subEntity.name | customTranslate }}
-</a>
+@for (subEntity of subEntities; track subEntity) {
+  <a class="tb-entity-chip"
+     routerLink="{{entityDetailsPrefixUrl}}/{{subEntity.id.id}}" (click)="$event.stopPropagation();">
+    {{ subEntity.name | customTranslate }}
+  </a>
+}

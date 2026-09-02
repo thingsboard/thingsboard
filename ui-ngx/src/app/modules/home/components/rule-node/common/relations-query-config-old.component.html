@@ -23,9 +23,11 @@
     <mat-form-field class="mat-block" style="min-width: 100px;">
       <mat-label translate>relation.direction</mat-label>
       <mat-select required matInput formControlName="direction">
-        <mat-option *ngFor="let type of directionTypes" [value]="type">
-          {{ directionTypeTranslations.get(type) | translate }}
-        </mat-option>
+        @for (type of directionTypes; track type) {
+          <mat-option [value]="type">
+            {{ directionTypeTranslations.get(type) | translate }}
+          </mat-option>
+        }
       </mat-select>
     </mat-form-field>
     <mat-form-field floatLabel="always" class="mat-block flex-1">

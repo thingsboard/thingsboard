@@ -28,11 +28,12 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 @Slf4j
 public abstract class AbstractSecurityLwM2MIntegrationDtlsCidLengthNullTest extends AbstractSecurityLwM2MIntegrationDtlsCidLengthTest {
 
+    private static final Integer  serverDtlsCidLength = null;
 
     protected void  testNoSecDtlsCidLength(Integer dtlsCidLength) throws Exception {
-        testNoSecDtlsCidLength(dtlsCidLength, null);
+        testNoSecDtlsCidLength(dtlsCidLength, serverDtlsCidLength);
     }
     protected void  testPskDtlsCidLength(Integer dtlsCidLength) throws Exception {
-        testPskDtlsCidLength(dtlsCidLength, null);
+        testPskDtlsCidLength(dtlsCidLength, serverDtlsCidLength);
     }
 }

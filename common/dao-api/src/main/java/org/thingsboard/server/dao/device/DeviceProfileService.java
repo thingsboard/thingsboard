@@ -64,4 +64,6 @@ public interface DeviceProfileService extends EntityDaoService {
 
     List<EntityInfo> findDeviceProfileNamesByTenantId(TenantId tenantId, boolean activeOnly);
 
+    List<DeviceProfileInfo> findDeviceProfilesByIds(TenantId tenantId, List<DeviceProfileId> deviceProfileIds);
+
 }

@@ -1,0 +1,82 @@
+<!--
+
+    Copyright © 2016-2026 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-form-panel no-border no-gap no-padding" [formGroup]="filterPredicateValueFormGroup">
+  <div class="tb-form-row no-padding no-border column-xs">
+    <mat-form-field hideRequiredMarker class="w-full max-w-30% flex-1 xs:max-w-full" appearance="outline" subscriptSizing="dynamic">
+      <mat-select [formControl]="dynamicModeControl" placeholder="{{'filter.dynamic-source-type' | translate}}">
+        <mat-option [value]="false">{{'alarm-rule.static' | translate}}</mat-option>
+        <mat-option [value]="true">{{'alarm-rule.dynamic' | translate}}</mat-option>
+      </mat-select>
+    </mat-form-field>
+    @if (!dynamicModeControl.value) {
+      @switch (valueType) {
+        @case (valueTypeEnum.STRING) {
+          <mat-form-field hideRequiredMarker class="flex-1" appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="staticValue" placeholder="{{'filter.value' | translate}}">
+          </mat-form-field>
+        }
+        @case (valueTypeEnum.NUMERIC) {
+          <mat-form-field hideRequiredMarker class="flex-1" appearance="outline" subscriptSizing="dynamic">
+            <input required type="number" matInput formControlName="staticValue"
+                   placeholder="{{'filter.value' | translate}}">
+          </mat-form-field>
+        }
+        @case (valueTypeEnum.BOOLEAN) {
+          <mat-checkbox formControlName="staticValue">
+            {{ (filterPredicateValueFormGroup.get('staticValue').value ? 'value.true' : 'value.false') | translate }}
+          </mat-checkbox>
+        }
+        @case (valueTypeEnum.DATE_TIME) {
+          <tb-datetime formControlName="staticValue"
+                       class="flex-1"
+                       appearance="outline"
+                       subscriptSizing="dynamic"
+                       fieldClass="flex-1"
+                       dateText="{{ 'filter.date' | translate }}"
+                       required [showLabel]="false"></tb-datetime>
+        }
+      }
+    } @else {
+      <mat-form-field class="w-full flex-1" appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="dynamicValueArgument" placeholder="{{ 'action.set' | translate }}">
+          @for (argument of argumentsList; track argument) {
+            <mat-option [value]="argument" [disabled]="argument === argumentInUse">{{ argument }}</mat-option>
+          }
+        </mat-select>
+        @if (filterPredicateValueFormGroup.get('dynamicValueArgument').touched && filterPredicateValueFormGroup.get('dynamicValueArgument').hasError('required')) {
+          <mat-icon matSuffix
+                    matTooltipPosition="above"
+                    matTooltipClass="tb-error-tooltip"
+                    [matTooltip]="'calculated-fields.hint.argument-name-required' | translate"
+                    class="tb-error !block">
+            warning
+          </mat-icon>
+        }
+        @if (filterPredicateValueFormGroup.get('dynamicValueArgument').hasError('argumentInUse')) {
+          <mat-icon matSuffix
+                    matTooltipPosition="above"
+                    matTooltipClass="tb-error-tooltip"
+                    [matTooltip]="'alarm-rule.argument-in-use' | translate"
+                    class="tb-error !block">
+            warning
+          </mat-icon>
+        }
+      </mat-form-field>
+    }
+  </div>
+</div>

@@ -27,7 +27,7 @@ import { AttributeScope, telemetryTypeTranslations } from '@shared/models/teleme
 })
 export class PushToEdgeConfigComponent extends RuleNodeConfigurationComponent {
 
-  attributeScopes = Object.keys(AttributeScope);
+  attributeScopes = Object.values(AttributeScope);
   telemetryTypeTranslationsMap = telemetryTypeTranslations;
 
   pushToEdgeConfigForm: UntypedFormGroup;

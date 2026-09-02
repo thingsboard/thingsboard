@@ -19,18 +19,24 @@ import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
 import { HomeDialogsModule } from '../../dialogs/home-dialogs.module';
 import { DashboardFormComponent } from '@modules/home/pages/dashboard/dashboard-form.component';
-import { ManageDashboardCustomersDialogComponent } from '@modules/home/pages/dashboard/manage-dashboard-customers-dialog.component';
+import {
+  ManageDashboardCustomersDialogComponent
+} from '@modules/home/pages/dashboard/manage-dashboard-customers-dialog.component';
 import { DashboardRoutingModule } from './dashboard-routing.module';
-import { MakeDashboardPublicDialogComponent } from '@modules/home/pages/dashboard/make-dashboard-public-dialog.component';
+import {
+  MakeDashboardPublicDialogComponent
+} from '@modules/home/pages/dashboard/make-dashboard-public-dialog.component';
 import { HomeComponentsModule } from '@modules/home/components/home-components.module';
 import { DashboardTabsComponent } from '@home/pages/dashboard/dashboard-tabs.component';
+import { ImportDashboardFileDialogComponent } from "@home/pages/dashboard/import-dashboard-file-dialog.component";
 
 @NgModule({
   declarations: [
     DashboardFormComponent,
     DashboardTabsComponent,
     ManageDashboardCustomersDialogComponent,
-    MakeDashboardPublicDialogComponent
+    MakeDashboardPublicDialogComponent,
+    ImportDashboardFileDialogComponent
   ],
   imports: [
     CommonModule,
@@ -40,4 +46,5 @@ import { DashboardTabsComponent } from '@home/pages/dashboard/dashboard-tabs.com
     DashboardRoutingModule
   ]
 })
-export class DashboardModule { }
+export class DashboardModule {
+}

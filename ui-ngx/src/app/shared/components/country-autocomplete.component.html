@@ -29,38 +29,51 @@
          (focusin)="onFocus()"
          (blur)="checkInputAndAutoSelect()"
          [matAutocomplete]="countryAutocomplete">
-  <button *ngIf="countryFormGroup.get('country').value && !disabled"
-          type="button"
-          matSuffix mat-icon-button aria-label="Clear"
-          (click)="clear()">
-    <mat-icon class="material-icons">close</mat-icon>
-  </button>
+  @if (countryFormGroup.get('country').value && !disabled) {
+    <button
+      type="button"
+      matSuffix mat-icon-button aria-label="Clear"
+      (click)="clear()">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  }
   <mat-autocomplete class="tb-autocomplete"
                     #countryAutocomplete="matAutocomplete"
                     [displayWith]="displayCountryFn">
-    <mat-option *ngFor="let country of filteredCountries | async" [value]="country">
-      <span style="font-size: 20px;padding-right: 4px;">{{country.flag}}</span>
-      <span [innerHTML]="country.name | highlight:searchText"></span>
-    </mat-option>
-    <mat-option *ngIf="!(filteredCountries | async)?.length" [value]="null" class="tb-not-found">
-      <div class="tb-not-found-content" (click)="$event.stopPropagation()">
-        <div *ngIf="!textIsNotEmpty(searchText); else searchNotEmpty">
-          <span translate>contact.no-country-found</span>
-        </div>
-        <ng-template #searchNotEmpty>
-          <span>
+    @for (country of filteredCountries | async; track country) {
+      <mat-option [value]="country">
+        <span style="font-size: 20px;padding-right: 4px;">{{country.flag}}</span>
+        <span [innerHTML]="country.name | highlight:searchText"></span>
+      </mat-option>
+    }
+    @if (!(filteredCountries | async)?.length) {
+      <mat-option [value]="null" class="tb-not-found">
+        <div class="tb-not-found-content" (click)="$event.stopPropagation()">
+          @if (!textIsNotEmpty(searchText)) {
+            <div>
+              <span translate>contact.no-country-found</span>
+            </div>
+          } @else {
+            <span>
               {{ 'contact.no-country-matching' | translate:
-            {country: (searchText | truncate: true: 6: &apos;...&apos;)} }}
-          </span>
-        </ng-template>
-      </div>
-    </mat-option>
+              {country: (searchText | truncate: true: 6: &apos;...&apos;)} }}
+            </span>
+          }
+        </div>
+      </mat-option>
+    }
   </mat-autocomplete>
-  <mat-hint *ngIf="autocompleteHint">{{ autocompleteHint }}</mat-hint>
-  <mat-error *ngIf="countryFormGroup.get('country').hasError('required')">
-    {{ requiredText }}
-  </mat-error>
-  <mat-error *ngIf="countryFormGroup.get('country').hasError('objectRequired')">
-    {{ objectRequiredText }}
-  </mat-error>
+  @if (autocompleteHint) {
+    <mat-hint>{{ autocompleteHint }}</mat-hint>
+  }
+  @if (countryFormGroup.get('country').hasError('required')) {
+    <mat-error>
+      {{ requiredText }}
+    </mat-error>
+  }
+  @if (countryFormGroup.get('country').hasError('objectRequired')) {
+    <mat-error>
+      {{ objectRequiredText }}
+    </mat-error>
+  }
 </mat-form-field>

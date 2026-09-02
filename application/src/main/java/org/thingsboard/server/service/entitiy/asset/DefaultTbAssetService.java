@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.NameConflictStrategy;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.audit.ActionType;
@@ -40,10 +41,15 @@ public class DefaultTbAssetService extends AbstractTbEntityService implements Tb
 
     @Override
     public Asset save(Asset asset, User user) throws Exception {
+        return save(asset, NameConflictStrategy.DEFAULT, user);
+    }
+
+    @Override
+    public Asset save(Asset asset, NameConflictStrategy nameConflictStrategy, User user) throws Exception {
         ActionType actionType = asset.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = asset.getTenantId();
         try {
-            Asset savedAsset = checkNotNull(assetService.saveAsset(asset));
+            Asset savedAsset = checkNotNull(assetService.saveAsset(asset, nameConflictStrategy));
             autoCommit(user, savedAsset.getId());
             logEntityActionService.logEntityAction(tenantId, savedAsset.getId(), savedAsset, asset.getCustomerId(),
                     actionType, user);

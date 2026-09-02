@@ -27,6 +27,7 @@ import { UserModule } from '@modules/home/pages/user/user.module';
 import { DeviceModule } from '@modules/home/pages/device/device.module';
 import { AssetModule } from '@modules/home/pages/asset/asset.module';
 import { EntityViewModule } from '@modules/home/pages/entity-view/entity-view.module';
+import { CalculatedFieldPageModule } from '@home/pages/calculated-fields/calculated-field-page.module';
 import { RuleChainModule } from '@modules/home/pages/rulechain/rulechain.module';
 import { WidgetLibraryModule } from '@modules/home/pages/widget/widget-library.module';
 import { DashboardModule } from '@modules/home/pages/dashboard/dashboard.module';
@@ -70,6 +71,7 @@ import { IotHubModule } from '@home/pages/iot-hub/iot-hub.module';
     EdgeModule,
     EntityViewModule,
     CustomerModule,
+    CalculatedFieldPageModule,
     RuleChainModule,
     WidgetLibraryModule,
     DashboardModule,

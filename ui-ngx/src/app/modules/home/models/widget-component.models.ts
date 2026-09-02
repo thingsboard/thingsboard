@@ -38,6 +38,7 @@ import { Timewindow, WidgetTimewindow } from '@shared/models/time/time.models';
 import {
   IAliasController,
   IStateController,
+  IWidgetHttpUtils,
   IWidgetSubscription,
   IWidgetUtils,
   RpcApi,
@@ -58,6 +59,13 @@ import {
   ViewContainerRef
 } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import {
+  createDefaultHttpOptions,
+  defaultHttpOptions,
+  defaultHttpOptionsFromConfig,
+  defaultHttpOptionsFromParams,
+  defaultHttpUploadOptions
+} from '@core/http/http-utils';
 import { RafService } from '@core/services/raf.service';
 import { WidgetTypeId } from '@shared/models/id/widget-type-id';
 import { TenantId } from '@shared/models/id/tenant-id';
@@ -68,7 +76,8 @@ import {
   formatValue,
   getEntityDetailsPageURL,
   hasDatasourceLabelsVariables,
-  isDefined
+  isDefined,
+  isDefinedAndNotNull
 } from '@core/utils';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -142,11 +151,12 @@ export interface WidgetHeaderAction extends IWidgetAction {
 }
 
 export interface WidgetAction extends IWidgetAction {
-  show: boolean;
+  show: boolean | (()=> boolean);
 }
 
 export interface IDashboardWidget {
   updateWidgetParams(): void;
+  updateParamsFromData(detectChanges?: boolean): void;
 }
 
 export type WidgetDestroyCallback = () => void;
@@ -295,6 +305,14 @@ export class WidgetContext {
     getEntityDetailsPageURL
   };
 
+  httpUtils: IWidgetHttpUtils = {
+    defaultHttpOptions,
+    defaultHttpOptionsFromConfig,
+    defaultHttpOptionsFromParams,
+    defaultHttpUploadOptions,
+    createDefaultHttpOptions
+  };
+
   $widgetElement: JQuery<HTMLElement>;
   $container: JQuery<HTMLElement>;
   $containerParent: JQuery<HTMLElement>;
@@ -308,6 +326,8 @@ export class WidgetContext {
 
   widgetNamespace?: string;
   subscriptionApi?: WidgetSubscriptionApi;
+
+  widgetCssClass?: string;
 
   actionsApi?: WidgetActionsApi;
   activeEntityInfo?: SubscriptionEntityInfo;
@@ -486,6 +506,10 @@ export class WidgetContext {
     }
   }
 
+  updateParamsFromData(detectChanges = false) {
+    this.dashboardWidget.updateParamsFromData(detectChanges);
+  }
+
   updateAliases(aliasIds?: Array<string>) {
     this.aliasController.updateAliases(aliasIds);
   }
@@ -563,7 +587,9 @@ export class LabelVariablePattern {
         const entityInfo = this.ctx.defaultSubscription.getFirstEntityInfo();
         label = createLabelFromSubscriptionEntityInfo(entityInfo, label);
       } else {
-        const datasource = this.ctx.defaultSubscription?.firstDatasource;
+        const datasource = isDefinedAndNotNull(this.ctx.defaultSubscription)
+          ? this.ctx.defaultSubscription.firstDatasource ?? undefined
+          : (this.ctx as any).mapInstance?.getData()[0];
         label = createLabelFromDatasource(datasource, label);
       }
     }

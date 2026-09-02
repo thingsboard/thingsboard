@@ -23,11 +23,14 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AuthCmd implements WsCmd {
+
     private int cmdId;
     private String token;
+    private String apiKey;
 
     @Override
     public WsCmdType getType() {
         return WsCmdType.AUTH;
     }
+
 }

@@ -35,7 +35,7 @@ import org.thingsboard.server.common.data.validation.NoNullChar;
 import org.thingsboard.server.common.data.validation.NoXss;
 import org.thingsboard.server.common.data.validation.RateLimit;
 import org.thingsboard.server.common.data.validation.ValidJsonSchema;
-import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.exception.DataValidationException;
 
 import java.util.Collection;
 import java.util.Set;

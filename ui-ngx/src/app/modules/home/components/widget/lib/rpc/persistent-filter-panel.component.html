@@ -16,16 +16,18 @@
 
 -->
 <form class="mat-content mat-padding flex flex-col" [formGroup]="persistentFilterFormGroup" (ngSubmit)="update()">
-  <mat-form-field class="mat-block flex-1" floatLabel="always">
+  <mat-form-field class="mat-block flex-1" floatLabel="always" appearance="outline">
     <mat-label translate>widgets.persistent-table.rpc-status-list</mat-label>
     <mat-select formControlName="rpcStatus"
                 placeholder="{{ rpcSearchPlaceholder }}">
       <mat-option [value]="null">
         {{ 'widgets.persistent-table.rpc-search-status-all' | translate }}
       </mat-option>
-      <mat-option *ngFor="let searchStatus of persistentSearchStatuses" [value]="searchStatus">
-        {{ rpcSearchStatusTranslationMap.get(searchStatus) | translate }}
-      </mat-option>
+      @for (searchStatus of persistentSearchStatuses; track searchStatus) {
+        <mat-option [value]="searchStatus">
+          {{ rpcSearchStatusTranslationMap.get(searchStatus) | translate }}
+        </mat-option>
+      }
     </mat-select>
   </mat-form-field>
   <div class="tb-panel-actions flex flex-row items-center justify-end">

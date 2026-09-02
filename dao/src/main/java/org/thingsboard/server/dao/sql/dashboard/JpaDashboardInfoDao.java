@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.dashboard;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -124,6 +125,11 @@ public class JpaDashboardInfoDao extends JpaAbstractDao<DashboardInfoEntity, Das
     @Override
     public String findTitleById(UUID tenantId, UUID dashboardId) {
         return dashboardInfoRepository.findTitleByTenantIdAndId(tenantId, dashboardId);
+    }
+
+    @Override
+    public List<DashboardInfo> findDashboardsByIds(UUID tenantId, List<UUID> dashboardIds) {
+        return DaoUtil.convertDataList(dashboardInfoRepository.findByIdIn(dashboardIds));
     }
 
     @Override

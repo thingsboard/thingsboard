@@ -62,6 +62,7 @@ public class AlarmAssignmentTriggerProcessor implements NotificationRuleTriggerP
                 .alarmType(alarmInfo.getType())
                 .alarmOriginator(alarmInfo.getOriginator())
                 .alarmOriginatorName(alarmInfo.getOriginatorName())
+                .alarmOriginatorLabel(alarmInfo.getOriginatorLabel())
                 .alarmSeverity(alarmInfo.getSeverity())
                 .alarmStatus(alarmInfo.getStatus())
                 .alarmCustomerId(alarmInfo.getCustomerId())

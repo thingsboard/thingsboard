@@ -17,7 +17,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { PageLink } from '@shared/models/page/page-link';
-import { defaultHttpOptionsFromConfig, RequestConfig } from '@core/http/http-utils';
+import { defaultHttpOptionsFromConfig, defaultHttpUploadOptions, RequestConfig } from '@core/http/http-utils';
 import { forkJoin, Observable, of } from 'rxjs';
 import { PageData } from '@shared/models/page/page-data';
 import { Resource, ResourceInfo, ResourceSubType, ResourceType, TBResourceScope } from '@shared/models/resource.models';
@@ -88,6 +88,54 @@ export class ResourceService {
 
   public saveResource(resource: Resource, config?: RequestConfig): Observable<Resource> {
     return this.http.post<Resource>('/api/resource', resource, defaultHttpOptionsFromConfig(config));
+  }
+
+  public uploadResources(resources: Resource[], config?: RequestConfig): Observable<Resource[]> {
+    let partSize = 100;
+    partSize = resources.length > partSize ? partSize : resources.length;
+    const resourceObservables: Observable<Resource>[] = [];
+    for (let i = 0; i < partSize; i++) {
+      resourceObservables.push(this.uploadResource(resources[i], config).pipe(catchError(() => of({} as Resource))));
+    }
+    return forkJoin(resourceObservables).pipe(
+      mergeMap((resource) => {
+        resources.splice(0, partSize);
+        if (resources.length) {
+          return this.uploadResources(resources, config);
+        } else {
+          return of(resource);
+        }
+      })
+    );
+  }
+
+  public uploadResource(resource: Resource, config?: RequestConfig): Observable<Resource> {
+    if (!config) {
+      config = {};
+    }
+    const formData = new FormData();
+    formData.append('file', resource.data);
+    formData.append('title', resource.title);
+    formData.append('resourceType', resource.resourceType);
+    if (resource.resourceSubType) {
+      formData.append('resourceSubType', resource.resourceSubType);
+    }
+    return this.http.post<Resource>('/api/resource/upload', formData,
+      defaultHttpUploadOptions(config.ignoreLoading, config.ignoreErrors, config.resendRequest));
+  }
+
+  public updatedResourceInfo(resourceId: string, updatedResources: Partial<Omit<Resource, 'data'>>, config?: RequestConfig): Observable<Resource> {
+    return this.http.put<Resource>(`/api/resource/${resourceId}/info`, updatedResources, defaultHttpOptionsFromConfig(config));
+  }
+
+  public updatedResourceData(resourceId: string, data: File, config?: RequestConfig): Observable<Resource> {
+    if (!config) {
+      config = {};
+    }
+    const formData = new FormData();
+    formData.append('file', data);
+    return this.http.put<Resource>(`/api/resource/${resourceId}/data`, formData,
+      defaultHttpUploadOptions(config.ignoreLoading, config.ignoreErrors, config.resendRequest));
   }
 
   public deleteResource(resourceId: string, force = false, config?: RequestConfig) {

@@ -19,13 +19,15 @@
   <mat-slide-toggle class="mat-slide" formControlName="useQrCodeTextFunction">
     {{ 'widgets.qr-code.use-qr-code-text-function' | translate }}
   </mat-slide-toggle>
-  <mat-form-field [class.!hidden]="qrCodeWidgetSettingsForm.get('useQrCodeTextFunction').value">
+  <mat-form-field [class.!hidden]="qrCodeWidgetSettingsForm.get('useQrCodeTextFunction').value" appearance="outline">
     <mat-label translate>widgets.qr-code.qr-code-text-pattern</mat-label>
     <input required matInput formControlName="qrCodeTextPattern">
     <mat-hint>{{ 'widgets.qr-code.qr-code-text-pattern-hint' | translate }}</mat-hint>
-    <mat-error *ngIf="qrCodeWidgetSettingsForm.get('qrCodeTextPattern').hasError('required')">
-      {{ 'widgets.qr-code.qr-code-text-pattern-required' | translate }}
-    </mat-error>
+    @if (qrCodeWidgetSettingsForm.get('qrCodeTextPattern').hasError('required')) {
+      <mat-error>
+        {{ 'widgets.qr-code.qr-code-text-pattern-required' | translate }}
+      </mat-error>
+    }
   </mat-form-field>
   <tb-js-func required
               [class.!hidden]="!qrCodeWidgetSettingsForm.get('useQrCodeTextFunction').value"

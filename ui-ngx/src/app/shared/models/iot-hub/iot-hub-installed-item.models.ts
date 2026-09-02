@@ -137,7 +137,6 @@ export const getInstalledItemUrl = (descriptor?: IotHubInstalledItemDescriptor):
   }
   let entityId: string | null = null;
   let entityType: EntityType | null = null;
-  let query: string | null = null;
   switch (descriptor.type) {
     case 'DEVICE':
       if (descriptor.dashboardId) {
@@ -161,11 +160,8 @@ export const getInstalledItemUrl = (descriptor?: IotHubInstalledItemDescriptor):
       break;
     case 'CALCULATED_FIELD':
     case 'ALARM_RULE':
-      entityId = descriptor.entityId?.id;
-      entityType = descriptor.entityId?.entityType as EntityType;
-      if (descriptor.type === 'CALCULATED_FIELD') {
-        query = 'selectedTab=cf';
-      }
+      entityId = descriptor.calculatedFieldId?.id;
+      entityType = EntityType.CALCULATED_FIELD;
       break;
     case 'RULE_CHAIN':
       entityId = descriptor.ruleChainId?.id;
@@ -177,15 +173,13 @@ export const getInstalledItemUrl = (descriptor?: IotHubInstalledItemDescriptor):
       break;
   }
   if (entityType && entityId) {
-    let url = getEntityDetailsPageURL(entityId, entityType);
-    if (url) {
-      if (query) {
-        url = `${url}?${query}`;
-      }
-      return url;
+    let url: string | null;
+    if (descriptor.type === 'ALARM_RULE') {
+      url = `/alarms/alarm-rules/${entityId}`;
     } else {
-      return null;
+      url = getEntityDetailsPageURL(entityId, entityType);
     }
+    return url;
   }
   return null;
 }

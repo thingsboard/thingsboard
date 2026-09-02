@@ -28,7 +28,7 @@
       </tb-toggle-select>
     </div>
     @if(!attributesConfigForm.get('processingSettings.isAdvanced').value) {
-      <mat-form-field>
+      <mat-form-field appearance="outline">
         <mat-label translate>rule-node-config.save-attribute.strategy</mat-label>
         <mat-select formControlName="type">
           @for (strategy of processingStrategies; track strategy) {
@@ -39,6 +39,7 @@
 
       @if(attributesConfigForm.get('processingSettings.type').value === ProcessingType.DEDUPLICATE) {
         <tb-time-unit-input
+          appearance="outline"
           required
           labelText="{{ 'rule-node-config.save-attribute.deduplication-interval' | translate }}"
           requiredText="{{ 'rule-node-config.save-attribute.deduplication-interval-required' | translate }}"
@@ -63,16 +64,18 @@
       rule-node-config.save-attribute.scope
     </div>
     <div class="tb-form-row no-border no-padding tb-standard-fields">
-      <mat-form-field class="flex" subscriptSizing="dynamic">
+      <mat-form-field class="flex" subscriptSizing="dynamic" appearance="outline">
         <mat-label>{{ 'rule-node-config.attributes-scope' | translate }}</mat-label>
         <mat-select required
                     class="tb-entity-type-select" matInput formControlName="scope">
-          <mat-option *ngFor="let scope of attributeScopes" [value]="scope">
-            {{ telemetryTypeTranslationsMap.get(scope) | translate }}
-          </mat-option>
+          @for (scope of attributeScopes; track scope) {
+            <mat-option [value]="scope">
+              {{ telemetryTypeTranslationsMap.get(scope) | translate }}
+            </mat-option>
+          }
         </mat-select>
       </mat-form-field>
-      <mat-form-field class="flex" subscriptSizing="dynamic">
+      <mat-form-field class="flex" subscriptSizing="dynamic" appearance="outline">
         <mat-label>{{ 'rule-node-config.attributes-scope-value' | translate }}</mat-label>
         <input type="text" matInput readonly disabled [ngModel]="attributesConfigForm.get('scope').value" [ngModelOptions]="{standalone: true}">
         <button type="button"
@@ -98,25 +101,27 @@
       <div tb-hint-tooltip-icon="{{ (attributesConfigForm.get('updateAttributesOnlyOnValueChange').value
                                      ? 'rule-node-config.update-attributes-only-on-value-change-hint-enabled'
                                      : 'rule-node-config.update-attributes-only-on-value-change-hint') | translate }}"
-           class="tb-form-row no-border no-padding">
+        class="tb-form-row no-border no-padding">
         <mat-slide-toggle class="mat-slide" formControlName="updateAttributesOnlyOnValueChange">
           {{ 'rule-node-config.update-attributes-only-on-value-change' | translate }}
         </mat-slide-toggle>
       </div>
-      <div tb-hint-tooltip-icon="{{ 'rule-node-config.send-attributes-updated-notification-hint' | translate }}"
-           *ngIf="attributesConfigForm.get('scope').value !== attributeScopeMap.CLIENT_SCOPE"
-           class="tb-form-row no-border no-padding">
-        <mat-slide-toggle class="mat-slide" formControlName="sendAttributesUpdatedNotification">
-          {{ 'rule-node-config.send-attributes-updated-notification' | translate }}
-        </mat-slide-toggle>
-      </div>
-      <div tb-hint-tooltip-icon="{{ 'rule-node-config.notify-device-on-update-hint' | translate }}"
-           *ngIf="attributesConfigForm.get('scope').value === attributeScopeMap.SHARED_SCOPE"
-           class="tb-form-row no-border no-padding">
-        <mat-slide-toggle class="mat-slide" formControlName="notifyDevice">
-          {{ 'rule-node-config.notify-device' | translate }}
-        </mat-slide-toggle>
-      </div>
+      @if (attributesConfigForm.get('scope').value !== attributeScopeMap.CLIENT_SCOPE) {
+        <div tb-hint-tooltip-icon="{{ 'rule-node-config.send-attributes-updated-notification-hint' | translate }}"
+             class="tb-form-row no-border no-padding">
+          <mat-slide-toggle class="mat-slide" formControlName="sendAttributesUpdatedNotification">
+            {{ 'rule-node-config.send-attributes-updated-notification' | translate }}
+          </mat-slide-toggle>
+        </div>
+      }
+      @if (attributesConfigForm.get('scope').value === attributeScopeMap.SHARED_SCOPE) {
+        <div tb-hint-tooltip-icon="{{ 'rule-node-config.notify-device-on-update-hint' | translate }}"
+             class="tb-form-row no-border no-padding">
+          <mat-slide-toggle class="mat-slide" formControlName="notifyDevice">
+            {{ 'rule-node-config.notify-device' | translate }}
+          </mat-slide-toggle>
+        </div>
+      }
     </mat-expansion-panel>
   </section>
 </section>

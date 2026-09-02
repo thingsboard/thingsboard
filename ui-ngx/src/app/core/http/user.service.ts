@@ -61,6 +61,10 @@ export class UserService {
     return this.http.get<User>(`/api/user/${userId}`, defaultHttpOptionsFromConfig(config));
   }
 
+  public getUsersByIds(userIds: Array<string>, config?: RequestConfig): Observable<Array<User>> {
+    return this.http.get<Array<User>>(`/api/users?userIds=${userIds.join(',')}`, defaultHttpOptionsFromConfig(config));
+  }
+
   public saveUser(user: User, sendActivationMail: boolean = false,
                   config?: RequestConfig): Observable<User> {
     let url = '/api/user';

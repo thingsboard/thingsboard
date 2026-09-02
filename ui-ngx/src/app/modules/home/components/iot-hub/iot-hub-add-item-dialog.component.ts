@@ -15,7 +15,7 @@
 ///
 
 import { Component, Inject } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -28,6 +28,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { EntityId } from '@shared/models/id/entity-id';
 import { IotHubActionsService } from './iot-hub-actions.service';
 import { isBuiltInItem } from './iot-hub-utils';
+import {
+  IotHubSelectCfEntityDialogData,
+  TbIotHubSelectCfEntityDialogComponent
+} from './iot-hub-select-cf-entity-dialog.component';
 
 export interface IotHubAddItemDialogData {
   itemType: ItemType;
@@ -60,6 +64,7 @@ export class TbIotHubAddItemDialogComponent extends DialogComponent<TbIotHubAddI
     private translate: TranslateService,
     private iotHubApiService: IotHubApiService,
     private dialogService: DialogService,
+    private dialog: MatDialog,
     private iotHubActions: IotHubActionsService
   ) {
     super(store, router, dialogRef);
@@ -92,9 +97,28 @@ export class TbIotHubAddItemDialogComponent extends DialogComponent<TbIotHubAddI
       this.installDeviceItem(item);
       return;
     }
+    if ((this.itemType === ItemType.CALCULATED_FIELD || this.itemType === ItemType.ALARM_RULE) && !this.data.entityId) {
+      this.dialog.open<TbIotHubSelectCfEntityDialogComponent, IotHubSelectCfEntityDialogData, EntityId | null>(
+        TbIotHubSelectCfEntityDialogComponent, {
+          panelClass: ['tb-dialog'],
+          disableClose: true,
+          autoFocus: false,
+          data: { itemName: item.name }
+        }
+      ).afterClosed().subscribe(entityId => {
+        if (entityId) {
+          this.installItem(item, { entityId });
+        }
+      });
+      return;
+    }
+    const installData = this.data.entityId ? { entityId: this.data.entityId } : undefined;
+    this.installItem(item, installData);
+  }
+
+  private installItem(item: MpItemVersionView, installData?: { entityId: EntityId }): void {
     this.isInstalling = true;
     const versionId = item.id as string;
-    const installData = this.data.entityId ? { entityId: this.data.entityId } : undefined;
     this.iotHubApiService.installItemVersion(versionId, { ignoreLoading: true }, installData).subscribe({
       next: (result) => {
         this.isInstalling = false;

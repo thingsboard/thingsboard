@@ -401,20 +401,21 @@ export interface FilterInfo {
   filter: string;
   editable: boolean;
   keyFilters: Array<KeyFilterInfo>;
+  keyFiltersOperation?: ComplexOperation;
 }
 
 export interface FiltersInfo {
   datasourceFilters: {[datasourceIndex: number]: FilterInfo};
 }
 
-export function keyFiltersToText(translate: TranslateService, datePipe: DatePipe, keyFilters: Array<KeyFilter>): string {
+export function keyFiltersToText(translate: TranslateService, datePipe: DatePipe, keyFilters: Array<KeyFilter>,
+                                  operation: ComplexOperation = ComplexOperation.AND): string {
   const filtersText = keyFilters.map(keyFilter =>
-      keyFilterToText(translate, datePipe, keyFilter,
-        keyFilters.length > 1 ? ComplexOperation.AND : undefined));
+      keyFilterToText(translate, datePipe, keyFilter, operation));
   let result: string;
   if (filtersText.length > 1) {
-    const andText = translate.instant('filter.operation.and');
-    result = filtersText.join(' <span class="tb-filter-complex-operation">' + andText + '</span> ');
+    const opText = translate.instant(complexOperationTranslationMap.get(operation));
+    result = filtersText.join(' <span class="tb-filter-complex-operation">' + opText + '</span> ');
   } else {
     result = filtersText[0];
   }
@@ -802,6 +803,7 @@ export const singleEntityFilterFromDeviceId = (deviceId: string): EntityFilter =
 export interface EntityCountQuery {
   entityFilter: EntityFilter;
   keyFilters?: Array<KeyFilter>;
+  keyFiltersOperation?: ComplexOperation;
 }
 
 export interface AbstractDataQuery<T extends EntityDataPageLink> extends EntityCountQuery {
@@ -940,13 +942,15 @@ export const getFilterId = (filters: Filters, filterInfo: FilterInfo): string =>
     const newFilterName = createFilterName(filters, filterInfo.filter);
     newFilterId = guid();
     filters[newFilterId] = {id: newFilterId, filter: newFilterName,
-      keyFilters: filterInfo.keyFilters, editable: filterInfo.editable};
+      keyFilters: filterInfo.keyFilters, editable: filterInfo.editable,
+      keyFiltersOperation: filterInfo.keyFiltersOperation};
   }
   return newFilterId;
 }
 
 const isFilterEqual = (filter1: FilterInfo, filter2: FilterInfo): boolean => {
-  return isEqual(filter1.keyFilters, filter2.keyFilters);
+  return isEqual(filter1.keyFilters, filter2.keyFilters) &&
+    filter1.keyFiltersOperation === filter2.keyFiltersOperation;
 }
 
 const createFilterName = (filters: Filters, filter: string): string => {

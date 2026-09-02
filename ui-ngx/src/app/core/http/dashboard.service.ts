@@ -83,6 +83,11 @@ export class DashboardService {
     return this.http.get<DashboardInfo>(`/api/dashboard/info/${dashboardId}`, defaultHttpOptionsFromConfig(config));
   }
 
+  public getDashboards(dashboardIds: string[], config?: RequestConfig): Observable<Array<DashboardInfo>> {
+    return this.http.get<Array<DashboardInfo>>(`/api/dashboards?dashboardIds=${dashboardIds.join(',')}`,
+      defaultHttpOptionsFromConfig(config));
+  }
+
   public saveDashboard(dashboard: Dashboard, config?: RequestConfig): Observable<Dashboard> {
     return this.http.post<Dashboard>('/api/dashboard', dashboard, defaultHttpOptionsFromConfig(config));
   }

@@ -22,7 +22,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.http.HttpHeaders;
-import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.SystemParams;
@@ -151,7 +151,7 @@ public class AuthControllerTest extends AbstractControllerTest {
         loginTenantAdmin();
         ChangePasswordRequest changePasswordRequest = new ChangePasswordRequest();
         changePasswordRequest.setCurrentPassword("tenant");
-        changePasswordRequest.setNewPassword(RandomStringUtils.randomAlphanumeric(73));
+        changePasswordRequest.setNewPassword(RandomStringUtils.secure().nextAlphanumeric(73));
         doPost("/api/auth/changePassword", changePasswordRequest)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message", is("Password must be no more than 72 characters in length.")));
@@ -163,7 +163,7 @@ public class AuthControllerTest extends AbstractControllerTest {
 
         ChangePasswordRequest changePasswordRequest = new ChangePasswordRequest();
         changePasswordRequest.setCurrentPassword("tenant");
-        String newPassword = RandomStringUtils.randomAlphanumeric(16);
+        String newPassword = RandomStringUtils.secure().nextAlphanumeric(16);
         changePasswordRequest.setNewPassword(newPassword);
         doPost("/api/auth/changePassword", changePasswordRequest)
                 .andExpect(status().isOk());
@@ -196,7 +196,7 @@ public class AuthControllerTest extends AbstractControllerTest {
                 .andExpect(status().isSeeOther())
                 .andExpect(header().string(HttpHeaders.LOCATION, "/login/resetPassword?resetToken=" + this.currentResetPasswordToken));
 
-        String newPassword = RandomStringUtils.randomAlphanumeric(73);
+        String newPassword = RandomStringUtils.secure().nextAlphanumeric(73);
         JsonNode resetPasswordRequest = JacksonUtil.newObjectNode()
                 .put("resetToken", this.currentResetPasswordToken)
                 .put("password", newPassword);
