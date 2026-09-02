@@ -121,7 +121,7 @@ export class TimeSeriesChartWidgetComponent implements OnInit, OnDestroy, AfterV
     }
 
     if (this.showLegend) {
-      this.horizontalLegendPosition = [LegendPosition.left, LegendPosition.right].includes(this.legendConfig.position);
+      this.horizontalLegendPosition = [LegendPosition.top, LegendPosition.bottom].includes(this.legendConfig.position);
       this.legendClass = `legend-${this.legendConfig.position}`;
       this.legendColumnTitleStyle = textStyle(this.settings.legendColumnTitleFont);
       this.legendColumnTitleStyle.color = this.settings.legendColumnTitleColor;
