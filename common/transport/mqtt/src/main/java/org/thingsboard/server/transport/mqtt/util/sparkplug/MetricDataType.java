@@ -96,7 +96,7 @@ public enum MetricDataType {
      */
     public void checkType(Object value) throws AdaptorException {
         if (value != null && !clazz.isAssignableFrom(value.getClass())) {
-            String msgError = "Failed type check - " + clazz + " != " + ((value != null) ? value.getClass().toString() : "null");
+            String msgError = "Failed type check - " + clazz + " != " + value.getClass().toString();
             log.debug(msgError);
             throw new AdaptorException(msgError);
         }
