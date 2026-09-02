@@ -44,6 +44,11 @@ public class MqttV5ClientSparkplugBTelemetryTest extends AbstractMqttV5ClientSpa
     }
 
     @Test
+    public void testClientWithCorrectAccessTokenPublishNBIRTH_NDATA_AliasWithoutMetricName() throws Exception {
+        processClientWithCorrectAccessTokenPublishNBIRTH_NDATA_AliasWithoutMetricName();
+    }
+
+    @Test
     public void testClientWithCorrectAccessTokenPushNodeMetricBuildPrimitiveSimple() throws Exception {
         processClientWithCorrectAccessTokenPushNodeMetricBuildPrimitiveSimple();
     }
