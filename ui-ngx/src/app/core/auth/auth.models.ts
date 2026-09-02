@@ -37,6 +37,7 @@ export interface SysParamsState {
   minAllowedScheduledUpdateIntervalInSecForCF: number;
   maxRelationLevelPerCfArgument: number;
   maxRelatedEntitiesToReturnPerCfArgument: number;
+  maxActivationLinkTtl: number;
   ruleChainDebugPerTenantLimitsConfiguration?: string;
   calculatedFieldDebugPerTenantLimitsConfiguration?: string;
   intermediateAggregationIntervalInSecForCF: number;

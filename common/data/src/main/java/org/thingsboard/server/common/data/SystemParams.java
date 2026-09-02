@@ -44,6 +44,7 @@ public class SystemParams {
     long minAllowedDeduplicationIntervalInSecForCF;
     long minAllowedAggregationIntervalInSecForCF;
     long intermediateAggregationIntervalInSecForCF;
+    int maxActivationLinkTtl;
     TrendzSettings trendzSettings;
     boolean allowKeyFiltersOrConditions;
     String nullsOrderStrategy;

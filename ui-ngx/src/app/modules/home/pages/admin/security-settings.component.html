@@ -62,15 +62,15 @@
                    formControlName="userActivationTokenTtl"
                    step="1"
                    min="1"
-                   max="24"/>
+                   [max]="maxActivationLinkTtl"/>
             @if (securitySettingsFormGroup.get('userActivationTokenTtl').hasError('min')) {
               <mat-error>
-                {{ 'admin.user-activation-token-ttl-range' | translate }}
+                {{ 'admin.user-activation-token-ttl-range' | translate: {max: maxActivationLinkTtl} }}
               </mat-error>
             }
             @if (securitySettingsFormGroup.get('userActivationTokenTtl').hasError('max')) {
               <mat-error>
-                {{ 'admin.user-activation-token-ttl-range' | translate }}
+                {{ 'admin.user-activation-token-ttl-range' | translate: {max: maxActivationLinkTtl} }}
               </mat-error>
             }
           </mat-form-field>

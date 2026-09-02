@@ -81,6 +81,9 @@ public class SystemInfoController extends BaseController {
     @Value("${sql.query.key-filters-or-conditions.enabled:true}")
     private boolean keyFiltersOrConditionsEnabled;
 
+    @Value("${security.user_activation_link_max_ttl:720}")
+    private int maxActivationLinkTtl;
+
     @Value("${sql.entity_data_query_nulls_order_strategy:default}")
     private String nullsOrderStrategy;
 
@@ -168,7 +171,9 @@ public class SystemInfoController extends BaseController {
         systemParams.setMaxDatapointsLimit(maxDatapointsLimit);
         systemParams.setNullsOrderStrategy(ACCEPTED_NULLS_ORDER_STRATEGIES.contains(nullsOrderStrategy) ? nullsOrderStrategy : "default");
         systemParams.setEdqsEnabled(edqsService.isApiEnabled());
-        if (!currentUser.isSystemAdmin()) {
+        if (currentUser.isSystemAdmin()) {
+            systemParams.setMaxActivationLinkTtl(maxActivationLinkTtl);
+        } else {
             DefaultTenantProfileConfiguration tenantProfileConfiguration = tenantProfileCache.get(tenantId).getDefaultProfileConfiguration();
             systemParams.setMaxResourceSize(tenantProfileConfiguration.getMaxResourceSize());
             systemParams.setMaxDebugModeDurationMinutes(DebugModeUtil.getMaxDebugAllDuration(tenantProfileConfiguration.getMaxDebugModeDurationMinutes(), defaultDebugDurationMinutes));

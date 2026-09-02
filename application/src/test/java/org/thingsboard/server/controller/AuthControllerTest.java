@@ -25,6 +25,7 @@ import org.springframework.http.HttpHeaders;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.SystemParams;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.UserActivationLink;
 import org.thingsboard.server.common.data.id.UserId;
@@ -59,6 +60,7 @@ public class AuthControllerTest extends AbstractControllerTest {
         updateSecuritySettings(securitySettings -> {
             securitySettings.getPasswordPolicy().setMaximumLength(72);
             securitySettings.getPasswordPolicy().setForceUserToResetPasswordIfNotValid(false);
+            securitySettings.setUserActivationTokenTtl(24);
         });
     }
 
@@ -292,6 +294,29 @@ public class AuthControllerTest extends AbstractControllerTest {
                 .put("activateToken", newActivationToken)
                 .put("password", "wefewe")).andExpect(status().isOk());
         assertThat(getUser(user.getId()).getAdditionalInfo().get("userActivated").asBoolean()).isTrue();
+    }
+
+    @Test
+    public void testActivationLinkMaxTtlExposedInSystemParams() throws Exception {
+        loginSysAdmin();
+        SystemParams systemParams = doGet("/api/system/params", SystemParams.class);
+        assertThat(systemParams.getMaxActivationLinkTtl()).isEqualTo(720);
+    }
+
+    @Test
+    public void testActivationLinkTtlAtMaxIsAllowed() throws Exception {
+        loginSysAdmin();
+        SecuritySettings securitySettings = doGet("/api/admin/securitySettings", SecuritySettings.class);
+        securitySettings.setUserActivationTokenTtl(720);
+        doPost("/api/admin/securitySettings", securitySettings).andExpect(status().isOk());
+    }
+
+    @Test
+    public void testActivationLinkTtlExceedsMax() throws Exception {
+        loginSysAdmin();
+        SecuritySettings securitySettings = doGet("/api/admin/securitySettings", SecuritySettings.class);
+        securitySettings.setUserActivationTokenTtl(721);
+        doPost("/api/admin/securitySettings", securitySettings).andExpect(status().isBadRequest());
     }
 
     @Test
