@@ -15,9 +15,11 @@
  */
 package org.thingsboard.server.dao.tenant;
 
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.NestedTestConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.thingsboard.server.common.data.Tenant;
@@ -81,7 +83,9 @@ class DefaultTbTenantProfileCacheTest {
 
     @Test
     void shouldNotBeRestrictedForSysTenant() {
-        assertThat(tenantProfileCache.isRestricted(TenantId.SYS_TENANT_ID)).isFalse();
+        // Stub the sys tenant onto a restricted profile so the isSysTenantId() guard is load-bearing:
+        // without it, this would resolve the profile below and return true.
+        assertThat(tenantProfileCache.isRestricted(givenSysTenantWithProfileName("Free"))).isFalse();
     }
 
     @Test
@@ -89,6 +93,59 @@ class DefaultTbTenantProfileCacheTest {
         TenantId unknown = TenantId.fromUUID(UUID.randomUUID());
         willReturn(null).given(tenantService).findTenantById(unknown);
         assertThat(tenantProfileCache.isRestricted(unknown)).isFalse();
+    }
+
+    @Test
+    void shouldNotBeRestrictedForNullTenant() {
+        assertThat(tenantProfileCache.isRestricted(null)).isFalse();
+    }
+
+    private TenantId givenSysTenantWithProfileName(String name) {
+        TenantProfileId tenantProfileId = new TenantProfileId(UUID.randomUUID());
+
+        Tenant tenant = new Tenant();
+        tenant.setId(TenantId.SYS_TENANT_ID);
+        tenant.setTenantProfileId(tenantProfileId);
+        willReturn(tenant).given(tenantService).findTenantById(TenantId.SYS_TENANT_ID);
+
+        TenantProfile profile = new TenantProfile(tenantProfileId);
+        profile.setName(name);
+        willReturn(profile).given(tenantProfileService).findTenantProfileById(TenantId.SYS_TENANT_ID, tenantProfileId);
+        return TenantId.SYS_TENANT_ID;
+    }
+
+    // Own context configuration (not inherited) so the empty property overrides the outer class's value.
+    @Nested
+    @NestedTestConfiguration(NestedTestConfiguration.EnclosingConfiguration.OVERRIDE)
+    @SpringBootTest(classes = DefaultTbTenantProfileCache.class)
+    @TestPropertySource(properties = "security.restricted_tenant_profiles=")
+    class WhenConfigurationIsEmpty {
+
+        @MockitoBean
+        private TenantProfileService tenantProfileService;
+        @MockitoBean
+        private TenantService tenantService;
+
+        @Autowired
+        private DefaultTbTenantProfileCache tenantProfileCache;
+
+        @Test
+        void shouldNotBeRestrictedEvenOnConfiguredProfileName() {
+            TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());
+            TenantProfileId tenantProfileId = new TenantProfileId(UUID.randomUUID());
+
+            Tenant tenant = new Tenant();
+            tenant.setId(tenantId);
+            tenant.setTenantProfileId(tenantProfileId);
+            willReturn(tenant).given(tenantService).findTenantById(tenantId);
+
+            TenantProfile profile = new TenantProfile(tenantProfileId);
+            profile.setName("Free");
+            willReturn(profile).given(tenantProfileService).findTenantProfileById(TenantId.SYS_TENANT_ID, tenantProfileId);
+
+            assertThat(tenantProfileCache.isRestricted(tenantId)).isFalse();
+        }
+
     }
 
 }
