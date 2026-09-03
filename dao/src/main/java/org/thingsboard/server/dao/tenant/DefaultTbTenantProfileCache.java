@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.tenant;
 
-import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -26,7 +25,6 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 
-import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -44,13 +42,6 @@ public class DefaultTbTenantProfileCache implements TbTenantProfileCache, Tenant
 
     @Value("${security.restricted_tenant_profiles:}")
     private Set<String> restrictedTenantProfiles;
-
-    @PostConstruct
-    private void init() {
-        if (restrictedTenantProfiles == null) {
-            restrictedTenantProfiles = Collections.emptySet();
-        }
-    }
 
     private final ConcurrentMap<TenantProfileId, TenantProfile> tenantProfilesMap = new ConcurrentHashMap<>();
     private final ConcurrentMap<TenantId, TenantProfileId> tenantsMap = new ConcurrentHashMap<>();
