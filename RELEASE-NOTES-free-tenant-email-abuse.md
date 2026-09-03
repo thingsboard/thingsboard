@@ -32,6 +32,11 @@ driven entirely by one setting, `security.restricted_tenant_profiles`.
   - `POST /api/user/sendActivationMail` still answers `500` with "Couldn't send user activation
     email" — it cannot distinguish a rate-limit refusal from a mail failure.
   - `POST /api/noauth/resetPasswordByEmail` answers `200` regardless, as described above.
+- One unrelated path changes status as a side effect. `RateLimitExceededException` is also raised by
+  the Cassandra buffered-query executor (`AbstractBufferedRateExecutor`), so on a nosql deployment a
+  telemetry write refused by the `dao` rate limit now answers `429` instead of `500`. This could not
+  be separated out — it is the same exception type the mail limiter raises. WebSocket subscriptions
+  are unaffected; they handle that exception themselves rather than going through the REST handler.
 - Email-change verification is tuned by `security.email_verification.code_lifetime_seconds`,
   `security.email_verification.max_verification_failures` and
   `security.email_verification.min_resend_period_seconds`. The `cache.specs.emailVerificationCodes`
@@ -76,8 +81,8 @@ folded in. Each needs its own decision and its own release note.
 - **Quota refusals still surface as `500`.** `ApiUsageLimitsExceededException` shares the
   `AbstractRateLimitException` base class with the two rate-limit types that now map to `429`, but it
   is deliberately **not** mapped: doing so would move `POST /api/alarm` from `500` to `429` for a
-  tenant whose alarm-creation API feature is disabled (`BaseAlarmService`), and could do the same to
-  nosql-buffered telemetry write failures. `429` is arguably the better status for a quota refusal —
-  today a tenant over quota is indistinguishable from a server fault in monitoring — but changing the
-  status and error code of unrelated endpoints does not belong in this branch.
+  tenant whose alarm-creation API feature is disabled (`BaseAlarmService`). `429` is arguably the
+  better status for a quota refusal — today a tenant over quota is indistinguishable from a server
+  fault in monitoring — but changing the status and error code of unrelated endpoints does not belong
+  in this branch.
 - **No audit-log entry and no old-address notice** for a self-service email change, as noted above.
