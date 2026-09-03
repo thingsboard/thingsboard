@@ -49,6 +49,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 import org.springframework.web.util.WebUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.exception.AbstractRateLimitException;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.msg.tools.MaxPayloadSizeExceededException;
@@ -156,8 +157,8 @@ public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHand
                     } else {
                         handleThingsboardException(thingsboardException, response);
                     }
-                } else if (exception instanceof TbRateLimitsException rateLimitsException) {
-                    handleRateLimitException(response, rateLimitsException);
+                } else if (exception instanceof AbstractRateLimitException rateLimitException) {
+                    handleRateLimitException(response, rateLimitException);
                 } else if (exception instanceof AccessDeniedException) {
                     handleAccessDeniedException(response);
                 } else if (exception instanceof AuthenticationException authenticationException) {
@@ -196,9 +197,11 @@ public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHand
         JacksonUtil.writeValue(response.getWriter(), ThingsboardErrorResponse.of(thingsboardException.getMessage(), errorCode, status));
     }
 
-    private void handleRateLimitException(HttpServletResponse response, TbRateLimitsException exception) throws IOException {
+    private void handleRateLimitException(HttpServletResponse response, AbstractRateLimitException exception) throws IOException {
         response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
-        String message = "Too many requests for current " + exception.getEntityType().name().toLowerCase() + "!";
+        String message = exception instanceof TbRateLimitsException rateLimitsException && rateLimitsException.getEntityType() != null
+                ? "Too many requests for current " + rateLimitsException.getEntityType().name().toLowerCase() + "!"
+                : exception.getMessage();
         JacksonUtil.writeValue(response.getWriter(),
                 ThingsboardErrorResponse.of(message,
                         ThingsboardErrorCode.TOO_MANY_REQUESTS, HttpStatus.TOO_MANY_REQUESTS));
