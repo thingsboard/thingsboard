@@ -79,15 +79,15 @@ import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
 import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.exception.AccessDeniedException;
+import org.thingsboard.server.exception.EntityNotFoundException;
 import org.thingsboard.server.exception.ToErrorResponseEntity;
+import org.thingsboard.server.exception.UnauthorizedException;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.AccessControlService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.BiConsumer;
@@ -104,14 +104,6 @@ public class AccessValidator {
     public static final String DEVICE_WITH_REQUESTED_ID_NOT_FOUND = "Device with requested id wasn't found!";
     public static final String EDGE_WITH_REQUESTED_ID_NOT_FOUND = "Edge with requested id wasn't found!";
     public static final String ENTITY_VIEW_WITH_REQUESTED_ID_NOT_FOUND = "Entity-view with requested id wasn't found!";
-
-    private static final Set<Operation> TELEMETRY_OPERATIONS = EnumSet.of(
-            Operation.READ_TELEMETRY, Operation.WRITE_TELEMETRY, Operation.READ_ATTRIBUTES, Operation.WRITE_ATTRIBUTES);
-
-    // Entity types in scope of the telemetry API. The rest own neither time series nor attributes, or are not supported by the API at all.
-    private static final Set<EntityType> TELEMETRY_API_ENTITY_TYPES = Collections.unmodifiableSet(EnumSet.of(
-            EntityType.DEVICE, EntityType.ASSET, EntityType.ENTITY_VIEW, EntityType.CUSTOMER, EntityType.TENANT,
-            EntityType.TENANT_PROFILE, EntityType.USER, EntityType.EDGE, EntityType.RULE_CHAIN, EntityType.API_USAGE_STATE));
 
     @Autowired
     protected TenantService tenantService;
@@ -220,8 +212,9 @@ public class AccessValidator {
 
     public void validate(SecurityUser currentUser, Operation operation, EntityId entityId, FutureCallback<ValidationResult> callback) {
         EntityType entityType = entityId.getEntityType();
-        if (TELEMETRY_OPERATIONS.contains(operation) && !TELEMETRY_API_ENTITY_TYPES.contains(entityType)) {
-            callback.onFailure(new IncorrectParameterException("Telemetry is not supported for entity type '" + entityType + "'!"));
+        if (Operation.TS_AND_ATTRIBUTES_OPERATIONS.contains(operation)
+                && !Resource.ENTITY_TYPES_WITH_TS_AND_ATTRIBUTES.contains(entityType)) {
+            callback.onFailure(new IncorrectParameterException("Attributes and time series are not supported for entity type '" + entityType + "'!"));
             return;
         }
         switch (entityType) {
@@ -560,6 +553,12 @@ public class AccessValidator {
                 callback.onFailure(t);
             }
         };
+    }
+
+    // Failures caused by the request itself: they are reported to the client and must not be logged as server errors.
+    public static boolean isClientError(Throwable e) {
+        return e instanceof IncorrectParameterException || e instanceof EntityNotFoundException
+                || e instanceof AccessDeniedException || e instanceof UnauthorizedException;
     }
 
     public static void handleError(Throwable e, final DeferredResult<ResponseEntity> response, HttpStatus defaultErrorStatus) {

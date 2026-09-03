@@ -895,7 +895,11 @@ public class TelemetryController extends BaseController {
 
             @Override
             public void onFailure(Throwable e) {
-                log.error("Failed to fetch historical data", e);
+                if (AccessValidator.isClientError(e)) {
+                    log.debug("Failed to fetch historical data", e);
+                } else {
+                    log.error("Failed to fetch historical data", e);
+                }
                 AccessValidator.handleError(e, response, HttpStatus.INTERNAL_SERVER_ERROR);
             }
         };

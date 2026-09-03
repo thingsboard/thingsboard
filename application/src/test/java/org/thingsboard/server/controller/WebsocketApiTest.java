@@ -959,14 +959,25 @@ public class WebsocketApiTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testAttributesSubscriptionForEntityTypeOutOfTelemetryScope() throws Exception {
-        DeviceProfile deviceProfile = doPost("/api/deviceProfile", createDeviceProfile("Out of telemetry scope"), DeviceProfile.class);
+    public void testAttributesSubscriptionForEntityTypeWithoutTsAndAttributes() throws Exception {
+        DeviceProfile deviceProfile = doPost("/api/deviceProfile", createDeviceProfile("Out of attributes and time series scope"), DeviceProfile.class);
 
         JsonNode update = getWsClient().subscribeForAttributes(deviceProfile.getId(),
                 TbAttributeSubscriptionScope.SERVER_SCOPE.name(), List.of("anyAttributeKey"));
 
         assertThat(update.get("errorCode").asInt()).isEqualTo(SubscriptionErrorCode.BAD_REQUEST.getCode());
-        assertThat(update.get("errorMsg").asText()).isEqualTo("Telemetry is not supported for entity type 'DEVICE_PROFILE'!");
+        assertThat(update.get("errorMsg").asText()).isEqualTo("Attributes and time series are not supported for entity type 'DEVICE_PROFILE'!");
+    }
+
+    @Test
+    public void testAttributesSubscriptionForDeniedEntityIsRejected() throws Exception {
+        loginCustomerUser();
+
+        JsonNode update = getWsClient().subscribeForAttributes(device.getId(),
+                TbAttributeSubscriptionScope.SERVER_SCOPE.name(), List.of("anyAttributeKey"));
+
+        assertThat(update.get("errorCode").asInt()).isEqualTo(SubscriptionErrorCode.UNAUTHORIZED.getCode());
+        assertThat(update.hasNonNull("data")).isFalse();
     }
 
     @Test

@@ -349,6 +349,20 @@ public class TelemetryControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testGetTimeseriesForDeniedEntityIsRejected() throws Exception {
+        loginTenantAdmin();
+        Device device = createDevice();
+        long startTs = System.currentTimeMillis();
+        doPostAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/timeseries/smth",
+                "{\"data\": \"value\"}", String.class, status().isOk());
+        long endTs = System.currentTimeMillis();
+
+        loginCustomerUser();
+        doGetAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/values/timeseries?keys=data&startTs={startTs}&endTs={endTs}",
+                startTs, endTs).andExpect(status().isForbidden());
+    }
+
+    @Test
     public void testSaveTelemetryForEntityTypeNotSupportedByTelemetryApiIsRejected() throws Exception {
         loginTenantAdmin();
 

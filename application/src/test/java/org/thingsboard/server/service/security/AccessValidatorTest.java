@@ -75,11 +75,11 @@ public class AccessValidatorTest {
 
     private static final TenantId TENANT_ID = TenantId.fromUUID(UUID.fromString("1a6e3c46-4b6b-4a45-9a06-05a3b1b1e4b6"));
 
-    private static final Set<EntityType> ENTITY_TYPES_IN_TELEMETRY_SCOPE = EnumSet.of(
+    private static final Set<EntityType> EXPECTED_ENTITY_TYPES_WITH_TS_AND_ATTRIBUTES = EnumSet.of(
             EntityType.DEVICE, EntityType.ASSET, EntityType.ENTITY_VIEW, EntityType.CUSTOMER, EntityType.TENANT,
             EntityType.TENANT_PROFILE, EntityType.USER, EntityType.EDGE, EntityType.RULE_CHAIN, EntityType.API_USAGE_STATE);
 
-    private static final List<Operation> TELEMETRY_OPERATIONS = List.of(
+    private static final List<Operation> EXPECTED_TS_AND_ATTRIBUTES_OPERATIONS = List.of(
             Operation.READ_TELEMETRY, Operation.WRITE_TELEMETRY, Operation.READ_ATTRIBUTES, Operation.WRITE_ATTRIBUTES);
 
     @Mock
@@ -137,19 +137,27 @@ public class AccessValidatorTest {
         );
     }
 
+    @Test
+    public void givenScopeResolvedFromResources_whenRead_thenMatchesExpectedEntityTypesAndOperations() {
+        assertThat(Resource.ENTITY_TYPES_WITH_TS_AND_ATTRIBUTES)
+                .containsExactlyInAnyOrderElementsOf(EXPECTED_ENTITY_TYPES_WITH_TS_AND_ATTRIBUTES);
+        assertThat(Operation.TS_AND_ATTRIBUTES_OPERATIONS)
+                .containsExactlyInAnyOrderElementsOf(EXPECTED_TS_AND_ATTRIBUTES_OPERATIONS);
+    }
+
     @ParameterizedTest
-    @MethodSource("telemetryOperationsOnEntityTypesOutOfScope")
-    public void givenEntityTypeOutOfTelemetryScope_whenValidate_thenFailsAndEntityIsNotFetched(EntityId entityId, Operation operation) {
+    @MethodSource("tsAndAttributesOperationsOnEntityTypesOutOfScope")
+    public void givenEntityTypeWithoutTsAndAttributes_whenValidate_thenFailsAndEntityIsNotFetched(EntityId entityId, Operation operation) {
         accessValidator.validate(customerUser, operation, entityId, callback);
 
         assertSingleFailure(IncorrectParameterException.class);
         verifyNoInteractions(deviceProfileService, assetProfileService, apiUsageStateService, otaPackageService, accessControlService);
     }
 
-    private static Stream<Arguments> telemetryOperationsOnEntityTypesOutOfScope() {
-        return EnumSet.complementOf(EnumSet.copyOf(ENTITY_TYPES_IN_TELEMETRY_SCOPE)).stream()
+    private static Stream<Arguments> tsAndAttributesOperationsOnEntityTypesOutOfScope() {
+        return EnumSet.complementOf(EnumSet.copyOf(EXPECTED_ENTITY_TYPES_WITH_TS_AND_ATTRIBUTES)).stream()
                 .map(entityType -> EntityIdFactory.getByTypeAndUuid(entityType, UUID.randomUUID()))
-                .flatMap(entityId -> TELEMETRY_OPERATIONS.stream().map(operation -> Arguments.of(entityId, operation)));
+                .flatMap(entityId -> EXPECTED_TS_AND_ATTRIBUTES_OPERATIONS.stream().map(operation -> Arguments.of(entityId, operation)));
     }
 
     @Test
