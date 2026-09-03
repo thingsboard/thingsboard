@@ -78,7 +78,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -1449,6 +1451,70 @@ public class UserControllerTest extends AbstractControllerTest {
 
         doGet("/api/user/" + saved.getId().getId() + "/activationLinkInfo")
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    public void testActivatingUserMakesRecipientAllowed() throws Exception {
+        loginSysAdmin();
+        Tenant restrictedTenant = createRestrictedTenant();
+        final TenantId restrictedTenantId = restrictedTenant.getId();
+
+        User admin = new User();
+        admin.setAuthority(Authority.TENANT_ADMIN);
+        admin.setTenantId(restrictedTenantId);
+        admin.setEmail("invalidation.admin@thingsboard.org");
+        createUserAndLogin(admin, "testPassword1");
+
+        User invitee = new User();
+        invitee.setAuthority(Authority.TENANT_ADMIN);
+        invitee.setTenantId(restrictedTenantId);
+        invitee.setEmail("invalidation.invitee@thingsboard.org");
+        doPost("/api/user", invitee, User.class);
+
+        TbEmail toInvitee = TbEmail.builder().to("invalidation.invitee@thingsboard.org").subject("s").body("b").build();
+        assertThatThrownBy(() -> recipientValidator.validateRecipients(restrictedTenantId, toInvitee))
+                .isInstanceOf(ThingsboardException.class);
+
+        // createUserAndLogin captured the activation token from the mocked activation mail.
+        resetTokens();
+        JsonNode activateRequest = JacksonUtil.newObjectNode()
+                .put("activateToken", this.currentActivateToken)
+                .put("password", "testPassword2");
+        doPost("/api/noauth/activate", activateRequest).andExpect(status().isOk());
+
+        assertThatCode(() -> recipientValidator.validateRecipients(restrictedTenantId, toInvitee))
+                .doesNotThrowAnyException();
+
+        loginSysAdmin();
+        doDelete("/api/tenant/" + restrictedTenantId.getId()).andExpect(status().isOk());
+    }
+
+    @Test
+    public void testRestrictedTenantAlwaysSendsActivationMail() throws Exception {
+        loginSysAdmin();
+        Tenant restrictedTenant = createRestrictedTenant();
+        final TenantId restrictedTenantId = restrictedTenant.getId();
+
+        User admin = new User();
+        admin.setAuthority(Authority.TENANT_ADMIN);
+        admin.setTenantId(restrictedTenantId);
+        admin.setEmail("forcedmail.admin@thingsboard.org");
+        createUserAndLogin(admin, "testPassword1");
+
+        // clearInvocations (not reset) keeps setupMailServiceMock's activation stub armed for later tests.
+        Mockito.clearInvocations(mailService);
+        User invitee = new User();
+        invitee.setAuthority(Authority.TENANT_ADMIN);
+        invitee.setTenantId(restrictedTenantId);
+        invitee.setEmail("forcedmail.invitee@thingsboard.org");
+
+        // sendActivationMail=false must be overridden for a restricted tenant.
+        doPost("/api/user?sendActivationMail=false", invitee, User.class);
+        Mockito.verify(mailService).sendActivationEmail(eq(restrictedTenantId), anyString(), anyLong(),
+                eq("forcedmail.invitee@thingsboard.org"));
+
+        loginSysAdmin();
+        doDelete("/api/tenant/" + restrictedTenantId.getId()).andExpect(status().isOk());
     }
 
     private Tenant createRestrictedTenant() throws Exception {

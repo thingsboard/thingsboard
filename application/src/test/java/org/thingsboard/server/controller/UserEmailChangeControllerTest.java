@@ -22,6 +22,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.api.TbEmail;
 import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
@@ -32,16 +33,21 @@ import org.thingsboard.server.common.data.SystemParams;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.model.EmailVerificationCode;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.service.mail.RecipientValidator;
 
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -55,6 +61,9 @@ public class UserEmailChangeControllerTest extends AbstractControllerTest {
     @Autowired
     @Qualifier("EmailVerificationCache")
     private TbTransactionalCache<UserId, EmailVerificationCode> emailVerificationCache;
+
+    @Autowired
+    private RecipientValidator recipientValidator;
 
     @Before
     public void stubVerificationMail() throws Exception {
@@ -114,11 +123,36 @@ public class UserEmailChangeControllerTest extends AbstractControllerTest {
         // The defining invariant of this flow: the code goes to the new address, and only the new address.
         Mockito.verify(mailService).sendTwoFaVerificationEmail(eq(tenant.getId()), eq("restricted.changed@thingsboard.org"), eq(code), anyInt());
 
+        // The outdating check truncates to whole seconds, so the invalidation event must land in a
+        // later second than the token's issuedAt, or the old token would still compare as fresh.
+        TimeUnit.SECONDS.sleep(1);
         doPost("/api/user/email/verify?verificationCode=" + code).andExpect(status().isOk());
+
+        // The JWT subject is the email, so the old session must no longer work.
+        doGet("/api/auth/user").andExpect(status().isUnauthorized());
 
         loginSysAdmin();
         assertThat(doGet("/api/user/" + admin.getId().getId(), User.class).getEmail())
                 .isEqualTo("restricted.changed@thingsboard.org");
+    }
+
+    @Test
+    public void testVerifiedEmailChangeMovesTheRecipientAllowance() throws Exception {
+        Tenant tenant = createRestrictedTenant();
+        final TenantId tenantId = tenant.getId();
+        User admin = loginRestrictedTenantAdmin(tenant, "moving.old@thingsboard.org");
+
+        doPostWithResponse("/api/user/email",
+                new EmailChangeRequest("moving.new@thingsboard.org"), EmailChangeResult.class);
+        String code = emailVerificationCache.get(admin.getId()).get().code();
+        doPost("/api/user/email/verify?verificationCode=" + code).andExpect(status().isOk());
+
+        TbEmail toOld = TbEmail.builder().to("moving.old@thingsboard.org").subject("s").body("b").build();
+        TbEmail toNew = TbEmail.builder().to("moving.new@thingsboard.org").subject("s").body("b").build();
+        assertThatThrownBy(() -> recipientValidator.validateRecipients(tenantId, toOld))
+                .isInstanceOf(ThingsboardException.class);
+        assertThatCode(() -> recipientValidator.validateRecipients(tenantId, toNew))
+                .doesNotThrowAnyException();
     }
 
     @Test
