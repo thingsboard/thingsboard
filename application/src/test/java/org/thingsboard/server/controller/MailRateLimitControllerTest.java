@@ -19,6 +19,7 @@ import com.google.common.util.concurrent.Futures;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.thingsboard.server.common.data.EmailChangeRequest;
@@ -27,15 +28,19 @@ import org.thingsboard.server.common.data.EmailChangeStatus;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.service.mail.MailSenderInternalExecutorService;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
@@ -46,6 +51,9 @@ public class MailRateLimitControllerTest extends AbstractControllerTest {
     // SMTP hop is stubbed out: the real DefaultMailService templated path still runs in full.
     @MockitoSpyBean
     private MailSenderInternalExecutorService mailSenderExecutor;
+
+    @Autowired
+    private UserService userService;
 
     @Before
     public void stubSmtpHop() {
@@ -87,12 +95,44 @@ public class MailRateLimitControllerTest extends AbstractControllerTest {
         doDelete("/api/tenant/" + tenant.getId().getId()).andExpect(status().isOk());
     }
 
+    @Test
+    public void testRateLimitedUserCreationIsRefusedAndRolledBack() throws Exception {
+        loginSysAdmin();
+        Tenant tenant = new Tenant();
+        tenant.setTitle("Rate limited invites");
+        tenant = saveTenant(tenant);
+
+        // Created while the activation mail is still stubbed, so the tenant's token is untouched.
+        createTenantAdmin(tenant, "ratelimit.inviter@thingsboard.org");
+
+        // From here the real templated send runs, so the invites below go through the rate limit.
+        Mockito.doCallRealMethod().when(mailService).sendActivationEmail(any(), anyString(), anyLong(), anyString());
+
+        doPost("/api/user", tenantAdminUnder(tenant, "ratelimit.invitee1@thingsboard.org"), User.class);
+
+        // The refusal must surface as the rate limit rather than as a generic mail failure...
+        doPost("/api/user", tenantAdminUnder(tenant, "ratelimit.invitee2@thingsboard.org"))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(statusReason(containsString("emails sending")));
+
+        // ...and the compensating delete must still have run, so a retry is not blocked by a leftover user.
+        assertThat(userService.findUserByEmail(TenantId.SYS_TENANT_ID, "ratelimit.invitee2@thingsboard.org")).isNull();
+        assertThat(userService.findUserByEmail(TenantId.SYS_TENANT_ID, "ratelimit.invitee1@thingsboard.org")).isNotNull();
+
+        loginSysAdmin();
+        doDelete("/api/tenant/" + tenant.getId().getId()).andExpect(status().isOk());
+    }
+
+    private User tenantAdminUnder(Tenant tenant, String email) {
+        User user = new User();
+        user.setAuthority(Authority.TENANT_ADMIN);
+        user.setTenantId(tenant.getId());
+        user.setEmail(email);
+        return user;
+    }
+
     private User createTenantAdmin(Tenant tenant, String email) throws Exception {
-        User admin = new User();
-        admin.setAuthority(Authority.TENANT_ADMIN);
-        admin.setTenantId(tenant.getId());
-        admin.setEmail(email);
-        return createUserAndLogin(admin, "testPassword1");
+        return createUserAndLogin(tenantAdminUnder(tenant, email), "testPassword1");
     }
 
 }
