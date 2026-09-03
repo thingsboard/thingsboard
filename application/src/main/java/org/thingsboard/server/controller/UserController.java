@@ -40,6 +40,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.MailService;
+import org.thingsboard.server.common.data.EmailChangeRequest;
+import org.thingsboard.server.common.data.EmailChangeResult;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.UserActivationLink;
@@ -78,6 +80,7 @@ import org.thingsboard.server.service.security.model.UserPrincipal;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
+import org.thingsboard.server.service.user.email.EmailChangeService;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -129,6 +132,7 @@ public class UserController extends BaseController {
     private final TbUserService tbUserService;
     private final EntityQueryService entityQueryService;
     private final EntityService entityService;
+    private final EmailChangeService emailChangeService;
 
     @ApiOperation(value = "Get User (getUserById)",
             notes = "Fetch the User object based on the provided User Id. " +
@@ -410,6 +414,29 @@ public class UserController extends BaseController {
         if (!userCredentialsEnabled) {
             eventPublisher.publishEvent(new UserCredentialsInvalidationEvent(userId));
         }
+    }
+
+    @ApiOperation(value = "Change own email (changeEmail)",
+            notes = "Changes the email of the current user. For tenants whose profile requires it, a verification " +
+                    "code is emailed to the new address and the change is applied only after it is confirmed " +
+                    "with the verify endpoint. " + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PostMapping(value = "/user/email")
+    public EmailChangeResult changeEmail(
+            @Parameter(description = "A JSON value representing the new email.", required = true)
+            @RequestBody EmailChangeRequest request) throws ThingsboardException {
+        return emailChangeService.requestEmailChange(getCurrentUser(), request.email());
+    }
+
+    @ApiOperation(value = "Verify an email change (verifyEmailChange)",
+            notes = "Confirms a pending email change with the code that was sent to the new address. " + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PostMapping(value = "/user/email/verify")
+    @ResponseStatus(value = HttpStatus.OK)
+    public void verifyEmailChange(
+            @Parameter(description = "The verification code that was emailed to the new address", required = true)
+            @RequestParam String verificationCode) throws ThingsboardException {
+        emailChangeService.verifyEmailChange(getCurrentUser(), verificationCode);
     }
 
     @ApiOperation(value = "Get usersForAssign (getUsersForAssign)",

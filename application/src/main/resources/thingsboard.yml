@@ -171,6 +171,11 @@ security:
   user_token_access_enabled: "${SECURITY_USER_TOKEN_ACCESS_ENABLED:true}"
   # Tenant profile names whose tenants may only email their own activated users and must verify user email changes with a one-time code
   restricted_tenant_profiles: "${SECURITY_RESTRICTED_TENANT_PROFILES:Free}"
+  # Email change verification for restricted tenant profiles
+  email_verification:
+    code_lifetime_seconds: "${SECURITY_EMAIL_VERIFICATION_CODE_LIFETIME:900}"
+    max_verification_failures: "${SECURITY_EMAIL_VERIFICATION_MAX_FAILURES:5}"
+    min_resend_period_seconds: "${SECURITY_EMAIL_VERIFICATION_MIN_RESEND_PERIOD:60}"
   # API key parameters
   api_key:
     # Prefix for the auto-generated API key. For example, tb_Ood4dQMxWvMH-76z3E_Cv0mZaBWT0Clk3hRSO0P_jNQ
@@ -790,6 +795,9 @@ cache:
     apiKeys:
       timeToLiveInMinutes: "${CACHE_SPECS_API_KEYS_TTL:1440}" # API keys cache TTL
       maxSize: "${CACHE_SPECS_API_KEYS_MAX_SIZE:10000}" # 0 means the cache is disabled
+    emailVerificationCodes:
+      timeToLiveInMinutes: "${CACHE_SPECS_EMAIL_VERIFICATION_CODES_TTL:15}" # Email change verification codes cache TTL
+      maxSize: "${CACHE_SPECS_EMAIL_VERIFICATION_CODES_MAX_SIZE:100000}" # 0 means the cache is disabled
 
   # Deliberately placed outside the 'specs' group above
   notificationRules:
