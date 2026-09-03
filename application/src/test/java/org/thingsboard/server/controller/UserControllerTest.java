@@ -1436,6 +1436,19 @@ public class UserControllerTest extends AbstractControllerTest {
         doPost("/api/user/" + saved.getId().getId() + "/userCredentialsEnabled?userCredentialsEnabled=true")
                 .andExpect(status().isForbidden());
 
+        resetTokens();
+        doPost("/api/noauth/activate", JacksonUtil.newObjectNode()
+                .put("activateToken", this.currentActivateToken)
+                .put("password", "testPassword2")).andExpect(status().isOk());
+
+        // Lockout recovery must keep working: once the user has activated, a restricted tenant can
+        // still disable and re-enable them.
+        login("restricted.admin2@thingsboard.org", "testPassword1");
+        doPost("/api/user/" + saved.getId().getId() + "/userCredentialsEnabled?userCredentialsEnabled=false")
+                .andExpect(status().isOk());
+        doPost("/api/user/" + saved.getId().getId() + "/userCredentialsEnabled?userCredentialsEnabled=true")
+                .andExpect(status().isOk());
+
         loginSysAdmin();
         doDelete("/api/tenant/" + restrictedTenant.getId().getId()).andExpect(status().isOk());
     }
@@ -1483,10 +1496,12 @@ public class UserControllerTest extends AbstractControllerTest {
                 .put("activateToken", this.currentActivateToken)
                 .put("password", "testPassword2");
 
-        // Re-warm right before activating: the invitee-creation broadcast could otherwise evict the cache
-        // on its own in the gap above, making the pass below unattributable to activation.
-        assertThatThrownBy(() -> recipientValidator.validateRecipients(restrictedTenantId, toInvitee))
-                .isInstanceOf(ThingsboardException.class);
+        // Hold the negative for a sustained window rather than once: the invitee's own creation also queues
+        // a USER cache eviction, and a single re-warm could be overtaken by it, making the pass below
+        // unattributable to activation.
+        await().during(2, TimeUnit.SECONDS).atMost(10, TimeUnit.SECONDS).untilAsserted(() ->
+                assertThatThrownBy(() -> recipientValidator.validateRecipients(restrictedTenantId, toInvitee))
+                        .isInstanceOf(ThingsboardException.class));
         doPost("/api/noauth/activate", activateRequest).andExpect(status().isOk());
 
         // The cache eviction rides the TB_CORE notification-queue round-trip, not the activate request itself.
