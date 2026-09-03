@@ -72,7 +72,6 @@ export class ChangeEmailDialogComponent extends DialogComponent<ChangeEmailDialo
           this.userService.changeEmail(email).subscribe({
             next: (result) => {
               if (result.status === EmailChangeStatus.SUCCESS) {
-                this.showChangeSuccessNotification();
                 this.dialogRef.close(email);
               } else {
                 this.stepper.next();
@@ -87,10 +86,7 @@ export class ChangeEmailDialogComponent extends DialogComponent<ChangeEmailDialo
       case 1:
         if (this.verificationForm.valid) {
           this.userService.verifyEmailChange(this.verificationForm.get('verificationCode').value).subscribe({
-            next: () => {
-              this.showChangeSuccessNotification();
-              this.dialogRef.close(this.emailForm.get('email').value);
-            },
+            next: () => this.dialogRef.close(this.emailForm.get('email').value),
             error: (error: HttpErrorResponse) => this.showRateLimitError(error)
           });
         } else {
@@ -102,16 +98,6 @@ export class ChangeEmailDialogComponent extends DialogComponent<ChangeEmailDialo
 
   closeDialog() {
     return this.dialogRef.close(null);
-  }
-
-  // Dispatched before close(), not after: the dialog closing and the ensuing logout leave nothing on
-  // screen to carry a message, so this is the only point the user can see one. Applies to both the
-  // no-code SUCCESS path and the verified path — a successful change ends in a logout either way.
-  private showChangeSuccessNotification() {
-    this.store.dispatch(new ActionNotificationShow({
-      message: this.translate.instant('profile.change-email-success'),
-      type: 'success'
-    }));
   }
 
   // The global HTTP interceptor only surfaces a 429 when the request config asks it to auto-retry,
