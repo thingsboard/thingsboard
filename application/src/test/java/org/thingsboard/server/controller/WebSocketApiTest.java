@@ -1006,7 +1006,8 @@ public class WebSocketApiTest extends AbstractControllerTest {
 
         JsonNode update = getWsClient().sendTimeseriesCmd(device.getId(), "LATEST_TELEMETRY", "temperature");
 
-        assertThat(update.get("errorCode").asInt()).isEqualTo(SubscriptionErrorCode.UNAUTHORIZED.getCode());
+        assertThat(update.get("errorCode").asInt()).isEqualTo(SubscriptionErrorCode.ACCESS_DENIED.getCode());
+        assertThat(update.get("errorMsg").asText()).startsWith(SubscriptionErrorCode.ACCESS_DENIED.getDefaultMsg());
         assertThat(update.hasNonNull("data")).isFalse();
     }
 
