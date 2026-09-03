@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.DeviceInfo;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.OtaPackageInfo;
@@ -99,6 +100,7 @@ import org.thingsboard.server.gen.edge.v1.RuleChainUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.SyncCompletedMsg;
 import org.thingsboard.server.gen.edge.v1.TenantProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.TenantUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.UplinkMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.UserCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
@@ -109,6 +111,7 @@ import java.util.Optional;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -128,7 +131,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         registry.add("edges.rpc.port", () -> EDGE_PORT);
     }
 
-    public static final Integer CONNECT_MESSAGE_COUNT = 17;
+    public static final Integer CONNECT_MESSAGE_COUNT = 13;
     public static final Integer INSTALLATION_MESSAGE_COUNT = 8;
     public static final Integer SYNC_MESSAGE_COUNT = CONNECT_MESSAGE_COUNT + INSTALLATION_MESSAGE_COUNT;
     private static final String THERMOSTAT_DEVICE_PROFILE_NAME = "Thermostat";
@@ -140,6 +143,16 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
 
     @Autowired
     protected EdgeEventService edgeEventService;
+
+    protected void sendUplinkMsgAndWaitForResponse(Consumer<UplinkMsg.Builder> customizer) throws Exception {
+        UplinkMsg.Builder uplinkMsgBuilder = UplinkMsg.newBuilder();
+        uplinkMsgBuilder.setUplinkMsgId(EdgeUtils.nextPositiveInt());
+        customizer.accept(uplinkMsgBuilder);
+
+        edgeImitator.expectResponsesAmount(1);
+        edgeImitator.sendUplinkMsg(uplinkMsgBuilder.build());
+        Assert.assertTrue(edgeImitator.waitForResponses());
+    }
 
     @Before
     public void setupEdgeTest() throws Exception {
@@ -279,9 +292,9 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         validateMsgsCnt(RuleChainMetadataUpdateMsg.class, 1);
         validateRuleChainMetadataUpdates(ruleChainUUID);
 
-        // 4 messages ('general', 'mail', 'connectivity', 'jwt')
-        validateMsgsCnt(AdminSettingsUpdateMsg.class, 4);
-        validateAdminSettings(4);
+        // No admin settings are synced to the edge: 'general'/'connectivity' are system-scoped and the edge
+        // auto-generates its own, while 'mail'/'sms'/'notifications' are delegated to the cloud.
+        validateMsgsCnt(AdminSettingsUpdateMsg.class, 0);
 
         // 4 messages
         // - 1 from default profile fetcher
