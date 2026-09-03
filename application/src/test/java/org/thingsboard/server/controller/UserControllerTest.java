@@ -31,16 +31,19 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.ResultActions;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.api.TbEmail;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.UserEmailInfo;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
@@ -49,10 +52,13 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.settings.StarredDashboardInfo;
 import org.thingsboard.server.common.data.settings.UserDashboardsInfo;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
+import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.user.UserDao;
+import org.thingsboard.server.service.mail.RecipientValidator;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -64,6 +70,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
@@ -89,6 +97,9 @@ public class UserControllerTest extends AbstractControllerTest {
 
     @Autowired
     private DeviceService deviceService;
+
+    @Autowired
+    private RecipientValidator recipientValidator;
 
     static class Config {
         @Bean
@@ -1344,6 +1355,54 @@ public class UserControllerTest extends AbstractControllerTest {
         Assert.assertTrue(retrievedSettings.getLast().isEmpty());
         Assert.assertNotNull(retrievedSettings.getStarred());
         Assert.assertTrue(retrievedSettings.getStarred().isEmpty());
+    }
+
+    @Test
+    public void testRestrictedTenantCanOnlyEmailItsActivatedUsers() throws Exception {
+        loginSysAdmin();
+        Tenant restrictedTenant = createRestrictedTenant();
+        final TenantId restrictedTenantId = restrictedTenant.getId();
+
+        User admin = new User();
+        admin.setAuthority(Authority.TENANT_ADMIN);
+        admin.setTenantId(restrictedTenantId);
+        admin.setEmail("restricted.admin@thingsboard.org");
+        createUserAndLogin(admin, "testPassword1");
+
+        TbEmail toOutsider = TbEmail.builder().to("victim@example.com").subject("s").body("b").build();
+        assertThatThrownBy(() -> mailService.send(restrictedTenantId, null, toOutsider))
+                .isInstanceOf(ThingsboardException.class)
+                .hasMessageContaining("victim@example.com");
+
+        // A user of a DIFFERENT tenant is not reachable either.
+        TbEmail toOtherTenantUser = TbEmail.builder().to(TENANT_ADMIN_EMAIL).subject("s").body("b").build();
+        assertThatThrownBy(() -> mailService.send(restrictedTenantId, null, toOtherTenantUser))
+                .isInstanceOf(ThingsboardException.class);
+
+        TbEmail toMember = TbEmail.builder().to("restricted.admin@thingsboard.org").subject("s").body("b").build();
+        assertThatCode(() -> recipientValidator.validateRecipients(restrictedTenantId, toMember))
+                .doesNotThrowAnyException();
+
+        // Own-SMTP sends are exempt from the recipient restriction.
+        assertThatCode(() -> recipientValidator.resolveFrom(restrictedTenantId, toOutsider, "noreply@thingsboard.io"))
+                .doesNotThrowAnyException();
+
+        loginSysAdmin();
+        doDelete("/api/tenant/" + restrictedTenantId.getId()).andExpect(status().isOk());
+    }
+
+    private Tenant createRestrictedTenant() throws Exception {
+        TenantProfile restrictedProfile = new TenantProfile();
+        restrictedProfile.setName("Free");
+        TenantProfileData profileData = new TenantProfileData();
+        profileData.setConfiguration(new DefaultTenantProfileConfiguration());
+        restrictedProfile.setProfileData(profileData);
+        restrictedProfile = doPost("/api/tenantProfile", restrictedProfile, TenantProfile.class);
+
+        Tenant restrictedTenant = new Tenant();
+        restrictedTenant.setTitle("Restricted tenant");
+        restrictedTenant.setTenantProfileId(restrictedProfile.getId());
+        return saveTenant(restrictedTenant);
     }
 
 }

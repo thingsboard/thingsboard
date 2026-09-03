@@ -85,6 +85,7 @@ public class DefaultMailService implements MailService {
     private final PasswordResetExecutorService passwordResetExecutorService;
     private final TbMailContextComponent ctx;
     private final RateLimitService rateLimitService;
+    private final RecipientValidator recipientValidator;
 
     @Value("${mail.per_tenant_rate_limits:}")
     private String perTenantRateLimitConfig;
@@ -208,22 +209,27 @@ public class DefaultMailService implements MailService {
 
     @Override
     public void send(TenantId tenantId, CustomerId customerId, TbEmail tbEmail) throws ThingsboardException {
-        sendMail(tenantId, customerId, tbEmail, this.mailSender, timeout);
+        sendMail(tenantId, customerId, tbEmail, this.mailSender, timeout, true);
     }
 
     @Override
     public void send(TenantId tenantId, CustomerId customerId, TbEmail tbEmail, JavaMailSender javaMailSender, long timeout) throws ThingsboardException {
-        sendMail(tenantId, customerId, tbEmail, javaMailSender, timeout);
+        sendMail(tenantId, customerId, tbEmail, javaMailSender, timeout, false);
     }
 
-    private void sendMail(TenantId tenantId, CustomerId customerId, TbEmail tbEmail, JavaMailSender javaMailSender, long timeout) throws ThingsboardException {
+    private void sendMail(TenantId tenantId, CustomerId customerId, TbEmail tbEmail, JavaMailSender javaMailSender, long timeout, boolean systemMailSender) throws ThingsboardException {
         if (apiUsageStateService.getApiUsageState(tenantId).isEmailSendEnabled()) {
-            checkRateLimit(tenantId);
+            if (systemMailSender) {
+                checkRateLimit(tenantId);
+                recipientValidator.validateRecipients(tenantId, tbEmail);
+            }
             try {
                 MimeMessage mailMsg = javaMailSender.createMimeMessage();
                 boolean multipart = (tbEmail.getImages() != null && !tbEmail.getImages().isEmpty());
                 MimeMessageHelper helper = new MimeMessageHelper(mailMsg, multipart, "UTF-8");
-                helper.setFrom(StringUtils.isBlank(tbEmail.getFrom()) ? mailFrom : tbEmail.getFrom());
+                helper.setFrom(systemMailSender
+                        ? recipientValidator.resolveFrom(tenantId, tbEmail, mailFrom)
+                        : (StringUtils.isBlank(tbEmail.getFrom()) ? mailFrom : tbEmail.getFrom()));
                 helper.setTo(tbEmail.getTo().split("\\s*,\\s*"));
                 if (!StringUtils.isBlank(tbEmail.getCc())) {
                     helper.setCc(tbEmail.getCc().split("\\s*,\\s*"));
