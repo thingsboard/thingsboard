@@ -47,6 +47,11 @@ export class UserComponent extends EntityComponent<User>{
     map((auth) => auth.userTokenAccessEnabled)
   );
 
+  restrictedTenantProfile$ = this.store.pipe(
+    select(selectAuth),
+    map((auth) => auth.restrictedTenantProfile)
+  );
+
   constructor(protected store: Store<AppState>,
               @Optional() @Inject('entity') protected entityValue: User,
               @Optional() @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<User>,

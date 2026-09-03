@@ -6194,6 +6194,7 @@
         "originator-entity-by-name-pattern-desc": "Use entity fetched from DB as new originator. Lookup based on entity type and specified name pattern.",
         "email-from-template-hint": "Use $[messageKey] to extract value from the message and ${metadataKey} to extract value from the metadata.",
         "recipients-block-main-hint": "Comma-separated address list. All input fields support templatization. Use $[messageKey] to extract value from the message and ${metadataKey} to extract value from the metadata.",
+        "recipients-restricted-tenant-hint": "Your plan only allows sending emails to users of your tenant who have activated their account.",
         "forward-msg-default-rule-chain": "Forward message to the originator's default rule chain",
         "forward-msg-default-rule-chain-tooltip": "If enabled, message will be forwarded to the originator's default rule chain, or rule chain from configuration, if originator has no default rule chain defined in the entity profile.",
         "exclude-zero-deltas": "Exclude zero deltas from outbound message",

@@ -44,6 +44,7 @@ export interface SysParamsState {
   nullsOrderStrategy: NullsOrderStrategy;
   edqsEnabled: boolean;
   iotHubBaseUrl: string;
+  restrictedTenantProfile: boolean;
 }
 
 export interface SysParams extends SysParamsState {

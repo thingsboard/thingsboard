@@ -37,7 +37,7 @@
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'displayActivationLink')"
-          [class.!hidden]="isEdit || isUserActivated()">
+          [class.!hidden]="isEdit || isUserActivated() || (restrictedTenantProfile$ | async)">
     {{'user.display-activation-link' | translate }}
   </button>
   <button mat-raised-button color="primary"
@@ -76,7 +76,8 @@
     <fieldset [disabled]="(isLoading$ | async) || !isEdit">
       <mat-form-field class="mat-block" appearance="outline">
         <mat-label translate>user.email</mat-label>
-        <input matInput type="email" formControlName="email">
+        <input matInput type="email" formControlName="email"
+               [readonly]="entity?.id && (restrictedTenantProfile$ | async)">
         <mat-error *ngIf="entityForm.get('email').hasError('email')">
           {{ 'user.invalid-email-format' | translate }}
         </mat-error>

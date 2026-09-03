@@ -15,7 +15,7 @@
 ///
 
 import { Component } from '@angular/core';
-import { isDefinedAndNotNull } from '@core/public-api';
+import { getCurrentAuthState, isDefinedAndNotNull } from '@core/public-api';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { RuleNodeConfiguration, RuleNodeConfigurationComponent } from '@app/shared/models/rule-node.models';
 
@@ -26,6 +26,8 @@ import { RuleNodeConfiguration, RuleNodeConfigurationComponent } from '@app/shar
     standalone: false
 })
 export class ToEmailConfigComponent extends RuleNodeConfigurationComponent {
+
+  restrictedTenantProfile = getCurrentAuthState(this.store).restrictedTenantProfile;
 
   toEmailConfigForm: FormGroup;
   mailBodyTypes = [

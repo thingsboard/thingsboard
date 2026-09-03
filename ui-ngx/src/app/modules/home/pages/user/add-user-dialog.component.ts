@@ -32,6 +32,7 @@ import {
 import { TenantId } from '@app/shared/models/id/tenant-id';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
+import { getCurrentAuthState } from '@core/public-api';
 
 export interface AddUserDialogData {
   tenantId: string;
@@ -50,12 +51,19 @@ export class AddUserDialogComponent extends DialogComponent<AddUserDialogCompone
   detailsForm: UntypedFormGroup;
   user: User;
 
-  activationMethods = Object.keys(ActivationMethod);
   activationMethodEnum = ActivationMethod;
+
+  private readonly restrictedTenantProfile = getCurrentAuthState(this.store).restrictedTenantProfile;
+
+  activationMethods = this.restrictedTenantProfile
+    ? [ActivationMethod.SEND_ACTIVATION_MAIL]
+    : Object.keys(ActivationMethod);
 
   activationMethodTranslations = activationMethodTranslations;
 
-  activationMethod = ActivationMethod.DISPLAY_ACTIVATION_LINK;
+  activationMethod = this.restrictedTenantProfile
+    ? ActivationMethod.SEND_ACTIVATION_MAIL
+    : ActivationMethod.DISPLAY_ACTIVATION_LINK;
 
   @ViewChild(UserComponent, {static: true}) userComponent: UserComponent;
 

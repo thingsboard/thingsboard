@@ -48,6 +48,9 @@
       <tb-example-hint [hintText]="'rule-node-config.recipients-block-main-hint'"
                         popupHelpLink="rulenode/to_email_node_fields_templatization">
       </tb-example-hint>
+      <tb-example-hint *ngIf="restrictedTenantProfile"
+                       [hintText]="'rule-node-config.recipients-restricted-tenant-hint'">
+      </tb-example-hint>
     </div>
     <div class="tb-form-row no-border no-padding tb-standard-fields">
       <mat-form-field class="flex">
