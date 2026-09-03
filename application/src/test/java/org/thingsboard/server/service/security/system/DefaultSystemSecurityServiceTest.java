@@ -198,7 +198,7 @@ public class DefaultSystemSecurityServiceTest {
                 .isInstanceOf(LockedException.class);
 
         verify(userService).setUserCredentialsEnabled(TenantId.SYS_TENANT_ID, userId, false);
-        verify(mailService).sendAccountLockoutEmail(eq(username), eq(notificationEmail), eq(5));
+        verify(mailService).sendAccountLockoutEmail(eq(tenantId), eq(username), eq(notificationEmail), eq(5));
     }
 
 }

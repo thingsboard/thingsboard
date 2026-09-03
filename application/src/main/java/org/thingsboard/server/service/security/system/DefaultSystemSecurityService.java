@@ -89,7 +89,7 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
             SecuritySettings securitySettings = securitySettingsService.getSecuritySettings();
             if (securitySettings.getMaxFailedLoginAttempts() != null && securitySettings.getMaxFailedLoginAttempts() > 0) {
                 if (failedLoginAttempts > securitySettings.getMaxFailedLoginAttempts()) {
-                    lockAccount(userCredentials.getUserId(), username, securitySettings.getUserLockoutNotificationEmail(), securitySettings.getMaxFailedLoginAttempts());
+                    lockAccount(tenantId, userCredentials.getUserId(), username, securitySettings.getUserLockoutNotificationEmail(), securitySettings.getMaxFailedLoginAttempts());
                     throw new LockedException("Authentication Failed. Username was locked due to security policy.");
                 }
             }
@@ -127,16 +127,16 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
                 && failedVerificationAttempts >= maxVerificationFailures) {
             userService.setUserCredentialsEnabled(TenantId.SYS_TENANT_ID, userId, false);
             SecuritySettings securitySettings = securitySettingsService.getSecuritySettings();
-            lockAccount(userId, securityUser.getEmail(), securitySettings.getUserLockoutNotificationEmail(), maxVerificationFailures);
+            lockAccount(tenantId, userId, securityUser.getEmail(), securitySettings.getUserLockoutNotificationEmail(), maxVerificationFailures);
             throw new LockedException("User account was locked due to exceeded 2FA verification attempts");
         }
     }
 
-    private void lockAccount(UserId userId, String username, String userLockoutNotificationEmail, Integer maxFailedLoginAttempts) {
+    private void lockAccount(TenantId tenantId, UserId userId, String username, String userLockoutNotificationEmail, Integer maxFailedLoginAttempts) {
         userService.setUserCredentialsEnabled(TenantId.SYS_TENANT_ID, userId, false);
         if (StringUtils.isNotBlank(userLockoutNotificationEmail)) {
             try {
-                mailService.sendAccountLockoutEmail(username, userLockoutNotificationEmail, maxFailedLoginAttempts);
+                mailService.sendAccountLockoutEmail(tenantId, username, userLockoutNotificationEmail, maxFailedLoginAttempts);
             } catch (ThingsboardException e) {
                 log.warn("Can't send email regarding user account [{}] lockout to provided email [{}]", username, userLockoutNotificationEmail, e);
             }

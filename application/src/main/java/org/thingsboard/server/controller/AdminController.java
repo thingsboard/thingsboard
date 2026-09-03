@@ -231,7 +231,7 @@ public class AdminController extends BaseController {
             }
             String email = getCurrentUser().getEmail();
             try {
-                mailService.sendTestMail(adminSettings.getJsonValue(), email);
+                mailService.sendTestMail(getTenantId(), adminSettings.getJsonValue(), email);
             } catch (ThingsboardException e) {
                 String error = e.getMessage();
                 if (e.getCause() != null) {

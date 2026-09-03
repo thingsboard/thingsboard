@@ -217,7 +217,7 @@ public class UserController extends BaseController {
 
         UserActivationLink activationLink = tbUserService.getActivationLink(securityUser.getTenantId(), securityUser.getCustomerId(), user.getId(), request);
         try {
-            mailService.sendActivationEmail(activationLink.value(), activationLink.ttlMs(), email);
+            mailService.sendActivationEmail(securityUser.getTenantId(), activationLink.value(), activationLink.ttlMs(), email);
         } catch (Exception e) {
             throw new ThingsboardException("Couldn't send user activation email", ThingsboardErrorCode.GENERAL);
         }

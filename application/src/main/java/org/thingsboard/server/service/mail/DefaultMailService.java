@@ -120,11 +120,11 @@ public class DefaultMailService implements MailService {
 
     @Override
     public void sendEmail(TenantId tenantId, String email, String subject, String message) throws ThingsboardException {
-        sendMail(mailSender, mailFrom, email, subject, message, timeout);
+        sendMail(tenantId, mailSender, mailFrom, email, subject, message, timeout);
     }
 
     @Override
-    public void sendTestMail(JsonNode jsonConfig, String email) throws ThingsboardException {
+    public void sendTestMail(TenantId tenantId, JsonNode jsonConfig, String email) throws ThingsboardException {
         TbMailSender testMailSender = new TbMailSender(ctx, jsonConfig);
         String mailFrom = jsonConfig.get("mailFrom").asText();
         String subject = messages.getMessage("test.message.subject", null, Locale.US);
@@ -135,11 +135,11 @@ public class DefaultMailService implements MailService {
 
         String message = mergeTemplateIntoString("test.ftl", model);
 
-        sendMail(testMailSender, mailFrom, email, subject, message, timeout);
+        sendMail(tenantId, testMailSender, mailFrom, email, subject, message, timeout);
     }
 
     @Override
-    public void sendActivationEmail(String activationLink, long ttlMs, String email) throws ThingsboardException {
+    public void sendActivationEmail(TenantId tenantId, String activationLink, long ttlMs, String email) throws ThingsboardException {
         String subject = messages.getMessage("activation.subject", null, Locale.US);
 
         Map<String, Object> model = new HashMap<>();
@@ -149,11 +149,11 @@ public class DefaultMailService implements MailService {
 
         String message = mergeTemplateIntoString("activation.ftl", model);
 
-        sendMail(mailSender, mailFrom, email, subject, message, timeout);
+        sendMail(tenantId, mailSender, mailFrom, email, subject, message, timeout);
     }
 
     @Override
-    public void sendAccountActivatedEmail(String loginLink, String email) throws ThingsboardException {
+    public void sendAccountActivatedEmail(TenantId tenantId, String loginLink, String email) throws ThingsboardException {
 
         String subject = messages.getMessage("account.activated.subject", null, Locale.US);
 
@@ -163,11 +163,11 @@ public class DefaultMailService implements MailService {
 
         String message = mergeTemplateIntoString("account.activated.ftl", model);
 
-        sendMail(mailSender, mailFrom, email, subject, message, timeout);
+        sendMail(tenantId, mailSender, mailFrom, email, subject, message, timeout);
     }
 
     @Override
-    public void sendResetPasswordEmail(String passwordResetLink, long ttlMs, String email) throws ThingsboardException {
+    public void sendResetPasswordEmail(TenantId tenantId, String passwordResetLink, long ttlMs, String email) throws ThingsboardException {
 
         String subject = messages.getMessage("reset.password.subject", null, Locale.US);
 
@@ -178,14 +178,14 @@ public class DefaultMailService implements MailService {
 
         String message = mergeTemplateIntoString("reset.password.ftl", model);
 
-        sendMail(mailSender, mailFrom, email, subject, message, timeout);
+        sendMail(tenantId, mailSender, mailFrom, email, subject, message, timeout);
     }
 
     @Override
-    public void sendResetPasswordEmailAsync(String passwordResetLink, long ttlMs, String email) {
+    public void sendResetPasswordEmailAsync(TenantId tenantId, String passwordResetLink, long ttlMs, String email) {
         passwordResetExecutorService.execute(() -> {
             try {
-                this.sendResetPasswordEmail(passwordResetLink, ttlMs, email);
+                this.sendResetPasswordEmail(tenantId, passwordResetLink, ttlMs, email);
             } catch (Exception e) {
                 log.error("Error occurred: {} ", e.getMessage());
             }
@@ -193,7 +193,7 @@ public class DefaultMailService implements MailService {
     }
 
     @Override
-    public void sendPasswordWasResetEmail(String loginLink, String email) throws ThingsboardException {
+    public void sendPasswordWasResetEmail(TenantId tenantId, String loginLink, String email) throws ThingsboardException {
 
         String subject = messages.getMessage("password.was.reset.subject", null, Locale.US);
 
@@ -203,7 +203,7 @@ public class DefaultMailService implements MailService {
 
         String message = mergeTemplateIntoString("password.was.reset.ftl", model);
 
-        sendMail(mailSender, mailFrom, email, subject, message, timeout);
+        sendMail(tenantId, mailSender, mailFrom, email, subject, message, timeout);
     }
 
     @Override
@@ -218,10 +218,7 @@ public class DefaultMailService implements MailService {
 
     private void sendMail(TenantId tenantId, CustomerId customerId, TbEmail tbEmail, JavaMailSender javaMailSender, long timeout) throws ThingsboardException {
         if (apiUsageStateService.getApiUsageState(tenantId).isEmailSendEnabled()) {
-            if (tenantId != null && !tenantId.isSysTenantId() && StringUtils.isNotEmpty(perTenantRateLimitConfig) &&
-                    !rateLimitService.checkRateLimit(LimitedApi.EMAILS, (Object) tenantId, perTenantRateLimitConfig)) {
-                throw new RateLimitExceededException(LimitedApi.EMAILS);
-            }
+            checkRateLimit(tenantId);
             try {
                 MimeMessage mailMsg = javaMailSender.createMimeMessage();
                 boolean multipart = (tbEmail.getImages() != null && !tbEmail.getImages().isEmpty());
@@ -258,7 +255,7 @@ public class DefaultMailService implements MailService {
     }
 
     @Override
-    public void sendAccountLockoutEmail(String lockoutEmail, String email, Integer maxFailedLoginAttempts) throws ThingsboardException {
+    public void sendAccountLockoutEmail(TenantId tenantId, String lockoutEmail, String email, Integer maxFailedLoginAttempts) throws ThingsboardException {
         String subject = messages.getMessage("account.lockout.subject", null, Locale.US);
 
         Map<String, Object> model = new HashMap<>();
@@ -268,11 +265,11 @@ public class DefaultMailService implements MailService {
 
         String message = mergeTemplateIntoString("account.lockout.ftl", model);
 
-        sendMail(mailSender, mailFrom, email, subject, message, timeout);
+        sendMail(tenantId, mailSender, mailFrom, email, subject, message, timeout);
     }
 
     @Override
-    public void sendTwoFaVerificationEmail(String email, String verificationCode, int expirationTimeSeconds) throws ThingsboardException {
+    public void sendTwoFaVerificationEmail(TenantId tenantId, String email, String verificationCode, int expirationTimeSeconds) throws ThingsboardException {
         String subject = messages.getMessage("2fa.verification.code.subject", null, Locale.US);
         String message = mergeTemplateIntoString("2fa.verification.code.ftl", Map.of(
                 TARGET_EMAIL, email,
@@ -280,11 +277,11 @@ public class DefaultMailService implements MailService {
                 "expirationTimeSeconds", expirationTimeSeconds
         ));
 
-        sendMail(mailSender, mailFrom, email, subject, message, timeout);
+        sendMail(tenantId, mailSender, mailFrom, email, subject, message, timeout);
     }
 
     @Override
-    public void sendApiFeatureStateEmail(ApiFeature apiFeature, ApiUsageStateValue stateValue, String email, ApiUsageRecordState recordState) throws ThingsboardException {
+    public void sendApiFeatureStateEmail(TenantId tenantId, ApiFeature apiFeature, ApiUsageStateValue stateValue, String email, ApiUsageRecordState recordState) throws ThingsboardException {
         String subject = messages.getMessage("api.usage.state", null, Locale.US);
 
         Map<String, Object> model = new HashMap<>();
@@ -306,7 +303,7 @@ public class DefaultMailService implements MailService {
             }
         };
 
-        sendMail(mailSender, mailFrom, email, subject, message, timeout);
+        sendMail(tenantId, mailSender, mailFrom, email, subject, message, timeout);
     }
 
     @Override
@@ -371,8 +368,16 @@ public class DefaultMailService implements MailService {
         };
     }
 
-    private void sendMail(JavaMailSenderImpl mailSender, String mailFrom, String email,
+    private void checkRateLimit(TenantId tenantId) {
+        if (tenantId != null && !tenantId.isSysTenantId() && StringUtils.isNotEmpty(perTenantRateLimitConfig) &&
+                !rateLimitService.checkRateLimit(LimitedApi.EMAILS, (Object) tenantId, perTenantRateLimitConfig)) {
+            throw new RateLimitExceededException(LimitedApi.EMAILS);
+        }
+    }
+
+    private void sendMail(TenantId tenantId, JavaMailSenderImpl mailSender, String mailFrom, String email,
                           String subject, String message, long timeout) throws ThingsboardException {
+        checkRateLimit(tenantId);
         try {
             MimeMessage mimeMsg = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMsg, UTF_8);

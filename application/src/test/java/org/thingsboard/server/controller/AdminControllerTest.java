@@ -146,12 +146,12 @@ public class AdminControllerTest extends AbstractControllerTest {
 
     @Test
     public void testSendTestMail() throws Exception {
-        Mockito.doNothing().when(mailService).sendTestMail(any(), anyString());
+        Mockito.doNothing().when(mailService).sendTestMail(any(), any(), anyString());
         loginSysAdmin();
         AdminSettings adminSettings = doGet("/api/admin/settings/mail", AdminSettings.class);
         doPost("/api/admin/settings/testMail", adminSettings)
                 .andExpect(status().isOk());
-        Mockito.verify(mailService).sendTestMail(Mockito.any(), Mockito.anyString());
+        Mockito.verify(mailService).sendTestMail(Mockito.any(), Mockito.any(), Mockito.anyString());
     }
 
     @Test
@@ -168,7 +168,7 @@ public class AdminControllerTest extends AbstractControllerTest {
         adminSettings.setJsonValue(objectNode);
 
         doPost("/api/admin/settings/testMail", adminSettings).andExpect(status().is5xxServerError());
-        Mockito.verify(mailService).sendTestMail(Mockito.any(), Mockito.anyString());
+        Mockito.verify(mailService).sendTestMail(Mockito.any(), Mockito.any(), Mockito.anyString());
     }
 
     void resetJwtSettingsToDefault() throws Exception {

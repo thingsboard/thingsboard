@@ -42,6 +42,7 @@ import java.util.function.Consumer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -199,7 +200,7 @@ public class AuthControllerTest extends AbstractControllerTest {
                 .put("resetToken", this.currentResetPasswordToken)
                 .put("password", newPassword);
 
-        Mockito.doNothing().when(mailService).sendPasswordWasResetEmail(anyString(), anyString());
+        Mockito.doNothing().when(mailService).sendPasswordWasResetEmail(any(), anyString(), anyString());
         doPost("/api/noauth/resetPassword", resetPasswordRequest)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message",
