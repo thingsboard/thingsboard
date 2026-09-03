@@ -121,6 +121,8 @@ public class DefaultMailService implements MailService {
 
     @Override
     public void sendEmail(TenantId tenantId, String email, String subject, String message) throws ThingsboardException {
+        // Subject and body are caller-supplied, so this door needs the same recipient policy as the TbEmail path.
+        recipientValidator.validateRecipients(tenantId, email);
         sendMail(tenantId, mailSender, mailFrom, email, subject, message, timeout);
     }
 
@@ -230,12 +232,12 @@ public class DefaultMailService implements MailService {
                 helper.setFrom(systemMailSender
                         ? recipientValidator.resolveFrom(tenantId, tbEmail, mailFrom)
                         : (StringUtils.isBlank(tbEmail.getFrom()) ? mailFrom : tbEmail.getFrom()));
-                helper.setTo(tbEmail.getTo().split("\\s*,\\s*"));
+                helper.setTo(tbEmail.getTo().split(RecipientValidator.RECIPIENTS_SEPARATOR));
                 if (!StringUtils.isBlank(tbEmail.getCc())) {
-                    helper.setCc(tbEmail.getCc().split("\\s*,\\s*"));
+                    helper.setCc(tbEmail.getCc().split(RecipientValidator.RECIPIENTS_SEPARATOR));
                 }
                 if (!StringUtils.isBlank(tbEmail.getBcc())) {
-                    helper.setBcc(tbEmail.getBcc().split("\\s*,\\s*"));
+                    helper.setBcc(tbEmail.getBcc().split(RecipientValidator.RECIPIENTS_SEPARATOR));
                 }
                 helper.setSubject(tbEmail.getSubject());
                 helper.setText(tbEmail.getBody(), tbEmail.isHtml());

@@ -39,6 +39,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class RecipientValidator {
 
+    // Shared with DefaultMailService: the validator must split recipient lists exactly the way the
+    // MimeMessageHelper does, or an allow-listed address could carry a second, unchecked one.
+    static final String RECIPIENTS_SEPARATOR = "\\s*,\\s*";
+
     private final TbTenantProfileCache tenantProfileCache;
     private final UserService userService;
     private final UserAuthDetailsCache userAuthDetailsCache;
@@ -50,7 +54,20 @@ public class RecipientValidator {
         if (!tenantProfileCache.isRestricted(tenantId)) {
             return;
         }
-        for (String recipient : collectRecipients(tbEmail)) {
+        validate(tenantId, collectRecipients(tbEmail));
+    }
+
+    public void validateRecipients(TenantId tenantId, String addresses) throws ThingsboardException {
+        if (!tenantProfileCache.isRestricted(tenantId)) {
+            return;
+        }
+        List<String> recipients = new ArrayList<>();
+        addAll(recipients, addresses);
+        validate(tenantId, recipients);
+    }
+
+    private void validate(TenantId tenantId, List<String> recipients) throws ThingsboardException {
+        for (String recipient : recipients) {
             if (!isActivatedTenantUser(tenantId, recipient)) {
                 throw new ThingsboardException("Recipient '" + recipient + "' is not an activated user of this tenant",
                         ThingsboardErrorCode.PERMISSION_DENIED);
@@ -79,7 +96,7 @@ public class RecipientValidator {
         if (StringUtils.isBlank(addresses)) {
             return;
         }
-        for (String address : addresses.split("\\s*,\\s*")) {
+        for (String address : addresses.split(RECIPIENTS_SEPARATOR)) {
             if (StringUtils.isNotBlank(address)) {
                 recipients.add(address);
             }
