@@ -122,7 +122,7 @@ public class AccessValidatorTest {
 
     @ParameterizedTest
     @MethodSource("entitiesWithSynchronousValidation")
-    public void givenEntityNotFound_whenValidate_thenEntityNotFoundAndNoOkResult(EntityId entityId, Resource resource) {
+    public void givenEntityNotFound_whenValidate_thenEntityNotFoundAndNoOkResult(EntityId entityId) {
         accessValidator.validate(customerUser, Operation.WRITE, entityId, callback);
 
         assertSingleResult(ValidationResultCode.ENTITY_NOT_FOUND);

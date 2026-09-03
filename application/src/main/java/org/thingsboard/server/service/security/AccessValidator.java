@@ -210,6 +210,9 @@ public class AccessValidator {
         return response;
     }
 
+    // The attributes and time series scope is checked here rather than in the controllers: this is the single checkpoint
+    // both the REST API and the WebSocket service go through, and it runs before the entity is fetched, so a rejection
+    // does not reveal whether the entity exists.
     public void validate(SecurityUser currentUser, Operation operation, EntityId entityId, FutureCallback<ValidationResult> callback) {
         EntityType entityType = entityId.getEntityType();
         if (Operation.TS_AND_ATTRIBUTES_OPERATIONS.contains(operation)

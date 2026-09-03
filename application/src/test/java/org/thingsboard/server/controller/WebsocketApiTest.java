@@ -981,6 +981,26 @@ public class WebsocketApiTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testTimeseriesSubscriptionForEntityTypeWithoutTsAndAttributes() throws Exception {
+        DeviceProfile deviceProfile = doPost("/api/deviceProfile", createDeviceProfile("Out of time series scope"), DeviceProfile.class);
+
+        JsonNode update = getWsClient().sendTimeseriesCmd(deviceProfile.getId(), "LATEST_TELEMETRY");
+
+        assertThat(update.get("errorCode").asInt()).isEqualTo(SubscriptionErrorCode.BAD_REQUEST.getCode());
+        assertThat(update.get("errorMsg").asText()).isEqualTo("Attributes and time series are not supported for entity type 'DEVICE_PROFILE'!");
+    }
+
+    @Test
+    public void testTimeseriesSubscriptionWithKeysForDeniedEntityIsRejected() throws Exception {
+        loginCustomerUser();
+
+        JsonNode update = getWsClient().sendTimeseriesCmd(device.getId(), "LATEST_TELEMETRY", "temperature");
+
+        assertThat(update.get("errorCode").asInt()).isEqualTo(SubscriptionErrorCode.UNAUTHORIZED.getCode());
+        assertThat(update.hasNonNull("data")).isFalse();
+    }
+
+    @Test
     public void testAttributesSubscription_sysAdmin() throws Exception {
         loginSysAdmin();
         SingleEntityFilter entityFilter = new SingleEntityFilter();

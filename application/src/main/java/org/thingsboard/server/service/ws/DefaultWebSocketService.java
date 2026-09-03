@@ -291,6 +291,16 @@ public class DefaultWebSocketService implements WebSocketService {
         sendUpdate(sessionRef, update);
     }
 
+    // Logs the failure at a level that matches its cause and answers the subscription with the corresponding error.
+    private void handleSubscriptionFailure(WebSocketSessionRef sessionRef, int cmdId, String defaultErrorMsg, Throwable e) {
+        if (AccessValidator.isClientError(e)) {
+            log.debug(defaultErrorMsg, e);
+        } else {
+            log.error(defaultErrorMsg, e);
+        }
+        sendSubscriptionError(sessionRef, cmdId, defaultErrorMsg, e);
+    }
+
     private void sendSubscriptionError(WebSocketSessionRef sessionRef, int cmdId, String defaultErrorMsg, Throwable e) {
         if (e instanceof UnauthorizedException || e instanceof AccessDeniedException) {
             sendError(sessionRef, cmdId, SubscriptionErrorCode.UNAUTHORIZED, SubscriptionErrorCode.UNAUTHORIZED.getDefaultMsg());
@@ -298,14 +308,6 @@ public class DefaultWebSocketService implements WebSocketService {
             sendError(sessionRef, cmdId, SubscriptionErrorCode.BAD_REQUEST, e.getMessage());
         } else {
             sendError(sessionRef, cmdId, SubscriptionErrorCode.INTERNAL_ERROR, defaultErrorMsg);
-        }
-    }
-
-    private void logSubscriptionFailure(String defaultErrorMsg, Throwable e) {
-        if (AccessValidator.isClientError(e)) {
-            log.debug(defaultErrorMsg, e);
-        } else {
-            log.error(defaultErrorMsg, e);
         }
     }
 
@@ -513,8 +515,7 @@ public class DefaultWebSocketService implements WebSocketService {
 
             @Override
             public void onFailure(Throwable e) {
-                logSubscriptionFailure(FAILED_TO_FETCH_ATTRIBUTES, e);
-                sendSubscriptionError(sessionRef, cmd.getCmdId(), FAILED_TO_FETCH_ATTRIBUTES, e);
+                handleSubscriptionFailure(sessionRef, cmd.getCmdId(), FAILED_TO_FETCH_ATTRIBUTES, e);
             }
         };
 
@@ -555,7 +556,7 @@ public class DefaultWebSocketService implements WebSocketService {
 
             @Override
             public void onFailure(Throwable e) {
-                sendSubscriptionError(sessionRef, cmd.getCmdId(), FAILED_TO_FETCH_DATA, e);
+                handleSubscriptionFailure(sessionRef, cmd.getCmdId(), FAILED_TO_FETCH_DATA, e);
             }
         };
         accessValidator.validate(sessionRef.getSecurityCtx(), Operation.READ_TELEMETRY, entityId,
@@ -609,8 +610,7 @@ public class DefaultWebSocketService implements WebSocketService {
 
             @Override
             public void onFailure(Throwable e) {
-                logSubscriptionFailure(FAILED_TO_FETCH_ATTRIBUTES, e);
-                sendSubscriptionError(sessionRef, cmd.getCmdId(), FAILED_TO_FETCH_ATTRIBUTES, e);
+                handleSubscriptionFailure(sessionRef, cmd.getCmdId(), FAILED_TO_FETCH_ATTRIBUTES, e);
             }
         };
 
@@ -689,7 +689,7 @@ public class DefaultWebSocketService implements WebSocketService {
 
             @Override
             public void onFailure(Throwable e) {
-                sendSubscriptionError(sessionRef, cmd.getCmdId(), FAILED_TO_FETCH_DATA, e);
+                handleSubscriptionFailure(sessionRef, cmd.getCmdId(), FAILED_TO_FETCH_DATA, e);
             }
         };
         accessValidator.validate(sessionRef.getSecurityCtx(), Operation.READ_TELEMETRY, entityId,
