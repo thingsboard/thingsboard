@@ -16,7 +16,7 @@
 
 import { Injectable } from '@angular/core';
 import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
-import { ActivationLinkInfo, User, UserEmailInfo } from '@shared/models/user.model';
+import { ActivationLinkInfo, EmailChangeResult, User, UserEmailInfo } from '@shared/models/user.model';
 import { Observable } from 'rxjs';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { PageLink } from '@shared/models/page/page-link';
@@ -88,6 +88,15 @@ export class UserService {
   public sendActivationEmail(email: string, config?: RequestConfig) {
     const encodeEmail = encodeURIComponent(email);
     return this.http.post(`/api/user/sendActivationMail?email=${encodeEmail}`, null, defaultHttpOptionsFromConfig(config));
+  }
+
+  public changeEmail(email: string, config?: RequestConfig): Observable<EmailChangeResult> {
+    return this.http.post<EmailChangeResult>('/api/user/email', {email}, defaultHttpOptionsFromConfig(config));
+  }
+
+  public verifyEmailChange(verificationCode: string, config?: RequestConfig): Observable<void> {
+    return this.http.post<void>(`/api/user/email/verify?verificationCode=${verificationCode}`, null,
+      defaultHttpOptionsFromConfig(config));
   }
 
   public setUserCredentialsEnabled(userId: string, userCredentialsEnabled?: boolean, config?: RequestConfig): Observable<any> {

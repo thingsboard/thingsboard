@@ -28,10 +28,12 @@ import { environment as env } from '@env/environment';
 import { ActionSettingsChangeLanguage } from '@core/settings/settings.actions';
 import { ActivatedRoute } from '@angular/router';
 import { isDefinedAndNotNull, isNotEmptyStr, validateEmail } from '@core/utils';
-import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { getCurrentAuthState, getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { AuthService } from '@core/auth/auth.service';
 import { UnitSystem, UnitSystems } from '@shared/models/unit.models';
 import { UnitService } from '@core/services/unit.service';
+import { MatDialog } from '@angular/material/dialog';
+import { ChangeEmailDialogComponent } from '@modules/home/pages/profile/change-email-dialog.component';
 
 @Component({
     selector: 'tb-profile',
@@ -46,6 +48,7 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
   user: User;
   languageList = env.supportedLangs;
   UnitSystems = UnitSystems;
+  restrictedTenantProfile = getCurrentAuthState(this.store).restrictedTenantProfile;
   private readonly authUser: AuthUser;
 
   constructor(protected store: Store<AppState>,
@@ -53,6 +56,7 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
               private userService: UserService,
               private authService: AuthService,
               private unitService: UnitService,
+              private dialog: MatDialog,
               private fb: UntypedFormBuilder) {
     super(store);
     this.authUser = getCurrentAuthUser(this.store);
@@ -146,5 +150,18 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
 
   isSysAdmin(): boolean {
     return this.authUser.authority === Authority.SYS_ADMIN;
+  }
+
+  changeEmail(): void {
+    this.dialog.open<ChangeEmailDialogComponent, void, string>(ChangeEmailDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog']
+    }).afterClosed().subscribe((newEmail) => {
+      if (newEmail) {
+        // A verified change invalidates this session's tokens on the backend; log out rather than
+        // keep firing authenticated calls against a session the server no longer honors.
+        this.authService.logout();
+      }
+    });
   }
 }

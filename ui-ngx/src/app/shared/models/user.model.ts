@@ -63,6 +63,16 @@ export interface ActivationLinkInfo {
   ttlMs: number;
 }
 
+export enum EmailChangeStatus {
+  SUCCESS = 'SUCCESS',
+  VERIFICATION_REQUIRED = 'VERIFICATION_REQUIRED'
+}
+
+export interface EmailChangeResult {
+  status: EmailChangeStatus;
+  ttlSeconds?: number;
+}
+
 export interface AuthUser {
   sub: string;
   scopes: string[];
