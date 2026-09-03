@@ -28,6 +28,8 @@ public interface TbTenantProfileCache {
 
     TenantProfile get(TenantProfileId tenantProfileId);
 
+    boolean isRestricted(TenantId tenantId);
+
     void put(TenantProfile profile);
 
     void evict(TenantProfileId id);

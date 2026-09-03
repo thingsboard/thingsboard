@@ -15,7 +15,9 @@
  */
 package org.thingsboard.server.dao.tenant;
 
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.cache.limits.TenantProfileProvider;
 import org.thingsboard.server.common.data.Tenant;
@@ -24,6 +26,8 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 
+import java.util.Collections;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
@@ -37,6 +41,16 @@ public class DefaultTbTenantProfileCache implements TbTenantProfileCache, Tenant
     private final Lock tenantProfileFetchLock = new ReentrantLock();
     private final TenantProfileService tenantProfileService;
     private final TenantService tenantService;
+
+    @Value("${security.restricted_tenant_profiles:}")
+    private Set<String> restrictedTenantProfiles;
+
+    @PostConstruct
+    private void init() {
+        if (restrictedTenantProfiles == null) {
+            restrictedTenantProfiles = Collections.emptySet();
+        }
+    }
 
     private final ConcurrentMap<TenantProfileId, TenantProfile> tenantProfilesMap = new ConcurrentHashMap<>();
     private final ConcurrentMap<TenantId, TenantProfileId> tenantsMap = new ConcurrentHashMap<>();
@@ -80,6 +94,15 @@ public class DefaultTbTenantProfileCache implements TbTenantProfileCache, Tenant
             }
         }
         return get(profileId);
+    }
+
+    @Override
+    public boolean isRestricted(TenantId tenantId) {
+        if (restrictedTenantProfiles.isEmpty() || tenantId == null || tenantId.isSysTenantId()) {
+            return false;
+        }
+        TenantProfile profile = get(tenantId);
+        return profile != null && restrictedTenantProfiles.contains(profile.getName());
     }
 
     @Override

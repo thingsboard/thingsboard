@@ -169,6 +169,8 @@ security:
     tokenSigningKey: "${JWT_TOKEN_SIGNING_KEY:thingsboardDefaultSigningKey}" # Base64 encoded
   # Enable/disable access to Tenant Administrators JWT token by System Administrator or Customer Users JWT token by Tenant Administrator
   user_token_access_enabled: "${SECURITY_USER_TOKEN_ACCESS_ENABLED:true}"
+  # Tenant profile names whose tenants may only email their own activated users and must verify user email changes with a one-time code
+  restricted_tenant_profiles: "${SECURITY_RESTRICTED_TENANT_PROFILES:Free}"
   # API key parameters
   api_key:
     # Prefix for the auto-generated API key. For example, tb_Ood4dQMxWvMH-76z3E_Cv0mZaBWT0Clk3hRSO0P_jNQ
