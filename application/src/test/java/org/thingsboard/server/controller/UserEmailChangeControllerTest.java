@@ -128,7 +128,7 @@ public class UserEmailChangeControllerTest extends AbstractControllerTest {
         TimeUnit.SECONDS.sleep(1);
         doPost("/api/user/email/verify?verificationCode=" + code).andExpect(status().isOk());
 
-        // The JWT subject is the email, so the old session must no longer work.
+        // The verified change published UserCredentialsInvalidationEvent, so the old token is now outdated.
         doGet("/api/auth/user").andExpect(status().isUnauthorized());
 
         loginSysAdmin();
@@ -142,13 +142,21 @@ public class UserEmailChangeControllerTest extends AbstractControllerTest {
         final TenantId tenantId = tenant.getId();
         User admin = loginRestrictedTenantAdmin(tenant, "moving.old@thingsboard.org");
 
+        TbEmail toOld = TbEmail.builder().to("moving.old@thingsboard.org").subject("s").body("b").build();
+        TbEmail toNew = TbEmail.builder().to("moving.new@thingsboard.org").subject("s").body("b").build();
+
+        // Warm the allow-list on the old address before the change, so the post-change checks below prove
+        // the allowance actually moved rather than merely landing on an address never probed beforehand.
+        assertThatCode(() -> recipientValidator.validateRecipients(tenantId, toOld))
+                .doesNotThrowAnyException();
+        assertThatThrownBy(() -> recipientValidator.validateRecipients(tenantId, toNew))
+                .isInstanceOf(ThingsboardException.class);
+
         doPostWithResponse("/api/user/email",
                 new EmailChangeRequest("moving.new@thingsboard.org"), EmailChangeResult.class);
         String code = emailVerificationCache.get(admin.getId()).get().code();
         doPost("/api/user/email/verify?verificationCode=" + code).andExpect(status().isOk());
 
-        TbEmail toOld = TbEmail.builder().to("moving.old@thingsboard.org").subject("s").body("b").build();
-        TbEmail toNew = TbEmail.builder().to("moving.new@thingsboard.org").subject("s").body("b").build();
         assertThatThrownBy(() -> recipientValidator.validateRecipients(tenantId, toOld))
                 .isInstanceOf(ThingsboardException.class);
         assertThatCode(() -> recipientValidator.validateRecipients(tenantId, toNew))

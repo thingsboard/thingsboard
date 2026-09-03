@@ -69,12 +69,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
@@ -1475,15 +1477,22 @@ public class UserControllerTest extends AbstractControllerTest {
         assertThatThrownBy(() -> recipientValidator.validateRecipients(restrictedTenantId, toInvitee))
                 .isInstanceOf(ThingsboardException.class);
 
-        // createUserAndLogin captured the activation token from the mocked activation mail.
+        // The invitee's own creation above triggered the activation mail; that's what captured this token.
         resetTokens();
         JsonNode activateRequest = JacksonUtil.newObjectNode()
                 .put("activateToken", this.currentActivateToken)
                 .put("password", "testPassword2");
+
+        // Re-warm right before activating: the invitee-creation broadcast could otherwise evict the cache
+        // on its own in the gap above, making the pass below unattributable to activation.
+        assertThatThrownBy(() -> recipientValidator.validateRecipients(restrictedTenantId, toInvitee))
+                .isInstanceOf(ThingsboardException.class);
         doPost("/api/noauth/activate", activateRequest).andExpect(status().isOk());
 
-        assertThatCode(() -> recipientValidator.validateRecipients(restrictedTenantId, toInvitee))
-                .doesNotThrowAnyException();
+        // The cache eviction rides the TB_CORE notification-queue round-trip, not the activate request itself.
+        await().atMost(30, TimeUnit.SECONDS).untilAsserted(() ->
+                assertThatCode(() -> recipientValidator.validateRecipients(restrictedTenantId, toInvitee))
+                        .doesNotThrowAnyException());
 
         loginSysAdmin();
         doDelete("/api/tenant/" + restrictedTenantId.getId()).andExpect(status().isOk());
