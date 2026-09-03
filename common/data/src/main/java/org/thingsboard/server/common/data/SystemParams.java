@@ -48,4 +48,5 @@ public class SystemParams {
     String nullsOrderStrategy;
     boolean edqsEnabled;
     String iotHubBaseUrl;
+    boolean restrictedTenantProfile;
 }

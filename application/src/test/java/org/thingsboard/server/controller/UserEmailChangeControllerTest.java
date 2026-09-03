@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EmailChangeRequest;
 import org.thingsboard.server.common.data.EmailChangeResult;
 import org.thingsboard.server.common.data.EmailChangeStatus;
+import org.thingsboard.server.common.data.SystemParams;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
@@ -222,6 +223,17 @@ public class UserEmailChangeControllerTest extends AbstractControllerTest {
         // A public dashboard session must never be able to trigger a mailed verification code.
         doPost("/api/user/email", new EmailChangeRequest("public.customer.new@thingsboard.org"))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    public void testSystemParamsCarriesRestrictedFlag() throws Exception {
+        Tenant tenant = createRestrictedTenant();
+        loginRestrictedTenantAdmin(tenant, "restricted.sysparams@thingsboard.org");
+
+        assertThat(doGet("/api/system/params", SystemParams.class).isRestrictedTenantProfile()).isTrue();
+
+        loginTenantAdmin();
+        assertThat(doGet("/api/system/params", SystemParams.class).isRestrictedTenantProfile()).isFalse();
     }
 
 }

@@ -184,6 +184,7 @@ public class SystemInfoController extends BaseController {
             systemParams.setMinAllowedAggregationIntervalInSecForCF(tenantProfileConfiguration.getMinAllowedAggregationIntervalInSecForCF());
             systemParams.setIntermediateAggregationIntervalInSecForCF(tenantProfileConfiguration.getIntermediateAggregationIntervalInSecForCF());
             systemParams.setTrendzSettings(trendzSettingsService.findTrendzSettings(currentUser.getTenantId()));
+            systemParams.setRestrictedTenantProfile(tenantProfileCache.isRestricted(tenantId));
         }
         systemParams.setIotHubBaseUrl(iotHubBaseUrl);
         systemParams.setMobileQrEnabled(Optional.ofNullable(qrCodeSettingService.findQrCodeSettings(TenantId.SYS_TENANT_ID))
