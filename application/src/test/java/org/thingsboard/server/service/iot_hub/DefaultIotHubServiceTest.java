@@ -345,6 +345,41 @@ class DefaultIotHubServiceTest {
     }
 
     @Test
+    void installPlan_rootFails_errorMessageIsNotPrefixedWithTheItemName() throws Exception {
+        mockTenant();
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        String rootVersionId = UUID.randomUUID().toString();
+        InstallPlanEntry root = willInstall(rootVersionId, true);
+
+        when(iotHubInstalledItemService.findInstalledItemIdsByTenantIdAndItemIdIn(eq(tenantId), any())).thenReturn(List.of());
+        doThrow(new IllegalStateException("install failed")).when(service).doInstallVersion(eq(user), eq(rootVersionId), any(), any());
+
+        InstallPlanResult result = service.installPlan(user, new InstallPlan(rootVersionId, List.of(root)), null, request);
+
+        // the install dialog already shows "Failed to install '<item>'" right above these details
+        assertThat(result.getErrorMessage()).isEqualTo("install failed");
+    }
+
+    @Test
+    void installPlan_dependencyFails_errorMessageNamesTheDependency() throws Exception {
+        mockTenant();
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        String depVersionId = UUID.randomUUID().toString();
+        String rootVersionId = UUID.randomUUID().toString();
+        InstallPlanEntry dep = willInstall(depVersionId, false);
+        InstallPlanEntry root = willInstall(rootVersionId, true);
+
+        when(iotHubInstalledItemService.findInstalledItemIdsByTenantIdAndItemIdIn(eq(tenantId), any())).thenReturn(List.of());
+        doThrow(new IllegalStateException("install failed")).when(service).doInstallVersion(eq(user), eq(depVersionId), any(), any());
+
+        InstallPlanResult result = service.installPlan(user, new InstallPlan(rootVersionId, List.of(dep, root)), null, request);
+
+        // a failing dependency is not the item the dialog names, so it has to be named here
+        assertThat(result.getErrorMessage()).isEqualTo("Failed to install dependency 'Dep': install failed");
+        verify(service, never()).doInstallVersion(eq(user), eq(rootVersionId), any(), any());
+    }
+
+    @Test
     void installPlan_rollbackFailure_reportsNotFullyRolledBack() throws Exception {
         mockTenant();
         HttpServletRequest request = mock(HttpServletRequest.class);
