@@ -170,8 +170,8 @@ public enum Resource {
 
         Set<EntityType> entityTypesWithTsAndAttributes = EnumSet.noneOf(EntityType.class);
         operationsByResource.forEach((resource, operations) -> {
-            // Resource.ALL is a wildcard holding every operation, its own entity types are empty
-            if (resource != Resource.ALL && !Collections.disjoint(operations, Operation.TS_AND_ATTRIBUTES_OPERATIONS)) {
+            // Resource.ALL is a wildcard holding every operation, but its own entity types are empty, so it contributes nothing
+            if (!Collections.disjoint(operations, Operation.TS_AND_ATTRIBUTES_OPERATIONS)) {
                 entityTypesWithTsAndAttributes.addAll(resource.getEntityTypes());
             }
         });
