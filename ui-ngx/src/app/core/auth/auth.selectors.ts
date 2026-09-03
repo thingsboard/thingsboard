@@ -73,11 +73,6 @@ export const selectTbelEnabled = createSelector(
   (state: AuthState) => state.tbelEnabled
 );
 
-export const selectRestrictedTenantProfile = createSelector(
-  selectAuthState,
-  (state: AuthState) => state.restrictedTenantProfile
-);
-
 export const selectPersistDeviceStateToTelemetry = createSelector(
   selectAuthState,
   (state: AuthState) => state.persistDeviceStateToTelemetry

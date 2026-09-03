@@ -95,7 +95,7 @@ export class UserService {
   }
 
   public verifyEmailChange(verificationCode: string, config?: RequestConfig): Observable<void> {
-    return this.http.post<void>(`/api/user/email/verify?verificationCode=${verificationCode}`, null,
+    return this.http.post<void>(`/api/user/email/verify?verificationCode=${encodeURIComponent(verificationCode)}`, null,
       defaultHttpOptionsFromConfig(config));
   }
 
