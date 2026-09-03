@@ -16,14 +16,30 @@
 package org.thingsboard.server.common.msg;
 
 import lombok.extern.slf4j.Slf4j;
-import org.bouncycastle.crypto.digests.SHA3Digest;
 import org.bouncycastle.util.encoders.Hex;
+
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.Provider;
+import java.security.Security;
 
 /**
  * @author Valerii Sosliuk
  */
 @Slf4j
 public class EncryptionUtil {
+
+    /**
+     * JCE provider used for SHA3 hashing. Defaults to the standard BouncyCastle
+     * provider ("BC"); override with -Dthingsboard.bc.provider=BCFIPS once a
+     * FIPS-certified provider is registered on the classpath instead.
+     */
+    private static final String PROVIDER_NAME = System.getProperty("thingsboard.bc.provider", "BC");
+
+    static {
+        registerProviderIfAbsent(PROVIDER_NAME);
+    }
 
     private EncryptionUtil() {
     }
@@ -61,13 +77,12 @@ public class EncryptionUtil {
     public static String getSha3Hash(String data) {
         String trimmedData = certTrimNewLines(data);
         byte[] dataBytes = trimmedData.getBytes();
-        SHA3Digest md = new SHA3Digest(256);
-        md.reset();
-        md.update(dataBytes, 0, dataBytes.length);
-        byte[] hashedBytes = new byte[256 / 8];
-        md.doFinal(hashedBytes, 0);
-        String sha3Hash = Hex.toHexString(hashedBytes);
-        return sha3Hash;
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA3-256", PROVIDER_NAME);
+            return Hex.toHexString(md.digest(dataBytes));
+        } catch (NoSuchAlgorithmException | NoSuchProviderException e) {
+            throw new IllegalStateException("SHA3-256 not available from JCE provider '" + PROVIDER_NAME + "'", e);
+        }
     }
 
     public static String getSha3Hash(String delim, String... tokens) {
@@ -84,5 +99,22 @@ public class EncryptionUtil {
             }
         }
         return getSha3Hash(sb.toString());
+    }
+
+    private static void registerProviderIfAbsent(String providerName) {
+        if (Security.getProvider(providerName) != null) {
+            return;
+        }
+        String providerClass = switch (providerName) {
+            case "BC" -> "org.bouncycastle.jce.provider.BouncyCastleProvider";
+            case "BCFIPS" -> "org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider";
+            default -> throw new IllegalStateException("Unknown JCE provider name '" + providerName
+                    + "'; no provider class mapping and no provider already registered under that name");
+        };
+        try {
+            Security.addProvider((Provider) Class.forName(providerClass).getDeclaredConstructor().newInstance());
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException("Unable to instantiate JCE provider '" + providerName + "' (" + providerClass + ")", e);
+        }
     }
 }

@@ -20,7 +20,6 @@ import lombok.EqualsAndHashCode;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.PEMDecryptorProvider;
 import org.bouncycastle.openssl.PEMEncryptedKeyPair;
 import org.bouncycastle.openssl.PEMKeyPair;
@@ -37,6 +36,7 @@ import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.PrivateKey;
+import java.security.Provider;
 import java.security.Security;
 import java.security.cert.CertPath;
 import java.security.cert.Certificate;
@@ -52,6 +52,13 @@ public class PemSslCredentials extends AbstractSslCredentials {
 
     private static final String DEFAULT_KEY_ALIAS = "server";
 
+    /**
+     * JCE provider used for PEM parsing. Defaults to the standard BouncyCastle
+     * provider ("BC"); override with -Dthingsboard.bc.provider=BCFIPS once a
+     * FIPS-certified provider is registered on the classpath instead.
+     */
+    private static final String PROVIDER_NAME = System.getProperty("thingsboard.bc.provider", "BC");
+
     private String certFile;
     private String keyFile;
     private String keyPassword;
@@ -63,9 +70,7 @@ public class PemSslCredentials extends AbstractSslCredentials {
 
     @Override
     protected KeyStore loadKeyStore(boolean trustsOnly, char[] keyPasswordArray) throws IOException, GeneralSecurityException {
-        if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
-            Security.addProvider(new BouncyCastleProvider());
-        }
+        registerProviderIfAbsent(PROVIDER_NAME);
         List<X509Certificate> certificates = new ArrayList<>();
         PrivateKey privateKey = null;
         JcaX509CertificateConverter certConverter = new JcaX509CertificateConverter();
@@ -154,6 +159,23 @@ public class PemSslCredentials extends AbstractSslCredentials {
             // Include the path even if the file doesn't exist yet — the watcher uses mtime=0 / checksum="" as
             // baseline, so a late-appearing file (e.g. mounted after boot) will be detected and trigger a reload.
             paths.add(Path.of(filePath).toAbsolutePath());
+        }
+    }
+
+    private static void registerProviderIfAbsent(String providerName) {
+        if (Security.getProvider(providerName) != null) {
+            return;
+        }
+        String providerClass = switch (providerName) {
+            case "BC" -> "org.bouncycastle.jce.provider.BouncyCastleProvider";
+            case "BCFIPS" -> "org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider";
+            default -> throw new IllegalStateException("Unknown JCE provider name '" + providerName
+                    + "'; no provider class mapping and no provider already registered under that name");
+        };
+        try {
+            Security.addProvider((Provider) Class.forName(providerClass).getDeclaredConstructor().newInstance());
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException("Unable to instantiate JCE provider '" + providerName + "' (" + providerClass + ")", e);
         }
     }
 

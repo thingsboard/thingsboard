@@ -20,7 +20,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.PEMDecryptorProvider;
 import org.bouncycastle.openssl.PEMEncryptedKeyPair;
 import org.bouncycastle.openssl.PEMKeyPair;
@@ -38,6 +37,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.security.PrivateKey;
+import java.security.Provider;
 import java.security.Security;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -49,12 +49,15 @@ public class SslUtil {
 
     public static final char[] EMPTY_PASS = {};
 
-    public static final BouncyCastleProvider DEFAULT_PROVIDER = new BouncyCastleProvider();
+    /**
+     * JCE provider used for PEM/PKCS8 decryption. Defaults to the standard
+     * BouncyCastle provider ("BC"); override with -Dthingsboard.bc.provider=BCFIPS
+     * once a FIPS-certified provider is registered on the classpath instead.
+     */
+    public static final String PROVIDER_NAME = System.getProperty("thingsboard.bc.provider", "BC");
 
     static {
-        if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
-            Security.addProvider(DEFAULT_PROVIDER);
-        }
+        registerProviderIfAbsent(PROVIDER_NAME);
     }
 
     private SslUtil() {
@@ -116,7 +119,7 @@ public class SslUtil {
                     break;
                 } else if (object instanceof PKCS8EncryptedPrivateKeyInfo) {
                     InputDecryptorProvider decProv =
-                            new JcePKCSPBEInputDecryptorProviderBuilder().setProvider(DEFAULT_PROVIDER).build(password);
+                            new JcePKCSPBEInputDecryptorProviderBuilder().setProvider(PROVIDER_NAME).build(password);
                     privateKey = keyConverter.getPrivateKey(((PKCS8EncryptedPrivateKeyInfo) object).decryptPrivateKeyInfo(decProv));
                     break;
                 } else if (object instanceof PEMKeyPair) {
@@ -132,6 +135,23 @@ public class SslUtil {
 
     public static char[] getPassword(String passStr) {
         return StringUtils.isEmpty(passStr) ? EMPTY_PASS : passStr.toCharArray();
+    }
+
+    private static void registerProviderIfAbsent(String providerName) {
+        if (Security.getProvider(providerName) != null) {
+            return;
+        }
+        String providerClass = switch (providerName) {
+            case "BC" -> "org.bouncycastle.jce.provider.BouncyCastleProvider";
+            case "BCFIPS" -> "org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider";
+            default -> throw new IllegalStateException("Unknown JCE provider name '" + providerName
+                    + "'; no provider class mapping and no provider already registered under that name");
+        };
+        try {
+            Security.addProvider((Provider) Class.forName(providerClass).getDeclaredConstructor().newInstance());
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException("Unable to instantiate JCE provider '" + providerName + "' (" + providerClass + ")", e);
+        }
     }
 
 }
