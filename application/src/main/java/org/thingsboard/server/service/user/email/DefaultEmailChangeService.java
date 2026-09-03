@@ -117,6 +117,9 @@ public class DefaultEmailChangeService implements EmailChangeService {
 
         String code = StringUtils.randomNumeric(6);
         // Sent before caching, so a failed send does not leave a pending code the user never learned about.
+        // Depends on the templated mail path staying exempt from RecipientValidator: the new address is by
+        // definition not yet an activated user of this tenant, so extending the allow-list to templated
+        // sends would break every email change.
         mailService.sendTwoFaVerificationEmail(securityUser.getTenantId(), newEmail, code, codeLifetimeSeconds);
         cache.put(securityUser.getId(), new EmailVerificationCode(code, newEmail, System.currentTimeMillis(), failedAttempts));
         return EmailChangeResult.verificationRequired(codeLifetimeSeconds);
@@ -165,7 +168,8 @@ public class DefaultEmailChangeService implements EmailChangeService {
         // Validation is bypassed deliberately: UserDataValidator forbids email changes for restricted
         // tenants, and this flow is the verified route around it. Format and uniqueness were checked above.
         userService.saveUser(securityUser.getTenantId(), user, false);
-        // The JWT subject is the email, so every existing token for this user now names an address that no longer resolves.
+        // Signs the user out: DefaultTokenOutdatingService caches the outdating timestamp from this event and
+        // JwtAuthenticationProvider then rejects every token issued before it.
         eventPublisher.publishEvent(new UserCredentialsInvalidationEvent(securityUser.getId()));
     }
 
