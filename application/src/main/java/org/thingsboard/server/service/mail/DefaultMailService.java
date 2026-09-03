@@ -219,8 +219,8 @@ public class DefaultMailService implements MailService {
 
     private void sendMail(TenantId tenantId, CustomerId customerId, TbEmail tbEmail, JavaMailSender javaMailSender, long timeout, boolean systemMailSender) throws ThingsboardException {
         if (apiUsageStateService.getApiUsageState(tenantId).isEmailSendEnabled()) {
+            checkRateLimit(tenantId);
             if (systemMailSender) {
-                checkRateLimit(tenantId);
                 recipientValidator.validateRecipients(tenantId, tbEmail);
             }
             try {

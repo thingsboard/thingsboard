@@ -28,6 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpHeaders;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.ResultActions;
 import org.thingsboard.common.util.JacksonUtil;
@@ -43,6 +44,7 @@ import org.thingsboard.server.common.data.UserEmailInfo;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -65,6 +67,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -1383,9 +1386,21 @@ public class UserControllerTest extends AbstractControllerTest {
         assertThatCode(() -> recipientValidator.validateRecipients(restrictedTenantId, toMember))
                 .doesNotThrowAnyException();
 
-        // Own-SMTP sends are exempt from the recipient restriction.
-        assertThatCode(() -> recipientValidator.resolveFrom(restrictedTenantId, toOutsider, "noreply@thingsboard.io"))
-                .doesNotThrowAnyException();
+        // Own-SMTP sends are exempt from the recipient restriction: the send below reaches the
+        // (unreachable) SMTP server instead of being rejected as PERMISSION_DENIED, proving the
+        // outsider recipient was never checked on that path.
+        JavaMailSenderImpl ownSmtpSender = new JavaMailSenderImpl();
+        ownSmtpSender.setHost("127.0.0.1");
+        ownSmtpSender.setPort(1);
+        Properties mailProperties = new Properties();
+        mailProperties.put("mail.smtp.connectiontimeout", "1000");
+        mailProperties.put("mail.smtp.timeout", "1000");
+        mailProperties.put("mail.smtp.writetimeout", "1000");
+        ownSmtpSender.setJavaMailProperties(mailProperties);
+        assertThatThrownBy(() -> mailService.send(restrictedTenantId, null, toOutsider, ownSmtpSender, 3000))
+                .isInstanceOf(ThingsboardException.class)
+                .extracting(ex -> ((ThingsboardException) ex).getErrorCode())
+                .isNotEqualTo(ThingsboardErrorCode.PERMISSION_DENIED);
 
         loginSysAdmin();
         doDelete("/api/tenant/" + restrictedTenantId.getId()).andExpect(status().isOk());
