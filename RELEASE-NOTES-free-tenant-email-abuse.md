@@ -21,10 +21,17 @@ driven entirely by one setting, `security.restricted_tenant_profiles`.
   it, a restricted tenant's user-invite and password-reset mail is unmetered.
   Anyone who sets it should know that the unauthenticated `POST /api/noauth/resetPasswordByEmail`
   endpoint shares the same per-tenant bucket, so a third party who knows a single address of a
-  tenant can drain that tenant's mail allowance.
-  Once the limit is set, a request that trips it is answered with `429 TOO_MANY_REQUESTS` rather than
-  a generic `500`. On `POST /api/user` the newly created user is still rolled back, so a retry after
-  the limit refills starts from a clean state.
+  tenant can drain that tenant's mail allowance. **A drain attempt through that endpoint is
+  completely silent** — it answers `200` whether the mail was sent, refused by the limit, or failed
+  for any other reason — so the bucket can be emptied with no visible signal at all. Watch the
+  server logs, not the response codes.
+- How a tripped mail limit is reported depends on the endpoint:
+  - `POST /api/user` and `POST /api/user/email` answer `429 TOO_MANY_REQUESTS`. On `POST /api/user`
+    the newly created user is still rolled back, so a retry after the limit refills starts from a
+    clean state.
+  - `POST /api/user/sendActivationMail` still answers `500` with "Couldn't send user activation
+    email" — it cannot distinguish a rate-limit refusal from a mail failure.
+  - `POST /api/noauth/resetPasswordByEmail` answers `200` regardless, as described above.
 - Email-change verification is tuned by `security.email_verification.code_lifetime_seconds`,
   `security.email_verification.max_verification_failures` and
   `security.email_verification.min_resend_period_seconds`. The `cache.specs.emailVerificationCodes`
