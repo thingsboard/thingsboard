@@ -45,9 +45,6 @@ import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
-import org.thingsboard.server.exception.AccessDeniedException;
-import org.thingsboard.server.exception.EntityNotFoundException;
-import org.thingsboard.server.exception.UnauthorizedException;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.log.LogStreamDispatcher;
@@ -360,9 +357,10 @@ public class DefaultWebSocketService implements WebSocketService {
     }
 
     private void sendSubscriptionError(WebSocketSessionRef sessionRef, int cmdId, String defaultErrorMsg, Throwable e) {
-        if (e instanceof UnauthorizedException || e instanceof AccessDeniedException) {
-            sendError(sessionRef, cmdId, SubscriptionErrorCode.UNAUTHORIZED, SubscriptionErrorCode.UNAUTHORIZED.getDefaultMsg());
-        } else if (e instanceof IncorrectParameterException || e instanceof EntityNotFoundException) {
+        if (e instanceof ValidationException validationException) {
+            SubscriptionErrorCode errorCode = validationResultToSubscriptionErrorCode(validationException.getValidationResultCode());
+            sendError(sessionRef, cmdId, errorCode, errorCode.getDefaultMsg() + ": " + e.getMessage());
+        } else if (e instanceof IncorrectParameterException) {
             sendError(sessionRef, cmdId, SubscriptionErrorCode.BAD_REQUEST, e.getMessage());
         } else {
             sendError(sessionRef, cmdId, SubscriptionErrorCode.INTERNAL_ERROR, defaultErrorMsg);
@@ -806,13 +804,7 @@ public class DefaultWebSocketService implements WebSocketService {
                 } else {
                     log.info(FAILED_TO_FETCH_DATA, e);
                 }
-                if (e instanceof ValidationException) {
-                    ValidationResultCode validationResultCode = ((ValidationException) e).getValidationResultCode();
-                    SubscriptionErrorCode errorCode = validationResultToSubscriptionErrorCode(validationResultCode);
-                    sendError(sessionRef, cmd.getCmdId(), errorCode, errorCode.getDefaultMsg() + ": " + e.getMessage());
-                } else {
-                    sendSubscriptionError(sessionRef, cmd.getCmdId(), FAILED_TO_FETCH_DATA, e);
-                }
+                sendSubscriptionError(sessionRef, cmd.getCmdId(), FAILED_TO_FETCH_DATA, e);
             }
         };
     }
