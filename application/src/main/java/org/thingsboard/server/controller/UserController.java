@@ -199,7 +199,10 @@ public class UserController extends BaseController {
             user.setTenantId(getCurrentUser().getTenantId());
         }
         checkEntity(user.getId(), user, Resource.USER);
-        return tbUserService.save(getTenantId(), getCurrentUser().getCustomerId(), user, sendActivationMail, request, getCurrentUser());
+        // The activation link is not displayable for restricted tenants, so the email is the only way to invite a user.
+        // Keyed on the target user's tenant, not the caller's, so it also holds when a sysadmin creates the user.
+        boolean sendActivationEmail = sendActivationMail || tenantProfileCache.isRestricted(user.getTenantId());
+        return tbUserService.save(getTenantId(), getCurrentUser().getCustomerId(), user, sendActivationEmail, request, getCurrentUser());
     }
 
     @ApiOperation(value = "Send or re-send the activation email",
@@ -246,6 +249,9 @@ public class UserController extends BaseController {
         UserId userId = new UserId(toUUID(strUserId));
         checkUserId(userId, Operation.READ);
         SecurityUser securityUser = getCurrentUser();
+        if (tenantProfileCache.isRestricted(securityUser.getTenantId())) {
+            throw new ThingsboardException("Activation link can only be delivered by email", ThingsboardErrorCode.PERMISSION_DENIED);
+        }
         return tbUserService.getActivationLink(securityUser.getTenantId(), securityUser.getCustomerId(), userId, request);
     }
 
@@ -393,6 +399,12 @@ public class UserController extends BaseController {
         UserId userId = new UserId(toUUID(strUserId));
         checkUserId(userId, Operation.WRITE);
         TenantId tenantId = getCurrentUser().getTenantId();
+        if (userCredentialsEnabled && tenantProfileCache.isRestricted(tenantId)) {
+            UserCredentials credentials = userService.findUserCredentialsByUserId(tenantId, userId);
+            if (credentials != null && credentials.getActivateToken() != null) {
+                throw new ThingsboardException("User has not activated their account yet", ThingsboardErrorCode.PERMISSION_DENIED);
+            }
+        }
         userService.setUserCredentialsEnabled(tenantId, userId, userCredentialsEnabled);
 
         if (!userCredentialsEnabled) {

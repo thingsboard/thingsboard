@@ -1406,6 +1406,51 @@ public class UserControllerTest extends AbstractControllerTest {
         doDelete("/api/tenant/" + restrictedTenantId.getId()).andExpect(status().isOk());
     }
 
+    @Test
+    public void testActivationLinkIsHiddenForRestrictedTenant() throws Exception {
+        loginSysAdmin();
+        Tenant restrictedTenant = createRestrictedTenant();
+
+        User admin = new User();
+        admin.setAuthority(Authority.TENANT_ADMIN);
+        admin.setTenantId(restrictedTenant.getId());
+        admin.setEmail("restricted.admin2@thingsboard.org");
+        createUserAndLogin(admin, "testPassword1");
+
+        User customerUser = new User();
+        customerUser.setAuthority(Authority.TENANT_ADMIN);
+        customerUser.setTenantId(restrictedTenant.getId());
+        customerUser.setEmail("restricted.invitee@thingsboard.org");
+        User saved = doPost("/api/user", customerUser, User.class);
+
+        doGet("/api/user/" + saved.getId().getId() + "/activationLink")
+                .andExpect(status().isForbidden());
+        doGet("/api/user/" + saved.getId().getId() + "/activationLinkInfo")
+                .andExpect(status().isForbidden());
+
+        // The credentials-enable endpoint must not be a way around activation.
+        doPost("/api/user/" + saved.getId().getId() + "/userCredentialsEnabled?userCredentialsEnabled=true")
+                .andExpect(status().isForbidden());
+
+        loginSysAdmin();
+        doDelete("/api/tenant/" + restrictedTenant.getId().getId()).andExpect(status().isOk());
+    }
+
+    @Test
+    public void testActivationLinkIsAvailableForUnrestrictedTenant() throws Exception {
+        loginTenantAdmin();
+
+        User customerUser = new User();
+        customerUser.setAuthority(Authority.CUSTOMER_USER);
+        customerUser.setTenantId(tenantId);
+        customerUser.setCustomerId(customerId);
+        customerUser.setEmail("unrestricted.invitee@thingsboard.org");
+        User saved = doPost("/api/user", customerUser, User.class);
+
+        doGet("/api/user/" + saved.getId().getId() + "/activationLinkInfo")
+                .andExpect(status().isOk());
+    }
+
     private Tenant createRestrictedTenant() throws Exception {
         TenantProfile restrictedProfile = new TenantProfile();
         restrictedProfile.setName("Free");
