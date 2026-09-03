@@ -22,6 +22,9 @@ driven entirely by one setting, `security.restricted_tenant_profiles`.
   Anyone who sets it should know that the unauthenticated `POST /api/noauth/resetPasswordByEmail`
   endpoint shares the same per-tenant bucket, so a third party who knows a single address of a
   tenant can drain that tenant's mail allowance.
+  Once the limit is set, a request that trips it is answered with `429 TOO_MANY_REQUESTS` rather than
+  a generic `500`. On `POST /api/user` the newly created user is still rolled back, so a retry after
+  the limit refills starts from a clean state.
 - Email-change verification is tuned by `security.email_verification.code_lifetime_seconds`,
   `security.email_verification.max_verification_failures` and
   `security.email_verification.min_resend_period_seconds`. The `cache.specs.emailVerificationCodes`
