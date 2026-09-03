@@ -35,7 +35,6 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
-import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.ApiUsageStateId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -401,7 +400,7 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
                     mailExecutor.submit(() -> {
                         try {
                             mailService.sendApiFeatureStateEmail(state.getTenantId(), apiFeature, stateValue, email, recordState);
-                        } catch (ThingsboardException e) {
+                        } catch (Exception e) {
                             log.warn("[{}] Can't send update of the API state to tenant with provided email [{}]", state.getTenantId(), email, e);
                         }
                     });
