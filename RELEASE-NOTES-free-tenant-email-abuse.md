@@ -60,3 +60,17 @@ driven entirely by one setting, `security.restricted_tenant_profiles`.
   address.
 - There is currently **no audit-log entry** for a self-service email change, and **no notice sent to
   the old address**. Both are tracked as follow-ups.
+
+## Known improvements deliberately not made here
+
+This release is a targeted security fix on an LTS line, so the following were left alone rather than
+folded in. Each needs its own decision and its own release note.
+
+- **Quota refusals still surface as `500`.** `ApiUsageLimitsExceededException` shares the
+  `AbstractRateLimitException` base class with the two rate-limit types that now map to `429`, but it
+  is deliberately **not** mapped: doing so would move `POST /api/alarm` from `500` to `429` for a
+  tenant whose alarm-creation API feature is disabled (`BaseAlarmService`), and could do the same to
+  nosql-buffered telemetry write failures. `429` is arguably the better status for a quota refusal —
+  today a tenant over quota is indistinguishable from a server fault in monitoring — but changing the
+  status and error code of unrelated endpoints does not belong in this branch.
+- **No audit-log entry and no old-address notice** for a self-service email change, as noted above.

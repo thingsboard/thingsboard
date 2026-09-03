@@ -50,6 +50,7 @@ import org.springframework.web.util.WebUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.exception.AbstractRateLimitException;
+import org.thingsboard.server.common.data.exception.RateLimitExceededException;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.msg.tools.MaxPayloadSizeExceededException;
@@ -157,8 +158,10 @@ public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHand
                     } else {
                         handleThingsboardException(thingsboardException, response);
                     }
-                } else if (exception instanceof AbstractRateLimitException rateLimitException) {
-                    handleRateLimitException(response, rateLimitException);
+                } else if (exception instanceof RateLimitExceededException || exception instanceof TbRateLimitsException) {
+                    // Only these two of the three AbstractRateLimitException subclasses: mapping
+                    // ApiUsageLimitsExceededException too would drag unrelated endpoints from 500 to 429.
+                    handleRateLimitException(response, (AbstractRateLimitException) exception);
                 } else if (exception instanceof AccessDeniedException) {
                     handleAccessDeniedException(response);
                 } else if (exception instanceof AuthenticationException authenticationException) {
