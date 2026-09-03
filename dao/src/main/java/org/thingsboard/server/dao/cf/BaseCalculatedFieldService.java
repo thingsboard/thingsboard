@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
+import org.thingsboard.server.dao.exception.EntityConflictMessages;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.DataValidator;
 
@@ -40,6 +41,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
+import static org.thingsboard.server.dao.exception.EntityConflictMessages.NAME;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 
@@ -87,7 +89,7 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
             return savedCalculatedField;
         } catch (Exception e) {
             checkConstraintViolation(e,
-                    "calculated_field_unq_key", "Calculated Field with such name is already in exists!",
+                    "calculated_field_unq_key", EntityConflictMessages.alreadyExists(EntityType.CALCULATED_FIELD, NAME, calculatedField.getName()),
                     "calculated_field_external_id_unq_key", "Calculated Field with such external id already exists!");
             throw e;
         }

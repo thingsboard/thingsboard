@@ -33,7 +33,7 @@ import static org.thingsboard.server.msa.ui.base.AbstractBasePage.random;
 import static org.thingsboard.server.msa.ui.utils.Const.EMPTY_DEVICE_PROFILE_MESSAGE;
 import static org.thingsboard.server.msa.ui.utils.Const.ENTITY_NAME;
 import static org.thingsboard.server.msa.ui.utils.Const.NAME_IS_REQUIRED_MESSAGE;
-import static org.thingsboard.server.msa.ui.utils.Const.SAME_NAME_WARNING_DEVICE_PROFILE_MESSAGE;
+import static org.thingsboard.server.msa.ui.utils.Const.SAME_NAME_WARNING_DEVICE_PROFILE_MESSAGE_FORMAT;
 
 public class CreateDeviceProfileTest extends AbstractDriverBaseTest {
 
@@ -127,7 +127,8 @@ public class CreateDeviceProfileTest extends AbstractDriverBaseTest {
 
         Assert.assertNotNull(profilesPage.warningMessage());
         Assert.assertTrue(profilesPage.warningMessage().isDisplayed());
-        Assert.assertEquals(profilesPage.warningMessage().getText(), SAME_NAME_WARNING_DEVICE_PROFILE_MESSAGE);
+        Assert.assertEquals(profilesPage.warningMessage().getText(),
+                String.format(SAME_NAME_WARNING_DEVICE_PROFILE_MESSAGE_FORMAT, name));
         Assert.assertNotNull(profilesPage.addDeviceProfileView());
         Assert.assertTrue(profilesPage.addDeviceProfileView().isDisplayed());
     }

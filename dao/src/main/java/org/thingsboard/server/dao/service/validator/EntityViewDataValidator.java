@@ -18,15 +18,18 @@ package org.thingsboard.server.dao.service.validator;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.entityview.EntityViewDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.exception.EntityConflictMessages;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.tenant.TenantService;
 
+import static org.thingsboard.server.dao.exception.EntityConflictMessages.NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
 @Component
@@ -41,7 +44,7 @@ public class EntityViewDataValidator extends DataValidator<EntityView> {
     protected void validateCreate(TenantId tenantId, EntityView entityView) {
         entityViewDao.findEntityViewByTenantIdAndName(entityView.getTenantId().getId(), entityView.getName())
                 .ifPresent(e -> {
-                    throw new DataValidationException("Entity view with such name already exists!");
+                    throw new DataValidationException(EntityConflictMessages.alreadyExists(EntityType.ENTITY_VIEW, NAME, entityView.getName()));
                 });
     }
 
@@ -50,7 +53,7 @@ public class EntityViewDataValidator extends DataValidator<EntityView> {
         var opt = entityViewDao.findEntityViewByTenantIdAndName(entityView.getTenantId().getId(), entityView.getName());
         opt.ifPresent(e -> {
             if (!e.getUuidId().equals(entityView.getUuidId())) {
-                throw new DataValidationException("Entity view with such name already exists!");
+                throw new DataValidationException(EntityConflictMessages.alreadyExists(EntityType.ENTITY_VIEW, NAME, entityView.getName()));
             }
         });
         return opt.orElse(null);

@@ -79,6 +79,7 @@ import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.exception.EntityConflictMessages;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.validator.DeviceDataValidator;
@@ -92,6 +93,7 @@ import java.util.UUID;
 
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
+import static org.thingsboard.server.dao.exception.EntityConflictMessages.NAME;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validateIds;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
@@ -250,7 +252,7 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
         } catch (Exception t) {
             handleEvictEvent(deviceCacheEvictEvent);
             checkConstraintViolation(t,
-                    "device_name_unq_key", "Device with such name already exists!",
+                    "device_name_unq_key", EntityConflictMessages.alreadyExists(EntityType.DEVICE, NAME, device.getName()),
                     "device_external_id_unq_key", "Device with such external id already exists!");
             throw t;
         }

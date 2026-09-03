@@ -31,7 +31,7 @@ import org.thingsboard.server.msa.ui.pages.SideBarMenuViewElements;
 import static org.thingsboard.server.msa.ui.base.AbstractBasePage.random;
 import static org.thingsboard.server.msa.ui.utils.Const.EMPTY_CUSTOMER_MESSAGE;
 import static org.thingsboard.server.msa.ui.utils.Const.ENTITY_NAME;
-import static org.thingsboard.server.msa.ui.utils.Const.SAME_NAME_WARNING_CUSTOMER_MESSAGE;
+import static org.thingsboard.server.msa.ui.utils.Const.SAME_NAME_WARNING_CUSTOMER_MESSAGE_FORMAT;
 
 public class CreateCustomerTest extends AbstractDriverBaseTest {
 
@@ -160,7 +160,8 @@ public class CreateCustomerTest extends AbstractDriverBaseTest {
 
         Assert.assertNotNull(customerPage.warningMessage());
         Assert.assertTrue(customerPage.warningMessage().isDisplayed());
-        Assert.assertEquals(customerPage.warningMessage().getText(), SAME_NAME_WARNING_CUSTOMER_MESSAGE);
+        Assert.assertEquals(customerPage.warningMessage().getText(),
+                String.format(SAME_NAME_WARNING_CUSTOMER_MESSAGE_FORMAT, customerName));
         Assert.assertNotNull(customerPage.addEntityView());
         Assert.assertTrue(customerPage.addEntityView().isDisplayed());
     }

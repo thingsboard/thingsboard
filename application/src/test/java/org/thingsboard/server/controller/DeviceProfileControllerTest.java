@@ -281,7 +281,7 @@ public class DeviceProfileControllerTest extends AbstractControllerTest {
 
         Mockito.reset(tbClusterService, auditLogService);
 
-        String msgError = "Device profile with such name already exists";
+        String msgError = "Device profile with name \"Device Profile\" already exists!";
         doPost("/api/deviceProfile", deviceProfile2)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));

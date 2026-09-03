@@ -52,6 +52,7 @@ import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.exception.EntityConflictMessages;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.sql.JpaExecutorService;
@@ -64,6 +65,7 @@ import java.util.stream.Collectors;
 
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
+import static org.thingsboard.server.dao.exception.EntityConflictMessages.NAME;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validateIds;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
@@ -187,7 +189,7 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
         } catch (Exception t) {
             handleEvictEvent(evictEvent);
             checkConstraintViolation(t,
-                    "asset_name_unq_key", "Asset with such name already exists!",
+                    "asset_name_unq_key", EntityConflictMessages.alreadyExists(EntityType.ASSET, NAME, asset.getName()),
                     "asset_external_id_unq_key", "Asset with such external id already exists!");
             throw t;
         }

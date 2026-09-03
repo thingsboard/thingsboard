@@ -29,7 +29,7 @@ import static org.thingsboard.server.msa.ui.utils.Const.DEVICE_PROFILE_IS_REQUIR
 import static org.thingsboard.server.msa.ui.utils.Const.EMPTY_DEVICE_MESSAGE;
 import static org.thingsboard.server.msa.ui.utils.Const.ENTITY_NAME;
 import static org.thingsboard.server.msa.ui.utils.Const.NAME_IS_REQUIRED_MESSAGE;
-import static org.thingsboard.server.msa.ui.utils.Const.SAME_NAME_WARNING_DEVICE_MESSAGE;
+import static org.thingsboard.server.msa.ui.utils.Const.SAME_NAME_WARNING_DEVICE_MESSAGE_FORMAT;
 
 @Feature("Create device")
 public class CreateDeviceTest extends AbstractDeviceTest {
@@ -114,7 +114,8 @@ public class CreateDeviceTest extends AbstractDeviceTest {
         createDeviceTab.addBtn().click();
 
         assertIsDisplayed(devicePage.warningMessage());
-        assertThat(devicePage.warningMessage().getText()).as("Text of warning message").isEqualTo(SAME_NAME_WARNING_DEVICE_MESSAGE);
+        assertThat(devicePage.warningMessage().getText()).as("Text of warning message")
+                .isEqualTo(String.format(SAME_NAME_WARNING_DEVICE_MESSAGE_FORMAT, deviceName));
         assertIsDisplayed(devicePage.addDeviceView());
     }
 
