@@ -796,8 +796,10 @@ cache:
       timeToLiveInMinutes: "${CACHE_SPECS_API_KEYS_TTL:1440}" # API keys cache TTL
       maxSize: "${CACHE_SPECS_API_KEYS_MAX_SIZE:10000}" # 0 means the cache is disabled
     emailVerificationCodes:
-      timeToLiveInMinutes: "${CACHE_SPECS_EMAIL_VERIFICATION_CODES_TTL:15}" # Email change verification codes cache TTL
-      maxSize: "${CACHE_SPECS_EMAIL_VERIFICATION_CODES_MAX_SIZE:100000}" # 0 means the cache is disabled
+      # Must stay above security.email_verification.code_lifetime_seconds, so that an expired code is
+      # reported as expired instead of surfacing as a missing pending change
+      timeToLiveInMinutes: "${CACHE_SPECS_EMAIL_VERIFICATION_CODES_TTL:20}" # Email change verification codes cache TTL
+      maxSize: "${CACHE_SPECS_EMAIL_VERIFICATION_CODES_MAX_SIZE:100000}" # 0 means the cache is disabled. Sized like twoFaVerificationCodes: one entry per email change in flight
 
   # Deliberately placed outside the 'specs' group above
   notificationRules:

@@ -41,6 +41,8 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -147,12 +149,21 @@ public class DefaultEmailChangeService implements EmailChangeService {
         if (pending.failedAttempts() >= maxVerificationFailures) {
             throw new ThingsboardException(TOO_MANY_FAILURES_MESSAGE, ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
-        if (!pending.code().equals(verificationCode)) {
+        if (!codeMatches(pending.code(), verificationCode)) {
             cache.put(securityUser.getId(), pending.withFailedAttempt());
             throw new ThingsboardException("Verification code is incorrect", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
-        applyEmailChange(securityUser, pending.newEmail());
-        cache.evict(securityUser.getId());
+        try {
+            applyEmailChange(securityUser, pending.newEmail());
+        } finally {
+            // Also on failure: a pending entry that outlives its request would keep the resend throttle
+            // and the failure cap armed until natural expiry, blocking a retry of a change that never applied.
+            cache.evict(securityUser.getId());
+        }
+    }
+
+    private boolean codeMatches(String expected, String actual) {
+        return actual != null && MessageDigest.isEqual(expected.getBytes(StandardCharsets.UTF_8), actual.getBytes(StandardCharsets.UTF_8));
     }
 
     private boolean isExpired(EmailVerificationCode code) {
