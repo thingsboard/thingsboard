@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.UserActivationLink;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.exception.AbstractRateLimitException;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -58,6 +59,11 @@ public class DefaultUserService extends AbstractTbEntityService implements TbUse
                     mailService.sendActivationEmail(tenantId, activationLink.value(), activationLink.ttlMs(), savedUser.getEmail());
                 } catch (Exception e) {
                     userService.deleteUser(tenantId, savedUser);
+                    if (e instanceof AbstractRateLimitException rateLimitException) {
+                        // Nothing was created, so report the refusal as such instead of as a mail failure:
+                        // the caller can retry later, while a generic 500 tells them nothing.
+                        throw rateLimitException;
+                    }
                     throw new ThingsboardException("Couldn't send user activation email", ThingsboardErrorCode.GENERAL);
                 }
             }
