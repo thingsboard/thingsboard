@@ -49,6 +49,11 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class DefaultEmailChangeService implements EmailChangeService {
 
+    // Deliberately does not suggest requesting a new code: while capped, that request is refused too,
+    // and only waiting out the current code's expiry actually unblocks the user.
+    private static final String TOO_MANY_FAILURES_MESSAGE =
+            "Too many failed attempts. Please wait for the pending verification code to expire, then request a new one.";
+
     private final TbTenantProfileCache tenantProfileCache;
     private final UserService userService;
     private final MailService mailService;
@@ -97,6 +102,12 @@ public class DefaultEmailChangeService implements EmailChangeService {
         EmailVerificationCode existing = existingWrapper == null ? null : existingWrapper.get();
         int failedAttempts = 0;
         if (existing != null && !isExpired(existing)) {
+            // Reject before touching the cache: writing a fresh entry here would reset its timestamp,
+            // which both restarts the lockout window (the entry never reaches natural expiry if the user
+            // keeps resending) and mails a new code that verifyEmailChange will still refuse outright.
+            if (existing.failedAttempts() >= maxVerificationFailures) {
+                throw new ThingsboardException(TOO_MANY_FAILURES_MESSAGE, ThingsboardErrorCode.TOO_MANY_REQUESTS);
+            }
             if (System.currentTimeMillis() - existing.timestamp() < TimeUnit.SECONDS.toMillis(minResendPeriodSeconds)) {
                 throw new ThingsboardException("A verification code has already been sent, please wait before requesting another",
                         ThingsboardErrorCode.TOO_MANY_REQUESTS);
@@ -113,6 +124,11 @@ public class DefaultEmailChangeService implements EmailChangeService {
 
     @Override
     public void verifyEmailChange(SecurityUser securityUser, String verificationCode) throws ThingsboardException {
+        // Harmless today (only requestEmailChange writes the cache, and it already refuses public
+        // principals, so the NULL_UUID key can never hold an entry) - guarded anyway for defence in depth.
+        if (UserPrincipal.Type.PUBLIC_ID.equals(securityUser.getUserPrincipal().getType())) {
+            throw new ThingsboardException("Public users are not allowed to change email", ThingsboardErrorCode.PERMISSION_DENIED);
+        }
         TbCacheValueWrapper<EmailVerificationCode> wrapper = cache.get(securityUser.getId());
         EmailVerificationCode pending = wrapper == null ? null : wrapper.get();
         if (pending == null) {
@@ -126,7 +142,7 @@ public class DefaultEmailChangeService implements EmailChangeService {
         // requestEmailChange see no pending entry, skip the resend throttle and reset the failure
         // counter to zero, turning the cap into an unlimited retry loop instead of a limit.
         if (pending.failedAttempts() >= maxVerificationFailures) {
-            throw new ThingsboardException("Too many failed attempts, request a new code once this one expires", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+            throw new ThingsboardException(TOO_MANY_FAILURES_MESSAGE, ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
         if (!pending.code().equals(verificationCode)) {
             cache.put(securityUser.getId(), pending.withFailedAttempt());

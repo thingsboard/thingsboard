@@ -134,7 +134,7 @@ public class UserEmailChangeControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testEmailChangeFailureCapKeepsBlockingAndSurvivesResend() throws Exception {
+    public void testEmailChangeFailureCapBlocksResendWithoutResettingExpiry() throws Exception {
         Tenant tenant = createRestrictedTenant();
         User admin = loginRestrictedTenantAdmin(tenant, "restricted.cap@thingsboard.org");
 
@@ -153,20 +153,25 @@ public class UserEmailChangeControllerTest extends AbstractControllerTest {
         EmailVerificationCode capped = emailVerificationCache.get(admin.getId()).get();
         assertThat(capped.failedAttempts()).isEqualTo(5);
 
-        // Backdate the entry past the resend throttle window instead of sleeping in the test; the failure
-        // count must still be carried forward into whatever gets cached next.
+        // Backdate the entry past the resend throttle window instead of sleeping in the test, to prove
+        // the refusal below comes from the cap itself and not merely from the resend throttle.
+        long backdatedTimestamp = capped.timestamp() - TimeUnit.SECONDS.toMillis(61);
         emailVerificationCache.put(admin.getId(), new EmailVerificationCode(capped.code(), capped.newEmail(),
-                capped.timestamp() - TimeUnit.SECONDS.toMillis(61), capped.failedAttempts()));
+                backdatedTimestamp, capped.failedAttempts()));
 
-        // An immediate re-request must not hand out a fresh usable code.
-        EmailChangeResult resendResult = doPostWithResponse("/api/user/email",
-                new EmailChangeRequest("restricted.cap.new2@thingsboard.org"), EmailChangeResult.class);
-        assertThat(resendResult.status()).isEqualTo(EmailChangeStatus.VERIFICATION_REQUIRED);
-
-        String freshCode = emailVerificationCache.get(admin.getId()).get().code();
-        doPost("/api/user/email/verify?verificationCode=" + freshCode)
-                .andExpect(status().isBadRequest())
+        // A capped re-request must be refused outright: not mailed, and not allowed to touch the entry's
+        // timestamp - otherwise the lockout restarts on every resend instead of reaching natural expiry.
+        doPost("/api/user/email", new EmailChangeRequest("restricted.cap.new2@thingsboard.org"))
+                .andExpect(status().isTooManyRequests())
                 .andExpect(statusReason(containsString("Too many failed attempts")));
+
+        // Only the very first request (before the cap was ever reached) should have sent mail.
+        Mockito.verify(mailService, Mockito.times(1))
+                .sendTwoFaVerificationEmail(eq(tenant.getId()), anyString(), anyString(), anyInt());
+
+        EmailVerificationCode afterRefusedResend = emailVerificationCache.get(admin.getId()).get();
+        assertThat(afterRefusedResend.timestamp()).isEqualTo(backdatedTimestamp);
+        assertThat(afterRefusedResend.failedAttempts()).isEqualTo(5);
     }
 
     @Test
