@@ -29,6 +29,7 @@ import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.service.DataValidator;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.user.UserDao;
 import org.thingsboard.server.dao.user.UserService;
@@ -49,6 +50,10 @@ public class UserDataValidator extends DataValidator<User> {
     @Autowired
     @Lazy
     private TenantService tenantService;
+
+    @Autowired
+    @Lazy
+    private TbTenantProfileCache tenantProfileCache;
 
     @Override
     protected void validateCreate(TenantId tenantId, User user) {
@@ -71,6 +76,10 @@ public class UserDataValidator extends DataValidator<User> {
         }
         if (!old.getCustomerId().equals(user.getCustomerId())) {
             throw new DataValidationException("Can't update user customer id!");
+        }
+        // Restricted tenants must change an email through the verified flow, which bypasses this validator.
+        if (!old.getEmail().equals(user.getEmail()) && tenantProfileCache.isRestricted(user.getTenantId())) {
+            throw new DataValidationException("Can't update user email!");
         }
         return old;
     }
