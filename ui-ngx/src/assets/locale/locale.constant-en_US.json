@@ -5148,6 +5148,7 @@
         "change-email": "Change email",
         "change-email-title": "Change email",
         "change-email-description": "Enter your new email address. We will send a verification code to it.",
+        "change-email-success": "Your email has been changed. Please sign in again using your new email address.",
         "new-email": "New email",
         "change-password": "Change Password",
         "current-password": "Current password",

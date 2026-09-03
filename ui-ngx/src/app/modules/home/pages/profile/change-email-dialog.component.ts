@@ -27,6 +27,7 @@ import { UserService } from '@core/http/user.service';
 import { EmailChangeStatus } from '@shared/models/user.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'tb-change-email-dialog',
@@ -44,6 +45,7 @@ export class ChangeEmailDialogComponent extends DialogComponent<ChangeEmailDialo
   constructor(protected store: Store<AppState>,
               protected router: Router,
               private userService: UserService,
+              private translate: TranslateService,
               public dialogRef: MatDialogRef<ChangeEmailDialogComponent, string>,
               public fb: UntypedFormBuilder) {
     super(store, router, dialogRef);
@@ -84,7 +86,15 @@ export class ChangeEmailDialogComponent extends DialogComponent<ChangeEmailDialo
       case 1:
         if (this.verificationForm.valid) {
           this.userService.verifyEmailChange(this.verificationForm.get('verificationCode').value).subscribe({
-            next: () => this.dialogRef.close(this.emailForm.get('email').value),
+            next: () => {
+              // Dispatched before close(), not after: the dialog closing and the ensuing logout leave
+              // nothing on screen to carry a message, so this is the only point the user can see one.
+              this.store.dispatch(new ActionNotificationShow({
+                message: this.translate.instant('profile.change-email-success'),
+                type: 'success'
+              }));
+              this.dialogRef.close(this.emailForm.get('email').value);
+            },
             error: (error: HttpErrorResponse) => this.showRateLimitError(error)
           });
         } else {
@@ -102,7 +112,10 @@ export class ChangeEmailDialogComponent extends DialogComponent<ChangeEmailDialo
   // which this dialog does not want; show the backend's own message (throttle or failure-cap) instead.
   private showRateLimitError(error: HttpErrorResponse) {
     if (error.status === 429) {
-      this.store.dispatch(new ActionNotificationShow({message: error.error?.message, type: 'error'}));
+      // A proxy or load balancer in front of the platform can synthesize its own 429 with a plain-text
+      // or empty body, leaving no error.message to show; fall back to a generic translated message.
+      const message = error.error?.message || this.translate.instant('server-error.too-many-requests');
+      this.store.dispatch(new ActionNotificationShow({message, type: 'error'}));
     }
   }
 
