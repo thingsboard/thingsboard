@@ -15,12 +15,16 @@
  */
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cache.TbTransactionalCache;
+import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EmailChangeRequest;
 import org.thingsboard.server.common.data.EmailChangeResult;
 import org.thingsboard.server.common.data.EmailChangeStatus;
@@ -34,11 +38,14 @@ import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileCon
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
+import java.util.concurrent.TimeUnit;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
@@ -103,6 +110,9 @@ public class UserEmailChangeControllerTest extends AbstractControllerTest {
 
         String code = emailVerificationCache.get(admin.getId()).get().code();
 
+        // The defining invariant of this flow: the code goes to the new address, and only the new address.
+        Mockito.verify(mailService).sendTwoFaVerificationEmail(eq(tenant.getId()), eq("restricted.changed@thingsboard.org"), eq(code), anyInt());
+
         doPost("/api/user/email/verify?verificationCode=" + code).andExpect(status().isOk());
 
         loginSysAdmin();
@@ -124,9 +134,9 @@ public class UserEmailChangeControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testEmailChangeFailureCapDiscardsThePendingCode() throws Exception {
+    public void testEmailChangeFailureCapKeepsBlockingAndSurvivesResend() throws Exception {
         Tenant tenant = createRestrictedTenant();
-        loginRestrictedTenantAdmin(tenant, "restricted.cap@thingsboard.org");
+        User admin = loginRestrictedTenantAdmin(tenant, "restricted.cap@thingsboard.org");
 
         doPostWithResponse("/api/user/email",
                 new EmailChangeRequest("restricted.cap.new@thingsboard.org"), EmailChangeResult.class);
@@ -134,9 +144,29 @@ public class UserEmailChangeControllerTest extends AbstractControllerTest {
         for (int i = 0; i < 5; i++) {
             doPost("/api/user/email/verify?verificationCode=000000").andExpect(status().isBadRequest());
         }
+        // Cap reached: a 6th attempt is rejected outright, without comparing the code, and the pending
+        // entry is kept rather than discarded - discarding it would let a re-request reset the counter.
         doPost("/api/user/email/verify?verificationCode=000000")
                 .andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString("No pending email change")));
+                .andExpect(statusReason(containsString("Too many failed attempts")));
+
+        EmailVerificationCode capped = emailVerificationCache.get(admin.getId()).get();
+        assertThat(capped.failedAttempts()).isEqualTo(5);
+
+        // Backdate the entry past the resend throttle window instead of sleeping in the test; the failure
+        // count must still be carried forward into whatever gets cached next.
+        emailVerificationCache.put(admin.getId(), new EmailVerificationCode(capped.code(), capped.newEmail(),
+                capped.timestamp() - TimeUnit.SECONDS.toMillis(61), capped.failedAttempts()));
+
+        // An immediate re-request must not hand out a fresh usable code.
+        EmailChangeResult resendResult = doPostWithResponse("/api/user/email",
+                new EmailChangeRequest("restricted.cap.new2@thingsboard.org"), EmailChangeResult.class);
+        assertThat(resendResult.status()).isEqualTo(EmailChangeStatus.VERIFICATION_REQUIRED);
+
+        String freshCode = emailVerificationCache.get(admin.getId()).get().code();
+        doPost("/api/user/email/verify?verificationCode=" + freshCode)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Too many failed attempts")));
     }
 
     @Test
@@ -161,6 +191,32 @@ public class UserEmailChangeControllerTest extends AbstractControllerTest {
         doPost("/api/user", admin)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString("Can't update user email!")));
+    }
+
+    @Test
+    public void testEmailChangeRejectsPublicCustomer() throws Exception {
+        loginTenantAdmin();
+
+        Customer customer = new Customer();
+        customer.setTitle("Public customer " + System.currentTimeMillis());
+        customer = doPost("/api/customer", customer, Customer.class);
+
+        Device device = new Device();
+        device.setName("Public device " + System.currentTimeMillis());
+        device.setCustomerId(customer.getId());
+        device = doPost("/api/device", device, Device.class);
+        device = doPost("/api/customer/public/device/" + device.getUuidId(), Device.class);
+
+        String publicId = device.getCustomerId().toString();
+
+        resetTokens();
+        JsonNode publicLoginRequest = JacksonUtil.toJsonNode("{\"publicId\": \"" + publicId + "\"}");
+        JsonNode tokens = doPost("/api/auth/login/public", publicLoginRequest, JsonNode.class);
+        this.token = tokens.get("token").asText();
+
+        // A public dashboard session must never be able to trigger a mailed verification code.
+        doPost("/api/user/email", new EmailChangeRequest("public.customer.new@thingsboard.org"))
+                .andExpect(status().isForbidden());
     }
 
 }

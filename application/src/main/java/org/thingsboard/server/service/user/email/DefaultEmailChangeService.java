@@ -39,6 +39,7 @@ import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.security.model.UserPrincipal;
 
 import java.util.concurrent.TimeUnit;
 
@@ -68,6 +69,11 @@ public class DefaultEmailChangeService implements EmailChangeService {
 
     @Override
     public EmailChangeResult requestEmailChange(SecurityUser securityUser, String newEmail) throws ThingsboardException {
+        // A public dashboard session has no real account behind it (synthetic user, NULL_UUID id) and must
+        // not be able to trigger a mail send or reach applyEmailChange.
+        if (UserPrincipal.Type.PUBLIC_ID.equals(securityUser.getUserPrincipal().getType())) {
+            throw new ThingsboardException("Public users are not allowed to change email", ThingsboardErrorCode.PERMISSION_DENIED);
+        }
         if (StringUtils.isBlank(newEmail)) {
             throw new ThingsboardException("Email should be specified", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
@@ -116,13 +122,14 @@ public class DefaultEmailChangeService implements EmailChangeService {
             cache.evict(securityUser.getId());
             throw new ThingsboardException("Verification code is expired", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
+        // Keep the entry rather than evict it once the cap is hit: evicting would make the next
+        // requestEmailChange see no pending entry, skip the resend throttle and reset the failure
+        // counter to zero, turning the cap into an unlimited retry loop instead of a limit.
+        if (pending.failedAttempts() >= maxVerificationFailures) {
+            throw new ThingsboardException("Too many failed attempts, request a new code once this one expires", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        }
         if (!pending.code().equals(verificationCode)) {
-            EmailVerificationCode updated = pending.withFailedAttempt();
-            if (updated.failedAttempts() >= maxVerificationFailures) {
-                cache.evict(securityUser.getId());
-            } else {
-                cache.put(securityUser.getId(), updated);
-            }
+            cache.put(securityUser.getId(), pending.withFailedAttempt());
             throw new ThingsboardException("Verification code is incorrect", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
         applyEmailChange(securityUser, pending.newEmail());
@@ -133,8 +140,11 @@ public class DefaultEmailChangeService implements EmailChangeService {
         return System.currentTimeMillis() - code.timestamp() > TimeUnit.SECONDS.toMillis(codeLifetimeSeconds);
     }
 
-    private void applyEmailChange(SecurityUser securityUser, String newEmail) {
+    private void applyEmailChange(SecurityUser securityUser, String newEmail) throws ThingsboardException {
         User user = userService.findUserById(securityUser.getTenantId(), securityUser.getId());
+        if (user == null) {
+            throw new ThingsboardException("User not found", ThingsboardErrorCode.ITEM_NOT_FOUND);
+        }
         user.setEmail(newEmail);
         // Validation is bypassed deliberately: UserDataValidator forbids email changes for restricted
         // tenants, and this flow is the verified route around it. Format and uniqueness were checked above.
