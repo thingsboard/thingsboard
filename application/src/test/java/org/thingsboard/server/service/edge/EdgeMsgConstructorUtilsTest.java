@@ -56,18 +56,22 @@ import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserCredentialsId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 
 import java.lang.reflect.Constructor;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -79,6 +83,29 @@ import static org.thingsboard.server.service.edge.EdgeMsgConstructorUtils.IGNORE
 public class EdgeMsgConstructorUtilsTest {
 
     private static final int CONFIGURATION_VERSION = 5;
+
+    // Every property UserCredentials serializes, pinned so that adding a field to UserCredentials fails the
+    // test below rather than silently reaching an edge.
+    private static final Set<String> ALL_USER_CREDENTIALS_FIELDS = new TreeSet<>(Set.of(
+            "id", "createdTime", "userId", "enabled", "password",
+            "activateToken", "activateTokenExpTime", "resetToken", "resetTokenExpTime",
+            "lastLoginTs", "failedLoginAttempts", "additionalInfo"));
+
+    // The subset EdgeMsgConstructorUtils#toEdgeCredentials is allowed to give a value to.
+    private static final Set<String> EDGE_SAFE_USER_CREDENTIALS_FIELDS = new TreeSet<>(Set.of(
+            "id", "createdTime", "userId", "enabled", "password",
+            "lastLoginTs", "failedLoginAttempts", "additionalInfo"));
+
+    private static final String NEW_FIELD_HINT = "UserCredentials no longer serializes the fields this test " +
+            "was written against. A field added to UserCredentials must be explicitly included in, or excluded " +
+            "from, EdgeMsgConstructorUtils#toEdgeCredentials before it can travel to a tenant-controlled edge: " +
+            "decide which, then list it here and, if it is safe, in EDGE_SAFE_USER_CREDENTIALS_FIELDS too.";
+
+    private static final String LEAK_HINT = "Only edge-safe fields may carry a value to an edge, which its " +
+            "tenant admin controls. The cloud's one-time tokens must never be among them: an activateToken on " +
+            "the wire is an activation that tenant can complete for an address it does not own, and a " +
+            "resetToken is a password it can set. Add a field to EdgeMsgConstructorUtils#toEdgeCredentials " +
+            "only once you are sure the tenant may read it.";
 
     static Stream<EdgeVersion> provideEdgeVersions() {
         return Stream.of(
@@ -377,6 +404,35 @@ public class EdgeMsgConstructorUtilsTest {
 
         Assertions.assertTrue(json.get("version") == null || json.get("version").isNull(),
                 "DeviceCredentials version should be null in serialized message");
+    }
+
+    @Test
+    public void testConstructUserCredentialsUpdatedMsg_onlyEdgeSafeFieldsCarryValues() {
+        UserCredentials credentials = new UserCredentials(new UserCredentialsId(UUID.randomUUID()));
+        credentials.setCreatedTime(1L);
+        credentials.setUserId(new UserId(UUID.randomUUID()));
+        credentials.setEnabled(true);
+        credentials.setPassword("$2a$10$storedPasswordHash");
+        credentials.setActivateToken("activate-token");
+        credentials.setActivateTokenExpTime(2L);
+        credentials.setResetToken("reset-token");
+        credentials.setResetTokenExpTime(3L);
+        credentials.setLastLoginTs(4L);
+        credentials.setFailedLoginAttempts(5);
+        credentials.setAdditionalInfo(JacksonUtil.newObjectNode());
+
+        String entity = EdgeMsgConstructorUtils.constructUserCredentialsUpdatedMsg(credentials).getEntity();
+        JsonNode json = JacksonUtil.toJsonNode(entity);
+
+        Set<String> serializedFields = new TreeSet<>();
+        json.fieldNames().forEachRemaining(serializedFields::add);
+        Assertions.assertEquals(ALL_USER_CREDENTIALS_FIELDS, serializedFields, NEW_FIELD_HINT);
+
+        Set<String> populatedFields = new TreeSet<>();
+        json.properties().stream()
+                .filter(field -> !field.getValue().isNull())
+                .forEach(field -> populatedFields.add(field.getKey()));
+        Assertions.assertEquals(EDGE_SAFE_USER_CREDENTIALS_FIELDS, populatedFields, LEAK_HINT);
     }
 
     @Test
