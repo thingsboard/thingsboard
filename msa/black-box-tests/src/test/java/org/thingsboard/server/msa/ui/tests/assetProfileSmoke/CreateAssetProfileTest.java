@@ -31,7 +31,7 @@ import org.thingsboard.server.msa.ui.utils.EntityPrototypes;
 import static org.thingsboard.server.msa.ui.base.AbstractBasePage.random;
 import static org.thingsboard.server.msa.ui.utils.Const.EMPTY_ASSET_PROFILE_MESSAGE;
 import static org.thingsboard.server.msa.ui.utils.Const.ENTITY_NAME;
-import static org.thingsboard.server.msa.ui.utils.Const.SAME_NAME_WARNING_ASSET_PROFILE_MESSAGE;
+import static org.thingsboard.server.msa.ui.utils.Const.SAME_NAME_WARNING_ASSET_PROFILE_MESSAGE_FORMAT;
 
 public class CreateAssetProfileTest extends AbstractDriverBaseTest {
 
@@ -125,7 +125,8 @@ public class CreateAssetProfileTest extends AbstractDriverBaseTest {
 
         Assert.assertNotNull(profilesPage.warningMessage());
         Assert.assertTrue(profilesPage.warningMessage().isDisplayed());
-        Assert.assertEquals(profilesPage.warningMessage().getText(), SAME_NAME_WARNING_ASSET_PROFILE_MESSAGE);
+        Assert.assertEquals(profilesPage.warningMessage().getText(),
+                String.format(SAME_NAME_WARNING_ASSET_PROFILE_MESSAGE_FORMAT, name));
         Assert.assertNotNull(profilesPage.addAssetProfileView());
         Assert.assertTrue(profilesPage.addAssetProfileView().isDisplayed());
     }

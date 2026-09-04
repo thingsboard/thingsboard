@@ -38,6 +38,7 @@ import org.thingsboard.server.dao.entity.CachedVersionedEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.exception.EntityConflictMessages;
 import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -51,6 +52,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
+import static org.thingsboard.server.dao.exception.EntityConflictMessages.NAME;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Service("AssetProfileDaoService")
@@ -63,7 +65,9 @@ public class AssetProfileServiceImpl extends CachedVersionedEntityService<AssetP
 
     private static final String INCORRECT_ASSET_PROFILE_NAME = "Incorrect assetProfileName ";
 
-    private static final String ASSET_PROFILE_WITH_SUCH_NAME_ALREADY_EXISTS = "Asset profile with such name already exists!";
+    private static String assetProfileAlreadyExistsMsg(String name) {
+        return EntityConflictMessages.alreadyExists(EntityType.ASSET_PROFILE, NAME, name);
+    }
 
     @Autowired
     private AssetProfileDao assetProfileDao;
@@ -159,7 +163,7 @@ public class AssetProfileServiceImpl extends CachedVersionedEntityService<AssetP
             handleEvictEvent(new AssetProfileEvictEvent(assetProfile.getTenantId(), assetProfile.getName(),
                     oldAssetProfile != null ? oldAssetProfile.getName() : null, null, assetProfile.isDefault()));
             checkConstraintViolation(t,
-                    Map.of("asset_profile_name_unq_key", ASSET_PROFILE_WITH_SUCH_NAME_ALREADY_EXISTS,
+                    Map.of("asset_profile_name_unq_key", assetProfileAlreadyExistsMsg(assetProfile.getName()),
                             "asset_profile_external_id_unq_key", "Asset profile with such external id already exists!"));
             throw t;
         }
@@ -241,7 +245,7 @@ public class AssetProfileServiceImpl extends CachedVersionedEntityService<AssetP
             try {
                 assetProfile = this.doCreateAssetProfile(tenantId, name, isDefault, true);
             } catch (DataValidationException e) {
-                if (ASSET_PROFILE_WITH_SUCH_NAME_ALREADY_EXISTS.equals(e.getMessage())) {
+                if (assetProfileAlreadyExistsMsg(name).equals(e.getMessage())) {
                     assetProfile = findAssetProfileByName(tenantId, name, false);
                 } else {
                     throw e;

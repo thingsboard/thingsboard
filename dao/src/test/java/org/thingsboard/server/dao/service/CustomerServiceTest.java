@@ -319,7 +319,7 @@ public class CustomerServiceTest extends AbstractServiceTest {
 
         assertThatThrownBy(() -> customerService.saveCustomer(customer))
                 .isInstanceOf(DataValidationException.class)
-                .hasMessage("Customer with such title already exists!");
+                .hasMessage("Customer with title \"My customer\" already exists!");
 
         customerService.deleteCustomer(tenantId, savedCustomer.getId());
     }

@@ -47,6 +47,7 @@ import org.thingsboard.server.dao.entity.CachedVersionedEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.exception.EntityConflictMessages;
 import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
@@ -66,6 +67,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
+import static org.thingsboard.server.dao.exception.EntityConflictMessages.NAME;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validateString;
 
@@ -78,7 +80,9 @@ public class DeviceProfileServiceImpl extends CachedVersionedEntityService<Devic
     private static final String INCORRECT_DEVICE_PROFILE_ID = "Incorrect deviceProfileId ";
     private static final String INCORRECT_DEVICE_PROFILE_NAME = "Incorrect deviceProfileName ";
     private static final String INCORRECT_PROVISION_DEVICE_KEY = "Incorrect provisionDeviceKey ";
-    private static final String DEVICE_PROFILE_WITH_SUCH_NAME_ALREADY_EXISTS = "Device profile with such name already exists!";
+    private static String deviceProfileAlreadyExistsMsg(String name) {
+        return EntityConflictMessages.alreadyExists(EntityType.DEVICE_PROFILE, NAME, name);
+    }
 
     @Autowired
     private DeviceProfileDao deviceProfileDao;
@@ -196,7 +200,7 @@ public class DeviceProfileServiceImpl extends CachedVersionedEntityService<Devic
                     ? "Device profile with such certificate already exists!"
                     : "Device profile with such provision device key already exists!";
             checkConstraintViolation(t,
-                    Map.of("device_profile_name_unq_key", DEVICE_PROFILE_WITH_SUCH_NAME_ALREADY_EXISTS,
+                    Map.of("device_profile_name_unq_key", deviceProfileAlreadyExistsMsg(deviceProfile.getName()),
                             "device_provision_key_unq_key", unqProvisionKeyErrorMsg,
                             "device_profile_external_id_unq_key", "Device profile with such external id already exists!"));
             throw t;
@@ -276,7 +280,7 @@ public class DeviceProfileServiceImpl extends CachedVersionedEntityService<Devic
             try {
                 deviceProfile = this.doCreateDeviceProfile(tenantId, name, isDefault, true);
             } catch (DataValidationException e) {
-                if (DEVICE_PROFILE_WITH_SUCH_NAME_ALREADY_EXISTS.equals(e.getMessage())) {
+                if (deviceProfileAlreadyExistsMsg(name).equals(e.getMessage())) {
                     deviceProfile = findDeviceProfileByName(tenantId, name, false);
                 } else {
                     throw e;

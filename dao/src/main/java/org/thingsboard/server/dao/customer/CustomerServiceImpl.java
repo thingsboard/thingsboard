@@ -44,6 +44,7 @@ import org.thingsboard.server.dao.entity.EntityCountService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.exception.EntityConflictMessages;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -57,6 +58,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
+import static org.thingsboard.server.dao.exception.EntityConflictMessages.TITLE;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Service("CustomerDaoService")
@@ -67,7 +69,9 @@ public class CustomerServiceImpl extends AbstractCachedEntityService<CustomerCac
     public static final String INCORRECT_CUSTOMER_ID = "Incorrect customerId ";
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     public static final JsonNode PUBLIC_CUSTOMER_ADDITIONAL_INFO_JSON = JacksonUtil.toJsonNode("{\"isPublic\":true}");
-    public static final String CUSTOMER_UNIQUE_TITLE_EX_MSG = "Customer with such title already exists!";
+    private static String customerUniqueTitleExMsg(String title) {
+        return EntityConflictMessages.alreadyExists(EntityType.CUSTOMER, TITLE, title);
+    }
 
     @Autowired
     private CustomerDao customerDao;
@@ -169,7 +173,7 @@ public class CustomerServiceImpl extends AbstractCachedEntityService<CustomerCac
         } catch (Exception e) {
             handleEvictEvent(evictEvent);
             checkConstraintViolation(e,
-                    "customer_title_unq_key", CUSTOMER_UNIQUE_TITLE_EX_MSG,
+                    "customer_title_unq_key", customerUniqueTitleExMsg(customer.getTitle()),
                     "customer_external_id_unq_key", "Customer with such external id already exists!");
             throw e;
         }
@@ -230,7 +234,7 @@ public class CustomerServiceImpl extends AbstractCachedEntityService<CustomerCac
         try {
             return saveCustomer(publicCustomer, false);
         } catch (DataValidationException e) {
-            if (CUSTOMER_UNIQUE_TITLE_EX_MSG.equals(e.getMessage())) {
+            if (customerUniqueTitleExMsg(PUBLIC_CUSTOMER_TITLE).equals(e.getMessage())) {
                 Optional<Customer> publicCustomerOpt = customerDao.findPublicCustomerByTenantId(tenantId.getId());
                 if (publicCustomerOpt.isPresent()) {
                     return publicCustomerOpt.get();

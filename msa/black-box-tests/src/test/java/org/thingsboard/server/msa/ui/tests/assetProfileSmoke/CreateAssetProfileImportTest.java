@@ -32,7 +32,7 @@ import static org.thingsboard.server.msa.ui.utils.Const.EMPTY_IMPORT_MESSAGE;
 import static org.thingsboard.server.msa.ui.utils.Const.IMPORT_ASSET_PROFILE_FILE_NAME;
 import static org.thingsboard.server.msa.ui.utils.Const.IMPORT_ASSET_PROFILE_NAME;
 import static org.thingsboard.server.msa.ui.utils.Const.IMPORT_TXT_FILE_NAME;
-import static org.thingsboard.server.msa.ui.utils.Const.SAME_NAME_WARNING_ASSET_PROFILE_MESSAGE;
+import static org.thingsboard.server.msa.ui.utils.Const.SAME_NAME_WARNING_ASSET_PROFILE_MESSAGE_FORMAT;
 
 public class CreateAssetProfileImportTest extends AbstractDriverBaseTest {
 
@@ -118,7 +118,8 @@ public class CreateAssetProfileImportTest extends AbstractDriverBaseTest {
 
         Assert.assertNotNull(profilesPage.warningMessage());
         Assert.assertTrue(profilesPage.warningMessage().isDisplayed());
-        Assert.assertEquals(profilesPage.warningMessage().getText(), SAME_NAME_WARNING_ASSET_PROFILE_MESSAGE);
+        Assert.assertEquals(profilesPage.warningMessage().getText(),
+                String.format(SAME_NAME_WARNING_ASSET_PROFILE_MESSAGE_FORMAT, name));
     }
 
     @Epic("Asset profiles smoke")

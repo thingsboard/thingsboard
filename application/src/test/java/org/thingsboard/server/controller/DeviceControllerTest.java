@@ -299,7 +299,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
         Assert.assertNotNull(savedDevice);
 
         doPost("/api/device-with-credentials", saveRequest).andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString("Device with such name already exists!")));
+                .andExpect(statusReason(containsString("Device with name \"My device\" already exists!")));
     }
 
     @Test

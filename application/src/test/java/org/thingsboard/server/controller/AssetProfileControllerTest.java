@@ -257,7 +257,7 @@ public class AssetProfileControllerTest extends AbstractControllerTest {
 
         Mockito.reset(tbClusterService, auditLogService);
 
-        String msgError = "Asset profile with such name already exists";
+        String msgError = "Asset profile with name \"Asset Profile\" already exists!";
         doPost("/api/assetProfile", assetProfile2)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
