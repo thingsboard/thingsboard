@@ -152,7 +152,7 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
         try {
             UserCredentials userCredentialsByUserId = edgeCtx.getUserService().findUserCredentialsByUserId(tenantId, user.getId());
             if (tenantProfileCache.isRestricted(tenantId)) {
-                updateRestrictedTenantUserCredentials(tenantId, userCredentialsByUserId, userCredentials);
+                updateRestrictedTenantUserCredentials(tenantId, user, userCredentialsByUserId, userCredentials);
                 return;
             }
             if (userCredentialsByUserId != null && !userCredentialsByUserId.getId().equals(userCredentials.getId())) {
@@ -167,16 +167,25 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
     }
 
     // The uplink is tenant-controlled and saved without validation, so a restricted tenant could otherwise
-    // mark any address activated and whitelist it for the mail recipient allow-list. The activation signal -
-    // enabled, activateToken and its expiry - is therefore never taken from the edge.
-    private void updateRestrictedTenantUserCredentials(TenantId tenantId, UserCredentials storedCredentials, UserCredentials userCredentials) {
+    // mark any address activated and whitelist it for the mail recipient allow-list. The password is the only
+    // field taken from the edge; everything else, the activation state above all, stays the cloud's.
+    private void updateRestrictedTenantUserCredentials(TenantId tenantId, User user, UserCredentials storedCredentials, UserCredentials userCredentials) {
         if (storedCredentials == null) {
             // An edge-created user has no credentials row yet, since saveUser keeps the edge's own id and so
-            // never generates one. Take the row, but not its activation state: still to be activated, with a
-            // token of our own, exactly as a user created through the REST API starts out.
-            userCredentials.setEnabled(false);
-            edgeCtx.getUserService().generateUserActivationToken(userCredentials);
-            edgeCtx.getUserService().saveUserCredentials(tenantId, userCredentials, false);
+            // never generates one. Built here rather than adjusted in place: the message's own credentials id
+            // would otherwise be persisted, and the save is a primary key upsert, so a later uplink naming an
+            // existing id would repoint that row at another user.
+            UserCredentials createdCredentials = new UserCredentials();
+            createdCredentials.setUserId(user.getId());
+            createdCredentials.setEnabled(false);
+            createdCredentials.setPassword(userCredentials.getPassword());
+            createdCredentials.setAdditionalInfo(JacksonUtil.newObjectNode());
+            edgeCtx.getUserService().generateUserActivationToken(createdCredentials);
+            edgeCtx.getUserService().saveUserCredentials(tenantId, createdCredentials, false);
+            return;
+        }
+        // A password-less message must not blank the stored hash, and there is nothing else to apply.
+        if (userCredentials.getPassword() == null) {
             return;
         }
         storedCredentials.setPassword(userCredentials.getPassword());
