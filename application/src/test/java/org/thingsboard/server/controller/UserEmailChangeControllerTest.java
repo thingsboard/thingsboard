@@ -21,6 +21,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbEmail;
 import org.thingsboard.server.cache.TbTransactionalCache;
@@ -56,6 +57,9 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
+// The restricted mail policy is opt-in (thingsboard.yml leaves security.restricted_tenant_profiles
+// empty), so the profile name used by the restricted-tenant cases below must be enabled explicitly.
+@TestPropertySource(properties = "security.restricted_tenant_profiles=Free")
 public class UserEmailChangeControllerTest extends AbstractControllerTest {
 
     @Autowired

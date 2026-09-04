@@ -44,7 +44,12 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
-@TestPropertySource(properties = "mail.per_tenant_rate_limits=1:600")
+// The restricted mail policy is opt-in (thingsboard.yml leaves security.restricted_tenant_profiles
+// empty), so the profile name used by the restricted-tenant cases below must be enabled explicitly.
+@TestPropertySource(properties = {
+        "mail.per_tenant_rate_limits=1:600",
+        "security.restricted_tenant_profiles=Free"
+})
 public class MailRateLimitControllerTest extends AbstractControllerTest {
 
     // Stubbing the mail service itself would skip the rate limit check along with the send, so only the

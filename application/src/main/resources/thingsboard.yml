@@ -169,8 +169,11 @@ security:
     tokenSigningKey: "${JWT_TOKEN_SIGNING_KEY:thingsboardDefaultSigningKey}" # Base64 encoded
   # Enable/disable access to Tenant Administrators JWT token by System Administrator or Customer Users JWT token by Tenant Administrator
   user_token_access_enabled: "${SECURITY_USER_TOKEN_ACCESS_ENABLED:true}"
-  # Tenant profile names whose tenants may only email their own activated users and must verify user email changes with a one-time code
-  restricted_tenant_profiles: "${SECURITY_RESTRICTED_TENANT_PROFILES:Free}"
+  # Comma-separated tenant profile names whose tenants may only email their own activated users and must
+  # verify user email changes with a one-time code. Empty by default: the restriction is a Cloud-specific
+  # policy, so an existing deployment that happens to have a profile named "Free" must not acquire mail
+  # restrictions on upgrade. Cloud opts in through SECURITY_RESTRICTED_TENANT_PROFILES.
+  restricted_tenant_profiles: "${SECURITY_RESTRICTED_TENANT_PROFILES:}"
   # Email change verification for restricted tenant profiles
   email_verification:
     code_lifetime_seconds: "${SECURITY_EMAIL_VERIFICATION_CODE_LIFETIME:900}"
