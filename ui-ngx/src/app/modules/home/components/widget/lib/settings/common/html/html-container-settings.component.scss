@@ -26,11 +26,26 @@
     top: 0;
     flex: 1;
   }
-  .tb-action-expand-button {
+  .tb-html-container-toolbar {
     position: absolute;
     top: 4px;
     right: 0;
     z-index: 2;
+    & > * {
+      &:not(:last-child) {
+        margin-right: 4px;
+      }
+    }
+    button.mat-mdc-button-base, button.mat-mdc-button-base.tb-mat-32 {
+      background: rgba(220, 220, 220, .35);
+      align-items: center;
+      vertical-align: middle;
+      min-width: 32px;
+      padding: 4px;
+      &:not(.tb-help-popup-button) {
+        color: #7b7b7b;
+      }
+    }
   }
   .gutter {
     display: none;
@@ -92,7 +107,7 @@
   &.tb-fullscreen {
     padding: 8px;
     gap: 8px;
-    .tb-action-expand-button {
+    .tb-html-container-toolbar {
       position: relative;
       top: 0;
       right: 0;

@@ -24,14 +24,21 @@
       </tb-toggle-select>
     </div>
     <div class="tb-html-container-settings-panel flex flex-1 flex-col" tb-fullscreen [fullscreen]="fullscreen">
-      <div class="tb-action-expand-button flex flex-row items-center justify-end">
-        <button mat-stroked-button
-                matTooltip="{{ 'widget.toggle-fullscreen' | translate }}"
-                matTooltipPosition="above"
-                (click)="toggleFullScreen()">
-          <mat-icon>{{ fullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
-          <span>{{ (fullscreen ? 'fullscreen.exit' : 'fullscreen.fullscreen') | translate }}</span>
-        </button>
+      <div class="tb-html-container-toolbar flex flex-row items-center justify-end">
+        <div [tb-help-popup]="htmlContainerSettingsForm.get('type').value === HtmlContainerWidgetType.ANGULAR ? 'widget/lib/html_container/container_angular_fn' : 'widget/lib/html_container/container_plain_fn'"
+             [tb-help-popup-style]="{maxWidth: '820px'}"
+             tb-help-popup-placement="left">
+        </div>
+        <fieldset style="width: initial">
+          <div matTooltip="{{(fullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
+               matTooltipPosition="above"
+               style="border-radius: 50%"
+               (click)="toggleFullScreen()">
+            <button type="button" mat-icon-button class="tb-mat-32">
+              <mat-icon class="material-icons">{{ fullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+            </button>
+          </div>
+        </fieldset>
       </div>
       <div class="flex flex-1">
         <mat-tab-group #leftPanel
@@ -122,8 +129,7 @@
                 [editorCompleter]="containerFunctionEditorCompleter"
                 [functionArgs]="htmlContainerSettingsForm.get('type').value === HtmlContainerWidgetType.ANGULAR ? ['ctx'] : ['ctx', 'container']"
                 withModules
-                functionTitle="{{ 'widgets.html-container.js-function' | translate }}"
-                [helpId]="htmlContainerSettingsForm.get('type').value === HtmlContainerWidgetType.ANGULAR ? 'widget/lib/html_container/container_angular_fn' : 'widget/lib/html_container/container_plain_fn'">
+                functionTitle="{{ 'widgets.html-container.js-function' | translate }}">
     </tb-js-func>
   </ng-container>
 </ng-template>
