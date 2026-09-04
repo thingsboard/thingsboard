@@ -20,6 +20,12 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.errors.ConfigInvalidException;
+import org.eclipse.jgit.lib.Config;
+import org.eclipse.jgit.lib.StoredConfig;
+import org.eclipse.jgit.storage.file.FileBasedConfig;
+import org.eclipse.jgit.util.FS;
+import org.eclipse.jgit.util.SystemReader;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
@@ -67,6 +73,72 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
     public void init() {
         if (StringUtils.isEmpty(repositoriesFolder)) {
             repositoriesFolder = defaultFolder;
+        }
+        installRedirectHardeningSystemReader();
+    }
+
+    private static synchronized void installRedirectHardeningSystemReader() {
+        SystemReader current = SystemReader.getInstance();
+        if (current instanceof RedirectHardeningSystemReader) {
+            return;
+        }
+        SystemReader.setInstance(new RedirectHardeningSystemReader(current));
+    }
+
+    private static final class RedirectHardeningSystemReader extends SystemReader {
+        private final SystemReader delegate;
+
+        RedirectHardeningSystemReader(SystemReader delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public StoredConfig getUserConfig() throws ConfigInvalidException, IOException {
+            StoredConfig config = delegate.getUserConfig();
+            // SSRF hardening: keep http.followRedirects off — a followed
+            // redirect on the info/refs GET is itself the probe being closed.
+            config.setString("http", null, "followRedirects", "false");
+            return config;
+        }
+
+        @Override
+        public String getHostname() {
+            return delegate.getHostname();
+        }
+
+        @Override
+        public String getenv(String variable) {
+            return delegate.getenv(variable);
+        }
+
+        @Override
+        public String getProperty(String key) {
+            return delegate.getProperty(key);
+        }
+
+        @Override
+        public FileBasedConfig openUserConfig(Config parent, FS fs) {
+            return delegate.openUserConfig(parent, fs);
+        }
+
+        @Override
+        public FileBasedConfig openSystemConfig(Config parent, FS fs) {
+            return delegate.openSystemConfig(parent, fs);
+        }
+
+        @Override
+        public FileBasedConfig openJGitConfig(Config parent, FS fs) {
+            return delegate.openJGitConfig(parent, fs);
+        }
+
+        @Override
+        public long getCurrentTime() {
+            return delegate.getCurrentTime();
+        }
+
+        @Override
+        public int getTimezone(long when) {
+            return delegate.getTimezone(when);
         }
     }
 

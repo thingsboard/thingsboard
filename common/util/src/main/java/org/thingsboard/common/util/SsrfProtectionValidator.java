@@ -61,7 +61,18 @@ public class SsrfProtectionValidator {
             throw new RuntimeException("URI is invalid: only HTTP and HTTPS schemes are allowed, got: " + scheme);
         }
 
-        String host = uri.getHost();
+        validateHost(uri.getHost(), ssrfProtectionEnabled);
+    }
+
+    public static void validateHost(String host) {
+        validateHost(host, enabled);
+    }
+
+    static void validateHost(String host, boolean ssrfProtectionEnabled) {
+        if (!ssrfProtectionEnabled) {
+            return;
+        }
+
         if (host == null || host.isEmpty()) {
             throw new RuntimeException("URI is invalid: hostname is missing");
         }
