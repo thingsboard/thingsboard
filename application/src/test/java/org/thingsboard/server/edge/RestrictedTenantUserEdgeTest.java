@@ -280,7 +280,7 @@ public class RestrictedTenantUserEdgeTest extends AbstractEdgeTest {
         return UplinkMsg.newBuilder()
                 .setUplinkMsgId(EdgeUtils.nextPositiveInt())
                 .addUserUpdateMsg(EdgeMsgConstructorUtils.constructUserUpdatedMsg(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, user))
-                .addUserCredentialsUpdateMsg(EdgeMsgConstructorUtils.constructUserCredentialsUpdatedMsg(credentials))
+                .addUserCredentialsUpdateMsg(buildCredentialsUplinkMsg(credentials))
                 .build();
     }
 
@@ -289,8 +289,14 @@ public class RestrictedTenantUserEdgeTest extends AbstractEdgeTest {
         credentials.setPassword("password");
         return UplinkMsg.newBuilder()
                 .setUplinkMsgId(EdgeUtils.nextPositiveInt())
-                .addUserCredentialsUpdateMsg(EdgeMsgConstructorUtils.constructUserCredentialsUpdatedMsg(credentials))
+                .addUserCredentialsUpdateMsg(buildCredentialsUplinkMsg(credentials))
                 .build();
+    }
+
+    // Built here rather than with EdgeMsgConstructorUtils: that helper builds the cloud's *downlink*, which
+    // deliberately strips the one-time tokens, whereas an edge puts on the wire whatever its own code chose.
+    private UserCredentialsUpdateMsg buildCredentialsUplinkMsg(UserCredentials userCredentials) {
+        return UserCredentialsUpdateMsg.newBuilder().setEntity(JacksonUtil.toString(userCredentials)).build();
     }
 
     private UserCredentials buildCredentials(UserCredentialsId credentialsId, UserId userId, boolean enabled) {
