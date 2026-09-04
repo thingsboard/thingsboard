@@ -26,6 +26,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.cf.ComputeOn;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
@@ -70,6 +71,7 @@ public class DefaultNativeCalculatedFieldRepository implements NativeCalculatedF
                 UUID entityId = (UUID) row.get("entity_id");
                 CalculatedFieldType type = CalculatedFieldType.valueOf((String) row.get("type"));
                 String name = (String) row.get("name");
+                String computeOn = (String) row.get("compute_on");
                 int configurationVersion = (int) row.get("configuration_version");
                 JsonNode configuration = JacksonUtil.toJsonNode((String) row.get("configuration"));
                 long version = row.get("version") != null ? (long) row.get("version") : 0;
@@ -83,6 +85,7 @@ public class DefaultNativeCalculatedFieldRepository implements NativeCalculatedF
                 calculatedField.setEntityId(EntityIdFactory.getByTypeAndUuid(entityType, entityId));
                 calculatedField.setType(type);
                 calculatedField.setName(name);
+                calculatedField.setComputeOn(computeOn != null ? ComputeOn.valueOf(computeOn) : null);
                 calculatedField.setConfigurationVersion(configurationVersion);
                 try {
                     calculatedField.setConfiguration(JacksonUtil.treeToValue(configuration, CalculatedFieldConfiguration.class));

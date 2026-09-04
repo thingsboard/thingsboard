@@ -22,8 +22,10 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.cf.ComputeOn;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
@@ -42,6 +44,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
@@ -206,6 +209,92 @@ public class CalculatedFieldEdgeTest extends AbstractEdgeTest {
         CalculatedField calculatedFieldFromCloud = doGet("/api/calculatedField/" + uuid, CalculatedField.class);
         Assert.assertNotNull(calculatedFieldFromCloud);
         Assert.assertNotEquals(DEFAULT_CF_NAME, calculatedFieldFromCloud.getName());
+    }
+
+    @Test
+    public void testComputeOnIsDeliveredToEdge() throws Exception {
+        Device savedDevice = saveDeviceOnCloudAndVerifyDeliveryToEdge();
+
+        SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
+        CalculatedField calculatedField = createSimpleCalculatedField(savedDevice.getId(), config);
+        calculatedField.setComputeOn(ComputeOn.EDGE);
+
+        edgeImitator.expectMessageAmount(1);
+        CalculatedField savedCalculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
+        Assert.assertTrue(edgeImitator.waitForMessages());
+        Assert.assertEquals(ComputeOn.EDGE, savedCalculatedField.getComputeOn());
+
+        AbstractMessage latestMessage = edgeImitator.getLatestMessage();
+        Assert.assertTrue(latestMessage instanceof CalculatedFieldUpdateMsg);
+        CalculatedField calculatedFieldFromMsg =
+                JacksonUtil.fromString(((CalculatedFieldUpdateMsg) latestMessage).getEntity(), CalculatedField.class, true);
+        Assert.assertNotNull(calculatedFieldFromMsg);
+        Assert.assertEquals(ComputeOn.EDGE, calculatedFieldFromMsg.getComputeOn());
+
+        edgeImitator.expectMessageAmount(1);
+        savedCalculatedField.setComputeOn(ComputeOn.CLOUD);
+        savedCalculatedField = doPost("/api/calculatedField", savedCalculatedField, CalculatedField.class);
+        Assert.assertTrue(edgeImitator.waitForMessages());
+        Assert.assertEquals(ComputeOn.CLOUD, savedCalculatedField.getComputeOn());
+
+        latestMessage = edgeImitator.getLatestMessage();
+        Assert.assertTrue(latestMessage instanceof CalculatedFieldUpdateMsg);
+        calculatedFieldFromMsg =
+                JacksonUtil.fromString(((CalculatedFieldUpdateMsg) latestMessage).getEntity(), CalculatedField.class, true);
+        Assert.assertNotNull(calculatedFieldFromMsg);
+        Assert.assertEquals(ComputeOn.CLOUD, calculatedFieldFromMsg.getComputeOn());
+    }
+
+    @Test
+    public void testSendComputeOnToCloud() throws Exception {
+        Device savedDevice = saveDeviceOnCloudAndVerifyDeliveryToEdge();
+
+        SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
+        CalculatedField calculatedField = createSimpleCalculatedField(savedDevice.getId(), config);
+        calculatedField.setComputeOn(ComputeOn.EDGE);
+        UUID uuid = Uuids.timeBased();
+
+        edgeImitator.expectResponsesAmount(1);
+        edgeImitator.sendUplinkMsg(getUplinkMsg(uuid, calculatedField, UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE));
+        Assert.assertTrue(edgeImitator.waitForResponses());
+        Assert.assertTrue(edgeImitator.getLatestResponseMsg().getSuccess());
+
+        CalculatedField calculatedFieldFromCloud = doGet("/api/calculatedField/" + uuid, CalculatedField.class);
+        Assert.assertNotNull(calculatedFieldFromCloud);
+        Assert.assertEquals(ComputeOn.EDGE, calculatedFieldFromCloud.getComputeOn());
+    }
+
+    @Test
+    public void testComputeOnEdgeIsRejectedWhenDeviceIsNotAssignedToEdge() throws Exception {
+        Device notAssignedDevice = saveDevice(StringUtils.randomAlphanumeric(15), thermostatDeviceProfile.getName());
+
+        SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
+        CalculatedField calculatedField = createSimpleCalculatedField(notAssignedDevice.getId(), config);
+        calculatedField.setComputeOn(ComputeOn.EDGE);
+
+        doPost("/api/calculatedField", calculatedField)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Calculated field computed on the edge requires device to be assigned to an edge!")));
+    }
+
+    @Test
+    public void testComputeOnEdgeFromEdgeUplinkIsAcceptedForDeviceNotAssignedToEdge() throws Exception {
+        // the edge owns the assignment, so an uplink must not be rejected by the cloud-side edge assignment check
+        Device notAssignedDevice = saveDevice(StringUtils.randomAlphanumeric(15), thermostatDeviceProfile.getName());
+
+        SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
+        CalculatedField calculatedField = createSimpleCalculatedField(notAssignedDevice.getId(), config);
+        calculatedField.setComputeOn(ComputeOn.EDGE);
+        UUID uuid = Uuids.timeBased();
+
+        edgeImitator.expectResponsesAmount(1);
+        edgeImitator.sendUplinkMsg(getUplinkMsg(uuid, calculatedField, UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE));
+        Assert.assertTrue(edgeImitator.waitForResponses());
+        Assert.assertTrue(edgeImitator.getLatestResponseMsg().getSuccess());
+
+        CalculatedField calculatedFieldFromCloud = doGet("/api/calculatedField/" + uuid, CalculatedField.class);
+        Assert.assertNotNull(calculatedFieldFromCloud);
+        Assert.assertEquals(ComputeOn.EDGE, calculatedFieldFromCloud.getComputeOn());
     }
 
     private CalculatedField createSimpleCalculatedField(EntityId entityId, SimpleCalculatedFieldConfiguration config) {

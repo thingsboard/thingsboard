@@ -64,27 +64,52 @@
                             (entityChanged)="changeEntity($event)">
           </tb-entity-select>
         }
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>{{ 'common.type' | translate }}</mat-label>
-          <mat-select formControlName="type">
-            <mat-select-trigger>
-              {{ CalculatedFieldTypeTranslations.has(fieldFormGroup.get('type').value)
-                  ? (CalculatedFieldTypeTranslations.get(fieldFormGroup.get('type').value).name | translate)
-                  : fieldFormGroup.get('type').value }}
-            </mat-select-trigger>
-            @for (type of fieldTypes; track type) {
-              <mat-option [value]="type" class="py-1">
-                <span matListItemTitle>
-                  {{ CalculatedFieldTypeTranslations.get(type).name | translate}}
-                </span>
-                <br>
-                <small matListItemMeta style="color: inherit">
-                  {{ CalculatedFieldTypeTranslations.get(type).hint | translate }}
-                </small>
-              </mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
+        <div class="flex items-center gap-2">
+          <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ 'common.type' | translate }}</mat-label>
+            <mat-select formControlName="type">
+              <mat-select-trigger>
+                {{ CalculatedFieldTypeTranslations.has(fieldFormGroup.get('type').value)
+                    ? (CalculatedFieldTypeTranslations.get(fieldFormGroup.get('type').value).name | translate)
+                    : fieldFormGroup.get('type').value }}
+              </mat-select-trigger>
+              @for (type of fieldTypes; track type) {
+                <mat-option [value]="type" class="py-1">
+                  <span matListItemTitle>
+                    {{ CalculatedFieldTypeTranslations.get(type).name | translate}}
+                  </span>
+                  <br>
+                  <small matListItemMeta style="color: inherit">
+                    {{ CalculatedFieldTypeTranslations.get(type).hint | translate }}
+                  </small>
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          @if (edgesSupportEnabled) {
+            <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+              <mat-label>{{ 'calculated-fields.compute-on.label' | translate }}</mat-label>
+              <mat-select formControlName="computeOn">
+                <mat-select-trigger>
+                  {{ ComputeOnTranslations.has(fieldFormGroup.get('computeOn').value)
+                      ? (ComputeOnTranslations.get(fieldFormGroup.get('computeOn').value).name | translate)
+                      : fieldFormGroup.get('computeOn').value }}
+                </mat-select-trigger>
+                @for (computeOn of computeOnValues; track computeOn) {
+                  <mat-option [value]="computeOn" class="py-1">
+                    <span matListItemTitle>
+                      {{ ComputeOnTranslations.get(computeOn).name | translate }}
+                    </span>
+                    <br>
+                    <small matListItemMeta style="color: inherit">
+                      {{ ComputeOnTranslations.get(computeOn).hint | translate }}
+                    </small>
+                  </mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          }
+        </div>
       </div>
       @switch (fieldFormGroup.get('type').value) {
         @case (CalculatedFieldType.GEOFENCING) {

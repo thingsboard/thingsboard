@@ -38,6 +38,7 @@ export const FORBIDDEN_NAMES = ['ctx', 'e', 'pi'];
 
 interface BaseCalculatedField extends Omit<BaseData<CalculatedFieldId>, 'label'>, HasVersion, HasEntityDebugSettings, HasTenantId, ExportableEntity<CalculatedFieldId> {
   entityId: EntityId;
+  computeOn?: ComputeOn;
   additionalInfo?: any;
 }
 
@@ -129,6 +130,28 @@ export const CalculatedFieldTypeTranslations = new Map<CalculatedFieldType, Calc
 )
 
 export const calculatedFieldTypes = Object.values(CalculatedFieldType).filter(type => type !== CalculatedFieldType.ALARM)
+
+export enum ComputeOn {
+  CLOUD = 'CLOUD',
+  EDGE = 'EDGE',
+}
+
+export const computeOnValues = Object.values(ComputeOn);
+
+export const defaultComputeOn = ComputeOn.CLOUD;
+
+export const ComputeOnTranslations = new Map<ComputeOn, CalculatedFieldTypeTranslate>(
+  [
+    [ComputeOn.CLOUD, {
+      name: 'calculated-fields.compute-on.cloud',
+      hint: 'calculated-fields.compute-on.cloud-hint',
+    }],
+    [ComputeOn.EDGE, {
+      name: 'calculated-fields.compute-on.edge',
+      hint: 'calculated-fields.compute-on.edge-hint',
+    }],
+  ]
+)
 
 export type CalculatedFieldConfiguration =
   | CalculatedFieldSimpleConfiguration
