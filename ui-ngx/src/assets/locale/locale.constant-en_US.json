@@ -6606,8 +6606,11 @@
     },
     "legend": {
         "direction": "Direction",
-        "items-direction": "Direction",
+        "items-direction": "Items direction",
         "items-direction-auto": "Auto",
+        "view": "Legend view",
+        "view-table": "Table",
+        "view-card": "Card view",
         "position": "Position",
         "show-values": "Show values",
         "min-option": "Min",

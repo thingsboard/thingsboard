@@ -154,6 +154,18 @@
             </div>
           </div>
           <div class="tb-form-row space-between">
+            <div>{{ 'legend.view' | translate }}</div>
+            <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
+              <mat-select formControlName="legendView">
+                @for (view of legendViews; track view) {
+                  <mat-option [value]="view">
+                    {{ legendViewTranslationMap.get(legendView[view]) | translate }}
+                  </mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <div class="tb-form-row space-between">
             <div>{{ 'legend.items-direction' | translate }}</div>
             <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
               <mat-select formControlName="legendItemsDirection">

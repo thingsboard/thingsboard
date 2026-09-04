@@ -17,6 +17,10 @@ import { AppState } from '@core/core.state';
 import { formatValue, isDefinedAndNotNull } from '@core/utils';
 import { DateFormatProcessor, DateFormatSettings } from '@shared/models/widget-settings.models';
 import {
+  legendItemsDirectionApplicable,
+  legendViews,
+  legendViewTranslationMap,
+  LegendView,
   timeSeriesChartWidgetDefaultSettings
 } from '@home/components/widget/lib/chart/time-series-chart-widget.models';
 import {
@@ -64,6 +68,12 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
   legendDirections = Object.keys(LegendDirection);
 
   legendDirectionTranslationMap = legendDirectionTranslationMap;
+
+  legendViews = legendViews;
+
+  legendView = LegendView;
+
+  legendViewTranslationMap = legendViewTranslationMap;
 
   timeSeriesChartWidgetSettingsForm: UntypedFormGroup;
 
@@ -147,6 +157,7 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
       legendValueColor: [settings.legendValueColor, []],
       legendConfig: [settings.legendConfig, []],
       legendItemsDirection: [settings.legendItemsDirection, []],
+      legendView: [settings.legendView, []],
 
       showTooltip: [settings.showTooltip, []],
       tooltipTrigger: [settings.tooltipTrigger, []],
@@ -177,7 +188,7 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
   }
 
   protected validatorTriggers(): string[] {
-    return ['comparisonEnabled', 'dataZoom', 'showLegend', 'showTooltip', 'tooltipShowDate', 'stack'];
+    return ['comparisonEnabled', 'dataZoom', 'showLegend', 'legendView', 'showTooltip', 'tooltipShowDate', 'stack'];
   }
 
   protected updateValidators(emitEvent: boolean) {
@@ -187,6 +198,7 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
     const showTooltip: boolean = this.timeSeriesChartWidgetSettingsForm.get('showTooltip').value;
     const tooltipShowDate: boolean = this.timeSeriesChartWidgetSettingsForm.get('tooltipShowDate').value;
     const stack: boolean = this.timeSeriesChartWidgetSettingsForm.get('stack').value;
+    const legendView: LegendView = this.timeSeriesChartWidgetSettingsForm.get('legendView').value;
 
     if (dataZoom) {
       this.timeSeriesChartWidgetSettingsForm.get('dataZoomUpdateTimewindow').enable();
@@ -212,7 +224,12 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
       this.timeSeriesChartWidgetSettingsForm.get('legendValueFont').enable();
       this.timeSeriesChartWidgetSettingsForm.get('legendValueColor').enable();
       this.timeSeriesChartWidgetSettingsForm.get('legendConfig').enable();
-      this.timeSeriesChartWidgetSettingsForm.get('legendItemsDirection').enable();
+      this.timeSeriesChartWidgetSettingsForm.get('legendView').enable({emitEvent: false});
+      if (legendItemsDirectionApplicable(legendView)) {
+        this.timeSeriesChartWidgetSettingsForm.get('legendItemsDirection').enable();
+      } else {
+        this.timeSeriesChartWidgetSettingsForm.get('legendItemsDirection').disable();
+      }
     } else {
       this.timeSeriesChartWidgetSettingsForm.get('legendColumnTitleFont').disable();
       this.timeSeriesChartWidgetSettingsForm.get('legendColumnTitleColor').disable();
@@ -222,6 +239,7 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
       this.timeSeriesChartWidgetSettingsForm.get('legendValueColor').disable();
       this.timeSeriesChartWidgetSettingsForm.get('legendConfig').disable();
       this.timeSeriesChartWidgetSettingsForm.get('legendItemsDirection').disable();
+      this.timeSeriesChartWidgetSettingsForm.get('legendView').disable({emitEvent: false});
     }
 
     if (showTooltip) {
