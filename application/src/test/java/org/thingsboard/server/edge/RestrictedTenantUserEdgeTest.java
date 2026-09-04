@@ -18,6 +18,8 @@ package org.thingsboard.server.edge;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
@@ -51,6 +53,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.thingsboard.server.dao.user.UserServiceImpl.DEFAULT_TOKEN_LENGTH;
 
 @DaoSqlTest
@@ -180,6 +184,22 @@ public class RestrictedTenantUserEdgeTest extends AbstractEdgeTest {
                 .build());
 
         assertDownlinkCarriesNoToken(userId, storedActivateToken);
+    }
+
+    @Test
+    public void testEdgeCreatedUserIsMailedTheActivationLink() throws Exception {
+        CustomerId customerId = createAndAssignCustomerToEdge().getId();
+        UserId userId = new UserId(UUID.randomUUID());
+
+        // clearInvocations (not reset) keeps the base class's activation stub armed.
+        Mockito.clearInvocations(mailService);
+        sendUplinkAndWaitForResponse(buildUserUplinkMsg(userId, customerId, new UserCredentialsId(UUID.randomUUID()), EDGE_USER_EMAIL));
+
+        // With the token gone from the downlink, mailing the link is the only route left to activation, and
+        // it reaches the address owner rather than the tenant that stood up the edge.
+        ArgumentCaptor<String> link = ArgumentCaptor.forClass(String.class);
+        Mockito.verify(mailService).sendActivationEmail(eq(tenantId), link.capture(), anyLong(), eq(EDGE_USER_EMAIL));
+        assertThat(link.getValue()).endsWith(storedActivateToken(userId));
     }
 
     private String storedActivateToken(UserId userId) {

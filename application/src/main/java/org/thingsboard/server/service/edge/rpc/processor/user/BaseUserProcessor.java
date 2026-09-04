@@ -17,10 +17,13 @@ package org.thingsboard.server.service.edge.rpc.processor.user;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.util.Pair;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.UserActivationLink;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -33,6 +36,7 @@ import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.gen.edge.v1.UserCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
+import org.thingsboard.server.service.entitiy.user.TbUserService;
 
 @Slf4j
 public abstract class BaseUserProcessor extends BaseEdgeProcessor {
@@ -42,6 +46,14 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
 
     @Autowired
     private TbTenantProfileCache tenantProfileCache;
+
+    @Lazy
+    @Autowired
+    private TbUserService tbUserService;
+
+    @Lazy
+    @Autowired
+    private MailService mailService;
 
     protected Pair<Boolean, Boolean> saveOrUpdateUser(TenantId tenantId, UserId userId, UserUpdateMsg userUpdateMsg) {
         boolean isCreated = false;
@@ -182,6 +194,7 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
             createdCredentials.setAdditionalInfo(JacksonUtil.newObjectNode());
             edgeCtx.getUserService().generateUserActivationToken(createdCredentials);
             edgeCtx.getUserService().saveUserCredentials(tenantId, createdCredentials, false);
+            sendActivationMail(tenantId, user);
             return;
         }
         // A password-less message must not blank the stored hash, and there is nothing else to apply.
@@ -190,6 +203,19 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
         }
         storedCredentials.setPassword(userCredentials.getPassword());
         edgeCtx.getUserService().saveUserCredentials(tenantId, storedCredentials, false);
+    }
+
+    // The activation token no longer travels to the edge, so mailing the link is the only way the user can
+    // activate - and the address owner is the only party that ever sees it, which is the point. Mirrors the
+    // activation mail UserController already forces for restricted tenants when it creates a user.
+    private void sendActivationMail(TenantId tenantId, User user) {
+        try {
+            UserActivationLink activationLink = tbUserService.getActivationLink(tenantId, user.getCustomerId(), user.getId(), null);
+            mailService.sendActivationEmail(tenantId, activationLink.value(), activationLink.ttlMs(), user.getEmail());
+        } catch (Exception e) {
+            // Failing the uplink over an undelivered invite would have the edge resend it forever.
+            log.warn("[{}] Failed to send the activation mail to edge created user [{}]", tenantId, user.getId(), e);
+        }
     }
 
     private void addRemovedUserMetadata(TbMsgMetaData metaData, User removedUser) {
