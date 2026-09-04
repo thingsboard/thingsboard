@@ -172,7 +172,7 @@ security:
     # Enable/disable claiming devices; if false -> the device's [claimingAllowed] SERVER_SCOPE attribute must be set to [true] to allow claiming the specific device
     allowClaimingByDefault: "${SECURITY_CLAIM_ALLOW_CLAIMING_BY_DEFAULT:true}"
     # Time allowed to claim the device in milliseconds
-    duration: "${SECURITY_CLAIM_DURATION:86400000}" # 1 minute, note this value must equal claimDevices.timeToLiveInMinutes value
+    duration: "${SECURITY_CLAIM_DURATION:86400000}" # 24 hours, note this value must equal claimDevices.timeToLiveInMinutes value
   basic:
     # Enable/Disable basic security options
     enabled: "${SECURITY_BASIC_ENABLED:false}"
@@ -680,7 +680,7 @@ cache:
       timeToLiveInMinutes: "${CACHE_SPECS_ENTITY_VIEWS_TTL:1440}" # Entity view cache TTL
       maxSize: "${CACHE_SPECS_ENTITY_VIEWS_MAX_SIZE:10000}" # 0 means the cache is disabled
     claimDevices:
-      timeToLiveInMinutes: "${CACHE_SPECS_CLAIM_DEVICES_TTL:1440}" # Claim devices cache TTL
+      timeToLiveInMinutes: "${CACHE_SPECS_CLAIM_DEVICES_TTL:1440}" # Claim devices cache TTL; note this value must equal security.claim.duration value, the pending claim is stored only in this cache
       maxSize: "${CACHE_SPECS_CLAIM_DEVICES_MAX_SIZE:1000}" # 0 means the cache is disabled
     securitySettings:
       timeToLiveInMinutes: "${CACHE_SPECS_SECURITY_SETTINGS_TTL:1440}" # Security settings cache TTL
