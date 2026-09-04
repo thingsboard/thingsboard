@@ -83,10 +83,11 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
-import java.util.function.Function;
+import java.util.function.Predicate;
 
 import static org.thingsboard.server.service.state.DefaultDeviceStateService.ACTIVITY_STATE;
 import static org.thingsboard.server.service.state.DefaultDeviceStateService.LAST_CONNECT_TIME;
@@ -310,13 +311,10 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
 
     @Override
     public void deleteEdge(TenantId tenantId, EdgeId edgeId) {
-        EdgeGrpcSession session = sessions.get(edgeId);
-        if (session != null && session.isConnected()) {
+        EdgeGrpcSession toRemove = detachSession(edgeId, EdgeGrpcSession::isConnected);
+        if (toRemove != null) {
             log.info("[{}] Closing and removing session for edge [{}]", tenantId, edgeId);
-            destroySession(session);
-            session.cleanUp();
-            sessions.remove(edgeId);
-            sessionsById.remove(session.getSessionId());
+            sessionsById.remove(toRemove.getSessionId());
             final Lock newEventLock = sessionNewEventsLocks.computeIfAbsent(edgeId, id -> new ReentrantLock());
             newEventLock.lock();
             try {
@@ -324,7 +322,9 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             } finally {
                 newEventLock.unlock();
             }
-            cancelScheduleEdgeEventsCheck(edgeId);
+            // destroy is slow (stops the kafka edge event consumer), keep it off the atomic path
+            destroySession(toRemove);
+            toRemove.cleanUp();
         }
     }
 
@@ -365,16 +365,12 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         Edge edge = edgeGrpcSession.getEdge();
         TenantId tenantId = edge.getTenantId();
         log.info("[{}][{}] edge [{}] connected successfully.", tenantId, edgeGrpcSession.getSessionId(), edgeId);
-        if (sessions.containsKey(edgeId)) {
-            EdgeGrpcSession existing = sessions.get(edgeId);
-            if (existing != null) {
-                log.info("[{}][{}] Replacing existing session [{}] for edge [{}]", tenantId, edgeGrpcSession.getSessionId(), existing.getSessionId(), edgeId);
-                destroySession(existing);
-                sessionsById.remove(existing.getSessionId());
-            }
-        }
-        sessions.put(edgeId, edgeGrpcSession);
+        EdgeGrpcSession replaced = attachSession(edgeId, edgeGrpcSession);
         sessionsById.put(edgeGrpcSession.getSessionId(), edgeGrpcSession);
+        if (replaced != null) {
+            log.info("[{}][{}] Replacing existing session [{}] for edge [{}]", tenantId, edgeGrpcSession.getSessionId(), replaced.getSessionId(), edgeId);
+            sessionsById.remove(replaced.getSessionId());
+        }
         final Lock newEventLock = sessionNewEventsLocks.computeIfAbsent(edgeId, id -> new ReentrantLock());
         newEventLock.lock();
         try {
@@ -387,9 +383,12 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         save(tenantId, edgeId, LAST_CONNECT_TIME, lastConnectTs);
         edgeIdServiceIdCache.put(edgeId, serviceInfoProvider.getServiceId());
         pushRuleEngineMessage(tenantId, edge, lastConnectTs, TbMsgType.CONNECT_EVENT);
-        cancelScheduleEdgeEventsCheck(edgeId);
         edgeEventsMigrationProcessed.putIfAbsent(edgeId, Boolean.FALSE);
         scheduleEdgeEventsCheck(edgeGrpcSession);
+        if (replaced != null) {
+            // destroy is slow (stops the kafka edge event consumer), keep it off the atomic path
+            destroySession(replaced);
+        }
     }
 
     private void startSyncProcess(TenantId tenantId, EdgeId edgeId, UUID requestId, String requestServiceId) {
@@ -451,55 +450,62 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         EdgeId edgeId = session.getEdge().getId();
         TenantId tenantId = session.getEdge().getTenantId();
 
-        cancelScheduleEdgeEventsCheck(edgeId);
-
-        if (sessions.containsKey(edgeId)) {
-            ScheduledFuture<?> edgeEventCheckTask = edgeEventProcessingExecutorService.schedule(() -> {
+        Runnable edgeEventCheck = () -> {
+            try {
+                final Lock newEventLock = sessionNewEventsLocks.computeIfAbsent(edgeId, id -> new ReentrantLock());
+                newEventLock.lock();
                 try {
-                    final Lock newEventLock = sessionNewEventsLocks.computeIfAbsent(edgeId, id -> new ReentrantLock());
-                    newEventLock.lock();
-                    try {
-                        if (Boolean.TRUE.equals(sessionNewEvents.get(edgeId))) {
-                            log.trace("[{}][{}] set session new events flag to false", tenantId, edgeId.getId());
-                            sessionNewEvents.put(edgeId, false);
-                            session.processHighPriorityEvents();
-                            processEdgeEventMigrationIfNeeded(session, edgeId);
-                            if (Boolean.TRUE.equals(edgeEventsMigrationProcessed.get(edgeId))) {
-                                Futures.addCallback(session.processEdgeEvents(), new FutureCallback<>() {
-                                    @Override
-                                    public void onSuccess(Boolean newEventsAdded) {
-                                        if (Boolean.TRUE.equals(newEventsAdded)) {
-                                            log.trace("[{}][{}] new events added. set session new events flag to true", tenantId, edgeId.getId());
-                                            sessionNewEvents.put(edgeId, true);
-                                        }
-                                        scheduleEdgeEventsCheck(session);
+                    if (Boolean.TRUE.equals(sessionNewEvents.get(edgeId))) {
+                        log.trace("[{}][{}] set session new events flag to false", tenantId, edgeId.getId());
+                        sessionNewEvents.put(edgeId, false);
+                        session.processHighPriorityEvents();
+                        processEdgeEventMigrationIfNeeded(session, edgeId);
+                        if (Boolean.TRUE.equals(edgeEventsMigrationProcessed.get(edgeId))) {
+                            Futures.addCallback(session.processEdgeEvents(), new FutureCallback<>() {
+                                @Override
+                                public void onSuccess(Boolean newEventsAdded) {
+                                    if (Boolean.TRUE.equals(newEventsAdded)) {
+                                        log.trace("[{}][{}] new events added. set session new events flag to true", tenantId, edgeId.getId());
+                                        sessionNewEvents.put(edgeId, true);
                                     }
+                                    scheduleEdgeEventsCheck(session);
+                                }
 
-                                    @Override
-                                    public void onFailure(Throwable t) {
-                                        log.warn("[{}] Failed to process edge events for edge [{}]!", tenantId, session.getEdge().getId().getId(), t);
-                                        scheduleEdgeEventsCheck(session);
-                                    }
-                                }, ctx.getGrpcCallbackExecutorService());
-                            } else {
-                                scheduleEdgeEventsCheck(session);
-                            }
+                                @Override
+                                public void onFailure(Throwable t) {
+                                    log.warn("[{}] Failed to process edge events for edge [{}]!", tenantId, session.getEdge().getId().getId(), t);
+                                    scheduleEdgeEventsCheck(session);
+                                }
+                            }, ctx.getGrpcCallbackExecutorService());
                         } else {
                             scheduleEdgeEventsCheck(session);
                         }
-                    } finally {
-                        newEventLock.unlock();
+                    } else {
+                        scheduleEdgeEventsCheck(session);
                     }
-                } catch (Exception e) {
-                    log.warn("[{}] Failed to process edge events for edge [{}]!", tenantId, session.getEdge().getId().getId(), e);
+                } finally {
+                    newEventLock.unlock();
                 }
-            }, ctx.getEdgeEventStorageSettings().getNoRecordsSleepInterval(), TimeUnit.MILLISECONDS);
-            sessionEdgeEventChecks.put(edgeId, edgeEventCheckTask);
+            } catch (Exception e) {
+                log.warn("[{}] Failed to process edge events for edge [{}]!", tenantId, session.getEdge().getId().getId(), e);
+            }
+        };
+
+        // arm the next check only while this exact session is still the current one, atomically with
+        // cancelling the previous one, so that a concurrent connect/disconnect can neither lose the
+        // re-arm nor cancel a check that belongs to a session other than the one it is tearing down
+        sessions.compute(edgeId, (id, current) -> {
+            if (current != session) {
+                log.debug("[{}] Session is not current anymore and edge event check schedule must not be started [{}]",
+                        tenantId, edgeId.getId());
+                return current;
+            }
+            cancelScheduleEdgeEventsCheck(edgeId);
+            sessionEdgeEventChecks.put(edgeId, edgeEventProcessingExecutorService.schedule(edgeEventCheck,
+                    ctx.getEdgeEventStorageSettings().getNoRecordsSleepInterval(), TimeUnit.MILLISECONDS));
             log.trace("[{}] Check edge event scheduled for edge [{}]", tenantId, edgeId.getId());
-        } else {
-            log.debug("[{}] Session was removed and edge event check schedule must not be started [{}]",
-                    tenantId, edgeId.getId());
-        }
+            return current;
+        });
     }
 
     private void processEdgeEventMigrationIfNeeded(EdgeGrpcSession session, EdgeId edgeId) throws Exception {
@@ -532,24 +538,20 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private void onEdgeDisconnect(Edge edge, UUID sessionId) {
         EdgeId edgeId = edge.getId();
         log.info("[{}][{}] edge disconnected!", edgeId, sessionId);
-        EdgeGrpcSession current = sessions.get(edgeId);
-        if (current != null && current.getSessionId().equals(sessionId)) {
-            EdgeGrpcSession toRemove = sessions.remove(edgeId);
-            final Lock newEventLock = sessionNewEventsLocks.computeIfAbsent(edgeId, id -> new ReentrantLock());
-            newEventLock.lock();
-            try {
-                sessionNewEvents.remove(edgeId);
-            } finally {
-                newEventLock.unlock();
-            }
-            destroySession(toRemove);
+        EdgeGrpcSession toRemove = detachSession(edgeId, current -> current.getSessionId().equals(sessionId));
+        if (toRemove != null) {
+            // sessionNewEvents is deliberately left as is: clearing it here could wipe the flag a
+            // reconnecting session has just set, and updateSessionEventsFlag only lifts FALSE, not a
+            // missing entry, which would leave the check loop idle forever. deleteEdge still clears it
             sessionsById.remove(sessionId);
+            edgeIdServiceIdCache.evict(edgeId);
             TenantId tenantId = toRemove.getEdge().getTenantId();
-            save(tenantId, edgeId, ACTIVITY_STATE, false);
             long lastDisconnectTs = System.currentTimeMillis();
+            save(tenantId, edgeId, ACTIVITY_STATE, false);
             save(tenantId, edgeId, LAST_DISCONNECT_TIME, lastDisconnectTs);
-            pushRuleEngineMessage(toRemove.getEdge().getTenantId(), edge, lastDisconnectTs, TbMsgType.DISCONNECT_EVENT);
-            cancelScheduleEdgeEventsCheck(edgeId);
+            pushRuleEngineMessage(tenantId, edge, lastDisconnectTs, TbMsgType.DISCONNECT_EVENT);
+            // destroy is slow (stops the kafka edge event consumer), keep it off the atomic path
+            destroySession(toRemove);
         } else {
             log.info("[{}] edge session [{}] is not current anymore. Attempting to destroy it by sessionId.", edgeId, sessionId);
             EdgeGrpcSession stale = sessionsById.remove(sessionId);
@@ -564,7 +566,41 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                 log.debug("[{}] No session found by sessionId [{}] to destroy", edgeId, sessionId);
             }
         }
-        edgeIdServiceIdCache.evict(edgeId);
+    }
+
+    /**
+     * Registers the session as the current one for the edge and cancels the edge event check armed by
+     * the session it replaces, as a single atomic step. Returns the replaced session, or null if there
+     * was none - the caller is responsible for destroying it outside of this critical section.
+     */
+    private EdgeGrpcSession attachSession(EdgeId edgeId, EdgeGrpcSession session) {
+        AtomicReference<EdgeGrpcSession> replaced = new AtomicReference<>();
+        sessions.compute(edgeId, (id, current) -> {
+            replaced.set(current);
+            cancelScheduleEdgeEventsCheck(edgeId);
+            return session;
+        });
+        return replaced.get();
+    }
+
+    /**
+     * Detaches the edge's registered session and cancels its edge event check as a single atomic step,
+     * but only if that session satisfies shouldDetach. Returns the detached session, or null if the
+     * predicate rejected it - most importantly when another session has taken the edge over in the
+     * meantime, in which case nothing is touched and a reconnect racing with a teardown cannot lose
+     * the check it has just armed. The caller destroys the returned session outside the atomic step.
+     */
+    private EdgeGrpcSession detachSession(EdgeId edgeId, Predicate<EdgeGrpcSession> shouldDetach) {
+        AtomicReference<EdgeGrpcSession> detached = new AtomicReference<>();
+        sessions.compute(edgeId, (id, current) -> {
+            if (current == null || !shouldDetach.test(current)) {
+                return current;
+            }
+            detached.set(current);
+            cancelScheduleEdgeEventsCheck(edgeId);
+            return null;
+        });
+        return detached.get();
     }
 
     private void destroySession(EdgeGrpcSession session) {
@@ -686,7 +722,9 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
 
     private void cleanupZombieSessions() {
         try {
-            tryToDestroyZombieSessions(getZombieSessions(sessions.values()), s -> sessions.remove(s.getEdge().getId()));
+            // compare-and-remove: the edge may have reconnected since the zombie scan, and that newer
+            // session must not be evicted by the cleanup of the one it replaced
+            tryToDestroyZombieSessions(getZombieSessions(sessions.values()), s -> sessions.remove(s.getEdge().getId(), s));
             tryToDestroyZombieSessions(getZombieSessions(sessionsById.values()), s -> sessionsById.remove(s.getSessionId()));
 
             zombieSessions.removeIf(zombie -> {
@@ -715,11 +753,11 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         return result;
     }
 
-    private void tryToDestroyZombieSessions(List<EdgeGrpcSession> sessionsToRemove, Function<EdgeGrpcSession, EdgeGrpcSession> removeFunc) {
+    private void tryToDestroyZombieSessions(List<EdgeGrpcSession> sessionsToRemove, Consumer<EdgeGrpcSession> removeFunc) {
         for (EdgeGrpcSession toRemove : sessionsToRemove) {
             log.info("[{}] Destroying session for edge because edge is not connected", toRemove.getEdge().getId());
             if (toRemove.destroy()) {
-                removeFunc.apply(toRemove);
+                removeFunc.accept(toRemove);
             }
         }
     }
