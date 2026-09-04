@@ -28,12 +28,14 @@ import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.common.data.EmailChangeResult;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.event.UserCredentialsInvalidationEvent;
 import org.thingsboard.server.common.data.security.model.EmailVerificationCode;
+import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.user.UserService;
@@ -59,6 +61,7 @@ public class DefaultEmailChangeService implements EmailChangeService {
     private final TbTenantProfileCache tenantProfileCache;
     private final UserService userService;
     private final MailService mailService;
+    private final AuditLogService auditLogService;
     private final ApplicationEventPublisher eventPublisher;
 
     // Field injection, not constructor injection: this repo's lombok.config copies only @Lazy onto
@@ -175,10 +178,14 @@ public class DefaultEmailChangeService implements EmailChangeService {
         if (user == null) {
             throw new ThingsboardException("User not found", ThingsboardErrorCode.ITEM_NOT_FOUND);
         }
+        String oldEmail = user.getEmail();
         user.setEmail(newEmail);
         // Validation is bypassed deliberately: UserDataValidator forbids email changes for restricted
         // tenants, and this flow is the verified route around it. Format and uniqueness were checked above.
         userService.saveUser(securityUser.getTenantId(), user, false);
+        // Logged here rather than by tbUserService, which this flow bypasses along with the validator.
+        auditLogService.logEntityAction(user.getTenantId(), user.getCustomerId(), securityUser.getId(),
+                securityUser.getName(), user.getId(), user, ActionType.EMAIL_CHANGED, null, oldEmail, newEmail);
         // Signs the user out: DefaultTokenOutdatingService caches the outdating timestamp from this event and
         // JwtAuthenticationProvider then rejects every token issued before it.
         eventPublisher.publishEvent(new UserCredentialsInvalidationEvent(securityUser.getId()));

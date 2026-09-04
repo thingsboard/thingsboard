@@ -350,6 +350,10 @@ public class AuditLogServiceImpl implements AuditLogService {
                 String number = extractParameter(String.class, 0, additionalInfo);
                 actionData.put("recipientNumber", number);
                 break;
+            case EMAIL_CHANGED:
+                actionData.put("oldEmail", extractParameter(String.class, 0, additionalInfo));
+                actionData.put("newEmail", extractParameter(String.class, 1, additionalInfo));
+                break;
         }
         return actionData;
     }

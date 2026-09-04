@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.Before;
 import org.junit.Test;
@@ -34,9 +35,12 @@ import org.thingsboard.server.common.data.SystemParams;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.audit.AuditLog;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.model.EmailVerificationCode;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
@@ -44,11 +48,13 @@ import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.service.mail.RecipientValidator;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -280,6 +286,40 @@ public class UserEmailChangeControllerTest extends AbstractControllerTest {
 
         loginTenantAdmin();
         assertThat(doGet("/api/system/params", SystemParams.class).isRestrictedTenantProfile()).isFalse();
+    }
+
+    @Test
+    public void testVerifiedEmailChangeIsAudited() throws Exception {
+        Tenant tenant = createRestrictedTenant();
+        User admin = loginRestrictedTenantAdmin(tenant, "restricted.audited@thingsboard.org");
+
+        applyVerifiedEmailChange(admin, "restricted.audited.new@thingsboard.org");
+
+        // The change signs the user out but leaves the password alone, so the new address can log back in.
+        login("restricted.audited.new@thingsboard.org", "testPassword1");
+
+        // saveUser bypasses tbUserService, so this entry only exists because the service writes it itself.
+        await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> {
+            List<AuditLog> auditLogs = findEmailChangeAuditLogs(admin.getId());
+            assertThat(auditLogs).hasSize(1);
+            JsonNode actionData = auditLogs.get(0).getActionData();
+            assertThat(actionData.get("oldEmail").asText()).isEqualTo("restricted.audited@thingsboard.org");
+            assertThat(actionData.get("newEmail").asText()).isEqualTo("restricted.audited.new@thingsboard.org");
+        });
+    }
+
+    private void applyVerifiedEmailChange(User user, String newEmail) throws Exception {
+        doPostWithResponse("/api/user/email", new EmailChangeRequest(newEmail), EmailChangeResult.class);
+        String code = emailVerificationCache.get(user.getId()).get().code();
+        doPost("/api/user/email/verify?verificationCode=" + code).andExpect(status().isOk());
+    }
+
+    private List<AuditLog> findEmailChangeAuditLogs(UserId userId) throws Exception {
+        PageData<AuditLog> auditLogs = doGetTypedWithTimePageLink(
+                "/api/audit/logs/user/" + userId.getId() + "?actionTypes=EMAIL_CHANGED&",
+                new TypeReference<>() {
+                }, new TimePageLink(10));
+        return auditLogs.getData();
     }
 
 }

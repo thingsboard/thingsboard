@@ -219,7 +219,12 @@ public enum ActionType {
     /**
      * SMS sent. Does not push to rule engine.
      */
-    SMS_SENT;
+    SMS_SENT,
+    /**
+     * User changed their own email. Does not push to rule engine.
+     * Audit log payload: the previous and the new address.
+     */
+    EMAIL_CHANGED;
 
     @Getter
     private final boolean read;

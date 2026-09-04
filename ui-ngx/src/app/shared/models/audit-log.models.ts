@@ -65,7 +65,8 @@ export enum ActionType {
   TIMESERIES_DELETED = 'TIMESERIES_DELETED',
   ASSIGNED_TO_EDGE = 'ASSIGNED_TO_EDGE',
   UNASSIGNED_FROM_EDGE = 'UNASSIGNED_FROM_EDGE',
-  SMS_SENT = 'SMS_SENT'
+  SMS_SENT = 'SMS_SENT',
+  EMAIL_CHANGED = 'EMAIL_CHANGED'
 }
 
 export enum ActionStatus {
@@ -111,6 +112,7 @@ export const actionTypeTranslations = new Map<ActionType, string>(
     [ActionType.ASSIGNED_TO_EDGE, 'audit-log.type-assigned-to-edge'],
     [ActionType.UNASSIGNED_FROM_EDGE, 'audit-log.type-unassigned-from-edge'],
     [ActionType.SMS_SENT, 'audit-log.type-sms-sent'],
+    [ActionType.EMAIL_CHANGED, 'audit-log.type-email-changed'],
   ]
 );
 

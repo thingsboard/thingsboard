@@ -1082,6 +1082,7 @@
         "type-timeseries-updated": "Telemetry updated",
         "type-timeseries-deleted": "Telemetry deleted",
         "type-sms-sent": "SMS sent",
+        "type-email-changed": "Email changed",
         "any-type":"Any type",
         "audit-log-filter-title": "Audit log filter",
         "filter-title": "Filter",
