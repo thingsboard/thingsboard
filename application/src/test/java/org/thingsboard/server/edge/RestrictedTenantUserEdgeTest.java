@@ -75,6 +75,47 @@ public class RestrictedTenantUserEdgeTest extends AbstractEdgeTest {
                 .isInstanceOf(ThingsboardException.class);
     }
 
+    @Test
+    public void testEdgeCannotChangeUserEmail() throws Exception {
+        CustomerId customerId = createAndAssignCustomerToEdge().getId();
+        UserId userId = new UserId(UUID.randomUUID());
+
+        sendUplinkAndWaitForResponse(buildUserUplinkMsg(userId, customerId, new UserCredentialsId(UUID.randomUUID()), EDGE_USER_EMAIL));
+
+        User update = buildUser(customerId, "restricted.edge.renamed@thingsboard.org");
+        update.setId(userId);
+        update.setLastName("Renamed");
+        sendUplinkAndWaitForResponse(UplinkMsg.newBuilder()
+                .setUplinkMsgId(EdgeUtils.nextPositiveInt())
+                .addUserUpdateMsg(EdgeMsgConstructorUtils.constructUserUpdatedMsg(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, update))
+                .build());
+
+        // Acknowledged rather than failed: a failed uplink is resent by the edge until it succeeds.
+        Assert.assertTrue(edgeImitator.getLatestResponseMsg().getSuccess());
+
+        loginTenantAdmin();
+        User cloudUser = doGet("/api/user/" + userId, User.class);
+        Assert.assertEquals(EDGE_USER_EMAIL, cloudUser.getEmail());
+        // The rest of the update still syncs; only the email is held back.
+        Assert.assertEquals("Renamed", cloudUser.getLastName());
+    }
+
+    @Test
+    public void testEdgeUserWithDuplicateEmailIsStillRenamed() throws Exception {
+        CustomerId customerId = createAndAssignCustomerToEdge().getId();
+        UserId firstUserId = new UserId(UUID.randomUUID());
+        sendUplinkAndWaitForResponse(buildUserUplinkMsg(firstUserId, customerId, new UserCredentialsId(UUID.randomUUID()), EDGE_USER_EMAIL));
+
+        // A second user carrying an email the cloud already holds: the processor renames it to an
+        // unguessable address of its own, which is not a tenant-driven email change and must go through.
+        UserId secondUserId = new UserId(UUID.randomUUID());
+        sendUplinkAndWaitForResponse(buildUserUplinkMsg(secondUserId, customerId, new UserCredentialsId(UUID.randomUUID()), EDGE_USER_EMAIL));
+
+        loginTenantAdmin();
+        Assert.assertEquals(EDGE_USER_EMAIL, doGet("/api/user/" + firstUserId, User.class).getEmail());
+        Assert.assertNotEquals(EDGE_USER_EMAIL, doGet("/api/user/" + secondUserId, User.class).getEmail());
+    }
+
     private Customer createAndAssignCustomerToEdge() throws Exception {
         loginTenantAdmin();
         edgeImitator.expectMessageAmount(1);

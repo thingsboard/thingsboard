@@ -61,7 +61,11 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
                 user.setId(userId);
             }
             if (isSaveRequired(userById, user)) {
-                userEmailUpdated = updateUserEmailIfDuplicateExists(tenantId, userId, user);
+                if (!isCreated && keepStoredEmail(tenantId, userById, user)) {
+                    userEmailUpdated = true;
+                } else {
+                    userEmailUpdated = updateUserEmailIfDuplicateExists(tenantId, userId, user);
+                }
                 setCustomerId(tenantId, isCreated ? null : userById.getCustomerId(), user, userUpdateMsg);
 
                 userValidator.validate(user, User::getTenantId);
@@ -78,6 +82,18 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
         }
 
         return Pair.of(isCreated, userEmailUpdated);
+    }
+
+    // An edge is controlled by the tenant admin, so an edge-driven email change is the very change that
+    // UserDataValidator forbids for a restricted tenant: the stored address wins. Reported as an email
+    // update so the caller pushes the stored address back and the edge stops resending its own.
+    private boolean keepStoredEmail(TenantId tenantId, User storedUser, User user) {
+        if (storedUser.getEmail().equals(user.getEmail()) || !tenantProfileCache.isRestricted(tenantId)) {
+            return false;
+        }
+        log.warn("[{}] Ignoring edge-driven email change of user {} to {}", tenantId, storedUser.getId(), user.getEmail());
+        user.setEmail(storedUser.getEmail());
+        return true;
     }
 
     private boolean updateUserEmailIfDuplicateExists(TenantId tenantId, UserId userId, User user) {
