@@ -20,14 +20,44 @@ monitoring:
   rest:
     # Base REST API url, https://DOMAIN by default
     base_url: '${REST_BASE_URL:https://${monitoring.domain}}'
-    # Authentication username
+    # LOGIN (default) - username/password, exercises the real /api/auth/login endpoint.
+    # API_KEY - a static API key (see monitoring.rest.api_key) - use this if the monitored
+    # deployment enforces password expiration, which would otherwise force-reset this account's
+    # password and produce a false "login is down" alarm with no per-user exemption. If your key
+    # has an expiration date, also set api_key_description below to get expiry warnings - without
+    # it, that check is silently disabled.
+    auth_mode: '${REST_AUTH_MODE:LOGIN}'
+    # Authentication username (auth_mode: LOGIN only)
     username: '${REST_AUTH_USERNAME:tenant@thingsboard.org}'
-    # Authentication password
+    # Authentication password (auth_mode: LOGIN only)
     password: '${REST_AUTH_PASSWORD:tenant}'
+    # API key (auth_mode: API_KEY only) - create one via POST /api/apiKey for this account (see api_key_description below for expiry warnings).
+    # Note: in API_KEY mode, the "login" check only proves the API key itself is still valid
+    # (via a lightweight authenticated call) - it no longer exercises the real
+    # /api/auth/login endpoint, so it does not verify credential validation or JWT issuance.
+    api_key: '${REST_AUTH_API_KEY:}'
+    # API key description to match when looking up its expiration (auth_mode: API_KEY only).
+    # Optional - if not set, expiry monitoring for the key is silently disabled (a WARN is
+    # logged, no notifications are ever sent). Must exactly match the description you gave the
+    # key when creating it via POST /api/apiKey - keep it unique among this account's keys,
+    # e.g. when rotating, delete or rename the old key rather than reusing its description.
+    api_key_description: '${REST_AUTH_API_KEY_DESCRIPTION:}'
+    # Days before expiration to start sending a daily warning notification (auth_mode: API_KEY
+    # only, requires api_key_description to be set). The warning repeats every day once within
+    # this threshold until the key is rotated or the process restarts.
+    api_key_expiry_warning_days: '${REST_AUTH_API_KEY_EXPIRY_WARNING_DAYS:7}'
+    # Delay before the first expiry check, in milliseconds (auth_mode: API_KEY only)
+    api_key_expiry_check_initial_delay_ms: '${REST_AUTH_API_KEY_EXPIRY_CHECK_INITIAL_DELAY_MS:60000}'
+    # Interval between expiry checks, in milliseconds (auth_mode: API_KEY only)
+    api_key_expiry_check_interval_ms: '${REST_AUTH_API_KEY_EXPIRY_CHECK_INTERVAL_MS:86400000}'
     # REST request timeout in milliseconds
     request_timeout_ms: '${REST_REQUEST_TIMEOUT_MS:5000}'
   ws:
-    # WebSocket url, wss://DOMAIN by default
+    # WebSocket url, wss://DOMAIN by default.
+    # Requires the monitored ThingsBoard server to be version ~3.6.2 or later: this client
+    # exclusively uses the /api/ws GENERAL WebSocket endpoint (message-based AuthCmd auth)
+    # introduced in that version, with no fallback to the older, deprecated
+    # /api/ws/plugins/telemetry?token= endpoint.
     base_url: '${WS_BASE_URL:wss://${monitoring.domain}}'
     # WebSocket request timeout
     request_timeout_ms: '${WS_REQUEST_TIMEOUT_MS:3000}'

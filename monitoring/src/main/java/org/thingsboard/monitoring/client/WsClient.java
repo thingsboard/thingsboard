@@ -22,6 +22,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.monitoring.data.cmd.AuthCmd;
 import org.thingsboard.monitoring.data.cmd.CmdsWrapper;
 import org.thingsboard.monitoring.data.cmd.EntityDataCmd;
 import org.thingsboard.monitoring.data.cmd.EntityDataUpdate;
@@ -59,6 +60,11 @@ public class WsClient extends WebSocketClient implements AutoCloseable {
 
     private final long requestTimeoutMs;
 
+    // captured from onClose() so a later subscribe failure can report why the socket went away
+    private volatile boolean closed;
+    private volatile int closeCode;
+    private volatile String closeReason;
+
     public WsClient(URI serverUri, long requestTimeoutMs) {
         super(serverUri);
         this.requestTimeoutMs = requestTimeoutMs;
@@ -90,8 +96,11 @@ public class WsClient extends WebSocketClient implements AutoCloseable {
     }
 
     @Override
-    public void onClose(int i, String s, boolean b) {
-        log.debug("WebSocket client is closed");
+    public void onClose(int code, String reason, boolean remote) {
+        this.closed = true;
+        this.closeCode = code;
+        this.closeReason = reason;
+        log.debug("WebSocket client is closed (code={}, reason={}, remote={})", code, reason, remote);
     }
 
     @Override
@@ -119,7 +128,11 @@ public class WsClient extends WebSocketClient implements AutoCloseable {
         } finally {
             updateLock.unlock();
         }
-        super.send(text);
+        try {
+            super.send(text);
+        } catch (RuntimeException e) {
+            throw new IllegalStateException("Failed to send WS message" + closeInfo(), e);
+        }
     }
 
     public WsClient subscribeForTelemetry(List<UUID> devices, List<String> keys) {
@@ -138,7 +151,22 @@ public class WsClient extends WebSocketClient implements AutoCloseable {
         cmd.setLatestCmd(latestCmd);
 
         CmdsWrapper wrapper = new CmdsWrapper();
-        wrapper.setEntityDataCmds(List.of(cmd));
+        wrapper.setCmds(List.of(cmd));
+
+        send(JacksonUtil.toString(wrapper));
+        return this;
+    }
+
+    // must be the connection's first message - the GENERAL endpoint has no ?token= query param
+    public WsClient authenticate(TbClient.AuthMode authMode, String tokenOrApiKey) {
+        AuthCmd authCmd = new AuthCmd();
+        if (authMode == TbClient.AuthMode.API_KEY) {
+            authCmd.setApiKey(tokenOrApiKey);
+        } else {
+            authCmd.setToken(tokenOrApiKey);
+        }
+        CmdsWrapper wrapper = new CmdsWrapper();
+        wrapper.setAuthCmd(authCmd);
         send(JacksonUtil.toString(wrapper));
         return this;
     }
@@ -168,7 +196,15 @@ public class WsClient extends WebSocketClient implements AutoCloseable {
             log.debug("Failed to await reply", e);
         }
         log.trace("No reply arrived within {} ms", requestTimeoutMs);
-        throw new IllegalStateException("No WS reply arrived within " + requestTimeoutMs + " ms");
+        throw new IllegalStateException("No WS reply arrived within " + requestTimeoutMs + " ms" + closeInfo());
+    }
+
+    // surfaces the close reason instead of an opaque WebsocketNotConnectedException/timeout
+    private String closeInfo() {
+        if (!closed) {
+            return "";
+        }
+        return " - WebSocket closed (code=" + closeCode + ", reason=" + closeReason + ")";
     }
 
     private List<JsonNode> getLastMsgs() {

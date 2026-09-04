@@ -15,19 +15,16 @@
  */
 package org.thingsboard.monitoring.data.cmd;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
-import org.thingsboard.server.common.data.query.EntityDataQuery;
 
-// hand-rolled mirror of application's org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataCmd
+// NON_NULL: don't send the field we're not using (token vs apiKey) - not a known server requirement, just good hygiene for an outbound command
+@JsonInclude(JsonInclude.Include.NON_NULL)
 @Data
-public class EntityDataCmd {
-
-    // must match the server's @JsonSubTypes discriminator for this command - not compile-checked against it
-    public static final String TYPE = "ENTITY_DATA";
+public class AuthCmd {
 
     private int cmdId;
-    private EntityDataQuery query;
-    private LatestValueCmd latestCmd;
-    private final String type = TYPE;
+    private String token;
+    private String apiKey;
 
 }
