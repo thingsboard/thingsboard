@@ -274,12 +274,17 @@ public class TbTestWebSocketClient extends WebSocketClient {
     }
 
     public JsonNode sendTimeseriesCmd(EntityId entityId, String scope) {
-        log.warn("sendTimeseriesCmd entityId: {}, scope: {}", entityId, scope);
+        return sendTimeseriesCmd(entityId, scope, null);
+    }
+
+    public JsonNode sendTimeseriesCmd(EntityId entityId, String scope, String keys) {
+        log.warn("sendTimeseriesCmd entityId: {}, scope: {}, keys: {}", entityId, scope, keys);
         TimeseriesSubscriptionCmd cmd = new TimeseriesSubscriptionCmd(0, 0, 0, 10,  null);
         cmd.setEntityId(entityId.getId().toString());
         cmd.setEntityType(entityId.getEntityType().toString());
         cmd.setCmdId(1);
         cmd.setScope(scope);
+        cmd.setKeys(keys);
         send(cmd);
         String msg = this.waitForReply();
         return JacksonUtil.fromString(msg, JsonNode.class);

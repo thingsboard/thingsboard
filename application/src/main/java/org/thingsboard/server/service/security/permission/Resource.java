@@ -17,21 +17,25 @@ package org.thingsboard.server.service.security.permission;
 
 import org.thingsboard.server.common.data.EntityType;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public enum Resource {
 
+    // The boolean flag marks resources whose entities own time series and attributes.
     ADMIN_SETTINGS(EntityType.ADMIN_SETTINGS),
     ALARM(EntityType.ALARM),
-    DEVICE(EntityType.DEVICE),
-    ASSET(EntityType.ASSET),
-    CUSTOMER(EntityType.CUSTOMER),
+    DEVICE(true, EntityType.DEVICE),
+    ASSET(true, EntityType.ASSET),
+    CUSTOMER(true, EntityType.CUSTOMER),
     DASHBOARD(EntityType.DASHBOARD),
-    ENTITY_VIEW(EntityType.ENTITY_VIEW),
-    TENANT(EntityType.TENANT),
-    RULE_CHAIN(EntityType.RULE_CHAIN),
-    USER(EntityType.USER),
+    ENTITY_VIEW(true, EntityType.ENTITY_VIEW),
+    TENANT(true, EntityType.TENANT),
+    RULE_CHAIN(true, EntityType.RULE_CHAIN),
+    USER(true, EntityType.USER),
     WIDGETS_BUNDLE(EntityType.WIDGETS_BUNDLE),
     WIDGET_TYPE(EntityType.WIDGET_TYPE),
     OAUTH2_CLIENT(EntityType.OAUTH2_CLIENT),
@@ -39,13 +43,13 @@ public enum Resource {
     MOBILE_APP(EntityType.MOBILE_APP),
     MOBILE_APP_BUNDLE(EntityType.MOBILE_APP_BUNDLE),
     OAUTH2_CONFIGURATION_TEMPLATE(),
-    TENANT_PROFILE(EntityType.TENANT_PROFILE),
+    TENANT_PROFILE(true, EntityType.TENANT_PROFILE),
     DEVICE_PROFILE(EntityType.DEVICE_PROFILE),
     ASSET_PROFILE(EntityType.ASSET_PROFILE),
-    API_USAGE_STATE(EntityType.API_USAGE_STATE),
+    API_USAGE_STATE(true, EntityType.API_USAGE_STATE),
     TB_RESOURCE(EntityType.TB_RESOURCE),
     OTA_PACKAGE(EntityType.OTA_PACKAGE),
-    EDGE(EntityType.EDGE),
+    EDGE(true, EntityType.EDGE),
     RPC(EntityType.RPC),
     QUEUE(EntityType.QUEUE),
     VERSION_CONTROL,
@@ -56,13 +60,26 @@ public enum Resource {
     AI_MODEL(EntityType.AI_MODEL),
     API_KEY(EntityType.API_KEY);
 
+    // Entity types in scope of the attributes and time series API. The rest own neither, or are not supported by the API at all.
+    public static final Set<EntityType> ENTITY_TYPES_WITH_TS_AND_ATTRIBUTES = Collections.unmodifiableSet(
+            Arrays.stream(values())
+                    .filter(resource -> resource.tsAndAttributes)
+                    .flatMap(resource -> resource.getEntityTypes().stream())
+                    .collect(Collectors.toCollection(() -> EnumSet.noneOf(EntityType.class))));
+
+    private final boolean tsAndAttributes;
     private final Set<EntityType> entityTypes;
 
     Resource() {
-        this.entityTypes = Collections.emptySet();
+        this(false);
     }
 
     Resource(EntityType... entityTypes) {
+        this(false, entityTypes);
+    }
+
+    Resource(boolean tsAndAttributes, EntityType... entityTypes) {
+        this.tsAndAttributes = tsAndAttributes;
         this.entityTypes = Set.of(entityTypes);
     }
 
