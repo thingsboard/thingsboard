@@ -1287,12 +1287,16 @@ public class EdgeControllerTest extends AbstractControllerTest {
 
     @Test
     public void testGetEdgeUpgradeInstructions() throws Exception {
-        // UpdateInfo config is updating from the Thingsboard Update server
-        HashMap<String, EdgeUpgradeInfo> upgradeInfoHashMap = new HashMap<>();
-        upgradeInfoHashMap.put("3.6.0", new EdgeUpgradeInfo(true, "3.6.1"));
-        upgradeInfoHashMap.put("3.6.1", new EdgeUpgradeInfo(true, "3.6.2"));
-        upgradeInfoHashMap.put("3.6.2", new EdgeUpgradeInfo(true, null));
-        edgeUpgradeInstructionsService.updateInstructionMap(upgradeInfoHashMap);
+        // Version graph is fetched from the Thingsboard Update server and resolved against the platform edge version
+        HashMap<String, List<EdgeUpgradeInfo>> versionGraph = new HashMap<>();
+        versionGraph.put("3.6.0", List.of(new EdgeUpgradeInfo(true, "3.6.1")));
+        versionGraph.put("3.6.1", List.of(new EdgeUpgradeInfo(true, "3.6.2")));
+        // branch: resolver must keep the highest nextEdgeVersion <= platform version (3.6.4), not the newer 3.7.0 line
+        versionGraph.put("3.6.2", List.of(new EdgeUpgradeInfo(false, "3.6.4"), new EdgeUpgradeInfo(true, "3.7.0")));
+        versionGraph.put("3.6.4", List.of(new EdgeUpgradeInfo(true, null)));
+        versionGraph.put("3.7.0", List.of(new EdgeUpgradeInfo(true, null)));
+        edgeUpgradeInstructionsService.setPlatformEdgeVersion("3.6.4");
+        edgeUpgradeInstructionsService.updateVersionGraph(versionGraph);
         Edge edge = constructEdge("Edge for Test Docker Upgrade Instructions", "default");
         Edge savedEdge = doPost("/api/edge", edge, Edge.class);
         String body = "{\"edgeVersion\": \"V_3_6_0\"}";
@@ -1300,6 +1304,9 @@ public class EdgeControllerTest extends AbstractControllerTest {
         String upgradeInstructions = doGet("/api/edge/instructions/upgrade/" + EdgeVersion.V_3_6_0.name() + "/docker", String.class);
         Assert.assertTrue(upgradeInstructions.contains("Upgrading to 3.6.1EDGE"));
         Assert.assertTrue(upgradeInstructions.contains("Upgrading to 3.6.2EDGE"));
+        Assert.assertTrue(upgradeInstructions.contains("Upgrading to 3.6.4EDGE"));
+        // 3.7.0 is newer than the platform edge version, so the resolver must not include it in the path
+        Assert.assertFalse(upgradeInstructions.contains("3.7.0EDGE"));
     }
 
     @Test

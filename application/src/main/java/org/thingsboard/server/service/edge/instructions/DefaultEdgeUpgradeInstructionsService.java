@@ -18,6 +18,7 @@ package org.thingsboard.server.service.edge.instructions;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.TbVersionUtils;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EdgeUpgradeInfo;
@@ -30,6 +31,7 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.install.InstallScripts;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -62,7 +64,11 @@ public class DefaultEdgeUpgradeInstructionsService extends BaseEdgeInstallUpgrad
     }
 
     @Override
-    public void updateInstructionMap(Map<String, EdgeUpgradeInfo> map) {
+    public void updateVersionGraph(Map<String, List<EdgeUpgradeInfo>> versionGraph) {
+        updateInstructionMap(EdgeVersionGraphResolver.resolve(versionGraph, platformEdgeVersion));
+    }
+
+    private void updateInstructionMap(Map<String, EdgeUpgradeInfo> map) {
         for (String key : map.keySet()) {
             upgradeVersionHashMap.put(key, map.get(key));
         }
@@ -73,27 +79,11 @@ public class DefaultEdgeUpgradeInstructionsService extends BaseEdgeInstallUpgrad
         Optional<AttributeKvEntry> attributeKvEntryOpt = attributesService.find(tenantId, edgeId, AttributeScope.SERVER_SCOPE, DataConstants.EDGE_VERSION_ATTR_KEY).get();
         if (attributeKvEntryOpt.isPresent()) {
             String edgeVersionFormatted = convertEdgeVersionToDocsFormat(attributeKvEntryOpt.get().getValueAsString());
-            return isVersionGreaterOrEqualsThan(edgeVersionFormatted, "3.6.0") && !isVersionGreaterOrEqualsThan(edgeVersionFormatted, platformEdgeVersion);
+            String platformEdgeVersionFormatted = TbVersionUtils.extractStartingDigits(platformEdgeVersion);
+            return TbVersionUtils.compare(edgeVersionFormatted, "3.6.0") >= 0
+                    && TbVersionUtils.compare(edgeVersionFormatted, platformEdgeVersionFormatted) < 0;
         }
         return false;
-    }
-
-    private boolean isVersionGreaterOrEqualsThan(String version1, String version2) {
-        String[] v1 = version1.split("\\.");
-        String[] v2 = version2.split("\\.");
-
-        int length = Math.max(v1.length, v2.length);
-        for (int i = 0; i < length; i++) {
-            int num1 = i < v1.length ? Integer.parseInt(v1[i]) : 0;
-            int num2 = i < v2.length ? Integer.parseInt(v2[i]) : 0;
-
-            if (num1 < num2) {
-                return false;
-            } else if (num1 > num2) {
-                return true;
-            }
-        }
-        return true;
     }
 
     private EdgeInstructions getDockerUpgradeInstructions(String platformEdgeVersion, String currentEdgeVersion) {
