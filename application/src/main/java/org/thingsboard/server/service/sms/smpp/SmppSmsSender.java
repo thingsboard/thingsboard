@@ -33,6 +33,7 @@ import org.smpp.pdu.PDUException;
 import org.smpp.pdu.SubmitSM;
 import org.smpp.pdu.SubmitSMResp;
 import org.thingsboard.rule.engine.api.sms.exception.SmsException;
+import org.thingsboard.rule.engine.api.sms.exception.SmsSendException;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.sms.config.SmppSmsProviderConfiguration;
 import org.thingsboard.server.service.sms.AbstractSmsSender;
@@ -85,8 +86,9 @@ public class SmppSmsSender extends AbstractSmsSender {
                 request.setSourceAddr(new Address(config.getSourceTon(), config.getSourceNpi(), config.getSourceAddress()));
             }
             request.setDestAddr(new Address(config.getDestinationTon(), config.getDestinationNpi(), prepareNumber(numberTo)));
-            request.setShortMessage(message);
-            request.setDataCoding(Optional.ofNullable(config.getCodingScheme()).orElse((byte) 0));
+            byte dataCoding = Optional.ofNullable(config.getCodingScheme()).orElse((byte) 0);
+            request.setShortMessage(message, charsetFor(dataCoding));
+            request.setDataCoding(dataCoding);
             request.setReplaceIfPresentFlag((byte) 0);
             request.setEsmClass((byte) 0);
             request.setProtocolId((byte) 0);
@@ -98,10 +100,37 @@ public class SmppSmsSender extends AbstractSmsSender {
 
             log.debug("SMPP submit command status: {}", response.getCommandStatus());
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new SmsSendException("Failed to send SMS message - " + ExceptionUtils.getRootCauseMessage(e), e);
         }
 
         return countMessageSegments(message);
+    }
+
+    private static String charsetFor(byte dataCoding) {
+        return switch (dataCoding) {
+            case 0 -> Data.ENC_GSM7BIT; // SMSC Default Alphabet (GSM 7-bit) — opensmpp-charset SPI charset "X-Gsm7Bit"
+            case 1 -> "US-ASCII"; // IA5 (CCITT T.50) / ASCII
+            // DCS 2, 4 are "Octet unspecified" (binary) — ISO-8859-1 is bijective for bytes 0-255, so it passes bytes through unchanged.
+            case 2 -> "ISO-8859-1"; // Octet unspecified (binary pass-through)
+            case 3 -> "ISO-8859-1"; // Latin 1
+            case 4 -> "ISO-8859-1"; // Octet unspecified (binary pass-through)
+            case 5 -> "Shift_JIS"; // JIS
+            case 6 -> "ISO-8859-5"; // Cyrillic
+            case 7 -> "ISO-8859-8"; // Latin/Hebrew
+            case 8 -> "UTF-16BE"; // UCS-2
+            // FIXME: Pictogram encoding not natively supported, falling back to ISO-8859-1.
+            case 9 -> "ISO-8859-1"; // Pictogram
+            case 10 -> "ISO-2022-JP"; // Music Codes
+            case 13 -> "JIS_X0212-1990"; // Extended Kanji JIS
+            case 14 -> "EUC-KR"; // KS C 5601
+            default -> {
+                // Unknown/unsupported data_coding (the @Schema allowableValues are documentation only and not enforced,
+                // so out-of-range values may be persisted). Fall back to a byte-transparent charset instead of failing the
+                // send, since SMS backs 2FA and notifications. ISO-8859-1 is bijective for bytes 0-255 and never substitutes.
+                log.warn("Unsupported SMPP data_coding {}, falling back to ISO-8859-1 encoding", dataCoding);
+                yield "ISO-8859-1";
+            }
+        };
     }
 
     private synchronized void checkSmppSession() {
