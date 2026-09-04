@@ -682,7 +682,24 @@ public class EdgeMsgConstructorUtils {
     }
 
     public static UserCredentialsUpdateMsg constructUserCredentialsUpdatedMsg(UserCredentials userCredentials) {
-        return UserCredentialsUpdateMsg.newBuilder().setEntity(JacksonUtil.toString(userCredentials)).build();
+        return UserCredentialsUpdateMsg.newBuilder().setEntity(JacksonUtil.toString(toEdgeCredentials(userCredentials))).build();
+    }
+
+    // An edge is controlled by its tenant admin, so the cloud's one-time tokens must never reach it: an
+    // activateToken on the wire is an activation the tenant can complete for an address it does not own, and
+    // a resetToken is a password it can set. The edge needs the account state and the password hash, nothing
+    // more. Copied field by field rather than blanked in place, so a field added to UserCredentials later has
+    // to be named here before it can travel to an edge.
+    private static UserCredentials toEdgeCredentials(UserCredentials userCredentials) {
+        UserCredentials edgeCredentials = new UserCredentials(userCredentials.getId());
+        edgeCredentials.setCreatedTime(userCredentials.getCreatedTime());
+        edgeCredentials.setUserId(userCredentials.getUserId());
+        edgeCredentials.setEnabled(userCredentials.isEnabled());
+        edgeCredentials.setPassword(userCredentials.getPassword());
+        edgeCredentials.setLastLoginTs(userCredentials.getLastLoginTs());
+        edgeCredentials.setFailedLoginAttempts(userCredentials.getFailedLoginAttempts());
+        edgeCredentials.setAdditionalInfo(userCredentials.getAdditionalInfo());
+        return edgeCredentials;
     }
 
     public static WidgetsBundleUpdateMsg constructWidgetsBundleUpdateMsg(UpdateMsgType msgType, WidgetsBundle widgetsBundle, List<String> widgets) {

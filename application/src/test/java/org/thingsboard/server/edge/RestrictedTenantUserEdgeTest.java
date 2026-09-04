@@ -16,6 +16,7 @@
 package org.thingsboard.server.edge;
 
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestPropertySource;
@@ -33,14 +34,23 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
+import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.UplinkMsg;
+import org.thingsboard.server.gen.edge.v1.UserCredentialsRequestMsg;
+import org.thingsboard.server.gen.edge.v1.UserCredentialsUpdateMsg;
 import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 import org.thingsboard.server.service.mail.RecipientValidator;
 
+import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.awaitility.Awaitility.await;
 import static org.thingsboard.server.dao.user.UserServiceImpl.DEFAULT_TOKEN_LENGTH;
 
 @DaoSqlTest
@@ -53,6 +63,19 @@ public class RestrictedTenantUserEdgeTest extends AbstractEdgeTest {
 
     @Autowired
     private RecipientValidator recipientValidator;
+
+    @Autowired
+    private TbTenantProfileCache tenantProfileCache;
+
+    @Autowired
+    private UserService userService;
+
+    @Before
+    public void verifyFixtureTenantIsRestricted() {
+        // Every test here is meaningless if the fixture's profile name ever leaves the configured list, and
+        // the tests would go on passing while exercising the unrestricted paths. Fail loudly instead.
+        assertThat(tenantProfileCache.isRestricted(tenantId)).isTrue();
+    }
 
     @Test
     public void testEdgeCannotMarkUserActivated() throws Exception {
@@ -114,6 +137,85 @@ public class RestrictedTenantUserEdgeTest extends AbstractEdgeTest {
         loginTenantAdmin();
         Assert.assertEquals(EDGE_USER_EMAIL, doGet("/api/user/" + firstUserId, User.class).getEmail());
         Assert.assertNotEquals(EDGE_USER_EMAIL, doGet("/api/user/" + secondUserId, User.class).getEmail());
+    }
+
+    @Test
+    public void testCredentialsRequestDownlinkCarriesNoToken() throws Exception {
+        CustomerId customerId = createAndAssignCustomerToEdge().getId();
+        UserId userId = new UserId(UUID.randomUUID());
+        sendUplinkAndWaitForResponse(buildUserUplinkMsg(userId, customerId, new UserCredentialsId(UUID.randomUUID()), EDGE_USER_EMAIL));
+
+        String storedActivateToken = storedActivateToken(userId);
+
+        // The cheapest route to a credentials downlink: the edge just asks for the user's credentials by id.
+        edgeImitator.expectMessageAmount(1);
+        sendUplinkAndWaitForResponse(UplinkMsg.newBuilder()
+                .setUplinkMsgId(EdgeUtils.nextPositiveInt())
+                .addUserCredentialsRequestMsg(UserCredentialsRequestMsg.newBuilder()
+                        .setUserIdMSB(userId.getId().getMostSignificantBits())
+                        .setUserIdLSB(userId.getId().getLeastSignificantBits())
+                        .build())
+                .build());
+
+        assertDownlinkCarriesNoToken(userId, storedActivateToken);
+    }
+
+    @Test
+    public void testUserUpdateDownlinkCarriesNoToken() throws Exception {
+        CustomerId customerId = createAndAssignCustomerToEdge().getId();
+        UserId userId = new UserId(UUID.randomUUID());
+        sendUplinkAndWaitForResponse(buildUserUplinkMsg(userId, customerId, new UserCredentialsId(UUID.randomUUID()), EDGE_USER_EMAIL));
+
+        String storedActivateToken = storedActivateToken(userId);
+
+        // The route the restricted email block itself opens on demand: refusing the edge's email change
+        // writes a USER/UPDATED event addressed back to this same edge, and that downlink carries the
+        // user's credentials alongside the user.
+        User update = buildUser(customerId, "restricted.edge.downlink@thingsboard.org");
+        update.setId(userId);
+        edgeImitator.expectMessageAmount(2);
+        sendUplinkAndWaitForResponse(UplinkMsg.newBuilder()
+                .setUplinkMsgId(EdgeUtils.nextPositiveInt())
+                .addUserUpdateMsg(EdgeMsgConstructorUtils.constructUserUpdatedMsg(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, update))
+                .build());
+
+        assertDownlinkCarriesNoToken(userId, storedActivateToken);
+    }
+
+    private String storedActivateToken(UserId userId) {
+        UserCredentials stored = userService.findUserCredentialsByUserId(tenantId, userId);
+        assertThat(stored).isNotNull();
+        return stored.getActivateToken();
+    }
+
+    private void assertDownlinkCarriesNoToken(UserId userId, String storedActivateToken) {
+        UserCredentialsUpdateMsg downlink = awaitCredentialsDownlink();
+        UserCredentials sent = JacksonUtil.fromString(downlink.getEntity(), UserCredentials.class, true);
+        assertThat(sent).isNotNull();
+        // Positive control: this is the user under test, so the assertions below are about the right message.
+        assertThat(sent.getUserId()).isEqualTo(userId);
+        assertThat(sent.isEnabled()).isFalse();
+
+        // The cloud does hold a live activation token for this user...
+        assertThat(storedActivateToken).isNotBlank();
+        // ...and no part of what reached the tenant-controlled edge carries it, or any reset token.
+        assertThat(sent.getActivateToken()).isNull();
+        assertThat(sent.getActivateTokenExpTime()).isNull();
+        assertThat(sent.getResetToken()).isNull();
+        assertThat(sent.getResetTokenExpTime()).isNull();
+        assertThat(downlink.getEntity()).doesNotContain(storedActivateToken);
+    }
+
+    private UserCredentialsUpdateMsg awaitCredentialsDownlink() {
+        AtomicReference<UserCredentialsUpdateMsg> received = new AtomicReference<>();
+        // Polled rather than latched on an exact message count, so the assertion does not depend on how many
+        // sub-messages the cloud happens to bundle into the downlink.
+        await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> {
+            Optional<UserCredentialsUpdateMsg> downlink = edgeImitator.findMessageByType(UserCredentialsUpdateMsg.class);
+            assertThat(downlink).as("UserCredentialsUpdateMsg downlink").isPresent();
+            received.set(downlink.get());
+        });
+        return received.get();
     }
 
     private Customer createAndAssignCustomerToEdge() throws Exception {
