@@ -1,18 +1,7 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-License-Identifier: Apache-2.0
 
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -878,71 +867,76 @@
                 <plugin>
                     <groupId>com.mycila</groupId>
                     <artifactId>license-maven-plugin</artifactId>
-                    <version>3.0</version>
+                    <version>5.1.2</version>
                     <configuration>
-                        <header>${main.dir}/license-header-template.txt</header>
-                        <properties>
-                            <owner>The Thingsboard Authors</owner>
-                        </properties>
-                        <excludes>
-                            <exclude>**/.env</exclude>
-                            <exclude>**/*.env</exclude>
-                            <exclude>**/.eslintrc</exclude>
-                            <exclude>**/.babelrc</exclude>
-                            <exclude>**/.jshintrc</exclude>
-                            <exclude>**/.gradle/**</exclude>
-                            <exclude>**/nightwatch</exclude>
-                            <exclude>**/README</exclude>
-                            <exclude>**/LICENSE</exclude>
-                            <exclude>**/banner.txt</exclude>
-                            <exclude>node_modules/**</exclude>
-                            <exclude>**/*.properties</exclude>
-                            <exclude>src/test/resources/**</exclude>
-                            <exclude>src/vendor/**</exclude>
-                            <exclude>src/font/**</exclude>
-                            <exclude>src/sh/**</exclude>
-                            <exclude>packaging/*/scripts/control/**</exclude>
-                            <exclude>packaging/*/scripts/windows/**</exclude>
-                            <exclude>packaging/*/scripts/init/**</exclude>
-                            <exclude>**/*.log</exclude>
-                            <exclude>**/*.current</exclude>
-                            <exclude>.instance_id</exclude>
-                            <exclude>src/main/scripts/control/**</exclude>
-                            <exclude>src/main/scripts/windows/**</exclude>
-                            <exclude>src/main/resources/public/static/rulenode/**</exclude>
-                            <exclude>**/*.proto.js</exclude>
-                            <exclude>docker/haproxy/**</exclude>
-                            <exclude>docker/tb-node/**</exclude>
-                            <exclude>ui/**</exclude>
-                            <exclude>**/.browserslistrc</exclude>
-                            <exclude>**/yarn.lock</exclude>
-                            <exclude>**/.yarnrc</exclude>
-                            <exclude>**/.angular/**</exclude>
-                            <exclude>**/*.raw</exclude>
-                            <exclude>**/*.patch</exclude>
-                            <exclude>**/apache/cassandra/io/**</exclude>
-                            <exclude>.run/**</exclude>
-                            <exclude>**/NetworkReceive.java</exclude>
-                            <exclude>**/lwm2m-registry/**</exclude>
-                            <exclude>**/test/resources/lwm2m/**</exclude>
-                            <exclude>**/resources/lwm2m/models/**</exclude>
-                            <exclude>src/main/data/resources/**</exclude>
-                            <exclude>.claude/**</exclude>
-                            <exclude>**/lombok.config</exclude>
-                            <exclude>**/eslint.config.mjs</exclude>
-                            <exclude>**/config.monitoring</exclude>
-                            <exclude>**/valkey-certs/**</exclude>
-                            <exclude>**/data/certs/**</exclude>
-                            <exclude>**/*.otf</exclude>
-                        </excludes>
+                        <licenseSets>
+                            <licenseSet>
+                                <header>${main.dir}/license-header.txt</header>
+                                <excludes>
+                                    <exclude>**/.env</exclude>
+                                    <exclude>**/*.env</exclude>
+                                    <exclude>**/.eslintrc</exclude>
+                                    <exclude>**/.babelrc</exclude>
+                                    <exclude>**/.jshintrc</exclude>
+                                    <exclude>**/.gradle/**</exclude>
+                                    <exclude>**/nightwatch</exclude>
+                                    <exclude>**/README</exclude>
+                                    <exclude>**/LICENSE</exclude>
+                                    <exclude>**/banner.txt</exclude>
+                                    <exclude>node_modules/**</exclude>
+                                    <exclude>**/*.properties</exclude>
+                                    <exclude>src/test/resources/**</exclude>
+                                    <exclude>src/vendor/**</exclude>
+                                    <exclude>src/font/**</exclude>
+                                    <exclude>src/sh/**</exclude>
+                                    <exclude>packaging/*/scripts/control/**</exclude>
+                                    <exclude>packaging/*/scripts/windows/**</exclude>
+                                    <exclude>packaging/*/scripts/init/**</exclude>
+                                    <exclude>**/*.log</exclude>
+                                    <exclude>**/*.current</exclude>
+                                    <exclude>.instance_id</exclude>
+                                    <exclude>src/main/scripts/control/**</exclude>
+                                    <exclude>src/main/scripts/windows/**</exclude>
+                                    <exclude>src/main/resources/public/static/rulenode/**</exclude>
+                                    <exclude>**/*.proto.js</exclude>
+                                    <exclude>docker/haproxy/**</exclude>
+                                    <exclude>docker/tb-node/**</exclude>
+                                    <exclude>ui/**</exclude>
+                                    <exclude>**/.browserslistrc</exclude>
+                                    <exclude>**/yarn.lock</exclude>
+                                    <exclude>**/.yarnrc</exclude>
+                                    <exclude>**/.angular/**</exclude>
+                                    <exclude>**/*.raw</exclude>
+                                    <exclude>**/*.patch</exclude>
+                                    <exclude>**/apache/cassandra/io/**</exclude>
+                                    <exclude>.run/**</exclude>
+                                    <exclude>**/NetworkReceive.java</exclude>
+                                    <exclude>**/lwm2m-registry/**</exclude>
+                                    <exclude>**/test/resources/lwm2m/**</exclude>
+                                    <exclude>**/resources/lwm2m/models/**</exclude>
+                                    <exclude>src/main/data/resources/**</exclude>
+                                    <exclude>.claude/**</exclude>
+                                    <exclude>**/lombok.config</exclude>
+                                    <exclude>**/eslint.config.mjs</exclude>
+                                    <exclude>**/config.monitoring</exclude>
+                                    <exclude>**/valkey-certs/**</exclude>
+                                    <exclude>**/data/certs/**</exclude>
+                                    <exclude>**/*.otf</exclude>
+                                    <exclude>**/*.txt</exclude>
+                                </excludes>
+                            </licenseSet>
+                        </licenseSets>
                         <mapping>
-                            <proto>JAVADOC_STYLE</proto>
-                            <cql>DOUBLEDASHES_STYLE</cql>
-                            <scss>JAVADOC_STYLE</scss>
-                            <jsx>SLASHSTAR_STYLE</jsx>
-                            <tsx>SLASHSTAR_STYLE</tsx>
+                            <java>SINGLE_LINE_DOUBLESLASH_STYLE</java>
+                            <ts>SINGLE_LINE_DOUBLESLASH_STYLE</ts>
+                            <tsx>SINGLE_LINE_DOUBLESLASH_STYLE</tsx>
+                            <js>SINGLE_LINE_DOUBLESLASH_STYLE</js>
+                            <jsx>SINGLE_LINE_DOUBLESLASH_STYLE</jsx>
+                            <scss>SINGLE_LINE_DOUBLESLASH_STYLE</scss>
+                            <proto>SINGLE_LINE_DOUBLESLASH_STYLE</proto>
+                            <gradle>SINGLE_LINE_DOUBLESLASH_STYLE</gradle>
                             <conf>SCRIPT_STYLE</conf>
-                            <gradle>JAVADOC_STYLE</gradle>
+                            <cql>DOUBLEDASHES_STYLE</cql>
                         </mapping>
                     </configuration>
                     <executions>
