@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.service.DataValidator;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.gen.edge.v1.UserCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
@@ -38,6 +39,9 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
 
     @Autowired
     private DataValidator<User> userValidator;
+
+    @Autowired
+    private TbTenantProfileCache tenantProfileCache;
 
     protected Pair<Boolean, Boolean> saveOrUpdateUser(TenantId tenantId, UserId userId, UserUpdateMsg userUpdateMsg) {
         boolean isCreated = false;
@@ -131,6 +135,10 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
                 tenantId, user.getName(), userCredentials.getId(), userCredentials.isEnabled());
         try {
             UserCredentials userCredentialsByUserId = edgeCtx.getUserService().findUserCredentialsByUserId(tenantId, user.getId());
+            if (tenantProfileCache.isRestricted(tenantId)) {
+                updateRestrictedTenantUserCredentials(tenantId, userCredentialsByUserId, userCredentials);
+                return;
+            }
             if (userCredentialsByUserId != null && !userCredentialsByUserId.getId().equals(userCredentials.getId())) {
                 edgeCtx.getUserService().deleteUserCredentials(tenantId, userCredentialsByUserId);
             }
@@ -140,6 +148,23 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
                     tenantId, user.getName(), updateMsg, e);
             throw new RuntimeException(e);
         }
+    }
+
+    // The uplink is tenant-controlled and saved without validation, so a restricted tenant could otherwise
+    // mark any address activated and whitelist it for the mail recipient allow-list. The activation signal -
+    // enabled, activateToken and its expiry - is therefore never taken from the edge.
+    private void updateRestrictedTenantUserCredentials(TenantId tenantId, UserCredentials storedCredentials, UserCredentials userCredentials) {
+        if (storedCredentials == null) {
+            // An edge-created user has no credentials row yet, since saveUser keeps the edge's own id and so
+            // never generates one. Take the row, but not its activation state: still to be activated, with a
+            // token of our own, exactly as a user created through the REST API starts out.
+            userCredentials.setEnabled(false);
+            edgeCtx.getUserService().generateUserActivationToken(userCredentials);
+            edgeCtx.getUserService().saveUserCredentials(tenantId, userCredentials, false);
+            return;
+        }
+        storedCredentials.setPassword(userCredentials.getPassword());
+        edgeCtx.getUserService().saveUserCredentials(tenantId, storedCredentials, false);
     }
 
     private void addRemovedUserMetadata(TbMsgMetaData metaData, User removedUser) {
