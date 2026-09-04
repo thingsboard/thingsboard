@@ -114,6 +114,20 @@ public class UserEmailChangeControllerTest extends AbstractControllerTest {
                 new EmailChangeRequest("renamed.tenant.admin@thingsboard.org"), EmailChangeResult.class);
 
         assertThat(result.status()).isEqualTo(EmailChangeStatus.SUCCESS);
+
+        // The audit entry and the notice are not restricted-tenant features: the unverified path applies the
+        // same change and owes the account owner the same trail.
+        Mockito.verify(mailService).sendEmailChangedEmail(eq(tenantId),
+                eq("renamed.tenant.admin@thingsboard.org"), eq(TENANT_ADMIN_EMAIL));
+
+        login("renamed.tenant.admin@thingsboard.org", TENANT_ADMIN_PASSWORD);
+        await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> {
+            List<AuditLog> auditLogs = findEmailChangeAuditLogs(tenantAdminUserId);
+            assertThat(auditLogs).hasSize(1);
+            JsonNode actionData = auditLogs.get(0).getActionData();
+            assertThat(actionData.get("oldEmail").asText()).isEqualTo(TENANT_ADMIN_EMAIL);
+            assertThat(actionData.get("newEmail").asText()).isEqualTo("renamed.tenant.admin@thingsboard.org");
+        });
     }
 
     @Test
