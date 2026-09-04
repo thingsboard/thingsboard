@@ -210,6 +210,19 @@ public class DefaultMailService implements MailService {
     }
 
     @Override
+    public void sendEmailChangedEmail(TenantId tenantId, String newEmail, String email) throws ThingsboardException {
+        String subject = messages.getMessage("email.changed.subject", null, Locale.US);
+
+        Map<String, Object> model = new HashMap<>();
+        model.put("newEmail", newEmail);
+        model.put(TARGET_EMAIL, email);
+
+        String message = mergeTemplateIntoString("email.changed.ftl", model);
+
+        sendMail(tenantId, mailSender, mailFrom, email, subject, message, timeout);
+    }
+
+    @Override
     public void send(TenantId tenantId, CustomerId customerId, TbEmail tbEmail) throws ThingsboardException {
         sendMail(tenantId, customerId, tbEmail, this.mailSender, timeout, true);
     }

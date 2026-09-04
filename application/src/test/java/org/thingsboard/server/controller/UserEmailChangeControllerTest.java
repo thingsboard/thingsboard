@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.AuditLog;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
@@ -76,9 +77,10 @@ public class UserEmailChangeControllerTest extends AbstractControllerTest {
     private RecipientValidator recipientValidator;
 
     @Before
-    public void stubVerificationMail() throws Exception {
-        // Nothing in the repo stubs this one; without it the real sender runs against localhost:25.
+    public void stubEmailChangeMails() throws Exception {
+        // Nothing in the repo stubs these; without it the real sender runs against localhost:25.
         Mockito.doNothing().when(mailService).sendTwoFaVerificationEmail(any(), anyString(), anyString(), anyInt());
+        Mockito.doNothing().when(mailService).sendEmailChangedEmail(any(), anyString(), anyString());
     }
 
     private Tenant createRestrictedTenant() throws Exception {
@@ -306,6 +308,32 @@ public class UserEmailChangeControllerTest extends AbstractControllerTest {
             assertThat(actionData.get("oldEmail").asText()).isEqualTo("restricted.audited@thingsboard.org");
             assertThat(actionData.get("newEmail").asText()).isEqualTo("restricted.audited.new@thingsboard.org");
         });
+    }
+
+    @Test
+    public void testEmailChangeNotifiesThePreviousAddress() throws Exception {
+        Tenant tenant = createRestrictedTenant();
+        User admin = loginRestrictedTenantAdmin(tenant, "restricted.notified@thingsboard.org");
+
+        applyVerifiedEmailChange(admin, "restricted.notified.new@thingsboard.org");
+
+        // The address the account owner still controls is the only place the takeover can be noticed.
+        Mockito.verify(mailService).sendEmailChangedEmail(eq(tenant.getId()),
+                eq("restricted.notified.new@thingsboard.org"), eq("restricted.notified@thingsboard.org"));
+    }
+
+    @Test
+    public void testEmailChangeSurvivesAFailingNotice() throws Exception {
+        Tenant tenant = createRestrictedTenant();
+        User admin = loginRestrictedTenantAdmin(tenant, "restricted.noticefails@thingsboard.org");
+        Mockito.doThrow(new ThingsboardException("Unable to send mail", ThingsboardErrorCode.GENERAL))
+                .when(mailService).sendEmailChangedEmail(any(), anyString(), anyString());
+
+        applyVerifiedEmailChange(admin, "restricted.noticefails.new@thingsboard.org");
+
+        loginSysAdmin();
+        assertThat(doGet("/api/user/" + admin.getId().getId(), User.class).getEmail())
+                .isEqualTo("restricted.noticefails.new@thingsboard.org");
     }
 
     private void applyVerifiedEmailChange(User user, String newEmail) throws Exception {

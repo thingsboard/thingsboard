@@ -189,6 +189,18 @@ public class DefaultEmailChangeService implements EmailChangeService {
         // Signs the user out: DefaultTokenOutdatingService caches the outdating timestamp from this event and
         // JwtAuthenticationProvider then rejects every token issued before it.
         eventPublisher.publishEvent(new UserCredentialsInvalidationEvent(securityUser.getId()));
+        notifyPreviousAddress(user.getTenantId(), oldEmail, newEmail);
+    }
+
+    // Without this notice a stolen session is a silent takeover: the attacker owns the new address, so the
+    // verification code is no obstacle and the account owner never learns the account left their hands.
+    private void notifyPreviousAddress(TenantId tenantId, String oldEmail, String newEmail) {
+        try {
+            mailService.sendEmailChangedEmail(tenantId, newEmail, oldEmail);
+        } catch (Exception e) {
+            // The change is already committed and the session is gone, so the notice cannot fail the request.
+            log.warn("[{}] Failed to notify {} that the account email changed", tenantId, oldEmail, e);
+        }
     }
 
 }

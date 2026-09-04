@@ -42,6 +42,8 @@ public interface MailService {
 
     void sendPasswordWasResetEmail(TenantId tenantId, String loginLink, String email) throws ThingsboardException;
 
+    void sendEmailChangedEmail(TenantId tenantId, String newEmail, String email) throws ThingsboardException;
+
     void sendAccountLockoutEmail(TenantId tenantId, String lockoutEmail, String email, Integer maxFailedLoginAttempts) throws ThingsboardException;
 
     void sendTwoFaVerificationEmail(TenantId tenantId, String email, String verificationCode, int expirationTimeSeconds) throws ThingsboardException;
