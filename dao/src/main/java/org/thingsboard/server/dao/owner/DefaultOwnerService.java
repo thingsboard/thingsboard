@@ -171,6 +171,11 @@ public class DefaultOwnerService implements OwnerService {
     }
 
     @Override
+    public void clearAllOwners() {
+        cacheManager.getCache(ENTITY_OWNERS_CACHE).clear();
+    }
+
+    @Override
     public PageData<EntityInfo> findTenantOwnerByTenantId(TenantId tenantId, PageLink pageLink) {
         log.trace("Executing findTenantOwnerByTenantId, tenantId [{}], pageLink [{}]", tenantId, pageLink);
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);

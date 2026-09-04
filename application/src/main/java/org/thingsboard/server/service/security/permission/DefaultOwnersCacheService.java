@@ -356,7 +356,7 @@ public class DefaultOwnersCacheService implements OwnersCacheService {
 
         deleteFromGroupsAndAddToGroupAll(tenantId, entityId, targetOwnerId);
 
-        clearOwners(entityId);
+        clearOwnersOnOwnerChange(entityId);
     }
 
     private <T extends HasOwnerId> void changeEntityOwner(TenantId tenantId, EntityId targetOwnerId, EntityId entityId, T entity, Consumer<T> saveFunction)
@@ -369,10 +369,21 @@ public class DefaultOwnersCacheService implements OwnersCacheService {
         EntityId previousOwnerId = entity.getOwnerId();
         entity.setOwnerId(targetOwnerId);
         saveFunction.accept(entity);
-        clearOwners(entityId);
+        clearOwnersOnOwnerChange(entityId);
 
         eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).entityId(entityId)
                 .body(JacksonUtil.toString(previousOwnerId)).actionType(ActionType.CHANGE_OWNER).build());
+    }
+
+    private void clearOwnersOnOwnerChange(EntityId entityId) {
+        clearOwners(entityId);
+        if (EntityType.CUSTOMER.equals(entityId.getEntityType())) {
+            // Owner chains cached for the entity groups of the moved customer, for its sub-customers and for their
+            // entities all contain the previous hierarchy, so evicting the customer itself is not enough. The cache is
+            // derived and rebuilt lazily, and changing the owner of a customer is a rare operation, so the whole cache
+            // is dropped instead of traversing the hierarchy of unknown depth.
+            ownerService.clearAllOwners();
+        }
     }
 
     private void deleteFromGroupsAndAddToGroupAll(TenantId tenantId, EntityId entityId, EntityId targetOwnerId) throws ThingsboardException {
