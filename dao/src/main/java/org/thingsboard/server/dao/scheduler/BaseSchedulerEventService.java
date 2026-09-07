@@ -150,7 +150,7 @@ public class BaseSchedulerEventService extends AbstractEntityService implements 
             oldSchedulerEvent = findSchedulerEventById(schedulerEvent.getTenantId(), schedulerEvent.getId());
         }
         try {
-            SchedulerEvent savedSchedulerEvent = schedulerEventDao.save(schedulerEvent.getTenantId(), schedulerEvent);
+            SchedulerEvent savedSchedulerEvent = schedulerEventDao.saveAndFlush(schedulerEvent.getTenantId(), schedulerEvent);
             if (schedulerEvent.getId() == null) {
                 entityCountService.publishCountEntityEvictEvent(schedulerEvent.getTenantId(), EntityType.SCHEDULER_EVENT);
             }

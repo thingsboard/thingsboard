@@ -85,7 +85,7 @@ public class BaseIntegrationService extends CachedVersionedEntityService<Integra
         TenantId tenantId = integration.getTenantId();
         try {
             updateDebugSettings(tenantId, integration, System.currentTimeMillis());
-            var result = integrationDao.save(tenantId, integration);
+            var result = integrationDao.saveAndFlush(tenantId, integration);
             publishEvictEvent(new IntegrationCacheEvictEvent(result.getId(), result));
             if (integration.getId() == null) {
                 entityCountService.publishCountEntityEvictEvent(tenantId, EntityType.INTEGRATION);
