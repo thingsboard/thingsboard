@@ -36,6 +36,7 @@ import static org.thingsboard.server.common.data.audit.ActionType.LOGIN;
 import static org.thingsboard.server.common.data.audit.ActionType.LOGOUT;
 import static org.thingsboard.server.common.data.audit.ActionType.REST_API_RULE_ENGINE_CALL;
 import static org.thingsboard.server.common.data.audit.ActionType.RPC_CALL;
+import static org.thingsboard.server.common.data.audit.ActionType.SETTINGS_UPDATED;
 import static org.thingsboard.server.common.data.audit.ActionType.SMS_SENT;
 import static org.thingsboard.server.common.data.audit.ActionType.SUSPENDED;
 
@@ -53,6 +54,7 @@ class ActionTypeTest {
             LOCKOUT,
             DELETED_COMMENT,
             SMS_SENT,
+            SETTINGS_UPDATED,
             REST_API_RULE_ENGINE_CALL
     );
 

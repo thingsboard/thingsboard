@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.security.model.mfa.PlatformTwoFaSettings;
 import org.thingsboard.server.common.data.security.model.mfa.account.AccountTwoFaSettings;
@@ -261,7 +262,21 @@ public class TwoFactorAuthConfigController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     public PlatformTwoFaSettings savePlatformTwoFaSettings(@Parameter(description = "Settings value", required = true)
                                                            @RequestBody PlatformTwoFaSettings twoFaSettings) throws ThingsboardException {
-        return twoFaConfigManager.savePlatformTwoFaSettings(getTenantId(), twoFaSettings);
+        SecurityUser securityUser = getCurrentUser();
+        try {
+            PlatformTwoFaSettings savedSettings = twoFaConfigManager.savePlatformTwoFaSettings(getTenantId(), twoFaSettings);
+            logSettingsAction(securityUser, null);
+            return savedSettings;
+        } catch (Exception e) {
+            logSettingsAction(securityUser, e);
+            throw e;
+        }
+    }
+
+    private void logSettingsAction(SecurityUser securityUser, Exception e) {
+        auditLogService.logEntityAction(securityUser.getTenantId(), securityUser.getCustomerId(),
+                securityUser.getId(), securityUser.getName(),
+                securityUser.getId(), securityUser, ActionType.SETTINGS_UPDATED, e, "twoFaSettings");
     }
 
     @Data
