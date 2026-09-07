@@ -16,6 +16,15 @@
 
 -->
 @if (entity) {
+  @if (!isEdit) {
+    <mat-tab label="{{ 'attribute.attributes' | translate }}" #attributesTab="matTab">
+      <tb-attribute-table [defaultAttributeScope]="attributeScopes.SERVER_SCOPE"
+                          [active]="attributesTab.isActive"
+                          [entityId]="entity.id"
+                          [entityName]="entity.name">
+      </tb-attribute-table>
+    </mat-tab>
+  }
   <mat-tab #transportType="matTab" label="{{ 'device-profile.transport-configuration' | translate }}">
     @if (transportType.isActive) {
       <div class="mat-padding" [formGroup]="detailsForm">
