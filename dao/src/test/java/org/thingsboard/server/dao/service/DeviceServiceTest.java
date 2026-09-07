@@ -16,6 +16,8 @@
 package org.thingsboard.server.dao.service;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.junit.After;
@@ -31,7 +33,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
-import org.testcontainers.shaded.org.awaitility.Awaitility;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
@@ -80,6 +81,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -160,27 +162,24 @@ public class DeviceServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testDeviceLimitOnTenantProfileLevel() throws InterruptedException {
+    public void testDeviceLimitOnTenantProfileLevel() throws Exception {
         TenantProfile defaultTenantProfile = tenantProfileService.findDefaultTenantProfile(tenantId);
         defaultTenantProfile.getProfileData().setConfiguration(DefaultTenantProfileConfiguration.builder().maxDevices(5l).build());
         tenantProfileService.saveTenantProfile(tenantId, defaultTenantProfile);
 
+        List<ListenableFuture<Device>> futures = new ArrayList<>();
         for (int i = 0; i < 50; i++) {
-            executor.submit(() -> {
+            futures.add(executor.submit(() -> {
                 Device device = new Device();
                 device.setTenantId(tenantId);
                 device.setName(StringUtils.randomAlphabetic(10));
                 device.setType("default");
-                deviceService.saveDevice(device);
-            });
+                return deviceService.saveDevice(device);
+            }));
         }
+        List<Device> savedDevices = Futures.successfulAsList(futures).get(30, TimeUnit.SECONDS);
 
-        Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> {
-            long countByTenantId = deviceService.countByTenantId(tenantId);
-            return countByTenantId == 5;
-        });
-
-        Thread.sleep(2000);
+        assertThat(savedDevices.stream().filter(Objects::nonNull)).hasSize(5);
         assertThat(deviceService.countByTenantId(tenantId)).isEqualTo(5);
     }
 

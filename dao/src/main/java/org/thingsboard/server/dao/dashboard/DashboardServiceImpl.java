@@ -177,7 +177,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
             imageService.updateImagesUsage(dashboard);
             resourceService.updateResourcesUsage(tenantId, dashboard);
 
-            var saved = dashboardDao.save(tenantId, dashboard);
+            var saved = dashboardDao.saveAndFlush(tenantId, dashboard);
             publishEvictEvent(new DashboardTitleEvictEvent(saved.getId()));
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId)
                     .entityId(saved.getId()).entity(saved).created(dashboard.getId() == null).build());

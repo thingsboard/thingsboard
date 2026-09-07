@@ -163,13 +163,11 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
         return executor.submit(() -> findDeviceByTenantIdAndName(tenantId, name));
     }
 
-    @Transactional
     @Override
     public Device saveDeviceWithAccessToken(Device device, String accessToken) {
         return doSaveDevice(device, accessToken, true);
     }
 
-    @Transactional
     @Override
     public Device saveDeviceWithAccessToken(Device device, String accessToken, NameConflictStrategy nameConflictStrategy) {
         return doSaveDevice(device, accessToken, true, nameConflictStrategy);
@@ -180,19 +178,16 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
         return doSaveDevice(device, null, doValidate);
     }
 
-    @Transactional
     @Override
     public Device saveDevice(Device device) {
         return doSaveDevice(device, null, true);
     }
 
-    @Transactional
     @Override
     public Device saveDeviceWithCredentials(Device device, DeviceCredentials deviceCredentials) {
         return saveDeviceWithCredentials(device, deviceCredentials, NameConflictStrategy.DEFAULT);
     }
 
-    @Transactional
     @Override
     public Device saveDeviceWithCredentials(Device device, DeviceCredentials deviceCredentials, NameConflictStrategy nameConflictStrategy) {
         return saveEntity(device, () -> doSaveWithCredentials(device, deviceCredentials, nameConflictStrategy));

@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.ConcurrentReferenceHashMap;
 import org.thingsboard.common.util.DebugModeUtil;
 import org.thingsboard.server.common.data.EntityInfo;
@@ -105,20 +106,25 @@ public abstract class AbstractEntityService {
     @Autowired
     protected EntityDaoRegistry entityDaoRegistry;
 
+    @Autowired
+    private TransactionTemplate transactionTemplate;
+
     @Value("${debug.settings.default_duration:15}")
     private int defaultDebugDurationMinutes;
 
+    // Commit must happen inside the lock, otherwise the next thread counts stale data when checking the limit.
+    // Entry points delegating here must not be @Transactional, or the template joins them and commits later.
     protected <E extends HasId & HasTenantId> E saveEntity(E entity, Supplier<E> saveFunction) {
         if (entity.getId() == null) {
             ReentrantLock lock = entityCreationLocks.computeIfAbsent(entity.getTenantId(), id -> new ReentrantLock());
             lock.lock();
             try {
-                return saveFunction.get();
+                return transactionTemplate.execute(status -> saveFunction.get());
             } finally {
                 lock.unlock();
             }
         } else {
-            return saveFunction.get();
+            return transactionTemplate.execute(status -> saveFunction.get());
         }
     }
 

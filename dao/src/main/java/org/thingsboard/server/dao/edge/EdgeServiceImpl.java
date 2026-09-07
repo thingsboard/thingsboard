@@ -211,7 +211,7 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
         Edge oldEdge = edgeValidator.validate(edge, Edge::getTenantId);
         EdgeCacheEvictEvent evictEvent = new EdgeCacheEvictEvent(edge.getTenantId(), edge.getName(), oldEdge != null ? oldEdge.getName() : null);
         try {
-            Edge savedEdge = edgeDao.save(edge.getTenantId(), edge);
+            Edge savedEdge = edgeDao.saveAndFlush(edge.getTenantId(), edge);
             publishEvictEvent(evictEvent);
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedEdge.getTenantId())
                     .entityId(savedEdge.getId()).entity(savedEdge).created(edge.getId() == null).build());
