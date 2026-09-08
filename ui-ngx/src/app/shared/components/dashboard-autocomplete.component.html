@@ -25,11 +25,13 @@
   @if (!inlineField && label) {
     <mat-label>{{ label }}</mat-label>
   }
-  <input matInput type="text"
+  <input matInput [errorStateMatcher]="this" type="text"
          #dashboardInput
+         #autocompleteTrigger="matAutocompleteTrigger"
          placeholder="{{ placeholder }}"
          formControlName="dashboard"
          (focusin)="onFocus()"
+         (blur)="onBlur()"
          [required]="required"
          [matAutocomplete]="dashboardAutocomplete"
          [class.!hidden]="useDashboardLink && disabled && selectDashboardFormGroup.get('dashboard').value">
@@ -58,8 +60,19 @@
       warning
     </mat-icon>
   }
+  @if (inlineField && selectDashboardFormGroup.get('dashboard').hasError('objectRequired') && selectDashboardFormGroup.get('dashboard').touched) {
+    <mat-icon matSuffix
+              matTooltipPosition="above"
+              matTooltipClass="tb-error-tooltip"
+              [matTooltip]="'entity.entity-not-valid' | translate: {entity: 'dashboard.dashboard' | translate | lowercase}"
+              class="tb-error">
+      warning
+    </mat-icon>
+  }
   <mat-autocomplete
     class="tb-autocomplete"
+    (opened)="onPanelOpened()"
+    (closed)="onPanelClosed()"
     #dashboardAutocomplete="matAutocomplete"
     [displayWith]="displayDashboardFn">
     @for (dashboard of filteredDashboards | async; track dashboard) {
@@ -83,7 +96,12 @@
       </mat-option>
     }
   </mat-autocomplete>
-  @if (!inlineField) {
+  @if (!inlineField && selectDashboardFormGroup.get('dashboard').hasError('objectRequired')) {
+    <mat-error>
+      {{ 'entity.entity-not-valid' | translate: {entity: 'dashboard.dashboard' | translate | lowercase} }}
+    </mat-error>
+  }
+  @if (!inlineField && !selectDashboardFormGroup.get('dashboard').hasError('objectRequired')) {
     <mat-error>
       <ng-content select="[tb-error]"></ng-content>
     </mat-error>

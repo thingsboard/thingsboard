@@ -24,10 +24,11 @@
   @if (showLabel && !inlineField) {
     <mat-label>{{ 'filter.filter' | translate }}</mat-label>
   }
-  <input matInput type="text" placeholder="{{  (!showLabel || inlineField) ? ('filter.filter' | translate) : ''}}"
+  <input matInput [errorStateMatcher]="this" type="text" placeholder="{{  (!showLabel || inlineField) ? ('filter.filter' | translate) : ''}}"
          #filterInput
          formControlName="filter"
          (focusin)="onFocus()"
+         (blur)="onBlur()"
          [required]="tbRequired"
          (keydown)="filterEnter($event)"
          (keypress)="filterEnter($event)"
@@ -61,6 +62,8 @@
     </button>
   }
   <mat-autocomplete class="tb-autocomplete"
+                    (opened)="onPanelOpened()"
+                    (closed)="onPanelClosed()"
                     #filterAutocomplete="matAutocomplete"
                     [displayWith]="displayFilterFn">
     @for (filter of filteredFilters | async; track filter) {
@@ -90,6 +93,11 @@
   @if (!inlineField && !modelValue && tbRequired) {
     <mat-error>
       {{ 'filter.filter-required' | translate }}
+    </mat-error>
+  }
+  @if (selectFilterFormGroup.get('filter').hasError('objectRequired')) {
+    <mat-error>
+      {{ 'entity.entity-not-valid' | translate: {entity: 'filter.filter' | translate | lowercase} }}
     </mat-error>
   }
 </mat-form-field>
