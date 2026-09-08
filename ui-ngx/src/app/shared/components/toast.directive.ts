@@ -37,6 +37,9 @@ import { MediaBreakpoints } from '@shared/models/constants';
 import { MatButton } from '@angular/material/button';
 import Timeout = NodeJS.Timeout;
 
+export const TOAST_PANEL_MIN_WIDTH = 80;
+export const TOAST_PANEL_MIN_HEIGHT = 120;
+
 @Directive({
     selector: '[tb-toast]',
     standalone: false

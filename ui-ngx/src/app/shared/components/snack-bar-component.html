@@ -30,6 +30,7 @@
   </ng-container>
   <ng-template #modern>
     <div class="tb-modern-toast-panel"
+         [class.top]="notification.verticalPosition === 'top'"
          [class.error-toast]="notification.type === 'error'"
          [class.warn-toast]="notification.type === 'warn'"
          [class.success-toast]="notification.type === 'success'"
