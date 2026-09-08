@@ -52,6 +52,8 @@ kafka:
   confluent:
     sasl:
       mechanism: "TB_QUEUE_KAFKA_CONFLUENT_SASL_MECHANISM"
+    security:
+      protocol: "TB_QUEUE_KAFKA_CONFLUENT_SECURITY_PROTOCOL"
     username: "TB_QUEUE_KAFKA_CONFLUENT_USERNAME"
     password: "TB_QUEUE_KAFKA_CONFLUENT_PASSWORD"
 
