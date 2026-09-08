@@ -18,9 +18,12 @@ package org.thingsboard.server.transport.mqtt.sparkplug.timeseries;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
+import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
+import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.gen.transport.mqtt.SparkplugBProto;
 import org.thingsboard.server.transport.mqtt.sparkplug.AbstractMqttV5ClientSparkplugTest;
+import org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType;
 import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType;
 
 import java.util.ArrayList;
@@ -49,6 +52,52 @@ public abstract class AbstractMqttV5ClientSparkplugTelemetryTest extends Abstrac
                     return !finalFuture.get().get().isEmpty();
                 });
         Assert.assertEquals(listKeys.size(), finalFuture.get().get().size());
+    }
+
+    protected void processClientWithCorrectAccessTokenPublishNBIRTH_NDATA_AliasWithoutMetricName() throws Exception {
+        clientWithCorrectNodeAccessTokenWithNDEATH();
+        String metricBirthName_Alias = "Node Metric int32 Only Alias";
+        MetricDataType metricBirthDataType = metricBirthDataType_Int32;
+        List<String> listKeys = connectionWithNBirthMetricNameAndAlias(metricBirthDataType, metricBirthName_Alias, nextInt32(), 4L);
+        Assert.assertTrue("Connection node is failed", client.isConnected());
+        AtomicReference<ListenableFuture<List<TsKvEntry>>> finalFuture = new AtomicReference<>();
+        await(alias + SparkplugMessageType.NBIRTH.name())
+                .atMost(40, TimeUnit.SECONDS)
+                .until(() -> {
+                    finalFuture.set(tsService.findLatest(tenantId, savedGateway.getId(), listKeys));
+                    return !finalFuture.get().get().isEmpty();
+                });
+        Assert.assertEquals(listKeys.size(), finalFuture.get().get().size());
+
+        String messageTypeName = SparkplugMessageType.NDATA.name();
+
+        List<TsKvEntry> listTsKvEntry = new ArrayList<>();
+
+        SparkplugBProto.Payload.Builder ndataPayload = SparkplugBProto.Payload.newBuilder()
+                .setTimestamp(calendar.getTimeInMillis())
+                .setSeq(getSeqNum());
+        long ts = calendar.getTimeInMillis() - PUBLISH_TS_DELTA_MS;
+        int valueKey = nextInt32();
+
+        TsKvEntry tsKvEntry = new BasicTsKvEntry(ts, new LongDataEntry(metricBirthName_Alias, Long.valueOf(String.valueOf(valueKey))));
+        listTsKvEntry.add(tsKvEntry);
+        createdAddMetricValueWithAliasTsKv(ndataPayload, valueKey, metricBirthDataType, ts);
+
+        if (client.isConnected()) {
+            client.publish(TOPIC_ROOT_SPB_V_1_0 + "/" + groupId + "/" + messageTypeName + "/" + edgeNode,
+                    ndataPayload.build().toByteArray(), 0, false);
+        }
+
+        AtomicReference<ListenableFuture<List<TsKvEntry>>> finalFutureAlias = new AtomicReference<>();
+        await(alias + SparkplugMessageType.NDATA.name())
+                .atMost(40, TimeUnit.SECONDS)
+                .until(() -> {
+                    finalFutureAlias.set(tsService.findAllLatest(tenantId, savedGateway.getId()));
+                    return finalFutureAlias.get().get().size() == (listKeys.size() + listTsKvEntry.size() + 1);
+                });
+        Assert.assertTrue("Actual tsKvEntries is not containsAll Expected tsKvEntries", containsIgnoreVersion(finalFutureAlias .get().get(), listTsKvEntry));
+
+
     }
 
     protected void processClientWithCorrectAccessTokenPushNodeMetricBuildPrimitiveSimple() throws Exception {
