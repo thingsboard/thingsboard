@@ -135,7 +135,7 @@ export class GetValueActionSettingsComponent implements OnInit, ControlValueAcce
         renderer: this.renderer,
         componentType: GetValueActionSettingsPanelComponent,
         hostView: this.viewContainerRef,
-        preferredPlacement: ['leftTopOnly', 'leftOnly', 'leftBottomOnly'],
+        preferredPlacement: 'leftBottom',
         context: {
           getValueSettings: this.modelValue,
           panelTitle: this.panelTitle,
@@ -147,7 +147,8 @@ export class GetValueActionSettingsComponent implements OnInit, ControlValueAcce
           targetDevice: this.targetDevice,
           widgetType: this.widgetType
         },
-        isModal: true
+        isModal: true,
+        overlayStyle: { maxHeight: '70vh', height: '100%' }
       });
       getValueSettingsPanelPopover.tbComponentRef.instance.popover = getValueSettingsPanelPopover;
       getValueSettingsPanelPopover.tbComponentRef.instance.getValueSettingsApplied.subscribe((getValueSettings) => {
