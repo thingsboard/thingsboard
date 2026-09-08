@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div class="tb-table-widget tb-absolute-fill">
+<div class="tb-table-widget tb-absolute-fill" [class.is-time-window]="!isDashboardTimewindow">
   <div class="tb-absolute-fill flex flex-1 flex-col">
     <mat-toolbar class="mat-mdc-table-toolbar" [class.!hidden]="!textSearchMode">
       <div class="mat-toolbar-tools">
