@@ -269,7 +269,12 @@ public abstract class EdgeGrpcSession implements Closeable {
 
                 @Override
                 public void onFailure(Throwable t) {
-                    log.error("[{}][{}] Exception during sync process", tenantId, edge.getId(), t);
+                    log.error("[{}][{}] Exception during sync process, skipping fetcher {} and continuing",
+                            tenantId, edge.getId(), next.getClass().getSimpleName(), t);
+                    // Keep walking the cursor: returning here leaves syncInProgress set for the life of the
+                    // session, so the edge never receives SyncCompletedMsg and both general downlink delivery
+                    // and uplink processing stay gated until the session is re-established.
+                    doSync(cursor);
                 }
             }, ctx.getGrpcCallbackExecutorService());
         } else {
