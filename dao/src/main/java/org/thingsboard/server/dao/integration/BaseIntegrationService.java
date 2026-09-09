@@ -75,6 +75,11 @@ public class BaseIntegrationService extends CachedVersionedEntityService<Integra
     }
 
     @Override
+    protected boolean isUpdateTransactional() {
+        return false; // entry points had no @Transactional before the fix, update stays without an ambient transaction
+    }
+
+    @Override
     public Integration saveIntegration(Integration integration) {
         return saveEntity(integration, () -> doSaveIntegration(integration));
     }

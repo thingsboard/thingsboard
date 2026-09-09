@@ -132,6 +132,11 @@ public class BaseSchedulerEventService extends AbstractEntityService implements 
     }
 
     @Override
+    protected boolean isUpdateTransactional() {
+        return false; // entry points had no @Transactional before the fix, update stays without an ambient transaction
+    }
+
+    @Override
     public SchedulerEvent saveSchedulerEvent(SchedulerEvent schedulerEvent) {
         return saveSchedulerEvent(schedulerEvent, true);
     }

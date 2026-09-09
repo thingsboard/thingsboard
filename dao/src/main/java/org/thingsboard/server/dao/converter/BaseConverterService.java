@@ -62,6 +62,11 @@ public class BaseConverterService extends AbstractEntityService implements Conve
     private JpaExecutorService executor;
 
     @Override
+    protected boolean isUpdateTransactional() {
+        return false; // entry points had no @Transactional before the fix, update stays without an ambient transaction
+    }
+
+    @Override
     public Converter saveConverter(Converter converter) {
         return saveEntity(converter, () -> doSaveConverter(converter));
     }
