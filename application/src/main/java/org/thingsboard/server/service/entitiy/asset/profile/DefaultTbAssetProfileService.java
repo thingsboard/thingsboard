@@ -64,7 +64,7 @@ public class DefaultTbAssetProfileService extends AbstractTbEntityService implem
             logEntityActionService.logEntityAction(tenantId, assetProfileId, assetProfile, null,
                     actionType, user, assetProfileId.toString());
         } catch (Exception e) {
-            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.ASSET_PROFILE), actionType,
+            logEntityActionService.logEntityAction(tenantId, getOrEmptyId(assetProfileId, EntityType.ASSET_PROFILE), actionType,
                     user, e, assetProfileId.toString());
             throw e;
         }

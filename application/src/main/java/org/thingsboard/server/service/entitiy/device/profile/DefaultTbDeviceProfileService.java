@@ -66,7 +66,7 @@ public class DefaultTbDeviceProfileService extends AbstractTbEntityService imple
             logEntityActionService.logEntityAction(tenantId, deviceProfileId, deviceProfile, null,
                     actionType, user, deviceProfileId.toString());
         } catch (Exception e) {
-            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.DEVICE_PROFILE), actionType,
+            logEntityActionService.logEntityAction(tenantId, getOrEmptyId(deviceProfileId, EntityType.DEVICE_PROFILE), actionType,
                     user, e, deviceProfileId.toString());
             throw e;
         }
