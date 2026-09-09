@@ -597,7 +597,6 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
     }
 
     @Override
-    @Transactional
     public Device saveDevice(ProvisionRequest provisionRequest, DeviceProfile profile) {
         Device device = new Device();
         device.setName(provisionRequest.getDeviceName());
@@ -640,6 +639,7 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
             try {
                 deviceCredentialsService.updateDeviceCredentials(savedDevice.getTenantId(), deviceCredentials);
             } catch (Exception e) {
+                deleteProvisionedDevice(savedDevice);
                 throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
             }
         }
@@ -647,6 +647,15 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
         publishEvictEvent(new DeviceCacheEvictEvent(savedDevice.getTenantId(), savedDevice.getId(), provisionRequest.getDeviceName(), null));
         countService.publishCountEntityEvictEvent(savedDevice.getTenantId(), EntityType.DEVICE);
         return savedDevice;
+    }
+
+    // The device is already committed by saveDevice, so a failed provision request has to remove it explicitly.
+    private void deleteProvisionedDevice(Device device) {
+        try {
+            transactionTemplate.executeWithoutResult(status -> deleteDevice(device.getTenantId(), device));
+        } catch (Exception e) {
+            log.warn("[{}][{}] Failed to delete the device created by a failed provision request", device.getTenantId(), device.getId(), e);
+        }
     }
 
     @Override

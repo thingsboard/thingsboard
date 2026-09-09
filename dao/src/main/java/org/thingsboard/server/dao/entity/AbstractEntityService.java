@@ -107,13 +107,13 @@ public abstract class AbstractEntityService {
     protected EntityDaoRegistry entityDaoRegistry;
 
     @Autowired
-    private TransactionTemplate transactionTemplate;
+    protected TransactionTemplate transactionTemplate;
 
     @Value("${debug.settings.default_duration:15}")
     private int defaultDebugDurationMinutes;
 
     // Commit must happen inside the lock, otherwise the next thread counts stale data when checking the limit.
-    // Entry points delegating here must not be @Transactional, or the template joins them and commits later.
+    // No caller in the chain may have a transaction open, or the template joins it and commits after the unlock.
     protected <E extends HasId & HasTenantId> E saveEntity(E entity, Supplier<E> saveFunction) {
         if (entity.getId() == null) {
             ReentrantLock lock = entityCreationLocks.computeIfAbsent(entity.getTenantId(), id -> new ReentrantLock());
@@ -124,8 +124,14 @@ public abstract class AbstractEntityService {
                 lock.unlock();
             }
         } else {
-            return transactionTemplate.execute(status -> saveFunction.get());
+            return isUpdateTransactional()
+                    ? transactionTemplate.execute(status -> saveFunction.get())
+                    : saveFunction.get();
         }
+    }
+
+    protected boolean isUpdateTransactional() {
+        return true;
     }
 
     protected void createRelation(TenantId tenantId, EntityRelation relation) {

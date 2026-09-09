@@ -155,6 +155,11 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     }
 
     @Override
+    protected boolean isUpdateTransactional() {
+        return false; // entry points had no @Transactional before the fix, update stays without an ambient transaction
+    }
+
+    @Override
     public Dashboard saveDashboard(Dashboard dashboard) {
         return saveDashboard(dashboard, true);
     }

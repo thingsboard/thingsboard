@@ -53,6 +53,7 @@ import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.TimeSeriesOutput;
+import org.thingsboard.server.common.data.device.credentials.ProvisionDeviceCredentialsData;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
@@ -69,6 +70,8 @@ import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.device.provision.ProvisionFailedException;
+import org.thingsboard.server.dao.device.provision.ProvisionRequest;
 import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.dao.ota.OtaPackageService;
@@ -181,6 +184,26 @@ public class DeviceServiceTest extends AbstractServiceTest {
 
         assertThat(savedDevices.stream().filter(Objects::nonNull)).hasSize(5);
         assertThat(deviceService.countByTenantId(tenantId)).isEqualTo(5);
+    }
+
+    @Test
+    public void testProvisionedDeviceIsDeletedWhenCredentialsUpdateFails() {
+        String takenToken = "TAKEN_ACCESS_TOKEN";
+        Device existingDevice = new Device();
+        existingDevice.setTenantId(tenantId);
+        existingDevice.setName("Existing device");
+        existingDevice.setType("default");
+        deviceService.saveDeviceWithAccessToken(existingDevice, takenToken);
+
+        DeviceProfile deviceProfile = deviceProfileService.findOrCreateDeviceProfile(tenantId, "default");
+        ProvisionRequest provisionRequest = new ProvisionRequest("Provisioned device", DeviceCredentialsType.ACCESS_TOKEN,
+                new ProvisionDeviceCredentialsData(takenToken, null, null, null, null), null, null);
+
+        assertThatThrownBy(() -> deviceService.saveDevice(provisionRequest, deviceProfile))
+                .isInstanceOf(ProvisionFailedException.class);
+
+        assertThat(deviceService.findDeviceByTenantIdAndName(tenantId, "Provisioned device")).isNull();
+        assertThat(deviceService.countByTenantId(tenantId)).isEqualTo(1);
     }
 
     @Test
