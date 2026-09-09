@@ -97,6 +97,8 @@ public abstract class AbstractEntityService {
     // queue.edqs.api.supported are both on, validateNumberOfEntitiesPerTenant counts through EDQS, which is filled
     // asynchronously after commit, so the next thread reads a replica without the new row and the limit stays
     // exceedable. Both properties are disabled by default.
+    // The transaction also covers everything the save function does, including best-effort calls that swallow their
+    // own exceptions (addEntityToEntityGroupAll): if a @Transactional call beneath one fails, the commit here throws.
     protected <E extends HasId & HasTenantId> E saveEntity(E entity, Supplier<E> saveFunction) {
         if (entity.getId() == null) {
             ReentrantLock lock = entityCreationLocks.computeIfAbsent(entity.getTenantId(), id -> new ReentrantLock());
