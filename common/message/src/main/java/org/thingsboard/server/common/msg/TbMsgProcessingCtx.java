@@ -63,16 +63,17 @@ public final class TbMsgProcessingCtx implements Serializable {
         stack.add(new TbMsgProcessingStackItem(ruleChainId, ruleNodeId));
     }
 
-    public boolean isAlreadyInStack(RuleChainId ruleChainId, RuleNodeId ruleNodeId) {
+    public int countOccurrences(RuleChainId ruleChainId, RuleNodeId ruleNodeId) {
         if (stack == null || stack.isEmpty()) {
-            return false;
+            return 0;
         }
+        int count = 0;
         for (TbMsgProcessingStackItem item : stack) {
             if (ruleChainId.equals(item.getRuleChainId()) && ruleNodeId.equals(item.getRuleNodeId())) {
-                return true;
+                count++;
             }
         }
-        return false;
+        return count;
     }
 
     public TbMsgProcessingStackItem pop() {

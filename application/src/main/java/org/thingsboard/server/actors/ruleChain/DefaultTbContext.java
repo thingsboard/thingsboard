@@ -186,15 +186,15 @@ public class DefaultTbContext implements TbContext {
         }
         RuleChainId selfRuleChainId = nodeCtx.getSelf().getRuleChainId();
         RuleNodeId selfId = nodeCtx.getSelf().getId();
-        if (msg.isAlreadyInStack(selfRuleChainId, selfId)) {
-            log.warn("[{}] Detected rule chain processing loop for rule node [{}] in rule chain [{}]. " +
-                    "The message will be failed to prevent infinite loop. " +
-                    "Please check the rule chain configuration for circular references.",
-                    nodeCtx.getTenantId(), selfId, selfRuleChainId);
-            tellFailure(msg, new RuntimeException(
-                    "Detected rule chain processing loop for rule node [" + selfId + "] " +
-                    "in rule chain [" + selfRuleChainId + "]. " +
-                    "Please check the rule chain configuration for circular references."));
+        int maxVisits = Math.max(1, mainCtx.getRuleChainInputLoopMaxVisits());
+        if (msg.countOccurrences(selfRuleChainId, selfId) >= maxVisits) {
+            String reason = "Rule chain input node visit limit " + maxVisits + " reached for rule node ["
+                    + selfId + "] in rule chain [" + selfRuleChainId + "]. "
+                    + "If this loop is unexpected, check the rule chain configuration for circular references. "
+                    + "If the loop is intentional, raise actors.rule.chain.input_loop_max_visits "
+                    + "(env ACTORS_RULE_CHAIN_INPUT_LOOP_MAX_VISITS).";
+            log.warn("[{}] {}", nodeCtx.getTenantId(), reason);
+            tellFailure(msg, new RuntimeException(reason));
             return;
         }
         TbMsg tbMsg = msg.copy()
