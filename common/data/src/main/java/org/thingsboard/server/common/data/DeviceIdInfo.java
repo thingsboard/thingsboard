@@ -19,6 +19,7 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 
 import java.io.Serializable;
@@ -33,10 +34,12 @@ public class DeviceIdInfo implements Serializable, HasTenantId {
     private final TenantId tenantId;
     private final CustomerId customerId;
     private final DeviceId deviceId;
+    private final DeviceProfileId deviceProfileId;
 
-    public DeviceIdInfo(UUID tenantId, UUID customerId, UUID deviceId) {
+    public DeviceIdInfo(UUID tenantId, UUID customerId, UUID deviceId, UUID deviceProfileId) {
         this.tenantId = TenantId.fromUUID(tenantId);
         this.customerId = customerId != null ? new CustomerId(customerId) : null;
         this.deviceId = new DeviceId(deviceId);
+        this.deviceProfileId = deviceProfileId != null ? new DeviceProfileId(deviceProfileId) : null;
     }
 }
