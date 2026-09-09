@@ -100,7 +100,7 @@ public class DeviceServiceTest extends AbstractServiceTest {
 
     @Autowired
     CustomerService customerService;
-    @Autowired
+    @MockitoSpyBean
     DeviceCredentialsService deviceCredentialsService;
     @Autowired
     DeviceProfileService deviceProfileService;
@@ -204,6 +204,23 @@ public class DeviceServiceTest extends AbstractServiceTest {
 
         assertThat(deviceService.findDeviceByTenantIdAndName(tenantId, "Provisioned device")).isNull();
         assertThat(deviceService.countByTenantId(tenantId)).isEqualTo(1);
+    }
+
+    @Test
+    public void testProvisionedDeviceIsDeletedWhenCredentialsLookupFails() {
+        Mockito.doThrow(new RuntimeException("mock message"))
+                .doCallRealMethod()
+                .when(deviceCredentialsService).findDeviceCredentialsByDeviceId(any(), any());
+
+        DeviceProfile deviceProfile = deviceProfileService.findOrCreateDeviceProfile(tenantId, "default");
+        ProvisionRequest provisionRequest = new ProvisionRequest("Provisioned device", DeviceCredentialsType.ACCESS_TOKEN,
+                new ProvisionDeviceCredentialsData("PROVISION_ACCESS_TOKEN", null, null, null, null), null, null);
+
+        assertThatThrownBy(() -> deviceService.saveDevice(provisionRequest, deviceProfile))
+                .isInstanceOf(ProvisionFailedException.class);
+
+        assertThat(deviceService.findDeviceByTenantIdAndName(tenantId, "Provisioned device")).isNull();
+        assertThat(deviceService.countByTenantId(tenantId)).isZero();
     }
 
     @Test
