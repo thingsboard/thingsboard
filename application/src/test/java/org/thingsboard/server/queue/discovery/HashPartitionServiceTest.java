@@ -96,6 +96,7 @@ public class HashPartitionServiceTest {
                 .setServiceId("tb-core-0")
                 .addAllServiceTypes(Collections.singletonList(ServiceType.TB_CORE.name()))
                 .build();
+        when(serviceInfoProvider.getServiceInfo()).thenReturn(currentServer);
         List<ServiceInfo> otherServers = new ArrayList<>();
         for (int i = 1; i < SERVER_COUNT; i++) {
             otherServers.add(ServiceInfo.newBuilder()
@@ -105,6 +106,14 @@ public class HashPartitionServiceTest {
         }
 
         partitionService.recalculatePartitions(currentServer, otherServers);
+    }
+
+    @Test
+    public void testIsKnownServiceId() {
+        assertThat(partitionService.isKnownServiceId(ServiceType.TB_CORE, "tb-core-0")).isTrue(); // current server
+        assertThat(partitionService.isKnownServiceId(ServiceType.TB_CORE, "tb-rule-1")).isTrue(); // other server
+        assertThat(partitionService.isKnownServiceId(ServiceType.TB_CORE, "unknown-id")).isFalse();
+        assertThat(partitionService.isKnownServiceId(ServiceType.TB_RULE_ENGINE, "tb-core-0")).isFalse(); // wrong type
     }
 
     @Test

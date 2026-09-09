@@ -27,9 +27,19 @@ public class SetCache<K> {
     private final Cache<K, Object> cache;
 
     public SetCache(long valueTtlMs) {
-        this.cache = Caffeine.newBuilder()
-                .expireAfterWrite(valueTtlMs, TimeUnit.MILLISECONDS)
-                .build();
+        this(Caffeine.newBuilder().expireAfterWrite(valueTtlMs, TimeUnit.MILLISECONDS));
+    }
+
+    private SetCache(Caffeine<Object, Object> builder) {
+        this.cache = builder.build();
+    }
+
+    /**
+     * Bounded by entry count with LRU-ish eviction, instead of a TTL - for callers that want to remember
+     * up to N recently seen keys rather than expire entries after a fixed duration.
+     */
+    public static <T> SetCache<T> boundedBySize(int maximumSize) {
+        return new SetCache<>(Caffeine.newBuilder().maximumSize(maximumSize));
     }
 
     public void add(K key) {

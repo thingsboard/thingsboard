@@ -20,9 +20,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.SetCache;
 import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.ApiUsageState;
@@ -96,6 +98,7 @@ import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.common.TbRuleEngineProducerService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TopicService;
+import org.thingsboard.server.queue.discovery.event.ServiceListChangedEvent;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.service.gateway_device.GatewayNotificationsService;
 import org.thingsboard.server.service.ota.OtaPackageStateService;
@@ -129,6 +132,12 @@ public class DefaultTbClusterService implements TbClusterService {
     private final AtomicInteger toTransportNfs = new AtomicInteger(0);
     private final AtomicInteger toEdgeMsgs = new AtomicInteger(0);
     private final AtomicInteger toEdgeNfs = new AtomicInteger(0);
+    private final AtomicInteger skippedUnknownServiceNfs = new AtomicInteger(0);
+
+    private static final int RECENTLY_SEEN_SERVICES_MAX_SIZE = 1024;
+    // serviceType:serviceId -> seen. Bounded LRU of cluster members ever observed, used to grace a service id that is
+    // briefly missing from the live snapshot (see isUnknownService). Fed from ServiceListChangedEvent.
+    private final SetCache<String> recentlySeenServices = SetCache.boundedBySize(RECENTLY_SEEN_SERVICES_MAX_SIZE);
 
     @Autowired
     private PartitionService partitionService;
@@ -208,6 +217,10 @@ public class DefaultTbClusterService implements TbClusterService {
 
     @Override
     public void pushNotificationToCore(String serviceId, FromDeviceRpcResponse response, TbQueueCallback callback) {
+        if (isUnknownService(ServiceType.TB_CORE, serviceId)) {
+            skipNotificationToUnknownService(ServiceType.TB_CORE, serviceId, callback);
+            return;
+        }
         TopicPartitionInfo tpi = topicService.getNotificationsTopic(ServiceType.TB_CORE, serviceId);
         log.trace("PUSHING msg: {} to:{}", response, tpi);
         FromDeviceRPCResponseProto.Builder builder = FromDeviceRPCResponseProto.newBuilder()
@@ -222,10 +235,91 @@ public class DefaultTbClusterService implements TbClusterService {
 
     @Override
     public void pushNotificationToCore(String targetServiceId, TransportProtos.RestApiCallResponseMsgProto responseMsgProto, TbQueueCallback callback) {
+        if (isUnknownService(ServiceType.TB_CORE, targetServiceId)) {
+            skipNotificationToUnknownService(ServiceType.TB_CORE, targetServiceId, callback);
+            return;
+        }
         TopicPartitionInfo tpi = topicService.getNotificationsTopic(ServiceType.TB_CORE, targetServiceId);
         ToCoreNotificationMsg msg = ToCoreNotificationMsg.newBuilder().setRestApiCallResponseMsg(responseMsgProto).build();
         producerProvider.getTbCoreNotificationsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), msg), callback);
         toCoreNfs.incrementAndGet();
+    }
+
+    /**
+     * Per-service notification topics ({@code <notifications-topic>.<serviceId>}) are auto-created by the producer on
+     * first send. A {@code serviceId} that is not a member of the cluster - e.g. a stale node id or a value injected
+     * via message metadata - would therefore create an orphan topic that nobody ever consumes and that is never
+     * cleaned up. To prevent that, notifications whose target service id is not a current member of the cluster are
+     * skipped.
+     * <p>
+     * This is a safety net for never-real ids, not a precise gatekeeper, so it is deliberately lenient. A service id is
+     * treated as known if it is either a current member ({@link PartitionService#isKnownServiceId}) or a recently seen
+     * one ({@link #recentlySeenServices}). The recently-seen grace covers nodes that are briefly absent from the live
+     * snapshot - a discovery-propagation lag, a rolling restart or a transient scale-down - so legitimate replies to
+     * them are not dropped; genuine non-delivery to a node that is actually gone is already handled by the caller-side
+     * RPC/REST timeout. The check also fails open while the cluster topology is not yet known (empty/absent membership,
+     * e.g. right after startup).
+     */
+    private boolean isUnknownService(ServiceType serviceType, String serviceId) {
+        if (serviceId == null || serviceId.isEmpty()) {
+            return true;
+        }
+        if (partitionService.isKnownServiceId(serviceType, serviceId)) {
+            return false; // currently a live member
+        }
+        Set<String> serviceIds = partitionService.getAllServiceIds(serviceType);
+        if (serviceIds == null || serviceIds.isEmpty()) {
+            return false; // topology not known yet - fail open
+        }
+        return !recentlySeenServices.contains(recentlySeenServiceKey(serviceType, serviceId));
+    }
+
+    private void skipNotificationToUnknownService(ServiceType serviceType, String serviceId, TbQueueCallback callback) {
+        log.debug("Skipping notification push to unknown {} service id [{}]", serviceType, serviceId);
+        skippedUnknownServiceNfs.incrementAndGet();
+        if (callback != null) {
+            // Deliberate skip - the target is not a cluster member. Complete the callback as a no-op success,
+            // matching pushNotificationToTransport, so callers don't treat an intentional skip as a delivery error.
+            callback.onSuccess(null);
+        }
+    }
+
+    /**
+     * Records every observed cluster member so that {@link #isUnknownService} can grace a service id that has dropped
+     * out of the live snapshot (propagation lag, rolling restart, transient scale-down) instead of dropping
+     * notifications to it. Bounded by {@link #RECENTLY_SEEN_SERVICES_MAX_SIZE} with LRU eviction, so an id that is gone
+     * for good eventually ages out and the guard tightens again. Discovery events are change-only, so this never
+     * removes entries - it only adds; the live-snapshot check in {@link #isUnknownService} stays authoritative for
+     * current members.
+     */
+    @EventListener
+    public void onServiceListChanged(ServiceListChangedEvent event) {
+        rememberSeenService(event.getCurrentService());
+        List<TransportProtos.ServiceInfo> otherServices = event.getOtherServices();
+        if (otherServices != null) {
+            otherServices.forEach(this::rememberSeenService);
+        }
+    }
+
+    private void rememberSeenService(TransportProtos.ServiceInfo serviceInfo) {
+        if (serviceInfo == null) {
+            return;
+        }
+        String serviceId = serviceInfo.getServiceId();
+        if (serviceId == null || serviceId.isEmpty()) {
+            return;
+        }
+        for (String serviceType : serviceInfo.getServiceTypesList()) {
+            recentlySeenServices.add(recentlySeenServiceKey(serviceType, serviceId));
+        }
+    }
+
+    private static String recentlySeenServiceKey(ServiceType serviceType, String serviceId) {
+        return recentlySeenServiceKey(serviceType.name(), serviceId);
+    }
+
+    private static String recentlySeenServiceKey(String serviceType, String serviceId) {
+        return serviceType + ":" + serviceId;
     }
 
     @Override
@@ -322,6 +416,10 @@ public class DefaultTbClusterService implements TbClusterService {
 
     @Override
     public void pushNotificationToRuleEngine(String serviceId, FromDeviceRpcResponse response, TbQueueCallback callback) {
+        if (isUnknownService(ServiceType.TB_RULE_ENGINE, serviceId)) {
+            skipNotificationToUnknownService(ServiceType.TB_RULE_ENGINE, serviceId, callback);
+            return;
+        }
         TopicPartitionInfo tpi = topicService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, serviceId);
         log.trace("PUSHING msg: {} to:{}", response, tpi);
         FromDeviceRPCResponseProto.Builder builder = FromDeviceRPCResponseProto.newBuilder()
@@ -336,11 +434,8 @@ public class DefaultTbClusterService implements TbClusterService {
 
     @Override
     public void pushNotificationToTransport(String serviceId, ToTransportMsg response, TbQueueCallback callback) {
-        if (serviceId == null || serviceId.isEmpty()) {
-            log.trace("pushNotificationToTransport: skipping message without serviceId [{}], (ToTransportMsg) response [{}]", serviceId, response);
-            if (callback != null) {
-                callback.onSuccess(null); //callback that message already sent, no useful payload expected
-            }
+        if (isUnknownService(ServiceType.TB_TRANSPORT, serviceId)) {
+            skipNotificationToUnknownService(ServiceType.TB_TRANSPORT, serviceId, callback);
             return;
         }
         TopicPartitionInfo tpi = topicService.getNotificationsTopic(ServiceType.TB_TRANSPORT, serviceId);
@@ -630,9 +725,11 @@ public class DefaultTbClusterService implements TbClusterService {
             int toTransportNfsCnt = toTransportNfs.getAndSet(0);
             int toEdgeMsgCnt = toEdgeMsgs.getAndSet(0);
             int toEdgeNfsCnt = toEdgeNfs.getAndSet(0);
-            if (toCoreMsgCnt > 0 || toCoreNfsCnt > 0 || toRuleEngineMsgsCnt > 0 || toRuleEngineNfsCnt > 0 || toTransportNfsCnt > 0 || toEdgeMsgCnt > 0 || toEdgeNfsCnt > 0) {
+            int skippedUnknownServiceNfsCnt = skippedUnknownServiceNfs.getAndSet(0);
+            if (toCoreMsgCnt > 0 || toCoreNfsCnt > 0 || toRuleEngineMsgsCnt > 0 || toRuleEngineNfsCnt > 0 || toTransportNfsCnt > 0 || toEdgeMsgCnt > 0 || toEdgeNfsCnt > 0 || skippedUnknownServiceNfsCnt > 0) {
                 log.info("To TbCore: [{}] messages [{}] notifications; To TbRuleEngine: [{}] messages [{}] notifications; To Transport: [{}] notifications;" +
-                        "To Edge: [{}] messages [{}] notifications", toCoreMsgCnt, toCoreNfsCnt, toRuleEngineMsgsCnt, toRuleEngineNfsCnt, toTransportNfsCnt, toEdgeMsgCnt, toEdgeNfsCnt);
+                        "To Edge: [{}] messages [{}] notifications; Skipped notifications to unknown service id: [{}]",
+                        toCoreMsgCnt, toCoreNfsCnt, toRuleEngineMsgsCnt, toRuleEngineNfsCnt, toTransportNfsCnt, toEdgeMsgCnt, toEdgeNfsCnt, skippedUnknownServiceNfsCnt);
             }
         }
     }

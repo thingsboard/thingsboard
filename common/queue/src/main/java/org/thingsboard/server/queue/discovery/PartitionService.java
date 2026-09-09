@@ -61,6 +61,12 @@ public interface PartitionService {
      */
     Set<String> getAllServiceIds(ServiceType serviceType);
 
+    /**
+     * Cheaper alternative to {@link #getAllServiceIds} when only membership of a single id needs to be checked -
+     * avoids building the full service id set.
+     */
+    boolean isKnownServiceId(ServiceType serviceType, String serviceId);
+
     Set<TransportProtos.ServiceInfo> getAllServices(ServiceType serviceType);
 
     Set<TransportProtos.ServiceInfo> getOtherServices(ServiceType serviceType);

@@ -109,7 +109,7 @@ public class HashPartitionService implements PartitionService {
 
     private final ConcurrentMap<TenantId, TenantRoutingInfo> tenantRoutingInfoMap = new ConcurrentHashMap<>();
 
-    private List<ServiceInfo> currentOtherServices;
+    private volatile List<ServiceInfo> currentOtherServices;
     private final Map<String, List<ServiceInfo>> tbTransportServicesByType = new HashMap<>();
     private volatile Map<TenantProfileId, List<ServiceInfo>> responsibleServices = Collections.emptyMap();
 
@@ -548,6 +548,23 @@ public class HashPartitionService implements PartitionService {
     @Override
     public Set<String> getAllServiceIds(ServiceType serviceType) {
         return getAllServices(serviceType).stream().map(ServiceInfo::getServiceId).collect(Collectors.toSet());
+    }
+
+    @Override
+    public boolean isKnownServiceId(ServiceType serviceType, String serviceId) {
+        ServiceInfo current = serviceInfoProvider.getServiceInfo();
+        if (serviceId.equals(current.getServiceId()) && current.getServiceTypesList().contains(serviceType.name())) {
+            return true;
+        }
+        List<ServiceInfo> others = currentOtherServices;
+        if (others != null) {
+            for (ServiceInfo serviceInfo : others) {
+                if (serviceId.equals(serviceInfo.getServiceId()) && serviceInfo.getServiceTypesList().contains(serviceType.name())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     @Override
