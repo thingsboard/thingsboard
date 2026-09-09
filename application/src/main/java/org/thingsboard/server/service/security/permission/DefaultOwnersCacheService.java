@@ -375,7 +375,8 @@ public class DefaultOwnersCacheService implements OwnersCacheService {
                 .body(JacksonUtil.toString(previousOwnerId)).actionType(ActionType.CHANGE_OWNER).build());
     }
 
-    private void clearOwnersOnOwnerChange(EntityId entityId) {
+    @Override
+    public void clearOwnersOnOwnerChange(EntityId entityId) {
         clearOwners(entityId);
         if (EntityType.CUSTOMER.equals(entityId.getEntityType())) {
             // Owner chains cached for the entity groups of the moved customer, for its sub-customers and for their
