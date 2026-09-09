@@ -56,7 +56,7 @@ public class PskLwm2mIntegrationTest extends AbstractSecurityLwM2MIntegrationTes
                 shortServerId,
                 identity.getBytes(StandardCharsets.UTF_8),
                 Hex.decodeHex(keyPsk.toCharArray()));
-        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsSecure(PSK, NONE));
+        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapSectionsServerCredentialsSecure(PSK, NONE));
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsSecure(clientCredentials, null, null, PSK, false);
         this.basicTestConnection(security, null,
                 deviceCredentials,
@@ -83,7 +83,7 @@ public class PskLwm2mIntegrationTest extends AbstractSecurityLwM2MIntegrationTes
                 shortServerId,
                 identity.getBytes(StandardCharsets.UTF_8),
                 Hex.decodeHex(keyPsk.toCharArray()));
-        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(TELEMETRY_WITH_ONE_OBSERVE, getBootstrapServerCredentialsSecure(PSK, NONE));
+        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(TELEMETRY_WITH_ONE_OBSERVE, getBootstrapSectionsServerCredentialsSecure(PSK, NONE));
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsSecure(clientCredentials, null, null, PSK, false);
         String awaitAlias = "await on client state (Psk_Lwm2m)";
         Device lwm2mDevice = this.basicTestConnection(security, null,
@@ -98,7 +98,7 @@ public class PskLwm2mIntegrationTest extends AbstractSecurityLwM2MIntegrationTes
 
         awaitObserveReadAll(1, lwm2mDevice.getId().getId().toString());
         DeviceProfile foundDeviceProfile = doGet("/api/deviceProfile/" + lwm2mDevice.getDeviceProfileId().getId().toString(), DeviceProfile.class);
-        transportConfiguration = getTransportConfiguration(TELEMETRY_WITH_MANY_OBSERVE, getBootstrapServerCredentialsSecure(PSK, NONE));
+        transportConfiguration = getTransportConfiguration(TELEMETRY_WITH_MANY_OBSERVE, getBootstrapSectionsServerCredentialsSecure(PSK, NONE));
         foundDeviceProfile.getProfileData().setTransportConfiguration(transportConfiguration);
         DeviceProfile lwm2mDeviceProfileManyParams = doPost("/api/deviceProfile", foundDeviceProfile, DeviceProfile.class);
         Assert.assertNotNull(lwm2mDeviceProfileManyParams);
@@ -120,7 +120,7 @@ public class PskLwm2mIntegrationTest extends AbstractSecurityLwM2MIntegrationTes
                 shortServerId,
                 identity.getBytes(StandardCharsets.UTF_8),
                 Hex.decodeHex(keyPsk.toCharArray()));
-        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(TELEMETRY_WITH_ONE_OBSERVE, getBootstrapServerCredentialsSecure(PSK, NONE));
+        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(TELEMETRY_WITH_ONE_OBSERVE, getBootstrapSectionsServerCredentialsSecure(PSK, NONE));
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsSecure(clientCredentials, null, null, PSK, false);
         String awaitAlias = "await on client state (Psk_Lwm2m)";
         Device lwm2mDevice = this.basicTestConnection(security, null,
@@ -137,7 +137,7 @@ public class PskLwm2mIntegrationTest extends AbstractSecurityLwM2MIntegrationTes
         lwM2MTestClient.stop(true);
 
         DeviceProfile foundDeviceProfile = doGet("/api/deviceProfile/" + lwm2mDevice.getDeviceProfileId().getId().toString(), DeviceProfile.class);
-        transportConfiguration = getTransportConfiguration(TELEMETRY_WITH_MANY_OBSERVE, getBootstrapServerCredentialsSecure(PSK, NONE));
+        transportConfiguration = getTransportConfiguration(TELEMETRY_WITH_MANY_OBSERVE, getBootstrapSectionsServerCredentialsSecure(PSK, NONE));
         foundDeviceProfile.getProfileData().setTransportConfiguration(transportConfiguration);
         DeviceProfile lwm2mDeviceProfileManyParams = doPost("/api/deviceProfile", foundDeviceProfile, DeviceProfile.class);
         Assert.assertNotNull(lwm2mDeviceProfileManyParams);
@@ -156,7 +156,7 @@ public class PskLwm2mIntegrationTest extends AbstractSecurityLwM2MIntegrationTes
         clientCredentials.setEndpoint(clientEndpoint);
         clientCredentials.setIdentity(identity);
         clientCredentials.setKey(keyPsk);
-        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsSecure(PSK, NONE));
+        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapSectionsServerCredentialsSecure(PSK, NONE));
         DeviceProfile deviceProfile = createLwm2mDeviceProfile("profileFor" + clientEndpoint, transportConfiguration);
 
         // Wait for the profile to become available. This synchronizes asynchronous processes  and prevents TenantNotFoundException during tearDown.
@@ -192,7 +192,7 @@ public class PskLwm2mIntegrationTest extends AbstractSecurityLwM2MIntegrationTes
         Security securityPskBs = pskBootstrap(SECURE_URI_BS,
                 identity.getBytes(StandardCharsets.UTF_8),
                 Hex.decodeHex(keyPsk.toCharArray()));
-        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsSecure(PSK, BOTH));
+        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapSectionsServerCredentialsSecure(PSK, BOTH));
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsSecure(clientCredentials, null, null, PSK, false);
         this.basicTestConnection(null, securityPskBs,
                 deviceCredentials,

@@ -27,7 +27,7 @@ public class LwM2MIntegrationDiffPortTest extends AbstractLwM2MIntegrationDiffPo
     @Test
     public void testWithNoSecConnectLwm2mSuccess_AfterRegistration_UpdateRegistrationFromDifferentPort_Ok() throws Exception {
         String awaitAlias = "await on client state (NoSec different port)";
-        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsSecure(NO_SEC, NONE));
+        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapSectionsServerCredentialsSecure(NO_SEC, NONE));
         initDeviceCredentialsNoSek();
         basicTestConnectionDifferentPort(
                 transportConfiguration,
@@ -36,7 +36,7 @@ public class LwM2MIntegrationDiffPortTest extends AbstractLwM2MIntegrationDiffPo
     @Test
     public void testWithPskConnectLwm2mSuccess_AfterRegistration_UpdateRegistrationFromDifferentPort_Ok() throws Exception {
         String awaitAlias = "await on client state (Psk different port)";
-        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsSecure(PSK, NONE));
+        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapSectionsServerCredentialsSecure(PSK, NONE));
         initDeviceCredentialsPsk();
         basicTestConnectionDifferentPort(
                 transportConfiguration,
