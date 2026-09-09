@@ -34,6 +34,7 @@ import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.service.DefaultTransportService;
 import org.thingsboard.server.common.transport.session.DeviceAwareSessionContext;
+import org.thingsboard.server.common.transport.session.SessionCloseReason;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeResponseMsg;
@@ -105,6 +106,12 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
 
     @Override
     public void onDeviceDeleted(DeviceId deviceId) {
+        snmpTransportContext.onDeviceDeleted(this);
+    }
+
+    @Override
+    public void onTenantDeleted(DeviceId deviceId) {
+        setSessionCloseReason(SessionCloseReason.TENANT_DELETED);
         snmpTransportContext.onDeviceDeleted(this);
     }
 

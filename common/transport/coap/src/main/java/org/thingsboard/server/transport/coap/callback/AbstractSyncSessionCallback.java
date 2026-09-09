@@ -58,6 +58,11 @@ public abstract class AbstractSyncSessionCallback implements SessionMsgListener 
     }
 
     @Override
+    public void onTenantDeleted(DeviceId deviceId) {
+
+    }
+
+    @Override
     public void onToDeviceRpcRequest(UUID sessionId, TransportProtos.ToDeviceRpcRequestMsg toDeviceRequest) {
         logUnsupportedCommandMessage(toDeviceRequest);
     }
