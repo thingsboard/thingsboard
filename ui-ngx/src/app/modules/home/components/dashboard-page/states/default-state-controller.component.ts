@@ -77,6 +77,18 @@ export class DefaultStateControllerComponent extends StateControllerComponent im
   }
 
   protected onStatesChanged() {
+    const stateObj = this.stateObject[0];
+    if (stateObj && (!stateObj.id || !this.states[stateObj.id])) {
+      const currentStateId = this.dashboardCtrl.dashboardCtx.state;
+      stateObj.id = currentStateId && this.states[currentStateId]
+        ? currentStateId
+        : this.dashboardUtils.getRootStateId(this.states);
+      this.stateIdSubject.next(stateObj.id);
+      if (this.syncStateWithQueryParam && this.states[stateObj.id]) {
+        this.mobileService.handleDashboardStateName(this.getStateName(stateObj.id, this.states[stateObj.id]));
+      }
+      this.updateStateParam(objToBase64(this.stateObject), true);
+    }
   }
 
   protected onStateChanged() {
