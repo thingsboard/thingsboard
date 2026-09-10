@@ -114,9 +114,6 @@ public class LwM2MBootstrapConfig implements Serializable {
 
     private BootstrapConfig.ServerConfig setServerConfig (AbstractLwM2MBootstrapServerCredential serverCredential) {
         BootstrapConfig.ServerConfig serverConfig = new BootstrapConfig.ServerConfig();
-        if (serverCredential.getShortServerId() != null) {
-            serverConfig.shortId = serverCredential.getShortServerId();
-        }
         serverConfig.lifetime = serverCredential.getLifetime();
         serverConfig.defaultMinPeriod = serverCredential.getDefaultMinPeriod();
         serverConfig.notifIfDisabled = serverCredential.isNotifIfDisabled();

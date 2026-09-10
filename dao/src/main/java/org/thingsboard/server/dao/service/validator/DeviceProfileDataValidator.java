@@ -333,9 +333,27 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
         }
     }
 
+    /**
+         Validates the list of LwM2M / Bootstrap Server configurations for client transport.
+         OMA LwM2M Specification Compliance & Validation Rules:
+         - OMA LwM2M Core TS 1.1.1 (Object 0 - LwM2M Security, Resource 10 Short Server ID):
+           According to section 3.2 and Object 0 Resource 10 specification, Short Server ID (range 1..65534)
+           identifies a regular LwM2M Server Account and links Object 0 to Object 1.
+           It MUST be set when Bootstrap-Server is false, but is NOT applicable to a
+           Bootstrap Server Account (Bootstrap-Server = true) as there is no associated Object 1 Instance.
+           See: http://www.openmobilealliance.org/release/LightweightM2M/V1_1_1-20190617-A/OMA-TS-LightweightM2M_Core-V1_1_1-20190617-A.pdf
+         - Backward Compatibility (ThingsBoard <= 4.2):
+           Non-null shortServerId on Bootstrap Server is normalized to null with a warning.
+         - Port Misconfiguration Protection:
+           Bootstrap Server entries using DM ports (e.g. 5685/5686) are rejected.
+         - Single Bootstrap Server Constraint:
+           Only one Bootstrap Server configuration is allowed per transport setup.
+    */
     private void validateLwm2mServersConfigOfBootstrapForClient(List<LwM2MBootstrapServerCredential> lwM2MBootstrapServersConfigurations, boolean isBootstrapServerUpdateEnable) {
         Set<String> uris = new HashSet<>();
         Set<Integer> shortServerIds = new HashSet<>();
+        boolean hasBootstrapServer = false;
+
         for (LwM2MBootstrapServerCredential bootstrapServerCredential : lwM2MBootstrapServersConfigurations) {
             AbstractLwM2MBootstrapServerCredential serverConfig = (AbstractLwM2MBootstrapServerCredential) bootstrapServerCredential;
             if (!isBootstrapServerUpdateEnable && serverConfig.isBootstrapServerIs()) {
@@ -343,14 +361,29 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
             }
 
             if (serverConfig.isBootstrapServerIs()) {
-                if (serverConfig.getShortServerId() != null) {
-                    if (serverConfig.getShortServerId() == 0) {
-                        serverConfig.setShortServerId(null);
-                    } else {
-                        throw new DeviceCredentialsValidationException("Bootstrap Server ShortServerId must be null!");
-                    }
+                // 1. Only one Bootstrap Server configuration is allowed
+                if (hasBootstrapServer) {
+                    log.error("Multiple Bootstrap Server configurations detected!");
+                    throw new DeviceCredentialsValidationException("Only one Bootstrap Server configuration is allowed!");
                 }
+
+                // 2. Reject if DM (LwM2M) Server ports are used for Bootstrap Server
+                int dmPort = LwM2MSecurityMode.NO_SEC.equals(serverConfig.getSecurityMode()) ? lwm2mPort : lwm2mSecurePort;
+                if (serverConfig.getPort() != null && serverConfig.getPort() == dmPort) {
+                    log.error("Invalid Bootstrap Server configuration: uses DM Server port [{}]", serverConfig.getPort());
+                    throw new DeviceCredentialsValidationException("Bootstrap Server configuration cannot use DM Server port " + serverConfig.getPort());
+                }
+
+                // 3. Normalize legacy shortServerId to null for backward compatibility
+                if (serverConfig.getShortServerId() != null) {
+                    log.warn("Ignoring Short Server ID [{}] on the Bootstrap Server entry: cleared to null for backward compatibility (ThingsBoard <= 4.2).",
+                            serverConfig.getShortServerId());
+
+                    serverConfig.setShortServerId(null);
+                }
+                hasBootstrapServer = true;
             } else {
+                // Validate regular LwM2M (DM) Server
                 if (serverConfig.getShortServerId() != null) {
                     if (isNotLwm2mServer(serverConfig.getShortServerId())) {
                         throw new DeviceCredentialsValidationException("LwM2M Server ShortServerId must be in range [" + PRIMARY_LWM2M_SERVER.getId() + " - " + LWM2M_SERVER_MAX.getId() + "]!");
@@ -358,16 +391,20 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
                 } else {
                     throw new DeviceCredentialsValidationException("LwM2M Server ShortServerId must not be null!");
                 }
+
+                if (!shortServerIds.add(serverConfig.getShortServerId())) {
+                    throw new DeviceCredentialsValidationException("LwM2M Server \"Short server Id\" value = " + serverConfig.getShortServerId() + ". This value must be a unique value for all servers!");
+                }
             }
 
+            // Check Host + Port uniqueness
             String server = serverConfig.isBootstrapServerIs() ? "Bootstrap Server" : "LwM2M Server";
-            if (!shortServerIds.add(serverConfig.getShortServerId())) {
-                throw new DeviceCredentialsValidationException(server + " \"Short server Id\" value = " + serverConfig.getShortServerId() + ". This value must be a unique value for all servers!");
-            }
             String uri = serverConfig.getHost() + ":" + serverConfig.getPort();
             if (!uris.add(uri)) {
                 throw new DeviceCredentialsValidationException(server + " \"Host + port\" value = " + uri + ". This value must be a unique value for all servers!");
             }
+
+            // Check port compliance with security mode
             int port;
             if (LwM2MSecurityMode.NO_SEC.equals(serverConfig.getSecurityMode())) {
                 port = serverConfig.isBootstrapServerIs() ? lwm2mBootstrapPort : lwm2mPort;
