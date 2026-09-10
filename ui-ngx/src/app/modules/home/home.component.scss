@@ -37,6 +37,7 @@
   }
   mat-sidenav.tb-site-sidenav {
     width: 250px;
+    background-color: $tb-primary-color;
     @media (max-width:456px) {
       width: calc(100% - 56px);
     }
@@ -52,7 +53,8 @@
         z-index: 2;
         flex-shrink: 0;
         white-space: nowrap;
-        border-right: 1px solid rgba(0, 0, 0, 0.12);
+        background-color: $tb-primary-color;
+        border-right: 1px solid rgba(255, 255, 255, 0.12);
         .tb-logo-title {
           width: auto;
           max-width: 100%;
@@ -65,6 +67,7 @@
           position: absolute;
           right: 9px;
           top: 12px;
+          color: rgba(255, 255, 255, .85);
           .tb-collapsed-logo-container {
             position: relative;
             width: 20px;
@@ -82,6 +85,8 @@
             }
             .tb-collapsed-logo {
               opacity: 1;
+              /* Icone e azul (asset de marca); vira branco solido via filtro pra contrastar com o fundo navy do sidenav */
+              filter: brightness(0) invert(1);
             }
           }
           &:hover {
@@ -101,10 +106,11 @@
       overflow: hidden;
       height: inherit;
       padding: 0;
-      border-right: 1px solid rgba(0, 0, 0, 0.12);
-      --mat-toolbar-container-text-color: rgba(0, 0, 0, .76);
+      background-color: $tb-primary-color;
+      border-right: 1px solid rgba(255, 255, 255, 0.12);
+      --mat-toolbar-container-text-color: rgba(255, 255, 255, .85);
       tb-user-menu {
-        border-top: 1px solid rgba(0, 0, 0, 0.12);
+        border-top: 1px solid rgba(255, 255, 255, 0.12);
       }
     }
   }
@@ -112,7 +118,12 @@
     z-index: 2;
     height: 56px;
     min-height: 56px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+    background-color: $tb-primary-color;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, .85);
+    --mat-toolbar-container-text-color: rgba(255, 255, 255, .85);
+    --mdc-icon-button-icon-color: rgba(255, 255, 255, .85);
+    --mdc-icon-button-state-layer-color: rgba(255, 255, 255, .85);
     .mat-toolbar-tools {
       height: 56px;
       padding: 0;
@@ -120,6 +131,25 @@
     h1 {
       font-size: 24px !important;
       font-weight: 400 !important;
+    }
+  }
+  ::ng-deep {
+    .tb-breadcrumb {
+      color: rgba(255, 255, 255, .85) !important;
+    }
+    .tb-site-sidenav tb-user-menu {
+      .tb-user-display-name {
+        color: rgba(255, 255, 255, .95);
+      }
+      .tb-user-authority {
+        color: rgba(255, 255, 255, .65) !important;
+      }
+      .mat-icon.tb-mini-avatar {
+        color: rgba(255, 255, 255, .85);
+      }
+      button.mat-mdc-button:not(.mat-mdc-icon-button).tb-user-menu:hover {
+        background-color: rgba(255, 255, 255, .08);
+      }
     }
   }
   .tb-main-content {

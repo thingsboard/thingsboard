@@ -294,11 +294,6 @@
                                  [dashboardsScope]="currentDashboardScope">
             </tb-dashboard-select>
           }
-          @if (!isEdit && !widgetEditMode) {
-            <div class="-mr-1.5 md-lg:!hidden lt-md:!hidden" [class.!hidden]="githubBadge.hideGithubBadge">
-              <tb-github-badge #githubBadge ></tb-github-badge>
-            </div>
-          }
         </div>
       </div>
     </tb-dashboard-toolbar>

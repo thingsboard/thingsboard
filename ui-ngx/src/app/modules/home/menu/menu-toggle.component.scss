@@ -25,14 +25,14 @@
       right: 44px;
       top: 4px;
       content: "NEW";
-      background: rgba(0, 0, 0, 0.03);
-      color: rgba(0, 0, 0, 0.76);
+      background: rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.85);
       font-size: 11px;
       letter-spacing: .25px;
       line-height: 16px;
       padding: 2px 8px;
       border-radius: 10px;
-      border: 1px solid rgba(0, 0, 0, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.15);
       opacity: 1;
       transition: opacity $sidenav-anim-timing;
     }

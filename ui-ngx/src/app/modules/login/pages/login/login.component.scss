@@ -93,5 +93,286 @@
       }
     }
   }
+
+  /* =========================================================
+     TECWISE / ThingsBoard - Login Modern (Advanced CSS)
+     Paleta: #006caf #939196 #f4ac20 #00326f #1e120d #ffffff
+     Versão: Novo gradiente azul elegante
+     ========================================================= */
+  ::ng-deep {
+    .tb-login-content{
+      /* Paleta */
+      --tw-blue:   #006caf;
+      --tw-grey:   #939196;
+      --tw-yellow: #f4ac20;
+      --tw-dk:     #00326f;
+      --tw-black:  #1e120d;
+      --tw-white:  #ffffff;
+
+      /* Layout */
+      --tw-card-w: 560px;      /* <-- aumenta a caixa (largura) */
+      --tw-card-pad-x: 34px;   /* <-- aumenta padding interno */
+      --tw-card-pad-y: 30px;
+
+      --tw-radius-xl: 24px;
+      --tw-radius-lg: 16px;
+      --tw-radius-md: 14px;
+
+      --tw-field-h: 52px;      /* <-- campos mais altos */
+      --tw-shadow-1: 0 18px 48px rgba(0,0,0,.35);
+      --tw-shadow-2: 0 30px 90px rgba(0,0,0,.50);
+
+      position: relative;
+      min-height: 100vh;
+      padding: 32px 16px;
+      overflow: hidden;
+    }
+
+    /* Fundo elegante com gradiente azul premium */
+    .tb-login-content{
+      background: linear-gradient(135deg, #001f4d 0%, #00326f 25%, #006caf 50%, #0099cc 75%, #1a5f7a 100%) !important;
+    }
+
+    .tb-login-content::before{
+      content:"";
+      position:absolute;
+      inset:-1px;
+      pointer-events:none;
+      background:
+        radial-gradient(1200px 700px at 10% 15%, rgba(0,153,204,.35), transparent 55%),
+        radial-gradient(1000px 600px at 90% 25%, rgba(0,108,175,.25), transparent 50%),
+        radial-gradient(800px 800px at 50% 100%, rgba(26,95,122,.15), transparent 65%);
+      filter: blur(2px);
+      opacity: 1;
+    }
+
+    /* Grid/texture sutil com tons azuis */
+    .tb-login-content::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      opacity:.08;
+      background-image:
+        linear-gradient(to right, rgba(255,255,255,.12) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,.12) 1px, transparent 1px);
+      background-size: 56px 56px;
+      mask-image: radial-gradient(closest-side at 50% 28%, #000 34%, transparent 72%);
+    }
+
+    /* =========================================================
+       CARD (caixa principal) - maior, mais moderna
+       ========================================================= */
+    .tb-login-content mat-card,
+    .tb-login-content .mat-mdc-card,
+    .tb-login-content .mat-card{
+      width: min(var(--tw-card-w), 95vw) !important;  /* <-- aumenta largura */
+      border-radius: var(--tw-radius-xl) !important;
+      box-shadow: var(--tw-shadow-2) !important;
+      overflow: hidden;
+      position: relative;
+      transform: translateZ(0);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(0,153,204,.25) !important;
+    }
+
+    /* Fundo do card (dark elegante com azul) */
+    .tb-login-content mat-card,
+    .tb-login-content .mat-mdc-card,
+    .tb-login-content .mat-card{
+      background: rgba(11,45,85,.50) !important; /* Azul escuro com transparência */
+    }
+
+    /* Faixa superior com destaque gradiente azul */
+    .tb-login-content mat-card::before,
+    .tb-login-content .mat-mdc-card::before,
+    .tb-login-content .mat-card::before{
+      content:"";
+      position:absolute;
+      inset:0 0 auto 0;
+      height: 5px;
+      background: linear-gradient(90deg, #0099cc, #006caf, #00326f);
+      opacity: .95;
+    }
+
+    /* Padding interno (mais "respiro" => caixa parece maior) */
+    .tb-login-content mat-card-content{
+      padding: var(--tw-card-pad-y) var(--tw-card-pad-x) calc(var(--tw-card-pad-y) - 6px) !important;
+    }
+
+    /* =========================================================
+       LOGO / TÍTULO
+       ========================================================= */
+    .tb-login-content .login-logo{
+      width: 400px !important; /* <-- logo maior */
+      height: 86px !important;
+      max-width: 90% !important;
+      margin: 6px auto 10px;
+      display: block;
+      filter: drop-shadow(0 16px 26px rgba(0,0,0,.40));
+    }
+
+    /* Se existir algum texto abaixo do logo */
+    .tb-login-content .tb-login-form .mat-headline-6,
+    .tb-login-content .tb-login-form h1,
+    .tb-login-content .tb-login-form h2{
+      letter-spacing: -0.02em;
+      opacity: .95;
+    }
+
+    /* =========================================================
+       CAMPOS (Inputs) - remove "caixa cinza" feia e moderniza
+       ========================================================= */
+    .tb-login-content .mat-mdc-form-field,
+    .tb-login-content .mat-form-field{
+      width: 100%;
+    }
+
+    /* MDC field container */
+    .tb-login-content .mdc-text-field{
+      min-height: var(--tw-field-h) !important;
+      border-radius: var(--tw-radius-md) !important;
+      transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease, background-color 160ms ease;
+    }
+
+    /* Fundo do input (dark premium com toque azul) */
+    .tb-login-content .mdc-text-field--filled,
+    .tb-login-content .mdc-text-field--outlined{
+      background: rgba(0,108,175,.08) !important;
+    }
+
+    /* Borda (usa azul da paleta) */
+    .tb-login-content .mdc-notched-outline__leading,
+    .tb-login-content .mdc-notched-outline__notch,
+    .tb-login-content .mdc-notched-outline__trailing{
+      border-color: rgba(0,153,204,.40) !important;
+      transition: border-color 160ms ease, opacity 160ms ease;
+    }
+
+    /* Texto/placeholder */
+    .tb-login-content .mdc-floating-label,
+    .tb-login-content .mat-form-field-label{
+      color: rgba(255,255,255,.78) !important;
+    }
+
+    .tb-login-content input,
+    .tb-login-content .mdc-text-field__input{
+      color: rgba(255,255,255,.92) !important;
+    }
+
+    .tb-login-content input::placeholder{
+      color: rgba(255,255,255,.55) !important;
+    }
+
+    /* Hover */
+    .tb-login-content .mat-mdc-form-field:hover .mdc-text-field,
+    .tb-login-content .mat-form-field:hover .mat-form-field-flex{
+      transform: translateY(-1px);
+      box-shadow: var(--tw-shadow-1);
+      background: rgba(0,108,175,.12) !important;
+    }
+
+    /* Focus com ring azul ciano */
+    .tb-login-content .mat-mdc-form-field.mat-focused .mdc-text-field,
+    .tb-login-content .mat-form-field.mat-focused .mat-form-field-flex{
+      box-shadow: 0 0 0 4px rgba(0,153,204,.30), var(--tw-shadow-1) !important;
+      background: rgba(0,108,175,.14) !important;
+    }
+
+    .tb-login-content .mat-mdc-form-field.mat-focused .mdc-notched-outline__leading,
+    .tb-login-content .mat-mdc-form-field.mat-focused .mdc-notched-outline__notch,
+    .tb-login-content .mat-mdc-form-field.mat-focused .mdc-notched-outline__trailing{
+      border-color: rgba(0,153,204,.80) !important;
+    }
+
+    /* Prefix/suffix ícones */
+    .tb-login-content .mat-mdc-form-field-icon-prefix,
+    .tb-login-content .mat-form-field-prefix,
+    .tb-login-content .mat-mdc-form-field-icon-suffix,
+    .tb-login-content .mat-form-field-suffix{
+      opacity: .92;
+      color: rgba(255,255,255,.80) !important;
+    }
+
+    /* =========================================================
+       BOTÃO (Sign in) - gradiente azul premium
+       ========================================================= */
+    .tb-login-content .tb-action-button{
+      border-radius: var(--tw-radius-lg) !important;
+      min-height: 48px !important;
+      width: 100%;
+      font-weight: 700;
+      letter-spacing: .2px;
+      box-shadow: var(--tw-shadow-1);
+      transition: transform 160ms ease, box-shadow 160ms ease, filter 160ms ease;
+      background: linear-gradient(135deg, #a8a6aa, var(--tw-grey), #6e6c70) !important;
+      color: var(--tw-white) !important;
+    }
+
+    .tb-login-content .tb-action-button:hover{
+      transform: translateY(-1px);
+      box-shadow: var(--tw-shadow-2);
+      filter: saturate(1.08) brightness(1.04);
+    }
+
+    .tb-login-content .tb-action-button:active{
+      transform: translateY(0);
+      filter: saturate(1.0) brightness(.96);
+    }
+
+    /* =========================================================
+       LINK "Forgot your password" - destaque amarelo TecWise
+       ========================================================= */
+    .tb-login-content .forgot-password .tb-reset-password,
+    .tb-login-content a{
+      color: rgba(244,172,32,.95) !important; /* #f4ac20 */
+      text-decoration: none;
+    }
+
+    .tb-login-content .forgot-password .tb-reset-password:hover,
+    .tb-login-content a:hover{
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    /* Divider OR */
+    .tb-login-content .container-divider{
+      opacity: .92;
+      margin: 8px 0 16px;
+    }
+
+    /* Progress bar arredondada com azul */
+    .tb-login-content mat-progress-bar{
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .tb-login-content mat-progress-bar .mat-mdc-progress-bar-fill::after{
+      background-color: #0099cc !important;
+    }
+
+    /* =========================================================
+       RESPONSIVO
+       ========================================================= */
+    @media (max-width: 520px){
+      .tb-login-content{
+        --tw-card-w: 92vw;
+        --tw-card-pad-x: 18px;
+        --tw-card-pad-y: 20px;
+        --tw-field-h: 50px;
+      }
+      .tb-login-content .login-logo{
+        max-width: 240px;
+      }
+    }
+
+    /* Acessibilidade */
+    @media (prefers-reduced-motion: reduce){
+      .tb-login-content *{
+        transition: none !important;
+      }
+    }
+  }
 }
 

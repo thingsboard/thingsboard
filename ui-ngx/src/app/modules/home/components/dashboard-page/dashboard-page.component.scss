@@ -47,6 +47,11 @@ div.tb-dashboard-page {
     left: 0;
     z-index: 13;
     pointer-events: none;
+    --mat-toolbar-container-background-color: #{$tb-primary-color};
+    --mat-toolbar-container-text-color: rgba(255, 255, 255, .85);
+    --mdc-icon-button-icon-color: rgba(255, 255, 255, .85);
+    --mdc-icon-button-state-layer-color: rgba(255, 255, 255, .85);
+    color: rgba(255, 255, 255, .85);
 
     .dashboard_logo{
       height: 75%;

@@ -1,0 +1,55 @@
+# Esqueleto ILUSTRATIVO de docker-compose para ThingsBoard monolítico + Postgres.
+# Ajustar tags de imagem, credenciais e variáveis conforme a versão exata (CE ou PE)
+# e a documentação oficial de instalação correspondente antes de usar em produção.
+#
+# PE: a imagem "thingsboard" real fica em um registry privado que exige `docker login`
+# com credenciais associadas à licença — substituir pelo nome de imagem correto fornecido
+# no processo de ativação da licença PE.
+
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:15
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: thingsboard
+      POSTGRES_USER: thingsboard
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+    volumes:
+      - tb-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U thingsboard"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  thingsboard:
+    # image: thingsboard/tb-postgres:VERSION        # CE
+    # image: <registry-privado-pe>/tb-pe:VERSION    # PE — confirmar nome/registry na ativação
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8080:8080"   # HTTP UI/API
+      - "1883:1883"   # MQTT
+      - "5683-5688:5683-5688/udp"  # CoAP / CoAP-DTLS
+    environment:
+      DATABASE_TS_TYPE: sql
+      SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/thingsboard"
+      SPRING_DATASOURCE_USERNAME: thingsboard
+      SPRING_DATASOURCE_PASSWORD: "${POSTGRES_PASSWORD}"
+      TB_QUEUE_TYPE: in-memory   # trocar para "kafka" em produção/multi-instância
+      CACHE_TYPE: caffeine       # trocar para "redis" se houver mais de uma instância tb-core
+      # --- PE: variáveis de licença específicas da versão, confirmar na doc de ativação ---
+      # TB_SERVICE_ID: "..."
+      # TB_LICENSE_SECRET: "..."
+    volumes:
+      - tb-data:/data
+      - tb-logs:/var/log/thingsboard
+
+volumes:
+  tb-postgres-data:
+  tb-data:
+  tb-logs:
