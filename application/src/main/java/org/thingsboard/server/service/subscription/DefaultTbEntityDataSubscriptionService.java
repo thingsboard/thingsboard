@@ -472,18 +472,17 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
     @Override
     public void handleCmd(WebSocketSessionRef session, AlarmStatusCmd cmd) {
         log.debug("[{}] Handling alarm status subscription cmd (cmdId: {})", session.getSessionId(), cmd.getCmdId());
-        TbAlarmStatusSubCtx ctx = getSubCtx(session.getSessionId(), cmd.getCmdId());
+        TbAlarmStatusSubCtx ctx = createSubCtx(session, cmd);
         if (ctx == null) {
-            ctx = createSubCtx(session, cmd);
-            long start = System.currentTimeMillis();
-            ctx.fetchActiveAlarms();
-            long end = System.currentTimeMillis();
-            stats.getAlarmQueryInvocationCnt().incrementAndGet();
-            stats.getAlarmQueryTimeSpent().addAndGet(end - start);
-            ctx.sendUpdate();
-        } else {
             log.debug("[{}][{}] Received duplicate command: {}", session.getSessionId(), cmd.getCmdId(), cmd);
+            return;
         }
+        long start = System.currentTimeMillis();
+        ctx.fetchActiveAlarms();
+        long end = System.currentTimeMillis();
+        stats.getAlarmQueryInvocationCnt().incrementAndGet();
+        stats.getAlarmQueryTimeSpent().addAndGet(end - start);
+        ctx.sendUpdate();
     }
 
     private boolean validate(TbAbstractSubCtx finalCtx) {
@@ -592,10 +591,16 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
 
     private TbAlarmStatusSubCtx createSubCtx(WebSocketSessionRef sessionRef, AlarmStatusCmd cmd) {
         Map<Integer, TbAbstractSubCtx> sessionSubs = subscriptionsBySessionId.computeIfAbsent(sessionRef.getSessionId(), k -> new ConcurrentHashMap<>());
+        if (sessionSubs.containsKey(cmd.getCmdId())) {
+            return null;
+        }
         TbAlarmStatusSubCtx ctx = new TbAlarmStatusSubCtx(serviceId, wsService, localSubscriptionService,
                 stats, alarmService, alarmsPerAlarmStatusSubscriptionCacheSize, sessionRef, cmd.getCmdId());
         ctx.createSubscription(cmd);
-        sessionSubs.put(cmd.getCmdId(), ctx);
+        if (sessionSubs.putIfAbsent(cmd.getCmdId(), ctx) != null) {
+            ctx.stop();
+            return null;
+        }
         return ctx;
     }
 

@@ -231,11 +231,8 @@ public class DefaultWebSocketService implements WebSocketService {
             try {
                 Optional.ofNullable(cmdsHandlers.get(cmd.getType()))
                         .ifPresent(cmdHandler -> cmdHandler.handle(sessionRef, cmd));
-            } catch (TbRateLimitsException e) {
-                log.debug("{} Failed to handle WS cmd: {}", sessionRef, cmd, e);
             } catch (Exception e) {
-                sendError(sessionRef, cmd.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR, e.getMessage());
-                log.error("{} Failed to handle WS cmd: {}", sessionRef, cmd, e);
+                handleCmdFailure(sessionRef, cmd, e);
             }
         }
     }
@@ -275,6 +272,12 @@ public class DefaultWebSocketService implements WebSocketService {
             }
         })) return;
 
+        if (sessionRef.getSecurityCtx().isSystemAdmin()) {
+            sendAlarmStatusError(sessionRef, cmd.getCmdId(), SubscriptionErrorCode.UNAUTHORIZED,
+                    AccessValidator.SYSTEM_ADMINISTRATOR_IS_NOT_ALLOWED_TO_PERFORM_THIS_OPERATION);
+            return;
+        }
+
         try {
             accessValidator.validate(sessionRef.getSecurityCtx(), Operation.READ, cmd.getOriginatorId(),
                     on(r -> executor.submit(() -> {
@@ -283,11 +286,8 @@ public class DefaultWebSocketService implements WebSocketService {
                                 }
                                 try {
                                     entityDataSubService.handleCmd(sessionRef, cmd);
-                                } catch (TbRateLimitsException e) {
-                                    log.debug("{} Failed to handle WS cmd: {}", sessionRef, cmd, e);
                                 } catch (Exception e) {
-                                    sendError(sessionRef, cmd.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR, e.getMessage());
-                                    log.error("{} Failed to handle WS cmd: {}", sessionRef, cmd, e);
+                                    handleCmdFailure(sessionRef, cmd, e);
                                 }
                             }),
                             t -> sendAlarmStatusError(sessionRef, cmd.getCmdId(), SubscriptionErrorCode.UNAUTHORIZED, t.getMessage())));
@@ -520,7 +520,7 @@ public class DefaultWebSocketService implements WebSocketService {
             public void onFailure(Throwable e) {
                 logAttributesFetchFailure(e);
                 TelemetrySubscriptionUpdate update;
-                if (e instanceof UnauthorizedException) {
+                if (isValidationFailure(e)) {
                     update = new TelemetrySubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.UNAUTHORIZED,
                             SubscriptionErrorCode.UNAUTHORIZED.getDefaultMsg());
                 } else {
@@ -631,7 +631,12 @@ public class DefaultWebSocketService implements WebSocketService {
             @Override
             public void onFailure(Throwable e) {
                 logAttributesFetchFailure(e);
-                sendError(sessionRef, cmd.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR, FAILED_TO_FETCH_ATTRIBUTES);
+                if (isValidationFailure(e)) {
+                    sendError(sessionRef, cmd.getCmdId(), SubscriptionErrorCode.UNAUTHORIZED,
+                            SubscriptionErrorCode.UNAUTHORIZED.getDefaultMsg());
+                } else {
+                    sendError(sessionRef, cmd.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR, FAILED_TO_FETCH_ATTRIBUTES);
+                }
             }
         };
 
@@ -955,16 +960,33 @@ public class DefaultWebSocketService implements WebSocketService {
                 callback::onFailure);
     }
 
+    private void handleCmdFailure(WebSocketSessionRef sessionRef, WsCmd cmd, Exception e) {
+        if (e instanceof TbRateLimitsException) {
+            log.debug("{} Failed to handle WS cmd: {}", sessionRef, cmd, e);
+            return;
+        }
+        if (cmd instanceof AlarmStatusCmd) {
+            sendAlarmStatusError(sessionRef, cmd.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR, e.getMessage());
+        } else {
+            sendError(sessionRef, cmd.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR, e.getMessage());
+        }
+        log.error("{} Failed to handle WS cmd: {}", sessionRef, cmd, e);
+    }
+
     private void sendAlarmStatusError(WebSocketSessionRef sessionRef, int cmdId, SubscriptionErrorCode errorCode, String errorMsg) {
         sendUpdate(sessionRef.getSessionId(), new AlarmStatusUpdate(cmdId, errorCode.getCode(), errorMsg));
     }
 
     private void logAttributesFetchFailure(Throwable e) {
-        if (e instanceof AccessDeniedException || e instanceof EntityNotFoundException || e instanceof UnauthorizedException) {
+        if (isValidationFailure(e)) {
             log.debug(FAILED_TO_FETCH_ATTRIBUTES, e);
         } else {
             log.error(FAILED_TO_FETCH_ATTRIBUTES, e);
         }
+    }
+
+    private static boolean isValidationFailure(Throwable e) {
+        return e instanceof AccessDeniedException || e instanceof EntityNotFoundException || e instanceof UnauthorizedException;
     }
 
     private FutureCallback<ValidationResult> on(Consumer<Void> success, Consumer<Throwable> failure) {

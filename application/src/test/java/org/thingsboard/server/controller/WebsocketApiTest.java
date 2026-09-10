@@ -1006,7 +1006,7 @@ public class WebsocketApiTest extends AbstractControllerTest {
         loginDifferentTenant();
 
         JsonNode update = getAnotherWsClient().subscribeForAttributes(device.getId(), TbAttributeSubscriptionScope.SERVER_SCOPE.name(), List.of("attr"));
-        assertThat(update.get("errorCode").asInt()).isNotEqualTo(SubscriptionErrorCode.NO_ERROR.getCode());
+        assertThat(update.get("errorCode").asInt()).isEqualTo(SubscriptionErrorCode.UNAUTHORIZED.getCode());
         assertThat(update.get("data").isNull()).isTrue();
     }
 
