@@ -863,6 +863,48 @@ public class AlarmRulesTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testCreateAlarm_durationCondition_scheduleStarted() throws Exception {
+        Argument motionDetectedArgument = new Argument();
+        motionDetectedArgument.setRefEntityKey(new ReferencedEntityKey("motionDetected", ArgumentType.TS_LATEST, null));
+        motionDetectedArgument.setDefaultValue("false");
+        Map<String, Argument> arguments = Map.of(
+                "motionDetected", motionDetectedArgument
+        );
+
+        SpecificTimeSchedule schedule = new SpecificTimeSchedule();
+        schedule.setTimezone(ZoneId.systemDefault().getId());
+        schedule.setDaysOfWeek(Set.of(1, 2, 3, 4, 5, 6, 7));
+        long startsOn = Duration.between(LocalDate.now().atStartOfDay(), LocalDateTime.now())
+                .plus(15, ChronoUnit.SECONDS).toMillis();
+        schedule.setStartsOn(startsOn);
+        Map<AlarmSeverity, Condition> createRules = Map.of(
+                AlarmSeverity.CRITICAL, new Condition("return motionDetected == true;", null, null,
+                        new AlarmConditionValue<>(1000L, null),
+                        new AlarmConditionValue<>(schedule, null))
+        );
+
+        AlarmRuleDefinition alarmRule = createAlarmRule(deviceId, "Motion detected alarm",
+                arguments, createRules, null);
+
+        postTelemetry(deviceId, "{\"motionDetected\":true}");
+
+        Thread.sleep(10000);
+        assertThat(getLatestAlarmResult(alarmRule.getId())).isNull();
+
+        // no new telemetry after the schedule window opens, so the stored value must be used
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            CalculatedFieldDebugEvent debugEvent = getDebugEvents(alarmRule.getId(), 5).stream()
+                    .filter(event -> event.getResult() != null)
+                    .findFirst().orElse(null);
+            assertThat(debugEvent).isNotNull();
+            TbAlarmResult alarmResult = JacksonUtil.fromString(debugEvent.getResult(), TbAlarmResult.class);
+            assertThat(alarmResult.isCreated()).isTrue();
+            assertThat(alarmResult.getAlarm().getSeverity()).isEqualTo(AlarmSeverity.CRITICAL);
+            assertThat(alarmResult.getAlarm().getStatus()).isEqualTo(AlarmStatus.ACTIVE_UNACK);
+        });
+    }
+
+    @Test
     public void testManualClearAlarm() throws Exception {
         Argument temperatureArgument = new Argument();
         temperatureArgument.setRefEntityKey(new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null));
