@@ -25,7 +25,7 @@ import {
   Validators
 } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
-import { isDefinedAndNotNull } from '@core/utils';
+import { isDefinedAndNotNull, isEqual } from '@core/utils';
 import { DashboardId } from '@shared/models/id/dashboard-id';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AlarmRule, AlarmRuleCondition } from "@shared/models/alarm-rule.models";
@@ -79,8 +79,8 @@ export class CfAlarmRuleComponent implements ControlValueAccessor, OnInit, Valid
 
   alarmRuleFormGroup = this.fb.group({
     condition: this.fb.control<AlarmRuleCondition | null>(null, Validators.required),
-    alarmDetails: [null],
-    dashboardId: [null]
+    alarmDetails: this.fb.control<string | null>(null),
+    dashboardId: this.fb.control<string | null>(null)
   });
 
   private propagateChange = (v: any) => { };
@@ -105,8 +105,8 @@ export class CfAlarmRuleComponent implements ControlValueAccessor, OnInit, Valid
   ngOnInit() {
     this.alarmRuleFormGroup.valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
-    ).subscribe(() => {
-      this.updateModel();
+    ).subscribe((value) => {
+      this.updateModel(value);
     });
     this.alarmRuleFormGroup.statusChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
@@ -125,12 +125,12 @@ export class CfAlarmRuleComponent implements ControlValueAccessor, OnInit, Valid
   }
 
   writeValue(value: AlarmRule): void {
-    this.modelValue = value;
-    const model = this.modelValue ? {
-      ...this.modelValue,
-      dashboardId: this.modelValue.dashboardId?.id
+    const model = value ? {
+      ...value,
+      dashboardId: value.dashboardId?.id
     } : null;
     this.alarmRuleFormGroup.patchValue(model, {emitEvent: false});
+    this.modelValue = model ? this.toModel(model) : null;
   }
 
   public openEditDetailsDialog($event: Event) {
@@ -160,9 +160,16 @@ export class CfAlarmRuleComponent implements ControlValueAccessor, OnInit, Valid
     };
   }
 
-  private updateModel() {
-    const value = this.alarmRuleFormGroup.value;
-    this.modelValue = {...value, dashboardId: value.dashboardId ? new DashboardId(value.dashboardId) : null} as AlarmRule;
-    this.propagateChange(this.modelValue);
+  private updateModel(value: typeof this.alarmRuleFormGroup.value): void {
+    const modelValue = this.toModel(value);
+    if (isEqual(modelValue, this.modelValue)) {
+      return;
+    }
+    this.modelValue = modelValue;
+    this.propagateChange(modelValue);
+  }
+
+  private toModel(value: typeof this.alarmRuleFormGroup.value): AlarmRule {
+    return {...value, dashboardId: value.dashboardId ? new DashboardId(value.dashboardId) : null} as AlarmRule;
   }
 }
