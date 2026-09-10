@@ -144,7 +144,8 @@ public class NashornJsInvokeService extends AbstractJsInvokeService {
         // that can never be deleted, so every eval/release cycle would grow the Global's PropertyMap
         // shape history forever. Declaring the function inside an IIFE and assigning it to a global
         // property keeps the property configurable, allowing doRelease() to actually delete it.
-        // The prefix stays on the first line so that script line numbers in errors are unchanged.
+        // The prefix stays on the first line to preserve line numbering on the raw engine path;
+        // the sandbox beautifier reformats the wrapper and shifts reported error lines anyway.
         String wrappedScript = "this['" + scriptInfo.getFunctionName() + "'] = (function() { " + jsScript
                 + "\nreturn " + scriptInfo.getFunctionName() + ";\n})();";
         return jsExecutor.submit(() -> {
@@ -190,10 +191,15 @@ public class NashornJsInvokeService extends AbstractJsInvokeService {
 
     protected void doRelease(UUID scriptId, JsScriptInfo scriptInfo) throws ScriptException {
         String deleteScript = "delete this['" + scriptInfo.getFunctionName() + "'];";
-        if (useJsSandbox) {
-            sandbox.eval(deleteScript);
-        } else {
-            engine.eval(deleteScript);
+        evalLock.lock();
+        try {
+            if (useJsSandbox) {
+                sandbox.eval(deleteScript);
+            } else {
+                engine.eval(deleteScript);
+            }
+        } finally {
+            evalLock.unlock();
         }
     }
 

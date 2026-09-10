@@ -231,12 +231,13 @@ class NashornJsInvokeServiceTest extends AbstractControllerTest {
     void whenScriptIsReleased_thenGlobalPropertyIsRemoved() throws Exception {
         UUID scriptId = evalScript("return msg;");
         String functionName = "invokeInternal_" + scriptId.toString().replace('-', '_');
-        assertThat(evalInEngine("this.hasOwnProperty('" + functionName + "')")).hasToString("true");
+        assertThat(evalInEngine("this.hasOwnProperty('" + functionName + "')")).isEqualTo(true);
 
         invokeService.release(scriptId).get();
 
         // the property must be deleted, not just set to undefined: an abandoned binding keeps
-        assertThat(evalInEngine("this.hasOwnProperty('" + functionName + "')")).hasToString("false");
+        // its slot in the Global's PropertyMap forever
+        assertThat(evalInEngine("this.hasOwnProperty('" + functionName + "')")).isEqualTo(false);
     }
 
     @Test
