@@ -1,0 +1,28 @@
+{
+  "providerId": "DingTalk",
+  "additionalInfo": {
+    "providerName": "DingTalk"
+  },
+  "accessTokenUri": "https://api.dingtalk.com/v1.0/oauth2/userAccessToken",
+  "authorizationUri": "https://login.dingtalk.com/oauth2/auth",
+  "scope": [
+    "corpid"
+  ],
+  "jwkSetUri": null,
+  "userInfoUri": "https://api.dingtalk.com/v1.0/contact/users/me",
+  "clientAuthenticationMethod": "POST",
+  "userNameAttributeName": "userid",
+  "mapperConfig": {
+    "type": "DINGTALK",
+    "basic": {
+      "emailAttributeKey": "email",
+      "firstNameAttributeKey": "nick",
+      "lastNameAttributeKey": null,
+      "tenantNameStrategy": "DOMAIN"
+    }
+  },
+  "comment": null,
+  "loginButtonIcon": "dingtalk-logo",
+  "loginButtonLabel": "DingTalk",
+  "helpLink": "https://open.dingtalk.com/document/isvapp/obtain-user-token"
+}

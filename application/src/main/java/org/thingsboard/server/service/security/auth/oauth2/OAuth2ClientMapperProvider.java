@@ -30,6 +30,10 @@ public class OAuth2ClientMapperProvider {
     @Qualifier("appleOAuth2ClientMapper")
     private OAuth2ClientMapper appleOAuth2ClientMapper;
 
+    @Autowired
+    @Qualifier("dingTalkOAuth2ClientMapper")
+    private OAuth2ClientMapper dingTalkOAuth2ClientMapper;
+
     public OAuth2ClientMapper getOAuth2ClientMapperByType(MapperType oauth2MapperType) {
         switch (oauth2MapperType) {
             case CUSTOM:
@@ -40,6 +44,8 @@ public class OAuth2ClientMapperProvider {
                 return githubOAuth2ClientMapper;
             case APPLE:
                 return appleOAuth2ClientMapper;
+            case DINGTALK:
+                return dingTalkOAuth2ClientMapper;
             default:
                 throw new RuntimeException("OAuth2ClientRegistrationMapper with type " + oauth2MapperType + " is not supported!");
         }
