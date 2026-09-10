@@ -598,7 +598,7 @@
                                             <files>
                                                 <file>${project.build.directory}/openapi.json</file>
                                             </files>
-                                            <message>OpenAPI spec was not generated — target/openapi.json is missing. The springdoc-openapi-maven-plugin logs HTTP failures but does not fail the build; scan the log above for "An error has occured" or a 5xx response from /v3/api-docs/thingsboard and fix the underlying issue (e.g. duplicate @Schema names rejected by SwaggerConfiguration).</message>
+                                            <message>OpenAPI spec was not generated — target/openapi.json is missing. The springdoc-openapi-maven-plugin logs HTTP failures but does not fail the build; scan the log above for "An error has occurred" or a 5xx response from /v3/api-docs/thingsboard and fix the underlying issue (e.g. duplicate @Schema names rejected by SwaggerConfiguration).</message>
                                         </requireFilesExist>
                                     </rules>
                                 </configuration>
