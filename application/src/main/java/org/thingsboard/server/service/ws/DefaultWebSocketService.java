@@ -53,6 +53,8 @@ import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
+import org.thingsboard.server.exception.AccessDeniedException;
+import org.thingsboard.server.exception.EntityNotFoundException;
 import org.thingsboard.server.exception.UnauthorizedException;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -77,6 +79,7 @@ import org.thingsboard.server.service.ws.telemetry.cmd.v1.TimeseriesSubscription
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmCountCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmDataCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmStatusCmd;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmStatusUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.CmdUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityCountCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataCmd;
@@ -228,11 +231,8 @@ public class DefaultWebSocketService implements WebSocketService {
             try {
                 Optional.ofNullable(cmdsHandlers.get(cmd.getType()))
                         .ifPresent(cmdHandler -> cmdHandler.handle(sessionRef, cmd));
-            } catch (TbRateLimitsException e) {
-                log.debug("{} Failed to handle WS cmd: {}", sessionRef, cmd, e);
             } catch (Exception e) {
-                sendError(sessionRef, cmd.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR, e.getMessage());
-                log.error("{} Failed to handle WS cmd: {}", sessionRef, cmd, e);
+                handleCmdFailure(sessionRef, cmd, e);
             }
         }
     }
@@ -266,8 +266,34 @@ public class DefaultWebSocketService implements WebSocketService {
     }
 
     private void handleWsAlarmsStatusCmd(WebSocketSessionRef sessionRef, AlarmStatusCmd cmd) {
-        if (validateCmd(sessionRef, cmd)) {
-            entityDataSubService.handleCmd(sessionRef, cmd);
+        if (!validateCmd(sessionRef, cmd, () -> {
+            if (cmd.getOriginatorId() == null) {
+                throw new IllegalArgumentException("Originator id is empty!");
+            }
+        })) return;
+
+        if (sessionRef.getSecurityCtx().isSystemAdmin()) {
+            sendAlarmStatusError(sessionRef, cmd.getCmdId(), SubscriptionErrorCode.UNAUTHORIZED,
+                    AccessValidator.SYSTEM_ADMINISTRATOR_IS_NOT_ALLOWED_TO_PERFORM_THIS_OPERATION);
+            return;
+        }
+
+        try {
+            accessValidator.validate(sessionRef.getSecurityCtx(), Operation.READ, cmd.getOriginatorId(),
+                    on(r -> executor.submit(() -> {
+                                if (!msgEndpoint.isOpen(sessionRef.getSessionId())) {
+                                    return;
+                                }
+                                try {
+                                    entityDataSubService.handleCmd(sessionRef, cmd);
+                                } catch (Exception e) {
+                                    handleCmdFailure(sessionRef, cmd, e);
+                                }
+                            }),
+                            t -> sendAlarmStatusError(sessionRef, cmd.getCmdId(), SubscriptionErrorCode.UNAUTHORIZED, t.getMessage())));
+        } catch (IllegalStateException e) {
+            sendAlarmStatusError(sessionRef, cmd.getCmdId(), SubscriptionErrorCode.BAD_REQUEST,
+                    "Unsupported originator type: " + cmd.getOriginatorId().getEntityType());
         }
     }
 
@@ -492,9 +518,9 @@ public class DefaultWebSocketService implements WebSocketService {
 
             @Override
             public void onFailure(Throwable e) {
-                log.error(FAILED_TO_FETCH_ATTRIBUTES, e);
+                logAttributesFetchFailure(e);
                 TelemetrySubscriptionUpdate update;
-                if (e instanceof UnauthorizedException) {
+                if (isValidationFailure(e)) {
                     update = new TelemetrySubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.UNAUTHORIZED,
                             SubscriptionErrorCode.UNAUTHORIZED.getDefaultMsg());
                 } else {
@@ -604,8 +630,13 @@ public class DefaultWebSocketService implements WebSocketService {
 
             @Override
             public void onFailure(Throwable e) {
-                log.error(FAILED_TO_FETCH_ATTRIBUTES, e);
-                sendError(sessionRef, cmd.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR, FAILED_TO_FETCH_ATTRIBUTES);
+                logAttributesFetchFailure(e);
+                if (isValidationFailure(e)) {
+                    sendError(sessionRef, cmd.getCmdId(), SubscriptionErrorCode.UNAUTHORIZED,
+                            SubscriptionErrorCode.UNAUTHORIZED.getDefaultMsg());
+                } else {
+                    sendError(sessionRef, cmd.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR, FAILED_TO_FETCH_ATTRIBUTES);
+                }
             }
         };
 
@@ -895,72 +926,67 @@ public class DefaultWebSocketService implements WebSocketService {
                 }, executor);
     }
 
-    private <T> FutureCallback<ValidationResult> getAttributesFetchCallback(final TenantId tenantId, final EntityId entityId, final List<String> keys, final FutureCallback<List<AttributeKvEntry>> callback) {
-        return new FutureCallback<ValidationResult>() {
-            @Override
-            public void onSuccess(@Nullable ValidationResult result) {
-                List<ListenableFuture<List<AttributeKvEntry>>> futures = new ArrayList<>();
-                for (AttributeScope scope : AttributeScope.values()) {
-                    futures.add(attributesService.find(tenantId, entityId, scope, keys));
-                }
-
-                ListenableFuture<List<AttributeKvEntry>> future = mergeAllAttributesFutures(futures);
-                Futures.addCallback(future, callback, MoreExecutors.directExecutor());
+    private FutureCallback<ValidationResult> getAttributesFetchCallback(final TenantId tenantId, final EntityId entityId, final List<String> keys, final FutureCallback<List<AttributeKvEntry>> callback) {
+        return on(r -> {
+            List<ListenableFuture<List<AttributeKvEntry>>> futures = new ArrayList<>();
+            for (AttributeScope scope : AttributeScope.values()) {
+                futures.add(attributesService.find(tenantId, entityId, scope, keys));
             }
 
-            @Override
-            public void onFailure(Throwable t) {
-                callback.onFailure(t);
-            }
-        };
+            ListenableFuture<List<AttributeKvEntry>> future = mergeAllAttributesFutures(futures);
+            Futures.addCallback(future, callback, MoreExecutors.directExecutor());
+        }, callback::onFailure);
     }
 
-    private <T> FutureCallback<ValidationResult> getAttributesFetchCallback(final TenantId tenantId, final EntityId entityId, final String scope, final List<String> keys, final FutureCallback<List<AttributeKvEntry>> callback) {
-        return new FutureCallback<ValidationResult>() {
-            @Override
-            public void onSuccess(@Nullable ValidationResult result) {
-                Futures.addCallback(attributesService.find(tenantId, entityId, AttributeScope.valueOf(scope), keys), callback, MoreExecutors.directExecutor());
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                callback.onFailure(t);
-            }
-        };
+    private FutureCallback<ValidationResult> getAttributesFetchCallback(final TenantId tenantId, final EntityId entityId, final String scope, final List<String> keys, final FutureCallback<List<AttributeKvEntry>> callback) {
+        return on(r -> Futures.addCallback(attributesService.find(tenantId, entityId, AttributeScope.valueOf(scope), keys), callback, MoreExecutors.directExecutor()),
+                callback::onFailure);
     }
 
-    private <T> FutureCallback<ValidationResult> getAttributesFetchCallback(final TenantId tenantId, final EntityId entityId, final FutureCallback<List<AttributeKvEntry>> callback) {
-        return new FutureCallback<ValidationResult>() {
-            @Override
-            public void onSuccess(@Nullable ValidationResult result) {
-                List<ListenableFuture<List<AttributeKvEntry>>> futures = new ArrayList<>();
-                for (AttributeScope scope : AttributeScope.values()) {
-                    futures.add(attributesService.findAll(tenantId, entityId, scope));
-                }
-
-                ListenableFuture<List<AttributeKvEntry>> future = mergeAllAttributesFutures(futures);
-                Futures.addCallback(future, callback, MoreExecutors.directExecutor());
+    private FutureCallback<ValidationResult> getAttributesFetchCallback(final TenantId tenantId, final EntityId entityId, final FutureCallback<List<AttributeKvEntry>> callback) {
+        return on(r -> {
+            List<ListenableFuture<List<AttributeKvEntry>>> futures = new ArrayList<>();
+            for (AttributeScope scope : AttributeScope.values()) {
+                futures.add(attributesService.findAll(tenantId, entityId, scope));
             }
 
-            @Override
-            public void onFailure(Throwable t) {
-                callback.onFailure(t);
-            }
-        };
+            ListenableFuture<List<AttributeKvEntry>> future = mergeAllAttributesFutures(futures);
+            Futures.addCallback(future, callback, MoreExecutors.directExecutor());
+        }, callback::onFailure);
     }
 
-    private <T> FutureCallback<ValidationResult> getAttributesFetchCallback(final TenantId tenantId, final EntityId entityId, final String scope, final FutureCallback<List<AttributeKvEntry>> callback) {
-        return new FutureCallback<ValidationResult>() {
-            @Override
-            public void onSuccess(@Nullable ValidationResult result) {
-                Futures.addCallback(attributesService.findAll(tenantId, entityId, AttributeScope.valueOf(scope)), callback, MoreExecutors.directExecutor());
-            }
+    private FutureCallback<ValidationResult> getAttributesFetchCallback(final TenantId tenantId, final EntityId entityId, final String scope, final FutureCallback<List<AttributeKvEntry>> callback) {
+        return on(r -> Futures.addCallback(attributesService.findAll(tenantId, entityId, AttributeScope.valueOf(scope)), callback, MoreExecutors.directExecutor()),
+                callback::onFailure);
+    }
 
-            @Override
-            public void onFailure(Throwable t) {
-                callback.onFailure(t);
-            }
-        };
+    private void handleCmdFailure(WebSocketSessionRef sessionRef, WsCmd cmd, Exception e) {
+        if (e instanceof TbRateLimitsException) {
+            log.debug("{} Failed to handle WS cmd: {}", sessionRef, cmd, e);
+            return;
+        }
+        if (cmd instanceof AlarmStatusCmd) {
+            sendAlarmStatusError(sessionRef, cmd.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR, e.getMessage());
+        } else {
+            sendError(sessionRef, cmd.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR, e.getMessage());
+        }
+        log.error("{} Failed to handle WS cmd: {}", sessionRef, cmd, e);
+    }
+
+    private void sendAlarmStatusError(WebSocketSessionRef sessionRef, int cmdId, SubscriptionErrorCode errorCode, String errorMsg) {
+        sendUpdate(sessionRef.getSessionId(), new AlarmStatusUpdate(cmdId, errorCode.getCode(), errorMsg));
+    }
+
+    private void logAttributesFetchFailure(Throwable e) {
+        if (isValidationFailure(e)) {
+            log.debug(FAILED_TO_FETCH_ATTRIBUTES, e);
+        } else {
+            log.error(FAILED_TO_FETCH_ATTRIBUTES, e);
+        }
+    }
+
+    private static boolean isValidationFailure(Throwable e) {
+        return e instanceof AccessDeniedException || e instanceof EntityNotFoundException || e instanceof UnauthorizedException;
     }
 
     private FutureCallback<ValidationResult> on(Consumer<Void> success, Consumer<Throwable> failure) {

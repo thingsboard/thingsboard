@@ -402,11 +402,12 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
     int deleteTypeIfNoAlarmsExist(@Param("tenantId") UUID tenantId, @Param("types") Set<String> types);
 
     @Query(value = "SELECT a.id FROM alarm a " +
-            "WHERE a.originator_id = :originatorId " +
+            "WHERE a.tenant_id = :tenantId AND a.originator_id = :originatorId " +
             "AND (COALESCE(:alarmTypes) IS NULL OR a.type IN (:alarmTypes)) " +
             "AND (COALESCE(:alarmSeverities) IS NULL OR a.severity IN (:alarmSeverities)) " +
             "AND (a.cleared = false) ORDER BY id LIMIT :limit", nativeQuery = true)
-    List<UUID> findActiveOriginatorAlarms(@Param("originatorId") UUID originatorId,
+    List<UUID> findActiveOriginatorAlarms(@Param("tenantId") UUID tenantId,
+                                          @Param("originatorId") UUID originatorId,
                                           @Param("alarmTypes") List<String> alarmTypes,
                                           @Param("alarmSeverities") List<String> alarmSeverities,
                                           int limit);
