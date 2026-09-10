@@ -204,9 +204,19 @@ $gallery-border-hover-color: #2a7dec;
     }
 
     th, td {
+      // Long unbreakable tokens (logins, e-mails, passwords) must never overflow their
+      // own column. `anywhere` also drops the cell min-content width down to a single
+      // character, so auto layout can always squeeze the table into the available
+      // width instead of overflowing (and getting clipped by `overflow: hidden`).
+      overflow-wrap: break-word; // fallback for engines without `anywhere`
+      overflow-wrap: anywhere;
+
       div.code-wrapper {
         display: inline-block;
         width: 100%;
+        // Reserve room for the absolutely positioned copy icon (38px wide, offset 3px
+        // from the right edge) so the cell text does not run underneath it.
+        padding-right: 44px;
 
         button.clipboard-btn {
           top: -6px;
@@ -275,11 +285,10 @@ $gallery-border-hover-color: #2a7dec;
       margin-top: 20px;
       margin-bottom: 20px;
       overflow: hidden;
-      table-layout: fixed;
-
-      &.auto {
-        table-layout: auto;
-      }
+      // Columns are sized to their content: with fixed layout every column got the
+      // same width, so cells with long values (e-mails, logins, tokens) had to wrap
+      // mid-word while short columns kept a lot of unused space.
+      table-layout: auto;
 
       > thead {
         background-color: $table-header-background-color;
