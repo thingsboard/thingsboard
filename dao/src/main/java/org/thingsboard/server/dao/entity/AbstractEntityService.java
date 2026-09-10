@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.ConcurrentReferenceHashMap;
 import org.thingsboard.common.util.DebugModeUtil;
 import org.thingsboard.server.common.data.EntityInfo;
@@ -92,21 +93,36 @@ public abstract class AbstractEntityService {
     @Autowired
     protected EntityDaoRegistry entityDaoRegistry;
 
+    @Autowired
+    protected TransactionTemplate transactionTemplate;
+
     @Value("${debug.settings.default_duration:15}")
     private int defaultDebugDurationMinutes;
 
+    // Commit must happen inside the lock, otherwise the next thread counts stale data when checking the limit.
+    // No caller in the chain may have a transaction open, or the template joins it and commits after the unlock.
+    // The lock serializes the check only while the count comes from Postgres. Once queue.edqs.sync.enabled and
+    // queue.edqs.api.supported are both on, validateNumberOfEntitiesPerTenant counts through EDQS, which is filled
+    // asynchronously after commit, so the next thread reads a replica without the new row and the limit stays
+    // exceedable. Both properties are disabled by default.
     protected <E extends HasId & HasTenantId> E saveEntity(E entity, Supplier<E> saveFunction) {
         if (entity.getId() == null) {
             ReentrantLock lock = entityCreationLocks.computeIfAbsent(entity.getTenantId(), id -> new ReentrantLock());
             lock.lock();
             try {
-                return saveFunction.get();
+                return transactionTemplate.execute(status -> saveFunction.get());
             } finally {
                 lock.unlock();
             }
         } else {
-            return saveFunction.get();
+            return isUpdateTransactional()
+                    ? transactionTemplate.execute(status -> saveFunction.get())
+                    : saveFunction.get();
         }
+    }
+
+    protected boolean isUpdateTransactional() {
+        return true;
     }
 
     protected void createRelation(TenantId tenantId, EntityRelation relation) {
