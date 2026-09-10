@@ -2821,7 +2821,7 @@
     "timeseries-placeholder": "Tidsserier",
     "target-entity": "Målenhed",
     "attributes-propagation": "Attributter propagation",
-    "attributes-propagation-hint": "Entitetsvisningen kopierer automatisk de specificerede attributter fra målenheden, hver gang du gemmer eller opdaterer denne entitetsvisning. Af hensyn til ydeevnen bliver attributterne ikke automatisk overført ved hver ændring. Du kan aktivere automatisk overførsel ved at konfigurere \"copy to view\" regelnode i din regelkæde og forbinde \"Post attributes\" og \"Attributes Updated\" beskeder til den nye regelnode.",
+    "attributes-propagation-hint": "Entitetsvisningen kopierer automatisk de specificerede attributter fra målenheden, hver gang du gemmer eller opdaterer denne entitetsvisning. Af hensyn til ydeevnen bliver attributterne ikke automatisk overført ved hver ændring. Du kan aktivere automatisk overførsel ved at konfigurere \"copy to view\" regelnode i din regelkæde og forbinde \"Post Attributes\" og \"Attributes Updated\" beskeder til den nye regelnode.",
     "timeseries-data": "Tidsseriedata",
     "timeseries-data-hint": "Konfigurer tidsserie-nøgler fra målenheden, som vil være tilgængelige i entitetsvisningen. Disse data er skrivebeskyttede.",
     "search": "Søg i entitetsvisninger",
