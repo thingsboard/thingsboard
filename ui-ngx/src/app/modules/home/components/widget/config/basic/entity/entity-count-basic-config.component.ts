@@ -12,7 +12,11 @@ import { WidgetConfigComponent } from '@home/components/widget/widget-config.com
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { isUndefined } from '@core/utils';
 import { UtilsService } from '@core/services/utils.service';
-import { countDefaultSettings, CountWidgetSettings } from '@home/components/widget/lib/count/count-widget.models';
+import {
+  countDefaultSettings,
+  CountWidgetSettings,
+  normalizeCountWidgetDatasource
+} from '@home/components/widget/lib/count/count-widget.models';
 
 @Component({
     selector: 'tb-entity-count-basic-config',
@@ -49,7 +53,7 @@ export class EntityCountBasicConfigComponent extends BasicWidgetConfigComponent 
 
   protected onConfigSet(configData: WidgetConfigComponentData) {
     if (!this.widgetEditMode) {
-      this.normalizeDatasource(configData);
+      normalizeCountWidgetDatasource(configData, DatasourceType.entityCount, this.utils);
     }
     const settings: CountWidgetSettings = {...countDefaultSettings(false), ...(configData.config.settings || {})};
     this.entityCountWidgetConfigForm = this.fb.group({
@@ -75,19 +79,6 @@ export class EntityCountBasicConfigComponent extends BasicWidgetConfigComponent 
 
     this.widgetConfig.config.actions = config.actions;
     return this.widgetConfig;
-  }
-
-  private normalizeDatasource(configData: WidgetConfigComponentData) {
-    let datasources = configData.config.datasources;
-    if (!datasources || !datasources.length) {
-      datasources = [{}];
-      configData.config.datasources = datasources;
-    }
-    if (datasources[0].type !== DatasourceType.entityCount) {
-      datasources[0].type = DatasourceType.entityCount;
-      delete datasources[0].name;
-      datasources[0].dataKeys = [this.utils.createKey({name: 'count'}, DataKeyType.count)];
-    }
   }
 
   private getCardButtons(config: WidgetConfig): string[] {

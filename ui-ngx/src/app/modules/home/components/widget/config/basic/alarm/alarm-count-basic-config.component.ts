@@ -2,12 +2,12 @@
 // SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component } from '@angular/core';
-import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { BasicWidgetConfigComponent } from '@home/components/widget/config/widget-config.component.models';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
-import { DatasourceType, WidgetConfig, widgetType, } from '@shared/models/widget.models';
+import { DatasourceType, WidgetConfig } from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { isUndefined } from '@core/utils';
@@ -16,7 +16,8 @@ import { UtilsService } from '@core/services/utils.service';
 import { AlarmSearchStatus } from '@shared/models/alarm.models';
 import {
   countDefaultSettings,
-  CountWidgetSettings
+  CountWidgetSettings,
+  normalizeCountWidgetDatasource
 } from '@home/components/widget/lib/count/count-widget.models';
 
 @Component({
@@ -55,7 +56,9 @@ export class AlarmCountBasicConfigComponent extends BasicWidgetConfigComponent {
 
   protected onConfigSet(configData: WidgetConfigComponentData) {
     if (!this.widgetEditMode) {
-      this.normalizeDatasource(configData);
+      normalizeCountWidgetDatasource(configData, DatasourceType.alarmCount, this.utils, datasource => {
+        datasource.alarmFilterConfig = {statusList: [AlarmSearchStatus.ACTIVE]};
+      });
     }
     const settings: CountWidgetSettings = {...countDefaultSettings(true), ...(configData.config.settings || {})};
     this.alarmCountWidgetConfigForm = this.fb.group({
@@ -84,19 +87,6 @@ export class AlarmCountBasicConfigComponent extends BasicWidgetConfigComponent {
 
     this.widgetConfig.config.actions = config.actions;
     return this.widgetConfig;
-  }
-
-  private normalizeDatasource(configData: WidgetConfigComponentData) {
-    let datasources = configData.config.datasources;
-    if (!datasources || !datasources.length) {
-      datasources = [{}];
-      configData.config.datasources = datasources;
-    }
-    if (datasources[0].type !== DatasourceType.alarmCount) {
-      datasources[0].type = DatasourceType.alarmCount;
-      delete datasources[0].name;
-      datasources[0].dataKeys = [this.utils.createKey({name: 'count'}, DataKeyType.count)];
-    }
   }
 
   private getCardButtons(config: WidgetConfig): string[] {
