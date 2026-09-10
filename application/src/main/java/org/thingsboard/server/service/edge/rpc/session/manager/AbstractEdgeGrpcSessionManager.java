@@ -122,6 +122,11 @@ public abstract class AbstractEdgeGrpcSessionManager extends EdgeGrpcSessionDele
         session.sendDownlinkMsg(edgeConfigMsg);
     }
 
+    /**
+     * Stops the session and hands it to the zombie cleanup service if that fails. This can block for
+     * seconds - the Kafka session gives its consumer executor up to 5s to terminate - so it must never
+     * be called from inside an {@code EdgeSessionsHolder} remapping function.
+     */
     @Override
     public void destroyAndMarkAsZombieIfFailed() {
         EdgeSessionState state = getState();

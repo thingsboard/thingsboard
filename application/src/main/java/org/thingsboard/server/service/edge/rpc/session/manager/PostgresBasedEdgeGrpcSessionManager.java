@@ -92,8 +92,8 @@ public class PostgresBasedEdgeGrpcSessionManager extends AbstractEdgeGrpcSession
         EdgeId edgeId = getState().getEdgeId();
         TenantId tenantId = getState().getTenantId();
 
-        if (!edgeSessions.hasByEdgeId(edgeId)) {
-            log.debug("[{}] Session was removed and edge event check schedule must not be started [{}]",
+        if (!edgeSessions.isCurrent(this)) {
+            log.debug("[{}] Session is not current anymore and edge event check schedule must not be started [{}]",
                     tenantId, edgeId.getId());
             return;
         }
@@ -101,6 +101,11 @@ public class PostgresBasedEdgeGrpcSessionManager extends AbstractEdgeGrpcSession
             try {
                 newEventsLock.lock();
                 try {
+                    if (!edgeSessions.isCurrent(this)) {
+                        log.debug("[{}] Session is not current anymore, edge event check must not run for edge [{}]",
+                                tenantId, edgeId.getId());
+                        return;
+                    }
                     if (!hasNewEvents) {
                         scheduleEdgeEventsCheck();
                         return;

@@ -69,10 +69,25 @@ public class EdgeSessionsHolder {
     }
 
     /**
+     * Whether the given session is still the one registered for its edge. A session that has been
+     * superseded must not arm or run work on the edge's behalf - the session that replaced it owns
+     * that now - and a plain "some session exists for this edge" check does not catch that.
+     */
+    public boolean isCurrent(EdgeGrpcSessionManager session) {
+        EdgeSessionState state = session.getState();
+        return state != null && sessions.get(state.getEdgeId()) == session;
+    }
+
+    /**
      * Removes the edge's registered session and returns it, but only if it is still the given session.
      * Returns null when another session has taken the edge over in the meantime, so that a teardown
      * racing with a reconnect cannot act on behalf of a session it no longer owns. The check and the
      * removal are one atomic step.
+     * <p>
+     * Only cheap non-blocking work may run inside the remapping function: it holds the bin lock of
+     * {@link #sessions} for this edge, so a slow teardown such as
+     * {@link EdgeGrpcSessionManager#destroyAndMarkAsZombieIfFailed()} has to be done by the caller
+     * once compute has returned.
      */
     public EdgeGrpcSessionManager removeByEdgeIdIfCurrent(EdgeId id, UUID sessionId) {
         AtomicReference<EdgeGrpcSessionManager> removed = new AtomicReference<>();
