@@ -51,6 +51,11 @@ export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy
   @Input() mode: 'default' | 'add' = 'default';
   @Input() fixedSubType: string;
   @Output() addItem = new EventEmitter<MpItemVersionView>();
+  /**
+   * Fired whenever an install, update or delete changed what this tenant has installed, so a host
+   * page showing its own installed-items counter can refresh it instead of waiting for a reload.
+   */
+  @Output() installedItemsChanged = new EventEmitter<void>();
   @Input() set activeType(value: ItemType) {
     if (value && value !== this._activeType) {
       const wasInit = !!this._activeType;
@@ -643,6 +648,7 @@ export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy
         this.installedItemCounts = counts;
       });
     }
+    this.installedItemsChanged.emit();
   }
 
   private loadFilterInfo(): void {
