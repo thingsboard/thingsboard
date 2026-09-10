@@ -58,6 +58,34 @@ export class KafkaTemplate implements IQueue {
                 return CompressionTypes.None;
         }
     }
+    // node-config returns environment overrides as raw strings, so a plain Boolean()
+    // would treat "false" as true.
+    private isTrue(value: any): boolean {
+        return String(value).trim().toLowerCase() === 'true';
+    }
+
+    private resolveSslEnabled(configuredSsl: boolean, useSasl: boolean, securityProtocol: any): boolean {
+        if (configuredSsl) {
+            return true;
+        }
+        if (!useSasl) {
+            return false;
+        }
+        switch (String(securityProtocol).trim().toUpperCase()) {
+            case 'SSL':
+            case 'SASL_SSL':
+                return true;
+            case 'PLAINTEXT':
+            case 'SASL_PLAINTEXT':
+                return false;
+            default:
+                // Keep TLS on: an unrecognized value must not silently send SASL
+                // credentials over an unencrypted connection.
+                this.logger.warn('Unknown kafka.confluent.security.protocol value "%s"; keeping SSL enabled. Supported values: PLAINTEXT, SSL, SASL_PLAINTEXT, SASL_SSL.', securityProtocol);
+                return true;
+        }
+    }
+
     private partitionsConsumedConcurrently = Number(config.get('kafka.partitions_consumed_concurrently'));
 
     private kafkaClient: Kafka;
@@ -77,8 +105,11 @@ export class KafkaTemplate implements IQueue {
         const kafkaBootstrapServers: string = config.get('kafka.bootstrap.servers');
         const queuePrefix: string = config.get('queue_prefix');
         const requestTopic: string = queuePrefix ? queuePrefix + "." + config.get('request_topic') : config.get('request_topic');
-        const useConfluent = config.get('kafka.use_confluent_cloud');
-        const enabledSsl = Boolean(config.get('kafka.ssl.enabled'));
+        const useConfluent = this.isTrue(config.get('kafka.use_confluent_cloud'));
+        const configuredSsl = this.isTrue(config.get('kafka.ssl.enabled'));
+        const securityProtocol = config.has('kafka.confluent.security.protocol')
+            ? config.get('kafka.confluent.security.protocol') : 'SASL_SSL';
+        const enabledSsl = this.resolveSslEnabled(configuredSsl, useConfluent, securityProtocol);
         const groupId:string =  queuePrefix ? queuePrefix + ".js-executor-group" : "js-executor-group";
         this.logger.info('Kafka Bootstrap Servers: %s', kafkaBootstrapServers);
         this.logger.info('Kafka Requests Topic: %s', requestTopic);
@@ -105,8 +136,10 @@ export class KafkaTemplate implements IQueue {
                 username: config.get('kafka.confluent.username'),
                 password: config.get('kafka.confluent.password')
             };
-            kafkaConfig['ssl'] = true;
+            this.logger.info('Kafka SASL security protocol: %s', securityProtocol);
         }
+
+        this.logger.info('Kafka SSL enabled: %s, SASL enabled: %s', enabledSsl, useConfluent);
 
         if (enabledSsl) {
             const certFilePath: string = config.has('kafka.ssl.cert_file') ? config.get('kafka.ssl.cert_file') : '';
