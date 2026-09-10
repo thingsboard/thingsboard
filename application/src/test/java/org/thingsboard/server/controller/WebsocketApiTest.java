@@ -73,6 +73,7 @@ import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmCountCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmCountUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmStatusCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmStatusUpdate;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.CmdUpdateType;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityCountCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityCountUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataUpdate;
@@ -977,6 +978,54 @@ public class WebsocketApiTest extends AbstractControllerTest {
         JsonNode update = JacksonUtil.toJsonNode(getWsClient().waitForUpdate());
         assertThat(update).as("waitForUpdate").isNotNull();
         assertThat(update.get("data").get("attr").get(0).get(1).asText()).isEqualTo(expectedAttrValue);
+    }
+
+    @Test
+    public void testAttributesSubscription_tenantAdmin() throws Exception {
+        JsonNode update = getWsClient().subscribeForAttributes(device.getId(), TbAttributeSubscriptionScope.SERVER_SCOPE.name(), List.of("attr"));
+        assertThat(update.get("errorMsg").isNull()).isTrue();
+        assertThat(update.get("errorCode").asInt()).isEqualTo(SubscriptionErrorCode.NO_ERROR.getCode());
+
+        getWsClient().registerWaitForUpdate();
+        String expectedAttrValue = "42";
+        sendAttributes(device, TbAttributeSubscriptionScope.SERVER_SCOPE, List.of(
+                new BaseAttributeKvEntry(System.currentTimeMillis(), new StringDataEntry("attr", expectedAttrValue))
+        ));
+
+        JsonNode attributesUpdate = JacksonUtil.toJsonNode(getWsClient().waitForUpdate());
+        assertThat(attributesUpdate).as("waitForUpdate").isNotNull();
+        assertThat(attributesUpdate.get("data").get("attr").get(0).get(1).asText()).isEqualTo(expectedAttrValue);
+    }
+
+    @Test
+    public void testAttributesSubscription_differentTenant() throws Exception {
+        sendAttributes(device, TbAttributeSubscriptionScope.SERVER_SCOPE, List.of(
+                new BaseAttributeKvEntry(System.currentTimeMillis(), new StringDataEntry("attr", "42"))
+        ));
+
+        loginDifferentTenant();
+
+        JsonNode update = getAnotherWsClient().subscribeForAttributes(device.getId(), TbAttributeSubscriptionScope.SERVER_SCOPE.name(), List.of("attr"));
+        assertThat(update.get("errorCode").asInt()).isNotEqualTo(SubscriptionErrorCode.NO_ERROR.getCode());
+        assertThat(update.get("data").isNull()).isTrue();
+    }
+
+    @Test
+    public void testAlarmStatusSubscription_differentTenant() throws Exception {
+        Alarm alarm = new Alarm();
+        alarm.setOriginator(device.getId());
+        alarm.setType("TEST ALARM");
+        alarm.setSeverity(AlarmSeverity.WARNING);
+        doPost("/api/alarm", alarm, Alarm.class);
+
+        loginDifferentTenant();
+
+        getAnotherWsClient().send(new AlarmStatusCmd(1, device.getId(), List.of("TEST ALARM"), List.of(AlarmSeverity.WARNING)));
+
+        JsonNode update = JacksonUtil.toJsonNode(getAnotherWsClient().waitForReply());
+        assertThat(update.get("errorCode").asInt()).isEqualTo(SubscriptionErrorCode.UNAUTHORIZED.getCode());
+        assertThat(update.get("cmdUpdateType").asText()).isEqualTo(CmdUpdateType.ALARM_STATUS.name());
+        assertThat(update.get("active").asBoolean()).isFalse();
     }
 
     @Test

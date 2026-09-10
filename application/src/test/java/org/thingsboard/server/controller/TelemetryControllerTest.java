@@ -15,12 +15,15 @@
  */
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.awaitility.Awaitility;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
@@ -196,6 +199,36 @@ public class TelemetryControllerTest extends AbstractControllerTest {
         timeseries = doGetAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/values/timeseries?keys=data&startTs={startTs}&endTs={endTs}", ObjectNode.class, startTs, endTs);
 
         Assert.assertTrue(timeseries.isEmpty());
+    }
+
+    @Test
+    public void testGetTimeseriesForEntityOfDifferentTenant() throws Exception {
+        loginTenantAdmin();
+        Device device = createDevice();
+        long ts = System.currentTimeMillis();
+        tsService.save(tenantId, device.getId(), new BasicTsKvEntry(ts, new LongDataEntry("t", 1L)));
+
+        loginDifferentTenant();
+        doGetAsync("/api/plugins/telemetry/DEVICE/" + device.getId().getId() +
+                "/values/timeseries?keys=t&startTs=0&endTs=" + (ts + 1000))
+                .andExpect(status().is4xxClientError());
+    }
+
+    @Test
+    public void testSaveAttributesForEntityOfDifferentTenant() throws Exception {
+        loginTenantAdmin();
+        DeviceProfile deviceProfile = doPost("/api/deviceProfile", createDeviceProfile("Test profile"), DeviceProfile.class);
+        String attributesUrl = "/api/plugins/telemetry/DEVICE_PROFILE/" + deviceProfile.getId().getId() + "/attributes/SERVER_SCOPE";
+
+        loginDifferentTenant();
+        doPostAsync(attributesUrl, "{\"leaked\": \"value\"}", String.class, status().isForbidden());
+
+        loginTenantAdmin();
+        String valuesUrl = "/api/plugins/telemetry/DEVICE_PROFILE/" + deviceProfile.getId().getId() + "/values/attributes/SERVER_SCOPE";
+        Awaitility.await("attributes are not saved")
+                .during(2, TimeUnit.SECONDS)
+                .atMost(10, TimeUnit.SECONDS)
+                .until(() -> doGetAsync(valuesUrl, ArrayNode.class).isEmpty());
     }
 
     @Test

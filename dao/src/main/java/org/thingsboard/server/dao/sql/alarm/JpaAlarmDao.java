@@ -441,7 +441,7 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
 
     @Override
     public List<UUID> findActiveOriginatorAlarms(TenantId tenantId, OriginatorAlarmFilter filter, int limit) {
-        return alarmRepository.findActiveOriginatorAlarms(filter.getOriginatorId().getId(),
+        return alarmRepository.findActiveOriginatorAlarms(tenantId.getId(), filter.getOriginatorId().getId(),
                 filter.getTypeList(), filter.getSeverityList() != null ? filter.getSeverityList().stream().map(Enum::name).toList() : null,
                 limit);
     }
