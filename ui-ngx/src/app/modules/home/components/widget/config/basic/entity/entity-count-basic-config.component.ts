@@ -48,6 +48,9 @@ export class EntityCountBasicConfigComponent extends BasicWidgetConfigComponent 
   }
 
   protected onConfigSet(configData: WidgetConfigComponentData) {
+    if (!this.widgetEditMode) {
+      this.normalizeDatasource(configData);
+    }
     const settings: CountWidgetSettings = {...countDefaultSettings(false), ...(configData.config.settings || {})};
     this.entityCountWidgetConfigForm = this.fb.group({
       datasources: [configData.config.datasources, []],
@@ -72,6 +75,19 @@ export class EntityCountBasicConfigComponent extends BasicWidgetConfigComponent 
 
     this.widgetConfig.config.actions = config.actions;
     return this.widgetConfig;
+  }
+
+  private normalizeDatasource(configData: WidgetConfigComponentData) {
+    let datasources = configData.config.datasources;
+    if (!datasources || !datasources.length) {
+      datasources = [{}];
+      configData.config.datasources = datasources;
+    }
+    if (datasources[0].type !== DatasourceType.entityCount) {
+      datasources[0].type = DatasourceType.entityCount;
+      delete datasources[0].name;
+      datasources[0].dataKeys = [this.utils.createKey({name: 'count'}, DataKeyType.count)];
+    }
   }
 
   private getCardButtons(config: WidgetConfig): string[] {

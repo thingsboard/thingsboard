@@ -54,6 +54,9 @@ export class AlarmCountBasicConfigComponent extends BasicWidgetConfigComponent {
   }
 
   protected onConfigSet(configData: WidgetConfigComponentData) {
+    if (!this.widgetEditMode) {
+      this.normalizeDatasource(configData);
+    }
     const settings: CountWidgetSettings = {...countDefaultSettings(true), ...(configData.config.settings || {})};
     this.alarmCountWidgetConfigForm = this.fb.group({
       alarmFilterConfig: [getAlarmFilterConfig(configData.config.datasources), []],
@@ -81,6 +84,19 @@ export class AlarmCountBasicConfigComponent extends BasicWidgetConfigComponent {
 
     this.widgetConfig.config.actions = config.actions;
     return this.widgetConfig;
+  }
+
+  private normalizeDatasource(configData: WidgetConfigComponentData) {
+    let datasources = configData.config.datasources;
+    if (!datasources || !datasources.length) {
+      datasources = [{}];
+      configData.config.datasources = datasources;
+    }
+    if (datasources[0].type !== DatasourceType.alarmCount) {
+      datasources[0].type = DatasourceType.alarmCount;
+      delete datasources[0].name;
+      datasources[0].dataKeys = [this.utils.createKey({name: 'count'}, DataKeyType.count)];
+    }
   }
 
   private getCardButtons(config: WidgetConfig): string[] {
