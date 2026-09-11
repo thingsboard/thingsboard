@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import {
   NotificationDeliveryMethod,
   NotificationRequest,
@@ -47,6 +33,8 @@ import { AuthUser } from '@shared/models/user.model';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
+import { EditorOptions } from 'hugerte';
+import { defaultHugeRteOptions, HUGERTE_BODY_ID } from '@shared/models/hugerte/hugerte.models';
 
 export interface RequestNotificationDialogData {
   request?: NotificationRequest;
@@ -78,9 +66,7 @@ export class SentNotificationDialogComponent extends
 
   showRefresh = false;
 
-  tinyMceOptions: Record<string, any> = {
-    base_url: '/assets/tinymce',
-    suffix: '.min',
+  hugeRteOptions: Partial<EditorOptions> = defaultHugeRteOptions({
     plugins: ['autoresize'],
     menubar: false,
     toolbar: false,
@@ -88,19 +74,16 @@ export class SentNotificationDialogComponent extends
     resize: false,
     readonly: true,
     height: 400,
-    autofocus: false,
-    branding: false,
-    promotion: false,
     setup: (ed) => {
       ed.on('PreInit', () => {
         const document = $(ed.iframeElement.contentDocument);
-        const body = $('#tinymce', document);
+        const body = $(`#${HUGERTE_BODY_ID}`, document);
         body.attr({contenteditable: false});
         body.css('pointerEvents', 'none');
         body.css('userSelect', 'none');
       })
     }
-  };
+  });
 
   private authUser: AuthUser = getCurrentAuthUser(this.store);
 
