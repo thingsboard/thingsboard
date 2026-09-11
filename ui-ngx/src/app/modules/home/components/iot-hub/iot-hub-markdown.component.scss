@@ -3,6 +3,10 @@
 $text-color: rgba(0,0,0,0.76);
 $link-color: #2a7dec;
 $copy-button-color: #2a7dec;
+// Geometry of the copy icon chip, shared by the chip itself and by the space table
+// cells reserve for it, so the two cannot drift apart.
+$copy-icon-width: 38px;
+$copy-icon-offset: 3px;
 
 $code-block-border-color: rgba(42, 125, 236, .2);
 $code-default-color: #212529;
@@ -169,10 +173,10 @@ $gallery-border-hover-color: #2a7dec;
         div {
           background-color: #fff;
           position: absolute;
-          width: 38px;
+          width: $copy-icon-width;
           height: 28px;
-          top: 3px;
-          right: 3px;
+          top: $copy-icon-offset;
+          right: $copy-icon-offset;
           padding: 8px 10px 0;
 
           img {
@@ -224,9 +228,10 @@ $gallery-border-hover-color: #2a7dec;
       div.code-wrapper {
         display: inline-block;
         width: 100%;
-        // Reserve room for the absolutely positioned copy icon (38px wide, offset 3px
-        // from the right edge) so the cell text does not run underneath it.
-        padding-right: 44px;
+        // Reserve room for the absolutely positioned copy icon, plus the same gap on its
+        // far side, so the cell text does not run underneath it and the reservation
+        // follows the chip if its geometry ever changes.
+        padding-right: $copy-icon-width + 2 * $copy-icon-offset;
 
         button.clipboard-btn {
           top: -6px;
