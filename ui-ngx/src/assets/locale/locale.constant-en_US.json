@@ -1119,6 +1119,13 @@
             "time-series-data-aggregation": "Time series data aggregation",
             "time-series-data-aggregation-hint": "Aggregation of historical data from a current entity."
         },
+        "compute-on": {
+            "label": "Computed on",
+            "cloud": "Cloud",
+            "cloud-hint": "Computed on the cloud. Edges do not compute this field.",
+            "edge": "Edge",
+            "edge-hint": "Computed on the edge, and the cloud stores the edge result without recomputing it."
+        },
         "preview": "Preview",
         "arguments": "Arguments",
         "decimals-by-default": "Decimals by default",
