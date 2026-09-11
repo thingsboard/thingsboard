@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.edge.rpc;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
@@ -33,6 +20,7 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
@@ -247,8 +235,9 @@ public abstract class EdgeGrpcSession implements Closeable {
     public void onConfigurationUpdate(Edge edge) {
         log.debug("[{}] onConfigurationUpdate [{}]", sessionId, edge);
         this.tenantId = edge.getTenantId();
+        CustomerId stateCustomerId = this.edge != null ? this.edge.getCustomerId() : null;
         this.edge = edge;
-        if (!this.edge.getCustomerId().equals(edge.getCustomerId())) {
+        if (stateCustomerId != null && !stateCustomerId.equals(edge.getCustomerId())) {
             // do not send edge configuration message on customer update
             // message send by separate flow from assign_to or unassing_from customer
             return;
@@ -338,7 +327,12 @@ public abstract class EdgeGrpcSession implements Closeable {
 
                 @Override
                 public void onFailure(Throwable t) {
-                    log.error("[{}][{}] Exception during sync process", tenantId, edge.getId(), t);
+                    log.error("[{}][{}] Exception during sync process, skipping fetcher {} and continuing",
+                            tenantId, edge.getId(), next.getClass().getSimpleName(), t);
+                    // Keep walking the cursor: returning here leaves syncInProgress set for the life of the
+                    // session, so the edge never receives SyncCompletedMsg and both general downlink delivery
+                    // and uplink processing stay gated until the session is re-established.
+                    doSync(cursor);
                 }
             }, ctx.getGrpcCallbackExecutorService());
         } else {
@@ -846,7 +840,7 @@ public abstract class EdgeGrpcSession implements Closeable {
         ctx.getClusterService().onEdgeEventUpdate(new EdgeEventUpdateMsg(edge.getTenantId(), edge.getId()));
     }
 
-    private void stopCurrentSendDownlinkMsgsTask(Boolean isInterrupted) {
+    protected void stopCurrentSendDownlinkMsgsTask(Boolean isInterrupted) {
         if (sessionState.getSendDownlinkMsgsFuture() != null && !sessionState.getSendDownlinkMsgsFuture().isDone()) {
             sessionState.getSendDownlinkMsgsFuture().set(isInterrupted);
         }

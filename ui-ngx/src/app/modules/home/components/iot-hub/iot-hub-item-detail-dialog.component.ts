@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Component, Inject, Type } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Router } from '@angular/router';
@@ -28,6 +14,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { SolutionInstallDialogComponent } from '@home/components/iot-hub/solution-install-dialog.component';
 import { SolutionTemplateInstalledItemDescriptor } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
+import {
+  iotHubItemActionLabel,
+  iotHubItemActionMode,
+  isBuiltInItem
+} from '@home/components/iot-hub/iot-hub-utils';
 
 export type IotHubItemDetailDialogMode = 'default' | 'add';
 
@@ -59,6 +50,8 @@ export class TbIotHubItemDetailDialogComponent extends DialogComponent<TbIotHubI
   installedItemsCount = 0;
   carouselImages: string[] = [];
   carouselIndex = 0;
+  // Built-in marker rides on the version line rather than as a standalone badge.
+  versionLabel: string;
 
   constructor(
     protected store: Store<AppState>,
@@ -77,8 +70,20 @@ export class TbIotHubItemDetailDialogComponent extends DialogComponent<TbIotHubI
     this.preview = data.preview === true;
     this.installedItem = data.installedItem;
     this.installedItemsCount = data.installedItemsCount || 0;
+    this.versionLabel = isBuiltInItem(this.item)
+      ? `v ${this.item.version} | ${this.translate.instant('iot-hub.built-in')}`
+      : `v ${this.item.version}`;
     this.buildCarouselImages();
     this.loadReadme();
+  }
+
+  // The counter and the separator that would otherwise dangle next to it share this boolean.
+  get showInstallCount(): boolean {
+    return !isBuiltInItem(this.item);
+  }
+
+  get actionLabel(): string {
+    return iotHubItemActionLabel(this.item, this.mode === 'add' ? 'add' : 'detail');
   }
 
   isCompactLayout(): boolean {
@@ -167,6 +172,19 @@ export class TbIotHubItemDetailDialogComponent extends DialogComponent<TbIotHubI
       && this.installedItem.itemVersionId !== this.item.id;
   }
 
+  /** Runs whatever the item's action mode calls for: open the local copy, connect, or install. */
+  runPrimaryAction(): void {
+    if (iotHubItemActionMode(this.item) === 'connect') {
+      this.installDevice();
+    } else {
+      this.install();
+    }
+  }
+
+  /**
+   * For a built-in item this opens the local copy (the dialog closes itself on navigation) and only
+   * installs if that copy no longer exists — `IotHubActionsService.installItem` owns that decision.
+   */
   install(): void {
     this.iotHubActions.installItem(this.item).subscribe(result => {
       if (result === 'installed') {

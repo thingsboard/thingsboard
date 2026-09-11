@@ -1,17 +1,6 @@
 #
-# Copyright © 2016-2026 The Thingsboard Authors
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+# SPDX-License-Identifier: Apache-2.0
 #
 
 # Server common parameters
@@ -1672,6 +1661,11 @@ edges:
   state:
     # Persist state of edge (active, last connect, last disconnect) into timeseries or attributes tables. 'false' means to store edge state into attributes table
     persistToTelemetry: "${EDGES_PERSIST_STATE_TO_TELEMETRY:false}"
+  connectivity:
+    # Delay (ms) before sending an edge "disconnected" notification. Suppressed if the edge reconnects within
+    # this window - debounces flapping edges from spamming the notification center. Only the notification is
+    # delayed; rule-engine events and state attributes update immediately. Set to 0 to notify immediately.
+    disconnect_notification_delay_ms: "${EDGES_DISCONNECT_NOTIFICATION_DELAY_MS:60000}"
   stats:
     # Enable or disable reporting of edge communication stats (true or false)
     enabled: "${EDGES_STATS_ENABLED:true}"
