@@ -78,7 +78,6 @@ import org.thingsboard.server.service.edge.EdgeContextComponent;
 import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 import org.thingsboard.server.service.edge.rpc.fetch.EdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.GeneralEdgeEventFetcher;
-import org.thingsboard.server.service.edge.rpc.utils.AdminSettingsCleanupUtils;
 import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 
 import java.io.Closeable;
@@ -240,9 +239,7 @@ public abstract class EdgeGrpcSession implements Closeable {
             log.info("[{}][{}][{}] Staring edge sync process", tenantId, edge.getId(), sessionId);
             syncInProgress = true;
             interruptGeneralProcessingOnSync();
-            AdminSettingsCleanupUtils.sendOneTimeAdminSettingsCleanupIfNeeded(ctx, edge, edgeVersion,
-                    EdgeVersion.V_4_2_2_4, this::sendDownlinkMsgsPack,
-                    () -> doSync(new EdgeSyncCursor(ctx, edge, fullSync)));
+            doSync(new EdgeSyncCursor(ctx, edge, fullSync));
         } else {
             log.info("[{}][{}][{}] Sync is already started, skipping starting it now", tenantId, edge.getId(), sessionId);
         }
