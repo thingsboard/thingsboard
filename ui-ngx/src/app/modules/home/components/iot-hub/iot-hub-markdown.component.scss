@@ -3,6 +3,10 @@
 $text-color: rgba(0,0,0,0.76);
 $link-color: #2a7dec;
 $copy-button-color: #2a7dec;
+// Geometry of the copy icon chip, shared by the chip itself and by the space table
+// cells reserve for it, so the two cannot drift apart.
+$copy-icon-width: 38px;
+$copy-icon-offset: 3px;
 
 $code-block-border-color: rgba(42, 125, 236, .2);
 $code-default-color: #212529;
@@ -169,10 +173,10 @@ $gallery-border-hover-color: #2a7dec;
         div {
           background-color: #fff;
           position: absolute;
-          width: 38px;
+          width: $copy-icon-width;
           height: 28px;
-          top: 3px;
-          right: 3px;
+          top: $copy-icon-offset;
+          right: $copy-icon-offset;
           padding: 8px 10px 0;
 
           img {
@@ -204,9 +208,30 @@ $gallery-border-hover-color: #2a7dec;
     }
 
     th, td {
+      // Long unbreakable tokens (logins, e-mails, passwords) must never overflow their
+      // own column. `anywhere` also drops the cell min-content width down to a single
+      // character, so auto layout can always squeeze the table into the available
+      // width instead of overflowing (and getting clipped by `overflow: hidden`).
+      overflow-wrap: break-word; // fallback for engines without `anywhere`
+      overflow-wrap: anywhere;
+
+      // Text is not the only thing that can outgrow a column: a preformatted block keeps
+      // its whole line as min-content width, which auto layout cannot shrink, so the table
+      // would push past its container and get cut off by a host that hides horizontal
+      // overflow (iot-hub-item-detail-dialog's .dlg-body). Wrap it inside the cell instead.
+      // Prism sets `white-space: pre` on both the block and the code inside it, so both
+      // have to be relaxed for the cell to shrink.
+      pre, pre > code {
+        white-space: pre-wrap;
+      }
+
       div.code-wrapper {
         display: inline-block;
         width: 100%;
+        // Reserve room for the absolutely positioned copy icon, plus the same gap on its
+        // far side, so the cell text does not run underneath it and the reservation
+        // follows the chip if its geometry ever changes.
+        padding-right: $copy-icon-width + 2 * $copy-icon-offset;
 
         button.clipboard-btn {
           top: -6px;
@@ -275,11 +300,10 @@ $gallery-border-hover-color: #2a7dec;
       margin-top: 20px;
       margin-bottom: 20px;
       overflow: hidden;
-      table-layout: fixed;
-
-      &.auto {
-        table-layout: auto;
-      }
+      // Columns are sized to their content: with fixed layout every column got the
+      // same width, so cells with long values (e-mails, logins, tokens) had to wrap
+      // mid-word while short columns kept a lot of unused space.
+      table-layout: auto;
 
       > thead {
         background-color: $table-header-background-color;
