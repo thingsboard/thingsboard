@@ -211,6 +211,16 @@ $gallery-border-hover-color: #2a7dec;
       overflow-wrap: break-word; // fallback for engines without `anywhere`
       overflow-wrap: anywhere;
 
+      // Text is not the only thing that can outgrow a column: a preformatted block keeps
+      // its whole line as min-content width, which auto layout cannot shrink, so the table
+      // would push past its container and get cut off by a host that hides horizontal
+      // overflow (iot-hub-item-detail-dialog's .dlg-body). Wrap it inside the cell instead.
+      // Prism sets `white-space: pre` on both the block and the code inside it, so both
+      // have to be relaxed for the cell to shrink.
+      pre, pre > code {
+        white-space: pre-wrap;
+      }
+
       div.code-wrapper {
         display: inline-block;
         width: 100%;
