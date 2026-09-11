@@ -37,7 +37,6 @@ import org.thingsboard.server.gen.edge.v1.ConnectResponseMsg;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.DownlinkResponseMsg;
 import org.thingsboard.server.gen.edge.v1.EdgeConfiguration;
-import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.RequestMsg;
 import org.thingsboard.server.gen.edge.v1.RequestMsgType;
 import org.thingsboard.server.gen.edge.v1.ResponseMsg;
@@ -53,7 +52,6 @@ import org.thingsboard.server.service.edge.rpc.EdgeUplinkMessageDispatcher;
 import org.thingsboard.server.service.edge.rpc.fetch.EdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.GeneralEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.session.manager.EdgeGrpcSessionManager;
-import org.thingsboard.server.service.edge.rpc.utils.AdminSettingsCleanupUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -175,9 +173,7 @@ public class EdgeGrpcSession implements EdgeSession {
             saveSyncInProgressAsAttribute(true);
             log.info("[{}][{}][{}] Staring edge sync process", getTenantId(), getEdgeId(), getSessionId());
             interruptGeneralProcessingOnSync();
-            AdminSettingsCleanupUtils.sendOneTimeAdminSettingsCleanupIfNeeded(ctx, state.getEdge(), state.getEdgeVersion(),
-                    EdgeVersion.V_4_3_1_4, this::sendDownlinkMsgsPack,
-                    () -> doSync(new EdgeSyncCursor(ctx, state.getEdge(), fullSync)));
+            doSync(new EdgeSyncCursor(ctx, state.getEdge(), fullSync));
         } else {
             log.info("[{}][{}][{}] Sync is already started, skipping starting it now", getTenantId(), getEdgeId(), getSessionId());
         }
