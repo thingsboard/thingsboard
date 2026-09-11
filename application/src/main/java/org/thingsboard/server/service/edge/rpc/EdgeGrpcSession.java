@@ -85,6 +85,7 @@ import org.thingsboard.server.service.edge.EdgeContextComponent;
 import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 import org.thingsboard.server.service.edge.rpc.fetch.EdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.GeneralEdgeEventFetcher;
+import org.thingsboard.server.service.edge.rpc.utils.AdminSettingsCleanupUtils;
 import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 
 import java.io.Closeable;
@@ -107,7 +108,6 @@ public abstract class EdgeGrpcSession implements Closeable {
 
     private static final String QUEUE_START_TS_ATTR_KEY = "queueStartTs";
     private static final String QUEUE_START_SEQ_ID_ATTR_KEY = "queueStartSeqId";
-    private static final String ADMIN_SETTINGS_CLEANUP_COMPLETED_ATTR_KEY = "adminSettingsCleanupCompleted";
 
     private static final int MAX_DOWNLINK_ATTEMPTS = 3;
     private static final String RATE_LIMIT_REACHED = "Rate limit reached";
@@ -255,62 +255,12 @@ public abstract class EdgeGrpcSession implements Closeable {
             log.info("[{}][{}][{}] Staring edge sync process", tenantId, edge.getId(), sessionId);
             updateSyncInProgress(true);
             interruptGeneralProcessingOnSync();
-            sendOneTimeAdminSettingsCleanupIfNeeded(() -> doSync(new EdgeSyncCursor(ctx, edge, fullSync)));
+            AdminSettingsCleanupUtils.sendOneTimeAdminSettingsCleanupIfNeeded(ctx, edge, edgeVersion,
+                    EdgeVersion.V_4_3_1_4, this::sendDownlinkMsgsPack,
+                    () -> doSync(new EdgeSyncCursor(ctx, edge, fullSync)));
         } else {
             log.info("[{}][{}][{}] Sync is already started, skipping starting it now", tenantId, edge.getId(), sessionId);
         }
-    }
-
-    private void sendOneTimeAdminSettingsCleanupIfNeeded(Runnable continuation) {
-        if (!EdgeVersionUtils.isEdgeVersionOlderThan(edgeVersion, EdgeVersion.V_4_3_1_4)) {
-            continuation.run();
-            return;
-        }
-        try {
-            ListenableFuture<Optional<AttributeKvEntry>> isCleanupCompletedAttrFuture = ctx.getAttributesService()
-                    .find(tenantId, edge.getId(), AttributeScope.SERVER_SCOPE, ADMIN_SETTINGS_CLEANUP_COMPLETED_ATTR_KEY);
-
-            ListenableFuture<Boolean> cleanupFuture = Futures.transformAsync(
-                    isCleanupCompletedAttrFuture,
-                    attr -> {
-                        boolean alreadyCompleted = attr.isPresent() && attr.flatMap(AttributeKvEntry::getBooleanValue).orElse(false);
-                        if (alreadyCompleted) {
-                            return Futures.immediateFuture(false);
-                        }
-                        List<DownlinkMsg> cleanupMsgs = ctx.getAdminSettingsProcessor().convertAdminSettingsCleanupToDownlinks(edge);
-                        if (cleanupMsgs.isEmpty()) {
-                            return Futures.immediateFuture(true);
-                        }
-                        // send the cleanup pack; mark completed only if it was not interrupted, so it retries on next sync otherwise
-                        return Futures.transform(sendDownlinkMsgsPack(cleanupMsgs),
-                                isInterrupted -> !Boolean.TRUE.equals(isInterrupted), ctx.getGrpcCallbackExecutorService());
-                    }, ctx.getGrpcCallbackExecutorService());
-
-            Futures.addCallback(cleanupFuture, new FutureCallback<>() {
-                @Override
-                public void onSuccess(@Nullable Boolean markCompleted) {
-                    if (Boolean.TRUE.equals(markCompleted)) {
-                        markAdminSettingsCleanupCompleted();
-                    }
-                    continuation.run();
-                }
-
-                @Override
-                public void onFailure(Throwable t) {
-                    log.error("[{}][{}] Failed to run one-time admin settings cleanup for edge", tenantId, edge.getId(), t);
-                    continuation.run();
-                }
-            }, ctx.getGrpcCallbackExecutorService());
-        } catch (Exception e) {
-            log.error("[{}][{}] Failed to start admin settings cleanup", tenantId, edge.getId(), e);
-            continuation.run();
-        }
-    }
-
-    private void markAdminSettingsCleanupCompleted() {
-        AttributeKvEntry attributeKvEntry = new BaseAttributeKvEntry(
-                new BooleanDataEntry(ADMIN_SETTINGS_CLEANUP_COMPLETED_ATTR_KEY, true), System.currentTimeMillis());
-        ctx.getAttributesService().save(tenantId, edge.getId(), AttributeScope.SERVER_SCOPE, attributeKvEntry);
     }
 
     private void doSync(EdgeSyncCursor cursor) {
