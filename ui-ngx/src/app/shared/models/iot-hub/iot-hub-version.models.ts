@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { ItemType } from './iot-hub-item.models';
 import { PageLink } from '@shared/models/page/page-link';
 
@@ -109,6 +95,14 @@ export interface MpItemVersionView {
   creatorVerified: boolean;
   installCount: number;
   totalInstallCount: number;
+  /**
+   * Server-owned, read-only marker for content that already ships inside ThingsBoard
+   * (a bundled widget, a SCADA symbol) instead of being installed by the IoT Hub.
+   * Optional on purpose: older Hub deployments simply omit the field, so it must never
+   * be read directly — use `isBuiltInItem()` from `@home/components/iot-hub/iot-hub-utils`.
+   * Never send it back to the server.
+   */
+  builtIn?: boolean;
   resources: MpItemVersionResource[];
   relatedItems?: string[];
   checksum?: string;
