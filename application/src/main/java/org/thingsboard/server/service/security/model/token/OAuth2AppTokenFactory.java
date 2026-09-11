@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.security.model.token;
 
 import io.jsonwebtoken.Claims;
@@ -26,6 +13,7 @@ import io.jsonwebtoken.security.SignatureException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.service.security.auth.oauth2.CallbackUrlSchemeValidator;
 
 import java.util.Base64;
 import java.util.Date;
@@ -58,12 +46,15 @@ public class OAuth2AppTokenFactory {
         if (timeDiff > MAX_EXPIRATION_TIME_DIFF_MS) {
             throw new IllegalArgumentException("Application token expiration time can't be longer than 5 minutes");
         }
-        if (!claims.getIssuer().equals(appPackage)) {
+        if (!appPackage.equals(claims.getIssuer())) {
             throw new IllegalArgumentException("Application token issuer doesn't match application package");
         }
         String callbackUrlScheme = claims.get(CALLBACK_URL_SCHEME, String.class);
         if (StringUtils.isEmpty(callbackUrlScheme)) {
             throw new IllegalArgumentException("Application token doesn't have callbackUrlScheme");
+        }
+        if (!CallbackUrlSchemeValidator.isValid(callbackUrlScheme)) {
+            throw new IllegalArgumentException("Application token has invalid callbackUrlScheme");
         }
         return callbackUrlScheme;
     }
