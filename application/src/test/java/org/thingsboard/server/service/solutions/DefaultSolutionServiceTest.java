@@ -41,7 +41,7 @@ import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.rule.RuleChainService;
-import org.thingsboard.server.service.solutions.data.solution.SolutionInstallResponse;
+import org.thingsboard.server.service.solutions.data.SolutionValidationResult;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -111,18 +111,17 @@ class DefaultSolutionServiceTest {
                 .thenReturn(existingDevice("Existing device"));
         when(deviceService.findDeviceByTenantIdAndName(tenantId, "New device")).thenReturn(null);
 
-        SolutionInstallResponse result = service.validateSolution(tenantId, tempDir);
+        SolutionValidationResult result = service.validateSolution(tenantId, tempDir);
 
-        assertThat(result).isNotNull();
-        assertThat(result.isSuccess()).isFalse();
-        assertThat(result.getDetails().lines().toList())
+        assertThat(result.isPassed()).isFalse();
+        assertThat(result.getConflictReport().lines().toList())
                 .containsSubsequence(
                         CONFLICTS_INTRO,
                         "- **Customer**: 'Existing customer'",
                         "- **Asset**: 'Existing asset'",
                         "- **Device**: 'Existing device'");
         // the randomized customer title and the entities that do not exist yet are not reported
-        assertThat(result.getDetails())
+        assertThat(result.getConflictReport())
                 .doesNotContain("Customer $random")
                 .doesNotContain("New device")
                 .doesNotContain("New asset");
@@ -136,10 +135,10 @@ class DefaultSolutionServiceTest {
         dashboard.setTitle("Overview");
         when(dashboardService.findFirstDashboardInfoByTenantIdAndName(tenantId, "Overview")).thenReturn(dashboard);
 
-        SolutionInstallResponse result = service.validateSolution(tenantId, tempDir);
+        SolutionValidationResult result = service.validateSolution(tenantId, tempDir);
 
-        assertThat(result).isNotNull();
-        assertThat(result.getDetails().lines().toList())
+        assertThat(result.isPassed()).isFalse();
+        assertThat(result.getConflictReport().lines().toList())
                 .containsSubsequence(CONFLICTS_INTRO, "- **Dashboard**: 'Overview'");
     }
 
@@ -153,10 +152,10 @@ class DefaultSolutionServiceTest {
         when(ruleChainService.findTenantRuleChainsByTypeAndName(tenantId, RuleChainType.CORE, "Name the install creates"))
                 .thenReturn(List.of(ruleChain));
 
-        SolutionInstallResponse result = service.validateSolution(tenantId, tempDir);
+        SolutionValidationResult result = service.validateSolution(tenantId, tempDir);
 
-        assertThat(result).isNotNull();
-        assertThat(result.getDetails().lines().toList())
+        assertThat(result.isPassed()).isFalse();
+        assertThat(result.getConflictReport().lines().toList())
                 .containsSubsequence(CONFLICTS_INTRO, "- **Rule chain**: 'Name the install creates'");
     }
 
@@ -176,10 +175,10 @@ class DefaultSolutionServiceTest {
         when(assetProfileService.findAssetProfileByName(tenantId, "building")).thenReturn(assetProfile);
         when(edgeService.findEdgeByTenantIdAndName(tenantId, "Main edge")).thenReturn(edge);
 
-        SolutionInstallResponse result = service.validateSolution(tenantId, tempDir);
+        SolutionValidationResult result = service.validateSolution(tenantId, tempDir);
 
-        assertThat(result).isNotNull();
-        assertThat(result.getDetails().lines().toList()).containsSubsequence(
+        assertThat(result.isPassed()).isFalse();
+        assertThat(result.getConflictReport().lines().toList()).containsSubsequence(
                 "- **Device profile**: 'thermostat'",
                 "- **Asset profile**: 'building'",
                 "- **Edge**: 'Main edge'");
@@ -191,9 +190,9 @@ class DefaultSolutionServiceTest {
 
         when(deviceService.findDeviceByTenantIdAndName(tenantId, "Sensor")).thenReturn(existingDevice("Sensor"));
 
-        SolutionInstallResponse result = service.validateSolution(tenantId, tempDir);
+        SolutionValidationResult result = service.validateSolution(tenantId, tempDir);
 
-        assertThat(result.getDetails().lines().toList()).contains("- **Device**: 'Sensor'");
+        assertThat(result.getConflictReport().lines().toList()).contains("- **Device**: 'Sensor'");
         verify(deviceService, times(1)).findDeviceByTenantIdAndName(tenantId, "Sensor");
     }
 
@@ -203,7 +202,7 @@ class DefaultSolutionServiceTest {
                 "{\"name\": \"No name inside\", \"file\": \"nameless.json\"}]");
         writeFile("rule_chains/nameless.json", "{\"ruleChain\": {}}");
 
-        assertThat(service.validateSolution(tenantId, tempDir)).isNull();
+        assertThat(service.validateSolution(tenantId, tempDir).isPassed()).isTrue();
         verifyNoInteractions(ruleChainService);
     }
 
@@ -217,16 +216,16 @@ class DefaultSolutionServiceTest {
         when(ruleChainService.findTenantRuleChainsByTypeAndName(tenantId, RuleChainType.EDGE, "Edge chain"))
                 .thenReturn(List.of(ruleChain));
 
-        SolutionInstallResponse result = service.validateSolution(tenantId, tempDir);
+        SolutionValidationResult result = service.validateSolution(tenantId, tempDir);
 
-        assertThat(result.getDetails().lines().toList()).contains("- **Rule chain**: 'Edge chain'");
+        assertThat(result.getConflictReport().lines().toList()).contains("- **Rule chain**: 'Edge chain'");
     }
 
     @Test
     void testValidateSolutionTreatsAJsonNullFileAsEmpty() throws IOException {
         writeEntitiesFile("devices.json", "null");
 
-        assertThat(service.validateSolution(tenantId, tempDir)).isNull();
+        assertThat(service.validateSolution(tenantId, tempDir).isPassed()).isTrue();
         verifyNoInteractions(deviceService);
     }
 
@@ -240,17 +239,17 @@ class DefaultSolutionServiceTest {
         names.forEach(name -> when(deviceService.findDeviceByTenantIdAndName(tenantId, name))
                 .thenReturn(existingDevice(name)));
 
-        SolutionInstallResponse result = service.validateSolution(tenantId, tempDir);
+        SolutionValidationResult result = service.validateSolution(tenantId, tempDir);
 
         int hidden = conflictCount - LISTED_NAMES_PER_TYPE;
         String listed = names.stream().limit(LISTED_NAMES_PER_TYPE)
                 .map(name -> "'" + name + "'").collect(Collectors.joining(", "));
-        assertThat(result.getDetails().lines().toList()).contains("- **Device**: " + listed
+        assertThat(result.getConflictReport().lines().toList()).contains("- **Device**: " + listed
                 + (hidden > 0 ? " and " + hidden + " more (" + conflictCount + " in total)" : ""));
         if (hidden > 0) {
-            assertThat(result.getDetails()).contains(TRUNCATION_NOTE);
+            assertThat(result.getConflictReport()).contains(TRUNCATION_NOTE);
         } else {
-            assertThat(result.getDetails()).doesNotContain(TRUNCATION_NOTE);
+            assertThat(result.getConflictReport()).doesNotContain(TRUNCATION_NOTE);
         }
     }
 
@@ -267,9 +266,9 @@ class DefaultSolutionServiceTest {
         profile.setName("Sensor profile");
         when(deviceProfileService.findDeviceProfileByName(tenantId, "Sensor profile")).thenReturn(profile);
 
-        SolutionInstallResponse result = service.validateSolution(tenantId, tempDir);
+        SolutionValidationResult result = service.validateSolution(tenantId, tempDir);
 
-        assertThat(result.getDetails().lines().toList()).contains("- **Device profile**: 'Sensor profile'");
+        assertThat(result.getConflictReport().lines().toList()).contains("- **Device profile**: 'Sensor profile'");
         verify(deviceProfileService, times(1)).findDeviceProfileByName(tenantId, "Sensor profile");
     }
 
@@ -278,12 +277,12 @@ class DefaultSolutionServiceTest {
         writeEntitiesFile("devices.json", "[{\"name\": \"New device\"}]");
         when(deviceService.findDeviceByTenantIdAndName(tenantId, "New device")).thenReturn(null);
 
-        assertThat(service.validateSolution(tenantId, tempDir)).isNull();
+        assertThat(service.validateSolution(tenantId, tempDir).isPassed()).isTrue();
     }
 
     @Test
     void testValidateSolutionWithoutEntityFiles() {
-        assertThat(service.validateSolution(tenantId, tempDir)).isNull();
+        assertThat(service.validateSolution(tenantId, tempDir).isPassed()).isTrue();
         verifyNoInteractions(customerService, deviceService, assetService, dashboardService, ruleChainService,
                 deviceProfileService, assetProfileService, edgeService);
     }

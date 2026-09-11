@@ -111,6 +111,7 @@ import org.thingsboard.server.service.solutions.data.DashboardLinkInfo;
 import org.thingsboard.server.service.solutions.data.DeviceCredentialsInfo;
 import org.thingsboard.server.service.solutions.data.EdgeLinkInfo;
 import org.thingsboard.server.service.solutions.data.SolutionInstallContext;
+import org.thingsboard.server.service.solutions.data.SolutionValidationResult;
 import org.thingsboard.server.service.solutions.data.UserCredentialsInfo;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.thingsboard.server.service.solutions.data.definition.AssetDefinition;
@@ -257,9 +258,9 @@ public class DefaultSolutionService implements SolutionService {
                 throw new IllegalArgumentException("Solution template is missing solution.json or its 'title' field");
             }
 
-            SolutionInstallResponse validateResult = validateSolution(tenantId, tempDir);
-            if (validateResult != null && !validateResult.isSuccess()) {
-                return validateResult;
+            SolutionValidationResult validation = validateSolution(tenantId, tempDir);
+            if (!validation.isPassed()) {
+                return conflictResponse(validation.getConflictReport());
             }
             return doInstallSolution(user, tenantId, solutionId, tempDir, request);
         } finally {
@@ -300,7 +301,7 @@ public class DefaultSolutionService implements SolutionService {
         }
     }
 
-    SolutionInstallResponse validateSolution(TenantId tenantId, Path tempDir) {
+    SolutionValidationResult validateSolution(TenantId tenantId, Path tempDir) {
         //TODO: pre-validate what still only fails at provision time: customer users (unique by email),
         // alarm rules and calculated fields.
 
@@ -338,7 +339,7 @@ public class DefaultSolutionService implements SolutionService {
         collectConflicts(conflicts, edges, name -> edgeService.findEdgeByTenantIdAndName(tenantId, name));
 
         if (conflicts.isEmpty()) {
-            return null;
+            return SolutionValidationResult.passed();
         }
         StringBuilder details = new StringBuilder(CONFLICTS_INTRO).append(BLANK_LINE);
         conflicts.forEach((entityType, conflictDescriptions) -> appendConflicts(details, entityType, conflictDescriptions));
@@ -346,10 +347,14 @@ public class DefaultSolutionService implements SolutionService {
             details.append(System.lineSeparator()).append(TRUNCATION_NOTE);
         }
 
-        SolutionInstallResponse solutionInstallResponse = new SolutionInstallResponse();
-        solutionInstallResponse.setSuccess(false);
-        solutionInstallResponse.setDetails(details.toString());
-        return solutionInstallResponse;
+        return SolutionValidationResult.conflictsFound(details.toString());
+    }
+
+    private static SolutionInstallResponse conflictResponse(String conflictReport) {
+        SolutionInstallResponse response = new SolutionInstallResponse();
+        response.setSuccess(false);
+        response.setDetails(conflictReport);
+        return response;
     }
 
     /**
