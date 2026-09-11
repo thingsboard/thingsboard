@@ -632,7 +632,11 @@ export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy
     });
   }
 
-  private reloadInstalledItems(): void {
+  /**
+   * Re-reads what is installed for the active type and announces the change. Public so a host page
+   * that opens the item detail dialog itself can refresh this grid through the same path.
+   */
+  reloadInstalledItems(): void {
     const config = {ignoreLoading: true};
     const pageLink = new PageLink(10000, 0);
     if (this.activeType === ItemType.WIDGET) {
