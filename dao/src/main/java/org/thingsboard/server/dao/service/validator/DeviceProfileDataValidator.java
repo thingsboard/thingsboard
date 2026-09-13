@@ -380,14 +380,8 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
                     throw new DeviceCredentialsValidationException("Only one Bootstrap Server configuration is allowed!");
                 }
 
-                // 2. Reject if DM (LwM2M) Server ports are used for Bootstrap Server
-                int dmPort = LwM2MSecurityMode.NO_SEC.equals(serverConfig.getSecurityMode()) ? lwm2mPort : lwm2mSecurePort;
-                if (serverConfig.getPort() != null && serverConfig.getPort() == dmPort) {
-                    log.error("Invalid Bootstrap Server configuration: uses DM Server port [{}]", serverConfig.getPort());
-                    throw new DeviceCredentialsValidationException("Bootstrap Server configuration cannot use DM Server port " + serverConfig.getPort());
-                }
 
-                // 3. Normalize legacy shortServerId to null for backward compatibility
+                // 2. Normalize legacy shortServerId to null for backward compatibility
                 if (serverConfig.getShortServerId() != null) {
                     log.warn("Ignoring Short Server ID [{}] on the Bootstrap Server entry: cleared to null for backward compatibility (ThingsBoard <= 4.2).",
                             serverConfig.getShortServerId());
