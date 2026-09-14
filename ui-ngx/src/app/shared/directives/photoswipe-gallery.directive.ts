@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The Thingsboard Authors
 // SPDX-License-Identifier: Apache-2.0
-import { Directive, ElementRef, Input, OnDestroy, OnInit } from '@angular/core';
+import { Directive, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import PhotoSwipeLightbox from 'photoswipe/lightbox';
 import PhotoSwipe from 'photoswipe';
 import cssjs from '@core/css/css';
@@ -221,7 +221,12 @@ export class PhotoSwipeGalleryDirective implements OnInit, OnDestroy {
   @Input() galleryChildrenSelector = '.tb-image';
   @Input() imageCaptionSelector = '.tb-image-tooltip';
 
+  /** Raised when the lightbox opens, and on close with the slide it was left on. */
+  @Output() readonly lightboxOpened = new EventEmitter<void>();
+  @Output() readonly lightboxClosed = new EventEmitter<number>();
+
   private lightbox: PhotoSwipeLightbox;
+  private lastIndex = 0;
 
   constructor(
     private elementRef: ElementRef<HTMLElement>
@@ -300,8 +305,17 @@ export class PhotoSwipeGalleryDirective implements OnInit, OnDestroy {
     // than setting overflow:hidden on a scroller keeps this working wherever the gallery is used:
     // here the dialog's own content pane scrolls, elsewhere the page does, and the directive
     // cannot know which.
-    this.lightbox.on('beforeOpen', () => this.lockScroll());
-    this.lightbox.on('destroy', () => this.unlockScroll());
+    this.lightbox.on('change', () => {
+      this.lastIndex = this.lightbox.pswp?.currIndex ?? this.lastIndex;
+    });
+    this.lightbox.on('beforeOpen', () => {
+      this.lockScroll();
+      this.lightboxOpened.emit();
+    });
+    this.lightbox.on('destroy', () => {
+      this.unlockScroll();
+      this.lightboxClosed.emit(this.lastIndex);
+    });
     this.lightbox.init();
   }
 
@@ -325,12 +339,21 @@ export class PhotoSwipeGalleryDirective implements OnInit, OnDestroy {
    * capture listener on the same node never reaches, so Escape would stop working entirely.
    */
   private readonly onKeydownCapture = (e: KeyboardEvent): void => {
-    if (e.key !== 'Escape' || !this.lightbox?.pswp) {
+    const pswp = this.lightbox?.pswp;
+    if (e.key !== 'Escape' || !pswp) {
       return;
     }
     e.stopPropagation();
     e.preventDefault();
-    this.lightbox.pswp.close();
+    if (pswp.opener?.isOpen) {
+      pswp.close();
+      return;
+    }
+    // Escape landed during the opening zoom, where close() early-returns because
+    // opener.isOpen is still false. The key is swallowed either way, so dropping it
+    // here would leave both the image and the dialog open; close once the animation
+    // lets go instead.
+    pswp.on('openingAnimationEnd', () => pswp.close());
   };
 
   private readonly onScrollEvent = (e: Event): void => {

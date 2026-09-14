@@ -90,7 +90,9 @@
         <div class="flex gap-6 lt-md:flex-col">
           <div class="dlg-preview"
                [class.dlg-preview-carousel]="carouselImages.length > 1"
-               tbPhotoSwipeGallery galleryChildrenSelector=".dlg-carousel-item, .dlg-preview-img">
+               tbPhotoSwipeGallery galleryChildrenSelector=".dlg-carousel-item, .dlg-preview-img"
+               (lightboxOpened)="lightboxOpen = true"
+               (lightboxClosed)="onLightboxClosed($event)">
             @if (carouselImages.length > 1) {
               <div class="dlg-hero-carousel">
                 <ngx-hm-carousel
@@ -99,7 +101,7 @@
                   [infinite]="true"
                   [autoplay-speed]="3000"
                   [between-delay]="0"
-                  [autoplay]="true"
+                  [autoplay]="!lightboxOpen"
                   [mouse-enable]="true"
                   [show-num]="1"
                   class="dlg-carousel">

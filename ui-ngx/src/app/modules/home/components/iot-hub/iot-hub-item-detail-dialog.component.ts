@@ -20,15 +20,6 @@ import {
   isBuiltInItem
 } from '@home/components/iot-hub/iot-hub-utils';
 
-// Item types whose details show an image, and therefore a screenshot gallery. The remaining types
-// take the compact, image-less layout — see isCompactLayout().
-const imageItemTypes = new Set<ItemType>([
-  ItemType.WIDGET,
-  ItemType.DASHBOARD,
-  ItemType.DEVICE,
-  ItemType.SOLUTION_TEMPLATE
-]);
-
 export type IotHubItemDetailDialogMode = 'default' | 'add';
 
 export interface IotHubItemDetailDialogData {
@@ -58,6 +49,11 @@ export class TbIotHubItemDetailDialogComponent extends DialogComponent<TbIotHubI
   installedItem?: IotHubInstalledItem;
   installedItemsCount = 0;
   carouselImages: string[] = [];
+  // The carousel keeps its own timer, and the lightbox covering it counts as the pointer leaving,
+  // so without this it advances behind the open image: closing would land on a different slide,
+  // and PhotoSwipe — which re-reads the thumbnail's position at close time — would animate the
+  // zoom-out towards a slide that has since scrolled out of the preview box.
+  lightboxOpen = false;
   carouselIndex = 0;
   // Built-in marker rides on the version line rather than as a standalone badge.
   versionLabel: string;
@@ -293,7 +289,10 @@ export class TbIotHubItemDetailDialogComponent extends DialogComponent<TbIotHubI
    * which is what an item without screenshots looked like before.
    */
   private buildCarouselImages(): void {
-    if (!imageItemTypes.has(this.item.type)) {
+    // Derived from the layout rather than listed separately: every type that is not compact shows
+    // an image, so an item type this build does not know about still gets one instead of dropping
+    // through to the placeholder icon.
+    if (this.isCompactLayout()) {
       return;
     }
     const urls: string[] = [];
@@ -301,13 +300,13 @@ export class TbIotHubItemDetailDialogComponent extends DialogComponent<TbIotHubI
     if (previewUrl) {
       urls.push(previewUrl);
     }
+    // The preview may point at one of the screenshots, and must not then show up twice. Compared
+    // by resource id, not by URL: item.image is a stored path that can carry a query string or a
+    // /preview suffix (see the catalogue card), so the same resource resolves to a different URL.
+    const previewResourceId = this.item.image?.match(/\/api\/resources\/([^/?#]+)/)?.[1];
     for (const resource of this.item.resources || []) {
-      if (resource.type === 'SCREENSHOT') {
-        const url = this.resourceUrl(resource.id);
-        // The preview image may point at one of the screenshots; it must not show up twice.
-        if (!urls.includes(url)) {
-          urls.push(url);
-        }
+      if (resource.type === 'SCREENSHOT' && resource.id !== previewResourceId) {
+        urls.push(this.resourceUrl(resource.id));
       }
     }
     if (!urls.length) {
@@ -320,6 +319,13 @@ export class TbIotHubItemDetailDialogComponent extends DialogComponent<TbIotHubI
       }
     }
     this.carouselImages = urls;
+  }
+
+  onLightboxClosed(index: number): void {
+    this.lightboxOpen = false;
+    if (index >= 0 && index < this.carouselImages.length) {
+      this.carouselIndex = index;
+    }
   }
 
   private resourceUrl(id: string): string {
