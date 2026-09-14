@@ -114,6 +114,12 @@ $gallery-border-hover-color: #2a7dec;
       max-width: 100%;
     }
 
+    // Mirrors the exclusions on the gallery container in the template: only images the readme
+    // itself renders open in the lightbox, so only those advertise it.
+    img:not(.tb-gallery-images img):not(.clipboard-btn img):not(tb-iot-hub-item-link-card img) {
+      cursor: zoom-in;
+    }
+
     a:not(.mdc-button):not(.tb-iot-hub-item-link-card) {
       font-weight: 500;
       color: $link-color;

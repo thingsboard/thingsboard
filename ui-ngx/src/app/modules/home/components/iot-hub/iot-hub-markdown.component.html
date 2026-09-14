@@ -4,11 +4,19 @@
     SPDX-License-Identifier: Apache-2.0
 
 -->
-<tb-markdown [data]="parsedData"
-             [applyDefaultMarkdownStyle]="false"
-             [additionalStyles]="additionalStyles"
-             [additionalCompileModules]="itemLinkCompileModules"
-             [lineNumbers]="lineNumbers"
-             [fallbackToPlainMarkdown]="fallbackToPlainMarkdown"
-             (ready)="onReady()">
-</tb-markdown>
+<!-- Every image the readme itself renders opens in the PhotoSwipe lightbox. The exclusions are the
+     chrome that happens to be an <img>: the ${images.gallery(...)} block, which runs its own
+     instance of this directive; the clipboard icon on code blocks; and an item link card's
+     thumbnail, where a click has to follow the link instead. -->
+<div class="tb-readme-gallery"
+     tbPhotoSwipeGallery
+     galleryChildrenSelector="img:not(.tb-gallery-images img):not(.clipboard-btn img):not(tb-iot-hub-item-link-card img)">
+  <tb-markdown [data]="parsedData"
+               [applyDefaultMarkdownStyle]="false"
+               [additionalStyles]="additionalStyles"
+               [additionalCompileModules]="itemLinkCompileModules"
+               [lineNumbers]="lineNumbers"
+               [fallbackToPlainMarkdown]="fallbackToPlainMarkdown"
+               (ready)="onReady()">
+  </tb-markdown>
+</div>
