@@ -35,12 +35,21 @@ interface HeroTypeConfig {
 interface SearchResultGroup {
   type: ItemType;
   items: MpItemVersionView[];
+  /** Rows of this type behind the answer, from the response's typeTotal. */
+  total: number;
+  /** total - items.length, floored at 0. Zero means the header shows no "+N more". */
+  remaining: number;
 }
 
 const SEARCH_GROUP_ORDER: ItemType[] = [
   ItemType.DEVICE, ItemType.SOLUTION_TEMPLATE, ItemType.WIDGET,
   ItemType.CALCULATED_FIELD, ItemType.ALARM_RULE, ItemType.RULE_CHAIN
 ];
+
+/** Relevance ranking. Sent only while the field has text: with an empty field the backend
+ *  substitutes the install count anyway, and this component knows the field state, so it sends
+ *  the honest value rather than leaning on that safety net. */
+const RELEVANCE = 'relevance';
 
 @Component({
   selector: 'tb-iot-hub-home',
@@ -156,9 +165,16 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
       distinctUntilChanged(),
       switchMap(text => {
         this.searchLoading = true;
-        const sortOrder: SortOrder = { property: 'totalInstallCount', direction: Direction.DESC };
-        const pageLink = new PageLink(10, 0, text.trim() || null, sortOrder);
-        const query = new MpItemVersionQuery(pageLink);
+        const trimmed = text.trim();
+        // Two states, one panel: popularity answers "what is worth looking at" with an empty
+        // field, relevance answers "what did I ask for" once there is one.
+        const sortOrder: SortOrder = trimmed
+          ? { property: RELEVANCE, direction: Direction.DESC }
+          : { property: 'totalInstallCount', direction: Direction.DESC };
+        // The server sizes a grouped answer itself - the top rows of every type, one screen - so
+        // this page size is ignored, and page must stay 0 (a non-zero page is a 400).
+        const pageLink = new PageLink(10, 0, trimmed || null, sortOrder);
+        const query = new MpItemVersionQuery(pageLink, { grouped: true });
         return this.iotHubApiService.getPublishedVersions(query, { ignoreLoading: true });
       })
     ).subscribe(result => {
@@ -235,6 +251,17 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
     this.searchAutoTrigger?.closePanel();
     const search = this.searchText?.trim() || undefined;
     void this.router.navigate(['/iot-hub/search'], { queryParams: { search } });
+  }
+
+  /**
+   * The section header is the way into the rest of a type - the panel carries no per-section
+   * "see all" row, which would put six identical calls to action on one panel. The query goes
+   * with it, so the type page opens on the same search rather than on the whole type.
+   */
+  navigateToSection(type: ItemType): void {
+    this.searchAutoTrigger?.closePanel();
+    const search = this.searchText?.trim() || undefined;
+    void this.router.navigate(['/iot-hub', this.getTypeRoute(type)], { queryParams: { search } });
   }
 
   isCompactType(type: ItemType): boolean {
@@ -523,6 +550,11 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Reads the sections the server built. It no longer decides membership - a grouped response
+   * arrives already capped at four per type - so all this does is put the types in the panel's
+   * fixed order and carry each one's typeTotal onto the header.
+   */
   private groupSearchResults(items: MpItemVersionView[]): SearchResultGroup[] {
     const groupMap = new Map<ItemType, MpItemVersionView[]>();
     for (const item of items) {
@@ -538,6 +570,12 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
     }
     return SEARCH_GROUP_ORDER
       .filter(type => groupMap.has(type))
-      .map(type => ({ type, items: groupMap.get(type) }));
+      .map(type => {
+        const groupItems = groupMap.get(type);
+        // Every row of a type carries the same typeTotal. The fallback keeps a non-grouped
+        // response rendering correctly - which is what a stale backend would send.
+        const total = groupItems[0].typeTotal ?? groupItems.length;
+        return { type, items: groupItems, total, remaining: Math.max(0, total - groupItems.length) };
+      });
   }
 }

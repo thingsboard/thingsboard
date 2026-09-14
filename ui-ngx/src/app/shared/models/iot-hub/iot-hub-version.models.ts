@@ -106,6 +106,12 @@ export interface MpItemVersionView {
   resources: MpItemVersionResource[];
   relatedItems?: string[];
   checksum?: string;
+  /**
+   * Rows of this item's type behind a grouped response. A flat read does not omit it — the
+   * column is projected as NULL and serialised, so the field arrives as `null` there. Read it
+   * with `??`, never with a truthiness test.
+   */
+  typeTotal?: number | null;
 }
 
 // 404 body shapes returned by the public listing item-version endpoint
@@ -118,7 +124,15 @@ export interface ListingItemVersionNotFound {
 }
 
 export interface MpItemVersionQueryOptions {
+  /** Single item type, for a surface pinned to one (the type pages, the add-item dialog). */
   type?: string;
+  /**
+   * Several item types at once, for a cross-type surface whose Type facet is multi-select.
+   * Emitted as a repeated `type` parameter, which is the shape the backend reads
+   * (`@RequestParam List<ItemType> type`). Kept separate from `type` rather than widening it,
+   * so a caller that means "exactly this type" cannot be handed an array by accident.
+   */
+  types?: string[];
   peOnly?: boolean;
   creatorId?: string;
   categories?: string[];
@@ -131,6 +145,13 @@ export interface MpItemVersionQueryOptions {
   connectivity?: string[];
   vendors?: string[];
   scadaFirst?: boolean;
+  /**
+   * Ask for the top four of each item type in one response instead of a flat page.
+   * Every row then carries `typeTotal`, the number of rows of its type behind the answer,
+   * which is what the section header's "+N more" counts. Grouped responses are one screen:
+   * the backend rejects a non-zero `page`.
+   */
+  grouped?: boolean;
 }
 
 export class MpItemVersionQuery {
@@ -141,6 +162,9 @@ export class MpItemVersionQuery {
     const o = this.options;
     if (o.type) {
       query += `&type=${o.type}`;
+    }
+    if (o.types?.length) {
+      query += o.types.map(t => `&type=${encodeURIComponent(t)}`).join('');
     }
     if (o.peOnly != null) {
       query += `&peOnly=${o.peOnly}`;
@@ -177,6 +201,9 @@ export class MpItemVersionQuery {
     }
     if (o.scadaFirst != null) {
       query += `&scadaFirst=${o.scadaFirst}`;
+    }
+    if (o.grouped != null) {
+      query += `&grouped=${o.grouped}`;
     }
     return query;
   }
