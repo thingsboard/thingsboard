@@ -299,10 +299,7 @@ export class CfAlarmRuleConditionComponent implements ControlValueAccessor, Vali
       }
     }).afterClosed().subscribe((result) => {
       if (result) {
-        if (!this.modelValue) {
-          this.modelValue = {} as AlarmRuleCondition;
-        }
-        this.modelValue.schedule = result;
+        this.modelValue = {...this.modelValue, schedule: result} as AlarmRuleCondition;
         this.updateModel();
       }
     });

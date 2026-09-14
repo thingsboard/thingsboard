@@ -25,7 +25,7 @@ import {
   Validators
 } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
-import { isDefinedAndNotNull, isEqual } from '@core/utils';
+import { deepClone, isDefinedAndNotNull, isEqual } from '@core/utils';
 import { DashboardId } from '@shared/models/id/dashboard-id';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AlarmRule, AlarmRuleCondition } from "@shared/models/alarm-rule.models";
@@ -83,6 +83,8 @@ export class CfAlarmRuleComponent implements ControlValueAccessor, OnInit, Valid
     dashboardId: this.fb.control<string | null>(null)
   });
 
+  private formValueSnapshot: typeof this.alarmRuleFormGroup.value;
+
   private propagateChange = (v: any) => { };
   private onValidatorChange = () => { };
 
@@ -125,12 +127,15 @@ export class CfAlarmRuleComponent implements ControlValueAccessor, OnInit, Valid
   }
 
   writeValue(value: AlarmRule): void {
-    const model = value ? {
-      ...value,
-      dashboardId: value.dashboardId?.id
-    } : null;
-    this.alarmRuleFormGroup.patchValue(model, {emitEvent: false});
-    this.modelValue = model ? this.toModel(model) : null;
+    this.alarmRuleFormGroup.reset(undefined, {emitEvent: false});
+    if (value) {
+      this.alarmRuleFormGroup.patchValue({
+        ...value,
+        dashboardId: value.dashboardId?.id
+      }, {emitEvent: false});
+    }
+    this.updateSnapshot(this.alarmRuleFormGroup.value);
+    this.modelValue = value ? this.toModel(this.alarmRuleFormGroup.value) : null;
   }
 
   public openEditDetailsDialog($event: Event) {
@@ -161,12 +166,16 @@ export class CfAlarmRuleComponent implements ControlValueAccessor, OnInit, Valid
   }
 
   private updateModel(value: typeof this.alarmRuleFormGroup.value): void {
-    const modelValue = this.toModel(value);
-    if (isEqual(modelValue, this.modelValue)) {
+    if (isEqual(value, this.formValueSnapshot)) {
       return;
     }
-    this.modelValue = modelValue;
-    this.propagateChange(modelValue);
+    this.updateSnapshot(value);
+    this.modelValue = this.toModel(value);
+    this.propagateChange(this.modelValue);
+  }
+
+  private updateSnapshot(value: typeof this.alarmRuleFormGroup.value): void {
+    this.formValueSnapshot = deepClone(value);
   }
 
   private toModel(value: typeof this.alarmRuleFormGroup.value): AlarmRule {
