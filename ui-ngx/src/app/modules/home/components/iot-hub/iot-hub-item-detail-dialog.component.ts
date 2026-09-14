@@ -20,6 +20,15 @@ import {
   isBuiltInItem
 } from '@home/components/iot-hub/iot-hub-utils';
 
+// Item types whose details show an image, and therefore a screenshot gallery. The remaining types
+// take the compact, image-less layout — see isCompactLayout().
+const imageItemTypes = new Set<ItemType>([
+  ItemType.WIDGET,
+  ItemType.DASHBOARD,
+  ItemType.DEVICE,
+  ItemType.SOLUTION_TEMPLATE
+]);
+
 export type IotHubItemDetailDialogMode = 'default' | 'add';
 
 export interface IotHubItemDetailDialogData {
@@ -278,17 +287,43 @@ export class TbIotHubItemDetailDialogComponent extends DialogComponent<TbIotHubI
     this.dialogRef.close();
   }
 
+  /**
+   * Gallery order follows thingsboard.io: the item's own image leads, the creator's screenshots
+   * follow. A single entry is not a carousel — the template renders it as the plain preview image,
+   * which is what an item without screenshots looked like before.
+   */
   private buildCarouselImages(): void {
-    if (this.item.type !== ItemType.SOLUTION_TEMPLATE || !this.item.resources?.length) {
+    if (!imageItemTypes.has(this.item.type)) {
       return;
     }
-    const screenshotResources = this.item.resources.filter(r => r.type === 'SCREENSHOT');
-    const allResources = screenshotResources.length > 0
-      ? screenshotResources
-      : this.item.resources.filter(r => r.type === 'ICON');
-    this.carouselImages = allResources.map(r =>
-      this.iotHubApiService.resolveResourceUrl(`/api/resources/${r.id}`)
-    );
+    const urls: string[] = [];
+    const previewUrl = this.getPreviewUrl();
+    if (previewUrl) {
+      urls.push(previewUrl);
+    }
+    for (const resource of this.item.resources || []) {
+      if (resource.type === 'SCREENSHOT') {
+        const url = this.resourceUrl(resource.id);
+        // The preview image may point at one of the screenshots; it must not show up twice.
+        if (!urls.includes(url)) {
+          urls.push(url);
+        }
+      }
+    }
+    if (!urls.length) {
+      // Neither an image nor a screenshot: fall back to the ICON resources the carousel used
+      // before this method looked at anything else, so nothing that renders today stops doing so.
+      for (const resource of this.item.resources || []) {
+        if (resource.type === 'ICON') {
+          urls.push(this.resourceUrl(resource.id));
+        }
+      }
+    }
+    this.carouselImages = urls;
+  }
+
+  private resourceUrl(id: string): string {
+    return this.iotHubApiService.resolveResourceUrl(`/api/resources/${id}`);
   }
 
   private loadReadme(): void {
