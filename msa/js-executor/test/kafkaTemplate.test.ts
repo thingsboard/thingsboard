@@ -27,16 +27,28 @@ const resolveSsl = (configuredSsl: boolean, useSasl: boolean, protocol?: any): b
     (template as any).resolveSslEnabled(configuredSsl, useSasl, protocol);
 const isTrue = (value: any): boolean => (template as any).isTrue(value);
 
-test('kafka ssl.enabled is parsed as a string, not by truthiness', () => {
+test('kafka boolean flags are parsed as strings, not by truthiness', () => {
     // node-config hands back environment overrides as strings; Boolean("false") is true
-    assert.equal(isTrue('false'), false, '"false" must not enable SSL');
+    assert.equal(isTrue('false'), false, '"false" must not enable the flag');
     assert.equal(isTrue(false), false);
     assert.equal(isTrue('true'), true);
     assert.equal(isTrue(true), true);
     assert.equal(isTrue('TRUE'), true, 'value must be case-insensitive, like the tb-node flags');
     assert.equal(isTrue(' true '), true);
-    assert.equal(isTrue('yes'), false);
+    assert.equal(isTrue('maybe'), false, 'an unrecognized value must not enable the flag');
     assert.equal(isTrue(undefined), false);
+});
+
+test('kafka boolean flags accept the same values as tb-node', () => {
+    // TB_KAFKA_SSL_ENABLED and TB_QUEUE_KAFKA_USE_CONFLUENT_CLOUD are shared with
+    // tb-node, where Spring binds them through StringToBooleanConverter. The same
+    // value must mean the same thing in both services.
+    for (const value of ['true', 'on', 'yes', '1']) {
+        assert.equal(isTrue(value), true, `"${value}" is true for tb-node and must be true here`);
+    }
+    for (const value of ['false', 'off', 'no', '0']) {
+        assert.equal(isTrue(value), false, `"${value}" is false for tb-node and must be false here`);
+    }
 });
 
 test('kafka ssl is enabled for the SSL security protocols', () => {

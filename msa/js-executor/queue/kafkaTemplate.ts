@@ -73,9 +73,10 @@ export class KafkaTemplate implements IQueue {
         }
     }
     // node-config returns environment overrides as raw strings, so a plain Boolean()
-    // would treat "false" as true.
+    // would treat "false" as true. The accepted values mirror Spring's
+    // StringToBooleanConverter, which binds the same variables in tb-node.
     private isTrue(value: any): boolean {
-        return String(value).trim().toLowerCase() === 'true';
+        return ['true', 'on', 'yes', '1'].includes(String(value).trim().toLowerCase());
     }
 
     private resolveSslEnabled(configuredSsl: boolean, useSasl: boolean, securityProtocol: any): boolean {
