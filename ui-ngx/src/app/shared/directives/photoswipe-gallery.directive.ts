@@ -241,6 +241,7 @@ export class PhotoSwipeGalleryDirective implements OnInit, OnDestroy {
 
   private lightbox: PhotoSwipeLightbox;
   private lastIndex = 0;
+  private closeOnOpened = false;
 
   constructor(
     private elementRef: ElementRef<HTMLElement>
@@ -366,11 +367,23 @@ export class PhotoSwipeGalleryDirective implements OnInit, OnDestroy {
     // Escape landed during the opening zoom, where close() early-returns because
     // opener.isOpen is still false. The key is swallowed either way, so dropping it
     // here would leave both the image and the dialog open; close once the animation
-    // lets go instead.
+    // lets go instead. Guarded because these handlers are never removed, and Escape
+    // can be pressed repeatedly before the zoom finishes.
+    if (this.closeOnOpened) {
+      return;
+    }
+    this.closeOnOpened = true;
     pswp.on('openingAnimationEnd', () => pswp.close());
   };
 
   private readonly onScrollEvent = (e: Event): void => {
+    // Inside the lightbox the gesture is PhotoSwipe's. Its root carries touch-action: none, so a
+    // touch there cannot scroll the page anyway, while swallowing touchmove would break pan, pinch
+    // and swipe on any browser that falls back to touch events instead of pointer events
+    // (see gestures.js, _bindEvents('touch', ...)).
+    if (e.type === 'touchmove' && this.lightbox?.pswp?.element?.contains(e.target as Node)) {
+      return;
+    }
     e.preventDefault();
   };
 
@@ -381,6 +394,7 @@ export class PhotoSwipeGalleryDirective implements OnInit, OnDestroy {
   }
 
   private unlockScroll(): void {
+    this.closeOnOpened = false;
     document.removeEventListener('keydown', this.onKeydownCapture, true);
     document.removeEventListener('wheel', this.onScrollEvent, true);
     document.removeEventListener('touchmove', this.onScrollEvent, true);

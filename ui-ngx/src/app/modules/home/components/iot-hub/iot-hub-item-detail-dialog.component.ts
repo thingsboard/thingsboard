@@ -329,7 +329,7 @@ export class TbIotHubItemDetailDialogComponent extends DialogComponent<TbIotHubI
   }
 
   private resourceUrl(id: string): string {
-    return this.iotHubApiService.resolveResourceUrl(`/api/resources/${id}`);
+    return this.iotHubApiService.resolveResourceUrl(`/api/resources/${encodeURIComponent(id)}`);
   }
 
   private loadReadme(): void {
