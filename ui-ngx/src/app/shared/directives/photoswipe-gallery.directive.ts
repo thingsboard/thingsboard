@@ -254,6 +254,9 @@ export class PhotoSwipeGalleryDirective implements OnInit, OnDestroy {
       children: this.galleryChildrenSelector,
       pswpModule: PhotoSwipe,
       counter: false,
+      // Drops the toolbar's magnifier button. Zooming stays available on scroll and on click, so
+      // the button only crowded the corner next to close.
+      zoom: false,
       // The backdrop's colour and blur live in PHOTO_GALLERY_STYLE; a full target opacity here is
       // what makes PhotoSwipe fade it in with the zoom rather than flash it on at once.
       bgOpacity: 1,
