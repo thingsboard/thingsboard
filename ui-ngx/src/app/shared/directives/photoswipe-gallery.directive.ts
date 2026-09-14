@@ -6,10 +6,19 @@ import PhotoSwipe from 'photoswipe';
 import cssjs from '@core/css/css';
 
 const PHOTO_GALLERY_STYLE_ID = 'photoswipe-gallery-style';
-/** Share of the viewport the opened image is aimed at, leaving the platform visible around it. */
-const VIEWPORT_FILL = 0.8;
-/** A small screenshot is enlarged to fill that share, but never past this much of its own size. */
-const MAX_UPSCALE = 1.5;
+// Share of the available area an opened image is allowed to take, so it never runs under the
+// close button and there is always backdrop left to click to dismiss. Two values because the two
+// cases need different amounts of it: a picture being shrunk to fit is large and can spare the
+// room, while one being enlarged is short of size in the first place.
+const SHRINK_FILL = 0.86;
+const GROW_FILL = 0.95;
+/** A small screenshot is enlarged to fit, but never past this much of its own size. */
+const MAX_UPSCALE = 2;
+// Symmetric on purpose: PhotoSwipe centres the image inside the padded box, so an uneven
+// top/bottom pushes it off the middle of the screen — and up under the close button, once an
+// undersized image is allowed to grow into the space. The caption floats over the bottom padding
+// rather than reserving any.
+const VIEWPORT_PADDING = { top: 64, bottom: 64, left: 24, right: 24 };
 const PHOTO_GALLERY_CLASS = 'tb-photoswipe-gallery';
 const PHOTO_GALLERY_STYLE =
   // The root only needs its compositing layer neutralised. PhotoSwipe ships
@@ -154,15 +163,20 @@ interface ZoomLevelSizes {
 
 /**
  * PhotoSwipe's own `fit` is capped at 1, so a screenshot smaller than the viewport opens at its
- * original size and looks lost on screen. This fills the pan area in both directions instead,
- * capped so a tiny image is not blown up into mush.
+ * original size and looks lost on screen — clicking it to see it full screen appears to do
+ * nothing. Work off the raw ratio instead, so an undersized image grows into the space, capped so
+ * a tiny one is not blown up into mush.
  */
 function initialZoom(zoomLevel: ZoomLevelSizes): number {
   const { panAreaSize, elementSize } = zoomLevel;
   if (!panAreaSize || !elementSize?.x || !elementSize?.y) {
     return zoomLevel.fit;
   }
-  return Math.min(panAreaSize.x / elementSize.x, panAreaSize.y / elementSize.y, MAX_UPSCALE);
+  const fitRatio = Math.min(panAreaSize.x / elementSize.x, panAreaSize.y / elementSize.y);
+  if (fitRatio <= 1) {
+    return fitRatio * SHRINK_FILL;
+  }
+  return Math.min(fitRatio * GROW_FILL, MAX_UPSCALE);
 }
 
 function thumbnailImage(element: Element): HTMLImageElement {
@@ -243,11 +257,11 @@ export class PhotoSwipeGalleryDirective implements OnInit, OnDestroy {
       // what makes PhotoSwipe fade it in with the zoom rather than flash it on at once.
       bgOpacity: 1,
       mainClass: PHOTO_GALLERY_CLASS,
-      paddingFn: viewportSize => {
-        const horizontal = viewportSize.x * (1 - VIEWPORT_FILL) / 2;
-        const vertical = viewportSize.y * (1 - VIEWPORT_FILL) / 2;
-        return { top: vertical, bottom: vertical, left: horizontal, right: horizontal };
-      },
+      padding: VIEWPORT_PADDING,
+      // Scroll to zoom, the same gesture the images have on thingsboard.io. The page scroll lock
+      // below only preventDefaults the wheel event, it does not stop it propagating, so
+      // PhotoSwipe's own handler on .pswp still sees it.
+      wheelToZoom: true,
       initialZoomLevel: zoomLevel => initialZoom(zoomLevel),
       // Keeps the click-to-zoom step from going backwards for an image opened above its own size.
       secondaryZoomLevel: zoomLevel => Math.max(initialZoom(zoomLevel), Math.min(1, zoomLevel.fit * 3))
