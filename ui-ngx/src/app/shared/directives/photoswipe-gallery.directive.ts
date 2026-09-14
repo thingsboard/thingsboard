@@ -6,12 +6,29 @@ import PhotoSwipe from 'photoswipe';
 import cssjs from '@core/css/css';
 
 const PHOTO_GALLERY_STYLE_ID = 'photoswipe-gallery-style';
+/** Share of the viewport the opened image is aimed at, leaving the platform visible around it. */
+const VIEWPORT_FILL = 0.8;
+/** A small screenshot is enlarged to fill that share, but never past this much of its own size. */
+const MAX_UPSCALE = 1.5;
 const PHOTO_GALLERY_CLASS = 'tb-photoswipe-gallery';
 const PHOTO_GALLERY_STYLE =
-  '{\n'+
-  ' background: rgba(10, 10, 20, 0.55);\n' +
+  // The root only needs its compositing layer neutralised. PhotoSwipe ships
+  // `transform: translateZ(0)` and `will-change: opacity` on .pswp and .pswp__bg, and together
+  // those promote a layer that backdrop-filter cannot sample the page through — the blur
+  // silently does nothing and the backdrop reads as flat black.
+  '{\n' +
+  '    transform: none;\n' +
+  '    will-change: auto;\n' +
+  '}\n' +
+  '\n' +
+  // On .pswp__bg rather than the root element: that is the layer PhotoSwipe fades in along with the
+  // zoom, so its opacity is left to PhotoSwipe (see bgOpacity below) instead of being pinned here.
+  '.pswp__bg {\n' +
+  '    background: rgba(10, 10, 20, 0.55);\n' +
   '    backdrop-filter: blur(18px);\n' +
-  '    opacity: 1;\n' +
+  '    -webkit-backdrop-filter: blur(18px);\n' +
+  '    transform: none;\n' +
+  '    will-change: backdrop-filter;\n' +
   '}\n' +
   '\n' +
   '.pswp__tb-photoswipe-caption {\n' +
@@ -49,12 +66,23 @@ const PHOTO_GALLERY_STYLE =
   '.pswp__item img.pswp__img {\n' +
   '    display: block;\n' +
   '    object-fit: contain;\n' +
-  '    border-radius: 4px;    \n' +
-  '    box-shadow: 0 20px 60px #00000080;\n' +
+  '    border-radius: 4px;\n' +
   '}\n' +
   '\n' +
+  // drop-shadow, not box-shadow, and on the wrap rather than the image. box-shadow traces the
+  // element's rectangle, so anything with transparency — an SVG, a PNG with an alpha background —
+  // got a shadow drawn around empty space. drop-shadow follows the alpha channel and outlines the
+  // picture itself. On the wrap because it is always present, so the shadow does not flicker when
+  // the low-res placeholder is swapped for the full image.
+  '.pswp__zoom-wrap {\n' +
+  '    filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.5));\n' +
+  '}\n' +
+  '\n' +
+  // PhotoSwipe paints a #222 block behind the low-res placeholder while the zoom-from-thumbnail
+  // animation runs. Against a translucent backdrop that reads as a black box flashing in and out.
   '.pswp__item .pswp__img--placeholder {\n' +
-  '    border-radius: 4px; \n' +
+  '    background: transparent;\n' +
+  '    border-radius: 4px;\n' +
   '}\n' +
   '\n' +
   '.pswp__button {\n' +
@@ -117,6 +145,73 @@ const PHOTO_GALLERY_STYLE =
   '    right: 12px;\n' +
   '}';
 
+/** The parts of PhotoSwipe's ZoomLevel this directive needs; `panAreaSize` already excludes padding. */
+interface ZoomLevelSizes {
+  fit: number;
+  panAreaSize: { x: number; y: number } | null;
+  elementSize: { x: number; y: number } | null;
+}
+
+/**
+ * PhotoSwipe's own `fit` is capped at 1, so a screenshot smaller than the viewport opens at its
+ * original size and looks lost on screen. This fills the pan area in both directions instead,
+ * capped so a tiny image is not blown up into mush.
+ */
+function initialZoom(zoomLevel: ZoomLevelSizes): number {
+  const { panAreaSize, elementSize } = zoomLevel;
+  if (!panAreaSize || !elementSize?.x || !elementSize?.y) {
+    return zoomLevel.fit;
+  }
+  return Math.min(panAreaSize.x / elementSize.x, panAreaSize.y / elementSize.y, MAX_UPSCALE);
+}
+
+function thumbnailImage(element: Element): HTMLImageElement {
+  return element instanceof HTMLImageElement ? element : element.querySelector('img');
+}
+
+/**
+ * Bounds of the pixels an `object-fit` image actually paints, as opposed to the bounds of its box.
+ * `fill` stretches to the box, so the box is already the right answer.
+ */
+function renderedImageBounds(image: HTMLImageElement): { x: number; y: number; w: number } {
+  const rect = image.getBoundingClientRect();
+  const style = getComputedStyle(image);
+  const { naturalWidth, naturalHeight } = image;
+  let width = rect.width;
+  let height = rect.height;
+  switch (style.objectFit) {
+    case 'contain':
+    case 'scale-down': {
+      let scale = Math.min(rect.width / naturalWidth, rect.height / naturalHeight);
+      if (style.objectFit === 'scale-down') {
+        scale = Math.min(scale, 1);
+      }
+      width = naturalWidth * scale;
+      height = naturalHeight * scale;
+      break;
+    }
+    case 'none':
+      width = naturalWidth;
+      height = naturalHeight;
+      break;
+  }
+  const [positionX, positionY] = style.objectPosition.split(' ');
+  return {
+    x: rect.left + objectPositionOffset(positionX, rect.width - width),
+    y: rect.top + objectPositionOffset(positionY, rect.height - height),
+    w: width
+  };
+}
+
+/** Resolves one axis of a computed `object-position`, which is either a percentage or a length. */
+function objectPositionOffset(position: string, freeSpace: number): number {
+  const value = parseFloat(position);
+  if (isNaN(value)) {
+    return freeSpace / 2;
+  }
+  return position.endsWith('%') ? (value / 100) * freeSpace : value;
+}
+
 @Directive({
   selector: '[tbPhotoSwipeGallery]',
   standalone: false
@@ -139,21 +234,39 @@ export class PhotoSwipeGalleryDirective implements OnInit, OnDestroy {
       children: this.galleryChildrenSelector,
       pswpModule: PhotoSwipe,
       counter: false,
-      bgOpacity: 0,
-      mainClass: PHOTO_GALLERY_CLASS
+      // The backdrop's colour and blur live in PHOTO_GALLERY_STYLE; a full target opacity here is
+      // what makes PhotoSwipe fade it in with the zoom rather than flash it on at once.
+      bgOpacity: 1,
+      mainClass: PHOTO_GALLERY_CLASS,
+      paddingFn: viewportSize => {
+        const horizontal = viewportSize.x * (1 - VIEWPORT_FILL) / 2;
+        const vertical = viewportSize.y * (1 - VIEWPORT_FILL) / 2;
+        return { top: vertical, bottom: vertical, left: horizontal, right: horizontal };
+      },
+      initialZoomLevel: zoomLevel => initialZoom(zoomLevel),
+      // Keeps the click-to-zoom step from going backwards for an image opened above its own size.
+      secondaryZoomLevel: zoomLevel => Math.max(initialZoom(zoomLevel), Math.min(1, zoomLevel.fit * 3))
     });
     this.lightbox.addFilter('domItemData', (itemData, element) => {
-      let image: HTMLImageElement;
-      if (element instanceof HTMLImageElement) {
-        image = element;
-      } else {
-        image = element.querySelector('img');
-      }
+      const image = thumbnailImage(element);
       itemData.src = image.src;
       itemData.width = image.naturalWidth;
       itemData.height = image.naturalHeight;
-      itemData.thumbCropped = true;
+      // Only a cover-fitted thumbnail is really cropped. Claiming it for the rest makes PhotoSwipe
+      // start the zoom from a clipped, slightly oversized frame, which reads as a jump.
+      itemData.thumbCropped = getComputedStyle(image).objectFit === 'cover';
       return itemData;
+    });
+    // PhotoSwipe measures the thumbnail element, but object-fit leaves the rendered image smaller
+    // than its box. Hand it the bounds of the pixels actually on screen so the zoom starts exactly
+    // where the thumbnail ends. Cover is left alone: PhotoSwipe's own cropped path already fits it.
+    this.lightbox.addFilter('thumbBounds', (thumbBounds, itemData) => {
+      const element = itemData.element;
+      if (!element || itemData.thumbCropped) {
+        return thumbBounds;
+      }
+      const image = thumbnailImage(element);
+      return image?.naturalWidth ? renderedImageBounds(image) : thumbBounds;
     });
     this.lightbox.on('uiRegister', () => {
       this.lightbox.pswp.ui.registerElement({
@@ -182,13 +295,58 @@ export class PhotoSwipeGalleryDirective implements OnInit, OnDestroy {
         }
       });
     });
+    // PhotoSwipe does not lock page scroll — it only manages overflow inside its own container —
+    // so without this the page keeps scrolling behind the open image. Blocking the events rather
+    // than setting overflow:hidden on a scroller keeps this working wherever the gallery is used:
+    // here the dialog's own content pane scrolls, elsewhere the page does, and the directive
+    // cannot know which.
+    this.lightbox.on('beforeOpen', () => this.lockScroll());
+    this.lightbox.on('destroy', () => this.unlockScroll());
     this.lightbox.init();
   }
 
   ngOnDestroy(): void {
+    this.unlockScroll();
     if (this.lightbox) {
       this.lightbox.destroy();
     }
+  }
+
+  /**
+   * Make Escape close the image and nothing else.
+   *
+   * Without this, one press closes both the image and the dialog behind it: PhotoSwipe listens for
+   * Escape on document, and so does the CDK overlay dispatcher that serves mat-dialog, so both
+   * react to the same key.
+   *
+   * The handler runs in the capture phase to get in before CDK, and closes PhotoSwipe itself
+   * rather than leaving that to PhotoSwipe's own handler — that one is bound on document in the
+   * bubble phase (see pswp.events.add(document, 'keydown', ...)), which stopPropagation from a
+   * capture listener on the same node never reaches, so Escape would stop working entirely.
+   */
+  private readonly onKeydownCapture = (e: KeyboardEvent): void => {
+    if (e.key !== 'Escape' || !this.lightbox?.pswp) {
+      return;
+    }
+    e.stopPropagation();
+    e.preventDefault();
+    this.lightbox.pswp.close();
+  };
+
+  private readonly onScrollEvent = (e: Event): void => {
+    e.preventDefault();
+  };
+
+  private lockScroll(): void {
+    document.addEventListener('keydown', this.onKeydownCapture, true);
+    document.addEventListener('wheel', this.onScrollEvent, { passive: false, capture: true });
+    document.addEventListener('touchmove', this.onScrollEvent, { passive: false, capture: true });
+  }
+
+  private unlockScroll(): void {
+    document.removeEventListener('keydown', this.onKeydownCapture, true);
+    document.removeEventListener('wheel', this.onScrollEvent, true);
+    document.removeEventListener('touchmove', this.onScrollEvent, true);
   }
 
   private initPhotoSwipeGalleryStyle(): void {
