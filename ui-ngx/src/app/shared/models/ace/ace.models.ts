@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Copyright The Thingsboard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { Ace } from 'ace-builds';
+import type { LanguageProvider } from 'ace-linters';
 import { Observable } from 'rxjs/internal/Observable';
 import { forkJoin, from, of } from 'rxjs';
 import { map, mergeMap, tap } from 'rxjs/operators';
@@ -10,6 +11,7 @@ import { Renderer2 } from '@angular/core';
 let aceDependenciesLoaded = false;
 let aceModule: any;
 let aceDiffModule: any;
+let languageProviderCtor: typeof LanguageProvider;
 
 function loadAceDependencies(): Observable<any> {
   if (aceDependenciesLoaded) {
@@ -80,6 +82,19 @@ export function getAceDiff(): Observable<any> {
       }),
       tap((module) => {
         aceDiffModule = module;
+      })
+    );
+  }
+}
+
+export function getLanguageProvider(worker: Worker): Observable<LanguageProvider> {
+  if (languageProviderCtor) {
+    return of(languageProviderCtor.create(worker));
+  } else {
+    return from(import('ace-linters')).pipe(
+      map((module) => {
+        languageProviderCtor = module.LanguageProvider;
+        return languageProviderCtor.create(worker);
       })
     );
   }
