@@ -163,14 +163,16 @@ export class MpItemVersionQuery {
    */
   public toGroupedQuery(): string {
     const text = this.pageLink.textSearch?.trim();
-    let query = '?';
+    const parts: string[] = [];
     if (text?.length) {
-      query += `textSearch=${encodeURIComponent(text)}&`;
+      parts.push(`textSearch=${encodeURIComponent(text)}`);
     }
     if (this.pageLink.sortOrder) {
-      query += `sortProperty=${this.pageLink.sortOrder.property}&`;
+      parts.push(`sortProperty=${this.pageLink.sortOrder.property}`);
     }
-    return query + this.filtersToQuery();
+    // filtersToQuery() emits leading ampersands, which is what toQuery() needs after a page link;
+    // here they may be the whole query string, so the first one is dropped.
+    return `?${`${parts.join('&')}${this.filtersToQuery()}`.replace(/^&/, '')}`;
   }
 
   public toQuery(): string {
