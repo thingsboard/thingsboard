@@ -1,0 +1,92 @@
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
+@import "./iot-hub-common";
+
+// Values follow the type pages' filter panel so the two read as one control, minus its deep
+// left indent: that indent exists because the panel there sits in a wider rail.
+.tb-iot-hub-facet-panel.mat-expansion-panel {
+  box-shadow: none;
+  border-radius: 0;
+  background: transparent;
+
+  // Indented from the column's edges, because the rules between facets are not: they span the
+  // whole column, as they do on the type pages. The host sets --tb-facet-indent to whatever
+  // puts this text on the page's own left margin.
+  .mat-expansion-panel-header {
+    padding: 8px 16px 8px var(--tb-facet-indent, 16px);
+    height: 48px;
+    min-height: 48px;
+  }
+
+  ::ng-deep .mat-expansion-panel-header-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: rgba(0, 0, 0, 0.87);
+  }
+
+  ::ng-deep .mat-expansion-panel-body {
+    padding: 0 8px 8px var(--tb-facet-indent, 16px);
+  }
+
+  mat-checkbox {
+    display: block;
+    overflow: hidden;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.04);
+    }
+  }
+
+  .tb-iot-hub-facet-items {
+    // Uncapped until the list is long enough to need it, so a three-option facet does not
+    // reserve a scroll area it never uses.
+    &.scrollable {
+      max-height: 280px;
+      overflow-y: auto;
+    }
+
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background-color: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background-color: transparent;
+      border-radius: 3px;
+    }
+
+    &:hover {
+      &::-webkit-scrollbar-track {
+        background-color: rgba(0, 0, 0, 0.04);
+      }
+
+      &::-webkit-scrollbar-thumb {
+        background-color: rgba(0, 0, 0, 0.2);
+
+        &:hover {
+          background-color: rgba(0, 0, 0, 0.35);
+        }
+      }
+    }
+  }
+
+  .tb-iot-hub-facet-search {
+    @include tb-iot-hub-search-container;
+    margin: 4px 8px 8px 0;
+
+    mat-icon {
+      @include tb-iot-hub-search-icon(rgba(0, 0, 0, 0.54));
+    }
+
+    input {
+      @include tb-iot-hub-search-input-text(0.2px);
+    }
+
+    .tb-iot-hub-facet-search-clear.mat-mdc-icon-button {
+      @include tb-iot-hub-search-clear;
+    }
+  }
+}

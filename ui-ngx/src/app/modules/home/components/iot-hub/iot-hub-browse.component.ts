@@ -126,7 +126,17 @@ export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy
   activeHardwareTypes = new Set<string>();
   activeVendors = new Set<string>();
 
+  /**
+   * Relevance leads, and is therefore the default (selectedSortIndex starts at 0). A type page
+   * carries a search field, which is the only thing relevance ranks by; with the field empty the
+   * backend substitutes the install count, so browsing keeps the order it always had.
+   *
+   * Kept in step by hand with TbIotHubSearchComponent's list and with IOT_HUB_SORT_OPTIONS on
+   * thingsboard.io — three copies, because the two products share no code and this component
+   * predates the search page's list.
+   */
   sortOptions: SortOption[] = [
+    { value: 'relevance', label: 'iot-hub.sort-most-relevant', direction: Direction.DESC },
     { value: 'totalInstallCount', label: 'iot-hub.sort-most-installed', direction: Direction.DESC },
     { value: 'publishedTime', label: 'iot-hub.sort-newest', direction: Direction.DESC },
     { value: 'name', label: 'iot-hub.sort-name', direction: Direction.ASC }
@@ -175,6 +185,12 @@ export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy
     const params = this.route.snapshot.queryParams;
     if (params['search']) {
       this.textSearch = params['search'];
+    }
+    // A search section header on a creator profile lands here scoped to that creator. The
+    // bound input wins: an embedded host (the add-item dialog) sets its own scope, and must
+    // not pick one up from whatever URL happens to be open behind the dialog.
+    if (!this.creatorId && !this.embedded && params['creatorId']) {
+      this.creatorId = params['creatorId'];
     }
     if (this.fixedSubType) {
       const subtypes = this.getActiveSubtypes();

@@ -4,12 +4,17 @@ import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/co
 import { Router } from '@angular/router';
 import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { forkJoin, Subject, Subscription } from 'rxjs';
-import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { forkJoin, of, Subject, Subscription } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { MediaBreakpoints } from '@shared/models/constants';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
-import { MpItemVersionQuery, MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
+import {
+  MpItemVersionGroupedQuery,
+  MpItemVersionQuery,
+  MpItemVersionSection,
+  MpItemVersionView
+} from '@shared/models/iot-hub/iot-hub-version.models';
 import { getItemTypeIcon, ItemType, itemTypeTranslations } from '@shared/models/iot-hub/iot-hub-item.models';
 import { IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
@@ -35,12 +40,23 @@ interface HeroTypeConfig {
 interface SearchResultGroup {
   type: ItemType;
   items: MpItemVersionView[];
+  /** Rows of this type behind the answer, from the section's total. */
+  total: number;
+  /** total - items.length, floored at 0. Zero means the header shows no "+N more". */
+  remaining: number;
 }
 
-const SEARCH_GROUP_ORDER: ItemType[] = [
+/** The types this popup lays out. A section of anything else is dropped rather than rendered
+ *  without a label - the platform publishes no dashboards. Order comes from the server. */
+const SEARCH_GROUP_TYPES: ItemType[] = [
   ItemType.DEVICE, ItemType.SOLUTION_TEMPLATE, ItemType.WIDGET,
   ItemType.CALCULATED_FIELD, ItemType.ALARM_RULE, ItemType.RULE_CHAIN
 ];
+
+/** Relevance ranking. Sent only while the field has text: with an empty field the backend
+ *  substitutes the install count anyway, and this component knows the field state, so it sends
+ *  the honest value rather than leaning on that safety net. */
+const RELEVANCE = 'relevance';
 
 @Component({
   selector: 'tb-iot-hub-home',
@@ -53,7 +69,6 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
   readonly ItemType = ItemType;
 
   searchText = '';
-  searchResults: MpItemVersionView[] = [];
   searchResultGroups: SearchResultGroup[] = [];
   searchLoaded = false;
   searchLoading = false;
@@ -156,14 +171,19 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
       distinctUntilChanged(),
       switchMap(text => {
         this.searchLoading = true;
-        const sortOrder: SortOrder = { property: 'totalInstallCount', direction: Direction.DESC };
-        const pageLink = new PageLink(10, 0, text.trim() || null, sortOrder);
-        const query = new MpItemVersionQuery(pageLink);
-        return this.iotHubApiService.getPublishedVersions(query, { ignoreLoading: true });
+        const trimmed = text.trim();
+        // Two states, one panel: popularity answers "what is worth looking at" with an empty
+        // field, relevance answers "what did I ask for" once there is one.
+        const sortProperty = trimmed ? RELEVANCE : 'totalInstallCount';
+        const query = new MpItemVersionGroupedQuery({}, trimmed, sortProperty);
+        // A failed request must not end the subscription: the interceptor reports it, and the
+        // panel goes back to an empty answer the next keystroke can replace.
+        return this.iotHubApiService.getPublishedVersionsGrouped(query, { ignoreLoading: true }).pipe(
+          catchError(() => of([] as MpItemVersionSection[]))
+        );
       })
-    ).subscribe(result => {
-      this.searchResults = result.data;
-      this.searchResultGroups = this.groupSearchResults(result.data);
+    ).subscribe(sections => {
+      this.searchResultGroups = this.toResultGroups(sections);
       this.searchLoaded = true;
       this.searchLoading = false;
     });
@@ -235,6 +255,17 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
     this.searchAutoTrigger?.closePanel();
     const search = this.searchText?.trim() || undefined;
     void this.router.navigate(['/iot-hub/search'], { queryParams: { search } });
+  }
+
+  /**
+   * The section header is the way into the rest of a type - the panel carries no per-section
+   * "see all" row, which would put six identical calls to action on one panel. The query goes
+   * with it, so the type page opens on the same search rather than on the whole type.
+   */
+  navigateToSection(type: ItemType): void {
+    this.searchAutoTrigger?.closePanel();
+    const search = this.searchText?.trim() || undefined;
+    void this.router.navigate(['/iot-hub', this.getTypeRoute(type)], { queryParams: { search } });
   }
 
   isCompactType(type: ItemType): boolean {
@@ -523,21 +554,19 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
     });
   }
 
-  private groupSearchResults(items: MpItemVersionView[]): SearchResultGroup[] {
-    const groupMap = new Map<ItemType, MpItemVersionView[]>();
-    for (const item of items) {
-      if (!SEARCH_GROUP_ORDER.includes(item.type)) {
-        continue;
-      }
-      let list = groupMap.get(item.type);
-      if (!list) {
-        list = [];
-        groupMap.set(item.type, list);
-      }
-      list.push(item);
-    }
-    return SEARCH_GROUP_ORDER
-      .filter(type => groupMap.has(type))
-      .map(type => ({ type, items: groupMap.get(type) }));
+  /**
+   * Reads the sections the server built: they arrive capped and in the order to render them, so
+   * this only drops the types this panel has no layout for and works out each header's "+N more".
+   */
+  private toResultGroups(sections: MpItemVersionSection[]): SearchResultGroup[] {
+    return sections
+      .filter(section => SEARCH_GROUP_TYPES.includes(section.itemType))
+      .map(section => ({
+        type: section.itemType,
+        items: section.items,
+        total: section.total,
+        remaining: Math.max(0, section.total - section.items.length)
+      }));
   }
+
 }

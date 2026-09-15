@@ -242,6 +242,41 @@
       line-height: 20px;
       letter-spacing: 0.25px;
       color: rgba(0, 0, 0, 0.54);
+      // The header spans the panel so the count can sit against the right edge. Material's own
+      // label span is only as wide as its text.
+      width: 100%;
+    }
+  }
+
+  // Section header — the label IS the link into the type page: title left, how much is not shown
+  // plus a chevron right. There is deliberately no per-section "see all" row under the items;
+  // six of those on one panel is what this variant was chosen to avoid.
+  .tb-search-popup-group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    width: 100%;
+    cursor: pointer;
+    outline: none;
+  }
+
+  .tb-search-popup-group-more {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 16px;
+    letter-spacing: 0.25px;
+    color: $tb-primary-color;
+
+    .mat-icon {
+      width: 18px;
+      height: 18px;
+      font-size: 18px;
+      line-height: 18px;
     }
   }
 

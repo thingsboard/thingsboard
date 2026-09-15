@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The Thingsboard Authors
 // SPDX-License-Identifier: Apache-2.0
-import { Component, OnInit, OnDestroy, Input, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, Output, EventEmitter, ViewChild, ElementRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { forkJoin, Subject, Subscription } from 'rxjs';
@@ -8,15 +8,10 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { MpItemVersionQuery, MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
-import { ItemType, itemTypeTranslations } from '@shared/models/iot-hub/iot-hub-item.models';
+import { FilterParamInfo, ItemType, itemTypeTranslations } from '@shared/models/iot-hub/iot-hub-item.models';
 import { IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { IotHubActionsService } from './iot-hub-actions.service';
-
-interface SearchResultGroup {
-  type: ItemType;
-  items: MpItemVersionView[];
-}
 
 interface SortOption {
   value: string;
@@ -24,10 +19,26 @@ interface SortOption {
   direction: Direction;
 }
 
-const TYPE_ORDER: ItemType[] = [
+/** Sort property served by relevance ranking. With no text the backend substitutes the
+ *  install count, so it is a safe default in both states. */
+const RELEVANCE = 'relevance';
+
+/**
+ * Item types the Type facet offers, in the order every other cross-type surface uses (the hero
+ * popup's sections, the site's). Fixed rather than sorted by count: the counts move with the
+ * catalogue and a facet whose options reshuffle under the pointer is hard to use.
+ */
+const FACET_ITEM_TYPES: ItemType[] = [
   ItemType.DEVICE, ItemType.SOLUTION_TEMPLATE, ItemType.WIDGET,
   ItemType.CALCULATED_FIELD, ItemType.ALARM_RULE, ItemType.RULE_CHAIN
 ];
+
+/**
+ * Rows a page holds, as a multiple of the column count, so a page always ends on a complete row.
+ * The floor keeps a one- or two-column phone layout from falling to three cards a page.
+ */
+const ROWS_PER_PAGE = 3;
+const MIN_PAGE_SIZE = 12;
 
 @Component({
   selector: 'tb-iot-hub-search',
@@ -37,32 +48,64 @@ const TYPE_ORDER: ItemType[] = [
 })
 export class TbIotHubSearchComponent implements OnInit, OnDestroy {
 
-  readonly ItemType = ItemType;
-
   @Input() searchText = '';
   @Input() creatorId: string;
   @Input() showCreator = true;
+  /**
+   * Render the filter panel. The search page does; the creator profile does not - it is already
+   * scoped to one creator, and the site's profile has no panel either.
+   */
+  @Input() showFilters = true;
   @Output() searchTextChange = new EventEmitter<string>();
 
   get searchPlaceholderKey(): string {
     return this.creatorId ? 'iot-hub.search-published-items' : 'iot-hub.search';
   }
 
-  resultGroups: SearchResultGroup[] = [];
+  results: MpItemVersionView[] = [];
   totalElements = 0;
   isLoading = false;
   hasError = false;
   private retryTimer: any = null;
 
-  pageSize = 15;
   pageIndex = 0;
-  pageSizeOptions = [15, 30, 60];
+
+  /**
+   * Read from a hidden probe that carries the real grid's classes, not guessed from breakpoints:
+   * the grid's column count is a CSS fact, and duplicating its media queries in TypeScript is a
+   * second source of truth that drifts the first time someone edits the stylesheet.
+   */
+  @ViewChild('cardGridProbe', { static: true }) cardGridProbe!: ElementRef<HTMLElement>;
+  cols = 5;
+  pageSize = MIN_PAGE_SIZE;
+
+  get pageSizeOptions(): number[] {
+    const base = Math.max(MIN_PAGE_SIZE, this.cols * ROWS_PER_PAGE);
+    return [base, base * 2, base * 4];
+  }
+
+  /** Filter panel state. Empty sets mean "no filter", which is what the query object expects. */
+  /** Narrow widths only: the facet panel is a block above the results, not a sidebar. */
+  filtersOpen = false;
+  typeOptions: FilterParamInfo[] = [];
+  categoryOptions: FilterParamInfo[] = [];
+  useCaseOptions: FilterParamInfo[] = [];
+  activeTypes = new Set<string>();
+  activeCategories = new Set<string>();
+  activeUseCases = new Set<string>();
 
   sortOptions: SortOption[] = [
+    { value: RELEVANCE, label: 'iot-hub.sort-most-relevant', direction: Direction.DESC },
     { value: 'totalInstallCount', label: 'iot-hub.sort-most-installed', direction: Direction.DESC },
     { value: 'publishedTime', label: 'iot-hub.sort-newest', direction: Direction.DESC },
     { value: 'name', label: 'iot-hub.sort-name', direction: Direction.ASC }
   ];
+  /**
+   * Relevance is the default in BOTH states, which is why nothing here switches on whether the
+   * search field has text. With text it ranks the answer; without it the backend substitutes the
+   * install count, so a user who never opens this menu sees the order they always saw while
+   * browsing and the best matches once they type.
+   */
   selectedSortIndex = 0;
 
   installedWidgets: IotHubInstalledItem[] = [];
@@ -83,6 +126,11 @@ export class TbIotHubSearchComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.measureCols();
+    this.observeGridWidth();
+    if (this.showFilters) {
+      this.loadFilterInfo();
+    }
     this.loadInstalledItems();
     this.searchSubscription = this.searchSubject.pipe(
       debounceTime(300),
@@ -96,6 +144,148 @@ export class TbIotHubSearchComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.searchSubscription?.unsubscribe();
+    this.resizeSubscription?.unsubscribe();
+    this.resizeObserver?.disconnect();
+  }
+
+  // Filters
+
+  getTypeLabel = (key: string): string => {
+    const translationKey = itemTypeTranslations.get(key as ItemType);
+    return translationKey ? this.translate.instant(translationKey + '-plural') : key;
+  };
+
+  onTypeToggle(key: string): void {
+    this.toggle(this.activeTypes, key);
+  }
+
+  onCategoryToggle(key: string): void {
+    this.toggle(this.activeCategories, key);
+  }
+
+  onUseCaseToggle(key: string): void {
+    this.toggle(this.activeUseCases, key);
+  }
+
+  get activeFilterCount(): number {
+    return this.activeTypes.size + this.activeCategories.size + this.activeUseCases.size;
+  }
+
+  clearFilters(): void {
+    if (this.activeFilterCount === 0) {
+      return;
+    }
+    this.activeTypes.clear();
+    this.activeCategories.clear();
+    this.activeUseCases.clear();
+    this.pageIndex = 0;
+    this.loadResults();
+  }
+
+  private toggle(set: Set<string>, key: string): void {
+    if (set.has(key)) {
+      set.delete(key);
+    } else {
+      set.add(key);
+    }
+    this.pageIndex = 0;
+    this.loadResults();
+  }
+
+  /**
+   * There is no catalogue-wide filterInfo endpoint - it answers per item type - so the six
+   * answers are merged here, the way the site merges the same six at build time. Counts are
+   * deliberately not rendered: filterInfo takes no text query, so beside a searched result they
+   * would be the whole catalogue's numbers pretending to describe this answer.
+   */
+  private loadFilterInfo(): void {
+    const config = { ignoreLoading: true, ignoreErrors: true };
+    forkJoin(
+      FACET_ITEM_TYPES.map(type => this.iotHubApiService.getFilterInfo(type, config))
+    ).subscribe({
+      next: infos => {
+        // Every item type is offered, not only the ones filterInfo reports facets for: the
+        // endpoint describes a type's categories and vendors, never how many items it has, and
+        // a type whose items carry no categories would vanish from its own facet.
+        this.typeOptions = FACET_ITEM_TYPES.map(type => ({
+          key: type as string,
+          totalItems: 0,
+          totalInstallCount: 0
+        }));
+        this.categoryOptions = this.mergeFacet(infos.map(i => i?.categories));
+        this.useCaseOptions = this.mergeFacet(infos.map(i => i?.useCases));
+      },
+      // A facet panel that failed to load is an empty panel, never a broken page: the grid
+      // beside it answers the query perfectly well without it.
+      error: () => {}
+    });
+  }
+
+  private mergeFacet(lists: (FilterParamInfo[] | undefined)[]): FilterParamInfo[] {
+    const byKey = new Map<string, FilterParamInfo>();
+    for (const list of lists) {
+      for (const option of list || []) {
+        const seen = byKey.get(option.key);
+        if (seen) {
+          seen.totalItems += option.totalItems;
+          seen.totalInstallCount += option.totalInstallCount;
+        } else {
+          byKey.set(option.key, { ...option });
+        }
+      }
+    }
+    return [...byKey.values()]
+      .filter(o => o.totalItems > 0)
+      .sort((a, b) => a.key.localeCompare(b.key));
+  }
+
+  // Column count -> page size
+
+  private resizeObserver?: ResizeObserver;
+  private resizeSubject = new Subject<void>();
+  private resizeSubscription?: Subscription;
+
+  private observeGridWidth(): void {
+    const el = this.cardGridProbe?.nativeElement;
+    if (!el || typeof ResizeObserver === 'undefined') {
+      return;
+    }
+    this.resizeSubscription = this.resizeSubject.pipe(debounceTime(150)).subscribe(() => {
+      const before = this.pageSizeOptions[0];
+      this.measureCols();
+      if (this.pageSizeOptions[0] === before) {
+        return;
+      }
+      // Keep the user roughly where they were in the list rather than on the same page number:
+      // page 4 of 12-card pages is a different place from page 4 of 18-card pages.
+      const firstItem = this.pageIndex * this.pageSize;
+      this.pageSize = this.pageSizeOptions[0];
+      this.pageIndex = Math.floor(firstItem / this.pageSize);
+      this.loadResults();
+    });
+    this.resizeObserver = new ResizeObserver(() => this.resizeSubject.next());
+    this.resizeObserver.observe(el);
+  }
+
+  private measureCols(): void {
+    const el = this.cardGridProbe?.nativeElement;
+    if (!el) {
+      return;
+    }
+    // Force layout so grid-template-columns resolves to pixel tracks rather than `repeat(...)`.
+    void el.offsetWidth;
+    const tracks = getComputedStyle(el).gridTemplateColumns;
+    if (!tracks || tracks === 'none') {
+      this.cols = 1;
+    } else if (tracks.startsWith('repeat(')) {
+      const match = tracks.match(/^repeat\(\s*(\d+)\s*,/);
+      this.cols = match ? parseInt(match[1], 10) : 1;
+    } else {
+      this.cols = Math.max(1, tracks.trim().split(/\s+/).filter(t => t.length > 0).length);
+    }
+    if (!this.pageSizeOptions.includes(this.pageSize)) {
+      this.pageSize = this.pageSizeOptions[0];
+    }
   }
 
   onSearchInput(): void {
@@ -159,33 +349,9 @@ export class TbIotHubSearchComponent implements OnInit, OnDestroy {
   }
 
   // Type helpers
-  isCompactType(type: ItemType): boolean {
-    return type === ItemType.CALCULATED_FIELD
-      || type === ItemType.ALARM_RULE
-      || type === ItemType.RULE_CHAIN;
-  }
 
-  getTypeLabel(type: ItemType): string {
-    const key = itemTypeTranslations.get(type);
-    return key ? this.translate.instant(key + '-plural') : type;
-  }
 
-  getTypeRoute(type: ItemType): string {
-    switch (type) {
-      case ItemType.WIDGET: return 'widgets';
-      case ItemType.SOLUTION_TEMPLATE: return 'solution-templates';
-      case ItemType.CALCULATED_FIELD: return 'calculated-fields';
-      case ItemType.ALARM_RULE: return 'alarm-rules';
-      case ItemType.RULE_CHAIN: return 'rule-chains';
-      case ItemType.DEVICE: return 'devices';
-      default: return 'widgets';
-    }
-  }
 
-  navigateToType(type: ItemType): void {
-    const search = this.searchText?.trim() || undefined;
-    void this.router.navigate(['/iot-hub', this.getTypeRoute(type)], { queryParams: { search } });
-  }
 
   // Installed items
   getInstalledItem(item: MpItemVersionView): IotHubInstalledItem | undefined {
@@ -281,7 +447,7 @@ export class TbIotHubSearchComponent implements OnInit, OnDestroy {
       error: () => {
         this.isLoading = false;
         this.hasError = true;
-        this.resultGroups = [];
+        this.results = [];
         this.totalElements = 0;
       }
     });
@@ -291,30 +457,22 @@ export class TbIotHubSearchComponent implements OnInit, OnDestroy {
     const sort = this.sortOptions[this.selectedSortIndex];
     const sortOrder: SortOrder = { property: sort.value, direction: sort.direction };
     const pageLink = new PageLink(this.pageSize, this.pageIndex, text.trim() || null, sortOrder);
-    const query = new MpItemVersionQuery(pageLink, { creatorId: this.creatorId || undefined });
+    const query = new MpItemVersionQuery(pageLink, {
+      creatorId: this.creatorId || undefined,
+      // Empty sets are left off the query entirely - an empty array would narrow to nothing.
+      types: this.activeTypes.size ? [...this.activeTypes] : undefined,
+      categories: this.activeCategories.size ? [...this.activeCategories] : undefined,
+      useCases: this.activeUseCases.size ? [...this.activeUseCases] : undefined
+    });
     return this.iotHubApiService.getPublishedVersions(query, { ignoreLoading: true, ignoreErrors: true });
   }
 
   private applyResults(data: MpItemVersionView[], totalElements: number): void {
     this.totalElements = totalElements;
-    this.resultGroups = this.groupResults(data);
+    this.results = data;
     this.isLoading = false;
   }
 
-  private groupResults(items: MpItemVersionView[]): SearchResultGroup[] {
-    const groupMap = new Map<ItemType, MpItemVersionView[]>();
-    for (const item of items) {
-      let list = groupMap.get(item.type);
-      if (!list) {
-        list = [];
-        groupMap.set(item.type, list);
-      }
-      list.push(item);
-    }
-    return TYPE_ORDER
-      .filter(type => groupMap.has(type))
-      .map(type => ({ type, items: groupMap.get(type) }));
-  }
 
   private loadInstalledItems(): void {
     const config = { ignoreLoading: true };

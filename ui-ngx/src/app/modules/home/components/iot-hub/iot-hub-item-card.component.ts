@@ -23,6 +23,16 @@ export class TbIotHubItemCardComponent {
   @Input() showTypeChip = true;
   @Input() showSubtype = false;
   @Input() mode: 'default' | 'add' = 'default';
+  /**
+   * `auto` lets the item's type choose, which is what a single-type grid wants: calculated
+   * fields, alarm rules and rule chains have nothing to preview, so they get a compact row and
+   * the grid gives them wider cells.
+   *
+   * `preview` forces the tall card on every type. A grid that mixes types cannot widen its
+   * cells for some rows only, and a horizontal row squeezed into a cell sized for a preview
+   * truncates its own title and leaves the rest of the cell empty.
+   */
+  @Input() layout: 'auto' | 'preview' = 'auto';
   @Output() cardClick = new EventEmitter<MpItemVersionView>();
   @Output() creatorClick = new EventEmitter<string>();
   @Output() installClick = new EventEmitter<MpItemVersionView>();
@@ -47,6 +57,9 @@ export class TbIotHubItemCardComponent {
   }
 
   isCompactLayout(): boolean {
+    if (this.layout === 'preview') {
+      return false;
+    }
     return this.item.type === ItemType.CALCULATED_FIELD
         || this.item.type === ItemType.ALARM_RULE
         || this.item.type === ItemType.RULE_CHAIN;
