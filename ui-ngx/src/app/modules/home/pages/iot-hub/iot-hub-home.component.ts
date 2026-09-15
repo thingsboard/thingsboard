@@ -9,7 +9,7 @@ import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { MediaBreakpoints } from '@shared/models/constants';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
-import { MpItemVersionQuery, MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
+import { MpItemVersionGroupedView, MpItemVersionQuery, MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
 import { getItemTypeIcon, ItemType, itemTypeTranslations } from '@shared/models/iot-hub/iot-hub-item.models';
 import { IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
@@ -34,7 +34,7 @@ interface HeroTypeConfig {
 
 interface SearchResultGroup {
   type: ItemType;
-  items: MpItemVersionView[];
+  items: MpItemVersionGroupedView[];
   /** Rows of this type behind the answer, from the response's typeTotal. */
   total: number;
   /** total - items.length, floored at 0. Zero means the header shows no "+N more". */
@@ -62,7 +62,7 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
   readonly ItemType = ItemType;
 
   searchText = '';
-  searchResults: MpItemVersionView[] = [];
+  searchResults: MpItemVersionGroupedView[] = [];
   searchResultGroups: SearchResultGroup[] = [];
   searchLoaded = false;
   searchLoading = false;
@@ -171,11 +171,10 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
         const sortOrder: SortOrder = trimmed
           ? { property: RELEVANCE, direction: Direction.DESC }
           : { property: 'totalInstallCount', direction: Direction.DESC };
-        // The server sizes a grouped answer itself - the top rows of every type, one screen - so
-        // this page size is ignored, and page must stay 0 (a non-zero page is a 400).
+        // The grouped endpoint sizes its own answer, so the page size here is never sent.
         const pageLink = new PageLink(10, 0, trimmed || null, sortOrder);
-        const query = new MpItemVersionQuery(pageLink, { grouped: true });
-        return this.iotHubApiService.getPublishedVersions(query, { ignoreLoading: true });
+        const query = new MpItemVersionQuery(pageLink);
+        return this.iotHubApiService.getPublishedVersionsGrouped(query, { ignoreLoading: true });
       })
     ).subscribe(result => {
       this.searchResults = result.data;
@@ -555,8 +554,8 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
    * arrives already capped at four per type - so all this does is put the types in the panel's
    * fixed order and carry each one's typeTotal onto the header.
    */
-  private groupSearchResults(items: MpItemVersionView[]): SearchResultGroup[] {
-    const groupMap = new Map<ItemType, MpItemVersionView[]>();
+  private groupSearchResults(items: MpItemVersionGroupedView[]): SearchResultGroup[] {
+    const groupMap = new Map<ItemType, MpItemVersionGroupedView[]>();
     for (const item of items) {
       if (!SEARCH_GROUP_ORDER.includes(item.type)) {
         continue;
@@ -572,8 +571,9 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
       .filter(type => groupMap.has(type))
       .map(type => {
         const groupItems = groupMap.get(type);
-        // Every row of a type carries the same typeTotal. The fallback keeps a non-grouped
-        // response rendering correctly - which is what a stale backend would send.
+        // Every row of a type carries the same typeTotal, so the first one answers for the
+        // section. The fallback covers a backend too old to have the grouped endpoint, whose
+        // rows arrive without it.
         const total = groupItems[0].typeTotal ?? groupItems.length;
         return { type, items: groupItems, total, remaining: Math.max(0, total - groupItems.length) };
       });

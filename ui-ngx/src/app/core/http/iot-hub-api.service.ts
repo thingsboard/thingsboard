@@ -6,7 +6,7 @@ import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
 import { PageData } from '@shared/models/page/page-data';
 import { PageLink } from '@shared/models/page/page-link';
-import { MpItemVersionQuery, MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
+import { MpItemVersionGroupedView, MpItemVersionQuery, MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
 import { CreatorView } from '@shared/models/iot-hub/iot-hub-creator.models';
 import { IotHubInstalledItem, InstallItemVersionResult, InstallPlan, InstallPlanResult, UpdateItemVersionResult, ItemPublishedVersionInfo } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { ItemType, ItemTypeFilterInfo, WidgetCategory } from '@shared/models/iot-hub/iot-hub-item.models';
@@ -77,6 +77,25 @@ export class IotHubApiService {
     }
     return this.http.get<PageData<MpItemVersionView>>(
       `${this.baseUrl}/api/versions/published${query.toQuery()}`,
+      { params: this.buildParams(config) }
+    );
+  }
+
+  /**
+   * The sectioned answer: at most four rows of each item type, every row carrying the size of its
+   * section. Its own endpoint, which is why this is its own method - it takes no page, page size
+   * or sort direction, and sending them would be sending what the server does not read.
+   */
+  public getPublishedVersionsGrouped(query: MpItemVersionQuery,
+                                     config?: IotHubRequestConfig): Observable<PageData<MpItemVersionGroupedView>> {
+    if (query.options.tbVersion == null) {
+      query.options.tbVersion = tbVersionToInt(env.tbVersion);
+    }
+    if (query.options.peOnly == null) {
+      query.options.peOnly = false;
+    }
+    return this.http.get<PageData<MpItemVersionGroupedView>>(
+      `${this.baseUrl}/api/versions/published/grouped${query.toGroupedQuery()}`,
       { params: this.buildParams(config) }
     );
   }

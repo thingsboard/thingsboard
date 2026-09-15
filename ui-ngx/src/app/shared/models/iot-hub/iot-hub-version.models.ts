@@ -106,12 +106,18 @@ export interface MpItemVersionView {
   resources: MpItemVersionResource[];
   relatedItems?: string[];
   checksum?: string;
+}
+
+/**
+ * A row of a grouped search: the view plus the size of the section it belongs to. Its own type
+ * rather than a nullable field on the view, matching what the endpoint returns.
+ */
+export interface MpItemVersionGroupedView extends MpItemVersionView {
   /**
-   * Rows of this item's type behind a grouped response. A flat read does not omit it — the
-   * column is projected as NULL and serialised, so the field arrives as `null` there. Read it
-   * with `??`, never with a truthiness test.
+   * Rows of this row's item type behind the answer — what a "+N more" header subtracts the
+   * shown rows from. Always set: the grouped endpoint projects it for every row it returns.
    */
-  typeTotal?: number | null;
+  typeTotal: number;
 }
 
 // 404 body shapes returned by the public listing item-version endpoint
@@ -145,20 +151,36 @@ export interface MpItemVersionQueryOptions {
   connectivity?: string[];
   vendors?: string[];
   scadaFirst?: boolean;
-  /**
-   * Ask for the top four of each item type in one response instead of a flat page.
-   * Every row then carries `typeTotal`, the number of rows of its type behind the answer,
-   * which is what the section header's "+N more" counts. Grouped responses are one screen:
-   * the backend rejects a non-zero `page`.
-   */
-  grouped?: boolean;
 }
 
 export class MpItemVersionQuery {
   constructor(public pageLink: PageLink, public options: MpItemVersionQueryOptions = {}) {}
 
+  /**
+   * The grouped endpoint's query string: the filters, plus a sort key. It sizes its own answer,
+   * so it declares no page or page size, and each key's direction is fixed by its chain, so it
+   * declares no sort order either - sending any of the three would be sending something the
+   * server does not read.
+   */
+  public toGroupedQuery(): string {
+    const text = this.pageLink.textSearch?.trim();
+    let query = '?';
+    if (text?.length) {
+      query += `textSearch=${encodeURIComponent(text)}&`;
+    }
+    if (this.pageLink.sortOrder) {
+      query += `sortProperty=${this.pageLink.sortOrder.property}&`;
+    }
+    return query + this.filtersToQuery();
+  }
+
   public toQuery(): string {
-    let query = this.pageLink.toQuery();
+    return this.pageLink.toQuery() + this.filtersToQuery();
+  }
+
+  /** Every filter, as `&name=value` pairs - shared by both query strings above. */
+  private filtersToQuery(): string {
+    let query = '';
     const o = this.options;
     if (o.type) {
       query += `&type=${o.type}`;
@@ -201,9 +223,6 @@ export class MpItemVersionQuery {
     }
     if (o.scadaFirst != null) {
       query += `&scadaFirst=${o.scadaFirst}`;
-    }
-    if (o.grouped != null) {
-      query += `&grouped=${o.grouped}`;
     }
     return query;
   }
