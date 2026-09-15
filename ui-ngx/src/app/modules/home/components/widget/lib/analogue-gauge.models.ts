@@ -101,17 +101,19 @@ export abstract class TbBaseGauge<S, O extends GenericOptions> {
         if (this.formatValue) {
           value = parseFloat(this.formatValue.format(value));
         }
-        const valueText = !isNumeric(origValue) ? NOT_SUPPORTED : !value ? 'N/A' : '';
+        const valueText = !isDefinedAndNotNull(origValue) || origValue === '' ? 'N/A'
+          : !isNumeric(origValue) ? NOT_SUPPORTED : '';
         if (this.gauge.options.valueText !== valueText) {
           this.gauge.update({valueText} as GenericOptions);
         }
-        if (!isNaN(value) && value !== this.gauge.value) {
+        const gaugeValue = valueText ? this.gauge.options.minValue : value;
+        if (!isNaN(gaugeValue) && gaugeValue !== this.gauge.value) {
           if (!this.gauge.options.animation) {
-            this.gauge._value = value;
+            this.gauge._value = gaugeValue;
           } else {
             delete this.gauge._value;
           }
-          this.gauge.value = value;
+          this.gauge.value = gaugeValue;
         }
       }
     }

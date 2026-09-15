@@ -273,18 +273,20 @@ export class TbCanvasDigitalGauge {
         const origValue = tvPair[1];
         const value = parseFloat(origValue);
         const options = this.gauge.options as CanvasDigitalGaugeOptions;
-        const valueText = !origValue ? 'N/A' : !isNumeric(origValue) ? NOT_SUPPORTED : '';
+        const valueText = !isDefinedAndNotNull(origValue) || origValue === '' ? 'N/A'
+          : !isNumeric(origValue) ? NOT_SUPPORTED : '';
         if (options.valueText !== valueText) {
           options.valueText = valueText;
           this.gauge.update({} as CanvasDigitalGaugeOptions);
         }
-        if (!isNaN(value) && value !== this.gauge.value) {
+        const gaugeValue = valueText ? options.minValue : value;
+        if (!isNaN(gaugeValue) && gaugeValue !== this.gauge.value) {
           if (!this.gauge.options.animation) {
-            this.gauge._value = value;
+            this.gauge._value = gaugeValue;
           } else {
             delete this.gauge._value;
           }
-          this.gauge.value = value;
+          this.gauge.value = gaugeValue;
         } else if (this.localSettings.showTimestamp && this.gauge.timestamp !== timestamp) {
           this.gauge.timestamp = timestamp;
         }
