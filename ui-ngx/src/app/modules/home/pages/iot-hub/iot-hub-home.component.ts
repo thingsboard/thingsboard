@@ -555,9 +555,8 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Reads the sections the server built. It no longer decides membership - a grouped response
-   * arrives already capped at four per type - so all this does is put the types in the panel's
-   * fixed order and carry each one's typeTotal onto the header.
+   * Reads the sections the server built: they arrive capped and in the order to render them, so
+   * this only drops the types this panel has no layout for and works out each header's "+N more".
    */
   private toResultGroups(sections: MpItemVersionSection[]): SearchResultGroup[] {
     return sections
