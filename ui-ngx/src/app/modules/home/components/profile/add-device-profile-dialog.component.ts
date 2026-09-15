@@ -47,6 +47,7 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
 import { map } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { SECOND } from '@shared/models/time/time.models';
 
 export interface AddDeviceProfileDialogData {
   deviceProfileName: string;
@@ -115,6 +116,7 @@ export class AddDeviceProfileDialogComponent extends
         defaultDashboardId: [null, []],
         defaultQueueName: [null, []],
         defaultEdgeRuleChainId: [null, []],
+        inactivityTimeoutSec: [0, []],
         description: ['', []]
       }
     );
@@ -178,6 +180,7 @@ export class AddDeviceProfileDialogComponent extends
       const deviceProvisionConfiguration: DeviceProvisionConfiguration = this.provisionConfigFormGroup.get('provisionConfiguration').value;
       const provisionDeviceKey = deviceProvisionConfiguration.provisionDeviceKey;
       delete deviceProvisionConfiguration.provisionDeviceKey;
+      const inactivityTimeoutSec = this.deviceProfileDetailsFormGroup.get('inactivityTimeoutSec').value;
       const deviceProfile: DeviceProfile = {
         name: this.deviceProfileDetailsFormGroup.get('name').value,
         type: this.deviceProfileDetailsFormGroup.get('type').value,
@@ -190,7 +193,8 @@ export class AddDeviceProfileDialogComponent extends
         profileData: {
           configuration: createDeviceProfileConfiguration(DeviceProfileType.DEFAULT),
           transportConfiguration: this.transportConfigFormGroup.get('transportConfiguration').value,
-          provisionConfiguration: deviceProvisionConfiguration
+          provisionConfiguration: deviceProvisionConfiguration,
+          inactivityTimeoutMs: inactivityTimeoutSec && inactivityTimeoutSec > 0 ? inactivityTimeoutSec * SECOND : null
         }
       };
       if (this.deviceProfileDetailsFormGroup.get('defaultRuleChainId').value) {
