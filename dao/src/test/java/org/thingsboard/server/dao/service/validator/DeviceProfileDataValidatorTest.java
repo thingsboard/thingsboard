@@ -65,7 +65,7 @@ class DeviceProfileDataValidatorTest {
                     "  }";
 
     private static final String msgErrorLwm2mRange = "LwM2M Server ShortServerId must be in range [" + PRIMARY_LWM2M_SERVER.getId() + " - " + LWM2M_SERVER_MAX.getId() + "]!";
-    private static final String msgErrorBsRange = "Bootstrap Server ShortServerId must be null!";
+    private static final String msgErrorBsOnlyOne = "Only one Bootstrap Server configuration is allowed!";
     private static final String msgErrorNotNull = " Server ShortServerId must not be null!";
     private static final String host = "localhost";
     private static final String hostBs = "localhost";
@@ -115,50 +115,76 @@ class DeviceProfileDataValidatorTest {
     void testValidateDeviceProfile_Lwm2mBootstrap_ShortServerId_Ok() {
         Integer shortServerId = 123;
         Integer shortServerIdBs = null;
-        DeviceProfile deviceProfile = getDeviceProfile(shortServerId, shortServerIdBs);
+        DeviceProfile deviceProfile = getDeviceProfile(shortServerId, shortServerIdBs, 1);
 
         validator.validateDataImpl(tenantId, deviceProfile);
         verify(validator).validateString("Device profile name", deviceProfile.getName());
     }
 
     @Test
-    void testValidateDeviceProfile_Lwm2mShortServerId_Ok_BootstrapShortServerId_validate_0_to_null_Ok() {
+    void testValidateDeviceProfile_Lwm2mShortServerId_Ok_BootstrapShortServerId_validate_0_to_null_Warn() {
         Integer shortServerId = 123;
         Integer shortServerIdBs = 0;
-        DeviceProfile deviceProfile = getDeviceProfile(shortServerId, shortServerIdBs);
+        DeviceProfile deviceProfile = getDeviceProfile(shortServerId, shortServerIdBs, 1);
 
         validator.validateDataImpl(tenantId, deviceProfile);
         verify(validator).validateString("Device profile name", deviceProfile.getName());
     }
 
     @Test
-    void testValidateDeviceProfile_Lwm2mShortServerId_Ok_BootstrapShortServerId_More_65535_Error() {
-        verifyValidationError(123, 65536, msgErrorBsRange);
+    void testValidateDeviceProfile_Lwm2mShortServerId_Ok_BootstrapShortServerId_More_65535_to_null_Warn() {
+        Integer shortServerId = 123;
+        Integer shortServerIdBs = 65536;
+        DeviceProfile deviceProfile = getDeviceProfile(shortServerId, shortServerIdBs, 1);
+        validator.validateDataImpl(tenantId, deviceProfile);
+        verify(validator).validateString("Device profile name", deviceProfile.getName());
     }
 
     @Test
-    void testValidateDeviceProfile_Lwm2mShortServerId_Ok_BootstrapShortServerId_Less_0_Error() {
-        verifyValidationError(123, -1, msgErrorBsRange);
+    void testValidateDeviceProfile_Lwm2mShortServerId_Ok_BootstrapShortServerId_111_to_null_Warn() {
+        Integer shortServerId = 123;
+        Integer shortServerIdBs = 111;
+        DeviceProfile deviceProfile = getDeviceProfile(shortServerId, shortServerIdBs, 1);
+        validator.validateDataImpl(tenantId, deviceProfile);
+        verify(validator).validateString("Device profile name", deviceProfile.getName());
     }
 
     @Test
-    void testValidateDeviceProfile_Lwm2mShortServerId_null_Error_BootstrapShortServerId_Ok() {
-        verifyValidationError(null, 1, "LwM2M" + msgErrorNotNull);
+    void testValidateDeviceProfile_Lwm2mShortServerId_Ok_BootstrapShortServerId_Less_0_to_null_Warn() {
+        Integer shortServerId = 123;
+        Integer shortServerIdBs = -1;
+        DeviceProfile deviceProfile = getDeviceProfile(shortServerId, shortServerIdBs, 1);
+        validator.validateDataImpl(tenantId, deviceProfile);
+        verify(validator).validateString("Device profile name", deviceProfile.getName());
     }
 
     @Test
-    void testValidateDeviceProfile_Lwm2mShortServerId_More_65534_Error_BootstrapShortServerId_Ok() {
-        verifyValidationError(NOT_USED_IDENTIFYING_LWM2M_SERVER_MAX.getId(), 111, msgErrorLwm2mRange);
+    void testValidateDeviceProfile_Lwm2mShortServerId_null_Error_BootstrapShortServerId_null_Ok() {
+        verifyValidationError(null, null, "LwM2M" + msgErrorNotNull, 1);
     }
 
     @Test
-    void testValidateDeviceProfile_Lwm2mShortServerId_Less_1_Error_BootstrapShortServerId_Ok() {
-        verifyValidationError(0, 111, msgErrorLwm2mRange);
+    void testValidateDeviceProfile_Lwm2mShortServerId_More_65534_Error_BootstrapShortServerId_null_Ok() {
+        verifyValidationError(NOT_USED_IDENTIFYING_LWM2M_SERVER_MAX.getId(), null, msgErrorLwm2mRange, 1);
     }
 
-    private DeviceProfile getDeviceProfile(Integer shortServerId, Integer shortServerIdBs) {
+    @Test
+    void testValidateDeviceProfile_Lwm2mShortServerId_Less_1_Error_BootstrapShortServerId_null_Ok() {
+        verifyValidationError(0, null, msgErrorLwm2mRange, 1);
+    }
+
+    @Test
+    void testValidateDeviceProfile_Lwm2mShortServerId_Ok_Cnt_BootstrapShortServerId_Less_1_Error() {
+        verifyValidationError(123, null, msgErrorBsOnlyOne, 2);
+    }
+
+    private DeviceProfile getDeviceProfile(Integer shortServerId, Integer shortServerIdBs, int cntBsServer) {
         Lwm2mDeviceProfileTransportConfiguration transportConfiguration =
                 getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsNoSec(shortServerId, shortServerIdBs));
+        if (cntBsServer == 2) {
+            AbstractLwM2MBootstrapServerCredential bootstrapServerCredentialNoSecTwo =  getBootstrapServerCredentialNoSec(true, shortServerId, shortServerIdBs == null ? 111 : shortServerIdBs++);
+            transportConfiguration.getBootstrap().add(bootstrapServerCredentialNoSecTwo);
+        }
         DeviceProfile deviceProfile = new DeviceProfile();
         deviceProfile.setName("default");
         deviceProfile.setType(DeviceProfileType.DEFAULT);
@@ -198,8 +224,8 @@ class DeviceProfileDataValidatorTest {
         return bootstrapServerCredential;
     }
 
-    private void verifyValidationError(Integer shortServerId, Integer shortServerIdBs, String msgError) {
-        DeviceProfile deviceProfile = getDeviceProfile(shortServerId, shortServerIdBs);
+    private void verifyValidationError(Integer shortServerId, Integer shortServerIdBs, String msgError, int cntBsServer) {
+        DeviceProfile deviceProfile = getDeviceProfile(shortServerId, shortServerIdBs, cntBsServer);
         assertThatThrownBy(() -> validator.validateDataImpl(tenantId, deviceProfile))
                 .hasMessageContaining(msgError);
 

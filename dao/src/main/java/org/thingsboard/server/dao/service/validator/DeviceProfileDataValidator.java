@@ -367,7 +367,6 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
                     throw new DeviceCredentialsValidationException("Only one Bootstrap Server configuration is allowed!");
                 }
 
-
                 // 2. Normalize legacy shortServerId to null for backward compatibility
                 if (serverConfig.getShortServerId() != null) {
                     log.warn("Ignoring Short Server ID [{}] on the Bootstrap Server entry: cleared to null for backward compatibility (ThingsBoard <= 4.2).",
