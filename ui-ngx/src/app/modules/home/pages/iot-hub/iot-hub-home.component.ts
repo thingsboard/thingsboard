@@ -4,9 +4,10 @@ import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/co
 import { Router } from '@angular/router';
 import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { forkJoin, Subject, Subscription } from 'rxjs';
-import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { forkJoin, of, Subject, Subscription } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { MediaBreakpoints } from '@shared/models/constants';
+import { emptyPageData } from '@shared/models/page/page-data';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { MpItemVersionGroupedView, MpItemVersionQuery, MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
@@ -174,7 +175,11 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
         // The grouped endpoint sizes its own answer, so the page size here is never sent.
         const pageLink = new PageLink(10, 0, trimmed || null, sortOrder);
         const query = new MpItemVersionQuery(pageLink);
-        return this.iotHubApiService.getPublishedVersionsGrouped(query, { ignoreLoading: true });
+        // A failed request must not end the subscription: the interceptor reports it, and the
+        // panel goes back to an empty answer the next keystroke can replace.
+        return this.iotHubApiService.getPublishedVersionsGrouped(query, { ignoreLoading: true }).pipe(
+          catchError(() => of(emptyPageData<MpItemVersionGroupedView>()))
+        );
       })
     ).subscribe(result => {
       this.searchResults = result.data;
@@ -572,9 +577,8 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
       .map(type => {
         const groupItems = groupMap.get(type);
         // Every row of a type carries the same typeTotal, so the first one answers for the
-        // section. The fallback covers a backend too old to have the grouped endpoint, whose
-        // rows arrive without it.
-        const total = groupItems[0].typeTotal ?? groupItems.length;
+        // section.
+        const total = groupItems[0].typeTotal;
         return { type, items: groupItems, total, remaining: Math.max(0, total - groupItems.length) };
       });
   }
