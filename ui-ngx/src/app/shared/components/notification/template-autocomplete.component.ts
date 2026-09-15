@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { Observable, of } from 'rxjs';
@@ -28,6 +14,7 @@ import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
 import { emptyPageData } from '@shared/models/page/page-data';
 import {
+  NotificationDeliveryMethod,
   NotificationDeliveryMethodInfoMap,
   NotificationTemplate,
   NotificationType
@@ -41,6 +28,7 @@ import {
 import { MatDialog } from '@angular/material/dialog';
 import { MatButton } from '@angular/material/button';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { MatFormFieldAppearance } from '@angular/material/form-field';
 
 @Component({
     selector: 'tb-template-autocomplete',
@@ -71,6 +59,8 @@ export class TemplateAutocompleteComponent implements ControlValueAccessor, OnIn
   @coerceBoolean()
   allowEdit = false;
 
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
   @Input()
   disabled: boolean;
@@ -217,7 +207,7 @@ export class TemplateAutocompleteComponent implements ControlValueAccessor, OnIn
     button._elementRef.nativeElement.blur();
     this.createTemplateByName($event);
   }
-  
+
   createTemplateByName($event: Event, name?: string) {
     $event?.stopPropagation();
     this.openNotificationTemplateDialog({
@@ -264,5 +254,9 @@ export class TemplateAutocompleteComponent implements ControlValueAccessor, OnIn
     this.selectTemplateFormGroup.get('templateName').patchValue('', {emitEvent: false});
     this.updateView(null);
     this.dirty = true;
+  }
+
+  getNotificationDeliveryMethodInfoMap(key: string) {
+    return this.notificationDeliveryMethodInfoMap.get(key as NotificationDeliveryMethod);
   }
 }

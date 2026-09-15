@@ -1,0 +1,134 @@
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
+package org.thingsboard.server.service.install.lts;
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
+import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.install.DatabaseSchemaSettingsService;
+import org.thingsboard.server.service.install.InstallScripts;
+
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+@Slf4j
+@Component
+@TbCoreComponent
+public class LtsMigrationService {
+
+    private static final String SCHEMA_UPDATE_SQL = "schema_update.sql";
+
+    /** A migration paired with its parsed version, so the version is parsed exactly once per bean. */
+    private record VersionedMigration(LtsVersion version, LtsMigration migration) {}
+
+    private final JdbcTemplate jdbcTemplate;
+    private final InstallScripts installScripts;
+    private final DatabaseSchemaSettingsService schemaSettingsService;
+    private final TransactionTemplate transactionTemplate;
+    private final List<VersionedMigration> migrations;
+
+    public LtsMigrationService(JdbcTemplate jdbcTemplate,
+                               InstallScripts installScripts,
+                               DatabaseSchemaSettingsService schemaSettingsService,
+                               PlatformTransactionManager transactionManager,
+                               List<LtsMigration> migrations) {
+        this.jdbcTemplate = jdbcTemplate;
+        this.installScripts = installScripts;
+        this.schemaSettingsService = schemaSettingsService;
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
+        this.migrations = validateAndSort(migrations);
+        log.info("Discovered {} LTS migration(s): {}", this.migrations.size(),
+                this.migrations.stream().map(vm -> vm.migration().getVersion()).toList());
+    }
+
+    private static List<VersionedMigration> validateAndSort(List<LtsMigration> migrations) {
+        Set<String> seen = new HashSet<>();
+        List<VersionedMigration> versioned = new ArrayList<>();
+        for (LtsMigration m : migrations) {
+            LtsVersion version = LtsVersion.parse(m.getVersion()); // fail loud on unparseable version
+            if (!seen.add(m.getVersion())) {
+                throw new IllegalStateException("Duplicate LTS migration version: " + m.getVersion());
+            }
+            versioned.add(new VersionedMigration(version, m));
+        }
+        return versioned.stream()
+                .sorted(Comparator.comparing(VersionedMigration::version))
+                .toList();
+    }
+
+    /** No-downtime path: per migration in (from, to] run SQL, then apply(), then record the version. */
+    public void applyMigrations(String fromVersion, String toVersion) {
+        for (VersionedMigration vm : select(fromVersion, toVersion)) {
+            LtsMigration migration = vm.migration();
+            String version = migration.getVersion();
+            transactionTemplate.executeWithoutResult(status -> {
+                runSchemaUpdate(version);
+                migration.apply();
+                schemaSettingsService.updateSchemaVersion(version);
+            });
+            log.info("Applied LTS migration {}", version);
+        }
+    }
+
+    /** Offline major-upgrade schema phase: per migration in (from, to] run SQL only. No version record. */
+    public void runSchemaMigrations(String fromVersion, String toVersion) {
+        for (VersionedMigration vm : select(fromVersion, toVersion)) {
+            String version = vm.migration().getVersion();
+            transactionTemplate.executeWithoutResult(status -> runSchemaUpdate(version));
+            log.info("Applied LTS schema migration {}", version);
+        }
+    }
+
+    /** Offline major-upgrade data phase: per migration in (from, to] run apply() only. No SQL, no version record. */
+    public void runDataMigrations(String fromVersion, String toVersion) {
+        for (VersionedMigration vm : select(fromVersion, toVersion)) {
+            vm.migration().apply();
+            log.info("Applied LTS data migration {}", vm.migration().getVersion());
+        }
+    }
+
+    private List<VersionedMigration> select(String fromVersion, String toVersion) {
+        LtsVersion from = LtsVersion.parse(fromVersion);
+        LtsVersion to = LtsVersion.parse(toVersion);
+        // Select every migration in the (from, to] range, regardless of family. On a cross-family offline
+        // upgrade (e.g. 4.3.x -> 4.4) this is what makes the real in-range older-family beans run: it picks the
+        // 4.3.1.x schema/data changes the source has not yet passed AND the new target-family beans, each exactly
+        // once -- the half-open (from, to] range skips anything the source already applied. One logical migration
+        // is thus authored once (one bean + one lts/<version>/schema_update.sql) and reused by both the offline
+        // and no-downtime paths; nothing is reproduced into a newer family.
+        //
+        // Load-bearing invariant: no two beans may reproduce the same change within a single supported upgrade
+        // range. A reproduction-duplicate bean (one that re-does an older bean's work on a newer-family branch)
+        // must sit STRICTLY BELOW the minimum supported upgrade source, so it can never be selected together with
+        // the bean it duplicates. The only such pair today is 4.2.2.3 <-> 4.3.1.3, and the supported-source floor
+        // is 4.3.0.0 (SUPPORTED_VERSIONS_FOR_UPGRADE), well above 4.2.2.3. LtsMigrationServiceTest guards this.
+        return migrations.stream()
+                .filter(vm -> vm.version().isInRange(from, to))
+                .toList();
+    }
+
+    private void runSchemaUpdate(String version) {
+        Path sqlFile = Paths.get(installScripts.getDataDir(), "upgrade", "lts", version, SCHEMA_UPDATE_SQL);
+        if (!Files.exists(sqlFile)) {
+            log.trace("No LTS schema update file for version {} at {}", version, sqlFile);
+            return;
+        }
+        try {
+            jdbcTemplate.execute(Files.readString(sqlFile));
+            log.info("Applied LTS SQL schema update from {}", sqlFile);
+        } catch (IOException e) {
+            throw new UncheckedIOException("Failed to read LTS schema update file: " + sqlFile, e);
+        }
+    }
+}

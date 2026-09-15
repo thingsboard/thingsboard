@@ -1,26 +1,18 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.controller;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.junit.Test;
 import org.springframework.test.web.servlet.ResultActions;
+import org.thingsboard.common.util.SsrfProtectionValidator;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ai.AiModel;
+import org.thingsboard.server.common.data.ai.dto.TbChatRequest;
+import org.thingsboard.server.common.data.ai.dto.TbChatResponse;
+import org.thingsboard.server.common.data.ai.dto.TbContent;
+import org.thingsboard.server.common.data.ai.dto.TbUserMessage;
 import org.thingsboard.server.common.data.ai.model.chat.AnthropicChatModelConfig;
 import org.thingsboard.server.common.data.ai.model.chat.GoogleAiGeminiChatModelConfig;
 import org.thingsboard.server.common.data.ai.model.chat.OpenAiChatModelConfig;
@@ -33,6 +25,8 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -134,6 +128,68 @@ public class AiModelControllerTest extends AbstractControllerTest {
         assertThat(updatedModel.getName()).isEqualTo("Test model updated");
         assertThat(updatedModel.getConfiguration()).isEqualTo(newModelConfig);
         assertThat(updatedModel.getExternalId()).isNull();
+    }
+
+    @Test
+    public void saveAiModel_whenBaseUrlIsPrivateIp_shouldReturnBadRequest() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+        SsrfProtectionValidator.setEnabled(true);
+
+        try {
+            var modelConfig = OpenAiChatModelConfig.builder()
+                    .providerConfig(OpenAiProviderConfig.builder()
+                            .baseUrl("http://172.17.0.1:22/")
+                            .apiKey("test-api-key")
+                            .build())
+                    .modelId("gpt-4o")
+                    .build();
+
+            AiModel model = AiModel.builder()
+                    .tenantId(tenantId)
+                    .name("SSRF test model")
+                    .configuration(modelConfig)
+                    .build();
+
+            // WHEN
+            ResultActions result = doPost("/api/ai/model", model);
+
+            // THEN
+            result.andExpect(status().isBadRequest());
+        } finally {
+            SsrfProtectionValidator.setEnabled(false);
+        }
+    }
+
+    @Test
+    public void sendChatRequest_whenBaseUrlBlockedAtRuntime_shouldReturnFailureEnvelope() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+        SsrfProtectionValidator.setEnabled(true);
+
+        try {
+            var modelConfig = OpenAiChatModelConfig.builder()
+                    .providerConfig(OpenAiProviderConfig.builder()
+                            .baseUrl("http://10.0.0.1:8080/")
+                            .apiKey("test-api-key")
+                            .build())
+                    .modelId("gpt-4o")
+                    .build();
+
+            var chatRequest = new TbChatRequest(
+                    null,
+                    new TbUserMessage(List.of(new TbContent.TbTextContent("hi"))),
+                    modelConfig);
+
+            // WHEN
+            TbChatResponse response = doPostAsync("/api/ai/model/chat", chatRequest, TbChatResponse.class, status().isOk());
+
+            // THEN
+            assertThat(response).isInstanceOf(TbChatResponse.Failure.class);
+            assertThat(((TbChatResponse.Failure) response).errorDetails()).contains("URI is invalid");
+        } finally {
+            SsrfProtectionValidator.setEnabled(false);
+        }
     }
 
     /* --- Get by ID API tests --- */

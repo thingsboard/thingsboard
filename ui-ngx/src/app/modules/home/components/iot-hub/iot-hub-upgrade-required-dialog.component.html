@@ -1,0 +1,32 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<div class="tb-iot-hub-upgrade-required">
+  <button mat-icon-button class="tb-iot-hub-upgrade-required-close" (click)="close()" tabindex="-1">
+    <mat-icon>close</mat-icon>
+  </button>
+
+  <span class="tb-iot-hub-upgrade-required-icon" aria-hidden="true"></span>
+
+  <h2 class="tb-iot-hub-upgrade-required-title">
+    {{ 'iot-hub.upgrade-required-title' | translate }}
+  </h2>
+
+  <p class="tb-iot-hub-upgrade-required-message"
+     [innerHTML]="'iot-hub.upgrade-required-message' | translate:{
+                    minVersion: minVersion,
+                    currentVersion: currentVersion
+                  }"></p>
+
+  <div class="tb-iot-hub-upgrade-required-actions">
+    <button mat-button (click)="close()">
+      {{ 'action.close' | translate }}
+    </button>
+    <button mat-flat-button color="primary" (click)="upgradeInstance()">
+      {{ 'iot-hub.upgrade-instance' | translate }}
+    </button>
+  </div>
+</div>

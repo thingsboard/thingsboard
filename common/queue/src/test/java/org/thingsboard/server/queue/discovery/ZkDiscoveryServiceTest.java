@@ -1,25 +1,12 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.queue.discovery;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.imps.CuratorFrameworkState;
 import org.apache.curator.framework.recipes.cache.ChildData;
-import org.apache.curator.framework.recipes.cache.PathChildrenCache;
-import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
+import org.apache.curator.framework.recipes.cache.CuratorCache;
+import org.apache.curator.framework.recipes.cache.CuratorCacheListener;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,8 +23,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 
-import static org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent.Type.CHILD_ADDED;
-import static org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent.Type.CHILD_REMOVED;
+import static org.apache.curator.framework.recipes.cache.CuratorCacheListener.Type.NODE_CREATED;
+import static org.apache.curator.framework.recipes.cache.CuratorCacheListener.Type.NODE_DELETED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -63,12 +50,10 @@ public class ZkDiscoveryServiceTest {
     private CuratorFramework client;
 
     @Mock
-    private PathChildrenCache cache;
-
-    @Mock
-    private CuratorFramework curatorFramework;
+    private CuratorCache cache;
 
     private ZkDiscoveryService zkDiscoveryService;
+    private List<ChildData> dataList;
 
     private static final long RECALCULATE_DELAY = 100L;
 
@@ -89,12 +74,13 @@ public class ZkDiscoveryServiceTest {
         ReflectionTestUtils.setField(zkDiscoveryService, "zkExecutorService", zkExecutorService);
         ReflectionTestUtils.setField(zkDiscoveryService, "recalculateDelay", RECALCULATE_DELAY);
         ReflectionTestUtils.setField(zkDiscoveryService, "zkDir", "/thingsboard");
+        ReflectionTestUtils.setField(zkDiscoveryService, "zkNodesDir", "/thingsboard/nodes");
 
         when(serviceInfoProvider.getServiceInfo()).thenReturn(currentInfo);
 
-        List<ChildData> dataList = new ArrayList<>();
+        dataList = new ArrayList<>();
         dataList.add(currentData);
-        when(cache.getCurrentData()).thenReturn(dataList);
+        when(cache.stream()).thenAnswer(inv -> dataList.stream());
     }
 
     @Test
@@ -178,14 +164,14 @@ public class ZkDiscoveryServiceTest {
         verify(partitionService, times(1)).recalculatePartitions(eq(currentInfo), eq(List.of(anotherInfo, childInfo)));
     }
 
-    private void startNode(ChildData data) throws Exception {
-        cache.getCurrentData().add(data);
-        zkDiscoveryService.childEvent(curatorFramework, new PathChildrenCacheEvent(CHILD_ADDED, data));
+    private void startNode(ChildData data) {
+        dataList.add(data);
+        zkDiscoveryService.onCacheEvent(NODE_CREATED, null, data);
     }
 
-    private void stopNode(ChildData data) throws Exception {
-        cache.getCurrentData().remove(data);
-        zkDiscoveryService.childEvent(curatorFramework, new PathChildrenCacheEvent(CHILD_REMOVED, data));
+    private void stopNode(ChildData data) {
+        dataList.remove(data);
+        zkDiscoveryService.onCacheEvent(NODE_DELETED, data, null);
     }
 
 }

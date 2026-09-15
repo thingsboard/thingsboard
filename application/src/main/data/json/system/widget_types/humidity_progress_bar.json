@@ -1,7 +1,7 @@
 {
   "fqn": "humidity_progress_bar",
   "name": "Humidity progress bar",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/humidity_progress_bar_system_widget_image.png",
   "description": "Displays humidity reading as a horizontal progress bar. Allows to configure value range, bar colors, and other settings.",
   "descriptor": {

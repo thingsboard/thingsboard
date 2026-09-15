@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.profile;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -57,8 +44,8 @@ public class DefaultTbAssetProfileCacheTest {
 
     @Test
     public void onComponentLifecycleEvent_tenantDeleted_evictsAssetProfilesForThatTenant() {
-        TenantId tenant1 = new TenantId(UUID.randomUUID());
-        TenantId tenant2 = new TenantId(UUID.randomUUID());
+        TenantId tenant1 = TenantId.fromUUID(UUID.randomUUID());
+        TenantId tenant2 = TenantId.fromUUID(UUID.randomUUID());
         AssetProfileId profileId1 = new AssetProfileId(UUID.randomUUID());
         AssetProfileId profileId2 = new AssetProfileId(UUID.randomUUID());
 
@@ -75,7 +62,7 @@ public class DefaultTbAssetProfileCacheTest {
 
     @Test
     public void onComponentLifecycleEvent_tenantDeleted_evictsAssetMappingsForThatTenant() {
-        TenantId tenant = new TenantId(UUID.randomUUID());
+        TenantId tenant = TenantId.fromUUID(UUID.randomUUID());
         AssetProfileId profileId = new AssetProfileId(UUID.randomUUID());
         AssetId assetId = new AssetId(UUID.randomUUID());
 
@@ -92,7 +79,7 @@ public class DefaultTbAssetProfileCacheTest {
 
     @Test
     public void onComponentLifecycleEvent_tenantDeleted_removesListenersForThatTenant() {
-        TenantId tenant = new TenantId(UUID.randomUUID());
+        TenantId tenant = TenantId.fromUUID(UUID.randomUUID());
         EntityId listenerId = new AssetId(UUID.randomUUID());
         AtomicInteger callCount = new AtomicInteger();
 
@@ -110,7 +97,7 @@ public class DefaultTbAssetProfileCacheTest {
 
     @Test
     public void onComponentLifecycleEvent_tenantUpdated_doesNotEvictProfiles() {
-        TenantId tenant = new TenantId(UUID.randomUUID());
+        TenantId tenant = TenantId.fromUUID(UUID.randomUUID());
         AssetProfileId profileId = new AssetProfileId(UUID.randomUUID());
         loadProfileIntoCache(tenant, profileId);
 
@@ -123,8 +110,8 @@ public class DefaultTbAssetProfileCacheTest {
 
     @Test
     public void onComponentLifecycleEvent_differentTenantDeleted_keepsOtherTenantsProfiles() {
-        TenantId tenant1 = new TenantId(UUID.randomUUID());
-        TenantId tenant2 = new TenantId(UUID.randomUUID());
+        TenantId tenant1 = TenantId.fromUUID(UUID.randomUUID());
+        TenantId tenant2 = TenantId.fromUUID(UUID.randomUUID());
         AssetProfileId profileId1 = new AssetProfileId(UUID.randomUUID());
         AssetProfileId profileId2 = new AssetProfileId(UUID.randomUUID());
 

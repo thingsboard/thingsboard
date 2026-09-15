@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.queue.ruleengine;
 
 import com.google.protobuf.ProtocolStringList;
@@ -42,6 +29,7 @@ import org.thingsboard.server.queue.common.consumer.TbQueueConsumerTask.Consumer
 import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.service.queue.TbMsgPackCallback;
 import org.thingsboard.server.service.queue.TbMsgPackProcessingContext;
+import org.thingsboard.server.service.queue.TbMsgPackProcessingContextFactory;
 import org.thingsboard.server.service.queue.TbRuleEngineConsumerStats;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingDecision;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingResult;
@@ -67,13 +55,15 @@ public class TbRuleEngineQueueConsumerManager extends MainQueueConsumerManager<T
 
     private final TbRuleEngineConsumerContext ctx;
     private final TbRuleEngineConsumerStats stats;
+    private final TbMsgPackProcessingContextFactory packProcessingContextFactory;
 
     @Builder(builderMethodName = "create") // not to conflict with super.builder()
     public TbRuleEngineQueueConsumerManager(TbRuleEngineConsumerContext ctx,
                                             QueueKey queueKey,
                                             ExecutorService consumerExecutor,
                                             ScheduledExecutorService scheduler,
-                                            ExecutorService taskExecutor) {
+                                            ExecutorService taskExecutor,
+                                            TbMsgPackProcessingContextFactory packProcessingContextFactory) {
         super(queueKey, null, null,
                 (queueConfig, tpi) -> {
                     Integer partitionId = tpi != null ? tpi.getPartition().orElse(-1) : null;
@@ -82,6 +72,7 @@ public class TbRuleEngineQueueConsumerManager extends MainQueueConsumerManager<T
                 consumerExecutor, scheduler, taskExecutor, null);
         this.ctx = ctx;
         this.stats = new TbRuleEngineConsumerStats(queueKey, ctx.getStatsFactory());
+        this.packProcessingContextFactory = packProcessingContextFactory;
     }
 
     public void delete(boolean drainQueue) {
@@ -134,7 +125,7 @@ public class TbRuleEngineQueueConsumerManager extends MainQueueConsumerManager<T
         TbRuleEngineProcessingStrategy ackStrategy = getProcessingStrategy(queue);
         submitStrategy.init(msgs);
         while (!stopped && !consumer.isStopped()) {
-            TbMsgPackProcessingContext packCtx = new TbMsgPackProcessingContext(queue.getName(), submitStrategy, ackStrategy.isSkipTimeoutMsgs());
+            TbMsgPackProcessingContext packCtx = packProcessingContextFactory.create(queue.getName(), submitStrategy, ackStrategy.isSkipTimeoutMsgs());
             submitStrategy.submitAttempt((id, msg) -> submitMessage(packCtx, id, msg));
 
             final boolean timeout = !packCtx.await(queue.getPackProcessingTimeout(), TimeUnit.MILLISECONDS);

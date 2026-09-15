@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { IDashboardComponent } from '@home/models/dashboard-component.models';
 import {
   DataSet,
@@ -151,13 +137,15 @@ export interface WidgetHeaderAction extends IWidgetAction {
 }
 
 export interface WidgetAction extends IWidgetAction {
-  show: boolean;
+  show: boolean | (()=> boolean);
 }
 
 export interface IDashboardWidget {
   updateWidgetParams(): void;
   updateParamsFromData(detectChanges?: boolean): void;
 }
+
+export type WidgetDestroyCallback = () => void;
 
 export class WidgetContext {
 
@@ -363,6 +351,8 @@ export class WidgetContext {
     ...RxJSOperators
   };
 
+  private destroyCallbacks: WidgetDestroyCallback[] = [];
+
   registerPopoverComponent(popoverComponent: TbPopoverComponent) {
     this.popoverComponents.push(popoverComponent);
     popoverComponent.tbDestroy.subscribe(() => {
@@ -400,6 +390,10 @@ export class WidgetContext {
     for (const labelPattern of this.labelPatterns.values()) {
       labelPattern.update();
     }
+  }
+
+  registerDestroyCallback(destroyCallback: WidgetDestroyCallback) {
+    this.destroyCallbacks.push(destroyCallback);
   }
 
   showSuccessToast(message: string, duration: number = 1000,
@@ -518,6 +512,13 @@ export class WidgetContext {
       labelPattern.destroy();
     }
     this.labelPatterns.clear();
+    this.destroyCallbacks.forEach((destroyCallback) => {
+        try {
+          destroyCallback()
+        } catch (_ignoredError) { /* empty */ }
+      }
+    );
+    this.destroyCallbacks.length = 0;
     this.width = undefined;
     this.height = undefined;
     this.destroyed = true;

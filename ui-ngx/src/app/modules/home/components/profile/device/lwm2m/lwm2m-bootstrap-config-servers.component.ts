@@ -1,28 +1,15 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Component, EventEmitter, forwardRef, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
-  UntypedFormArray,
   UntypedFormBuilder, UntypedFormControl,
   UntypedFormGroup,
   NG_VALIDATORS,
-  NG_VALUE_ACCESSOR
+  NG_VALUE_ACCESSOR,
+  FormControl,
+  FormArray
 } from '@angular/forms';
 import { of, Subject } from 'rxjs';
 import { ServerSecurityConfig } from '@home/components/profile/device/lwm2m/lwm2m-profile-config.models';
@@ -104,8 +91,8 @@ export class Lwm2mBootstrapConfigServersComponent implements OnInit, ControlValu
     this.destroy$.complete();
   }
 
-  get serverConfigsFromArray(): UntypedFormArray {
-    return this.bootstrapConfigServersFormGroup.get('serverConfigs') as UntypedFormArray;
+  get serverConfigsFromArray(): FormArray<FormControl> {
+    return this.bootstrapConfigServersFormGroup.get('serverConfigs') as FormArray<FormControl>;
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -134,10 +121,6 @@ export class Lwm2mBootstrapConfigServersComponent implements OnInit, ControlValu
         this.bootstrapConfigServersFormGroup.enable({emitEvent: false});
       }
     }
-  }
-
-  trackByParams(index: number): number {
-    return index;
   }
 
   removeServerConfig($event: Event, index: number) {

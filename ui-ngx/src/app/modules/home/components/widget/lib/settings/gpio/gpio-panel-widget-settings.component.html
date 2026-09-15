@@ -1,18 +1,7 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-License-Identifier: Apache-2.0
 
 -->
 <section class="tb-widget-settings flex flex-col" [formGroup]="gpioPanelWidgetSettingsForm">
@@ -28,20 +17,23 @@
       <legend class="group-title" translate>widgets.gpio.gpio-leds</legend>
       <div class="flex flex-col">
         <div class="tb-control-list">
-          <div *ngFor="let gpioItemControl of gpioListFormArray().controls; trackBy: trackByGpioItem;
-                 let $index = index; last as isLast;"
-               class="flex flex-col" [class.pb-2]="!isLast">
-            <tb-gpio-item [formControl]="gpioItemControl"
-                          [hasColor]="true"
-                          [expanded]="gpioItemControl.new"
-                          (removeGpioItem)="removeGpioItem($index)">
-            </tb-gpio-item>
-          </div>
+          @for (gpioItemControl of typedSelectOptions; track gpioItemControl; let isLast = $last) {
+            <div
+              class="flex flex-col" [class.pb-2]="!isLast">
+              <tb-gpio-item [formControl]="gpioItemControl"
+                            [hasColor]="true"
+                            [expanded]="gpioItemControl.new"
+                            (removeGpioItem)="removeGpioItem($index)">
+              </tb-gpio-item>
+            </div>
+          }
         </div>
-        <div *ngIf="!gpioListFormArray().controls.length">
+        @if (!gpioListFormArray().controls.length) {
+          <div>
             <span translate
-                  class="tb-prompt flex items-center justify-center">widgets.gpio.no-gpio-leds</span>
-        </div>
+            class="tb-prompt flex items-center justify-center">widgets.gpio.no-gpio-leds</span>
+          </div>
+        }
         <div style="padding-top: 16px;">
           <button mat-raised-button color="primary"
                   type="button"

@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.rule.engine.flow;
 
 import org.assertj.core.api.Assertions;
@@ -64,7 +51,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 public class TbRuleChainInputNodeTest extends AbstractRuleNodeUpgradeTest {
 
-    private final TenantId TENANT_ID = new TenantId(UUID.fromString("4ba69ea5-6b27-42df-ab66-e7a727a67027"));
+    private final TenantId TENANT_ID = TenantId.fromUUID(UUID.fromString("4ba69ea5-6b27-42df-ab66-e7a727a67027"));
     private final DeviceId DEVICE_ID = new DeviceId(UUID.fromString("97731954-2147-4176-8f1a-d14f1b73e4e6"));
     private final AssetId ASSET_ID = new AssetId(UUID.fromString("841a47bd-4e8e-4ea5-88e6-420da0d70e51"));
     // A stable "current" rule chain ID: this node lives here. Must differ from any target used in tests.

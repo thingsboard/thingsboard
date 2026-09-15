@@ -1,18 +1,7 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-License-Identifier: Apache-2.0
 
 -->
 <div class="tb-form-panel no-padding no-border" [formGroup]="mobileActionFormGroup">
@@ -20,19 +9,22 @@
     <div class="fixed-title-width">{{ 'widget-action.mobile.action-type' | translate }}*</div>
     <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
       <mat-select required formControlName="type" placeholder="{{ 'widget-action.mobile.select-action-type' | translate }}">
-        <mat-option *ngFor="let actionType of mobileActionTypes" [value]="actionType">
-          {{ mobileActionTypeTranslations.get(mobileActionType[actionType]) | translate }}
-        </mat-option>
+        @for (actionType of mobileActionTypes; track actionType) {
+          <mat-option [value]="actionType">
+            {{ mobileActionTypeTranslations.get(mobileActionType[actionType]) | translate }}
+          </mat-option>
+        }
       </mat-select>
-      <mat-icon matSuffix
-                matTooltipPosition="above"
-                matTooltipClass="tb-error-tooltip"
-                [matTooltip]="'widget-action.mobile.action-type-required' | translate"
-                *ngIf="mobileActionFormGroup.get('type').hasError('required')
-                       && mobileActionFormGroup.get('type').touched"
-                class="tb-error">
-        warning
-      </mat-icon>
+      @if (mobileActionFormGroup.get('type').hasError('required')
+        && mobileActionFormGroup.get('type').touched) {
+        <mat-icon matSuffix
+                  matTooltipPosition="above"
+                  matTooltipClass="tb-error-tooltip"
+                  [matTooltip]="'widget-action.mobile.action-type-required' | translate"
+                  class="tb-error">
+          warning
+        </mat-icon>
+      }
     </mat-form-field>
   </div>
   <ng-container [formGroup]="mobileActionTypeFormGroup">
@@ -50,9 +42,11 @@
         <div class="fixed-title-width">{{ 'widget-action.mobile.provision-type' | translate }}*</div>
         <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
           <mat-select formControlName="provisionType">
-            <mat-option *ngFor="let type of provisionTypes" [value]="type">
-              {{ provisionTypeTranslationMap.get(type) | translate }}
-            </mat-option>
+            @for (type of provisionTypes; track type) {
+              <mat-option [value]="type">
+                {{  provisionTypeTranslationMap.get(type) | translate }}
+              </mat-option>
+            }
           </mat-select>
         </mat-form-field>
       </div>

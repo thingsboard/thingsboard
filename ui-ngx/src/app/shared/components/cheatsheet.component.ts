@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Component, ElementRef, Input, OnDestroy, OnInit } from '@angular/core';
 import { Hotkey, HotkeysService } from 'angular2-hotkeys';
 import { MousetrapInstance } from 'mousetrap';
@@ -115,17 +101,23 @@ import Mousetrap from 'mousetrap';
   }
 }  `],
     template: `<div tabindex="-1" class="tb-hotkeys-container fade" [class.in]="helpVisible" style="display:none"><div class="tb-hotkeys">
-  <h4 class="tb-hotkeys-title">{{ title }}</h4>
-  <table *ngIf="helpVisible"><tbody>
-    <tr *ngFor="let hotkey of hotkeysList">
-      <td class="tb-hotkeys-keys">
-        <span *ngFor="let key of hotkey.formatted" class="tb-hotkeys-key">{{ key }}</span>
-      </td>
-      <td class="tb-hotkeys-text">{{ hotkey.description }}</td>
-    </tr>
-  </tbody></table>
-  <div class="tb-hotkeys-close" (click)="toggleCheatSheet()">&#215;</div>
-</div></div>`,
+    <h4 class="tb-hotkeys-title">{{ title }}</h4>
+    @if (helpVisible) {
+      <table><tbody>
+        @for (hotkey of hotkeysList; track hotkey) {
+          <tr>
+            <td class="tb-hotkeys-keys">
+              @for (key of hotkey.formatted; track key) {
+                <span class="tb-hotkeys-key">{{ key }}</span>
+              }
+            </td>
+            <td class="tb-hotkeys-text">{{ hotkey.description }}</td>
+          </tr>
+        }
+      </tbody></table>
+    }
+    <div class="tb-hotkeys-close" (click)="toggleCheatSheet()">&#215;</div>
+  </div></div>`,
     standalone: false
 })
 export class TbCheatSheetComponent implements OnInit, OnDestroy {

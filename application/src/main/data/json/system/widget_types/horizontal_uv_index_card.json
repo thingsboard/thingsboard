@@ -1,7 +1,7 @@
 {
   "fqn": "horizontal_uv_index_card",
   "name": "Horizontal UV Index card",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/horizontal_uv_index_card_system_widget_image.png",
   "description": "Displays the latest UV index telemetry in a scalable horizontal layout.",
   "descriptor": {

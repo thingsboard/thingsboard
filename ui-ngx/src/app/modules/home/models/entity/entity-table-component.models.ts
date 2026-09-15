@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { BaseData, HasId } from '@shared/models/base-data';
 import { EntityTypeTranslation } from '@shared/models/entity-type.models';
 import { SafeHtml } from '@angular/platform-browser';
@@ -29,6 +15,7 @@ import {
   CellActionDescriptor,
   EntityActionTableColumn,
   EntityColumn,
+  EntityColumnsType,
   EntityTableColumn,
   EntityTableConfig,
   GroupActionDescriptor,
@@ -46,7 +33,7 @@ export interface IEntitiesTableComponent {
   groupActionDescriptors: Array<GroupActionDescriptor<BaseData<HasId>>>;
   cellActionDescriptors: Array<CellActionDescriptor<BaseData<HasId>>>;
   actionColumns: Array<EntityActionTableColumn<BaseData<HasId>>>;
-  entityColumns: Array<EntityTableColumn<BaseData<HasId>>>;
+  entityColumns: EntityColumnsType;
   displayedColumns: string[];
   headerCellStyleCache: Array<any>;
   cellContentCache: Array<SafeHtml>;
@@ -92,7 +79,6 @@ export interface IEntitiesTableComponent {
   cellContent(entity: BaseData<HasId>, column: EntityColumn<BaseData<HasId>>, row: number): any;
   cellTooltip(entity: BaseData<HasId>, column: EntityColumn<BaseData<HasId>>, row: number): string;
   cellStyle(entity: BaseData<HasId>, column: EntityColumn<BaseData<HasId>>, row: number): any;
-  trackByColumnKey(index, column: EntityTableColumn<BaseData<HasId>>): string;
   trackByEntityId(index: number, entity: BaseData<HasId>): string;
   detectChanges(): void;
 }

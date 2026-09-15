@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -278,6 +264,7 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
       elementClick: this.elementClick.bind(this),
       cardClick: this.cardClick.bind(this),
       click: this.click.bind(this),
+      invokeAction: this.invokeAction.bind(this),
       getActiveEntityInfo: this.getActiveEntityInfo.bind(this),
       openDashboardStateInSeparateDialog: this.openDashboardStateInSeparateDialog.bind(this),
       openDashboardStateInPopover: this.openDashboardStateInPopover.bind(this),
@@ -684,6 +671,7 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
   }
 
   private reInitImpl() {
+    this.displayNoData = false;
     this.onDestroy();
     if (!this.typeParameters.useCustomDatasources) {
       this.createDefaultSubscription().subscribe({
@@ -727,7 +715,6 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
           subscriptionChanged = subscriptionChanged || subscription.onAliasesChanged(aliasIds);
         }
         if (subscriptionChanged && !this.typeParameters.useCustomDatasources) {
-          this.displayNoData = false;
           this.reInit();
         }
       }
@@ -741,7 +728,6 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
           subscriptionChanged = subscriptionChanged || subscription.onFiltersChanged(filterIds);
         }
         if (subscriptionChanged && !this.typeParameters.useCustomDatasources) {
-          this.displayNoData = false;
           this.reInit();
         }
       }
@@ -1614,6 +1600,16 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
     const descriptors = this.getActionDescriptors(sourceId);
     if (descriptors.length) {
       this.onWidgetAction($event, descriptors[0]);
+    }
+  }
+
+  private invokeAction($event: Event, actionName: string, additionalParams?: any) {
+    const descriptors = this.getActionDescriptors('javaScript');
+    if (descriptors?.length) {
+      const found = descriptors.find(d => d.name === actionName);
+      if (found) {
+        this.handleWidgetAction($event, found, null, null, additionalParams);
+      }
     }
   }
 

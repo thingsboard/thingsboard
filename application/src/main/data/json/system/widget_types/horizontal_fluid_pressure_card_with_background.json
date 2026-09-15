@@ -1,7 +1,7 @@
 {
   "fqn": "horizontal_fluid_pressure_card_with_background",
   "name": "Horizontal pressure card with background",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/horizontal_pressure_card_with_background.svg",
   "description": "Displays the latest fluid pressure telemetry in a scalable horizontal layout with the background image.",
   "descriptor": {

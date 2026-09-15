@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.rule.engine.action;
 
 import com.google.common.util.concurrent.Futures;
@@ -108,7 +95,7 @@ public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         return supportedEntityTypes.stream().filter(entityType -> !entityType.equals(EntityType.TENANT)).map(Arguments::of);
     }
 
-    private static final TenantId tenantId = new TenantId(UUID.fromString("6fdb457d-0910-401c-8880-abc251e6a1e2"));
+    private static final TenantId tenantId = TenantId.fromUUID(UUID.fromString("6fdb457d-0910-401c-8880-abc251e6a1e2"));
     private static final DeviceId deviceId = new DeviceId(UUID.fromString("4eef91a7-8865-4c3c-837d-ed6f6577508b"));
     private static final AssetId assetId = new AssetId(UUID.fromString("f4fd3b10-3f36-4d46-a162-5e62050774cc"));
     private static final CustomerId customerId = new CustomerId(UUID.fromString("ab890af2-3622-41e0-ac94-14d50af84348"));

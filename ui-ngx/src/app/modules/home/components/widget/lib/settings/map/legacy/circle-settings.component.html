@@ -1,18 +1,7 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-License-Identifier: Apache-2.0
 
 -->
 <section class="tb-widget-settings" [formGroup]="circleSettingsFormGroup">
@@ -88,9 +77,11 @@
               <mat-form-field class="flex-1">
                 <mat-label translate>widgets.maps.show-tooltip-action</mat-label>
                 <mat-select required formControlName="showCircleTooltipAction">
-                  <mat-option *ngFor="let action of showTooltipActions" [value]="action">
-                    {{showTooltipActionTranslations.get(action) | translate}}
-                  </mat-option>
+                  @for (action of showTooltipActions; track action) {
+                    <mat-option [value]="action">
+                      {{showTooltipActionTranslations.get(action) | translate}}
+                    </mat-option>
+                  }
                 </mat-select>
               </mat-form-field>
               <mat-slide-toggle formControlName="autoCloseCircleTooltip" class="slide-block">

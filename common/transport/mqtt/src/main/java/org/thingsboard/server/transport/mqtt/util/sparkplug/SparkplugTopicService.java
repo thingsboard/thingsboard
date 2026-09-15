@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.transport.mqtt.util.sparkplug;
 
 import lombok.extern.slf4j.Slf4j;
@@ -34,8 +21,9 @@ public class SparkplugTopicService {
     private static final Map<String, SparkplugTopic> SPLIT_TOPIC_CACHE = new HashMap<>();
     public static final String TOPIC_ROOT_SPB_V_1_0 = "spBv1.0";
     public static final String TOPIC_ROOT_CERT_SP = "$sparkplug/certificates/";
-    public static final String TOPIC_SPLIT_REGEXP = "/";
-    public static final String TOPIC_STATE_REGEXP = TOPIC_ROOT_SPB_V_1_0 + TOPIC_SPLIT_REGEXP + STATE.name() + TOPIC_SPLIT_REGEXP;
+    public static final String TOPIC_SPLIT_SEPARATOR = "/";
+    public static final String DEVICE_NAME_SPLIT_SEPARATOR = ":";
+    public static final String TOPIC_STATE_SEPARATOR = TOPIC_ROOT_SPB_V_1_0 + TOPIC_SPLIT_SEPARATOR + STATE.name() + TOPIC_SPLIT_SEPARATOR;
 
     public static SparkplugTopic getSplitTopic(String topic) throws ThingsboardException {
         SparkplugTopic sparkplugTopic = SPLIT_TOPIC_CACHE.get(topic);

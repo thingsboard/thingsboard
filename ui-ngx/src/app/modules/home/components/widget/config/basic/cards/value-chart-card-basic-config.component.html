@@ -1,18 +1,7 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-License-Identifier: Apache-2.0
 
 -->
 <ng-container [formGroup]="valueChartCardWidgetConfigForm">
@@ -34,12 +23,14 @@
                                     breakpoints: {
                                       'lt-sm': 1
                                     }}"
-                           label="{{ 'widgets.value-chart-card.layout' | translate }}" formControlName="layout">
-      <tb-image-cards-select-option *ngFor="let layout of valueChartCardLayouts"
-                                    [value]="layout"
-                                    [image]="valueChartCardLayoutImageMap.get(layout)">
-        {{ valueChartCardLayoutTranslationMap.get(layout) | translate }}
-      </tb-image-cards-select-option>
+      label="{{ 'widgets.value-chart-card.layout' | translate }}" formControlName="layout">
+      @for (layout of valueChartCardLayouts; track layout) {
+        <tb-image-cards-select-option
+          [value]="layout"
+          [image]="valueChartCardLayoutImageMap.get(layout)">
+          {{ valueChartCardLayoutTranslationMap.get(layout) | translate }}
+        </tb-image-cards-select-option>
+      }
     </tb-image-cards-select>
     <div class="tb-form-row">
       <mat-slide-toggle class="mat-slide" formControlName="autoScale">
@@ -56,7 +47,6 @@
                                         brackets="curly"
                                         subscriptSizing="dynamic"
                                         predefinedValuesButton="true"
-                                        [disabled]="!valueChartCardWidgetConfigForm.get('showTitle').value"
                                         [predefinedValues]="predefinedValues"
                                         placeholderText="{{ 'widget-config.set' | translate }}"
                                         formControlName="title"

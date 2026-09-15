@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.dao.model;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
@@ -420,6 +407,7 @@ public class ModelConstants {
     public static final String RULE_CHAIN_FIRST_RULE_NODE_ID_PROPERTY = "first_rule_node_id";
     public static final String RULE_CHAIN_ROOT_PROPERTY = "root";
     public static final String RULE_CHAIN_CONFIGURATION_PROPERTY = "configuration";
+    public static final String RULE_CHAIN_NOTES_PROPERTY = "notes";
 
     /**
      * Rule node constants.
@@ -762,6 +750,18 @@ public class ModelConstants {
     public static final String API_KEY_EXPIRATION_TIME_COLUMN_NAME = "expiration_time";
     public static final String API_KEY_ENABLED_COLUMN_NAME = "enabled";
     public static final String API_KEY_DESCRIPTION_COLUMN_NAME = "description";
+
+    /**
+     * IoT Hub installed item constants.
+     */
+    public static final String IOT_HUB_INSTALLED_ITEM_TABLE_NAME = "iot_hub_installed_item";
+    public static final String IOT_HUB_INSTALLED_ITEM_TENANT_ID_COLUMN = TENANT_ID_COLUMN;
+    public static final String IOT_HUB_INSTALLED_ITEM_ITEM_ID_COLUMN = "item_id";
+    public static final String IOT_HUB_INSTALLED_ITEM_ITEM_VERSION_ID_COLUMN = "item_version_id";
+    public static final String IOT_HUB_INSTALLED_ITEM_ITEM_NAME_COLUMN = "item_name";
+    public static final String IOT_HUB_INSTALLED_ITEM_ITEM_TYPE_COLUMN = "item_type";
+    public static final String IOT_HUB_INSTALLED_ITEM_VERSION_COLUMN = "version";
+    public static final String IOT_HUB_INSTALLED_ITEM_DESCRIPTOR_COLUMN = "descriptor";
 
     protected static final String[] NONE_AGGREGATION_COLUMNS = new String[]{LONG_VALUE_COLUMN, DOUBLE_VALUE_COLUMN, BOOLEAN_VALUE_COLUMN, STRING_VALUE_COLUMN, JSON_VALUE_COLUMN, KEY_COLUMN, TS_COLUMN};
 

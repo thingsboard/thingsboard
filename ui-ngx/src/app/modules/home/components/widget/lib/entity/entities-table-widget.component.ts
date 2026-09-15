@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import {
   AfterViewInit,
   ChangeDetectorRef,
@@ -100,7 +86,7 @@ import {
   EntityKeyType,
   KeyFilter
 } from '@shared/models/query/query.models';
-import { sortItems } from '@shared/models/page/page-link';
+import { SortColumnType, sortItems } from '@shared/models/page/page-link';
 import { entityFields } from '@shared/models/entity.models';
 import { DatePipe } from '@angular/common';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
@@ -617,21 +603,17 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
       this.pageLink.sortOrder = null;
     }
     const sortOrderLabel = fromEntityColumnDef(this.sort.active, this.columns);
+    const sortColumnType: SortColumnType = key
+      ? (key.type === EntityKeyType.ENTITY_FIELD ? 'entityField'
+         : key.type === EntityKeyType.TIME_SERIES ? 'timeseries' : 'attribute')
+      : 'entityField';
     const keyFilters: KeyFilter[] = null; // TODO:
-    this.entityDatasource.loadEntities(this.pageLink, sortOrderLabel, keyFilters);
+    this.entityDatasource.loadEntities(this.pageLink, sortOrderLabel, sortColumnType, keyFilters);
     this.ctx.detectChanges();
-  }
-
-  public trackByColumnDef(index, column: EntityColumn) {
-    return column.def;
   }
 
   public trackByEntityId(index: number, entity: EntityData) {
     return entity.id.id;
-  }
-
-  public trackByActionCellDescriptionId(index: number, action: WidgetActionDescriptor) {
-    return action.id;
   }
 
   public headerStyle(key: EntityColumn): any {
@@ -865,6 +847,7 @@ class EntityDatasource implements DataSource<EntityData> {
 
   private appliedPageLink: EntityDataPageLink;
   private appliedSortOrderLabel: string;
+  private appliedSortColumnType: SortColumnType = 'entityField';
 
   private reserveSpaceForHiddenAction = true;
   private cellButtonActions: TableCellButtonActionDescriptor[];
@@ -905,11 +888,13 @@ class EntityDatasource implements DataSource<EntityData> {
     this.pageDataSubject.complete();
   }
 
-  loadEntities(pageLink: EntityDataPageLink, sortOrderLabel: string, keyFilters: KeyFilter[]) {
+  loadEntities(pageLink: EntityDataPageLink, sortOrderLabel: string,
+               sortColumnType: SortColumnType, keyFilters: KeyFilter[]) {
     this.dataLoading = true;
     // this.clear();
     this.appliedPageLink = pageLink;
     this.appliedSortOrderLabel = sortOrderLabel;
+    this.appliedSortColumnType = sortColumnType;
     this.subscription.subscribeForPaginatedData(0, pageLink, keyFilters);
   }
 
@@ -934,7 +919,7 @@ class EntityDatasource implements DataSource<EntityData> {
       });
       if (this.appliedSortOrderLabel && this.appliedSortOrderLabel.length) {
         const asc = this.appliedPageLink.sortOrder.direction === Direction.ASC;
-        entities = entities.sort((a, b) => sortItems(a, b, this.appliedSortOrderLabel, asc));
+        entities = entities.sort((a, b) => sortItems(a, b, this.appliedSortOrderLabel, asc, this.appliedSortColumnType));
       }
       if (!dynamicWidthCellButtonActions && this.cellButtonActions.length && entities.length) {
         maxCellButtonAction = entities[0].actionCellButtons.length;

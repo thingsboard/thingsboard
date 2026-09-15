@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@app/shared/shared.module';
@@ -94,6 +80,7 @@ import {
   SelectMapEntityPanelComponent
 } from '@home/components/widget/lib/maps/panels/select-map-entity-panel.component';
 import { MapTimelinePanelComponent } from '@home/components/widget/lib/maps/panels/map-timeline-panel.component';
+import { HtmlContainerWidgetComponent } from '@home/components/widget/lib/html/html-container-widget.component';
 import { ApiUsageWidgetComponent } from "@home/components/widget/lib/cards/api-usage-widget.component";
 
 @NgModule({
@@ -153,6 +140,7 @@ import { ApiUsageWidgetComponent } from "@home/components/widget/lib/cards/api-u
     SelectMapEntityPanelComponent,
     MapTimelinePanelComponent,
     MapWidgetComponent,
+    HtmlContainerWidgetComponent,
     ApiUsageWidgetComponent
   ],
   imports: [
@@ -217,6 +205,7 @@ import { ApiUsageWidgetComponent } from "@home/components/widget/lib/cards/api-u
     NotificationTypeFilterPanelComponent,
     ScadaSymbolWidgetComponent,
     MapWidgetComponent,
+    HtmlContainerWidgetComponent,
     ApiUsageWidgetComponent
   ],
   providers: [

@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Observable, of } from 'rxjs';
@@ -31,7 +17,7 @@ import { QueueService } from '@core/http/queue.service';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
 import { emptyPageData } from '@shared/models/page/page-data';
-import { SubscriptSizing } from '@angular/material/form-field';
+import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 
 @Component({
     selector: 'tb-queue-autocomplete',
@@ -76,6 +62,9 @@ export class QueueAutocompleteComponent implements ControlValueAccessor, OnInit 
 
   @Input()
   disabled: boolean;
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
   @ViewChild('queueInput', {static: true}) queueInput: ElementRef;
 

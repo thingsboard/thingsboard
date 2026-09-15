@@ -1,22 +1,10 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import jakarta.servlet.http.Cookie;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Test;
@@ -38,6 +26,8 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.service.security.auth.oauth2.HttpCookieOAuth2AuthorizationRequestRepository.PREV_URI_COOKIE_NAME;
+import static org.thingsboard.server.service.security.auth.oauth2.HttpCookieOAuth2AuthorizationRequestRepository.PREV_URI_PARAMETER;
 
 @Slf4j
 @DaoSqlTest
@@ -112,6 +102,36 @@ public class AdminControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testMailOAuth2AuthorizationStoresOnlyInAppPrevUri() throws Exception {
+        loginSysAdmin();
+        AdminSettings mailSettings = doGet("/api/admin/settings/mail", AdminSettings.class);
+        JsonNode originalJsonValue = mailSettings.getJsonValue();
+        try {
+            ObjectNode jsonValue = JacksonUtil.fromString(originalJsonValue.toString(), ObjectNode.class);
+            jsonValue.put("clientId", "clientId");
+            jsonValue.put("authUri", "https://accounts.google.com/o/oauth2/v2/auth");
+            jsonValue.put("redirectUri", "https://thingsboard.io/api/admin/mail/oauth2/code");
+            jsonValue.set("scope", JacksonUtil.newArrayNode().add("https://mail.google.com/"));
+            mailSettings.setJsonValue(jsonValue);
+            doPost("/api/admin/settings", mailSettings, AdminSettings.class);
+
+            Cookie prevUriCookie = doGet("/api/admin/mail/oauth2/authorize?" + PREV_URI_PARAMETER + "=@evil.com/")
+                    .andExpect(status().isOk()).andReturn().getResponse().getCookie(PREV_URI_COOKIE_NAME);
+            assertThat(prevUriCookie).isNull();
+
+            prevUriCookie = doGet("/api/admin/mail/oauth2/authorize?" + PREV_URI_PARAMETER + "=/settings/outgoing-mail")
+                    .andExpect(status().isOk()).andReturn().getResponse().getCookie(PREV_URI_COOKIE_NAME);
+            assertThat(prevUriCookie).isNotNull();
+            assertThat(prevUriCookie.getValue()).isEqualTo("/settings/outgoing-mail");
+        } finally {
+            // the mail settings are shared by the whole test context
+            AdminSettings currentSettings = doGet("/api/admin/settings/mail", AdminSettings.class);
+            currentSettings.setJsonValue(originalJsonValue);
+            doPost("/api/admin/settings", currentSettings, AdminSettings.class);
+        }
+    }
+
+    @Test
     public void testSendTestMail() throws Exception {
         Mockito.doNothing().when(mailService).sendTestMail(any(), anyString());
         loginSysAdmin();
@@ -168,7 +188,7 @@ public class AdminControllerTest extends AbstractControllerTest {
         assertThat(jwtSettings).isEqualTo(defaultJwtSettings);
 
         jwtSettings.setTokenSigningKey(Base64.getEncoder().encodeToString(
-                RandomStringUtils.randomAlphanumeric(512 / Byte.SIZE).getBytes(StandardCharsets.UTF_8)));
+                RandomStringUtils.secure().nextAlphanumeric(512 / Byte.SIZE).getBytes(StandardCharsets.UTF_8)));
 
         doPost("/api/admin/jwtSettings", jwtSettings).andExpect(status().isOk());
 

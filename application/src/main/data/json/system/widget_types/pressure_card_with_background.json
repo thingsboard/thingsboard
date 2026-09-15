@@ -1,7 +1,7 @@
 {
   "fqn": "pressure_card_with_background",
   "name": "Pressure card with background",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/pressure_card_with_background_system_widget_image.png",
   "description": "Displays the latest pressure telemetry in a scalable rectangle card with the background image.",
   "descriptor": {

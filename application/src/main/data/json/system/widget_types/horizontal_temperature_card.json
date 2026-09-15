@@ -1,7 +1,7 @@
 {
   "fqn": "horizontal_temperature_card",
   "name": "Horizontal temperature card",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/horizontal_temperature_card_system_widget_image.png",
   "description": "Displays the latest temperature telemetry in a scalable horizontal layout.",
   "descriptor": {

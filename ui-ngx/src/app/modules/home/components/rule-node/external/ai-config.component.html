@@ -1,18 +1,7 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-License-Identifier: Apache-2.0
 
 -->
 <section [formGroup]="aiConfigForm" class="flex flex-col gap-4">
@@ -50,28 +39,39 @@
         <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
           <mat-label translate>rule-node-config.ai.system-prompt</mat-label>
           <textarea matInput rows="4" formControlName="systemPrompt"></textarea>
-          <mat-error *ngIf="aiConfigForm.get('systemPrompt').hasError('maxlength')">
-            {{ 'rule-node-config.ai.system-prompt-max-length' | translate }}
-          </mat-error>
-          <mat-error *ngIf="aiConfigForm.get('systemPrompt').hasError('pattern')">
-            {{ 'rule-node-config.ai.system-prompt-blank' | translate }}
-          </mat-error>
+          @if (aiConfigForm.get('systemPrompt').hasError('maxlength')) {
+            <mat-error>
+              {{ 'rule-node-config.ai.system-prompt-max-length' | translate }}
+            </mat-error>
+          }
+          @if (aiConfigForm.get('systemPrompt').hasError('pattern')) {
+            <mat-error>
+              {{ 'rule-node-config.ai.system-prompt-blank' | translate }}
+            </mat-error>
+          }
         </mat-form-field>
         <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
           <mat-label translate>rule-node-config.ai.user-prompt</mat-label>
           <textarea required matInput rows="4" formControlName="userPrompt"></textarea>
-          <mat-error *ngIf="aiConfigForm.get('userPrompt').hasError('required')">
-            {{ 'rule-node-config.ai.user-prompt-required' | translate }}
-          </mat-error>
-          <mat-error *ngIf="aiConfigForm.get('userPrompt').hasError('maxlength')">
-            {{ 'rule-node-config.ai.user-prompt-max-length' | translate }}
-          </mat-error>
-          <mat-error *ngIf="aiConfigForm.get('userPrompt').hasError('pattern')">
-            {{ 'rule-node-config.ai.user-prompt-blank' | translate }}
-          </mat-error>
+          @if (aiConfigForm.get('userPrompt').hasError('required')) {
+            <mat-error>
+              {{ 'rule-node-config.ai.user-prompt-required' | translate }}
+            </mat-error>
+          }
+          @if (aiConfigForm.get('userPrompt').hasError('maxlength')) {
+            <mat-error>
+              {{ 'rule-node-config.ai.user-prompt-max-length' | translate }}
+            </mat-error>
+          }
+          @if (aiConfigForm.get('userPrompt').hasError('pattern')) {
+            <mat-error>
+              {{ 'rule-node-config.ai.user-prompt-blank' | translate }}
+            </mat-error>
+          }
         </mat-form-field>
         <tb-entity-list
           class="flex-1"
+          appearance="outline"
           syncIdsWithDB
           allowCreateNew
           placeholderText="{{ 'rule-node-config.ai.ai-resources' | translate }}"
@@ -91,9 +91,15 @@
         {{ 'rule-node-config.ai.response-format' | translate }}
       </div>
       <tb-toggle-select formControlName="type">
-        <tb-toggle-option [value]="responseFormat.TEXT">{{ 'rule-node-config.ai.response-text' | translate }}</tb-toggle-option>
-        <tb-toggle-option [value]="responseFormat.JSON">{{ 'rule-node-config.ai.response-json' | translate }}</tb-toggle-option>
-        <tb-toggle-option [value]="responseFormat.JSON_SCHEMA">{{ 'rule-node-config.ai.response-json-schema' | translate }}</tb-toggle-option>
+        @if (allowedResponseFormats.includes(responseFormat.TEXT)) {
+          <tb-toggle-option [value]="responseFormat.TEXT">{{ 'rule-node-config.ai.response-text' | translate }}</tb-toggle-option>
+        }
+        @if (allowedResponseFormats.includes(responseFormat.JSON)) {
+          <tb-toggle-option [value]="responseFormat.JSON">{{ 'rule-node-config.ai.response-json' | translate }}</tb-toggle-option>
+        }
+        @if (allowedResponseFormats.includes(responseFormat.JSON_SCHEMA)) {
+          <tb-toggle-option [value]="responseFormat.JSON_SCHEMA">{{ 'rule-node-config.ai.response-json-schema' | translate }}</tb-toggle-option>
+        }
       </tb-toggle-select>
     </div>
     <tb-json-object-edit
@@ -123,6 +129,7 @@
               <tb-time-unit-input
                 required
                 inlineField
+                appearance="outline"
                 requiredText="{{ 'rule-node-config.ai.timeout-required' | translate }}"
                 minErrorText="{{ 'rule-node-config.ai.timeout-validation' | translate }}"
                 maxErrorText="{{ 'rule-node-config.ai.timeout-validation' | translate }}"

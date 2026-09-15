@@ -1,7 +1,7 @@
 {
   "fqn": "efficiency_card",
   "name": "Efficiency card",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/efficiency_card.svg",
   "description": "Displays the latest efficiency telemetry in a scalable rectangle card.",
   "descriptor": {

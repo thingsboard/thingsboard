@@ -1,24 +1,9 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { PageComponent } from '@shared/components/page.component';
 import {
   Component,
   ElementRef,
-  EventEmitter,
   Inject,
   OnDestroy,
   OnInit,
@@ -74,6 +59,8 @@ import { JsFuncModulesComponent } from '@shared/components/js-func-modules.compo
 import { MatIconButton } from '@angular/material/button';
 import { formPropertyCompletions } from '@shared/models/dynamic-form.models';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
+import { BreadcrumbService } from '@core/services/breadcrumb.service';
+import { HomeService } from '@core/services/home.service';
 import Timeout = NodeJS.Timeout;
 
 // @dynamic
@@ -172,7 +159,7 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
 
   hotKeys: Hotkey[] = [];
 
-  updateBreadcrumbs = new EventEmitter();
+  breadcrumbs$ = this.breadcrumbService.breadcrumbs$;
 
   private rxSubscriptions = new Array<Subscription>();
 
@@ -188,7 +175,9 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
               private renderer: Renderer2,
               private viewContainerRef: ViewContainerRef,
               private customTranslate: CustomTranslatePipe,
-              private http: HttpClient) {
+              private http: HttpClient,
+              private breadcrumbService: BreadcrumbService,
+              public homeService: HomeService) {
     super(store);
 
     this.authUser = getCurrentAuthUser(store);
@@ -221,6 +210,7 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
   }
 
   ngOnInit(): void {
+    this.homeService.setHideMainToolbar(true);
     this.initSplitLayout();
     this.initAceEditors();
     this.iframe = $(this.widgetIFrameElmRef.nativeElement);
@@ -237,6 +227,10 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
       subscription.unsubscribe();
     });
     this.rxSubscriptions.length = 0;
+  }
+
+  toggleSidenav() {
+    this.homeService.toggleSideBar.emit();
   }
 
   private initHotKeys(): void {
@@ -628,7 +622,6 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
     this.widget.defaultConfig = JSON.stringify(config);
     this.origWidget = deepClone(this.widget);
     this.isDirty = false;
-    this.updateBreadcrumbs.emit();
   }
 
   applyWidgetScript(): void {

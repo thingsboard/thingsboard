@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import {
   ChangeDetectorRef,
   Component,
@@ -45,6 +31,7 @@ import {
   PositionStrategy
 } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
+import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
 
 @Component({
     selector: 'tb-string-pattern-autocomplete',
@@ -123,6 +110,8 @@ export class StringPatternAutocompleteComponent implements ControlValueAccessor,
 
   private predefinedValuesButtonMode = false;
 
+  private scrollSyncCancel: CancelAnimationFrame | null = null;
+
   private propagateChange = (_val: any) => {
   };
 
@@ -131,7 +120,8 @@ export class StringPatternAutocompleteComponent implements ControlValueAccessor,
               private translate: TranslateService,
               private viewContainerRef: ViewContainerRef,
               private destroyRef: DestroyRef,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private raf: RafService) {
   }
 
   ngOnInit() {
@@ -150,6 +140,8 @@ export class StringPatternAutocompleteComponent implements ControlValueAccessor,
     fromEvent<KeyboardEvent>(this.inputRef.nativeElement, 'keydown')
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(event => this.handleKeydown(event));
+
+    this.destroyRef.onDestroy(() => this.stopScrollSync());
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -180,6 +172,11 @@ export class StringPatternAutocompleteComponent implements ControlValueAccessor,
 
   onFocus() {
     this.onSelectionChange();
+    this.startScrollSync();
+  }
+
+  onBlur() {
+    this.stopScrollSync();
   }
 
   registerOnChange(fn: any): void {
@@ -199,12 +196,36 @@ export class StringPatternAutocompleteComponent implements ControlValueAccessor,
     }
   }
 
-  onInputScroll(event: Event) {
-    const scrollLeft = (event.target as HTMLInputElement).scrollLeft;
-    const scrollTop = (event.target as HTMLInputElement).scrollTop;
-    if (this.highlightTextRef && this.highlightTextRef.nativeElement) {
-      this.highlightTextRef.nativeElement.scrollLeft = scrollLeft;
-      this.highlightTextRef.nativeElement.scrollTop = scrollTop;
+  // Continuous per-frame poll instead of a 'scroll' event handler: Safari does not reliably
+  // fire 'scroll' on this input, so the highlight overlay would drift out of sync. The poll
+  // also keeps the overlay synced frame-by-frame during drag-selection / auto-scroll, where an
+  // event-driven sync stutters. The loop runs only while the input is focused (one at a time),
+  // so its cost is bounded - do not revert this to a 'scroll' listener.
+  private startScrollSync() {
+    if (this.scrollSyncCancel !== null) {
+      return;
+    }
+
+    let lastLeft = -1;
+    let lastTop = -1;
+    const tick = () => {
+      const input = this.inputRef?.nativeElement as HTMLInputElement;
+      const overlay = this.highlightTextRef?.nativeElement as HTMLElement;
+      if (input && overlay && (input.scrollLeft !== lastLeft || input.scrollTop !== lastTop)) {
+        lastLeft = input.scrollLeft;
+        lastTop = input.scrollTop;
+        overlay.scrollLeft = lastLeft;
+        overlay.scrollTop = lastTop;
+      }
+      this.scrollSyncCancel = this.raf.raf(tick);
+    };
+    this.scrollSyncCancel = this.raf.raf(tick);
+  }
+
+  private stopScrollSync() {
+    if (this.scrollSyncCancel !== null) {
+      this.scrollSyncCancel();
+      this.scrollSyncCancel = null;
     }
   }
 

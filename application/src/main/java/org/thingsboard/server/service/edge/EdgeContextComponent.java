@@ -1,25 +1,15 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.edge;
 
+import jakarta.annotation.PreDestroy;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.cache.limits.RateLimitService;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
@@ -86,6 +76,8 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 @Lazy
 @Data
@@ -96,14 +88,25 @@ public class EdgeContextComponent {
 
     private final Map<EdgeEventType, EdgeProcessor> processorMap = new EnumMap<>(EdgeEventType.class);
 
+    private ScheduledExecutorService edgeEventProcessingExecutorService;
+
     @Autowired
-    public EdgeContextComponent(List<EdgeProcessor> processors) {
+    public EdgeContextComponent(List<EdgeProcessor> processors,
+                                @Value("${edges.scheduler_pool_size}") int schedulerPoolSize) {
         processors.forEach(processor -> {
             EdgeEventType eventType = processor.getEdgeEventType();
             if (eventType != null) {
                 processorMap.put(eventType, processor);
             }
         });
+        this.edgeEventProcessingExecutorService = ThingsBoardExecutors.newScheduledThreadPool(schedulerPoolSize, "edge-event-check-scheduler");
+    }
+
+    @PreDestroy
+    private void destroy() {
+        if (edgeEventProcessingExecutorService != null && !edgeEventProcessingExecutorService.isShutdown()) {
+            edgeEventProcessingExecutorService.shutdownNow();
+        }
     }
 
     // services

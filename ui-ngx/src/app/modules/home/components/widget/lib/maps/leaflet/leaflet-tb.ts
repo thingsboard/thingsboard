@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import L, { TB } from 'leaflet';
 import { guid, isDefinedAndNotNull, isNotEmptyStr } from '@core/utils';
 import 'leaflet-providers';
@@ -24,6 +10,7 @@ import { MatIconRegistry } from '@angular/material/icon';
 import { isSvgIcon, splitIconName } from '@shared/models/icon.models';
 import { catchError, take } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { WEBGL_ERROR_EVENT } from '@shared/models/widget/maps/map.models';
 
 L.MarkerCluster = L.MarkerCluster.mergeOptions({ pmIgnore: true });
 
@@ -1093,6 +1080,7 @@ class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
   private _actualCanvas: HTMLCanvasElement;
   private _offset: L.Point;
   private _zooming: boolean;
+  private _glError = false;
 
   constructor(options: TB.MapLibreGL.LeafletMapLibreGLMapOptions) {
     super();
@@ -1136,7 +1124,9 @@ class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
     const paneName = this.getPaneName();
     map.getPane(paneName).removeChild(this._container);
 
-    this._glMap.remove();
+    if (this._glMap) {
+      this._glMap.remove();
+    }
     this._glMap = null;
 
     return this;
@@ -1204,7 +1194,18 @@ class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
       zoom: this._map.getZoom() - 1,
       attributionControl: false
     });
-    this._glMap = new MapLibreGLMap(options);
+    this._glError = false;
+    try {
+      this._glMap = new MapLibreGLMap(options);
+    } catch (e) {
+      this._glError = true;
+      this.fire(WEBGL_ERROR_EVENT, { error: e });
+      return;
+    }
+    this._glMap.once('webglcontextlost', (e) => {
+      this._glError = true;
+      this.fire(WEBGL_ERROR_EVENT, {error: e});
+    });
     this._glMap.once('load', () => {
       this.fire('load');
     });
@@ -1222,8 +1223,12 @@ class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
     }
   }
 
+  private _glReady(): boolean {
+    return !this._glError && !!this._glMap;
+  }
+
   private _update() {
-    if (!this._map) {
+    if (!this._map || !this._glReady()) {
       return;
     }
     this._offset = this._map.containerPointToLayerPoint([0, 0]);
@@ -1253,6 +1258,7 @@ class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
   private _transformGL(gl: MapLibreGLMap) {
     const center = this._map.getCenter();
     const tr = gl._getTransformForUpdate();
+    if (!tr) { return; }
     tr.setCenter(MapLibreGLLngLat.convert([center.lng, center.lat]));
     tr.setZoom(this._map.getZoom() - 1);
     gl.transform.apply(tr);
@@ -1260,6 +1266,7 @@ class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
   }
 
   private _pinchZoom() {
+    if (!this._glReady()) { return; }
     this._glMap.jumpTo({
       zoom: this._map.getZoom() - 1,
       center: this._map.getCenter()
@@ -1267,6 +1274,7 @@ class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
   }
 
   private _animateZoom(e: L.ZoomAnimEvent) {
+    if (!this._glReady() || !this._actualCanvas) { return; }
     const scale = this._map.getZoomScale(e.zoom);
     const padding = this._map.getSize().multiplyBy(this.options.padding * scale);
     const viewHalf = this.getSize().divideBy(2);
@@ -1291,6 +1299,7 @@ class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
   }
 
   private _zoomEnd() {
+    if (!this._glReady() || !this._actualCanvas) { return; }
     const scale = this._map.getZoomScale(this._map.getZoom());
     L.DomUtil.setTransform(
       this._actualCanvas,
@@ -1302,7 +1311,9 @@ class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
   }
 
   private _transitionEnd() {
+    if (!this._glReady()) { return; }
     L.Util.requestAnimFrame(() => {
+      if (!this._glReady()) { return; }
       const zoom = this._map.getZoom();
       const center = this._map.getCenter();
       const offset = this._map.latLngToContainerPoint(

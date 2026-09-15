@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Component, forwardRef, Input } from '@angular/core';
 import {
   ControlValueAccessor,
@@ -32,6 +18,7 @@ import {
 } from '@home/components/rule-node/action/timeseries-config.models';
 import { isDefinedAndNotNull } from '@core/utils';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MatFormFieldAppearance } from '@angular/material/form-field';
 
 @Component({
     selector: 'tb-advanced-processing-setting-row',
@@ -51,6 +38,9 @@ export class AdvancedProcessingSettingRowComponent implements ControlValueAccess
 
   @Input()
   title: string;
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
   processingSettingRowForm = this.fb.group({
     type: [defaultAdvancedProcessingConfig.type],

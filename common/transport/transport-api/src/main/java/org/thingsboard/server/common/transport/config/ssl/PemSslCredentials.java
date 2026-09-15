@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.common.transport.config.ssl;
 
 import lombok.Data;
@@ -33,6 +20,7 @@ import org.thingsboard.server.common.data.StringUtils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.PrivateKey;
@@ -76,13 +64,13 @@ public class PemSslCredentials extends AbstractSslCredentials {
                     if (object instanceof X509CertificateHolder) {
                         X509Certificate x509Cert = certConverter.getCertificate((X509CertificateHolder) object);
                         certificates.add(x509Cert);
-                    } else if (object instanceof PEMEncryptedKeyPair) {
+                    } else if (object instanceof PEMEncryptedKeyPair pemEncryptedKeyPair) {
                         PEMDecryptorProvider decProv = new JcePEMDecryptorProviderBuilder().build(keyPasswordArray);
-                        privateKey = keyConverter.getKeyPair(((PEMEncryptedKeyPair) object).decryptKeyPair(decProv)).getPrivate();
-                    } else if (object instanceof PEMKeyPair) {
-                        privateKey = keyConverter.getKeyPair((PEMKeyPair) object).getPrivate();
-                    } else if (object instanceof PrivateKeyInfo) {
-                        privateKey = keyConverter.getPrivateKey((PrivateKeyInfo) object);
+                        privateKey = keyConverter.getKeyPair(pemEncryptedKeyPair.decryptKeyPair(decProv)).getPrivate();
+                    } else if (object instanceof PEMKeyPair pemKeyPair) {
+                        privateKey = keyConverter.getKeyPair(pemKeyPair).getPrivate();
+                    } else if (object instanceof PrivateKeyInfo privateKeyInfo) {
+                        privateKey = keyConverter.getPrivateKey(privateKeyInfo);
                     }
                 }
             }
@@ -93,15 +81,15 @@ public class PemSslCredentials extends AbstractSslCredentials {
                     try (PEMParser pemParser = new PEMParser(new InputStreamReader(inStream))) {
                         Object object;
                         while ((object = pemParser.readObject()) != null) {
-                            if (object instanceof PEMEncryptedKeyPair) {
+                            if (object instanceof PEMEncryptedKeyPair pemEncryptedKeyPair) {
                                 PEMDecryptorProvider decProv = new JcePEMDecryptorProviderBuilder().build(keyPasswordArray);
-                                privateKey = keyConverter.getKeyPair(((PEMEncryptedKeyPair) object).decryptKeyPair(decProv)).getPrivate();
+                                privateKey = keyConverter.getKeyPair(pemEncryptedKeyPair.decryptKeyPair(decProv)).getPrivate();
                                 break;
-                            } else if (object instanceof PEMKeyPair) {
-                                privateKey = keyConverter.getKeyPair((PEMKeyPair) object).getPrivate();
+                            } else if (object instanceof PEMKeyPair pemKeyPair) {
+                                privateKey = keyConverter.getKeyPair(pemKeyPair).getPrivate();
                                 break;
-                            } else if (object instanceof PrivateKeyInfo) {
-                                privateKey = keyConverter.getPrivateKey((PrivateKeyInfo) object);
+                            } else if (object instanceof PrivateKeyInfo privateKeyInfo) {
+                                privateKey = keyConverter.getPrivateKey(privateKeyInfo);
                             }
                         }
                     }
@@ -138,6 +126,22 @@ public class PemSslCredentials extends AbstractSslCredentials {
     }
 
     @Override
-    protected void updateKeyAlias(String keyAlias) {
+    protected void updateKeyAlias(String keyAlias) {}
+
+    @Override
+    public List<Path> getCertificateFilePaths() {
+        List<Path> paths = new ArrayList<>();
+        addIfFileSystemPath(paths, certFile);
+        addIfFileSystemPath(paths, keyFile);
+        return paths;
     }
+
+    private static void addIfFileSystemPath(List<Path> paths, String filePath) {
+        if (!StringUtils.isEmpty(filePath) && !filePath.startsWith(ResourceUtils.CLASSPATH_URL_PREFIX)) {
+            // Include the path even if the file doesn't exist yet — the watcher uses mtime=0 / checksum="" as
+            // baseline, so a late-appearing file (e.g. mounted after boot) will be detected and trigger a reload.
+            paths.add(Path.of(filePath).toAbsolutePath());
+        }
+    }
+
 }

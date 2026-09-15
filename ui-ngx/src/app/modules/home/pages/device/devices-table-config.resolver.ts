@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Injectable } from '@angular/core';
 
 import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router';
@@ -84,6 +70,8 @@ import {
   DeviceCheckConnectivityDialogData
 } from '@home/pages/device/device-check-connectivity-dialog.component';
 import { EntityId } from '@shared/models/id/entity-id';
+import { ItemType } from '@shared/models/iot-hub/iot-hub-item.models';
+import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
 
 interface DevicePageQueryParams extends PageQueryParam {
   deviceProfileId?: string;
@@ -107,7 +95,8 @@ export class DevicesTableConfigResolver  {
               private translate: TranslateService,
               private datePipe: DatePipe,
               private router: Router,
-              private dialog: MatDialog) {
+              private dialog: MatDialog,
+              private iotHubActions: IotHubActionsService) {
 
     this.config.entityType = EntityType.DEVICE;
     this.config.entityComponent = DeviceComponent;
@@ -416,6 +405,12 @@ export class DevicesTableConfigResolver  {
           isEnabled: () => true,
           onAction: ($event) => this.importDevices($event)
         },
+        {
+          name: this.translate.instant('iot-hub.add-from-iot-hub'),
+          icon: 'hub',
+          isEnabled: () => true,
+          onAction: (_$event) => this.addDeviceFromIotHub()
+        },
       );
       this.config.addEntity = () => {this.deviceWizard(null); return of(null); };
     }
@@ -448,6 +443,14 @@ export class DevicesTableConfigResolver  {
     }
     const url = this.router.createUrlTree([device.id.id], {relativeTo: config.getActivatedRoute()});
     this.router.navigateByUrl(url);
+  }
+
+  addDeviceFromIotHub() {
+    this.iotHubActions.addItem(ItemType.DEVICE).subscribe(result => {
+      if (result?.descriptor) {
+        this.config.updateData();
+      }
+    });
   }
 
   importDevices($event: Event) {

@@ -1,0 +1,129 @@
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
+@import "../../../../../scss/constants";
+
+:host {
+  display: block;
+  padding: 16px;
+  height: 100%;
+}
+
+
+// Back button
+.tb-search-back-btn {
+  align-self: flex-start;
+  margin-top: 40px;
+  margin-left: 123px;
+}
+
+// Title
+.tb-search-title {
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 36px;
+  letter-spacing: 0.25px;
+  color: rgba(0, 0, 0, 0.87);
+  margin: 0;
+}
+
+.tb-search-title-query {
+  color: rgba(0, 0, 0, 0.54);
+}
+
+tb-iot-hub-search {
+  flex: 1;
+  min-height: 0;
+  padding-left: 123px;
+  padding-right: 123px;
+
+  ::ng-deep {
+    .tb-search-divider {
+      margin-left: -123px;
+      margin-right: -123px;
+    }
+
+    .tb-results-container {
+      padding-right: 123px;
+      padding-bottom: 40px;
+      margin-right: -123px;
+    }
+  }
+}
+
+// Responsive
+@media #{$mat-lt-xxl} {
+  .tb-search-back-btn {
+    margin-left: 40px;
+  }
+
+  tb-iot-hub-search {
+    padding-left: 40px;
+    padding-right: 40px;
+
+    ::ng-deep {
+      .tb-search-divider {
+        margin-left: -40px;
+        margin-right: -40px;
+      }
+
+      .tb-results-container {
+        padding-right: 40px;
+        margin-right: -40px;
+      }
+    }
+  }
+}
+
+@media #{$mat-lt-lg} {
+  .tb-search-back-btn {
+    margin-top: 24px;
+    margin-left: 24px;
+  }
+
+  tb-iot-hub-search {
+    padding-left: 24px;
+    padding-right: 24px;
+
+    ::ng-deep {
+      .tb-search-divider {
+        margin-left: -24px;
+        margin-right: -24px;
+      }
+
+      .tb-results-container {
+        padding-right: 24px;
+        padding-bottom: 24px;
+        margin-right: -24px;
+      }
+    }
+  }
+}
+
+@media #{$mat-lt-sm} {
+  .tb-search-page {
+    gap: 16px;
+  }
+
+  .tb-search-back-btn {
+    margin-top: 16px;
+    margin-left: 16px;
+  }
+
+  tb-iot-hub-search {
+    padding-left: 16px;
+    padding-right: 16px;
+
+    ::ng-deep {
+      .tb-search-divider {
+        margin-left: -16px;
+        margin-right: -16px;
+      }
+
+      .tb-results-container {
+        padding-right: 16px;
+        padding-bottom: 16px;
+        margin-right: -16px;
+      }
+    }
+  }
+}

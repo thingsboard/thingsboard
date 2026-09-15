@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -39,7 +26,6 @@ import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityHistoryCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.LatestValueCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.TimeSeriesCmd;
-import org.thingsboard.server.service.ws.telemetry.sub.TelemetrySubscriptionUpdate;
 
 import java.net.URI;
 import java.nio.channels.NotYetConnectedException;
@@ -53,6 +39,8 @@ public class TbTestWebSocketClient extends WebSocketClient {
 
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(30);
 
+    private final CountDownLatch closeLatch = new CountDownLatch(1);
+
     @Getter
     private volatile String lastMsg;
     private volatile CountDownLatch reply;
@@ -62,6 +50,7 @@ public class TbTestWebSocketClient extends WebSocketClient {
         super(serverUri);
     }
 
+
     @Override
     public void onOpen(ServerHandshake serverHandshake) {
 
@@ -69,7 +58,13 @@ public class TbTestWebSocketClient extends WebSocketClient {
 
     public void authenticate(String token) {
         WsCommandsWrapper cmdsWrapper = new WsCommandsWrapper();
-        cmdsWrapper.setAuthCmd(new AuthCmd(1, token));
+        cmdsWrapper.setAuthCmd(new AuthCmd(1, token, null));
+        send(JacksonUtil.toString(cmdsWrapper));
+    }
+
+    public void authenticateWithApiKey(String apiKey) {
+        WsCommandsWrapper cmdsWrapper = new WsCommandsWrapper();
+        cmdsWrapper.setAuthCmd(new AuthCmd(1, null, apiKey));
         send(JacksonUtil.toString(cmdsWrapper));
     }
 
@@ -88,6 +83,16 @@ public class TbTestWebSocketClient extends WebSocketClient {
     @Override
     public void onClose(int i, String s, boolean b) {
         log.info("CLOSED.");
+        closeLatch.countDown();
+    }
+
+    public boolean waitForClose() {
+        try {
+            return closeLatch.await(TIMEOUT, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            log.warn("Failed to await close", e);
+            return false;
+        }
     }
 
     @Override
@@ -275,7 +280,7 @@ public class TbTestWebSocketClient extends WebSocketClient {
 
     public JsonNode sendTimeseriesCmd(EntityId entityId, String scope) {
         log.warn("sendTimeseriesCmd entityId: {}, scope: {}", entityId, scope);
-        TimeseriesSubscriptionCmd cmd = new TimeseriesSubscriptionCmd(0, 0, 0, 10,  null);
+        TimeseriesSubscriptionCmd cmd = new TimeseriesSubscriptionCmd(0, 0, 0, 10, null);
         cmd.setEntityId(entityId.getId().toString());
         cmd.setEntityType(entityId.getEntityType().toString());
         cmd.setCmdId(1);

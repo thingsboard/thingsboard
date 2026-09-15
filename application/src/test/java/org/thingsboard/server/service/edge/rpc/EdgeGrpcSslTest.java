@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.edge.rpc;
 
 import io.grpc.ManagedChannel;
@@ -32,7 +19,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.thingsboard.server.controller.AbstractWebTest;
 import org.thingsboard.server.gen.edge.v1.EdgeRpcServiceGrpc;
 
 import java.io.ByteArrayInputStream;
@@ -56,7 +42,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 
 /**
- * Tests for Edge gRPC SSL setup using the production {@link EdgeGrpcService#setupSsl} method.
+ * Tests for Edge gRPC SSL setup using the production {@link GrpcServer#setupSsl} method.
  * <p>
  * Covers:
  * 1. Separate cert and key PEM inputs
@@ -67,6 +53,8 @@ import static org.awaitility.Awaitility.await;
  * Each scenario is parameterized across key types: RSA-2048, RSA-4096, EC P-256, EC P-384.
  */
 class EdgeGrpcSslTest {
+
+    private static final int TIMEOUT = 30;
 
     static {
         if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
@@ -170,13 +158,14 @@ class EdgeGrpcSslTest {
         Path certOnlyFile = writeTempPem("cert-only", cert);
 
         assertThatThrownBy(() -> startServer(certOnlyFile.toString(), "", null))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(RuntimeException.class)
+                .hasCauseInstanceOf(IllegalArgumentException.class);
     }
 
     // --- Server startup using production EdgeGrpcService.setupSsl() ---
 
     private Server startServer(String certFileResource, String privateKeyResource, String keyPassword) throws Exception {
-        EdgeGrpcService edgeGrpcService = new EdgeGrpcService();
+        GrpcServer edgeGrpcService = new GrpcServer(new EdgeRpcServiceGrpc.EdgeRpcServiceImplBase() {});
         ReflectionTestUtils.setField(edgeGrpcService, "certFileResource", certFileResource);
         ReflectionTestUtils.setField(edgeGrpcService, "privateKeyResource", privateKeyResource);
         ReflectionTestUtils.setField(edgeGrpcService, "keyPassword", keyPassword != null ? keyPassword : "");
@@ -200,7 +189,7 @@ class EdgeGrpcSslTest {
                 .build();
 
         channel.getState(true); // trigger connection attempt
-        await().atMost(AbstractWebTest.TIMEOUT, TimeUnit.SECONDS)
+        await().atMost(TIMEOUT, TimeUnit.SECONDS)
                 .pollInterval(50, TimeUnit.MILLISECONDS)
                 .untilAsserted(() -> {
                     var state = channel.getState(false);

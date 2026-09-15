@@ -1,22 +1,11 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-License-Identifier: Apache-2.0
 
 -->
 <form [formGroup]="conditionFormGroup" (ngSubmit)="save()">
-  <mat-toolbar color="primary">
+  <mat-toolbar class="tb-dialog-header">
     <h2>{{ (readonly ? 'alarm-rule.alarm-rule-condition' : 'alarm-rule.edit-alarm-rule-condition') | translate }}</h2>
     <span class="flex-1"></span>
     <button mat-icon-button
@@ -119,16 +108,18 @@
               </mat-expansion-panel>
             </div>
           }
+        </div>
       </div>
-    </div>
 
       <section class="tb-form-panel stroked">
         <div class="flex flex-row items-center justify-between">
           <div class="tb-form-panel-title">{{ 'alarm-rule.type' | translate }}</div>
           <tb-toggle-select formControlName="type" selectMediaBreakpoint="xs">
-            <tb-toggle-option *ngFor="let alarmConditionType of alarmConditionTypes" [value]="alarmConditionType">
-              {{ alarmConditionTypeTranslation.get(alarmConditionType) | translate }}
-            </tb-toggle-option>
+            @for (alarmConditionType of alarmConditionTypes; track alarmConditionType) {
+              <tb-toggle-option [value]="alarmConditionType">
+                {{ alarmConditionTypeTranslation.get(alarmConditionType) | translate }}
+              </tb-toggle-option>
+            }
           </tb-toggle-select>
         </div>
         @if (isNoData) {
@@ -157,13 +148,17 @@
                 <mat-form-field class="mat-block" appearance="outline">
                   <mat-select formControlName="unit" required
                               placeholder="{{ 'alarm-rule.condition-duration-time-unit' | translate }}">
-                    <mat-option *ngFor="let timeUnit of timeUnits" [value]="timeUnit">
-                      {{ timeUnitTranslations.get(timeUnit) | translate }}
-                    </mat-option>
+                    @for (timeUnit of timeUnits; track timeUnit) {
+                      <mat-option [value]="timeUnit">
+                        {{ timeUnitTranslations.get(timeUnit) | translate }}
+                      </mat-option>
+                    }
                   </mat-select>
-                  <mat-error *ngIf="conditionFormGroup.get('unit').hasError('required')">
-                    {{ 'alarm-rule.condition-duration-time-unit-required' | translate }}
-                  </mat-error>
+                  @if (conditionFormGroup.get('unit').hasError('required')) {
+                    <mat-error>
+                      {{ 'alarm-rule.condition-duration-time-unit-required' | translate }}
+                    </mat-error>
+                  }
                 </mat-form-field>
               </div>
             </div>

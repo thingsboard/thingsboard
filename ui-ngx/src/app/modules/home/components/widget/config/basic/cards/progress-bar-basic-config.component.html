@@ -1,25 +1,16 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-License-Identifier: Apache-2.0
 
 -->
 <ng-container [formGroup]="progressBarWidgetConfigForm">
-  <tb-timewindow-config-panel *ngIf="displayTimewindowConfig"
-                              [onlyHistoryTimewindow]="onlyHistoryTimewindow()"
-                              formControlName="timewindowConfig">
-  </tb-timewindow-config-panel>
+  @if (displayTimewindowConfig) {
+    <tb-timewindow-config-panel
+      [onlyHistoryTimewindow]="onlyHistoryTimewindow()"
+      formControlName="timewindowConfig">
+    </tb-timewindow-config-panel>
+  }
   <tb-datasources
     [configMode]="basicMode"
     hideDataKeyLabel
@@ -35,12 +26,14 @@
                                     breakpoints: {
                                       'lt-sm': 1
                                     }}"
-                           label="{{ 'widgets.progress-bar.layout' | translate }}" formControlName="layout">
-      <tb-image-cards-select-option *ngFor="let layout of progressBarLayouts"
-                                    [value]="layout"
-                                    [image]="progressBarLayoutImageMap.get(layout)">
-        {{ progressBarLayoutTranslationMap.get(layout) | translate }}
-      </tb-image-cards-select-option>
+      label="{{ 'widgets.progress-bar.layout' | translate }}" formControlName="layout">
+      @for (layout of progressBarLayouts; track layout) {
+        <tb-image-cards-select-option
+          [value]="layout"
+          [image]="progressBarLayoutImageMap.get(layout)">
+          {{ progressBarLayoutTranslationMap.get(layout) | translate }}
+        </tb-image-cards-select-option>
+      }
     </tb-image-cards-select>
     <div class="tb-form-row">
       <mat-slide-toggle class="mat-slide" formControlName="autoScale">
@@ -58,7 +51,6 @@
                                         subscriptSizing="dynamic"
                                         predefinedValuesButton="true"
                                         [predefinedValues]="predefinedValues"
-                                        [disabled]="!progressBarWidgetConfigForm.get('showTitle').value"
                                         placeholderText="{{ 'widget-config.set' | translate }}"
                                         formControlName="title"
         ></tb-string-pattern-autocomplete>
@@ -126,20 +118,22 @@
         </mat-form-field>
       </div>
     </div>
-    <div *ngIf="progressBarWidgetConfigForm.get('layout').value === progressBarLayout.default" class="tb-form-row space-between">
-      <mat-slide-toggle class="mat-slide" formControlName="showTicks">
-        {{ 'widgets.progress-bar.range-ticks' | translate }}
-      </mat-slide-toggle>
-      <div class="flex flex-row items-center justify-start gap-2">
-        <tb-font-settings formControlName="ticksFont"
-                          previewText="100">
-        </tb-font-settings>
-        <tb-color-input asBoxInput
-                        colorClearButton
-                        formControlName="ticksColor">
-        </tb-color-input>
+    @if (progressBarWidgetConfigForm.get('layout').value === progressBarLayout.default) {
+      <div class="tb-form-row space-between">
+        <mat-slide-toggle class="mat-slide" formControlName="showTicks">
+          {{ 'widgets.progress-bar.range-ticks' | translate }}
+        </mat-slide-toggle>
+        <div class="flex flex-row items-center justify-start gap-2">
+          <tb-font-settings formControlName="ticksFont"
+                            previewText="100">
+          </tb-font-settings>
+          <tb-color-input asBoxInput
+                          colorClearButton
+                          formControlName="ticksColor">
+          </tb-color-input>
+        </div>
       </div>
-    </div>
+    }
   </div>
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widgets.progress-bar.bar</div>

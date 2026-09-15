@@ -1,7 +1,7 @@
 {
   "fqn": "simple_radon_level_chart_card_with_background",
   "name": "Simple radon level chart card with background",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/simple_radon_level_chart_card_with_background_system_widget_image.png",
   "description": "Displays historical radon level values as a simplified chart with background. Optionally may display the corresponding latest radon level value.",
   "descriptor": {

@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.dao.sqlts.ts;
 
 import org.springframework.data.domain.Pageable;
@@ -61,8 +48,10 @@ public interface TsKvRepository extends JpaRepository<TsKvEntity, TsKvCompositeK
                              @Param("startTs") long startTs,
                              @Param("endTs") long endTs);
 
+    // -1.7976931348623157E308 = -Double.MAX_VALUE — the most negative finite double, used as a "less than any value" sentinel for MAX.
+    // Double.MIN_VALUE is +4.9E-324 (smallest positive), which would beat any negative real value and corrupt MAX.
     @Query("SELECT new TsKvEntity(MAX(COALESCE(tskv.longValue, -9223372036854775807)), " +
-            "MAX(COALESCE(tskv.doubleValue, java.lang.Double.MIN_VALUE)), " +
+            "MAX(COALESCE(tskv.doubleValue, -1.7976931348623157E308)), " +
             "SUM(CASE WHEN tskv.longValue IS NULL THEN 0 ELSE 1 END), " +
             "SUM(CASE WHEN tskv.doubleValue IS NULL THEN 0 ELSE 1 END), " +
             "'MAX', MAX(tskv.ts)) FROM TsKvEntity tskv " +

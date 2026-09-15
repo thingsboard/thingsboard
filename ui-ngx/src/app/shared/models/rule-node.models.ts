@@ -1,24 +1,10 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { BaseData } from '@shared/models/base-data';
 import { RuleChainId } from '@shared/models/id/rule-chain-id';
 import { RuleNodeId } from '@shared/models/id/rule-node-id';
 import { ComponentDescriptor } from '@shared/models/component-descriptor.models';
-import { FcEdge, FcNode } from 'ngx-flowchart';
+import { FcEdge, FcNode, FcNote } from 'ngx-flowchart';
 import { Observable } from 'rxjs';
 import { PageComponent } from '@shared/components/page.component';
 import { AfterViewInit, DestroyRef, Directive, EventEmitter, inject, OnInit } from '@angular/core';
@@ -27,6 +13,7 @@ import { RuleChainType } from '@shared/models/rule-chain.models';
 import { DebugRuleNodeEventBody } from '@shared/models/event.models';
 import { EntityTestScriptResult, HasEntityDebugSettings } from '@shared/models/entity.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { strings } from '@angular-devkit/core';
 
 export interface RuleNodeConfiguration {
   [key: string]: any;
@@ -356,6 +343,19 @@ export interface FcRuleNode extends FcRuleNodeType {
 
 export interface FcRuleEdge extends FcEdge {
   labels?: string[];
+}
+
+export const FC_RULE_NOTE_DEFAULT_BACKGROUND_COLOR = '#FFF9C4';
+export const FC_RULE_NOTE_DEFAULT_BORDER_WIDTH = 1;
+export const FC_RULE_NOTE_DEFAULT_APPLY_MARKDOWN_STYLE = true;
+
+export interface FcRuleNote extends FcNote {
+  content?: string;
+  backgroundColor?: string;
+  borderColor?: string;
+  borderWidth?: number;
+  applyDefaultMarkdownStyle?: boolean;
+  markdownCss?: string;
 }
 
 export enum ScriptLanguage {

@@ -1,26 +1,14 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import config from 'config';
 import fs from 'node:fs';
 import { _logger, KafkaJsWinstonLogCreator } from '../config/logger';
 import { JsInvokeMessageProcessor } from '../api/jsInvokeMessageProcessor'
 import { IQueue } from './queue.models';
+import { oauthBearerProvider } from './oAuthBearerProvider';
 import {
     Admin,
+    CompressionCodecs,
     CompressionTypes,
     Consumer,
     Kafka,
@@ -35,6 +23,8 @@ import { KeyObject } from 'tls';
 
 import process, { exit, kill } from 'process';
 
+const DEFAULT_OAUTH_REFRESH_THRESHOLD_MS = 60000;
+
 export class KafkaTemplate implements IQueue {
 
     private logger = _logger(`kafkaTemplate`);
@@ -46,7 +36,31 @@ export class KafkaTemplate implements IQueue {
     private linger = Number(config.get('kafka.linger_ms'));
     private requestTimeout = Number(config.get('kafka.requestTimeout'));
     private connectionTimeout = Number(config.get('kafka.connectionTimeout'));
-    private compressionType = (config.get('kafka.compression') === "gzip") ? CompressionTypes.GZIP : CompressionTypes.None;
+    private compressionType = this.resolveCompressionType(config.get('kafka.compression'));
+
+    private resolveCompressionType(compression: string): CompressionTypes {
+        switch (compression) {
+            case 'gzip':
+                return CompressionTypes.GZIP;
+            case 'lz4': {
+                // Load the LZ4 codec lazily so users who don't enable LZ4 don't take a hard
+                // dependency on the lz4-napi native binary (e.g. inside pkg-built executables).
+                // The package re-assigns module.exports = LZ4Codec, which wipes the __esModule
+                // flag and the .default property — so accept either shape.
+                const lz4Module = require('@2l/kafkajs-lz4');
+                const LZ4Codec = lz4Module.default || lz4Module;
+                CompressionCodecs[CompressionTypes.LZ4] = new LZ4Codec().codec;
+                return CompressionTypes.LZ4;
+            }
+            case 'none':
+                return CompressionTypes.None;
+            default:
+                if (isNotEmptyStr(compression)) {
+                    this.logger.warn('Unknown kafka.compression value "%s"; falling back to no compression. Supported values: gzip, lz4, none.', compression);
+                }
+                return CompressionTypes.None;
+        }
+    }
     private partitionsConsumedConcurrently = Number(config.get('kafka.partitions_consumed_concurrently'));
 
     private kafkaClient: Kafka;
@@ -89,11 +103,35 @@ export class KafkaTemplate implements IQueue {
         kafkaConfig['connectionTimeout'] = this.connectionTimeout;
 
         if (useConfluent) {
-            kafkaConfig['sasl'] = {
-                mechanism: config.get('kafka.confluent.sasl.mechanism') as any,
-                username: config.get('kafka.confluent.username'),
-                password: config.get('kafka.confluent.password')
-            };
+            const saslMechanism = config.get('kafka.confluent.sasl.mechanism') as string;
+            if (saslMechanism.toLowerCase() === 'oauthbearer') {
+                const refreshThresholdMs = config.has('kafka.confluent.oauth.refresh_threshold')
+                    ? Number(config.get('kafka.confluent.oauth.refresh_threshold'))
+                    : DEFAULT_OAUTH_REFRESH_THRESHOLD_MS;
+                const scope = config.has('kafka.confluent.oauth.scope')
+                    ? config.get('kafka.confluent.oauth.scope') as string
+                    : undefined;
+                // Read as optional so a missing key yields '' (and the provider raises its clear
+                // "requires client_id, client_secret and endpoint_url" error) rather than node-config
+                // throwing a generic "Configuration property ... is not defined".
+                const optionalOauthStr = (key: string): string => config.has(key) ? config.get(key) as string : '';
+                kafkaConfig['sasl'] = {
+                    mechanism: 'oauthbearer',
+                    oauthBearerProvider: oauthBearerProvider({
+                        clientId: optionalOauthStr('kafka.confluent.oauth.client_id'),
+                        clientSecret: optionalOauthStr('kafka.confluent.oauth.client_secret'),
+                        endpointUrl: optionalOauthStr('kafka.confluent.oauth.endpoint_url'),
+                        refreshThresholdMs,
+                        scope,
+                    })
+                };
+            } else {
+                kafkaConfig['sasl'] = {
+                    mechanism: saslMechanism as any,
+                    username: config.get('kafka.confluent.username'),
+                    password: config.get('kafka.confluent.password')
+                };
+            }
             kafkaConfig['ssl'] = true;
         }
 

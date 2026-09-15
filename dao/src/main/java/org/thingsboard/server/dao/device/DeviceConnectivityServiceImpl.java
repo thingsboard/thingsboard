@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.dao.device;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -48,6 +35,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -155,11 +143,17 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
 
     @Override
     public Resource createGatewayDockerComposeFile(String baseUrl, Device device) throws URISyntaxException {
+        DockerComposeParams params = new DockerComposeParams(true, "tb-gateway", true, true, true, true);
+        return createGatewayDockerComposeFile(baseUrl, device, params);
+    }
+
+    @Override
+    public Resource createGatewayDockerComposeFile(String baseUrl, Device device, DockerComposeParams params) throws URISyntaxException {
         String mqttType = isEnabled(MQTTS) ? MQTTS : MQTT;
         DeviceConnectivityInfo properties = getConnectivity(mqttType);
         DeviceCredentials creds = deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getTenantId(), device.getId());
         String host = getHost(baseUrl, properties, mqttType);
-        return DeviceConnectivityUtil.getGatewayDockerComposeFile(host, gatewayImageVersion, creds);
+        return DeviceConnectivityUtil.getGatewayDockerComposeFile(host, gatewayImageVersion, creds, params);
     }
 
     private DeviceConnectivityInfo getConnectivity(String protocol) {
@@ -174,6 +168,23 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
     public boolean isEnabled(String protocol) {
         var info = getConnectivity(protocol);
         return info != null && info.isEnabled();
+    }
+
+    @Override
+    public JsonNode getConnectivityInfo(String baseUrl) throws URISyntaxException {
+        String[] protocols = {HTTP, HTTPS, MQTT, MQTTS, COAP, COAPS};
+        Map<String, DeviceConnectivityInfo> result = new LinkedHashMap<>();
+        for (String protocol : protocols) {
+            DeviceConnectivityInfo info = getConnectivity(protocol);
+            if (info != null && info.isEnabled()) {
+                DeviceConnectivityInfo resolved = new DeviceConnectivityInfo();
+                resolved.setEnabled(true);
+                resolved.setHost(getHost(baseUrl, info, protocol));
+                resolved.setPort(getPort(info));
+                result.put(protocol, resolved);
+            }
+        }
+        return JacksonUtil.valueToTree(result);
     }
 
     private Resource getCert(String path) {

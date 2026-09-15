@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Inject, Injectable, DOCUMENT } from '@angular/core';
 import { DashboardService } from '@core/http/dashboard.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -89,11 +75,15 @@ import {
 import { FormProperty, propertyValid } from '@shared/models/dynamic-form.models';
 import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
 import { CalculatedField } from '@shared/models/calculated-field.models';
+import { RuleChainId } from '@shared/models/id/rule-chain-id';
 
 export type editMissingAliasesFunction = (widgets: Array<Widget>, isSingleWidget: boolean,
                                           customTitle: string, missingEntityAliases: EntityAliases) => Observable<EntityAliases>;
 
 type SupportEntityResources = 'includeResourcesInExportWidgetTypes' | 'includeResourcesInExportDashboard' | 'includeBundleWidgetsInExport';
+
+const profileRuleChainFields = ['defaultRuleChainId', 'defaultEdgeRuleChainId'] as const;
+type ProfileRuleChainField = typeof profileRuleChainFields[number];
 
 // @dynamic
 @Injectable()
@@ -749,7 +739,8 @@ export class ImportExportService {
               type: 'error'}));
           throw new Error('Invalid device profile file');
         } else {
-            return this.deviceProfileService.saveDeviceProfile(this.prepareImport(deviceProfile));
+          return this.clearMissingRuleChainsAndSave(deviceProfile,
+            profile => this.deviceProfileService.saveDeviceProfile(profile));
         }
       }),
       catchError(() => of(null))
@@ -776,10 +767,41 @@ export class ImportExportService {
               type: 'error'}));
           throw new Error('Invalid asset profile file');
         } else {
-          return this.assetProfileService.saveAssetProfile(this.prepareImport(assetProfile));
+          return this.clearMissingRuleChainsAndSave(assetProfile,
+            profile => this.assetProfileService.saveAssetProfile(profile));
         }
       }),
       catchError(() => of(null))
+    );
+  }
+
+  private clearMissingRuleChainsAndSave<T extends ExportableEntity<EntityId> & Partial<Record<ProfileRuleChainField, RuleChainId>>>(
+    profile: T, save: (profile: T) => Observable<T>): Observable<T> {
+    return this.clearMissingProfileRuleChains(profile).pipe(
+      mergeMap(cleared => save(this.prepareImport(cleared)))
+    );
+  }
+
+  private clearMissingProfileRuleChains<T extends Partial<Record<ProfileRuleChainField, RuleChainId>>>(profile: T): Observable<T> {
+    const fieldsToCheck = profileRuleChainFields.filter(field => profile[field]?.id);
+
+    if (!fieldsToCheck.length) {
+      return of(profile);
+    }
+    const ruleChainIds = fieldsToCheck.map(field => profile[field].id);
+    return this.ruleChainService.getRuleChainsByIds(ruleChainIds, {ignoreErrors: true, ignoreLoading: true}).pipe(
+      map(ruleChains => {
+        const existingIds = new Set(ruleChains.map(ruleChain => ruleChain.id.id));
+        const missingFields = fieldsToCheck.filter(field => !existingIds.has(profile[field].id));
+        if (!missingFields.length) {
+          return profile;
+        }
+        this.store.dispatch(new ActionNotificationShow(
+          {message: this.translate.instant('rulechain.rulechain-not-found-warning'),
+            type: 'warn'}));
+        missingFields.forEach(field => profile[field] = null);
+        return profile;
+      })
     );
   }
 

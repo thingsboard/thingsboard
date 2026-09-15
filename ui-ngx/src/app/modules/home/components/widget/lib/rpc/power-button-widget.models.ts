@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { BackgroundSettings, BackgroundType } from '@shared/models/widget-settings.models';
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import {
@@ -28,7 +14,7 @@ import { Circle, Effect, Element, G, Gradient, Path, Runner, Svg, Text, Timeline
 import '@svgdotjs/svg.filter.js';
 import tinycolor from 'tinycolor2';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { Observable, of, shareReplay } from 'rxjs';
+import { from, Observable, of, shareReplay } from 'rxjs';
 import { isSvgIcon, splitIconName } from '@shared/models/icon.models';
 import { catchError, map, take } from 'rxjs/operators';
 import { MatIconRegistry } from '@angular/material/icon';
@@ -392,7 +378,15 @@ export abstract class PowerButtonShape {
       tspan.attr({
         'dominant-baseline': 'hanging'
       });
-      return of(textElement);
+      return from(document.fonts.ready).pipe(
+        map(() => {
+          const iconGroup = this.svgShape.group();
+          textElement.addTo(iconGroup);
+          const box = iconGroup.bbox();
+          iconGroup.translate(-box.cx, -box.cy);
+          return iconGroup;
+        })
+      );
     }
   }
 

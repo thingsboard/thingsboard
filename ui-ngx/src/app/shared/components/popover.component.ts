@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
@@ -96,6 +82,7 @@ export class TbPopoverDirective implements OnChanges, OnDestroy, AfterViewInit {
   @Input('tbPopoverOverlayClassName') overlayClassName?: string;
   @Input('tbPopoverOverlayStyle') overlayStyle?: { [klass: string]: any };
   @Input() tbPopoverBackdrop = false;
+  @Input() tbPopoverMenu = false;
 
   // eslint-disable-next-line @angular-eslint/no-output-rename
   @Output('tbPopoverVisibleChange') readonly visibleChange = new EventEmitter<boolean>();
@@ -242,7 +229,8 @@ export class TbPopoverDirective implements OnChanges, OnDestroy, AfterViewInit {
       mouseLeaveDelay: ['tbMouseLeaveDelay', () => this.mouseLeaveDelay],
       overlayClassName: ['tbOverlayClassName', () => this.overlayClassName],
       overlayStyle: ['tbOverlayStyle', () => this.overlayStyle],
-      tbPopoverBackdrop: ['tbBackdrop', () => this.tbPopoverBackdrop]
+      tbPopoverBackdrop: ['tbBackdrop', () => this.tbPopoverBackdrop],
+      tbPopoverMenu: ['tbMenu', () => this.tbPopoverMenu]
     };
 
     (keys || Object.keys(mappingProperties).filter(key => !key.startsWith('directive'))).forEach(
@@ -327,9 +315,9 @@ export class TbPopoverDirective implements OnChanges, OnDestroy, AfterViewInit {
       (overlayOutsideClick)="onClickOutside($event)"
       (detach)="hide()"
       (positionChange)="onPositionChange($event)"
-    >
+      >
       <div #popoverRoot [@popoverMotion]="tbAnimationState"
-           (@popoverMotion.done)="animationDone()">
+        (@popoverMotion.done)="animationDone()">
         <div
           #popover
           class="tb-popover"
@@ -337,28 +325,32 @@ export class TbPopoverDirective implements OnChanges, OnDestroy, AfterViewInit {
           [class.tb-popover-rtl]="dir === 'rtl'"
           [class]="classMap"
           [style]="tbOverlayStyle"
-        >
+          >
           <div class="tb-popover-content">
             <div class="tb-popover-arrow">
               <span class="tb-popover-arrow-content"></span>
             </div>
             <div class="tb-popover-inner" [style]="tbPopoverInnerStyle" role="tooltip">
-              <div *ngIf="tbShowCloseButton" class="tb-popover-close-button" (click)="closeButtonClick($event)">×</div>
+              @if (tbShowCloseButton && !tbMenu) {
+                <div class="tb-popover-close-button" (click)="closeButtonClick($event)">×</div>
+              }
               <div style="width: 100%; height: 100%;">
                 <div class="tb-popover-inner-content"  [style]="tbPopoverInnerContentStyle"
-                     [class.strict-position]="strictPosition">
-                  <ng-container *ngIf="tbContent">
+                  [class.strict-position]="strictPosition">
+                  @if (tbContent) {
                     <ng-container *tbStringTemplateOutlet="tbContent; context: tbComponentContext">
                       {{ tbContent }}
                     </ng-container>
-                  </ng-container>
-                  <ng-container *ngIf="tbComponent"
-                                [tbComponentOutlet]="tbComponent"
-                                [tbComponentInjector]="tbComponentInjector"
-                                [tbComponentOutletContext]="tbComponentContext"
-                                (componentChange)="onComponentChange($event)"
-                                [tbComponentStyle]="tbComponentStyle">
-                  </ng-container>
+                  }
+                  @if (tbComponent) {
+                    <ng-container
+                      [tbComponentOutlet]="tbComponent"
+                      [tbComponentInjector]="tbComponentInjector"
+                      [tbComponentOutletContext]="tbComponentContext"
+                      (componentChange)="onComponentChange($event)"
+                      [tbComponentStyle]="tbComponentStyle">
+                    </ng-container>
+                  }
                 </div>
               </div>
             </div>
@@ -366,7 +358,7 @@ export class TbPopoverDirective implements OnChanges, OnDestroy, AfterViewInit {
         </div>
       </div>
     </ng-template>
-  `,
+    `,
     standalone: false
 })
 export class TbPopoverComponent<T = any> implements OnDestroy, OnInit {
@@ -385,6 +377,7 @@ export class TbPopoverComponent<T = any> implements OnDestroy, OnInit {
   tbPopoverInnerStyle: { [klass: string]: any } = {};
   tbPopoverInnerContentStyle: { [klass: string]: any } = {};
   tbBackdrop = false;
+  tbMenu = false;
   tbMouseEnterDelay?: number;
   tbMouseLeaveDelay?: number;
   tbHideOnClickOutside = true;
@@ -668,7 +661,8 @@ export class TbPopoverComponent<T = any> implements OnDestroy, OnInit {
   updateStyles(): void {
     this.classMap = {
       [`tb-popover-placement-${this.preferredPlacement}`]: true,
-      ['tb-popover-hidden']: this.tbHidden || !this.lastIsIntersecting
+      ['tb-popover-hidden']: this.tbHidden || !this.lastIsIntersecting,
+      ['tb-menu']: this.tbMenu
     };
     if (this.tbOverlayClassName) {
       this.classMap[this.tbOverlayClassName] = true;

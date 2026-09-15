@@ -1,7 +1,7 @@
 {
   "fqn": "horizontal_vibration_card_with_background",
   "name": "Horizontal vibration card with background",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/horizontal_vibration_card_with_background_system_widget_image.png",
   "description": "Displays the latest vibration telemetry in a scalable horizontal layout with the background image.",
   "descriptor": {

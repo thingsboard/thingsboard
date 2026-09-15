@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.transport.lwm2m.server.rpc;
 
 import com.google.gson.JsonElement;
@@ -212,7 +199,7 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
         String[] versionedIds = getIdsFromParameters(client, requestMsg);
         TbLwM2MReadCompositeRequest request = TbLwM2MReadCompositeRequest.builder().versionedIds(versionedIds).timeout(clientContext.getRequestTimeout(client)).build();
         var mainCallback = new TbLwM2MReadCompositeCallback(uplinkHandler, logService, client, versionedIds);
-        var rpcCallback = new RpcReadResponseCompositeCallback(transportService, client, requestMsg, mainCallback);
+        var rpcCallback = new RpcReadResponseCompositeCallback<>(transportService, client, requestMsg, mainCallback);
         downlinkHandler.sendReadCompositeRequest(client, request, rpcCallback);
     }
 
@@ -241,7 +228,13 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
     }
 
     private void sendExecuteRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
-        TbLwM2MExecuteRequest downlink = TbLwM2MExecuteRequest.builder().versionedId(versionedId).timeout(clientContext.getRequestTimeout(client)).build();
+        RpcExecuteRequest requestBody = JacksonUtil.fromString(requestMsg.getParams(), RpcExecuteRequest.class);
+        Object value = requestBody != null ? requestBody.getValue() : null;
+        TbLwM2MExecuteRequest downlink = TbLwM2MExecuteRequest.builder()
+                .versionedId(versionedId)
+                .params(value)
+                .timeout(clientContext.getRequestTimeout(client))
+                .build();
         var mainCallback = new TbLwM2MExecuteCallback(logService, client, versionedId);
         var rpcCallback = new RpcEmptyResponseCallback<>(transportService, client, requestMsg, mainCallback);
         downlinkHandler.sendExecuteRequest(client, downlink, rpcCallback);
@@ -323,7 +316,7 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
                 } else if (path.isResource()) {
                     validateResource(client, newNodes, nodes, key , value);
                 } else if (path.isObjectInstance() && value instanceof Map<?, ?>) {
-                    ((Map) value).forEach((k, v) -> {
+                    ((Map<?, ?>) value).forEach((k, v) -> {
                         validateResource(client, newNodes, nodes, validateResourceId (key, k.toString(), nodes), v);
                     });
                 } else {
@@ -337,7 +330,7 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
         return newNodes;
     }
 
-    private void validateResource(LwM2mClient client, Map newNodes, Map nodes, String resourceId , Object value) {
+    private void validateResource(LwM2mClient client, Map<String, Object> newNodes, Map<String, Object> nodes, String resourceId , Object value) {
         if (value instanceof Map<?, ?>) {
             ((Map<?, ?>) value).forEach((k, v) -> {
                 setValueToCompositeNodes(client, newNodes, nodes, validateResourceId (resourceId, k.toString(), nodes), v);
@@ -347,7 +340,7 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
         }
     }
 
-    private String validateResourceId (String key, String id, Map nodes) {
+    private String validateResourceId (String key, String id, Map<String, Object> nodes) {
         try {
             Integer.parseInt(id);
             return key + "/" + id;
@@ -357,7 +350,7 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
         }
     }
 
-    private void setValueToCompositeNodes (LwM2mClient client, Map newNodes, Map nodes, String versionedId , Object value) {
+    private void setValueToCompositeNodes (LwM2mClient client, Map<String, Object> newNodes, Map<String, Object> nodes, String versionedId , Object value) {
         // validate value. Must be only primitive, not JsonObject or JsonArray
         try {
             JsonElement element = JsonUtils.parse(value);
@@ -388,7 +381,7 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
         String[] versionedIds = getIdsFromParameters(client, requestMsg);
         TbLwM2MObserveCompositeRequest request = TbLwM2MObserveCompositeRequest.builder().versionedIds(versionedIds).timeout(clientContext.getRequestTimeout(client)).build();
         var mainCallback = new TbLwM2MObserveCompositeCallback(uplinkHandler, logService, client, versionedIds);
-        var rpcCallback = new RpcObserveResponseCompositeCallback(transportService, client, requestMsg, mainCallback);
+        var rpcCallback = new RpcObserveResponseCompositeCallback<>(transportService, client, requestMsg, mainCallback);
         downlinkHandler.sendObserveCompositeRequest(client, request, rpcCallback);
     }
 

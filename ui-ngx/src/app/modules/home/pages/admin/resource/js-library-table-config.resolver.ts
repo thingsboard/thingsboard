@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Injectable } from '@angular/core';
 import {
   CellActionDescriptor,
@@ -92,7 +78,7 @@ export class JsLibraryTableConfigResolver  {
     this.config.columns.push(
       new DateEntityTableColumn<ResourceInfo>('createdTime', 'common.created-time', this.datePipe, '150px'),
       new EntityTableColumn<ResourceInfo>('title', 'resource.title', '60%'),
-      new EntityTableColumn<ResourceInfo>('resourceSubType', 'javascript.javascript-type', '40%',
+      new EntityTableColumn<ResourceInfo>('resourceSubType', 'javascript.script-type', '40%',
         entity => this.translate.instant(ResourceSubTypeTranslationMap.get(entity.resourceSubType))),
       new EntityTableColumn<ResourceInfo>('tenantId', 'resource.system', '60px',
         entity => checkBoxCell(entity.tenantId.id === NULL_UUID)),
@@ -144,7 +130,7 @@ export class JsLibraryTableConfigResolver  {
   }
 
   resolve(): EntityTableConfig<Resource, PageLink, ResourceInfo> {
-    this.config.tableTitle = this.translate.instant('javascript.javascript-library');
+    this.config.tableTitle = this.translate.instant('javascript.scripts');
     this.config.componentsData = {
       resourceSubType: ''
     };

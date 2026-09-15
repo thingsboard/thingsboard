@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.queue.kafka;
 
 import jakarta.annotation.PostConstruct;
@@ -23,6 +10,7 @@ import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.config.SaslConfigs;
 import org.apache.kafka.common.config.SslConfigs;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
@@ -32,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbProperty;
 import org.thingsboard.server.queue.util.PropertyUtils;
 import org.thingsboard.server.queue.util.TbKafkaComponent;
@@ -137,6 +126,18 @@ public class TbKafkaSettings {
     @Value("${queue.kafka.confluent.security.protocol:}")
     private String securityProtocol;
 
+    @Value("${queue.kafka.confluent.oauth.client-id:}")
+    private String oauthClientId;
+
+    @Value("${queue.kafka.confluent.oauth.client-secret:}")
+    private String oauthClientSecret;
+
+    @Value("${queue.kafka.confluent.oauth.endpoint-url:}")
+    private String oauthEndpointUrl;
+
+    @Value("${queue.kafka.confluent.oauth.scope:}")
+    private String oauthScope;
+
     @Value("${queue.kafka.other-inline:}")
     private String otherInline;
 
@@ -213,9 +214,13 @@ public class TbKafkaSettings {
 
         if (useConfluent) {
             props.put("ssl.endpoint.identification.algorithm", sslAlgorithm);
-            props.put("sasl.mechanism", saslMechanism);
-            props.put("sasl.jaas.config", saslConfig);
+            props.put(SaslConfigs.SASL_MECHANISM, saslMechanism);
             props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, securityProtocol);
+            if ("OAUTHBEARER".equalsIgnoreCase(saslMechanism)) {
+                applyOauthBearerProps(props);
+            } else {
+                props.put(SaslConfigs.SASL_JAAS_CONFIG, saslConfig);
+            }
         }
 
         props.put(CommonClientConfigs.REQUEST_TIMEOUT_MS_CONFIG, requestTimeoutMs);
@@ -228,6 +233,34 @@ public class TbKafkaSettings {
         configureSSL(props);
 
         return props;
+    }
+
+    private void applyOauthBearerProps(Properties props) {
+        if (StringUtils.isBlank(oauthClientId) || StringUtils.isBlank(oauthClientSecret) || StringUtils.isBlank(oauthEndpointUrl)) {
+            throw new IllegalStateException("Kafka SASL mechanism is OAUTHBEARER but "
+                    + "queue.kafka.confluent.oauth.client-id / client-secret / endpoint-url are not all set");
+        }
+        if (!oauthEndpointUrl.regionMatches(true, 0, "https://", 0, "https://".length())) {
+            log.warn("Kafka OAuth token endpoint URL is not HTTPS ({}); client credentials will be sent unencrypted",
+                    oauthEndpointUrl);
+        }
+        StringBuilder jaasConfig = new StringBuilder(
+                "org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required"
+                        + " clientId=\"" + escapeJaasValue(oauthClientId) + "\""
+                        + " clientSecret=\"" + escapeJaasValue(oauthClientSecret) + "\"");
+        if (StringUtils.isNotBlank(oauthScope)) {
+            // Some IdPs (e.g. Azure AD's ".default") require a scope for the client-credentials grant.
+            jaasConfig.append(" scope=\"").append(escapeJaasValue(oauthScope)).append("\"");
+        }
+        jaasConfig.append(";");
+        props.put(SaslConfigs.SASL_JAAS_CONFIG, jaasConfig.toString());
+        props.put(SaslConfigs.SASL_LOGIN_CALLBACK_HANDLER_CLASS,
+                "org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginCallbackHandler");
+        props.put(SaslConfigs.SASL_OAUTHBEARER_TOKEN_ENDPOINT_URL, oauthEndpointUrl);
+    }
+
+    private static String escapeJaasValue(String value) {
+        return value.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 
     void configureSSL(Properties props) {

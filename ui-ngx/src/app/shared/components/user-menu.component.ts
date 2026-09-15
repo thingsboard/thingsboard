@@ -1,20 +1,13 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { ChangeDetectionStrategy, Component, Input, OnDestroy, OnInit } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
+import {
+  ChangeDetectionStrategy,
+  Component, EventEmitter,
+  Input,
+  OnDestroy,
+  OnInit, Output,
+  ViewEncapsulation
+} from '@angular/core';
 import { User } from '@shared/models/user.model';
 import { Authority } from '@shared/models/authority.enum';
 import { select, Store } from '@ngrx/store';
@@ -23,17 +16,24 @@ import { selectAuthUser, selectUserDetails } from '@core/auth/auth.selectors';
 import { map } from 'rxjs/operators';
 import { AuthService } from '@core/auth/auth.service';
 import { Router } from '@angular/router';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
     selector: 'tb-user-menu',
     templateUrl: './user-menu.component.html',
     styleUrls: ['./user-menu.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    encapsulation: ViewEncapsulation.None,
     standalone: false
 })
 export class UserMenuComponent implements OnInit, OnDestroy {
 
-  @Input() displayUserInfo: boolean;
+  @Input()
+  @coerceBoolean()
+  collapsed = false;
+
+  @Output()
+  menuClicked = new EventEmitter();
 
   authorities = Authority;
 
@@ -50,6 +50,11 @@ export class UserMenuComponent implements OnInit, OnDestroy {
   userDisplayName$ = this.store.pipe(
     select(selectUserDetails),
     map((user) => this.getUserDisplayName(user))
+  );
+
+  userEmail$ = this.store.pipe(
+    select(selectUserDetails),
+    map((user) => user?.email)
   );
 
   constructor(private store: Store<AppState>,
@@ -104,10 +109,12 @@ export class UserMenuComponent implements OnInit, OnDestroy {
   }
 
   openAccount(): void {
+    this.menuClicked.emit();
     this.router.navigate(['account']);
   }
 
   logout(): void {
+    this.menuClicked.emit();
     this.authService.logout();
   }
 

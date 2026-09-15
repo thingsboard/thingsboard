@@ -1,7 +1,7 @@
 {
   "fqn": "efficiency_card_with_background",
   "name": "Efficiency card with background",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/efficiency_card_with_background.svg",
   "description": "Displays the latest efficiency telemetry in a scalable rectangle card with the background image.",
   "descriptor": {

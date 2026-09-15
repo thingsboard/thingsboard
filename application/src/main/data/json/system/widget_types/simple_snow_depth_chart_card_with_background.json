@@ -1,7 +1,7 @@
 {
   "fqn": "simple_snow_depth_chart_card_with_background",
   "name": "Simple snow depth chart card with background",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/simple_snow_depth_chart_card_with_background_system_widget_image.png",
   "description": "Displays historical snow depth values as a simplified chart with background. Optionally may display the corresponding latest snow depth value.",
   "descriptor": {

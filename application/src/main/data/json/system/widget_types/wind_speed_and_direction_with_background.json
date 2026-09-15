@@ -1,7 +1,7 @@
 {
   "fqn": "wind_speed_and_direction_with_background",
   "name": "Wind speed and direction with background",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/wind_speed_and_direction_with_background_system_widget_image.png",
   "description": "Displays the latest values of the wind speed and direction with background.",
   "descriptor": {

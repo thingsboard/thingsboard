@@ -1,0 +1,50 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<div class="tb-iot-hub-items-page">
+  <!-- Hero section -->
+  <div class="tb-iot-hub-items-hero mb-10 flex justify-between gap-10">
+    <div class="min-w-0 flex-1">
+      <!-- Back link -->
+      <button mat-button color="primary" class="tb-iot-hub-back-btn" (click)="goBack()">
+        <mat-icon>chevron_left</mat-icon>
+        {{ 'iot-hub.back-to-iot-hub' | translate }}
+      </button>
+      <h1 class="tb-iot-hub-items-title">{{ config.titleKey | translate }}</h1>
+      <p class="tb-iot-hub-items-desc">{{ config.descriptionKey | translate }}</p>
+      <div class="flex items-center gap-4">
+        @if (installedItemsCount > 0) {
+          <button mat-stroked-button color="primary" class="tb-iot-hub-items-installed-btn" (click)="navigateToInstalledItems()">
+            <mat-icon>inventory_2</mat-icon>
+            {{ 'iot-hub.installed-items' | translate }}: {{ installedItemsCount }}
+          </button>
+        }
+        <button mat-button color="primary" (click)="openSignup()">
+          {{ 'iot-hub.contribute' | translate }}
+        </button>
+      </div>
+    </div>
+    <div class="tb-iot-hub-items-hero-image">
+      <img [src]="config.image" alt="">
+    </div>
+  </div>
+
+  <!-- Browse component (without tabs) -->
+  <tb-iot-hub-browse
+    [activeType]="config.type"
+    [hideTabs]="true">
+  </tb-iot-hub-browse>
+
+  <!-- Become a Creator footer -->
+  <div class="tb-iot-hub-items-divider"></div>
+  <div class="tb-iot-hub-items-footer">
+    <h2>{{ 'iot-hub.become-a-creator' | translate }}</h2>
+    <p>{{ 'iot-hub.become-creator-text' | translate }}</p>
+    <button mat-stroked-button color="primary" (click)="openSignup()">
+      {{ 'iot-hub.contribute' | translate }}
+    </button>
+  </div>
+</div>

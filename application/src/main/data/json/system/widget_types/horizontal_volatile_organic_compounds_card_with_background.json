@@ -1,7 +1,7 @@
 {
   "fqn": "horizontal_volatile_organic_compounds_card_with_background",
   "name": "Horizontal volatile organic compounds card with background",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/horizontal_volatile_organic_compounds_card_with_background_system_widget_image.png",
   "description": "Displays the latest volatile organic compounds (VOCs) telemetry in a scalable horizontal layout with the background image.",
   "descriptor": {

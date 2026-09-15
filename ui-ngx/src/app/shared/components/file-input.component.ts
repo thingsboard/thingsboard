@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import {
   AfterViewInit,
   Component,
@@ -38,6 +24,7 @@ import { UtilsService } from '@core/services/utils.service';
 import { DialogService } from '@core/services/dialog.service';
 import { FileSizePipe } from '@shared/pipe/file-size.pipe';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { bytesToString } from '@core/utils';
 
 @Component({
     selector: 'tb-file-input',
@@ -216,32 +203,37 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
         return;
       }
 
-      const reader = new FileReader();
-      reader.onload = () => {
-        let fileName = null;
-        let fileContent = null;
-        let mediaType = null;
-        if (reader.readyState === reader.DONE) {
-          fileContent = reader.result;
-          if (fileContent && fileContent.length > 0) {
-            if (this.contentConvertFunction) {
-              fileContent = this.contentConvertFunction(fileContent);
-            }
-            fileName = fileContent ? file.name : null;
-            mediaType = file?.file?.type || null;
-          }
-        }
-        resolve({fileContent, fileName, files: null, mediaType});
-      };
-      reader.onerror = () => {
-        resolve({fileContent: null, fileName: null, files: null, mediaType: null});
-      };
+      const onReadError = () => resolve({fileContent: null, fileName: null, files: null, mediaType: null});
+
       if (this.readAsBinary) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const content = reader.readyState === reader.DONE ? reader.result : null;
+          resolve(this.buildResult(file, content));
+        };
+        reader.onerror = onReadError;
         reader.readAsBinaryString(file.file);
       } else {
-        reader.readAsText(file.file);
+        file.file.arrayBuffer().then(
+          buf => resolve(this.buildResult(file, bytesToString(new Uint8Array(buf)))),
+          onReadError
+        );
       }
     });
+  }
+
+  private buildResult(file: flowjs.FlowFile, content: string | ArrayBuffer): any {
+    let fileContent: any = content;
+    let fileName = null;
+    let mediaType = null;
+    if (fileContent && fileContent.length > 0) {
+      if (this.contentConvertFunction) {
+        fileContent = this.contentConvertFunction(fileContent);
+      }
+      fileName = fileContent ? file.name : null;
+      mediaType = file?.file?.type || null;
+    }
+    return {fileContent, fileName, files: null, mediaType};
   }
 
   private checkMaxSize(file: flowjs.FlowFile): boolean {

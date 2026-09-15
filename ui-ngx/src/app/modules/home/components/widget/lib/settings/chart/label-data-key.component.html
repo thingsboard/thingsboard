@@ -1,18 +1,7 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-License-Identifier: Apache-2.0
 
 -->
 <mat-expansion-panel class="label-data-key flex=1" [formGroup]="labelDataKeyFormGroup" [(expanded)]="expanded">
@@ -24,13 +13,15 @@
         </div>
       </mat-panel-title>
       <span class="flex-1"></span>
-      <button *ngIf="!disabled" mat-icon-button style="min-width: 40px;"
-              type="button"
-              (click)="removeLabelDataKey.emit()"
-              matTooltip="{{ 'action.remove' | translate }}"
-              matTooltipPosition="above">
-        <mat-icon>delete</mat-icon>
-      </button>
+      @if (!disabled) {
+        <button mat-icon-button style="min-width: 40px;"
+                type="button"
+                (click)="removeLabelDataKey.emit()"
+                matTooltip="{{ 'action.remove' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>delete</mat-icon>
+        </button>
+      }
     </div>
   </mat-expansion-panel-header>
   <ng-template matExpansionPanelContent>
@@ -41,9 +32,11 @@
           <mat-form-field class="mat-block flex-1">
             <mat-label translate>widgets.chart.key-name</mat-label>
             <input required matInput formControlName="name">
-            <mat-error *ngIf="labelDataKeyFormGroup.get('name').hasError('required')">
-              {{ 'widgets.chart.key-name-required' | translate }}
-            </mat-error>
+            @if (labelDataKeyFormGroup.get('name').hasError('required')) {
+              <mat-error>
+                {{ 'widgets.chart.key-name-required' | translate }}
+              </mat-error>
+            }
           </mat-form-field>
           <mat-form-field class="mat-block flex-1">
             <mat-label translate>widgets.chart.key-type</mat-label>

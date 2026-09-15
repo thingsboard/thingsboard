@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.rule.engine.action;
 
 import com.google.common.util.concurrent.Futures;
@@ -97,7 +84,7 @@ class TbAssignToCustomerNodeTest extends AbstractRuleNodeUpgradeTest {
     private final Edge EDGE = new Edge();
     private final Dashboard DASHBOARD = new Dashboard();
 
-    private final TenantId TENANT_ID = new TenantId(UUID.fromString("c818385f-e661-407f-8c52-daf2dddf406d"));
+    private final TenantId TENANT_ID = TenantId.fromUUID(UUID.fromString("c818385f-e661-407f-8c52-daf2dddf406d"));
     private final RuleNodeId RULE_NODE_ID = new RuleNodeId(UUID.fromString("c3570bd0-c0bc-4609-97a4-6f57d7c8b809"));
 
     private static Stream<Arguments> givenUnsupportedOriginatorType_whenOnMsg_thenVerifyExceptionThrown() {

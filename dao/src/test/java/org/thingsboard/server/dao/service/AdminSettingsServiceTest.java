@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.dao.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -21,7 +8,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -90,7 +77,7 @@ public class AdminSettingsServiceTest extends AbstractServiceTest {
 
     @Test
     public void whenSavingAdminSettingsWithAlreadyExistingKey_thenReturnError() {
-        String key = RandomStringUtils.randomAlphanumeric(15);
+        String key = RandomStringUtils.secure().nextAlphanumeric(15);
         ObjectNode value = JacksonUtil.newObjectNode().put("test", "test");
 
         AdminSettings systemSettings = new AdminSettings();
@@ -124,7 +111,7 @@ public class AdminSettingsServiceTest extends AbstractServiceTest {
         for (int i = 0; i < totalElements; i++) {
             AdminSettings settings = new AdminSettings();
             settings.setTenantId(tenantId);
-            String key = RandomStringUtils.randomAlphanumeric(15);
+            String key = RandomStringUtils.secure().nextAlphanumeric(15);
             settings.setKey(key);
             settings.setJsonValue(JacksonUtil.newObjectNode().put("value", i));
             adminSettingsService.saveAdminSettings(tenantId, settings);

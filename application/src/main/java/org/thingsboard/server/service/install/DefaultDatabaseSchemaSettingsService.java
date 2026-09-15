@@ -1,24 +1,12 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.install;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.service.install.lts.LtsVersion;
 import org.thingsboard.server.service.install.update.DefaultDataUpdateService;
 
 import java.util.Map;
@@ -31,8 +19,8 @@ public class DefaultDatabaseSchemaSettingsService implements DatabaseSchemaSetti
     // map of versions from which the upgrade to the current version is possible
     // key - supported version prefix, value - display name
     private static final Map<String, String> SUPPORTED_VERSIONS_FOR_UPGRADE = Map.of(
-            "4.2.1", "4.2.1.x",
-            "4.2.2", "4.2.2.x"
+            "4.3.0", "4.3.0.x",
+            "4.3.1", "4.3.1.x"
     );
 
     private final ProjectInfo projectInfo;
@@ -75,7 +63,12 @@ public class DefaultDatabaseSchemaSettingsService implements DatabaseSchemaSetti
 
     @Override
     public void updateSchemaVersion() {
-        jdbcTemplate.execute("UPDATE tb_schema_settings SET schema_version = " + getPackageSchemaVersionForDb());
+        updateSchemaVersion(getPackageSchemaVersion());
+    }
+
+    @Override
+    public void updateSchemaVersion(String version) {
+        jdbcTemplate.execute("UPDATE tb_schema_settings SET schema_version = " + toDbVersion(version));
     }
 
     @Override
@@ -124,14 +117,12 @@ public class DefaultDatabaseSchemaSettingsService implements DatabaseSchemaSetti
     }
 
     private long getPackageSchemaVersionForDb() {
-        String[] versionParts = getPackageSchemaVersion().split("\\.");
+        return toDbVersion(getPackageSchemaVersion());
+    }
 
-        long major = Integer.parseInt(versionParts[0]);
-        long minor = Integer.parseInt(versionParts[1]);
-        long maintenance = Integer.parseInt(versionParts[2]);
-        long patch = Integer.parseInt(versionParts[3]);
-
-        return major * 1_000_000_000L + minor * 1_000_000L + maintenance * 1000L + patch;
+    private long toDbVersion(String version) {
+        LtsVersion v = LtsVersion.parse(version);
+        return v.major() * 1_000_000_000L + v.minor() * 1_000_000L + v.maintenance() * 1000L + v.patch();
     }
 
     private void onSchemaSettingsError(String message) {
@@ -140,14 +131,7 @@ public class DefaultDatabaseSchemaSettingsService implements DatabaseSchemaSetti
     }
 
     private String normalizeVersion(String version) {
-        String[] parts = version.split("\\.");
-
-        int major = Integer.parseInt(parts[0]);
-        int minor = parts.length > 1 ? Integer.parseInt(parts[1]) : 0;
-        int maintenance = parts.length > 2 ? Integer.parseInt(parts[2]) : 0;
-        int patch = parts.length > 3 ? Integer.parseInt(parts[3]) : 0;
-
-        return major + "." + minor + "." + maintenance + "." + patch;
+        return LtsVersion.parse(version).toString();
     }
 
 }

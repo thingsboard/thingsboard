@@ -1,33 +1,40 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
+@import "constants";
+
 :host {
   width: 100%;
 }
 
 :host ::ng-deep {
 
-  .tb-side-menu,
+  .tb-side-menu {
+    padding: 12px 0;
+    margin: 0;
+    list-style: none;
+    --mat-button-text-label-text-weight: 400;
+    &.tb-collapsed {
+      a.mat-mdc-button.mat-mdc-button-base {
+        padding-right: 0;
+        min-width: 0;
+        span.mdc-button__label {
+          opacity: 0;
+        }
+        &.is-new::after {
+          opacity: 0;
+        }
+      }
+    }
+    .mat-divider.mat-divider-horizontal {
+      margin-top: 12px;
+      margin-bottom: 12px;
+    }
+  }
+
   .tb-side-menu ul {
     padding: 0;
     margin-top: 0;
     list-style: none;
-  }
-
-  .tb-side-menu > li {
-    border-bottom: 1px solid rgba(0, 0, 0, .12);
   }
 
   a.mat-mdc-button.mat-mdc-button-base {
@@ -39,15 +46,16 @@
     line-height: 40px;
     border-radius: 0;
     padding: 0 16px;
-    &:hover {
+    --mat-button-text-label-text-color: rgba(0, 0, 0, .76);
+    &:hover, &.tb-hovered {
+      background-color: rgba(0, 0, 0, .07);
       border-bottom: none;
-      background-color: rgba(255,255,255,0.08);
     }
     &:focus {
       border-bottom: none;
     }
     &.tb-active {
-      background-color: rgba(255, 255, 255, .15);
+      background-color: rgba(0, 0, 0, .05);
     }
     .mat-icon {
       margin-right: 8px;
@@ -61,6 +69,8 @@
       text-overflow: ellipsis;
       white-space: nowrap;
       display: inline-flex;
+      opacity: 1;
+      transition: opacity $sidenav-anim-timing;
       & > span {
         overflow: hidden;
         text-overflow: ellipsis;

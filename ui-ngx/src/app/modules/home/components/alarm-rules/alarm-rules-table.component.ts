@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -37,6 +23,7 @@ import { DatePipe } from '@angular/common';
 import { AlarmRulesTableConfig } from "@home/components/alarm-rules/alarm-rules-table-config";
 import { UtilsService } from "@core/services/utils.service";
 import { ActivatedRoute, Router } from "@angular/router";
+import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
 
 @Component({
     selector: 'tb-alarm-rules-table',
@@ -71,7 +58,8 @@ export class AlarmRulesTableComponent {
               private utilsService: UtilsService,
               private destroyRef: DestroyRef,
               private route: ActivatedRoute,
-              private router: Router
+              private router: Router,
+              private iotHubActions: IotHubActionsService
   ) {
     this.pageMode = !!this.route.snapshot.data.isPage;
     effect(() => {
@@ -91,6 +79,7 @@ export class AlarmRulesTableComponent {
           this.entityDebugSettingsService,
           this.utilsService,
           this.router,
+          this.iotHubActions,
           this.pageMode,
         );
         this.cd.markForCheck();

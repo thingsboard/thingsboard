@@ -1,7 +1,7 @@
 {
   "fqn": "ground_temperature_card",
   "name": "Ground temperature card",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/ground_temperature_card_system_widget_image.png",
   "description": "Displays the latest ground temperature telemetry in a scalable rectangle card.",
   "descriptor": {

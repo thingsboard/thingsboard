@@ -1,0 +1,27 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<div class="tb-pe-connectivity-prompt">
+  <button mat-icon-button class="tb-pe-connectivity-prompt-close" (click)="close()" tabindex="-1">
+    <mat-icon>close</mat-icon>
+  </button>
+  <img class="tb-pe-connectivity-prompt-illustration"
+       src="assets/iot-hub/pe-only-illustration.svg" alt="">
+  <h2 class="tb-pe-connectivity-prompt-title">
+    <span class="tb-pe-connectivity-prompt-connector">{{ data.connectorName }}</span>
+    {{ 'iot-hub.pe-connectivity-prompt-title-suffix' | translate }}
+  </h2>
+  <div class="tb-pe-connectivity-prompt-actions">
+    <a mat-flat-button color="primary"
+       href="https://thingsboard.io/installations/"
+       target="_blank" rel="noopener">
+      {{ 'iot-hub.pe-connectivity-prompt-try-pe' | translate }}
+    </a>
+    <button mat-button (click)="close()">
+      {{ 'action.close' | translate }}
+    </button>
+  </div>
+</div>

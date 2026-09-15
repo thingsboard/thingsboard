@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.transport.mqtt.session;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -68,6 +55,7 @@ import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 import org.thingsboard.server.transport.mqtt.adaptors.ProtoMqttAdaptor;
 import org.thingsboard.server.transport.mqtt.gateway.GatewayMetricsService;
 import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugConnectionState;
+import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopic;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -277,6 +265,10 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
     }
 
     ListenableFuture<T> onDeviceConnect(String deviceName, String deviceType) {
+        return onDeviceConnect(deviceName, deviceType, false);
+    }
+
+    ListenableFuture<T> onDeviceConnect(String deviceName, String deviceType, boolean isSparkplug) {
         T result = devices.get(deviceName);
         if (result == null) {
             Lock deviceCreationLock = deviceCreationLockMap.computeIfAbsent(deviceName, s -> new ReentrantLock());
@@ -284,7 +276,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
             try {
                 result = devices.get(deviceName);
                 if (result == null) {
-                    return getDeviceCreationFuture(deviceName, deviceType);
+                    return getDeviceCreationFuture(deviceName, deviceType, isSparkplug);
                 } else {
                     return Futures.immediateFuture(result);
                 }
@@ -296,7 +288,27 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
         }
     }
 
-    private ListenableFuture<T> getDeviceCreationFuture(String deviceName, String deviceType) {
+    ListenableFuture<T> onDeviceConnectSparkplug(SparkplugTopic topic, String deviceType) {
+        String fullPath = topic.getNodeDeviceNameAllPath();
+        // Primary lookup: try to find the device by its full-path name (standard for new devices)
+        T result = devices.get(fullPath);
+
+        if (result == null) {
+            // Secondary lookup (Legacy Fallback): check for the short name if full path is not found.
+            // This supports devices migrated from older versions.
+            String shortName = topic.getNodeDeviceName();
+            result = devices.get(shortName);
+        }
+
+        if (result != null) {
+            return Futures.immediateFuture(result);
+        } else {
+            // If not found in cache at all, proceed with connection/creation using full path
+            return onDeviceConnect(fullPath, deviceType, true);
+        }
+    }
+
+    private ListenableFuture<T> getDeviceCreationFuture(String deviceName, String deviceType, boolean isSparkplug) {
         final SettableFuture<T> futureToSet = SettableFuture.create();
         ListenableFuture<T> future = deviceFutures.putIfAbsent(deviceName, futureToSet);
         if (future != null) {
@@ -309,6 +321,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
                             .setDeviceType(deviceType)
                             .setGatewayIdMSB(gateway.getDeviceId().getId().getMostSignificantBits())
                             .setGatewayIdLSB(gateway.getDeviceId().getId().getLeastSignificantBits())
+                            .setIsSparkplug(isSparkplug)
                             .build(),
                     new TransportServiceCallback<>() {
                         @Override
@@ -844,8 +857,16 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
                                 deviceSessionCtx, msgId, MqttReasonCodes.PubAck.UNSPECIFIED_ERROR.byteValue()));
                     }
                 }
+                // Check for malformed packets (msgId <= 0)
                 if (msgId <= 0) {
-                    closeDeviceSession(deviceName, MqttReasonCodes.Disconnect.MALFORMED_PACKET);
+                    if (deviceSessionCtx.isSparkplug()) {
+                        // Sparkplug devices may use msgId = 0 during the initial connection or for QoS 0 messages.
+                        // We bypass the MALFORMED_PACKET check to allow these sessions to proceed.
+                        log.trace("[{}] Sparkplug session: allowed msgId [{}] for device: [{}]", sessionId, msgId, deviceName);
+                    } else {
+                        // Standard MQTT defense: close session for invalid message IDs
+                        closeDeviceSession(deviceName, MqttReasonCodes.Disconnect.MALFORMED_PACKET);
+                    }
                 }
             }
 

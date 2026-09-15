@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.subscription;
 
 import org.apache.commons.lang3.RandomStringUtils;
@@ -23,7 +10,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.testcontainers.shaded.org.apache.commons.lang3.RandomUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
@@ -55,10 +42,10 @@ public class TbEntityDataSubCtxTest {
 
     private final DeviceId deviceId = new DeviceId(UUID.randomUUID());
 
-    private final Integer cmdId = RandomUtils.nextInt();
-    private final Integer subscriptionId = RandomUtils.nextInt();
-    private final String serviceId = RandomStringUtils.randomAlphanumeric(10);
-    private final String sessionId = RandomStringUtils.randomAlphanumeric(10);
+    private final Integer cmdId = RandomUtils.secure().randomInt();
+    private final Integer subscriptionId = RandomUtils.secure().randomInt();
+    private final String serviceId = RandomStringUtils.secure().nextAlphanumeric(10);
+    private final String sessionId = RandomStringUtils.secure().nextAlphanumeric(10);
 
     private final int maxEntitiesPerDataSubscription = 100;
 

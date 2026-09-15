@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.common.util;
 
 import org.junit.jupiter.api.Test;
@@ -52,10 +39,19 @@ public class NumberUtilsTest {
     }
 
     @Test
+    public void toLong() {
+        assertThat(NumberUtils.toLong(doubleVal)).isEqualTo(1729L);
+        assertThat(NumberUtils.toLong(12.8)).isEqualTo(13L);
+        assertThat(NumberUtils.toLong(28.0)).isEqualTo(28L);
+        assertThat(NumberUtils.toLong(3_980_173_734.0)).isEqualTo(3_980_173_734L);
+    }
+
+    @Test
     public void roundResult() {
         assertThat(NumberUtils.roundResult(doubleVal, null)).isEqualTo(1729.1729);
-        assertThat(NumberUtils.roundResult(doubleVal, 0)).isEqualTo(1729);
+        assertThat(NumberUtils.roundResult(doubleVal, 0)).isEqualTo(1729L);
         assertThat(NumberUtils.roundResult(doubleVal, 2)).isEqualTo(1729.17);
+        assertThat(NumberUtils.roundResult(3_980_173_734.0, 0)).isEqualTo(3_980_173_734L);
     }
 
 }

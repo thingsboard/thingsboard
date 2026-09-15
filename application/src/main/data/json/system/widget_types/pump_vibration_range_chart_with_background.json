@@ -1,7 +1,7 @@
 {
   "fqn": "pump_vibration_range_chart_with_background",
   "name": "Vibration range chart with background",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/vibration_range_chart_with_background.svg",
   "description": "Displays changes to vibration data over time visualized with color ranges and background.",
   "descriptor": {

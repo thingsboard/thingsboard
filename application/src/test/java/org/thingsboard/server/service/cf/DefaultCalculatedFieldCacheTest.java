@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.cf;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -92,8 +79,8 @@ public class DefaultCalculatedFieldCacheTest {
 
     @Test
     public void onComponentLifecycleEvent_tenantDeleted_evictsAllTenantCfsFromAllMaps() {
-        TenantId tenant1 = new TenantId(UUID.randomUUID());
-        TenantId tenant2 = new TenantId(UUID.randomUUID());
+        TenantId tenant1 = TenantId.fromUUID(UUID.randomUUID());
+        TenantId tenant2 = TenantId.fromUUID(UUID.randomUUID());
         DeviceId device1 = new DeviceId(UUID.randomUUID());
         DeviceId device2 = new DeviceId(UUID.randomUUID());
 
@@ -110,7 +97,7 @@ public class DefaultCalculatedFieldCacheTest {
 
     @Test
     public void onComponentLifecycleEvent_tenantDeleted_evictsOwnerEntities() {
-        TenantId tenant = new TenantId(UUID.randomUUID());
+        TenantId tenant = TenantId.fromUUID(UUID.randomUUID());
         DeviceId device = new DeviceId(UUID.randomUUID());
         stubDeviceOwner(tenant, device, tenant);
 
@@ -125,7 +112,7 @@ public class DefaultCalculatedFieldCacheTest {
 
     @Test
     public void onComponentLifecycleEvent_tenantDeleted_removesLinksToLinkedEntities() {
-        TenantId tenant = new TenantId(UUID.randomUUID());
+        TenantId tenant = TenantId.fromUUID(UUID.randomUUID());
         DeviceId cfEntity = new DeviceId(UUID.randomUUID());
         DeviceId linkedDevice = new DeviceId(UUID.randomUUID());
 
@@ -139,7 +126,7 @@ public class DefaultCalculatedFieldCacheTest {
 
     @Test
     public void onComponentLifecycleEvent_tenantUpdated_doesNotEvictCfs() {
-        TenantId tenant = new TenantId(UUID.randomUUID());
+        TenantId tenant = TenantId.fromUUID(UUID.randomUUID());
         DeviceId device = new DeviceId(UUID.randomUUID());
         CalculatedField cf = addCfToCache(tenant, device);
 
@@ -152,7 +139,7 @@ public class DefaultCalculatedFieldCacheTest {
 
     @Test
     public void onComponentLifecycleEvent_deviceDeleted_evictsCfsForThatDevice() {
-        TenantId tenant = new TenantId(UUID.randomUUID());
+        TenantId tenant = TenantId.fromUUID(UUID.randomUUID());
         DeviceId device = new DeviceId(UUID.randomUUID());
         CalculatedField cf = addCfToCache(tenant, device);
 
@@ -164,7 +151,7 @@ public class DefaultCalculatedFieldCacheTest {
 
     @Test
     public void onComponentLifecycleEvent_deviceDeleted_removesLinksForLinkedEntities() {
-        TenantId tenant = new TenantId(UUID.randomUUID());
+        TenantId tenant = TenantId.fromUUID(UUID.randomUUID());
         DeviceId device = new DeviceId(UUID.randomUUID());
         DeviceId linkedDevice = new DeviceId(UUID.randomUUID());
         addCfToCache(tenant, device, linkedDevice);
@@ -176,7 +163,7 @@ public class DefaultCalculatedFieldCacheTest {
 
     @Test
     public void onComponentLifecycleEvent_deviceDeleted_evictsDeviceFromOwnerEntities() {
-        TenantId tenant = new TenantId(UUID.randomUUID());
+        TenantId tenant = TenantId.fromUUID(UUID.randomUUID());
         CustomerId customer = new CustomerId(UUID.randomUUID());
         DeviceId device = new DeviceId(UUID.randomUUID());
         stubDeviceOwner(tenant, device, customer);
@@ -191,7 +178,7 @@ public class DefaultCalculatedFieldCacheTest {
 
     @Test
     public void onComponentLifecycleEvent_assetDeleted_evictsCfsForThatAsset() {
-        TenantId tenant = new TenantId(UUID.randomUUID());
+        TenantId tenant = TenantId.fromUUID(UUID.randomUUID());
         AssetId asset = new AssetId(UUID.randomUUID());
         CalculatedField cf = addCfToCache(tenant, asset);
 
@@ -203,7 +190,7 @@ public class DefaultCalculatedFieldCacheTest {
 
     @Test
     public void onComponentLifecycleEvent_deviceCreated_addsDeviceToOwnerEntities() {
-        TenantId tenant = new TenantId(UUID.randomUUID());
+        TenantId tenant = TenantId.fromUUID(UUID.randomUUID());
         CustomerId customer = new CustomerId(UUID.randomUUID());
         DeviceId device = new DeviceId(UUID.randomUUID());
         stubDeviceOwner(tenant, device, customer);
@@ -217,7 +204,7 @@ public class DefaultCalculatedFieldCacheTest {
 
     @Test
     public void onComponentLifecycleEvent_customerDeleted_evictsCustomerOwnerEntries() {
-        TenantId tenant = new TenantId(UUID.randomUUID());
+        TenantId tenant = TenantId.fromUUID(UUID.randomUUID());
         CustomerId customer = new CustomerId(UUID.randomUUID());
         DeviceId device = new DeviceId(UUID.randomUUID());
         stubDeviceOwner(tenant, device, customer);
@@ -235,7 +222,7 @@ public class DefaultCalculatedFieldCacheTest {
 
     @Test
     public void onComponentLifecycleEvent_deviceProfileDeleted_evictsCfsForThatProfile() {
-        TenantId tenant = new TenantId(UUID.randomUUID());
+        TenantId tenant = TenantId.fromUUID(UUID.randomUUID());
         DeviceProfileId profileId = new DeviceProfileId(UUID.randomUUID());
         CalculatedField cf = addCfToCache(tenant, profileId);
 
@@ -247,7 +234,7 @@ public class DefaultCalculatedFieldCacheTest {
 
     @Test
     public void onComponentLifecycleEvent_deviceProfileDeleted_removesLinksForLinkedEntities() {
-        TenantId tenant = new TenantId(UUID.randomUUID());
+        TenantId tenant = TenantId.fromUUID(UUID.randomUUID());
         DeviceProfileId profileId = new DeviceProfileId(UUID.randomUUID());
         DeviceId linkedDevice = new DeviceId(UUID.randomUUID());
         addCfToCache(tenant, profileId, linkedDevice);
@@ -259,7 +246,7 @@ public class DefaultCalculatedFieldCacheTest {
 
     @Test
     public void onComponentLifecycleEvent_deviceProfileDeleted_doesNotEvictOtherProfilesCfs() {
-        TenantId tenant = new TenantId(UUID.randomUUID());
+        TenantId tenant = TenantId.fromUUID(UUID.randomUUID());
         DeviceProfileId profile1 = new DeviceProfileId(UUID.randomUUID());
         DeviceProfileId profile2 = new DeviceProfileId(UUID.randomUUID());
         CalculatedField cf1 = addCfToCache(tenant, profile1);
@@ -275,7 +262,7 @@ public class DefaultCalculatedFieldCacheTest {
 
     @Test
     public void onComponentLifecycleEvent_deviceProfileUpdated_doesNotEvictCfs() {
-        TenantId tenant = new TenantId(UUID.randomUUID());
+        TenantId tenant = TenantId.fromUUID(UUID.randomUUID());
         DeviceProfileId profileId = new DeviceProfileId(UUID.randomUUID());
         CalculatedField cf = addCfToCache(tenant, profileId);
 
@@ -287,7 +274,7 @@ public class DefaultCalculatedFieldCacheTest {
 
     @Test
     public void onComponentLifecycleEvent_assetProfileDeleted_evictsCfsForThatProfile() {
-        TenantId tenant = new TenantId(UUID.randomUUID());
+        TenantId tenant = TenantId.fromUUID(UUID.randomUUID());
         AssetProfileId profileId = new AssetProfileId(UUID.randomUUID());
         CalculatedField cf = addCfToCache(tenant, profileId);
 
@@ -299,7 +286,7 @@ public class DefaultCalculatedFieldCacheTest {
 
     @Test
     public void onComponentLifecycleEvent_assetProfileDeleted_removesLinksForLinkedEntities() {
-        TenantId tenant = new TenantId(UUID.randomUUID());
+        TenantId tenant = TenantId.fromUUID(UUID.randomUUID());
         AssetProfileId profileId = new AssetProfileId(UUID.randomUUID());
         AssetId linkedAsset = new AssetId(UUID.randomUUID());
         addCfToCache(tenant, profileId, linkedAsset);
@@ -311,7 +298,7 @@ public class DefaultCalculatedFieldCacheTest {
 
     @Test
     public void onComponentLifecycleEvent_assetProfileDeleted_doesNotEvictOtherProfilesCfs() {
-        TenantId tenant = new TenantId(UUID.randomUUID());
+        TenantId tenant = TenantId.fromUUID(UUID.randomUUID());
         AssetProfileId profile1 = new AssetProfileId(UUID.randomUUID());
         AssetProfileId profile2 = new AssetProfileId(UUID.randomUUID());
         CalculatedField cf1 = addCfToCache(tenant, profile1);
@@ -327,7 +314,7 @@ public class DefaultCalculatedFieldCacheTest {
 
     @Test
     public void onComponentLifecycleEvent_assetProfileUpdated_doesNotEvictCfs() {
-        TenantId tenant = new TenantId(UUID.randomUUID());
+        TenantId tenant = TenantId.fromUUID(UUID.randomUUID());
         AssetProfileId profileId = new AssetProfileId(UUID.randomUUID());
         CalculatedField cf = addCfToCache(tenant, profileId);
 
@@ -341,7 +328,7 @@ public class DefaultCalculatedFieldCacheTest {
 
     @Test
     public void onComponentLifecycleEvent_calculatedFieldCreated_addsCfToCache() {
-        TenantId tenant = new TenantId(UUID.randomUUID());
+        TenantId tenant = TenantId.fromUUID(UUID.randomUUID());
         DeviceId device = new DeviceId(UUID.randomUUID());
         CalculatedFieldId cfId = new CalculatedFieldId(UUID.randomUUID());
         CalculatedField cf = buildCalculatedField(cfId, tenant, device, simpleCfConfig());
@@ -355,7 +342,7 @@ public class DefaultCalculatedFieldCacheTest {
 
     @Test
     public void onComponentLifecycleEvent_calculatedFieldDeleted_evictsCfFromCache() {
-        TenantId tenant = new TenantId(UUID.randomUUID());
+        TenantId tenant = TenantId.fromUUID(UUID.randomUUID());
         DeviceId device = new DeviceId(UUID.randomUUID());
         CalculatedField cf = addCfToCache(tenant, device);
 
@@ -367,7 +354,7 @@ public class DefaultCalculatedFieldCacheTest {
 
     @Test
     public void onComponentLifecycleEvent_calculatedFieldUpdated_refreshesCfInCache() {
-        TenantId tenant = new TenantId(UUID.randomUUID());
+        TenantId tenant = TenantId.fromUUID(UUID.randomUUID());
         DeviceId device = new DeviceId(UUID.randomUUID());
         CalculatedField cf = addCfToCache(tenant, device);
 
@@ -384,7 +371,7 @@ public class DefaultCalculatedFieldCacheTest {
 
     @Test
     public void evictOwner_customerDeleted_recursivelyEvictsDevicesOwnedByThatCustomer() {
-        TenantId tenant = new TenantId(UUID.randomUUID());
+        TenantId tenant = TenantId.fromUUID(UUID.randomUUID());
         CustomerId customer = new CustomerId(UUID.randomUUID());
         DeviceId device = new DeviceId(UUID.randomUUID());
 
@@ -406,7 +393,7 @@ public class DefaultCalculatedFieldCacheTest {
 
     @Test
     public void evictOwner_tenantDeleted_recursivelyEvictsCustomerAndItsOwnedDevices() {
-        TenantId tenant = new TenantId(UUID.randomUUID());
+        TenantId tenant = TenantId.fromUUID(UUID.randomUUID());
         CustomerId customer = new CustomerId(UUID.randomUUID());
         DeviceId device = new DeviceId(UUID.randomUUID());
 
@@ -431,7 +418,7 @@ public class DefaultCalculatedFieldCacheTest {
 
     @Test
     public void onComponentLifecycleEvent_tenantProfileUpdated_callsHandleTenantProfileUpdate() {
-        TenantId tenant = new TenantId(UUID.randomUUID());
+        TenantId tenant = TenantId.fromUUID(UUID.randomUUID());
         TenantProfileId profileId = new TenantProfileId(UUID.randomUUID());
         DefaultCalculatedFieldCache spyCache = spy(cache);
 
@@ -442,7 +429,7 @@ public class DefaultCalculatedFieldCacheTest {
 
     @Test
     public void onComponentLifecycleEvent_tenantProfileDeleted_doesNotCallHandleTenantProfileUpdate() {
-        TenantId tenant = new TenantId(UUID.randomUUID());
+        TenantId tenant = TenantId.fromUUID(UUID.randomUUID());
         TenantProfileId profileId = new TenantProfileId(UUID.randomUUID());
         DefaultCalculatedFieldCache spyCache = spy(cache);
 

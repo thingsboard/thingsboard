@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import {
   ComparisonResultType,
   DataEntry,
@@ -34,6 +20,7 @@ import {
 import {
   AlarmFilter,
   ComparisonTsValue,
+  ComplexOperation,
   EntityData,
   EntityDataPageLink,
   EntityFilter,
@@ -112,6 +99,7 @@ export interface EntityDataSubscriptionOptions {
   pageLink?: EntityDataPageLink;
   keyFilters?: Array<KeyFilter>;
   additionalKeyFilters?: Array<KeyFilter>;
+  keyFiltersOperation?: ComplexOperation;
   subscriptionTimewindow?: SubscriptionTimewindow;
   latestTsOffset?: number;
 }
@@ -356,7 +344,6 @@ export class EntityDataSubscription {
 
           this.subscriber = new TelemetrySubscriber(this.telemetryService);
           this.dataCommand = new EntityDataCmd();
-
           let keyFilters = this.entityDataSubscriptionOptions.keyFilters;
           if (this.entityDataSubscriptionOptions.additionalKeyFilters) {
             if (keyFilters) {
@@ -370,6 +357,7 @@ export class EntityDataSubscription {
             entityFilter: this.entityDataSubscriptionOptions.entityFilter,
             pageLink: this.entityDataSubscriptionOptions.pageLink,
             keyFilters,
+            keyFiltersOperation: this.entityDataSubscriptionOptions.keyFiltersOperation,
             entityFields,
             latestValues: this.latestValues
           };
@@ -494,7 +482,8 @@ export class EntityDataSubscription {
           }
           this.countCommand.query = {
             entityFilter: this.entityDataSubscriptionOptions.entityFilter,
-            keyFilters
+            keyFilters,
+            keyFiltersOperation: this.entityDataSubscriptionOptions.keyFiltersOperation
           };
           this.subscriber.subscriptionCommands.push(this.countCommand);
 
@@ -569,7 +558,8 @@ export class EntityDataSubscription {
           }
           this.alarmCountCommand.query = {
             entityFilter: this.entityDataSubscriptionOptions.entityFilter,
-            keyFilters
+            keyFilters,
+            keyFiltersOperation: this.entityDataSubscriptionOptions.keyFiltersOperation
           };
           if (this.entityDataSubscriptionOptions.alarmFilter) {
             this.alarmCountCommand.query = {...this.alarmCountCommand.query, ...this.entityDataSubscriptionOptions.alarmFilter};

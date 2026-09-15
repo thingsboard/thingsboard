@@ -1,0 +1,11 @@
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
+:host ::ng-deep {
+  tb-markdown-editor {
+    .markdown-content.tb-edit-mode {
+      &:not(.tb-fullscreen) {
+        padding-bottom: 0;
+      }
+    }
+  }
+}

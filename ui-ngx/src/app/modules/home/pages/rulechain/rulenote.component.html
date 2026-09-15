@@ -1,0 +1,33 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+@if (modelservice.isEditable() && !note.readonly && edit) {
+  <div class="fc-noselect fc-nodeedit"
+       (mousedown)="$event.stopPropagation()"
+       (click)="noteEdit($event)">
+    <i class="fa fa-pencil" aria-hidden="true"></i>
+  </div>
+  <div class="fc-noselect fc-nodedelete"
+       (mousedown)="$event.stopPropagation()"
+       (click)="noteDelete($event)">
+    &times;
+  </div>
+}
+<div class="tb-rule-note-bg"
+     [style.background-color]="note.backgroundColor || defaultBackgroundColor"
+     [style.border-color]="note.borderColor"
+     [style.border-width]="note.borderWidth !== null ? note.borderWidth + 'px' : null"
+     (dblclick)="userNoteCallbacks?.doubleClick?.($event, note)">
+  @if (note?.content) {
+    <tb-markdown [data]="note.content"
+                 [applyDefaultMarkdownStyle]="applyDefault"
+                 [additionalStyles]="additionalStyles"
+                 [containerClass]="noteClass"
+                 fallbackToPlainMarkdown
+                 usePlainMarkdown>
+    </tb-markdown>
+  }
+</div>

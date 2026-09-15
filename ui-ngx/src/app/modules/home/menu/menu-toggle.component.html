@@ -1,28 +1,48 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-License-Identifier: Apache-2.0
 
 -->
-<a mat-button class="tb-button-toggle" (click)="toggleSection($event)">
-  <tb-icon matButtonIcon *ngIf="section.icon !== null">{{section.icon}}</tb-icon>
+<a mat-button class="tb-button-toggle"
+   [class.tb-toggled]="section.opened && !collapsed"
+   [class.tb-hovered]="collapsed && menuPopover?.component?.tbVisible"
+   [class.tb-active]="toggleSectionActive()"
+   (click)="toggleSection($event)"
+   tb-popover
+   #menuPopover="tbPopover"
+   [tbPopoverTrigger]="collapsed ? 'hover' : null"
+   [tbPopoverMouseLeaveDelay]="0.05"
+   [tbPopoverMenu]="true"
+   [tbPopoverOverlayStyle]="{marginTop: '-8px'}"
+   [tbPopoverContent]="menuToggleMenuTpl"
+   [tbPopoverPlacement]="'rightTop'"
+   [class.is-new]="section.isNew">
+  @if (section.icon !== null) {
+    <tb-icon matButtonIcon>{{section.icon}}</tb-icon>
+  }
   <span>{{section.customTranslate ? (section.name | customTranslate) : (section.name | translate)}}</span>
   <span class="pull-right fa fa-chevron-down tb-toggle-icon"
-        [class.tb-toggled]="section.opened"></span>
+  [class.tb-toggled]="section.opened"></span>
 </a>
 <ul id="docs-menu-{{section.name | nospace}}" class="tb-menu-toggle-list" [style.height]="sectionHeight()">
-  <li *ngFor="let page of section.pages; trackBy: trackBySectionPages">
-    <tb-menu-link [section]="page"></tb-menu-link>
-  </li>
+  @for (page of section.pages; track page.id) {
+    <li>
+      <tb-menu-link [section]="page"></tb-menu-link>
+    </li>
+  }
 </ul>
+
+<ng-template #menuToggleMenuTpl>
+  <div class="tb-menu-content tb-toggle-menu-items">
+    <div class="tb-menu-toggle-header">
+      <span>{{section.customTranslate ? (section.name | customTranslate) : (section.name | translate)}}</span>
+    </div>
+    @for (page of section.pages; track page.id) {
+      <a mat-button routerLinkActive="tb-active" [routerLinkActiveOptions]="{paths: 'subset', queryParams: 'ignored', matrixParams: 'ignored', fragment: 'ignored'}"
+         routerLink="{{page.path}}" (click)="menuPopover?.hide();">
+        <span>{{page.customTranslate ? (page.name | customTranslate) : (page.name | translate)}}</span>
+      </a>
+    }
+  </div>
+</ng-template>

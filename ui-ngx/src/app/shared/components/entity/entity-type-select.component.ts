@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Component, DestroyRef, forwardRef, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
@@ -173,9 +159,9 @@ export class EntityTypeSelectComponent implements ControlValueAccessor, OnInit, 
     }
   }
 
-  displayEntityTypeFn(entityType?: EntityType | AliasEntityType | null): string | undefined {
-    if (this.additionEntityTypes[entityType]) {
-      return this.additionEntityTypes[entityType];
+  displayEntityTypeFn(entityType?: EntityType | AliasEntityType | string | null): string | undefined {
+    if (this.additionEntityTypes[entityType as EntityType]) {
+      return this.additionEntityTypes[entityType as EntityType];
     } else if (entityType) {
       return this.translate.instant(entityTypeTranslations.get(entityType as EntityType).type);
     } else {

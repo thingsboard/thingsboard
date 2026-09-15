@@ -1,22 +1,24 @@
-Here is the list of commands that can be used to quickly install ThingsBoard Edge on RHEL/CentOS 7/8 and connect to the server.
+Here is the list of commands that can be used to quickly install ThingsBoard Edge on RHEL/CentOS 9/10 and connect to the server.
+
+**Note:** OpenJDK 25 requires RHEL/CentOS 9+ or RHEL/CentOS 10+. Earlier versions (RHEL/CentOS 7, 8) are not supported.
 
 #### Prerequisites
 Before continuing to installation, execute the following commands to install the necessary tools:
 
 ```bash
-sudo yum install -y nano wget && sudo yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+sudo dnf install -y nano wget
 {:copy-code}
 ```
 
-#### Step 1. Install Java 17 (OpenJDK)
-ThingsBoard service is running on Java 17. To install OpenJDK 17, follow these instructions:
+#### Step 1. Install Java 25 (OpenJDK)
+ThingsBoard service is running on Java 25. To install OpenJDK 25, follow these instructions:
 
 ```bash
-sudo dnf install java-17-openjdk
+sudo dnf install -y java-25-openjdk
 {:copy-code}
 ```
 
-Configure your operating system to use OpenJDK 17 by default. You can configure the default version by running the following command:
+Configure your operating system to use OpenJDK 25 by default. You can configure the default version by running the following command:
 
 ```bash
 sudo update-alternatives --config java
@@ -33,7 +35,7 @@ java -version
 The expected result is:
 
 ```text
-openjdk version "17.x.xx"
+openjdk version "25.x.xx"
 OpenJDK Runtime Environment (...)
 OpenJDK 64-Bit Server VM (build ...)
 ```
@@ -41,7 +43,7 @@ OpenJDK 64-Bit Server VM (build ...)
 #### Step 2. Configure ThingsBoard Edge Database
 
 ThingsBoard Edge supports **SQL** and **hybrid** database configurations.
-In this guide, we’ll use an **SQL** database.
+In this guide, we'll use an **SQL** database.
 For more details about the hybrid setup, please refer to the official installation instructions on the <a href="https://thingsboard.io/docs/user-guide/install/edge/rhel/#step-2-configure-thingsboard-database" target="_blank">ThingsBoard documentation site</a>.
 
 To install the PostgreSQL database, run these commands:
@@ -54,19 +56,19 @@ sudo dnf update
 
 Install the repository RPM:
 
-* **For CentOS/RHEL 8:**
+* **For RHEL/CentOS 9:**
 
 ```bash
-# Install the repository RPM (For CentOS/RHEL 8):
-sudo sudo dnf -y install https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+# Install the repository RPM (for RHEL/CentOS 9):
+sudo dnf -y install https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm
 {:copy-code}
 ```
 
-* **For CentOS/RHEL 9:**
+* **For RHEL/CentOS 10:**
 
 ```bash
-# Install the repository RPM (for CentOS 9):
-sudo dnf -y install https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+# Install the repository RPM (for RHEL/CentOS 10):
+sudo dnf -y install https://download.postgresql.org/pub/repos/yum/reporpms/EL-10-x86_64/pgdg-redhat-repo-latest.noarch.rpm
 {:copy-code}
 ```
 
@@ -91,8 +93,8 @@ sudo -u postgres psql -c "\password"
 
 Then, enter and confirm the password.
 
-Since ThingsBoard Edge uses the PostgreSQL database for local storage, configuring MD5 authentication ensures that only authenticated users or 
-applications can access the database, thus protecting your data. After configuring the password, 
+Since ThingsBoard Edge uses the PostgreSQL database for local storage, configuring MD5 authentication ensures that only authenticated users or
+applications can access the database, thus protecting your data. After configuring the password,
 edit the pg_hba.conf file to use MD5 hashing for authentication instead of the default method (ident) for local IPv4 connections.
 
 To replace ident with md5, run the following command:
@@ -102,7 +104,7 @@ sudo sed -i 's/^host\s\+all\s\+all\s\+127\.0\.0\.1\/32\s\+ident/host    all     
 {:copy-code}
 ```
 
-Then run the command that will restart the PostgreSQL service to apply configuration changes, connect to the database as a postgres user, 
+Then run the command that will restart the PostgreSQL service to apply configuration changes, connect to the database as a postgres user,
 and create the ThingsBoard Edge database (tb_edge). To connect to the PostgreSQL database, enter the PostgreSQL password.
 
 ```bash

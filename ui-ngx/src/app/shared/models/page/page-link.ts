@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { getDescendantProp, isObject } from '@core/utils';
@@ -21,6 +7,19 @@ import { SortDirection } from '@angular/material/sort';
 import { EntitiesTableAction } from '@home/models/entity/entity-table-component.models';
 
 export const MAX_SAFE_PAGE_SIZE = 2147483647;
+
+export type NullsOrderStrategy = 'default' | 'nulls_first' | 'nulls_last';
+
+let nullsOrderStrategy: NullsOrderStrategy = 'default';
+let edqsEnabled = false;
+
+export function setNullsOrderStrategy(value: NullsOrderStrategy): void {
+  nullsOrderStrategy = value ?? 'default';
+}
+
+export function setEdqsEnabled(value: boolean): void {
+  edqsEnabled = !!value;
+}
 
 export type PageLinkSearchFunction<T> = (entity: T, textSearch: string, searchProperty?: string) => boolean;
 
@@ -73,9 +72,37 @@ const defaultPageLinkSearch: PageLinkSearchFunction<any> =
     return false;
   };
 
-export function sortItems(item1: any, item2: any, property: string, asc: boolean): number {
+export type SortColumnType = 'entityField' | 'attribute' | 'timeseries';
+
+export function sortItems(item1: any, item2: any, property: string, asc: boolean,
+                          columnType: SortColumnType = 'entityField'): number {
   const item1Value = getDescendantProp(item1, property);
   const item2Value = getDescendantProp(item2, property);
+  const item1Empty = item1Value === null || item1Value === undefined || item1Value === '';
+  const item2Empty = item2Value === null || item2Value === undefined || item2Value === '';
+  // Mirror backend's nulls ordering. EDQS uses fixed NULLS FIRST regardless of strategy and
+  // naive compare below already matches it, so skip this branch when EDQS is on.
+  // For entityField columns the ORDER BY hits a real nullable DB column → strategy always applies.
+  // For attribute/timeseries the strategy only applies to numeric/boolean values; string/json
+  // are coalesced to '' on the backend, so naive compare below already matches its order.
+  if (!edqsEnabled && (item1Empty || item2Empty) && !(item1Empty && item2Empty)) {
+    let applyStrategy = columnType === 'entityField';
+    if (!applyStrategy) {
+      const other = item1Empty ? item2Value : item1Value;
+      applyStrategy =
+        typeof other === 'boolean' || other === 'true' || other === 'false' ||
+        (typeof other === 'number' && isFinite(other)) ||
+        (typeof other === 'string' && other.trim() !== '' && !isNaN(Number(other)));
+    }
+    if (applyStrategy) {
+      const nullsFirst = nullsOrderStrategy === 'nulls_first'
+        || (nullsOrderStrategy === 'default' && !asc);
+      if (item1Empty) {
+        return nullsFirst ? -1 : 1;
+      }
+      return nullsFirst ? 1 : -1;
+    }
+  }
   let result = 0;
   if (item1Value !== item2Value) {
     const item1Type = typeof item1Value;
@@ -84,11 +111,25 @@ export function sortItems(item1: any, item2: any, property: string, asc: boolean
       result = item1Value - item2Value;
     } else if (item1Type === 'string' && item2Type === 'string') {
       result = item1Value.localeCompare(item2Value);
-    } else if ((item1Type === 'boolean' && item2Type === 'boolean') || (item1Type !== item2Type)) {
-      if (item1Value && !item2Value) {
+    } else if (item1Type === 'boolean' && item2Type === 'boolean') {
+      result = item1Value ? 1 : -1;
+    } else if (item1Type !== item2Type) {
+      const item1Empty = item1Value === null || item1Value === undefined || item1Value === '';
+      const item2Empty = item2Value === null || item2Value === undefined || item2Value === '';
+      if (!item1Empty && item2Empty) {
         result = 1;
-      } else if (!item1Value && item2Value) {
+      } else if (item1Empty && !item2Empty) {
         result = -1;
+      } else if (!item1Empty && !item2Empty) {
+        const str1 = String(item1Value).trim();
+        const str2 = String(item2Value).trim();
+        const num1 = str1.length ? Number(str1) : NaN;
+        const num2 = str2.length ? Number(str2) : NaN;
+        if (!isNaN(num1) && !isNaN(num2)) {
+          result = num1 - num2;
+        } else {
+          result = String(item1Value).localeCompare(String(item2Value));
+        }
       }
     }
   }

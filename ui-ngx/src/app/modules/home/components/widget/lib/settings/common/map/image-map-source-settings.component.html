@@ -1,18 +1,7 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-License-Identifier: Apache-2.0
 
 -->
 <div class="tb-image-map-source-settings tb-form-panel stroked" [formGroup]="imageMapSourceFormGroup">
@@ -25,11 +14,13 @@
       <tb-toggle-option [value]="ImageSourceType.entityKey">{{ 'widgets.maps.image.image-source-entity-key' | translate }}</tb-toggle-option>
     </tb-toggle-select>
   </div>
-  <tb-gallery-image-input *ngIf="ImageSourceType.image === imageMapSourceFormGroup.get('sourceType').value"
-                          required
-                          formControlName="url">
-  </tb-gallery-image-input>
-  <ng-container *ngIf="ImageSourceType.entityKey === imageMapSourceFormGroup.get('sourceType').value">
+  @if (ImageSourceType.image === imageMapSourceFormGroup.get('sourceType').value) {
+    <tb-gallery-image-input
+      required
+      formControlName="url">
+    </tb-gallery-image-input>
+  }
+  @if (ImageSourceType.entityKey === imageMapSourceFormGroup.get('sourceType').value) {
     <div class="tb-form-row column-xs">
       <div class="fixed-title-width" translate>widgets.maps.image.source-entity-alias</div>
       <tb-entity-alias-select
@@ -58,5 +49,5 @@
         formControlName="entityKey">
       </tb-data-key-input>
     </div>
-  </ng-container>
+  }
 </div>

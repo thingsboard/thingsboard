@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Component, Injector } from '@angular/core';
 import {
   Datasource,
@@ -78,6 +64,7 @@ export class BarChartWithLabelsWidgetSettingsComponent extends WidgetSettingsCom
     this.barChartWidgetSettingsForm = this.fb.group({
 
       dataZoom: [settings.dataZoom, []],
+      dataZoomUpdateTimewindow: [settings.dataZoomUpdateTimewindow, []],
 
       showBarLabel: [settings.showBarLabel, []],
       barLabelFont: [settings.barLabelFont, []],
@@ -130,16 +117,23 @@ export class BarChartWithLabelsWidgetSettingsComponent extends WidgetSettingsCom
   }
 
   protected validatorTriggers(): string[] {
-    return ['showBarLabel', 'showBarValue', 'showBarBorder', 'showLegend', 'showTooltip', 'tooltipShowDate'];
+    return ['dataZoom', 'showBarLabel', 'showBarValue', 'showBarBorder', 'showLegend', 'showTooltip', 'tooltipShowDate'];
   }
 
   protected updateValidators(emitEvent: boolean) {
+    const dataZoom: boolean = this.barChartWidgetSettingsForm.get('dataZoom').value;
     const showBarLabel: boolean = this.barChartWidgetSettingsForm.get('showBarLabel').value;
     const showBarValue: boolean = this.barChartWidgetSettingsForm.get('showBarValue').value;
     const showBarBorder: boolean = this.barChartWidgetSettingsForm.get('showBarBorder').value;
     const showLegend: boolean = this.barChartWidgetSettingsForm.get('showLegend').value;
     const showTooltip: boolean = this.barChartWidgetSettingsForm.get('showTooltip').value;
     const tooltipShowDate: boolean = this.barChartWidgetSettingsForm.get('tooltipShowDate').value;
+
+    if (dataZoom) {
+      this.barChartWidgetSettingsForm.get('dataZoomUpdateTimewindow').enable();
+    } else {
+      this.barChartWidgetSettingsForm.get('dataZoomUpdateTimewindow').disable();
+    }
 
     if (showBarLabel) {
       this.barChartWidgetSettingsForm.get('barLabelFont').enable();

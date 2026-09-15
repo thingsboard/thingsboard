@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { BaseData, ExportableEntity } from '@shared/models/base-data';
 import { HasTenantId } from '@shared/models/entity.models';
 import { AiModelId } from '@shared/models/id/ai-model-id';
@@ -105,11 +91,11 @@ export const AiModelMap = new Map<AiProvider, { modelList: string[], providerFie
     AiProvider.OPENAI,
     {
       modelList: [
-        'o4-mini',
         'o3-pro',
         'o3',
-        'o3-mini',
-        'o1',
+        'gpt-5.5-pro',
+        'gpt-5.5',
+        'gpt-5.4-pro',
         'gpt-5.4',
         'gpt-5.4-mini',
         'gpt-5.4-nano',
@@ -120,7 +106,6 @@ export const AiModelMap = new Map<AiProvider, { modelList: string[], providerFie
         'gpt-5-nano',
         'gpt-4.1',
         'gpt-4.1-mini',
-        'gpt-4.1-nano',
         'gpt-4o',
         'gpt-4o-mini',
       ],
@@ -140,9 +125,10 @@ export const AiModelMap = new Map<AiProvider, { modelList: string[], providerFie
     AiProvider.GOOGLE_AI_GEMINI,
     {
       modelList: [
+        'gemini-3.5-flash',
         'gemini-3.1-pro-preview',
         'gemini-3-flash-preview',
-        'gemini-3.1-flash-lite-preview',
+        'gemini-3.1-flash-lite',
         'gemini-2.5-pro',
         'gemini-2.5-flash',
         'gemini-2.5-flash-lite'
@@ -155,9 +141,10 @@ export const AiModelMap = new Map<AiProvider, { modelList: string[], providerFie
     AiProvider.GOOGLE_VERTEX_AI_GEMINI,
     {
       modelList: [
+        'gemini-3.5-flash',
         'gemini-3.1-pro-preview',
         'gemini-3-flash-preview',
-        'gemini-3.1-flash-lite-preview',
+        'gemini-3.1-flash-lite',
         'gemini-2.5-pro',
         'gemini-2.5-flash',
         'gemini-2.5-flash-lite'
@@ -170,15 +157,12 @@ export const AiModelMap = new Map<AiProvider, { modelList: string[], providerFie
     AiProvider.MISTRAL_AI,
     {
       modelList: [
-        'magistral-medium-latest',
-        'magistral-small-latest',
         'mistral-large-latest',
         'mistral-medium-latest',
         'mistral-small-latest',
         'ministral-14b-latest',
         'ministral-8b-latest',
-        'ministral-3b-latest',
-        'open-mistral-nemo',
+        'ministral-3b-latest'
       ],
       providerFieldsList: ['apiKey'],
       modelFieldsList: ['temperature', 'topP', 'frequencyPenalty', 'presencePenalty', 'maxOutputTokens'],
@@ -188,6 +172,8 @@ export const AiModelMap = new Map<AiProvider, { modelList: string[], providerFie
     AiProvider.ANTHROPIC,
     {
       modelList: [
+        'claude-opus-4-8',
+        'claude-opus-4-7',
         'claude-opus-4-6',
         'claude-opus-4-5',
         'claude-opus-4-1',
@@ -225,13 +211,21 @@ export const AiModelMap = new Map<AiProvider, { modelList: string[], providerFie
   ],
 ]);
 
-export const AiRuleNodeResponseFormatTypeOnlyText: AiProvider[] = [AiProvider.AMAZON_BEDROCK, AiProvider.ANTHROPIC, AiProvider.GITHUB_MODELS];
-
 export enum ResponseFormat {
   TEXT = 'TEXT',
   JSON = 'JSON',
   JSON_SCHEMA = 'JSON_SCHEMA'
 }
+
+export const aiRuleNodeResponseFormats = (provider: AiProvider): ResponseFormat[] => {
+  switch (provider) {
+    case AiProvider.ANTHROPIC:
+    case AiProvider.AMAZON_BEDROCK:
+      return [ResponseFormat.TEXT, ResponseFormat.JSON_SCHEMA];
+    default:
+      return [ResponseFormat.TEXT, ResponseFormat.JSON, ResponseFormat.JSON_SCHEMA];
+  }
+};
 
 export interface AiModelWithUserMsg {
   userMessage: {

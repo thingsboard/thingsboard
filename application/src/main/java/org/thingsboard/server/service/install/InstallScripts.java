@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.install;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -135,6 +122,10 @@ public class InstallScripts {
         return Paths.get(getDataDir(), JSON_DIR, SYSTEM_DIR, WIDGET_TYPES_DIR);
     }
 
+    public Path getWidgetBundlesDir() {
+        return Paths.get(getDataDir(), JSON_DIR, SYSTEM_DIR, WIDGET_BUNDLES_DIR);
+    }
+
     public String getDataDir() {
         if (!StringUtils.isEmpty(dataDir)) {
             if (!Paths.get(this.dataDir).toFile().isDirectory()) {
@@ -207,7 +198,7 @@ public class InstallScripts {
     public void loadSystemWidgets() {
         log.info("Loading system widgets");
         Map<Path, JsonNode> widgetsBundlesMap = new HashMap<>();
-        Path widgetBundlesDir = Paths.get(getDataDir(), JSON_DIR, SYSTEM_DIR, WIDGET_BUNDLES_DIR);
+        Path widgetBundlesDir = getWidgetBundlesDir();
         try (Stream<Path> dirStream = listDir(widgetBundlesDir).filter(path -> path.toString().endsWith(JSON_EXT))) {
             dirStream.forEach(
                     path -> {

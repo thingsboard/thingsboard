@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.queue.ruleengine;
 
 import lombok.Getter;
@@ -27,7 +14,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-import org.testcontainers.shaded.org.apache.commons.lang3.RandomUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
@@ -59,6 +46,7 @@ import org.thingsboard.server.queue.provider.KafkaMonolithQueueFactory;
 import org.thingsboard.server.queue.provider.KafkaTbRuleEngineQueueFactory;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.provider.TbRuleEngineQueueFactory;
+import org.thingsboard.server.service.queue.TbMsgPackProcessingContextFactory;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingStrategyFactory;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineSubmitStrategyFactory;
 import org.thingsboard.server.service.stats.RuleEngineStatisticsService;
@@ -194,6 +182,7 @@ public class TbRuleEngineQueueConsumerManagerTest {
                 .consumerExecutor(consumersExecutor)
                 .scheduler(scheduler)
                 .taskExecutor(mgmtExecutor)
+                .packProcessingContextFactory(new TbMsgPackProcessingContextFactory.DefaultTbMsgPackProcessingContextFactory())
                 .build();
     }
 
@@ -542,18 +531,18 @@ public class TbRuleEngineQueueConsumerManagerTest {
             Queue oldConfig = consumerManager.getConfig();
             Queue newConfig = JacksonUtil.clone(oldConfig);
             newConfig.setConsumerPerPartition(RandomUtils.nextBoolean());
-            newConfig.setPollInterval(RandomUtils.nextInt(100, 501));
-            newConfig.setPartitions(RandomUtils.nextInt(1, 10));
+            newConfig.setPollInterval(RandomUtils.secure().randomInt(100, 501));
+            newConfig.setPartitions(RandomUtils.secure().randomInt(1, 10));
             newConfig.setPackProcessingTimeout(RandomUtils.nextLong(100, 5001));
-            newConfig.getSubmitStrategy().setType(SubmitStrategyType.values()[RandomUtils.nextInt(0, SubmitStrategyType.values().length)]);
-            newConfig.getProcessingStrategy().setType(ProcessingStrategyType.values()[RandomUtils.nextInt(0, ProcessingStrategyType.values().length)]);
+            newConfig.getSubmitStrategy().setType(SubmitStrategyType.values()[RandomUtils.secure().randomInt(0, SubmitStrategyType.values().length)]);
+            newConfig.getProcessingStrategy().setType(ProcessingStrategyType.values()[RandomUtils.secure().randomInt(0, ProcessingStrategyType.values().length)]);
             log.info("Generated new config: consumerPerPartition={}, pollInterval={}, processingStrategy={}",
                     newConfig.isConsumerPerPartition(), newConfig.getPollInterval(), newConfig.getProcessingStrategy().getType());
             return newConfig;
         };
         Supplier<Set<TopicPartitionInfo>> partitionsUpdater = () -> {
-            int partitionsCount = RandomUtils.nextInt(0, 20);
-            int[] partitions = IntStream.generate(() -> RandomUtils.nextInt(0, 20))
+            int partitionsCount = RandomUtils.secure().randomInt(0, 20);
+            int[] partitions = IntStream.generate(() -> RandomUtils.secure().randomInt(0, 20))
                     .distinct().limit(partitionsCount)
                     .sorted().toArray();
             log.info("Generated new partitions: {}", Arrays.toString(partitions));

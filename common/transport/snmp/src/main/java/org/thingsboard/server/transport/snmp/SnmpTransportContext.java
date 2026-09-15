@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.transport.snmp;
 
 import jakarta.annotation.PreDestroy;
@@ -160,7 +147,6 @@ public class SnmpTransportContext extends TransportContext {
             return;
         }
         sessions.put(device.getId(), sessionContext);
-        snmpTransportService.createQueryingTasks(sessionContext);
         log.info("Established SNMP device session for device {}", device.getId());
     }
 
@@ -224,6 +210,8 @@ public class SnmpTransportContext extends TransportContext {
                                 registerTransportSession(sessionContext, msg);
                             });
                             transportService.lifecycleEvent(sessionContext.getTenantId(), sessionContext.getDeviceId(), ComponentLifecycleEvent.STARTED, true, null);
+                            snmpTransportService.createQueryingTasks(sessionContext);
+                            log.info("[{}] Session registered and querying tasks created", sessionContext.getDeviceId());
                         } else {
                             log.warn("[{}] Failed to process device auth", sessionContext.getDeviceId());
                         }

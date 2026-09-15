@@ -1,7 +1,7 @@
 {
   "fqn": "fluid_pressure_progress_bar",
   "name": "Pressure progress bar",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/pressure_progress_bar_(1).svg",
   "description": "Displays fluid pressure reading as a horizontal progress bar. Allows to configure value range, bar colors, and other settings.",
   "descriptor": {

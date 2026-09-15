@@ -1,0 +1,16 @@
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
+:host {
+  display: grid;
+  width: 650px;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100vh;
+  grid-template-rows: min-content minmax(auto, 1fr) min-content;
+}
+
+:host-context(.tb-fullscreen-dialog .mat-mdc-dialog-container) {
+  .mat-mdc-dialog-content {
+    padding: 8px;
+  }
+}

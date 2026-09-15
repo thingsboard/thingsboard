@@ -1,7 +1,7 @@
 {
   "fqn": "horizontal_sulfur_dioxide_so2_card_with_background",
   "name": "Horizontal sulfur dioxide (SO2) card with background",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/SO2-horizontal-value-card-with-background.svg",
   "description": "Produced by volcanoes and industrial processes, particularly the burning of coal and oil.",
   "descriptor": {

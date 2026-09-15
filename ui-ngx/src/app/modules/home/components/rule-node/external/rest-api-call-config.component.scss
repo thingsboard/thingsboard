@@ -1,0 +1,19 @@
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
+:host ::ng-deep {
+  .mat-expansion-panel-content {
+    .mat-expansion-panel-body {
+      .tb-kv-map-config {
+        margin-bottom: 0;
+        .body {
+          .mdc-icon-button {
+            margin-bottom: 22px;
+          }
+        }
+      }
+    }
+  }
+  textarea.tb-enable-vertical-resize {
+    resize: vertical;
+  }
+}

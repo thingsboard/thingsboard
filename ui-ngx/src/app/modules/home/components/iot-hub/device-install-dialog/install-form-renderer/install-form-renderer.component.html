@@ -1,0 +1,108 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+@if (formGroup) {
+  <form [formGroup]="formGroup" class="tb-install-form flex flex-col gap-4">
+    @for (field of fields; track field.key; let i = $index) {
+
+      <!-- typed widget -->
+      @switch (field.type) {
+        @case (FormFieldType.BOOLEAN) {
+          <mat-checkbox [formControlName]="field.key">{{ field.label }}</mat-checkbox>
+        }
+        @case (FormFieldType.SELECT) {
+          <mat-form-field appearance="outline">
+            <mat-label>{{ field.label }}</mat-label>
+            <mat-select [formControlName]="field.key">
+              @for (opt of field.options; track opt.value) {
+                <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
+              }
+            </mat-select>
+            @if (field.helpText) {
+              <mat-hint>{{ field.helpText }}</mat-hint>
+            }
+            @if (formGroup.controls[field.key]?.hasError('required')) {
+              <mat-error>{{ field.label + ' is required' }}</mat-error>
+            }
+          </mat-form-field>
+        }
+        @case (FormFieldType.PASSWORD) {
+          <mat-form-field appearance="outline">
+            <mat-label>{{ field.label }}</mat-label>
+            <input matInput [type]="passwordVisible[field.key] ? 'text' : 'password'"
+                   [formControlName]="field.key">
+            <button mat-icon-button matSuffix type="button"
+                    (click)="togglePasswordVisible(field.key)">
+              <mat-icon>{{ passwordVisible[field.key] ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
+            @if (field.randomGenerator) {
+              <button mat-icon-button matSuffix type="button"
+                      [matTooltip]="'iot-hub.generate-random-value' | translate"
+                      matTooltipPosition="above"
+                      (click)="regenerate(field)">
+                <mat-icon>autorenew</mat-icon>
+              </button>
+            }
+            @if (field.helpText) {
+              <mat-hint>{{ field.helpText }}</mat-hint>
+            }
+            @if (formGroup.controls[field.key]?.hasError('required')) {
+              <mat-error>{{ field.label + ' is required' }}</mat-error>
+            }
+            @if (formGroup.controls[field.key]?.hasError('pattern')) {
+              <mat-error>{{ getPatternErrorMessage(field) }}</mat-error>
+            }
+          </mat-form-field>
+        }
+        @case (FormFieldType.INTEGER) {
+          <mat-form-field appearance="outline">
+            <mat-label>{{ field.label }}</mat-label>
+            <input matInput type="number" [formControlName]="field.key">
+            @if (field.helpText) {
+              <mat-hint>{{ field.helpText }}</mat-hint>
+            }
+            @if (formGroup.controls[field.key]?.hasError('required')) {
+              <mat-error>{{ field.label + ' is required' }}</mat-error>
+            }
+            @if (formGroup.controls[field.key]?.hasError('pattern')) {
+              <mat-error>{{ getPatternErrorMessage(field) }}</mat-error>
+            }
+          </mat-form-field>
+        }
+        @default {
+          <mat-form-field appearance="outline">
+            <mat-label>{{ field.label }}</mat-label>
+            <input matInput [formControlName]="field.key">
+            @if (field.randomGenerator) {
+              <button mat-icon-button matSuffix type="button"
+                      [matTooltip]="'iot-hub.generate-random-value' | translate"
+                      matTooltipPosition="above"
+                      (click)="regenerate(field)">
+                <mat-icon>autorenew</mat-icon>
+              </button>
+            }
+            @if (field.helpText) {
+              <mat-hint>{{ field.helpText }}</mat-hint>
+            }
+            @if (formGroup.controls[field.key]?.hasError('required')) {
+              <mat-error>{{ field.label + ' is required' }}</mat-error>
+            }
+            @if (formGroup.controls[field.key]?.hasError('pattern')) {
+              <mat-error>{{ getPatternErrorMessage(field) }}</mat-error>
+            }
+          </mat-form-field>
+        }
+      }
+
+      @if (field.type === FormFieldType.BOOLEAN && field.helpText) {
+        <div class="tb-install-form-field-help">{{ field.helpText }}</div>
+      }
+      @if (field.helpImage) {
+        <img class="tb-install-form-field-help-image" [src]="imagePath(field.helpImage)" [alt]="field.label">
+      }
+    }
+  </form>
+}

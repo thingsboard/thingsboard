@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import {
   AfterContentChecked,
   AfterContentInit,
@@ -33,7 +19,7 @@ import {
   OnInit,
   Output,
   QueryList,
-  SimpleChanges,
+  SimpleChanges, TemplateRef,
   ViewChild
 } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
@@ -50,6 +36,7 @@ import { MatButtonToggle, MatButtonToggleGroup } from '@angular/material/button-
 export interface ToggleHeaderOption {
   name: string;
   value: any;
+  template?: TemplateRef<any>;
   error$?: Observable<string>;
 }
 
@@ -68,6 +55,8 @@ export type ScrollDirection = 'after' | 'before';
 export class ToggleOption implements OnChanges, OnDestroy {
 
   @Input() value: any;
+
+  @Input() template: TemplateRef<any>;
 
   @Input() error: string;
 
@@ -127,6 +116,7 @@ export abstract class _ToggleBase extends PageComponent implements AfterContentI
           {
             name: option.viewValue,
             value: option.value,
+            template: option.template,
             error$: option.currentError.asObservable()
           }
         );
@@ -300,10 +290,6 @@ export class ToggleHeaderComponent extends _ToggleBase implements OnInit, AfterV
       this._showPaginationControlsChanged = false;
       this.cd.markForCheck();
     }
-  }
-
-  trackByHeaderOption(index: number, option: ToggleHeaderOption){
-    return option.value;
   }
 
   handlePaginatorClick(direction: ScrollDirection, $event: Event) {

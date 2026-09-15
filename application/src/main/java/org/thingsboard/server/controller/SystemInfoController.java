@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -40,6 +27,7 @@ import org.thingsboard.server.common.data.mobile.qrCodeSettings.QrCodeSettings;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.settings.UserSettings;
 import org.thingsboard.server.common.data.settings.UserSettingsType;
+import org.thingsboard.server.common.msg.edqs.EdqsService;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.mobile.QrCodeSettingService;
 import org.thingsboard.server.dao.trendz.TrendzSettingsService;
@@ -52,6 +40,7 @@ import org.thingsboard.server.utils.DebugModeRateLimitsConfig;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Hidden
@@ -76,6 +65,17 @@ public class SystemInfoController extends BaseController {
     @Value("${debug.settings.default_duration:15}")
     private int defaultDebugDurationMinutes;
 
+    @Value("${sql.query.key-filters-or-conditions.enabled:true}")
+    private boolean keyFiltersOrConditionsEnabled;
+
+    @Value("${sql.entity_data_query_nulls_order_strategy:default}")
+    private String nullsOrderStrategy;
+
+    @Value("${iot-hub.base-url:https://iot-hub.thingsboard.io}")
+    private String iotHubBaseUrl;
+
+    private static final Set<String> ACCEPTED_NULLS_ORDER_STRATEGIES = Set.of("default", "nulls_first", "nulls_last");
+
     @Autowired(required = false)
     private BuildProperties buildProperties;
 
@@ -90,6 +90,9 @@ public class SystemInfoController extends BaseController {
 
     @Autowired
     private TrendzSettingsService trendzSettingsService;
+
+    @Autowired
+    private EdqsService edqsService;
 
     @PostConstruct
     public void init() {
@@ -150,6 +153,8 @@ public class SystemInfoController extends BaseController {
         }
         systemParams.setUserSettings(userSettingsNode);
         systemParams.setMaxDatapointsLimit(maxDatapointsLimit);
+        systemParams.setNullsOrderStrategy(ACCEPTED_NULLS_ORDER_STRATEGIES.contains(nullsOrderStrategy) ? nullsOrderStrategy : "default");
+        systemParams.setEdqsEnabled(edqsService.isApiEnabled());
         if (!currentUser.isSystemAdmin()) {
             DefaultTenantProfileConfiguration tenantProfileConfiguration = tenantProfileCache.get(tenantId).getDefaultProfileConfiguration();
             systemParams.setMaxResourceSize(tenantProfileConfiguration.getMaxResourceSize());
@@ -170,9 +175,11 @@ public class SystemInfoController extends BaseController {
             systemParams.setIntermediateAggregationIntervalInSecForCF(tenantProfileConfiguration.getIntermediateAggregationIntervalInSecForCF());
             systemParams.setTrendzSettings(trendzSettingsService.findTrendzSettings(currentUser.getTenantId()));
         }
+        systemParams.setIotHubBaseUrl(iotHubBaseUrl);
         systemParams.setMobileQrEnabled(Optional.ofNullable(qrCodeSettingService.findQrCodeSettings(TenantId.SYS_TENANT_ID))
                 .map(QrCodeSettings::getQrCodeConfig).map(QRCodeConfig::isShowOnHomePage)
                 .orElse(false));
+        systemParams.setAllowKeyFiltersOrConditions(keyFiltersOrConditionsEnabled);
         return systemParams;
     }
 

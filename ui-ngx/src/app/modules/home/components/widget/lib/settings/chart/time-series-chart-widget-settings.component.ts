@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Component, Injector } from '@angular/core';
 import {
   DataKey,
@@ -135,6 +121,7 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
       thresholds: [settings.thresholds, []],
 
       dataZoom: [settings.dataZoom, []],
+      dataZoomUpdateTimewindow: [settings.dataZoomUpdateTimewindow, []],
       stack: [settings.stack, []],
 
       grid: [settings.grid, []],
@@ -181,15 +168,22 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
   }
 
   protected validatorTriggers(): string[] {
-    return ['comparisonEnabled', 'showLegend', 'showTooltip', 'tooltipShowDate', 'stack'];
+    return ['comparisonEnabled', 'dataZoom', 'showLegend', 'showTooltip', 'tooltipShowDate', 'stack'];
   }
 
   protected updateValidators(emitEvent: boolean) {
     const comparisonEnabled: boolean = this.timeSeriesChartWidgetSettingsForm.get('comparisonEnabled').value;
+    const dataZoom: boolean = this.timeSeriesChartWidgetSettingsForm.get('dataZoom').value;
     const showLegend: boolean = this.timeSeriesChartWidgetSettingsForm.get('showLegend').value;
     const showTooltip: boolean = this.timeSeriesChartWidgetSettingsForm.get('showTooltip').value;
     const tooltipShowDate: boolean = this.timeSeriesChartWidgetSettingsForm.get('tooltipShowDate').value;
     const stack: boolean = this.timeSeriesChartWidgetSettingsForm.get('stack').value;
+
+    if (dataZoom) {
+      this.timeSeriesChartWidgetSettingsForm.get('dataZoomUpdateTimewindow').enable();
+    } else {
+      this.timeSeriesChartWidgetSettingsForm.get('dataZoomUpdateTimewindow').disable();
+    }
 
     if (comparisonEnabled) {
       this.timeSeriesChartWidgetSettingsForm.get('timeForComparison').enable();

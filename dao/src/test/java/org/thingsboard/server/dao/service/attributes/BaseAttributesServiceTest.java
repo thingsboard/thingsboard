@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.dao.service.attributes;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
@@ -122,7 +109,7 @@ public abstract class BaseAttributesServiceTest extends AbstractServiceTest {
 
     @Test
     public void testDummyRequestWithEmptyResult() throws Exception {
-        var future = attributesService.find(new TenantId(UUID.randomUUID()), new DeviceId(UUID.randomUUID()), AttributeScope.SERVER_SCOPE, "TEST");
+        var future = attributesService.find(TenantId.fromUUID(UUID.randomUUID()), new DeviceId(UUID.randomUUID()), AttributeScope.SERVER_SCOPE, "TEST");
         Assert.assertNotNull(future);
         var result = future.get(10, TimeUnit.SECONDS);
         Assert.assertTrue(result.isEmpty());
@@ -130,7 +117,7 @@ public abstract class BaseAttributesServiceTest extends AbstractServiceTest {
 
     @Test
     public void testConcurrentFetchAndUpdate() throws Exception {
-        var tenantId = new TenantId(UUID.randomUUID());
+        var tenantId = TenantId.fromUUID(UUID.randomUUID());
         ListeningExecutorService pool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(2));
         try {
             for (int i = 0; i < 100; i++) {
@@ -144,7 +131,7 @@ public abstract class BaseAttributesServiceTest extends AbstractServiceTest {
 
     @Test
     public void testConcurrentFetchAndUpdateMulti() throws Exception {
-        var tenantId = new TenantId(UUID.randomUUID());
+        var tenantId = TenantId.fromUUID(UUID.randomUUID());
         ListeningExecutorService pool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(2));
         try {
             for (int i = 0; i < 100; i++) {
@@ -158,7 +145,7 @@ public abstract class BaseAttributesServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFetchAndUpdateEmpty() throws Exception {
-        var tenantId = new TenantId(UUID.randomUUID());
+        var tenantId = TenantId.fromUUID(UUID.randomUUID());
         var deviceId = new DeviceId(UUID.randomUUID());
         var scope = AttributeScope.SERVER_SCOPE;
         var key = "TEST";
@@ -172,7 +159,7 @@ public abstract class BaseAttributesServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFetchAndUpdateMulti() throws Exception {
-        var tenantId = new TenantId(UUID.randomUUID());
+        var tenantId = TenantId.fromUUID(UUID.randomUUID());
         var deviceId = new DeviceId(UUID.randomUUID());
         var scope = AttributeScope.SERVER_SCOPE;
         var key1 = "TEST1";
@@ -204,7 +191,7 @@ public abstract class BaseAttributesServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindAllKeysByEntityId() {
-        var tenantId = new TenantId(UUID.randomUUID());
+        var tenantId = TenantId.fromUUID(UUID.randomUUID());
         var deviceId = new DeviceId(UUID.randomUUID());
         saveAttribute(tenantId, deviceId, AttributeScope.SERVER_SCOPE, "key1", "123");
         saveAttribute(tenantId, deviceId, AttributeScope.SERVER_SCOPE, "key2", "123");
@@ -217,7 +204,7 @@ public abstract class BaseAttributesServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindAllKeysByEntityIdAndAttributeType() {
-        var tenantId = new TenantId(UUID.randomUUID());
+        var tenantId = TenantId.fromUUID(UUID.randomUUID());
         var deviceId = new DeviceId(UUID.randomUUID());
         saveAttribute(tenantId, deviceId, AttributeScope.SERVER_SCOPE, "key1", "123");
         saveAttribute(tenantId, deviceId, AttributeScope.SERVER_SCOPE, "key2", "123");
@@ -230,7 +217,7 @@ public abstract class BaseAttributesServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindAllByEntityIdAndAttributeType() {
-        var tenantId = new TenantId(UUID.randomUUID());
+        var tenantId = TenantId.fromUUID(UUID.randomUUID());
         var deviceId = new DeviceId(UUID.randomUUID());
         saveAttribute(tenantId, deviceId, AttributeScope.SERVER_SCOPE, "key1", "123");
         saveAttribute(tenantId, deviceId, AttributeScope.SERVER_SCOPE, "key2", "123");

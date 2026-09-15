@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Component, NgZone, OnDestroy, OnInit } from '@angular/core';
 import { StateObject, StateParams } from '@core/api/widget-api.models';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -29,6 +15,7 @@ import { EntityService } from '@core/http/entity.service';
 import { EntityType } from '@shared/models/entity-type.models';
 import { map, tap } from 'rxjs/operators';
 import { MobileService } from '@core/services/mobile.service';
+import { BreadcrumbService } from '@core/services/breadcrumb.service';
 
 @Component({
     selector: 'tb-entity-state-controller',
@@ -37,6 +24,8 @@ import { MobileService } from '@core/services/mobile.service';
     standalone: false
 })
 export class EntityStateControllerComponent extends StateControllerComponent implements OnInit, OnDestroy {
+
+  breadcrumbs$ = this.breadcrumbService.breadcrumbs$;
 
   selectedStateIndex = -1;
 
@@ -47,7 +36,8 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
               private utils: UtilsService,
               private entityService: EntityService,
               private mobileService: MobileService,
-              private dashboardUtils: DashboardUtilsService) {
+              private dashboardUtils: DashboardUtilsService,
+              private breadcrumbService: BreadcrumbService) {
     super(router, route, ngZone, statesControllerService);
   }
 

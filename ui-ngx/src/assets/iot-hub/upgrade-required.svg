@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100" fill="none">
+  <!-- Designed to be applied via CSS `mask-image`: opacities on each
+       shape encode the original design so any `background-color` (CE
+       primary, PE primary, etc.) retints the icon. -->
+  <g clip-path="url(#clip-upgrade-required)">
+    <circle cx="50" cy="50" r="50" fill="#000" opacity="0.06"/>
+    <path d="M66.6654 49.9993L63.7279 52.9368L52.082 41.3118V66.666H47.9154V41.3118L36.2904 52.9577L33.332 49.9993L49.9987 33.3327L66.6654 49.9993Z" fill="#000"/>
+    <circle cx="50" cy="50" r="49.0625" stroke="#000" stroke-width="1.875" stroke-dasharray="10 10" opacity="0.4"/>
+  </g>
+  <defs>
+    <clipPath id="clip-upgrade-required">
+      <rect width="100" height="100" fill="#fff"/>
+    </clipPath>
+  </defs>
+</svg>

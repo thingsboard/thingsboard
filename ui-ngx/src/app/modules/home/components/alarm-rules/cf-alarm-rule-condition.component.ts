@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { ChangeDetectorRef, Component, forwardRef, Input, OnChanges, SimpleChanges } from '@angular/core';
 import {
   AbstractControl,
@@ -142,21 +128,24 @@ export class CfAlarmRuleConditionComponent implements ControlValueAccessor, Vali
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes.arguments) {
-      if (changes.arguments && !changes.arguments.firstChange) {
-        this.recalculateArgumentValidity();
+    if (changes.arguments && !changes.arguments.firstChange) {
+      if (this.recalculateArgumentValidity()) {
+        this.onValidatorChange();
       }
     }
   }
 
-  private recalculateArgumentValidity(): void {
+  private recalculateArgumentValidity(): boolean {
+    const prevFiltersValid = this.filtersArgumentsValid;
+    const prevSchedulerValid = this.schedulerArgumentsValid;
     if (!this.modelValue || !this.arguments) {
       this.filtersArgumentsValid = true;
       this.schedulerArgumentsValid = true;
-      return;
+    } else {
+      this.filtersArgumentsValid = this.areFilterAndPredicateArgumentsValid(this.modelValue, this.arguments);
+      this.schedulerArgumentsValid = this.isScheduleArgumentValid(this.modelValue, Object.keys(this.arguments));
     }
-    this.filtersArgumentsValid = this.areFilterAndPredicateArgumentsValid(this.modelValue, this.arguments);
-    this.schedulerArgumentsValid = this.isScheduleArgumentValid(this.modelValue, Object.keys(this.arguments));
+    return prevFiltersValid !== this.filtersArgumentsValid || prevSchedulerValid !== this.schedulerArgumentsValid;
   }
 
   private isScheduleArgumentValid(obj: any, validArguments: string[]): boolean {

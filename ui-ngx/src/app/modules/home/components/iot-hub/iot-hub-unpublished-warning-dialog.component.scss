@@ -1,0 +1,68 @@
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
+.tb-iot-hub-warning-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  max-width: 480px;
+}
+
+.tb-iot-hub-warning-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tb-iot-hub-warning-icon {
+  color: #d32f2f;
+  font-size: 28px;
+  width: 28px;
+  height: 28px;
+}
+
+.tb-iot-hub-warning-title {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 24px;
+  letter-spacing: 0.1px;
+  color: rgba(0, 0, 0, 0.87);
+  margin: 0;
+}
+
+.tb-iot-hub-warning-text {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  letter-spacing: 0.2px;
+  color: rgba(0, 0, 0, 0.75);
+  margin: 0;
+}
+
+.tb-iot-hub-warning-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(211, 47, 47, 0.08);
+  border-left: 3px solid #d32f2f;
+  border-radius: 2px;
+
+  .tb-iot-hub-warning-item-name {
+    font-weight: 600;
+    color: rgba(0, 0, 0, 0.87);
+  }
+
+  .tb-iot-hub-warning-item-version {
+    font-size: 13px;
+    color: rgba(0, 0, 0, 0.54);
+  }
+}
+
+.tb-iot-hub-warning-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 8px;
+}

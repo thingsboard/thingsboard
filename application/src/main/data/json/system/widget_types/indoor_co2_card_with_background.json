@@ -1,7 +1,7 @@
 {
   "fqn": "indoor_co2_card_with_background",
   "name": "Indoor CO2 card with background",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/indoor_co2_card_with_background_system_widget_image.png",
   "description": "Displays the latest indoor CO2 level telemetry in a scalable rectangle card with the background image.",
   "descriptor": {

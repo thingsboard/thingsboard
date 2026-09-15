@@ -1,18 +1,7 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-License-Identifier: Apache-2.0
 
 -->
 <div class="tb-two-factor-auth-login-content mat-app-background tb-dark flex flex-col items-center justify-center"
@@ -76,7 +65,7 @@
                     tooltipPosition="above"
                     icon="content_copy"
                     [style]="{'font-size': '24px', color: 'rgba(255,255,255,.8)'}"
-                  >
+                    >
                   </tb-copy-button>
                 </div>
                 <div class="flex w-full flex-col items-center justify-start gap-2">
@@ -120,6 +109,7 @@
                                     label="{{ 'login.phone-input.phone-input-label' | translate }}"
                                     hint="login.phone-input.phone-input-hint"
                                     requiredErrorText="{{ 'login.phone-input.phone-input-required' | translate }}"
+                                    appearance="outline"
                                     validationErrorText="{{ 'login.phone-input.phone-input-validation' | translate }}"
                                     formControlName="phone"
                                     [floatLabel]="'auto'">
@@ -167,12 +157,16 @@
                            type="email" required
                            autocomplete="email"
                            placeholder="{{ 'login.email-label' | translate }}" />
-                    <mat-error *ngIf="emailConfigForm.get('email').hasError('required')">
-                      {{ 'login.email-required' | translate }}
-                    </mat-error>
-                    <mat-error *ngIf="emailConfigForm.get('email').hasError('email')">
-                      {{ 'login.invalid-email-format' | translate }}
-                    </mat-error>
+                    @if (emailConfigForm.get('email').hasError('required')) {
+                      <mat-error>
+                        {{ 'login.email-required' | translate }}
+                      </mat-error>
+                    }
+                    @if (emailConfigForm.get('email').hasError('email')) {
+                      <mat-error>
+                        {{ 'login.invalid-email-format' | translate }}
+                      </mat-error>
+                    }
                   </mat-form-field>
                 </form>
                 <div class="flex w-full flex-col items-center justify-start gap-2">
@@ -267,9 +261,9 @@
                  autocomplete="one-time-code"
                  placeholder="{{ 'login.verification-code' | translate }}">
           @if (configForm.get('verificationCode').getError('required') ||
-          configForm.get('verificationCode').getError('minlength') ||
-          configForm.get('verificationCode').getError('maxlength') ||
-          configForm.get('verificationCode').getError('pattern')) {
+            configForm.get('verificationCode').getError('minlength') ||
+            configForm.get('verificationCode').getError('maxlength') ||
+            configForm.get('verificationCode').getError('pattern')) {
             <mat-error>{{ 'login.verification-code-invalid' | translate }}</mat-error>
           }
           @if (configForm.get('verificationCode').getError('incorrectCode')) {

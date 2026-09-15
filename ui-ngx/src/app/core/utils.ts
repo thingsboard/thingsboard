@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import _ from 'lodash';
 import { from, isObservable, Observable, of, ReplaySubject, Subject } from 'rxjs';
 import { catchError, finalize, share } from 'rxjs/operators';
@@ -226,8 +212,24 @@ export function objToBase64(obj: any): string {
     }));
 }
 
+const textDecoderUtf8 = new TextDecoder('UTF-8', { fatal: true });
+const textDecoderLatin1 = new TextDecoder('ISO-8859-1');
+
+export function bytesToString(bytes: Uint8Array): string {
+  try {
+    return textDecoderUtf8.decode(bytes);
+  } catch {
+    return textDecoderLatin1.decode(bytes);
+  }
+}
+
 export function base64toString(b64Encoded: string): string {
-  return decodeURIComponent(atob(b64Encoded).split('').map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+  const binary = atob(b64Encoded);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytesToString(bytes);
 }
 
 export function objToBase64URI(obj: any): string {
@@ -235,8 +237,7 @@ export function objToBase64URI(obj: any): string {
 }
 
 export function base64toObj(b64Encoded: string): any {
-  const json = decodeURIComponent(atob(b64Encoded).split('').map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
-  return JSON.parse(json);
+  return JSON.parse(base64toString(b64Encoded));
 }
 
 export function stringToBase64(value: string): string {

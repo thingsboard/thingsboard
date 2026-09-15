@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import {
   checkBoxCell,
   DateEntityTableColumn,
@@ -70,6 +56,8 @@ import { AlarmRulesTabsComponent } from '@home/pages/alarm/alarm-rules-tabs.comp
 import { Router } from '@angular/router';
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import { AlarmRulesComponent } from '@home/components/alarm-rules/alarm-rules.component';
+import { ItemType } from '@shared/models/iot-hub/iot-hub-item.models';
+import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
 
 export type AlarmRuleTableEntity = CalculatedFieldAlarmRule | CalculatedFieldAlarmRuleInfo;
 
@@ -97,6 +85,7 @@ export class AlarmRulesTableConfig extends EntityTableConfig<AlarmRuleTableEntit
               private entityDebugSettingsService: EntityDebugSettingsService,
               private utilsService: UtilsService,
               private router: Router,
+              private iotHubActions: IotHubActionsService,
               public pageMode: boolean = false,
   ) {
     super();
@@ -150,6 +139,12 @@ export class AlarmRulesTableConfig extends EntityTableConfig<AlarmRuleTableEntit
         icon: 'file_upload',
         isEnabled: () => true,
         onAction: () => this.importCalculatedField()
+      },
+      {
+        name: this.translate.instant('iot-hub.add-from-iot-hub'),
+        icon: 'hub',
+        isEnabled: () => true,
+        onAction: () => this.addAlarmRuleFromIotHub()
       }
     ];
 
@@ -331,6 +326,14 @@ export class AlarmRulesTableConfig extends EntityTableConfig<AlarmRuleTableEntit
   private exportAlarmRule($event: Event, calculatedField: AlarmRuleTableEntity): void {
     $event?.stopPropagation();
     this.importExportService.exportCalculatedField(calculatedField.id.id);
+  }
+
+  private addAlarmRuleFromIotHub(): void {
+    this.iotHubActions.addItem(ItemType.ALARM_RULE, { entityId: this.entityId }).subscribe(result => {
+      if (result?.descriptor) {
+        this.updateData();
+      }
+    });
   }
 
   private importCalculatedField(): void {

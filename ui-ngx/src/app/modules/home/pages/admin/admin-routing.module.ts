@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { inject, NgModule } from '@angular/core';
 import { ActivatedRouteSnapshot, ResolveFn, Router, RouterModule, RouterStateSnapshot, Routes } from '@angular/router';
 
@@ -103,7 +89,7 @@ const routes: Routes = [
             component: ImageGalleryComponent,
             data: {
               auth: [Authority.TENANT_ADMIN, Authority.SYS_ADMIN],
-              title: 'image.gallery',
+              title: 'image.images',
               imageSubType: ResourceSubType.IMAGE
             }
           }
@@ -157,7 +143,7 @@ const routes: Routes = [
             component: EntitiesTableComponent,
             data: {
               auth: [Authority.TENANT_ADMIN, Authority.SYS_ADMIN],
-              title: 'resource.resources-library',
+              title: 'resource.files',
             },
             resolve: {
               entitiesTableConfig: ResourcesLibraryTableConfigResolver
@@ -194,7 +180,7 @@ const routes: Routes = [
             component: EntitiesTableComponent,
             data: {
               auth: [Authority.TENANT_ADMIN, Authority.SYS_ADMIN],
-              title: 'javascript.javascript-library',
+              title: 'javascript.scripts',
             },
             resolve: {
               entitiesTableConfig: JsLibraryTableConfigResolver
@@ -227,7 +213,10 @@ const routes: Routes = [
       auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
       showMainLoadingBar: false,
       breadcrumb: {
-        menuId: MenuId.settings
+        menuIdByAuthority: {
+          SYS_ADMIN: MenuId.platform,
+          TENANT_ADMIN: MenuId.settings
+        }
       }
     },
     children: [

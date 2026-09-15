@@ -1,7 +1,7 @@
 {
   "fqn": "indoor_horizontal_pm2_5_card",
   "name": "Indoor horizontal PM2.5 card",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/indoor_horizontal_pm2_5_card_system_widget_image.png",
   "description": "Displays the latest indoor fine particulate matter (PM2.5) telemetry in a scalable horizontal layout.",
   "descriptor": {
