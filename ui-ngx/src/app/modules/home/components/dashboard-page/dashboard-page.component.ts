@@ -1108,7 +1108,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     if (!this.destroyed) {
       const layoutsData = this.dashboardUtils.getStateLayoutsData(this.dashboard, state);
       if (layoutsData) {
-        if (this.isEdit && Object.keys(layoutsData).some(l => {
+        if (this.isEdit && state !== this.dashboardCtx.state && Object.keys(layoutsData).some(l => {
           const layout: DashboardPageLayout = this.layouts[l];
           const breakpoint = (layout && layout.layoutCtx.breakpoint) || 'default';
           const layoutInfo: BreakpointLayoutInfo = layoutsData[l][breakpoint] || layoutsData[l].default;
@@ -1116,7 +1116,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
         })) {
           this.store.dispatch(new ActionNotificationShow({
             message: this.translate.instant('dashboard.state-widgets-overlap-warning'),
-            type: 'warn'
+            type: 'warn',
+            duration: 5000
           }));
         }
         this.dashboardCtx.state = state;
