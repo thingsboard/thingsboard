@@ -23,7 +23,7 @@ import { StateControllerComponent } from './state-controller.component';
 import { StatesControllerService } from '@home/components/dashboard-page/states/states-controller.service';
 import { EntityId } from '@app/shared/models/id/entity-id';
 import { UtilsService } from '@core/services/utils.service';
-import { base64toObj, insertVariable, isEmpty, objToBase64 } from '@app/core/utils';
+import { base64toObj, deepClone, insertVariable, isEmpty, objToBase64 } from '@app/core/utils';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { EntityService } from '@core/http/entity.service';
 import { EntityType } from '@shared/models/entity-type.models';
@@ -47,8 +47,8 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
               private utils: UtilsService,
               private entityService: EntityService,
               private mobileService: MobileService,
-              private dashboardUtils: DashboardUtilsService) {
-    super(router, route, ngZone, statesControllerService);
+              dashboardUtils: DashboardUtilsService) {
+    super(router, route, ngZone, statesControllerService, dashboardUtils);
   }
 
   ngOnInit(): void {
@@ -61,7 +61,7 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
 
   public init() {
     if (this.preservedState) {
-      this.stateObject = this.syncPreservedStateWithDashboardState(this.preservedState);
+      this.stateObject = this.syncStateObjectWithDashboardState(this.preservedState);
       this.selectedStateIndex = this.stateObject.length - 1;
       setTimeout(() => {
         this.gotoState(this.stateObject[this.stateObject.length - 1].id, true);
@@ -84,27 +84,11 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
 
   protected onStatesChanged() {
     const prevStateId = this.getStateId();
-    let i = this.stateObject.length;
-    while (i--) {
-      if (!this.stateObject[i].id || !this.states[this.stateObject[i].id]) {
-        this.stateObject.splice(i, 1);
-      }
-    }
-    if (!this.stateObject.length) {
-      const currentStateId = this.dashboardCtrl.dashboardCtx.state;
-      this.stateObject.push({
-        id: currentStateId && this.states[currentStateId] ? currentStateId : this.dashboardUtils.getRootStateId(this.states),
-        params: {}
-      });
-    }
+    this.stateObject = this.syncStateObjectWithDashboardState(this.stateObject);
     this.selectedStateIndex = this.stateObject.length - 1;
     const newStateId = this.getStateId();
     if (newStateId !== prevStateId) {
-      this.stateIdSubject.next(newStateId);
-      if (this.syncStateWithQueryParam) {
-        this.mobileService.handleDashboardStateName(this.getStateName(this.stateObject.length - 1));
-      }
-      this.updateLocation(false);
+      this.gotoState(newStateId, true, undefined, true);
     }
   }
 
@@ -276,50 +260,27 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
       try {
         result = base64toObj(stateBase64);
       } catch (e) {
-        result = [ { id: null, params: {} } ];
+        result = [];
       }
     }
-    if (!result) {
-      result = [];
-    }
-    if (!result.length) {
-      result[0] = { id: null, params: {} };
-    }
-    const rootStateId = this.dashboardUtils.getRootStateId(this.states);
-    if (!result[0].id) {
-      result[0].id = rootStateId;
-    }
-    if (!this.states[result[0].id]) {
-      result[0].id = rootStateId;
-    }
-    let i = result.length;
-    while (i--) {
-      if (!result[i].id || !this.states[result[i].id]) {
-        result.splice(i, 1);
-      }
-    }
-    return result;
+    return this.normalizeStateObject(result);
   }
 
-  private syncPreservedStateWithDashboardState(preservedState: StateControllerState): StateControllerState {
-    const result = preservedState.filter((stateObj) => stateObj.id && this.states[stateObj.id]);
+  private syncStateObjectWithDashboardState(stateObject: StateControllerState): StateControllerState {
+    const result = this.normalizeStateObject(stateObject);
     const currentStateId = this.dashboardCtrl.dashboardCtx.state;
-    if (currentStateId && this.states[currentStateId] &&
-        (!result.length || result[result.length - 1].id !== currentStateId)) {
+    if (currentStateId && this.states[currentStateId] && result[result.length - 1].id !== currentStateId) {
       const stateIndex = result.map((stateObj) => stateObj.id).lastIndexOf(currentStateId);
       if (stateIndex > -1) {
         result.splice(stateIndex + 1);
       } else {
-        result.push({ id: currentStateId, params: {} });
+        result.push({ id: currentStateId, params: deepClone(result[result.length - 1].params || {}) });
       }
-    }
-    if (!result.length) {
-      result.push({ id: this.dashboardUtils.getRootStateId(this.states), params: {} });
     }
     return result;
   }
 
-  private gotoState(stateId: string, update: boolean, openRightLayout?: boolean) {
+  private gotoState(stateId: string, update: boolean, openRightLayout?: boolean, replaceCurrentHistoryUrl?: boolean) {
     const isStateIdChanged = this.dashboardCtrl.dashboardCtx.state !== stateId;
     this.dashboardCtrl.openDashboardState(stateId, openRightLayout);
     if (isStateIdChanged) {
@@ -329,11 +290,11 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
       this.mobileService.handleDashboardStateName(this.getStateName(this.stateObject.length - 1));
     }
     if (update) {
-      this.updateLocation(isStateIdChanged);
+      this.updateLocation(replaceCurrentHistoryUrl ?? !isStateIdChanged);
     }
   }
 
-  private updateLocation(isStateIdChanged: boolean) {
+  private updateLocation(replaceCurrentHistoryUrl: boolean) {
     if (this.stateObject[this.stateObject.length - 1].id) {
       let newState;
       if (this.isDefaultState()) {
@@ -341,7 +302,7 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
       } else {
         newState = objToBase64(this.stateObject);
       }
-      this.updateStateParam(newState, !isStateIdChanged);
+      this.updateStateParam(newState, replaceCurrentHistoryUrl);
     }
   }
 
