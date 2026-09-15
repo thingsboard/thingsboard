@@ -109,15 +109,14 @@ export interface MpItemVersionView {
 }
 
 /**
- * A row of a grouped search: the view plus the size of the section it belongs to. Its own type
- * rather than a nullable field on the view, matching what the endpoint returns.
+ * One item type's share of a grouped search: the rows to show and how many exist behind them.
+ * A grouped answer is a list of these, in the server's section order, and a type nothing matched
+ * has no section — so a "+N more" header is `total - items.length`.
  */
-export interface MpItemVersionGroupedView extends MpItemVersionView {
-  /**
-   * Rows of this row's item type behind the answer — what a "+N more" header subtracts the
-   * shown rows from. Always set: the grouped endpoint projects it for every row it returns.
-   */
-  typeTotal: number;
+export interface MpItemVersionSection {
+  itemType: ItemType;
+  total: number;
+  items: MpItemVersionView[];
 }
 
 // 404 body shapes returned by the public listing item-version endpoint

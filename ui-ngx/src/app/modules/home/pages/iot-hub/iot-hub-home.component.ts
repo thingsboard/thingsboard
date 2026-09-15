@@ -7,10 +7,9 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import { forkJoin, of, Subject, Subscription } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { MediaBreakpoints } from '@shared/models/constants';
-import { emptyPageData } from '@shared/models/page/page-data';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
-import { MpItemVersionGroupedView, MpItemVersionQuery, MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
+import { MpItemVersionQuery, MpItemVersionSection, MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
 import { getItemTypeIcon, ItemType, itemTypeTranslations } from '@shared/models/iot-hub/iot-hub-item.models';
 import { IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
@@ -35,14 +34,16 @@ interface HeroTypeConfig {
 
 interface SearchResultGroup {
   type: ItemType;
-  items: MpItemVersionGroupedView[];
-  /** Rows of this type behind the answer, from the response's typeTotal. */
+  items: MpItemVersionView[];
+  /** Rows of this type behind the answer, from the section's total. */
   total: number;
   /** total - items.length, floored at 0. Zero means the header shows no "+N more". */
   remaining: number;
 }
 
-const SEARCH_GROUP_ORDER: ItemType[] = [
+/** The types this popup lays out. A section of anything else is dropped rather than rendered
+ *  without a label - the platform publishes no dashboards. Order comes from the server. */
+const SEARCH_GROUP_TYPES: ItemType[] = [
   ItemType.DEVICE, ItemType.SOLUTION_TEMPLATE, ItemType.WIDGET,
   ItemType.CALCULATED_FIELD, ItemType.ALARM_RULE, ItemType.RULE_CHAIN
 ];
@@ -63,7 +64,6 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
   readonly ItemType = ItemType;
 
   searchText = '';
-  searchResults: MpItemVersionGroupedView[] = [];
   searchResultGroups: SearchResultGroup[] = [];
   searchLoaded = false;
   searchLoading = false;
@@ -178,12 +178,11 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
         // A failed request must not end the subscription: the interceptor reports it, and the
         // panel goes back to an empty answer the next keystroke can replace.
         return this.iotHubApiService.getPublishedVersionsGrouped(query, { ignoreLoading: true }).pipe(
-          catchError(() => of(emptyPageData<MpItemVersionGroupedView>()))
+          catchError(() => of([] as MpItemVersionSection[]))
         );
       })
-    ).subscribe(result => {
-      this.searchResults = result.data;
-      this.searchResultGroups = this.groupSearchResults(result.data);
+    ).subscribe(sections => {
+      this.searchResultGroups = this.toResultGroups(sections);
       this.searchLoaded = true;
       this.searchLoading = false;
     });
@@ -559,27 +558,15 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
    * arrives already capped at four per type - so all this does is put the types in the panel's
    * fixed order and carry each one's typeTotal onto the header.
    */
-  private groupSearchResults(items: MpItemVersionGroupedView[]): SearchResultGroup[] {
-    const groupMap = new Map<ItemType, MpItemVersionGroupedView[]>();
-    for (const item of items) {
-      if (!SEARCH_GROUP_ORDER.includes(item.type)) {
-        continue;
-      }
-      let list = groupMap.get(item.type);
-      if (!list) {
-        list = [];
-        groupMap.set(item.type, list);
-      }
-      list.push(item);
-    }
-    return SEARCH_GROUP_ORDER
-      .filter(type => groupMap.has(type))
-      .map(type => {
-        const groupItems = groupMap.get(type);
-        // Every row of a type carries the same typeTotal, so the first one answers for the
-        // section.
-        const total = groupItems[0].typeTotal;
-        return { type, items: groupItems, total, remaining: Math.max(0, total - groupItems.length) };
-      });
+  private toResultGroups(sections: MpItemVersionSection[]): SearchResultGroup[] {
+    return sections
+      .filter(section => SEARCH_GROUP_TYPES.includes(section.itemType))
+      .map(section => ({
+        type: section.itemType,
+        items: section.items,
+        total: section.total,
+        remaining: Math.max(0, section.total - section.items.length)
+      }));
   }
+
 }

@@ -72,7 +72,7 @@
           <mat-option [disabled]="true" class="tb-search-popup-loading">
             <mat-spinner diameter="24"></mat-spinner>
           </mat-option>
-        } @else if (searchResults.length === 0 && searchLoaded) {
+        } @else if (searchResultGroups.length === 0 && searchLoaded) {
           <mat-option [disabled]="true" class="tb-search-popup-no-results">
             <div class="tb-search-popup-no-results-content">
               <mat-icon>search_off</mat-icon>
