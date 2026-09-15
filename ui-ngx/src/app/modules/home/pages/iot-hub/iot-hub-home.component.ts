@@ -9,7 +9,12 @@ import { catchError, debounceTime, distinctUntilChanged, switchMap } from 'rxjs/
 import { MediaBreakpoints } from '@shared/models/constants';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
-import { MpItemVersionQuery, MpItemVersionSection, MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
+import {
+  MpItemVersionGroupedQuery,
+  MpItemVersionQuery,
+  MpItemVersionSection,
+  MpItemVersionView
+} from '@shared/models/iot-hub/iot-hub-version.models';
 import { getItemTypeIcon, ItemType, itemTypeTranslations } from '@shared/models/iot-hub/iot-hub-item.models';
 import { IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
@@ -169,12 +174,8 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
         const trimmed = text.trim();
         // Two states, one panel: popularity answers "what is worth looking at" with an empty
         // field, relevance answers "what did I ask for" once there is one.
-        const sortOrder: SortOrder = trimmed
-          ? { property: RELEVANCE, direction: Direction.DESC }
-          : { property: 'totalInstallCount', direction: Direction.DESC };
-        // The grouped endpoint sizes its own answer, so the page size here is never sent.
-        const pageLink = new PageLink(10, 0, trimmed || null, sortOrder);
-        const query = new MpItemVersionQuery(pageLink);
+        const sortProperty = trimmed ? RELEVANCE : 'totalInstallCount';
+        const query = new MpItemVersionGroupedQuery({}, trimmed, sortProperty);
         // A failed request must not end the subscription: the interceptor reports it, and the
         // panel goes back to an empty answer the next keystroke can replace.
         return this.iotHubApiService.getPublishedVersionsGrouped(query, { ignoreLoading: true }).pipe(

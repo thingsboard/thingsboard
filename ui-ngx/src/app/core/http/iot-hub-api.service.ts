@@ -6,7 +6,13 @@ import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
 import { PageData } from '@shared/models/page/page-data';
 import { PageLink } from '@shared/models/page/page-link';
-import { MpItemVersionQuery, MpItemVersionSection, MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
+import {
+  MpItemVersionGroupedQuery,
+  MpItemVersionQuery,
+  MpItemVersionQueryOptions,
+  MpItemVersionSection,
+  MpItemVersionView
+} from '@shared/models/iot-hub/iot-hub-version.models';
 import { CreatorView } from '@shared/models/iot-hub/iot-hub-creator.models';
 import { IotHubInstalledItem, InstallItemVersionResult, InstallPlan, InstallPlanResult, UpdateItemVersionResult, ItemPublishedVersionInfo } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { ItemType, ItemTypeFilterInfo, WidgetCategory } from '@shared/models/iot-hub/iot-hub-item.models';
@@ -69,12 +75,7 @@ export class IotHubApiService {
   }
 
   public getPublishedVersions(query: MpItemVersionQuery, config?: IotHubRequestConfig): Observable<PageData<MpItemVersionView>> {
-    if (query.options.tbVersion == null) {
-      query.options.tbVersion = tbVersionToInt(env.tbVersion);
-    }
-    if (query.options.peOnly == null) {
-      query.options.peOnly = false;
-    }
+    this.applyPlatformFilters(query.options);
     return this.http.get<PageData<MpItemVersionView>>(
       `${this.baseUrl}/api/versions/published${query.toQuery()}`,
       { params: this.buildParams(config) }
@@ -87,18 +88,26 @@ export class IotHubApiService {
    * it takes no page, page size or sort direction, and sending them would be sending what the
    * server does not read.
    */
-  public getPublishedVersionsGrouped(query: MpItemVersionQuery,
+  public getPublishedVersionsGrouped(query: MpItemVersionGroupedQuery,
                                      config?: IotHubRequestConfig): Observable<MpItemVersionSection[]> {
-    if (query.options.tbVersion == null) {
-      query.options.tbVersion = tbVersionToInt(env.tbVersion);
-    }
-    if (query.options.peOnly == null) {
-      query.options.peOnly = false;
-    }
+    this.applyPlatformFilters(query.options);
     return this.http.get<MpItemVersionSection[]>(
-      `${this.baseUrl}/api/versions/published/grouped${query.toGroupedQuery()}`,
+      `${this.baseUrl}/api/versions/published/grouped${query.toQuery()}`,
       { params: this.buildParams(config) }
     );
+  }
+
+  /**
+   * What this platform can install, filled in for a caller that did not say: items built for a
+   * newer ThingsBoard, and PE-only items on a CE instance, cannot be installed from here.
+   */
+  private applyPlatformFilters(options: MpItemVersionQueryOptions): void {
+    if (options.tbVersion == null) {
+      options.tbVersion = tbVersionToInt(env.tbVersion);
+    }
+    if (options.peOnly == null) {
+      options.peOnly = false;
+    }
   }
 
   public getFilterInfo(itemType: ItemType, config?: IotHubRequestConfig): Observable<ItemTypeFilterInfo> {
