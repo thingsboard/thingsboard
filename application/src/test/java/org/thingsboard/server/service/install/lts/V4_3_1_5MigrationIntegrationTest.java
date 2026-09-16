@@ -89,12 +89,53 @@ public class V4_3_1_5MigrationIntegrationTest extends AbstractControllerTest {
         assertEquals(1, countRows(TEMPERATURE.toItemId()));
     }
 
+    @Test
+    public void remapsOnlyTheOldestRowWhenTheSameItemIsInstalledTwice() {
+        // The install endpoint does not deduplicate and nothing constrains (tenant_id, item_id), so one tenant can
+        // hold several rows for the same 4.2 item. All of them match the WHERE and none can see another's new
+        // item_id (every subquery reads the pre-statement snapshot), so without the created_time guard the whole
+        // group would collapse onto the 4.3 item -- exactly the two-rows-one-item state the first guard prevents.
+        UUID olderRowId = insertRow(UUID.randomUUID(), 1_000L, "SOLUTION_TEMPLATE", TEMPERATURE.fromItemId(),
+                UUID.randomUUID(), "Temperature & Humidity sensors", "1.0.0");
+        UUID newerRowId = insertRow(UUID.randomUUID(), 2_000L, "SOLUTION_TEMPLATE", TEMPERATURE.fromItemId(),
+                UUID.randomUUID(), "Temperature & Humidity sensors", "1.0.0");
+
+        migration.apply();
+
+        // The oldest row is the one that moves; the rest stay put, as in the already-installed-successor case.
+        assertEquals(TEMPERATURE.toItemId(), row(olderRowId).get("item_id"));
+        assertEquals(TEMPERATURE.toItemName(), row(olderRowId).get("item_name"));
+        assertEquals(TEMPERATURE.fromItemId(), row(newerRowId).get("item_id"));
+        assertEquals(1, countRows(TEMPERATURE.toItemId()));
+    }
+
+    @Test
+    public void remapsOneRowWhenDuplicatesShareCreatedTime() {
+        // created_time is millisecond-granular and two installs can land in the same millisecond, so the guard
+        // orders by (created_time, id) -- the id half is what keeps the group from collapsing on a tie.
+        UUID lowerId = UUID.fromString("00000000-0000-1000-8000-000000000001");
+        UUID higherId = UUID.fromString("00000000-0000-1000-8000-000000000002");
+        insertRow(lowerId, 1_000L, "SOLUTION_TEMPLATE", TEMPERATURE.fromItemId(),
+                UUID.randomUUID(), "Temperature & Humidity sensors", "1.0.0");
+        insertRow(higherId, 1_000L, "SOLUTION_TEMPLATE", TEMPERATURE.fromItemId(),
+                UUID.randomUUID(), "Temperature & Humidity sensors", "1.0.0");
+
+        migration.apply();
+
+        assertEquals(TEMPERATURE.toItemId(), row(lowerId).get("item_id"));
+        assertEquals(TEMPERATURE.fromItemId(), row(higherId).get("item_id"));
+        assertEquals(1, countRows(TEMPERATURE.toItemId()));
+    }
+
     private UUID insertRow(String itemType, UUID itemId, UUID itemVersionId, String itemName, String version) {
-        UUID id = UUID.randomUUID();
+        return insertRow(UUID.randomUUID(), System.currentTimeMillis(), itemType, itemId, itemVersionId, itemName, version);
+    }
+
+    private UUID insertRow(UUID id, long createdTime, String itemType, UUID itemId, UUID itemVersionId, String itemName, String version) {
         jdbcTemplate.update("""
                         INSERT INTO iot_hub_installed_item (id, created_time, tenant_id, item_id, item_version_id, item_name, item_type, version, descriptor)
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb)""",
-                id, System.currentTimeMillis(), tenantId.getId(), itemId, itemVersionId, itemName, itemType, version, DESCRIPTOR);
+                id, createdTime, tenantId.getId(), itemId, itemVersionId, itemName, itemType, version, DESCRIPTOR);
         return id;
     }
 

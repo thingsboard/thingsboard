@@ -85,15 +85,23 @@ public class V4_3_1_5Migration implements LtsMigration {
             move("generator-monitoring", "43fa7c70-7c60-11f1-ad69-cb6d3580c9b4", "1aafceb0-7c60-11f1-bf7c-01757b5ced76", "Generator monitoring")
     );
 
-    // The NOT EXISTS guard keeps a tenant that already installed the 4.3 item (possible on 4.3.1.3 / 4.3.1.4,
+    // The first NOT EXISTS keeps a tenant that already installed the 4.3 item (possible on 4.3.1.3 / 4.3.1.4,
     // where the 4.2 row silently stayed behind) from ending up with two rows for the same item.
+    // The second one covers the mirror case: the install endpoint does not deduplicate and nothing constrains
+    // (tenant_id, item_id), so a tenant can hold several rows for one 4.2 item. All of them match the WHERE, and
+    // the first guard cannot separate them -- every subquery reads the pre-statement snapshot, so no row sees the
+    // new item_id of another -- which would collapse the duplicates onto one item id. Remapping only the oldest
+    // row per tenant leaves the rest exactly as the already-installed-successor case leaves them: untouched.
     // The descriptor is left untouched: it lists the entities the install created and is what uninstall needs.
     static final String REMAP_SQL = """
             UPDATE iot_hub_installed_item i
             SET item_id = ?, item_name = ?
             WHERE i.item_type = 'SOLUTION_TEMPLATE' AND i.item_id = ?
               AND NOT EXISTS (SELECT 1 FROM iot_hub_installed_item n
-                              WHERE n.tenant_id = i.tenant_id AND n.item_id = ?)""";
+                              WHERE n.tenant_id = i.tenant_id AND n.item_id = ?)
+              AND NOT EXISTS (SELECT 1 FROM iot_hub_installed_item d
+                              WHERE d.tenant_id = i.tenant_id AND d.item_id = i.item_id
+                                AND (d.created_time, d.id) < (i.created_time, i.id))""";
 
     private void remapSolutionTemplatesToCurrentFamily() {
         int total = 0;
