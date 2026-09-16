@@ -310,8 +310,13 @@ export class TbIotHubItemDetailDialogComponent extends DialogComponent<TbIotHubI
       }
     }
     if (!urls.length) {
-      // Neither an image nor a screenshot: fall back to the ICON resources the carousel used
-      // before this method looked at anything else, so nothing that renders today stops doing so.
+      // Last resort, and deliberately the same order resolveIotHubItemImageUrl uses everywhere
+      // else (iot-hub-utils.ts): image, then screenshot, then icon. An icon stands in for an item
+      // with nothing to show; it is not gallery material. This does change one case — the previous
+      // version ignored item.image, so it fell back to the icons whenever there were no
+      // screenshots, and an item with an image and two or more icons showed them as a carousel.
+      // Now the image leads the list, so that item never reaches here and renders its image
+      // instead. That is the intent: the carousel is for screenshots, not for chrome.
       for (const resource of this.item.resources || []) {
         if (resource.type === 'ICON') {
           urls.push(this.resourceUrl(resource.id));

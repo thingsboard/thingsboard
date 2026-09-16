@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The Thingsboard Authors
 // SPDX-License-Identifier: Apache-2.0
-import { Directive, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Directive, ElementRef, EventEmitter, Input, NgZone, OnDestroy, OnInit, Output } from '@angular/core';
 import PhotoSwipeLightbox from 'photoswipe/lightbox';
 import PhotoSwipe from 'photoswipe';
 import cssjs from '@core/css/css';
@@ -14,6 +14,8 @@ const SHRINK_FILL = 0.86;
 const GROW_FILL = 0.95;
 /** A small screenshot is enlarged to fit, but never past this much of its own size. */
 const MAX_UPSCALE = 2;
+/** How far a click-to-zoom steps past the level the image opened at. */
+const ZOOM_STEP = 2;
 // Symmetric on purpose: PhotoSwipe centres the image inside the padded box, so an uneven
 // top/bottom pushes it off the middle of the screen — and up under the close button, once an
 // undersized image is allowed to grow into the space. The caption floats over the bottom padding
@@ -179,7 +181,20 @@ function initialZoom(zoomLevel: ZoomLevelSizes): number {
   return Math.min(fitRatio * GROW_FILL, MAX_UPSCALE);
 }
 
-function thumbnailImage(element: Element): HTMLImageElement {
+/**
+ * Where a click-to-zoom lands. `fit` is capped at 1, so for an image smaller than the pan area
+ * `fit * 3` sits below the level `initialZoom` opened it at, and taking the larger of the two left
+ * the secondary level equal to the initial one — the click zoomed from a level to itself and did
+ * nothing, with no toolbar magnifier left to fall back on. Step off the actual opening level
+ * instead, and keep the old ceiling for an image that had to be shrunk to fit.
+ */
+function secondaryZoom(zoomLevel: ZoomLevelSizes): number {
+  return Math.max(initialZoom(zoomLevel) * ZOOM_STEP, Math.min(1, zoomLevel.fit * 3));
+}
+
+// Nullable on purpose: `galleryChildrenSelector` is a public input, so a caller can point it at a
+// container that holds no image. `thumbBounds` already guarded for that; `domItemData` now does too.
+function thumbnailImage(element: Element): HTMLImageElement | null {
   return element instanceof HTMLImageElement ? element : element.querySelector('img');
 }
 
@@ -238,13 +253,16 @@ export class PhotoSwipeGalleryDirective implements OnInit, OnDestroy {
   /** Raised when the lightbox opens, and on close with the slide it was left on. */
   @Output() readonly lightboxOpened = new EventEmitter<void>();
   @Output() readonly lightboxClosed = new EventEmitter<number>();
+  /** The slide the lightbox moved to, while it is still open. See the `change` handler. */
+  @Output() readonly slideChanged = new EventEmitter<number>();
 
   private lightbox: PhotoSwipeLightbox;
   private lastIndex = 0;
   private closeOnOpened = false;
 
   constructor(
-    private elementRef: ElementRef<HTMLElement>
+    private elementRef: ElementRef<HTMLElement>,
+    private ngZone: NgZone
   ) {}
 
   ngOnInit(): void {
@@ -267,11 +285,13 @@ export class PhotoSwipeGalleryDirective implements OnInit, OnDestroy {
       // PhotoSwipe's own handler on .pswp still sees it.
       wheelToZoom: true,
       initialZoomLevel: zoomLevel => initialZoom(zoomLevel),
-      // Keeps the click-to-zoom step from going backwards for an image opened above its own size.
-      secondaryZoomLevel: zoomLevel => Math.max(initialZoom(zoomLevel), Math.min(1, zoomLevel.fit * 3))
+      secondaryZoomLevel: zoomLevel => secondaryZoom(zoomLevel)
     });
     this.lightbox.addFilter('domItemData', (itemData, element) => {
       const image = thumbnailImage(element);
+      if (!image) {
+        return itemData;
+      }
       itemData.src = image.src;
       itemData.width = image.naturalWidth;
       itemData.height = image.naturalHeight;
@@ -325,14 +345,21 @@ export class PhotoSwipeGalleryDirective implements OnInit, OnDestroy {
     // cannot know which.
     this.lightbox.on('change', () => {
       this.lastIndex = this.lightbox.pswp?.currIndex ?? this.lastIndex;
+      // Emitted while the lightbox is still open rather than once it has closed. PhotoSwipe reads
+      // the thumbnail's position at the *start* of the closing animation
+      // (Opener._applyStartProps -> getThumbBounds), so a host that keeps a carousel behind the
+      // image needs the matching slide back in view by then. Emitting only on destroy meant that
+      // after navigating inside the lightbox the zoom-out animated towards a slide still
+      // translated out of the preview box, and the image flew off sideways.
+      this.ngZone.run(() => this.slideChanged.emit(this.lastIndex));
     });
     this.lightbox.on('beforeOpen', () => {
       this.lockScroll();
-      this.lightboxOpened.emit();
+      this.ngZone.run(() => this.lightboxOpened.emit());
     });
     this.lightbox.on('destroy', () => {
       this.unlockScroll();
-      this.lightboxClosed.emit(this.lastIndex);
+      this.ngZone.run(() => this.lightboxClosed.emit(this.lastIndex));
     });
     this.lightbox.init();
   }
@@ -391,9 +418,15 @@ export class PhotoSwipeGalleryDirective implements OnInit, OnDestroy {
   };
 
   private lockScroll(): void {
-    document.addEventListener('keydown', this.onKeydownCapture, true);
-    document.addEventListener('wheel', this.onScrollEvent, { passive: false, capture: true });
-    document.addEventListener('touchmove', this.onScrollEvent, { passive: false, capture: true });
+    // Outside the zone: these three are pure DOM side effects, but zone.js patches
+    // addEventListener, so inside it every event would run a full change-detection pass over the
+    // host. touchmove alone fires for the whole length of a pinch or pan, at ~60 Hz, for a handler
+    // that does nothing but preventDefault. The outputs above re-enter the zone explicitly.
+    this.ngZone.runOutsideAngular(() => {
+      document.addEventListener('keydown', this.onKeydownCapture, true);
+      document.addEventListener('wheel', this.onScrollEvent, { passive: false, capture: true });
+      document.addEventListener('touchmove', this.onScrollEvent, { passive: false, capture: true });
+    });
   }
 
   private unlockScroll(): void {

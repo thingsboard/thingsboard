@@ -92,6 +92,7 @@
                [class.dlg-preview-carousel]="carouselImages.length > 1"
                tbPhotoSwipeGallery galleryChildrenSelector=".dlg-carousel-item, .dlg-preview-img"
                (lightboxOpened)="lightboxOpen = true"
+               (slideChanged)="carouselIndex = $event"
                (lightboxClosed)="onLightboxClosed($event)">
             @if (carouselImages.length > 1) {
               <div class="dlg-hero-carousel">
