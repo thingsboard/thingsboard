@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.transport.lwm2m.utils;
 
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +9,7 @@ import org.eclipse.leshan.core.node.ObjectLink;
 import org.eclipse.leshan.core.node.codec.CodecException;
 import org.eclipse.leshan.core.node.codec.LwM2mValueConverter;
 import org.eclipse.leshan.core.util.Hex;
+import org.eclipse.leshan.core.util.datatype.ULong;
 import org.thingsboard.server.common.data.StringUtils;
 
 import java.math.BigInteger;
@@ -73,6 +61,7 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
                         if ((double) value == longValue.doubleValue()) {
                             return longValue;
                         }
+                        break;
                     case STRING:
                         log.debug("Trying to convert String value [{}] to Integer", value);
                         return Long.parseLong((String) value);
@@ -80,6 +69,28 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
                         break;
                 }
                 break;
+            case UNSIGNED_INTEGER:
+                    switch (currentType) {
+                        case INTEGER:
+                            if (value instanceof Integer) {
+                                log.debug("Trying to convert Integer value [{}] to Unsigned Integer", value);
+                                return ULong.valueOf(Integer.toUnsignedLong((Integer) value));
+                            } else if (value instanceof Long) {
+                                log.debug("Trying to convert Long value [{}] to Unsigned Integer", value);
+                                return ULong.valueOf((Long) value);
+                            } else if (value instanceof BigInteger) {
+                                log.debug("Trying to convert Biginteger value [{}] to Unsigned Integer", value);
+                                return ULong.valueOf((BigInteger) value);
+                            }
+                            throw new IllegalArgumentException("Trying to convert value [" + value + "] to Unsigned Integer. Unsupported value type: " + value.getClass());
+                        case FLOAT:
+                            log.debug("Trying to convert float value [{}] to Unsigned Integer", value);
+                            return ULong.valueOf(((Float) value).longValue());
+                        case STRING:
+                            log.debug("Trying to convert string value [{}] to Unsigned Integer", value);
+                            return ULong.valueOf((String) value);
+                    }
+                    break;
             case FLOAT:
                 switch (currentType) {
                     case INTEGER:
