@@ -30,6 +30,9 @@ public class LwM2MServiceImpl implements LwM2MService {
         if (bsServerConfig!= null) {
             LwM2MServerSecurityConfigDefault result = getServerSecurityConfig(bsServerConfig);
             result.setBootstrapServerIs(bootstrapServer);
+            if (bootstrapServer) {
+                result.setShortServerId(null);
+            }
             return result;
         }
         else {
