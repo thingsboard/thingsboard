@@ -36,8 +36,7 @@ import {
 import { JsFuncComponent } from '@shared/components/js-func.component';
 import {
   ScadaSymbolActionTrigger,
-  scadaSymbolActionTriggerHelpIds,
-  scadaSymbolActionTriggerTranslations
+  scadaSymbolActionTriggerInfo
 } from '@home/components/widget/lib/scada/scada-symbol.models';
 
 @Component({
@@ -104,10 +103,10 @@ export class ScadaSymbolMetadataTagFunctionPanelComponent implements OnInit, Aft
       this.highlightRules = scadaSymbolRenderFunctionHighlightRules;
       this.tagFunctionHelpId = 'scada/tag_state_render_fn';
     } else {
-      this.panelTitle = scadaSymbolActionTriggerTranslations.get(this.tagFunctionType);
+      this.panelTitle = scadaSymbolActionTriggerInfo[this.tagFunctionType].name;
       this.tagFunctionArgs = ['ctx', 'element', 'event'];
       this.highlightRules = scadaSymbolActionFunctionHighlightRules;
-      this.tagFunctionHelpId = scadaSymbolActionTriggerHelpIds.get(this.tagFunctionType);
+      this.tagFunctionHelpId = scadaSymbolActionTriggerInfo[this.tagFunctionType].helpId;
     }
   }
 

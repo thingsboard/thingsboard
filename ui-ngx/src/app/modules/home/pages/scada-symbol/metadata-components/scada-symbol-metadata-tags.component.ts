@@ -41,7 +41,7 @@ import {
 import {
   ScadaSymbolActionTrigger,
   scadaSymbolActionTriggers,
-  scadaSymbolActionTriggerTranslations,
+  scadaSymbolActionTriggerInfo,
   ScadaSymbolTag
 } from '@home/components/widget/lib/scada/scada-symbol.models';
 import {
@@ -94,7 +94,7 @@ export class ScadaSymbolMetadataTagsComponent implements ControlValueAccessor, O
 
   actionTriggers = scadaSymbolActionTriggers;
 
-  actionTriggerTranslations = scadaSymbolActionTriggerTranslations;
+  actionTriggerInfo = scadaSymbolActionTriggerInfo;
 
   tagsFormGroup: UntypedFormGroup;
 

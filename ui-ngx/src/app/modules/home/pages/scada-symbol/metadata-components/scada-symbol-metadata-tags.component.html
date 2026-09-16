@@ -21,7 +21,7 @@
       <div class="tb-form-table-header-cell tb-tag-header" translate>scada.tag.tag</div>
       <div class="tb-form-table-header-cell tb-state-render-function-header" translate>scada.state-render-function</div>
       @for (trigger of actionTriggers; track trigger) {
-        <div class="tb-form-table-header-cell tb-action-function-header">{{ actionTriggerTranslations.get(trigger) | translate }}</div>
+        <div class="tb-form-table-header-cell tb-action-function-header">{{ actionTriggerInfo[trigger].name | translate }}</div>
       }
     </div>
     @if (tagsFormArray().controls.length) {

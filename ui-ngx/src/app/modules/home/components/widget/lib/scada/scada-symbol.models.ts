@@ -118,27 +118,34 @@ export type ScadaSymbolTagStateRenderFunction = (ctx: ScadaSymbolContext, elemen
 // noinspection JSUnusedGlobalSymbols
 export type ScadaSymbolActionTrigger = 'click' | 'dblclick' | 'contextmenu';
 
-export const scadaSymbolActionTriggers: ScadaSymbolActionTrigger[] = ['click', 'dblclick', 'contextmenu'];
+export interface ScadaSymbolActionTriggerInfo {
+  name: string;
+  helpId: string;
+}
+
+export const scadaSymbolActionTriggerInfo: Record<ScadaSymbolActionTrigger, ScadaSymbolActionTriggerInfo> = {
+  click: {
+    name: 'scada.tag.on-click-action',
+    helpId: 'scada/tag_click_action_fn'
+  },
+  dblclick: {
+    name: 'scada.tag.on-double-click-action',
+    helpId: 'scada/tag_dblclick_action_fn'
+  },
+  contextmenu: {
+    name: 'scada.tag.on-right-click-action',
+    helpId: 'scada/tag_contextmenu_action_fn'
+  }
+};
+
+export const scadaSymbolActionTriggers =
+  Object.keys(scadaSymbolActionTriggerInfo) as ScadaSymbolActionTrigger[];
 
 // Max interval between clicks of a double click: a click action is deferred by this amount
 // when the same tag also has a dblclick action, so it can be canceled by the second click.
-const dblClickDelay = 300;
+const dblClickDelay = 500;
 
-export const scadaSymbolActionTriggerTranslations = new Map<ScadaSymbolActionTrigger, string>(
-  [
-    ['click', 'scada.tag.on-click-action'],
-    ['dblclick', 'scada.tag.on-double-click-action'],
-    ['contextmenu', 'scada.tag.on-right-click-action']
-  ]
-);
 
-export const scadaSymbolActionTriggerHelpIds = new Map<ScadaSymbolActionTrigger, string>(
-  [
-    ['click', 'scada/tag_click_action_fn'],
-    ['dblclick', 'scada/tag_dblclick_action_fn'],
-    ['contextmenu', 'scada/tag_contextmenu_action_fn']
-  ]
-);
 
 export type ScadaSymbolActionFunction = (ctx: ScadaSymbolContext, element: Element, event: Event) => void;
 export interface ScadaSymbolAction {
@@ -150,7 +157,7 @@ export interface ScadaSymbolTag {
   tag: string;
   stateRenderFunction?: string;
   stateRender?: ScadaSymbolTagStateRenderFunction;
-  actions?: {[trigger: string]: ScadaSymbolAction};
+  actions?: {[trigger in ScadaSymbolActionTrigger]?: ScadaSymbolAction};
 }
 
 export enum ScadaSymbolBehaviorType {
@@ -539,6 +546,8 @@ export class ScadaSymbolObject {
   private readonly shapeResize$: ResizeObserver;
   private readonly destroy$ = new Subject<void>();
 
+  private readonly deferredClickTimeouts = new Set<ReturnType<typeof setTimeout>>();
+
   private scale = 1;
 
   private performInit = true;
@@ -568,6 +577,8 @@ export class ScadaSymbolObject {
   public destroy() {
     this.destroy$.next();
     this.destroy$.complete();
+    this.deferredClickTimeouts.forEach(timeout => clearTimeout(timeout));
+    this.deferredClickTimeouts.clear();
     if (this.shapeResize$) {
       this.shapeResize$.disconnect();
     }
@@ -597,9 +608,11 @@ export class ScadaSymbolObject {
     for (const tag of this.metadata.tags) {
       tag.stateRender = parseFunction(tag.stateRenderFunction, ['ctx', 'element']) || (() => {});
       if (tag.actions) {
-        for (const trigger of Object.keys(tag.actions)) {
+        for (const trigger of scadaSymbolActionTriggers) {
           const action = tag.actions[trigger];
-          action.action = parseFunction(action.actionFunction, ['ctx', 'element', 'event']) || (() => {});
+          if (action) {
+            action.action = parseFunction(action.actionFunction, ['ctx', 'element', 'event']) || (() => {});
+          }
         }
       }
     }
@@ -692,18 +705,27 @@ export class ScadaSymbolObject {
       if (tag.actions) {
         const elements = this.svgShape.find(`[tb\\:tag="${tag.tag}"]`);
         const deferClick = !!tag.actions.click && !!tag.actions.dblclick;
-        for (const trigger of Object.keys(tag.actions)) {
+        for (const trigger of scadaSymbolActionTriggers) {
           const action = tag.actions[trigger];
+          if (!action) {
+            continue;
+          }
           elements.forEach(element => {
             element.attr('cursor', 'pointer');
             if (trigger === 'click' && deferClick) {
               let clickTimeout: ReturnType<typeof setTimeout> = null;
               element.on('click', (event: MouseEvent) => {
-                clearTimeout(clickTimeout);
+                if (clickTimeout !== null) {
+                  clearTimeout(clickTimeout);
+                  this.deferredClickTimeouts.delete(clickTimeout);
+                  clickTimeout = null;
+                }
                 if (event.detail === 1) {
                   clickTimeout = setTimeout(() => {
+                    this.deferredClickTimeouts.delete(clickTimeout);
                     action.action(this.context, element, event);
                   }, dblClickDelay);
+                  this.deferredClickTimeouts.add(clickTimeout);
                 }
               });
             } else {

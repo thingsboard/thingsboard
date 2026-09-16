@@ -33,8 +33,8 @@ import {
 import { ScadaSymbolElement } from '@home/pages/scada-symbol/scada-symbol-editor.models';
 import {
   ScadaSymbolActionTrigger,
-  scadaSymbolActionTriggers,
-  scadaSymbolActionTriggerTranslations
+  scadaSymbolActionTriggerInfo,
+  scadaSymbolActionTriggers
 } from '@home/components/widget/lib/scada/scada-symbol.models';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
@@ -394,7 +394,7 @@ class ScadaSymbolRemoveTagConfirmComponent extends ScadaSymbolPanelComponent imp
       }
       @for (trigger of actionTriggers; track trigger) {
         @if (!symbolElement?.readonly || hasActions[trigger]) {
-          <div>{{ actionTriggerTranslations.get(trigger) | translate }}</div>
+          <div>{{ actionTriggerInfo[trigger].name | translate }}</div>
         }
         @if (hasActions[trigger]) {
           <button
@@ -424,7 +424,7 @@ class ScadaSymbolTagSettingsComponent extends ScadaSymbolPanelComponent implemen
 
   actionTriggers = scadaSymbolActionTriggers;
 
-  actionTriggerTranslations = scadaSymbolActionTriggerTranslations;
+  actionTriggerInfo = scadaSymbolActionTriggerInfo;
 
   hasStateRenderFunction = false;
 

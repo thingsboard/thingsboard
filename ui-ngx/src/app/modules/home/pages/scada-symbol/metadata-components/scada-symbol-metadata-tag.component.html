@@ -26,11 +26,12 @@
     </mat-chip-set>
   </div>
   <div class="tb-state-render-function-field">
-    @if (!disabled || tagFormGroup.get('stateRenderFunction').value) {
+    @if (isStateRenderFunctionVisible()) {
       <button
         #editStateRenderFunctionButton
         mat-button
         color="primary"
+        [attr.aria-label]="stateRenderFunctionButtonAriaLabel()"
         (click)="editTagStateRenderFunction()">
         <mat-icon>{{ disabled ? 'visibility' :  (tagFormGroup.get('stateRenderFunction').value ? 'edit' : 'add') }}</mat-icon>
         <span>{{ ( disabled ? 'action.view' : (tagFormGroup.get('stateRenderFunction').value ? 'action.edit' : 'action.add') ) | translate }}</span>
@@ -39,12 +40,12 @@
   </div>
   @for (trigger of actionTriggers; track trigger) {
     <div class="tb-action-function-field">
-      @if (!disabled || tagFormGroup.get(actionControlName(trigger)).value) {
+      @if (isActionVisible(trigger)) {
         <button
-          #editActionButton
-          [attr.data-trigger]="trigger"
+          [tbScadaSymbolTagActionButton]="trigger"
           mat-button
           color="primary"
+          [attr.aria-label]="actionButtonAriaLabel(trigger)"
           (click)="editAction(trigger)">
           <mat-icon>{{ disabled ? 'visibility' : (tagFormGroup.get(actionControlName(trigger)).value ? 'edit' : 'add') }}</mat-icon>
           <span>{{ ( disabled ? 'action.view' : (tagFormGroup.get(actionControlName(trigger)).value ? 'action.edit' : 'action.add') ) | translate }}</span>
