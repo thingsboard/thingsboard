@@ -97,32 +97,30 @@
                   </span>
                 }
               </span>
-              <ng-container>
-                @for (item of group.items; track item.id) {
-                  <mat-option [value]="searchText" (click)="openItemDetail(item)">
-                    @if (isCompactType(item.type)) {
-                      <div class="tb-search-popup-icon-square" [style.background]="item.color || '#048ad3'">
-                        <tb-icon class="tb-search-popup-icon-inner">{{ getCompactIcon(item) }}</tb-icon>
-                      </div>
-                    } @else {
-                      <div class="tb-search-popup-thumbnail">
-                        @if (getItemImage(item); as imgUrl) {
-                          <img [src]="imgUrl" alt="">
-                        } @else {
-                          <tb-icon class="tb-search-popup-thumb-placeholder">{{ getItemTypeIcon(item.type) }}</tb-icon>
-                        }
-                      </div>
-                    }
-                    <div class="tb-search-popup-text">
-                      <span class="tb-search-popup-name">{{ item.name }}</span>
-                      <span class="tb-search-popup-author">
-                        <mat-icon>person</mat-icon>
-                        {{ item.creatorDisplayName }}
-                      </span>
+              @for (item of group.items; track item.id) {
+                <mat-option [value]="searchText" (click)="openItemDetail(item)">
+                  @if (isCompactType(item.type)) {
+                    <div class="tb-search-popup-icon-square" [style.background]="item.color || '#048ad3'">
+                      <tb-icon class="tb-search-popup-icon-inner">{{ getCompactIcon(item) }}</tb-icon>
                     </div>
-                  </mat-option>
-                }
-              </ng-container>
+                  } @else {
+                    <div class="tb-search-popup-thumbnail">
+                      @if (getItemImage(item); as imgUrl) {
+                        <img [src]="imgUrl" alt="">
+                      } @else {
+                        <tb-icon class="tb-search-popup-thumb-placeholder">{{ getItemTypeIcon(item.type) }}</tb-icon>
+                      }
+                    </div>
+                  }
+                  <div class="tb-search-popup-text">
+                    <span class="tb-search-popup-name">{{ item.name }}</span>
+                    <span class="tb-search-popup-author">
+                      <mat-icon>person</mat-icon>
+                      {{ item.creatorDisplayName }}
+                    </span>
+                  </div>
+                </mat-option>
+              }
             </mat-optgroup>
           }
         }

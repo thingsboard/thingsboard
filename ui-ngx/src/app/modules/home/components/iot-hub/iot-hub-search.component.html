@@ -142,48 +142,48 @@
       </aside>
     }
 
-  <div class="tb-results-container">
-    <!-- Error -->
-    @if (hasError) {
-      <div class="tb-search-empty flex flex-col items-center py-10">
-        <div class="tb-no-service-bg"></div>
-        <h3>{{ 'iot-hub.network-server-unavailable' | translate }}</h3>
-        <p>{{ 'iot-hub.network-server-unavailable-text' | translate }}</p>
-        <button mat-flat-button color="primary" (click)="retryLoadResults()">
-          {{ 'iot-hub.try-again' | translate }}
-        </button>
-      </div>
-    }
+    <div class="tb-results-container">
+      <!-- Error -->
+      @if (hasError) {
+        <div class="tb-search-empty flex flex-col items-center py-10">
+          <div class="tb-no-service-bg"></div>
+          <h3>{{ 'iot-hub.network-server-unavailable' | translate }}</h3>
+          <p>{{ 'iot-hub.network-server-unavailable-text' | translate }}</p>
+          <button mat-flat-button color="primary" (click)="retryLoadResults()">
+            {{ 'iot-hub.try-again' | translate }}
+          </button>
+        </div>
+      }
 
-    <!-- No results -->
-    @if (!hasError && totalElements === 0 && searchText?.trim()) {
-      <div class="tb-search-empty flex flex-col items-center py-10">
-        <div class="tb-no-data-bg"></div>
-        <h3>{{ 'iot-hub.no-items-found' | translate }}</h3>
-        <p>{{ 'iot-hub.try-adjusting-search' | translate }}</p>
-      </div>
-    }
+      <!-- No results -->
+      @if (!hasError && totalElements === 0 && searchText?.trim()) {
+        <div class="tb-search-empty flex flex-col items-center py-10">
+          <div class="tb-no-data-bg"></div>
+          <h3>{{ 'iot-hub.no-items-found' | translate }}</h3>
+          <p>{{ 'iot-hub.try-adjusting-search' | translate }}</p>
+        </div>
+      }
 
-    <!-- Results -->
-    @if (results.length > 0) {
-      <div class="tb-search-card-grid">
-        @for (item of results; track item.id) {
-          <tb-iot-hub-item-card
-            layout="preview"
-            [item]="item"
-            [installedItem]="getInstalledItem(item)"
-            [installedItemsCount]="getInstalledItemsCount(item)"
-            [showCreator]="showCreator"
-            (cardClick)="openItemDetail($event)"
-            (creatorClick)="navigateToCreator($event)"
-            (installClick)="installItem($event)"
-            (updateClick)="updateItem($event)"
-            (deleteClick)="deleteInstalledItem($event)">
-          </tb-iot-hub-item-card>
-        }
-      </div>
-    }
-  </div>
+      <!-- Results -->
+      @if (results.length > 0) {
+        <div class="tb-search-card-grid">
+          @for (item of results; track item.id) {
+            <tb-iot-hub-item-card
+              layout="preview"
+              [item]="item"
+              [installedItem]="getInstalledItem(item)"
+              [installedItemsCount]="getInstalledItemsCount(item)"
+              [showCreator]="showCreator"
+              (cardClick)="openItemDetail($event)"
+              (creatorClick)="navigateToCreator($event)"
+              (installClick)="installItem($event)"
+              (updateClick)="updateItem($event)"
+              (deleteClick)="deleteInstalledItem($event)">
+            </tb-iot-hub-item-card>
+          }
+        </div>
+      }
+    </div>
   </div>
 
   <!-- Loading -->

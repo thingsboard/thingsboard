@@ -279,21 +279,18 @@
 @media #{$mat-gt-xxl} {
   .tb-search-card-grid {
     grid-template-columns: repeat(6, 1fr);
-
   }
 }
 
 @media #{$mat-lt-xl} {
   .tb-search-card-grid {
     grid-template-columns: repeat(4, 1fr);
-
   }
 }
 
 @media #{$mat-lt-xmd} {
   .tb-search-card-grid {
     grid-template-columns: repeat(3, 1fr);
-
   }
 }
 
@@ -316,7 +313,6 @@
 
   .tb-search-card-grid {
     grid-template-columns: repeat(2, 1fr);
-
   }
 }
 
