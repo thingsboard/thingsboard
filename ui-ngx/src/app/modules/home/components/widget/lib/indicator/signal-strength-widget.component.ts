@@ -203,6 +203,8 @@ export class SignalStrengthWidgetComponent implements OnInit, OnDestroy, AfterVi
     if (this.shapeResize$) {
       this.shapeResize$.disconnect();
     }
+    this.dateFormat?.destroy();
+    this.tooltipDateFormat?.destroy();
   }
 
   public onInit() {

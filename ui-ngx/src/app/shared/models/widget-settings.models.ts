@@ -767,6 +767,8 @@ export abstract class DateFormatProcessor {
 
   abstract update(ts: string | number | Date, interval?: Interval): string;
 
+  destroy(): void {}
+
 }
 
 export class SimpleDateFormatProcessor extends DateFormatProcessor {

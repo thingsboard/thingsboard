@@ -277,11 +277,14 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
     if (this.showChart) {
       this.lineChart.destroy();
     }
+    this.dateFormat.destroy();
   }
 
   private updateLastUpdateTs(ts: number) {
-    this.lastUpdateTs = ts;
-    this.dateFormat.update(ts);
+    if (ts && (!this.lastUpdateTs || ts > this.lastUpdateTs)) {
+      this.lastUpdateTs = ts;
+      this.dateFormat.update(ts);
+    }
   }
 
   private onValueCardValuesResize() {

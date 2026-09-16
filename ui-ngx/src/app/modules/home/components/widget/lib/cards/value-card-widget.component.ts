@@ -162,6 +162,7 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
     if (this.panelResize$) {
       this.panelResize$.disconnect();
     }
+    this.dateFormat.destroy();
   }
 
   public onInit() {
