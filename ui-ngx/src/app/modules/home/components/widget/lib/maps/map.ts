@@ -89,6 +89,8 @@ import TooltipPositioningSide = JQueryTooltipster.TooltipPositioningSide;
 
 type TooltipInstancesData = { root: HTMLElement, instances: ITooltipsterInstance[] };
 
+const GESTURE_HANDLING_DURATION = 2000;
+
 export abstract class TbMap<S extends BaseMapSettings> {
 
   protected settings: S;
@@ -1131,13 +1133,16 @@ export abstract class TbMap<S extends BaseMapSettings> {
 
   protected abstract fitBounds(bounds: L.LatLngBounds): void;
 
-  protected get gestureHandlingOptions() {
+  protected get gestureHandlingMapOptions(): Pick<L.MapOptions, 'gestureHandling' | 'gestureHandlingOptions'> {
     return {
-      duration: 2000,
-      text: {
-        touch: this.ctx.translate.instant('widgets.maps.control.gesture-handling-touch'),
-        scroll: this.ctx.translate.instant('widgets.maps.control.gesture-handling-scroll'),
-        scrollMac: this.ctx.translate.instant('widgets.maps.control.gesture-handling-scroll-mac'),
+      gestureHandling: this.settings.useGestureHandling,
+      gestureHandlingOptions: {
+        duration: GESTURE_HANDLING_DURATION,
+        text: {
+          touch: this.ctx.translate.instant('widgets.maps.control.gesture-handling-touch'),
+          scroll: this.ctx.translate.instant('widgets.maps.control.gesture-handling-scroll'),
+          scrollMac: this.ctx.translate.instant('widgets.maps.control.gesture-handling-scroll-mac'),
+        }
       }
     };
   }

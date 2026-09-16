@@ -306,9 +306,6 @@ export class MapSettingsComponent implements OnInit, ControlValueAccessor, Valid
 
   private updateModel() {
     this.modelValue = this.mapSettingsFormGroup.getRawValue();
-    if (!this.modelValue.zoomActions?.includes(MapZoomAction.scroll)) {
-      this.modelValue.useGestureHandling = false;
-    }
     this.propagateChange(this.modelValue);
   }
 
