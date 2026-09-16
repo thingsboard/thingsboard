@@ -83,10 +83,11 @@ export interface SortOption {
  * The sort menu every IoT Hub surface carrying a search field offers, and the order it offers
  * them in: the first entry is the default each surface opens on.
  *
- * Relevance is that default in both states. With text it ranks the answer; with none the backend
- * substitutes the install count, so a surface opens on the order it opened on before and nothing
- * switches on the field state. Agreed with the product owner and recorded on TBIOH-33, which
- * supersedes that ticket's SCOPE-IN 2, SCOPE-IN 4 and AC-4.
+ * Relevance is that default with or without text. With text it ranks the answer; with none the
+ * backend serves the install count under the same key, so a surface opens on the order it opened
+ * on before and nothing here switches on the field state. The cost is a menu reading "Most
+ * relevant" over an install-ordered list until the user types; the alternative - flipping the
+ * selector once text appears - moves a control the user did not touch and reorders nothing.
  *
  * One list rather than one per surface: a new key must reach all of them, and the surface that
  * missed it would keep a different default without failing.

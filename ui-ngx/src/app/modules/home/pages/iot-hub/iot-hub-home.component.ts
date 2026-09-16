@@ -165,8 +165,8 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
         this.searchLoading = true;
         const trimmed = text.trim();
         // Relevance in both states, the same value every other IoT Hub surface sends: with an
-        // empty field the backend substitutes the install count, so this panel opens on
-        // popularity without having to say so. See TBIOH-33 for the decision.
+        // empty field the backend serves the install count under this key, so the panel opens on
+        // popularity without this component having to know it.
         const query = new MpItemVersionGroupedQuery({}, trimmed, RELEVANCE_SORT_PROPERTY);
         // A failed request must not end the subscription: the interceptor reports it, and the
         // panel goes back to an empty answer the next keystroke can replace.
