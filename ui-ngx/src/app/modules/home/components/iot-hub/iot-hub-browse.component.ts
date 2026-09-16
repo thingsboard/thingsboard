@@ -171,12 +171,6 @@ export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy
     if (params['search']) {
       this.textSearch = params['search'];
     }
-    // A search section header on a creator profile lands here scoped to that creator. The
-    // bound input wins: an embedded host (the add-item dialog) sets its own scope, and must
-    // not pick one up from whatever URL happens to be open behind the dialog.
-    if (!this.creatorId && !this.embedded && params['creatorId']) {
-      this.creatorId = params['creatorId'];
-    }
     if (this.fixedSubType) {
       const subtypes = this.getActiveSubtypes();
       if (subtypes) {
