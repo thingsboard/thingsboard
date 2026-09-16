@@ -38,7 +38,7 @@ public class LwM2MBootstrapConfig implements Serializable {
      *   clientSecretKey?: string,
      *   serverPublicKey?: string;
      *   clientHoldOffTime?: number,
-     *   shortServerId?: number for DM server; null for BS server,
+     *  shortServerId?: number, // DM server only; null for the BS entry
      *   bootstrapServerAccountTimeout: number
      * */
     @Getter

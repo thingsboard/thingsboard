@@ -169,7 +169,7 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
             List<LwM2MBootstrapServerCredential> lwM2MBootstrapServersConfigurations = ((Lwm2mDeviceProfileTransportConfiguration) transportConfiguration).getBootstrap();
             if (lwM2MBootstrapServersConfigurations != null) {
                 validateLwm2mServersConfigOfBootstrapForClient(lwM2MBootstrapServersConfigurations,
-                        ((Lwm2mDeviceProfileTransportConfiguration) transportConfiguration).isBootstrapServerUpdateEnable());
+                        ((Lwm2mDeviceProfileTransportConfiguration) transportConfiguration).isBootstrapServerUpdateEnable(), deviceProfile.getName(), tenantId);
                 for (LwM2MBootstrapServerCredential bootstrapServerCredential : lwM2MBootstrapServersConfigurations) {
                     validateLwm2mServersCredentialOfBootstrapForClient(bootstrapServerCredential);
                 }
@@ -344,12 +344,11 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
            See: http://www.openmobilealliance.org/release/LightweightM2M/V1_1_1-20190617-A/OMA-TS-LightweightM2M_Core-V1_1_1-20190617-A.pdf
          - Backward Compatibility (ThingsBoard <= 4.2):
            Non-null shortServerId on Bootstrap Server is normalized to null with a warning.
-         - Port Misconfiguration Protection:
-           Bootstrap Server entries using DM ports (e.g. 5685/5686) are rejected.
          - Single Bootstrap Server Constraint:
            Only one Bootstrap Server configuration is allowed per transport setup.
     */
-    private void validateLwm2mServersConfigOfBootstrapForClient(List<LwM2MBootstrapServerCredential> lwM2MBootstrapServersConfigurations, boolean isBootstrapServerUpdateEnable) {
+    private void validateLwm2mServersConfigOfBootstrapForClient(List<LwM2MBootstrapServerCredential> lwM2MBootstrapServersConfigurations,
+                                                                boolean isBootstrapServerUpdateEnable, String deviceProfileName, TenantId tenantId) {
         Set<String> uris = new HashSet<>();
         Set<Integer> shortServerIds = new HashSet<>();
         boolean hasBootstrapServer = false;
@@ -363,14 +362,13 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
             if (serverConfig.isBootstrapServerIs()) {
                 // 1. Only one Bootstrap Server configuration is allowed
                 if (hasBootstrapServer) {
-                    log.error("Multiple Bootstrap Server configurations detected!");
                     throw new DeviceCredentialsValidationException("Only one Bootstrap Server configuration is allowed!");
                 }
 
                 // 2. Normalize legacy shortServerId to null for backward compatibility
                 if (serverConfig.getShortServerId() != null) {
-                    log.warn("Ignoring Short Server ID [{}] on the Bootstrap Server entry: cleared to null for backward compatibility (ThingsBoard <= 4.2).",
-                            serverConfig.getShortServerId());
+                    log.warn("[{}] [{}] Ignoring Short Server ID [{}] on the Bootstrap Server entry: cleared to null for backward compatibility (ThingsBoard <= 4.2).",
+                            tenantId, deviceProfileName, serverConfig.getShortServerId());
 
                     serverConfig.setShortServerId(null);
                 }
