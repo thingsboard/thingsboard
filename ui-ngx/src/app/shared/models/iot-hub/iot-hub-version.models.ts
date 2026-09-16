@@ -156,7 +156,7 @@ export interface MpItemVersionQueryOptions {
 function filtersToQuery(o: MpItemVersionQueryOptions): string {
   let query = '';
   if (o.type) {
-    query += `&type=${o.type}`;
+    query += `&type=${encodeURIComponent(o.type)}`;
   }
   if (o.types?.length) {
     query += o.types.map(t => `&type=${encodeURIComponent(t)}`).join('');
@@ -165,7 +165,7 @@ function filtersToQuery(o: MpItemVersionQueryOptions): string {
     query += `&peOnly=${o.peOnly}`;
   }
   if (o.creatorId) {
-    query += `&creatorId=${o.creatorId}`;
+    query += `&creatorId=${encodeURIComponent(o.creatorId)}`;
   }
   if (o.categories?.length) {
     query += o.categories.map(c => `&categories=${encodeURIComponent(c)}`).join('');
