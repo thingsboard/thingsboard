@@ -114,7 +114,7 @@ public class LwM2MBootstrapConfig implements Serializable {
 
     private BootstrapConfig.ServerConfig setServerConfig (AbstractLwM2MBootstrapServerCredential serverCredential) {
         BootstrapConfig.ServerConfig serverConfig = new BootstrapConfig.ServerConfig();
-        if (!serverCredential.isBootstrapServerIs()) {
+        if (!serverCredential.isBootstrapServerIs() && serverCredential.getShortServerId() != null) {
             serverConfig.shortId = serverCredential.getShortServerId();
         }
         serverConfig.lifetime = serverCredential.getLifetime();
