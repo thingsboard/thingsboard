@@ -33,7 +33,8 @@
              cover msa/js-executor, whose yarn install and sandbox tests keep running.
              frontend-maven-plugin reads skip.yarn itself, so that property cannot be narrowed to a
              subset of the modules; this one can, and it defaults to skip.yarn so that
-             -Dskip.yarn=true still skips every yarn invocation in the project exactly as before. -->
+             -Dskip.yarn=true still skips every yarn invocation in the project exactly as before.
+             Either flag also skips all packaging (see the skip-pkg-without-* profiles). -->
         <skip.ui.build>${skip.yarn}</skip.ui.build>
         <pkg.process-resources.phase>none</pkg.process-resources.phase>
         <pkg.package.phase>none</pkg.package.phase>
@@ -222,6 +223,40 @@
             <activation>
                 <property>
                     <name>pkg.skip</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <properties>
+                <pkg.skip.bootjar>true</pkg.skip.bootjar>
+                <pkg.skip.deb>true</pkg.skip.deb>
+                <pkg.skip.rpm>true</pkg.skip.rpm>
+                <pkg.skip.zip>true</pkg.skip.zip>
+            </properties>
+        </profile>
+
+        <!-- Packages built without the UI are incomplete (and the JS Windows ZIPs fail on the missing
+             launcher), so skipping the UI build skips all packaging too. One profile per flag because
+             activation only sees CLI/system properties, not the skip.ui.build default. -->
+        <profile>
+            <id>skip-pkg-without-yarn</id>
+            <activation>
+                <property>
+                    <name>skip.yarn</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <properties>
+                <pkg.skip.bootjar>true</pkg.skip.bootjar>
+                <pkg.skip.deb>true</pkg.skip.deb>
+                <pkg.skip.rpm>true</pkg.skip.rpm>
+                <pkg.skip.zip>true</pkg.skip.zip>
+            </properties>
+        </profile>
+        <profile>
+            <id>skip-pkg-without-ui-build</id>
+            <activation>
+                <property>
+                    <name>skip.ui.build</name>
                     <value>true</value>
                 </property>
             </activation>

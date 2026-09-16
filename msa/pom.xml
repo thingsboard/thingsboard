@@ -83,6 +83,31 @@
                 <pkg.deb.phase>none</pkg.deb.phase>
             </properties>
         </profile>
+        <!-- Mirror the root skip-pkg-without-* profiles: no .deb is built when the UI build is skipped. -->
+        <profile>
+            <id>skip-pkg-without-yarn</id>
+            <activation>
+                <property>
+                    <name>skip.yarn</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <properties>
+                <pkg.deb.phase>none</pkg.deb.phase>
+            </properties>
+        </profile>
+        <profile>
+            <id>skip-pkg-without-ui-build</id>
+            <activation>
+                <property>
+                    <name>skip.ui.build</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <properties>
+                <pkg.deb.phase>none</pkg.deb.phase>
+            </properties>
+        </profile>
         <profile>
             <id>black-box-tests</id>
             <activation>

@@ -30,11 +30,6 @@
         <pkg.package.phase>package</pkg.package.phase>
         <pkg.linux.dist>${project.build.directory}/package/linux</pkg.linux.dist>
         <pkg.win.dist>${project.build.directory}/package/windows</pkg.win.dist>
-        <!-- The Windows ZIP bundles the native launcher that `yarn run pkg` produces, so there is
-             nothing to assemble when the yarn build is skipped. skip.yarn is referenced directly
-             (not through a profile) so that it is honoured both when it comes from the command
-             line and when it comes from a pom property. -->
-        <pkg.skip.zip>${skip.yarn}</pkg.skip.zip>
         <!-- The `yarn test` execution has to be skipped when tests are skipped and also when the
              yarn build as a whole is skipped: with `yarn install` skipped there is no node_modules
              to run the tests from. Maven has no boolean OR, so skip.yarn is used as the default

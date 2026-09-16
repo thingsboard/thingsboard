@@ -46,6 +46,8 @@ Use `-Dpkg.skip=true` to skip all packaging at once (equivalent to all four flag
 | `-Dpkg.skip.rpm=true`      | Gradle `buildRpm`                         | Yes — no test depends on the RPM                             |
 | `-Dpkg.skip.zip=true`      | `maven-assembly-plugin` Windows ZIP       | Yes — no test depends on the ZIP                             |
 
+`-Dskip.yarn=true` and `-Dskip.ui.build=true` imply `-Dpkg.skip=true`: packages built without the UI are incomplete.
+
 ## Testcontainers compatibility with the Docker API workaround
 
 In case your tests failed to run testcontainers due to unsupported Docker API version
