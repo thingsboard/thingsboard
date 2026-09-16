@@ -4,10 +4,15 @@ import { AfterViewInit, Component, ElementRef, EventEmitter, Input, NgZone, OnDe
 import { Subject } from 'rxjs';
 import { debounceTime, takeUntil } from 'rxjs/operators';
 import { PageLink } from '@shared/models/page/page-link';
-import { Direction, SortOrder } from '@shared/models/page/sort-order';
+import { SortOrder } from '@shared/models/page/sort-order';
 import { PageData } from '@shared/models/page/page-data';
 import { MpItemVersionQuery, MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
-import { ItemType, FilterParamInfo, CREATOR_VISIBLE_ITEM_TYPES } from '@shared/models/iot-hub/iot-hub-item.models';
+import {
+  CREATOR_VISIBLE_ITEM_TYPES,
+  FilterParamInfo,
+  IOT_HUB_SORT_OPTIONS,
+  ItemType
+} from '@shared/models/iot-hub/iot-hub-item.models';
 import { widgetTypeTranslations, cfTypeTranslations, ruleChainTypeTranslations } from '@shared/models/iot-hub/iot-hub-version.models';
 import { IotHubInstalledItem, DeviceInstalledItemDescriptor } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
@@ -15,12 +20,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
 import { filterIotHubItemsBySearch, groupIotHubFilterItems, IotHubFilterGroup } from '@home/components/iot-hub/iot-hub-utils';
-
-interface SortOption {
-  value: string;
-  label: string;
-  direction: Direction;
-}
 
 @Component({
   selector: 'tb-iot-hub-browse',
@@ -126,21 +125,7 @@ export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy
   activeHardwareTypes = new Set<string>();
   activeVendors = new Set<string>();
 
-  /**
-   * Relevance leads, and is therefore the default (selectedSortIndex starts at 0). A type page
-   * carries a search field, which is the only thing relevance ranks by; with the field empty the
-   * backend substitutes the install count, so browsing keeps the order it always had.
-   *
-   * Kept in step by hand with TbIotHubSearchComponent's list and with IOT_HUB_SORT_OPTIONS on
-   * thingsboard.io — three copies, because the two products share no code and this component
-   * predates the search page's list.
-   */
-  sortOptions: SortOption[] = [
-    { value: 'relevance', label: 'iot-hub.sort-most-relevant', direction: Direction.DESC },
-    { value: 'totalInstallCount', label: 'iot-hub.sort-most-installed', direction: Direction.DESC },
-    { value: 'publishedTime', label: 'iot-hub.sort-newest', direction: Direction.DESC },
-    { value: 'name', label: 'iot-hub.sort-name', direction: Direction.ASC }
-  ];
+  readonly sortOptions = IOT_HUB_SORT_OPTIONS;
 
   typeTabs: { type: ItemType; label: string }[] = CREATOR_VISIBLE_ITEM_TYPES.map(t => ({
     type: t,

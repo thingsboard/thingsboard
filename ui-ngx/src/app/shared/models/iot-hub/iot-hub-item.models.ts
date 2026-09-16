@@ -1,5 +1,7 @@
 // SPDX-FileCopyrightText: Copyright The Thingsboard Authors
 // SPDX-License-Identifier: Apache-2.0
+import { Direction } from '@shared/models/page/sort-order';
+
 export enum ItemType {
   WIDGET = 'WIDGET',
   DASHBOARD = 'DASHBOARD',
@@ -52,6 +54,48 @@ export const CREATOR_VISIBLE_ITEM_TYPES: ItemType[] = [
   ItemType.CALCULATED_FIELD,
   ItemType.ALARM_RULE,
   ItemType.RULE_CHAIN,
+];
+
+/**
+ * Item types a surface that mixes them lays out, in the order they are shown. Distinct from
+ * CREATOR_VISIBLE_ITEM_TYPES, which is the same six as a membership test and carries the type
+ * tabs' own order: here DEVICE leads, matching the hero popup's sections and the website.
+ */
+export const CROSS_TYPE_ITEM_TYPES: ItemType[] = [
+  ItemType.DEVICE,
+  ItemType.SOLUTION_TEMPLATE,
+  ItemType.WIDGET,
+  ItemType.CALCULATED_FIELD,
+  ItemType.ALARM_RULE,
+  ItemType.RULE_CHAIN,
+];
+
+/** Sort property served by relevance ranking. */
+export const RELEVANCE_SORT_PROPERTY = 'relevance';
+
+export interface SortOption {
+  value: string;
+  label: string;
+  direction: Direction;
+}
+
+/**
+ * The sort menu every IoT Hub surface carrying a search field offers, and the order it offers
+ * them in: the first entry is the default each surface opens on.
+ *
+ * Relevance is that default in both states. With text it ranks the answer; with none the backend
+ * substitutes the install count, so a surface opens on the order it opened on before and nothing
+ * switches on the field state. Agreed with the product owner and recorded on TBIOH-33, which
+ * supersedes that ticket's SCOPE-IN 2, SCOPE-IN 4 and AC-4.
+ *
+ * One list rather than one per surface: a new key must reach all of them, and the surface that
+ * missed it would keep a different default without failing.
+ */
+export const IOT_HUB_SORT_OPTIONS: SortOption[] = [
+  { value: RELEVANCE_SORT_PROPERTY, label: 'iot-hub.sort-most-relevant', direction: Direction.DESC },
+  { value: 'totalInstallCount', label: 'iot-hub.sort-most-installed', direction: Direction.DESC },
+  { value: 'publishedTime', label: 'iot-hub.sort-newest', direction: Direction.DESC },
+  { value: 'name', label: 'iot-hub.sort-name', direction: Direction.ASC }
 ];
 
 export interface FilterParamInfo {

@@ -22,7 +22,7 @@
   }
 
   <div class="tb-iot-hub-facet-items" [class.scrollable]="scrollable">
-    @for (option of visibleOptions; track trackByKey($index, option)) {
+    @for (option of visibleOptions; track option.key) {
       <mat-checkbox [checked]="isSelected(option.key)" (change)="onToggle(option.key)">
         {{ labelFor(option.key) }}
       </mat-checkbox>

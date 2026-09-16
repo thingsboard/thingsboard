@@ -15,7 +15,13 @@ import {
   MpItemVersionSection,
   MpItemVersionView
 } from '@shared/models/iot-hub/iot-hub-version.models';
-import { getItemTypeIcon, ItemType, itemTypeTranslations } from '@shared/models/iot-hub/iot-hub-item.models';
+import {
+  CROSS_TYPE_ITEM_TYPES,
+  getItemTypeIcon,
+  ItemType,
+  itemTypeTranslations,
+  RELEVANCE_SORT_PROPERTY
+} from '@shared/models/iot-hub/iot-hub-item.models';
 import { IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -40,23 +46,9 @@ interface HeroTypeConfig {
 interface SearchResultGroup {
   type: ItemType;
   items: MpItemVersionView[];
-  /** Rows of this type behind the answer, from the section's total. */
-  total: number;
-  /** total - items.length, floored at 0. Zero means the header shows no "+N more". */
+  /** How many rows of this type the header offers beyond the ones shown. Zero renders no "+N more". */
   remaining: number;
 }
-
-/** The types this popup lays out. A section of anything else is dropped rather than rendered
- *  without a label - the platform publishes no dashboards. Order comes from the server. */
-const SEARCH_GROUP_TYPES: ItemType[] = [
-  ItemType.DEVICE, ItemType.SOLUTION_TEMPLATE, ItemType.WIDGET,
-  ItemType.CALCULATED_FIELD, ItemType.ALARM_RULE, ItemType.RULE_CHAIN
-];
-
-/** Relevance ranking. Sent only while the field has text: with an empty field the backend
- *  substitutes the install count anyway, and this component knows the field state, so it sends
- *  the honest value rather than leaning on that safety net. */
-const RELEVANCE = 'relevance';
 
 @Component({
   selector: 'tb-iot-hub-home',
@@ -172,10 +164,10 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
       switchMap(text => {
         this.searchLoading = true;
         const trimmed = text.trim();
-        // Two states, one panel: popularity answers "what is worth looking at" with an empty
-        // field, relevance answers "what did I ask for" once there is one.
-        const sortProperty = trimmed ? RELEVANCE : 'totalInstallCount';
-        const query = new MpItemVersionGroupedQuery({}, trimmed, sortProperty);
+        // Relevance in both states, the same value every other IoT Hub surface sends: with an
+        // empty field the backend substitutes the install count, so this panel opens on
+        // popularity without having to say so. See TBIOH-33 for the decision.
+        const query = new MpItemVersionGroupedQuery({}, trimmed, RELEVANCE_SORT_PROPERTY);
         // A failed request must not end the subscription: the interceptor reports it, and the
         // panel goes back to an empty answer the next keystroke can replace.
         return this.iotHubApiService.getPublishedVersionsGrouped(query, { ignoreLoading: true }).pipe(
@@ -556,17 +548,24 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
 
   /**
    * Reads the sections the server built: they arrive capped and in the order to render them, so
-   * this only drops the types this panel has no layout for and works out each header's "+N more".
+   * this only drops the types this panel has no layout for - the platform publishes no dashboards
+   * - and works out each header's "+N more".
+   *
+   * `items` is defaulted because the response is an unvalidated cast of a new endpoint, and a
+   * throw here lands in a subscribe callback, where it would leave the panel on its spinner
+   * rather than reaching the catchError upstream.
    */
   private toResultGroups(sections: MpItemVersionSection[]): SearchResultGroup[] {
     return sections
-      .filter(section => SEARCH_GROUP_TYPES.includes(section.itemType))
-      .map(section => ({
-        type: section.itemType,
-        items: section.items,
-        total: section.total,
-        remaining: Math.max(0, section.total - section.items.length)
-      }));
+      .filter(section => CROSS_TYPE_ITEM_TYPES.includes(section.itemType))
+      .map(section => {
+        const items = section.items ?? [];
+        return {
+          type: section.itemType,
+          items,
+          remaining: Math.max(0, section.total - items.length)
+        };
+      });
   }
 
 }

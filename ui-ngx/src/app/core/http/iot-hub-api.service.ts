@@ -83,10 +83,9 @@ export class IotHubApiService {
   }
 
   /**
-   * The sectioned answer: one section per item type, in the server's order, each holding at most
-   * four rows and the total behind them. Its own endpoint, which is why this is its own method -
-   * it takes no page, page size or sort direction, and sending them would be sending what the
-   * server does not read.
+   * The sectioned answer: one section per item type, in the server's order, each capped by the
+   * server and carrying the total behind that cap. Its own endpoint, which takes no page, page
+   * size or sort direction.
    */
   public getPublishedVersionsGrouped(query: MpItemVersionGroupedQuery,
                                      config?: IotHubRequestConfig): Observable<MpItemVersionSection[]> {

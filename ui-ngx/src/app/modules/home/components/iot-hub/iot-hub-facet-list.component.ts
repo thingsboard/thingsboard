@@ -26,7 +26,8 @@ export class TbIotHubFacetListComponent {
 
   @Input() options: FilterParamInfo[] = [];
 
-  /** Keys the host currently has selected. Read, never written. */
+  /** Keys the host currently has selected. Read, never written - the host hands over a new Set
+   *  on every toggle rather than mutating this one. */
   @Input() selected = new Set<string>();
 
   /**
@@ -75,9 +76,5 @@ export class TbIotHubFacetListComponent {
 
   onToggle(key: string): void {
     this.toggled.emit(key);
-  }
-
-  trackByKey(_index: number, option: FilterParamInfo): string {
-    return option.key;
   }
 }

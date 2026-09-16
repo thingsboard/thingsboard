@@ -21,7 +21,12 @@ import { ItemSizeStrategy } from '@shared/components/grid/scroll-grid.component'
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { TranslateService } from '@ngx-translate/core';
 import { MpItemVersionQuery, MpItemVersionView, widgetTypeTranslations } from '@shared/models/iot-hub/iot-hub-version.models';
-import { ItemType, FilterParamInfo, WidgetCategory } from '@shared/models/iot-hub/iot-hub-item.models';
+import {
+  FilterParamInfo,
+  IOT_HUB_SORT_OPTIONS,
+  ItemType,
+  WidgetCategory
+} from '@shared/models/iot-hub/iot-hub-item.models';
 import { IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
@@ -37,12 +42,6 @@ import { IotHubBuiltInService } from '@home/components/iot-hub/iot-hub-built-in.
 type selectWidgetMode = 'installed' | 'iotHub';
 type installedSubMode = 'default' | 'allWidgets';
 type iotHubSubMode = 'default' | 'allWidgets' | 'installed' | 'category';
-
-interface WidgetSelectSortOption {
-  value: string;
-  label: string;
-  direction: Direction;
-}
 
 const LOGICAL_ALL_WIDGETS = '__logical_all_widgets__';
 const LOGICAL_INSTALLED_FROM_IOT_HUB = '__logical_installed_from_iot_hub__';
@@ -89,22 +88,10 @@ export class DashboardWidgetSelectComponent {
   searchFocused = false;
 
   /**
-   * Relevance leads, and is therefore the default (iotHubSelectedSortIndex starts at 0). This
-   * panel has a search field, which is the only thing relevance ranks by; with the field empty
-   * the backend substitutes the install count, so the picker opens on the order it always had.
-   *
-   * scadaFirst is unaffected: the backend prepends it ahead of the caller's sort AND ahead of
-   * relevance, so a SCADA context still lists SCADA widgets first.
-   *
-   * Fourth copy of this list — the others are in TbIotHubSearchComponent, TbIotHubBrowseComponent
-   * and IOT_HUB_SORT_OPTIONS on thingsboard.io. Kept in step by hand.
+   * scadaFirst is unaffected by the sort: the backend prepends it ahead of the caller's key AND
+   * ahead of relevance, so a SCADA context still lists SCADA widgets first.
    */
-  iotHubSortOptions: WidgetSelectSortOption[] = [
-    { value: 'relevance', label: 'iot-hub.sort-most-relevant', direction: Direction.DESC },
-    { value: 'totalInstallCount', label: 'iot-hub.sort-most-installed', direction: Direction.DESC },
-    { value: 'publishedTime', label: 'iot-hub.sort-newest', direction: Direction.DESC },
-    { value: 'name', label: 'iot-hub.sort-name', direction: Direction.ASC }
-  ];
+  readonly iotHubSortOptions = IOT_HUB_SORT_OPTIONS;
   iotHubSelectedSortIndex = 0;
 
   @Input()

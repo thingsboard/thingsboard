@@ -3,35 +3,21 @@
 import { Component, OnInit, OnDestroy, Input, Output, EventEmitter, ViewChild, ElementRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { forkJoin, Subject, Subscription } from 'rxjs';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { forkJoin, of, Subject, Subscription } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { PageLink } from '@shared/models/page/page-link';
-import { Direction, SortOrder } from '@shared/models/page/sort-order';
+import { SortOrder } from '@shared/models/page/sort-order';
 import { MpItemVersionQuery, MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
-import { FilterParamInfo, ItemType, itemTypeTranslations } from '@shared/models/iot-hub/iot-hub-item.models';
+import {
+  CROSS_TYPE_ITEM_TYPES,
+  FilterParamInfo,
+  IOT_HUB_SORT_OPTIONS,
+  ItemType,
+  itemTypeTranslations
+} from '@shared/models/iot-hub/iot-hub-item.models';
 import { IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { IotHubActionsService } from './iot-hub-actions.service';
-
-interface SortOption {
-  value: string;
-  label: string;
-  direction: Direction;
-}
-
-/** Sort property served by relevance ranking. With no text the backend substitutes the
- *  install count, so it is a safe default in both states. */
-const RELEVANCE = 'relevance';
-
-/**
- * Item types the Type facet offers, in the order every other cross-type surface uses (the hero
- * popup's sections, the site's). Fixed rather than sorted by count: the counts move with the
- * catalogue and a facet whose options reshuffle under the pointer is hard to use.
- */
-const FACET_ITEM_TYPES: ItemType[] = [
-  ItemType.DEVICE, ItemType.SOLUTION_TEMPLATE, ItemType.WIDGET,
-  ItemType.CALCULATED_FIELD, ItemType.ALARM_RULE, ItemType.RULE_CHAIN
-];
 
 /**
  * Rows a page holds, as a multiple of the column count, so a page always ends on a complete row.
@@ -84,7 +70,8 @@ export class TbIotHubSearchComponent implements OnInit, OnDestroy {
     return [base, base * 2, base * 4];
   }
 
-  /** Filter panel state. Empty sets mean "no filter", which is what the query object expects. */
+  // Filter panel state. Empty sets mean "no filter", which is what the query object expects.
+
   /** Narrow widths only: the facet panel is a block above the results, not a sidebar. */
   filtersOpen = false;
   typeOptions: FilterParamInfo[] = [];
@@ -94,18 +81,7 @@ export class TbIotHubSearchComponent implements OnInit, OnDestroy {
   activeCategories = new Set<string>();
   activeUseCases = new Set<string>();
 
-  sortOptions: SortOption[] = [
-    { value: RELEVANCE, label: 'iot-hub.sort-most-relevant', direction: Direction.DESC },
-    { value: 'totalInstallCount', label: 'iot-hub.sort-most-installed', direction: Direction.DESC },
-    { value: 'publishedTime', label: 'iot-hub.sort-newest', direction: Direction.DESC },
-    { value: 'name', label: 'iot-hub.sort-name', direction: Direction.ASC }
-  ];
-  /**
-   * Relevance is the default in BOTH states, which is why nothing here switches on whether the
-   * search field has text. With text it ranks the answer; without it the backend substitutes the
-   * install count, so a user who never opens this menu sees the order they always saw while
-   * browsing and the best matches once they type.
-   */
+  readonly sortOptions = IOT_HUB_SORT_OPTIONS;
   selectedSortIndex = 0;
 
   installedWidgets: IotHubInstalledItem[] = [];
@@ -156,15 +132,18 @@ export class TbIotHubSearchComponent implements OnInit, OnDestroy {
   };
 
   onTypeToggle(key: string): void {
-    this.toggle(this.activeTypes, key);
+    this.activeTypes = this.toggled(this.activeTypes, key);
+    this.reloadFromFirstPage();
   }
 
   onCategoryToggle(key: string): void {
-    this.toggle(this.activeCategories, key);
+    this.activeCategories = this.toggled(this.activeCategories, key);
+    this.reloadFromFirstPage();
   }
 
   onUseCaseToggle(key: string): void {
-    this.toggle(this.activeUseCases, key);
+    this.activeUseCases = this.toggled(this.activeUseCases, key);
+    this.reloadFromFirstPage();
   }
 
   get activeFilterCount(): number {
@@ -175,19 +154,26 @@ export class TbIotHubSearchComponent implements OnInit, OnDestroy {
     if (this.activeFilterCount === 0) {
       return;
     }
-    this.activeTypes.clear();
-    this.activeCategories.clear();
-    this.activeUseCases.clear();
-    this.pageIndex = 0;
-    this.loadResults();
+    this.activeTypes = new Set<string>();
+    this.activeCategories = new Set<string>();
+    this.activeUseCases = new Set<string>();
+    this.reloadFromFirstPage();
   }
 
-  private toggle(set: Set<string>, key: string): void {
-    if (set.has(key)) {
-      set.delete(key);
-    } else {
-      set.add(key);
+  /**
+   * Returns a new Set rather than mutating the one passed in: TbIotHubFacetListComponent holds
+   * this very instance as an @Input, and a mutation it cannot see is a trap for the first person
+   * to put that component on OnPush.
+   */
+  private toggled(set: Set<string>, key: string): Set<string> {
+    const next = new Set(set);
+    if (!next.delete(key)) {
+      next.add(key);
     }
+    return next;
+  }
+
+  private reloadFromFirstPage(): void {
     this.pageIndex = 0;
     this.loadResults();
   }
@@ -197,27 +183,30 @@ export class TbIotHubSearchComponent implements OnInit, OnDestroy {
    * answers are merged here, the way the site merges the same six at build time. Counts are
    * deliberately not rendered: filterInfo takes no text query, so beside a searched result they
    * would be the whole catalogue's numbers pretending to describe this answer.
+   *
+   * Each request carries its own catchError so one type's failure costs that type's categories
+   * and use cases, not the panel: a bare forkJoin is all-or-nothing, and the Type facet needs no
+   * server data at all.
    */
   private loadFilterInfo(): void {
     const config = { ignoreLoading: true, ignoreErrors: true };
     forkJoin(
-      FACET_ITEM_TYPES.map(type => this.iotHubApiService.getFilterInfo(type, config))
+      CROSS_TYPE_ITEM_TYPES.map(type =>
+        this.iotHubApiService.getFilterInfo(type, config).pipe(catchError(() => of(null)))
+      )
     ).subscribe({
       next: infos => {
         // Every item type is offered, not only the ones filterInfo reports facets for: the
         // endpoint describes a type's categories and vendors, never how many items it has, and
         // a type whose items carry no categories would vanish from its own facet.
-        this.typeOptions = FACET_ITEM_TYPES.map(type => ({
+        this.typeOptions = CROSS_TYPE_ITEM_TYPES.map(type => ({
           key: type as string,
           totalItems: 0,
           totalInstallCount: 0
         }));
         this.categoryOptions = this.mergeFacet(infos.map(i => i?.categories));
         this.useCaseOptions = this.mergeFacet(infos.map(i => i?.useCases));
-      },
-      // A facet panel that failed to load is an empty panel, never a broken page: the grid
-      // beside it answers the query perfectly well without it.
-      error: () => {}
+      }
     });
   }
 
@@ -347,11 +336,6 @@ export class TbIotHubSearchComponent implements OnInit, OnDestroy {
     this.pageIndex = 0;
     this.loadResults();
   }
-
-  // Type helpers
-
-
-
 
   // Installed items
   getInstalledItem(item: MpItemVersionView): IotHubInstalledItem | undefined {
