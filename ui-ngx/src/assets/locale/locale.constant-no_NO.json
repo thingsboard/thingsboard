@@ -4583,7 +4583,6 @@
         "community-string": "SNMP fellesskapsstreng"
       },
       "isgateway": "Er gateway",
-      "activity-time-from-gateway-device": "Aktivitetstid fra gateway-enhet",
       "description": "Beskrivelse",
       "edge-license-key": "Lisensnøkkel",
       "cloud-endpoint": "Cloud-endepunkt",

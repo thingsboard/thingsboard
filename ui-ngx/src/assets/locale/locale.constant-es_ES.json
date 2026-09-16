@@ -5422,7 +5422,6 @@
         "community-string": "Cadena de comunidad SNMP"
       },
       "isgateway": "Es Gateway",
-      "activity-time-from-gateway-device": "Hora de actividad desde dispositivo Gateway",
       "description": "Descripción",
       "edge-license-key": "Clave de licencia",
       "cloud-endpoint": "Endpoint de la nube",

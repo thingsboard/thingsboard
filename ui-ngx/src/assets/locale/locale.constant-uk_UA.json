@@ -5422,7 +5422,6 @@
         "community-string": "Рядок спільноти SNMP"
       },
       "isgateway": "Це Gateway",
-      "activity-time-from-gateway-device": "Час активності з пристрою Gateway",
       "description": "Опис",
       "edge-license-key": "Ліцензійний ключ",
       "cloud-endpoint": "Кінцева точка хмари",
