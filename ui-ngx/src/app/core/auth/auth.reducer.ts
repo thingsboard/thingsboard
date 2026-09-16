@@ -46,7 +46,7 @@ const emptyUserAuthState: AuthPayload = {
   allowKeyFiltersOrConditions: true,
   nullsOrderStrategy: 'default',
   edqsEnabled: false,
-  iotHubBaseUrl: '',
+  iotHubBaseUrl: ''
 };
 
 export const initialState: AuthState = {
