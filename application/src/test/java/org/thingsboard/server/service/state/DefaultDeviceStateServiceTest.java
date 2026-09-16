@@ -39,6 +39,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.AttributesSaveResult;
+import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
@@ -49,6 +50,7 @@ import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.dao.attributes.AttributesDao;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.sql.query.EntityQueryRepository;
@@ -77,6 +79,7 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -108,6 +111,8 @@ class DefaultDeviceStateServiceTest {
     @Mock
     AttributesService attributesService;
     @Mock
+    AttributesDao attributesDao;
+    @Mock
     TimeseriesService tsService;
     @Mock
     TbClusterService clusterService;
@@ -138,7 +143,7 @@ class DefaultDeviceStateServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = spy(new DefaultDeviceStateService(deviceService, attributesService, tsService, clusterService, partitionService, entityQueryRepository, null, defaultTbApiUsageReportClient, notificationRuleProcessor));
+        service = spy(new DefaultDeviceStateService(deviceService, attributesService, attributesDao, tsService, clusterService, partitionService, entityQueryRepository, null, defaultTbApiUsageReportClient, notificationRuleProcessor));
         ReflectionTestUtils.setField(service, "tsSubService", telemetrySubscriptionService);
         ReflectionTestUtils.setField(service, "defaultInactivityTimeoutMs", defaultInactivityTimeoutMs);
         ReflectionTestUtils.setField(service, "defaultStateCheckIntervalInSec", 60);
@@ -152,6 +157,7 @@ class DefaultDeviceStateServiceTest {
         ReflectionTestUtils.setField(service, "deviceStateCallbackExecutor", deviceStateCallbackExecutor);
 
         lenient().when(partitionService.resolve(ServiceType.TB_CORE, tenantId, deviceId)).thenReturn(tpi);
+        lenient().when(attributesDao.find(any(), any(), any(), anyString())).thenReturn(Optional.empty());
 
         ConcurrentMap<TopicPartitionInfo, Set<DeviceId>> partitionedEntities = new ConcurrentHashMap<>();
         partitionedEntities.put(tpi, new HashSet<>());
@@ -1125,47 +1131,136 @@ class DefaultDeviceStateServiceTest {
         });
     }
 
-    // After a partition rebalance a node may hold a device with a stale in-memory lastActivityTime while the true
-    // owner keeps it alive. Such a node must NOT persist active=false: it must re-check the authoritative persisted
-    // lastActivityTime and skip the inactivity report.
-    @Test
-    void givenStaleLocalClockButFreshPersistedActivity_whenUpdateInactivityStateIfExpired_thenDoesNotPersistInactive() {
-        // GIVEN persist-to-telemetry mode
-        ReflectionTestUtils.setField(service, "persistToTelemetry", true);
-        lenient().when(telemetrySubscriptionService.saveTimeseriesInternal(any())).thenReturn(Futures.immediateFuture(null));
+    /*
+     * A node can hold a device whose activity is handled by another node, leaving its in-memory lastActivityTime
+     * frozen while the real owner keeps the device alive. Such a node must not persist active=false without first
+     * confirming against storage. These cases pin all four outcomes of that confirmation, in both persistence modes.
+     */
 
-        long now = 10_000_000L;
-        long timeout = 100_000L;
-
-        // in-memory state is STALE: last activity long ago, so locally the device looks inactive
+    private DeviceStateData staleStateData(long now, long timeout, boolean active) {
         var state = DeviceState.builder()
-                .active(true)
+                .active(active)
                 .lastActivityTime(now - 10 * timeout)
                 .lastInactivityAlarmTime(0L)
                 .inactivityTimeout(timeout)
                 .build();
-        var stateData = DeviceStateData.builder()
+        return DeviceStateData.builder()
                 .tenantId(tenantId).deviceId(deviceId).deviceCreationTime(0L)
                 .metaData(new TbMsgMetaData()).state(state).build();
+    }
 
-        given(partitionService.resolve(ServiceType.TB_CORE, tenantId, deviceId)).willReturn(tpi);
+    private void givenPersistedLastActivityTime(boolean persistToTelemetry, Long persisted) {
+        ReflectionTestUtils.setField(service, "persistToTelemetry", persistToTelemetry);
+        if (persistToTelemetry) {
+            lenient().when(telemetrySubscriptionService.saveTimeseriesInternal(any())).thenReturn(Futures.immediateFuture(null));
+            given(tsService.findLatest(TenantId.SYS_TENANT_ID, deviceId, LAST_ACTIVITY_TIME))
+                    .willReturn(Futures.immediateFuture(persisted == null ? Optional.empty()
+                            : Optional.of(new BasicTsKvEntry(persisted, new LongDataEntry(LAST_ACTIVITY_TIME, persisted)))));
+        } else {
+            mockSuccessfulSaveAttributes();
+            given(attributesDao.find(TenantId.SYS_TENANT_ID, deviceId, AttributeScope.SERVER_SCOPE, LAST_ACTIVITY_TIME))
+                    .willReturn(persisted == null ? Optional.empty()
+                            : Optional.of(new BaseAttributeKvEntry(new LongDataEntry(LAST_ACTIVITY_TIME, persisted), persisted)));
+        }
+    }
 
-        // the authoritative persisted lastActivityTime is FRESH (the true owner is keeping the device alive)
+    private void thenPersistedInactive(boolean persistToTelemetry, boolean expected) {
+        if (persistToTelemetry) {
+            then(telemetrySubscriptionService).should(expected ? times(1) : never()).saveTimeseriesInternal(argThat(request ->
+                    request.getEntries().get(0).getKey().equals(ACTIVITY_STATE)
+                            && request.getEntries().get(0).getValue().equals(false)));
+        } else {
+            then(telemetrySubscriptionService).should(expected ? times(1) : never()).saveAttributesInternal(argThat(request ->
+                    request.getEntries().get(0).getKey().equals(ACTIVITY_STATE)
+                            && request.getEntries().get(0).getValue().equals(false)));
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void givenStalelocalStateButFreshPersistedActivity_whenUpdateInactivityStateIfExpired_thenDoesNotPersistInactive(boolean persistToTelemetry) {
+        long now = 10_000_000L, timeout = 100_000L;
+        var stateData = staleStateData(now, timeout, true);
         long freshLastActivityTime = now - 1;
-        lenient().when(tsService.findLatest(TenantId.SYS_TENANT_ID, deviceId, LAST_ACTIVITY_TIME))
-                .thenReturn(Futures.immediateFuture(Optional.of(
-                        new BasicTsKvEntry(freshLastActivityTime, new LongDataEntry(LAST_ACTIVITY_TIME, freshLastActivityTime)))));
+        givenPersistedLastActivityTime(persistToTelemetry, freshLastActivityTime);
 
-        // WHEN
         service.updateInactivityStateIfExpired(now, deviceId, stateData);
 
-        // THEN the device is NOT persisted as inactive...
-        then(telemetrySubscriptionService).should(never()).saveTimeseriesInternal(argThat(request ->
-                request.getEntries().get(0).getKey().equals(ACTIVITY_STATE)
-                        && request.getEntries().get(0).getValue().equals(false)));
-        // ...and the stale local clock is reconciled from the source of truth
-        assertThat(state.getLastActivityTime()).isEqualTo(freshLastActivityTime);
-        assertThat(state.isActive()).isTrue();
+        thenPersistedInactive(persistToTelemetry, false);
+        assertThat(stateData.getState().getLastActivityTime()).isEqualTo(freshLastActivityTime);
+        assertThat(stateData.getState().isActive()).isTrue();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void givenPersistedActivityAlsoExpired_whenUpdateInactivityStateIfExpired_thenReconcilesAndStillReportsInactive(boolean persistToTelemetry) {
+        long now = 10_000_000L, timeout = 100_000L;
+        var stateData = staleStateData(now, timeout, true);
+        // newer than local state, but still older than now - timeout, so the device really is inactive
+        long persisted = now - 5 * timeout;
+        givenPersistedLastActivityTime(persistToTelemetry, persisted);
+
+        service.updateInactivityStateIfExpired(now, deviceId, stateData);
+
+        assertThat(stateData.getState().getLastActivityTime()).isEqualTo(persisted);
+        thenPersistedInactive(persistToTelemetry, true);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void givenNoPersistedActivity_whenUpdateInactivityStateIfExpired_thenReportsInactive(boolean persistToTelemetry) {
+        long now = 10_000_000L, timeout = 100_000L;
+        var stateData = staleStateData(now, timeout, true);
+        givenPersistedLastActivityTime(persistToTelemetry, null);
+
+        service.updateInactivityStateIfExpired(now, deviceId, stateData);
+
+        thenPersistedInactive(persistToTelemetry, true);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void givenPersistedReadFails_whenUpdateInactivityStateIfExpired_thenFailsSafeAndReportsInactive(boolean persistToTelemetry) {
+        long now = 10_000_000L, timeout = 100_000L;
+        var stateData = staleStateData(now, timeout, true);
+        ReflectionTestUtils.setField(service, "persistToTelemetry", persistToTelemetry);
+        if (persistToTelemetry) {
+            lenient().when(telemetrySubscriptionService.saveTimeseriesInternal(any())).thenReturn(Futures.immediateFuture(null));
+            given(tsService.findLatest(TenantId.SYS_TENANT_ID, deviceId, LAST_ACTIVITY_TIME))
+                    .willReturn(Futures.immediateFailedFuture(new RuntimeException("db down")));
+        } else {
+            mockSuccessfulSaveAttributes();
+            given(attributesDao.find(TenantId.SYS_TENANT_ID, deviceId, AttributeScope.SERVER_SCOPE, LAST_ACTIVITY_TIME))
+                    .willThrow(new RuntimeException("db down"));
+        }
+
+        service.updateInactivityStateIfExpired(now, deviceId, stateData);
+
+        thenPersistedInactive(persistToTelemetry, true);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void givenLocalStateInactiveButPersistedActivityFresh_whenUpdateInactivityStateIfExpired_thenDrivesStateBackToActive(boolean persistToTelemetry) {
+        long now = 10_000_000L, timeout = 100_000L;
+        // local state already flipped to inactive, e.g. an earlier ACTIVITY_STATE save failed
+        var stateData = staleStateData(now, timeout, false);
+        long freshLastActivityTime = now - 1;
+        givenPersistedLastActivityTime(persistToTelemetry, freshLastActivityTime);
+
+        service.updateInactivityStateIfExpired(now, deviceId, stateData);
+
+        thenPersistedInactive(persistToTelemetry, false);
+        if (persistToTelemetry) {
+            then(telemetrySubscriptionService).should().saveTimeseriesInternal(argThat(request ->
+                    request.getEntries().get(0).getKey().equals(ACTIVITY_STATE)
+                            && request.getEntries().get(0).getValue().equals(true)));
+        } else {
+            then(telemetrySubscriptionService).should().saveAttributesInternal(argThat(request ->
+                    request.getEntries().get(0).getKey().equals(ACTIVITY_STATE)
+                            && request.getEntries().get(0).getValue().equals(true)));
+        }
+        assertThat(stateData.getState().isActive()).isTrue();
     }
 
     private void mockSuccessfulSaveAttributes() {
