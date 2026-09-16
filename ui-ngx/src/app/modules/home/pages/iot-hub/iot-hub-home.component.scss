@@ -220,45 +220,32 @@
     0 114px 46px 0 rgba(0, 0, 0, 0.01),
     0 178px 50px 0 rgba(0, 0, 0, 0);
 
-  // Section group — 12px gap between groups
-  .mat-mdc-optgroup + .mat-mdc-optgroup .mat-mdc-optgroup-label {
-    margin-top: 12px;
-  }
-
-  // Section title — Design: 14px Medium, 0.25 tracking, black-tertiary, 4px V / 16px H
-  .mat-mdc-optgroup .mat-mdc-optgroup-label {
+  // Section header — an option like every other row, not a button beside them, so the arrow keys
+  // reach it and a screen reader reads it in the list. It IS the way into the type page: title
+  // left, how much is not shown plus a chevron right. There is deliberately no per-section
+  // "see all" row under the items; six of those on one panel is what this variant avoids.
+  // Design: 14px Medium, 0.25 tracking, black-tertiary, 4px V / 16px H, 12px above each section.
+  .mat-mdc-option.tb-search-popup-group-header {
     padding: 4px 16px;
     min-height: 28px;
+    margin-top: 12px;
+
+    &:first-child {
+      margin-top: 0;
+    }
+
+    .mdc-list-item__primary-text {
+      justify-content: space-between;
+    }
+  }
+
+  .tb-search-popup-group-label {
     font-size: 14px;
     font-weight: 500;
     line-height: 20px;
     letter-spacing: 0.25px;
     color: rgba(0, 0, 0, 0.54);
     white-space: nowrap;
-
-    .mdc-list-item__primary-text {
-      font-size: 14px;
-      font-weight: 500;
-      line-height: 20px;
-      letter-spacing: 0.25px;
-      color: rgba(0, 0, 0, 0.54);
-      // The header spans the panel so the count can sit against the right edge. Material's own
-      // label span is only as wide as its text.
-      width: 100%;
-    }
-  }
-
-  // Section header — the label IS the link into the type page: title left, how much is not shown
-  // plus a chevron right. There is deliberately no per-section "see all" row under the items;
-  // six of those on one panel is what this variant was chosen to avoid.
-  .tb-search-popup-group-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    width: 100%;
-    cursor: pointer;
-    outline: none;
   }
 
   .tb-search-popup-group-more {
@@ -281,7 +268,7 @@
   }
 
   // Item row — Design: 8px V / 16px H, 16px gap, centered
-  .mat-mdc-optgroup .mat-mdc-option:not(.mat-mdc-option-multiple) {
+  .mat-mdc-option:not(.mat-mdc-option-multiple) {
     padding: 8px 16px;
     min-height: auto;
     height: auto;
@@ -426,26 +413,31 @@
   }
 
   // Footer — Design: 40px h, 8px V / 16px H, 1px top border, tb-primary text
-  .tb-search-popup-footer {
+  .mat-mdc-option.tb-search-popup-footer {
     position: sticky;
     bottom: 0;
+    z-index: 1;
     border-top: 1px solid rgba(0, 0, 0, 0.12);
     height: 40px;
     min-height: 40px;
     padding: 8px 16px;
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
     font-size: 14px;
     font-weight: 500;
     line-height: 20px;
     letter-spacing: 0.25px;
     color: $tb-primary-color;
-    cursor: pointer;
     background: white;
     white-space: nowrap;
 
-    &:hover {
+    .mdc-list-item__primary-text {
+      justify-content: flex-start;
+      font: inherit;
+      letter-spacing: inherit;
+      color: inherit;
+    }
+
+    &:hover:not(.mdc-list-item--disabled),
+    &.mat-mdc-option-active:not(.mdc-list-item--disabled) {
       background: #f5f5f5;
     }
   }

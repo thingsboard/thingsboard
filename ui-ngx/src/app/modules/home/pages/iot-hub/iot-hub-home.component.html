@@ -85,53 +85,51 @@
           </mat-option>
         } @else {
           @for (group of searchResultGroups; track group.type) {
-            <mat-optgroup>
-              <span class="tb-search-popup-group-header" role="button" tabindex="0"
-                    (click)="navigateToSection(group.type)"
-                    (keyup.enter)="navigateToSection(group.type)">
-                <span class="tb-search-popup-group-label">{{ getSearchGroupLabel(group.type) }}</span>
-                @if (group.remaining > 0) {
-                  <span class="tb-search-popup-group-more">
-                    {{ 'iot-hub.section-more' | translate:{ count: group.remaining } }}
-                    <mat-icon>chevron_right</mat-icon>
-                  </span>
-                }
-              </span>
-              @for (item of group.items; track item.id) {
-                <mat-option [value]="searchText" (click)="openItemDetail(item)">
-                  @if (isCompactType(item.type)) {
-                    <div class="tb-search-popup-icon-square" [style.background]="item.color || '#048ad3'">
-                      <tb-icon class="tb-search-popup-icon-inner">{{ getCompactIcon(item) }}</tb-icon>
-                    </div>
-                  } @else {
-                    <div class="tb-search-popup-thumbnail">
-                      @if (getItemImage(item); as imgUrl) {
-                        <img [src]="imgUrl" alt="">
-                      } @else {
-                        <tb-icon class="tb-search-popup-thumb-placeholder">{{ getItemTypeIcon(item.type) }}</tb-icon>
-                      }
-                    </div>
-                  }
-                  <div class="tb-search-popup-text">
-                    <span class="tb-search-popup-name">{{ item.name }}</span>
-                    <span class="tb-search-popup-author">
-                      <mat-icon>person</mat-icon>
-                      {{ item.creatorDisplayName }}
-                    </span>
-                  </div>
-                </mat-option>
+            <mat-option class="tb-search-popup-group-header" [value]="searchText"
+                        (onSelectionChange)="$event.isUserInput && navigateToSection(group.type)">
+              <span class="tb-search-popup-group-label">{{ getSearchGroupLabel(group.type) }}</span>
+              @if (group.remaining > 0) {
+                <span class="tb-search-popup-group-more">
+                  {{ 'iot-hub.section-more' | translate:{ count: group.remaining } }}
+                  <mat-icon>chevron_right</mat-icon>
+                </span>
               }
-            </mat-optgroup>
+            </mat-option>
+            @for (item of group.items; track item.id) {
+              <mat-option [value]="searchText"
+                          (onSelectionChange)="$event.isUserInput && openItemDetail(item)">
+                @if (isCompactType(item.type)) {
+                  <div class="tb-search-popup-icon-square" [style.background]="item.color || '#048ad3'">
+                    <tb-icon class="tb-search-popup-icon-inner">{{ getCompactIcon(item) }}</tb-icon>
+                  </div>
+                } @else {
+                  <div class="tb-search-popup-thumbnail">
+                    @if (getItemImage(item); as imgUrl) {
+                      <img [src]="imgUrl" alt="">
+                    } @else {
+                      <tb-icon class="tb-search-popup-thumb-placeholder">{{ getItemTypeIcon(item.type) }}</tb-icon>
+                    }
+                  </div>
+                }
+                <div class="tb-search-popup-text">
+                  <span class="tb-search-popup-name">{{ item.name }}</span>
+                  <span class="tb-search-popup-author">
+                    <mat-icon>person</mat-icon>
+                    {{ item.creatorDisplayName }}
+                  </span>
+                </div>
+              </mat-option>
+            }
           }
         }
-        <div class="tb-search-popup-footer" role="button" tabindex="0"
-             (click)="seeAllResults()" (keyup.enter)="seeAllResults()">
+        <mat-option class="tb-search-popup-footer" [value]="searchText"
+                    (onSelectionChange)="$event.isUserInput && seeAllResults()">
           @if (searchText?.trim(); as query) {
             {{ 'iot-hub.see-results-for' | translate:{ search: query } }}
           } @else {
             {{ 'iot-hub.see-all-results' | translate }}
           }
-        </div>
+        </mat-option>
       </mat-autocomplete>
     </div>
   </div>

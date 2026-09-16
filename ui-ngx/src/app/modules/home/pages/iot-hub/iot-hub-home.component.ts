@@ -239,7 +239,16 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
     setTimeout(() => this.searchAutoTrigger?.openPanel());
   }
 
+  /**
+   * Enter in the field opens the search page - unless the panel has an option highlighted, which
+   * the trigger has already acted on during keydown. This runs on keyup, which preventDefault on
+   * the keydown does not stop, so without the guard one Enter would both open a result and
+   * navigate away from it.
+   */
   onSearch(): void {
+    if (this.searchAutoTrigger?.activeOption) {
+      return;
+    }
     this.seeAllResults();
   }
 
