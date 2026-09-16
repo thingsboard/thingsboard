@@ -47,7 +47,6 @@ const emptyUserAuthState: AuthPayload = {
   nullsOrderStrategy: 'default',
   edqsEnabled: false,
   iotHubBaseUrl: '',
-  dynamicPageLinkRefreshIntervalSec: 60
 };
 
 export const initialState: AuthState = {

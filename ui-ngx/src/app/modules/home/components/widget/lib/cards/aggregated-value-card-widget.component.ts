@@ -37,7 +37,7 @@ import {
   getTsValueByLatestDataKey
 } from '@home/components/widget/lib/cards/aggregated-value-card.models';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { interval, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 import {
   autoDateFormat,
   backgroundStyle,
@@ -45,13 +45,13 @@ import {
   DateFormatProcessor,
   getDataKey,
   getLatestSingleTsValue,
+  LastUpdateAgeDateFormatProcessor,
   overlayStyle,
   textStyle
 } from '@shared/models/widget-settings.models';
 import { DataKey } from '@shared/models/widget.models';
 import { formatNumberValue, formatValue, isDefined, isDefinedAndNotNull, isNumeric } from '@core/utils';
 import { map } from 'rxjs/operators';
-import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
 import { TbTimeSeriesChart } from '@home/components/widget/lib/chart/time-series-chart';
@@ -173,15 +173,9 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
     this.dateColor = this.settings.dateColor;
 
     if (this.showDate && this.settings.dateFormat?.lastUpdateAgo) {
-      const refreshIntervalSec = getCurrentAuthState(this.ctx.store)?.dynamicPageLinkRefreshIntervalSec || 60;
-      interval(refreshIntervalSec * 1000).pipe(
+      (this.dateFormat as LastUpdateAgeDateFormatProcessor).tick$.pipe(
         takeUntilDestroyed(this.destroyRef)
-      ).subscribe(() => {
-        if (this.lastUpdateTs) {
-          this.dateFormat.update(this.lastUpdateTs);
-          this.cd.detectChanges();
-        }
-      });
+      ).subscribe(() => this.cd.detectChanges());
     }
 
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
@@ -300,10 +294,8 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
   }
 
   private updateLastUpdateTs(ts: number) {
-    if (ts && (!this.lastUpdateTs || ts > this.lastUpdateTs)) {
-      this.lastUpdateTs = ts;
-      this.dateFormat.update(ts);
-    }
+    this.lastUpdateTs = ts;
+    this.dateFormat.update(ts);
   }
 
   private onValueCardValuesResize() {
