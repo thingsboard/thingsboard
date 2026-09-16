@@ -1,25 +1,12 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { MpItemVersionView, cfTypeTranslations, cfTypeIcons, ruleChainTypeTranslations, widgetTypeTranslations } from '@shared/models/iot-hub/iot-hub-version.models';
 import { getItemTypeIcon, ItemType } from '@shared/models/iot-hub/iot-hub-item.models';
 import { IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { TranslateService } from '@ngx-translate/core';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
+import { iotHubItemActionLabel, isBuiltInItem } from '@home/components/iot-hub/iot-hub-utils';
 
 @Component({
   selector: 'tb-iot-hub-item-card',
@@ -28,8 +15,6 @@ import { IotHubApiService } from '@core/http/iot-hub-api.service';
   styleUrls: ['./iot-hub-item-card.component.scss']
 })
 export class TbIotHubItemCardComponent {
-
-  readonly ItemType = ItemType;
 
   @Input() item: MpItemVersionView;
   @Input() installedItem: IotHubInstalledItem;
@@ -50,6 +35,16 @@ export class TbIotHubItemCardComponent {
     private translate: TranslateService,
     private iotHubApiService: IotHubApiService
   ) {}
+
+  // Install counters mean nothing for content the tenant already has, so the counter and the
+  // separator that would dangle next to it are both derived from this one boolean.
+  get showInstallCount(): boolean {
+    return !isBuiltInItem(this.item);
+  }
+
+  get actionLabel(): string {
+    return iotHubItemActionLabel(this.item, this.mode === 'add' ? 'add' : 'card');
+  }
 
   isCompactLayout(): boolean {
     return this.item.type === ItemType.CALCULATED_FIELD

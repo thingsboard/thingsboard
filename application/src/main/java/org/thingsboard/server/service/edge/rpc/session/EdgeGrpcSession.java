@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.edge.rpc.session;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
@@ -366,7 +353,12 @@ public class EdgeGrpcSession implements EdgeSession {
 
                 @Override
                 public void onFailure(Throwable t) {
-                    log.error("[{}][{}] Exception during sync process", getTenantId(), getEdgeId(), t);
+                    log.error("[{}][{}] Exception during sync process, skipping fetcher {} and continuing",
+                            getTenantId(), getEdgeId(), next.getClass().getSimpleName(), t);
+                    // Keep walking the cursor: returning here leaves syncInProgress set for the life of the
+                    // session, so the edge never receives SyncCompletedMsg and both general downlink delivery
+                    // and uplink processing stay gated until the session is re-established.
+                    doSync(cursor);
                 }
             }, ctx.getGrpcCallbackExecutorService());
         } else {

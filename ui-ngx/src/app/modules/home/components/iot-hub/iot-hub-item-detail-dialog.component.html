@@ -1,18 +1,7 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-License-Identifier: Apache-2.0
 
 -->
 <div class="tb-iot-hub-detail-dialog">
@@ -30,15 +19,17 @@
           <tb-icon class="dlg-subtitle-icon">{{ getTypeIcon() }}</tb-icon>
           <span>{{ typeTranslations.get(item.type) | translate }}</span>
         </span>
-        <span class="dlg-dot"></span>
-        <span class="dlg-subtitle-group">
-          <tb-icon class="dlg-subtitle-icon">download</tb-icon>
-          <span>{{ item.totalInstallCount | shortNumber }} {{ 'iot-hub.installs' | translate }}</span>
-        </span>
+        @if (showInstallCount) {
+          <span class="dlg-dot"></span>
+          <span class="dlg-subtitle-group">
+            <tb-icon class="dlg-subtitle-icon">download</tb-icon>
+            <span>{{ item.totalInstallCount | shortNumber }} {{ 'iot-hub.installs' | translate }}</span>
+          </span>
+        }
         <span class="dlg-dot"></span>
         <span class="dlg-subtitle-group">
           <mat-icon class="dlg-subtitle-icon">update</mat-icon>
-          <span>v {{ item.version }}</span>
+          <span>{{ versionLabel }}</span>
         </span>
         @if (preview) {
           <span class="dlg-dot"></span>
@@ -318,19 +309,13 @@
     <button mat-button (click)="close()">{{ 'action.close' | translate }}</button>
     @if (mode === 'add' && !isInstalled()) {
       <button mat-flat-button color="primary" (click)="addItem()">
-        {{ 'action.add' | translate }}
+        {{ actionLabel | translate }}
       </button>
     }
     @if (!isInstalled() && mode !== 'add') {
-      @if (item.type === ItemType.DEVICE) {
-        <button mat-flat-button color="primary" (click)="installDevice()">
-          {{ 'iot-hub.connect-device' | translate }}
-        </button>
-      } @else {
-        <button mat-flat-button color="primary" (click)="install()">
-          {{ 'iot-hub.install' | translate }}
-        </button>
-      }
+      <button mat-flat-button color="primary" (click)="runPrimaryAction()">
+        {{ actionLabel | translate }}
+      </button>
     }
     @if (isInstalled() && mode !== 'add') {
       <button mat-flat-button color="primary" (click)="openEntityDetails()">
