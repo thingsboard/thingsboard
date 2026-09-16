@@ -34,14 +34,13 @@
              Individual flags below can be set independently for finer control. -->
         <!-- Set to true to skip spring-boot:repackage (the boot jar, i.e. the *-boot.jar artifact).
              The boot jar is the mandatory input to Gradle buildDeb; skipping it also prevents
-             the .deb from being produced. Any msa/* module that depends on a .deb artifact
-             (e.g. msa/tb-node depends on application:deb) will FAIL when the boot jar and
+             the .deb from being produced. Any msa/* module that copies a .deb
+             (e.g. msa/tb-node copies application's .deb) will FAIL when the boot jar and
              consequently the .deb are missing. Each packaging module overrides this to false. -->
         <pkg.skip.bootjar>false</pkg.skip.bootjar>
-        <!-- Set to true to skip Gradle buildDeb and suppress the Maven attach-artifact goal
-             that registers the .deb with the reactor. msa/* docker modules copy the .deb
-             directly from the upstream module's target/ directory (not from .m2), and their
-             copy execution is bound to ${pkg.deb.phase}, so they are silently skipped too. -->
+        <!-- Set to true to skip Gradle buildDeb. msa/* docker modules copy the .deb directly
+             from the upstream module's target/ directory, and their copy execution is bound to
+             ${pkg.deb.phase} (see msa/pom.xml), so they are silently skipped too. -->
         <pkg.skip.deb>false</pkg.skip.deb>
         <!-- Set to true to skip Gradle buildRpm. No Maven reactor module depends on the RPM
              artifact, so this flag can be toggled freely without breaking downstream modules. -->
@@ -50,11 +49,6 @@
              module depends on the ZIP artifact, so this flag can be toggled freely without
              breaking downstream modules. -->
         <pkg.skip.zip>false</pkg.skip.zip>
-        <!-- Internal: resolved phase for the build-helper attach-deb execution. Overridden to
-             "none" by the skip-deb profile when pkg.skip.deb=true so the goal is silently
-             skipped instead of failing on a non-existent .deb file. Packaging modules inherit
-             "package" via pkg.package.phase; msa/* docker modules set it explicitly in msa/pom.xml. -->
-        <pkg.deb.phase>${pkg.package.phase}</pkg.deb.phase>
         <pkg.user>thingsboard</pkg.user>
         <pkg.implementationTitle>${project.name}</pkg.implementationTitle>
         <pkg.unixLogFolder>/var/log/${pkg.name}</pkg.unixLogFolder>
@@ -215,26 +209,7 @@
             </properties>
         </profile>
 
-        <!-- Activated by -Dpkg.skip.deb=true. Sets the attach-artifact lifecycle phase to "none"
-             so the build-helper goal that registers the .deb with the Maven reactor is silently
-             skipped. Without this, the goal would fail because the .deb file does not exist. -->
-        <profile>
-            <id>skip-deb</id>
-            <activation>
-                <property>
-                    <name>pkg.skip.deb</name>
-                    <value>true</value>
-                </property>
-            </activation>
-            <properties>
-                <pkg.deb.phase>none</pkg.deb.phase>
-            </properties>
-        </profile>
-
-        <!-- Activated by -Dpkg.skip=true. Convenience alias that sets all four skip flags at
-             once. Also sets pkg.deb.phase=none directly because Maven profile activation is
-             evaluated against CLI/system properties only — a property set inside another profile
-             cannot trigger a second profile, so skip-deb would not fire automatically. -->
+        <!-- Activated by -Dpkg.skip=true. Convenience alias that sets all four skip flags at once. -->
         <profile>
             <id>skip-pkg</id>
             <activation>
@@ -248,7 +223,6 @@
                 <pkg.skip.deb>true</pkg.skip.deb>
                 <pkg.skip.rpm>true</pkg.skip.rpm>
                 <pkg.skip.zip>true</pkg.skip.zip>
-                <pkg.deb.phase>none</pkg.deb.phase>
             </properties>
         </profile>
 
@@ -565,6 +539,8 @@
                                 <skip>${pkg.skip.bootjar}</skip>
                                 <mainClass>${pkg.mainClass}</mainClass>
                                 <classifier>boot</classifier>
+                                <!-- Input for Gradle packaging only; don't install/deploy the fat jar -->
+                                <attach>false</attach>
                                 <layout>ZIP</layout>
                                 <executable>true</executable>
                                 <excludeDevtools>true</excludeDevtools>
@@ -641,28 +617,9 @@
                                     </goals>
                                     <configuration>
                                         <skipAssembly>${pkg.skip.zip}</skipAssembly>
-                                    </configuration>
-                                </execution>
-                            </executions>
-                        </plugin>
-                        <plugin>
-                            <groupId>org.codehaus.mojo</groupId>
-                            <artifactId>build-helper-maven-plugin</artifactId>
-                            <executions>
-                                <execution>
-                                    <id>attach-deb</id>
-                                    <phase>${pkg.deb.phase}</phase>
-                                    <goals>
-                                        <goal>attach-artifact</goal>
-                                    </goals>
-                                    <configuration>
-                                        <artifacts>
-                                            <artifact>
-                                                <file>${project.build.directory}/${pkg.name}.deb</file>
-                                                <type>deb</type>
-                                                <classifier>deb</classifier>
-                                            </artifact>
-                                        </artifacts>
+                                        <!-- Picked up from target/; don't install/deploy the Windows zip.
+                                             Set on the execution so other assemblies (e.g. rule nodes) stay attached. -->
+                                        <attach>false</attach>
                                     </configuration>
                                 </execution>
                             </executions>
