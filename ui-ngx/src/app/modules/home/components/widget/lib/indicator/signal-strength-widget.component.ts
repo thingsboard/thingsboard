@@ -54,7 +54,7 @@ import {
   createValueFormatterFromSettings,
   DateFormatProcessor,
   getSingleTsValue,
-  LastUpdateAgeDateFormatProcessor,
+  LastUpdateAgoDateFormatProcessor,
   overlayStyle,
   textStyle,
   ValueFormatProcessor
@@ -171,7 +171,7 @@ export class SignalStrengthWidgetComponent implements OnInit, OnDestroy, AfterVi
       this.dateStyle = textStyle(this.settings.dateFont);
       this.dateStyle.color = this.settings.dateColor;
       if (this.settings.dateFormat?.lastUpdateAgo) {
-        (this.dateFormat as LastUpdateAgeDateFormatProcessor).tick$.pipe(
+        (this.dateFormat as LastUpdateAgoDateFormatProcessor).tick$.pipe(
           takeUntilDestroyed(this.destroyRef)
         ).subscribe(() => this.cd.detectChanges());
       }
@@ -211,7 +211,7 @@ export class SignalStrengthWidgetComponent implements OnInit, OnDestroy, AfterVi
       this.tooltipDateStyle.color = this.settings.tooltipDateColor;
       this.tooltipDateLabelStyle = {...this.tooltipDateStyle, ...this.tooltipDateLabelStyle};
       if (this.settings.tooltipDateFormat?.lastUpdateAgo) {
-        (this.tooltipDateFormat as LastUpdateAgeDateFormatProcessor).tick$.pipe(
+        (this.tooltipDateFormat as LastUpdateAgoDateFormatProcessor).tick$.pipe(
           takeUntilDestroyed(this.destroyRef)
         ).subscribe(() => this.cd.detectChanges());
       }

@@ -39,7 +39,7 @@ import {
   getLabel,
   getSingleTsValue,
   iconStyle,
-  LastUpdateAgeDateFormatProcessor,
+  LastUpdateAgoDateFormatProcessor,
   overlayStyle,
   resolveCssSize,
   textStyle,
@@ -145,7 +145,7 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
     this.dateColor = ColorProcessor.fromSettings(this.settings.dateColor);
 
     if (this.showDate && this.settings.dateFormat?.lastUpdateAgo) {
-      (this.dateFormat as LastUpdateAgeDateFormatProcessor).tick$.pipe(
+      (this.dateFormat as LastUpdateAgoDateFormatProcessor).tick$.pipe(
         takeUntilDestroyed(this.destroyRef)
       ).subscribe(() => this.cd.detectChanges());
     }

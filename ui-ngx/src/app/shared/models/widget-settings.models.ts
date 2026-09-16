@@ -804,7 +804,7 @@ export class SimpleDateFormatProcessor extends DateFormatProcessor {
 
 }
 
-export class LastUpdateAgeDateFormatProcessor extends DateFormatProcessor {
+export class LastUpdateAgoDateFormatProcessor extends DateFormatProcessor {
 
   readonly tick$ = new Subject<void>();
 

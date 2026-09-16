@@ -45,7 +45,7 @@ import {
   DateFormatProcessor,
   getDataKey,
   getLatestSingleTsValue,
-  LastUpdateAgeDateFormatProcessor,
+  LastUpdateAgoDateFormatProcessor,
   overlayStyle,
   textStyle
 } from '@shared/models/widget-settings.models';
@@ -173,7 +173,7 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
     this.dateColor = this.settings.dateColor;
 
     if (this.showDate && this.settings.dateFormat?.lastUpdateAgo) {
-      (this.dateFormat as LastUpdateAgeDateFormatProcessor).tick$.pipe(
+      (this.dateFormat as LastUpdateAgoDateFormatProcessor).tick$.pipe(
         takeUntilDestroyed(this.destroyRef)
       ).subscribe(() => this.cd.detectChanges());
     }
