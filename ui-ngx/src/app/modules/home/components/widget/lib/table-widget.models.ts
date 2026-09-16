@@ -528,13 +528,16 @@ export function setupPaginationResets(ctx: WidgetContext,
     sort.sortChange.subscribe(() => paginator.pageIndex = 0)
   );
 
-  subscription.add(
-    ctx.stateController.stateChanged().pipe(
-      map(() => ctx.stateController.getStateParams()),
-      startWith(ctx.stateController.getStateParams()),
-      distinctUntilChanged(isEqual),
-      skip(1)
-    ).subscribe(() => paginator.firstPage())
-  );
+  const stateController = ctx.stateController;
+  if (stateController) {
+    subscription.add(
+      stateController.stateChanged().pipe(
+        map(() => stateController.getStateParams()),
+        startWith(stateController.getStateParams()),
+        distinctUntilChanged(isEqual),
+        skip(1)
+      ).subscribe(() => paginator.firstPage())
+    );
+  }
   return subscription;
 }
