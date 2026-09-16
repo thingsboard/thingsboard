@@ -555,21 +555,6 @@
                             </executions>
                         </plugin>
                         <plugin>
-                            <groupId>org.apache.maven.plugins</groupId>
-                            <artifactId>maven-jar-plugin</artifactId>
-                            <configuration>
-                                <excludes>
-                                    <exclude>**/logback.xml</exclude>
-                                </excludes>
-                                <archive>
-                                    <manifestEntries>
-                                        <Implementation-Title>${pkg.implementationTitle}</Implementation-Title>
-                                        <Implementation-Version>${project.version}</Implementation-Version>
-                                    </manifestEntries>
-                                </archive>
-                            </configuration>
-                        </plugin>
-                        <plugin>
                             <groupId>org.springframework.boot</groupId>
                             <artifactId>spring-boot-maven-plugin</artifactId>
                             <configuration>
@@ -597,7 +582,6 @@
                                 <execution>
                                     <goals>
                                         <goal>repackage</goal>
-                                        <goal>build-info</goal>
                                     </goals>
                                 </execution>
                             </executions>
@@ -717,6 +701,18 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
                     <version>${jar-plugin.version}</version>
+                    <!-- Outside the packaging profile: activating any other root profile (e.g. skip-pkg) disables it -->
+                    <configuration>
+                        <excludes>
+                            <exclude>**/logback.xml</exclude>
+                        </excludes>
+                        <archive>
+                            <manifestEntries>
+                                <Implementation-Title>${pkg.implementationTitle}</Implementation-Title>
+                                <Implementation-Version>${project.version}</Implementation-Version>
+                            </manifestEntries>
+                        </archive>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -727,6 +723,20 @@
                     <groupId>org.springframework.boot</groupId>
                     <artifactId>spring-boot-maven-plugin</artifactId>
                     <version>${spring-boot.version}</version>
+                    <executions>
+                        <!-- Outside the packaging profile: activating any other root profile (e.g. skip-pkg) disables it,
+                             and ProjectInfo needs build-info.properties at runtime -->
+                        <execution>
+                            <id>build-info</id>
+                            <goals>
+                                <goal>build-info</goal>
+                            </goals>
+                            <configuration>
+                                <!-- Overrides the packaging profile's pkg.skip.bootjar skip -->
+                                <skip>false</skip>
+                            </configuration>
+                        </execution>
+                    </executions>
                 </plugin>
                 <plugin>
                     <groupId>org.thingsboard</groupId>
