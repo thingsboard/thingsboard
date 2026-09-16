@@ -3807,7 +3807,6 @@
         "community-string": "Chaîne de communauté SNMP"
       },
       "isgateway": "Est une passerelle",
-      "activity-time-from-gateway-device": "Heure d'activité depuis l'appareil passerelle",
       "description": "Description",
       "routing-key": "Clé Edge",
       "secret": "Secret Edge"

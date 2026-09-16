@@ -153,6 +153,13 @@ export class TableColumnsAssignmentComponent implements OnInit, ControlValueAcce
         isGatewayColumnType.disabled = isSelectGateway;
       }
 
+      const isSelectOverwriteActivityTime = this.columns.findIndex((column) => column.type === ImportEntityColumnType.overwriteActivityTime) > -1;
+
+      const overwriteActivityTimeColumnType = this.columnTypes.find((columnType) => columnType.value === ImportEntityColumnType.overwriteActivityTime);
+      if (overwriteActivityTimeColumnType) {
+        overwriteActivityTimeColumnType.disabled = isSelectOverwriteActivityTime;
+      }
+
       this.columnDeviceCredentials.forEach((columnCredential) => {
         columnCredential.disabled = this.columns.findIndex(column => column.type === columnCredential.value) > -1;
       });

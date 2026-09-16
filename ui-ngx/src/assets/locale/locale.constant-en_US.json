@@ -3825,7 +3825,6 @@
             },
             "isgateway": "Is Gateway",
             "overwrite-activity-time": "Overwrite activity time for connected device",
-            "activity-time-from-gateway-device": "Activity time from gateway device",
             "description": "Description",
             "routing-key": "Edge key",
             "secret": "Edge secret"

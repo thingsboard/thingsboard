@@ -1674,6 +1674,43 @@ public class DeviceControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testBulkImportDeviceWithOverwriteActivityTime() throws Exception {
+        String deviceName = "some_device";
+        String deviceType = "some_type";
+        BulkImportRequest request = new BulkImportRequest();
+        request.setFile(String.format("NAME,TYPE,OVERWRITE_ACTIVITY_TIME\n%s,%s,true", deviceName, deviceType));
+        BulkImportRequest.Mapping mapping = new BulkImportRequest.Mapping();
+        BulkImportRequest.ColumnMapping name = new BulkImportRequest.ColumnMapping();
+        name.setType(BulkImportColumnType.NAME);
+        BulkImportRequest.ColumnMapping type = new BulkImportRequest.ColumnMapping();
+        type.setType(BulkImportColumnType.TYPE);
+        BulkImportRequest.ColumnMapping overwriteActivityTime = new BulkImportRequest.ColumnMapping();
+        overwriteActivityTime.setType(BulkImportColumnType.OVERWRITE_ACTIVITY_TIME);
+        List<BulkImportRequest.ColumnMapping> columns = new ArrayList<>();
+        columns.add(name);
+        columns.add(type);
+        columns.add(overwriteActivityTime);
+
+        mapping.setColumns(columns);
+        mapping.setDelimiter(',');
+        mapping.setUpdate(true);
+        mapping.setHeader(true);
+        request.setMapping(mapping);
+
+        BulkImportResult<Device> result = doPostWithTypedResponse("/api/device/bulk_import", request, new TypeReference<>() {});
+
+        Assert.assertEquals(1, result.getCreated().get());
+        Assert.assertEquals(0, result.getErrors().get());
+        Assert.assertTrue(result.getErrorsList().isEmpty());
+
+        Device savedDevice = doGet("/api/tenant/devices?deviceName=" + deviceName, Device.class);
+
+        Assert.assertNotNull(savedDevice);
+        Assert.assertNotNull(savedDevice.getAdditionalInfo());
+        Assert.assertTrue(savedDevice.getAdditionalInfo().get("overwriteActivityTime").asBoolean());
+    }
+
+    @Test
     public void testSaveDeviceWithOutdatedVersion() throws Exception {
         Device device = createDevice("Device v1.0");
         assertThat(device.getVersion()).isOne();
