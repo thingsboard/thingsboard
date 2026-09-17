@@ -4,14 +4,26 @@
     SPDX-License-Identifier: Apache-2.0
 
 -->
-<div class="mb-10 flex items-baseline gap-4 lt-md:mb-4">
+<div class="tb-search-pad mb-10 flex items-baseline gap-4 lt-md:mb-4">
   <ng-content></ng-content>
   <span class="tb-search-results-count tb-search-results-count-mobile">
     {{ 'iot-hub.results-count' | translate:{ count: totalElements } }}
   </span>
 </div>
-<!-- Search + Sort row -->
-<div class="flex items-center gap-4">
+<!-- Hidden probe — we read its computed grid-template-columns to detect the current column count. -->
+<div #cardGridProbe class="tb-search-card-grid tb-search-card-grid-probe" aria-hidden="true"></div>
+
+<!-- Filter + Search + Sort row -->
+<div class="tb-search-pad flex items-center gap-4">
+  @if (showFilters) {
+    <button mat-stroked-button class="tb-search-filter-btn" (click)="filtersOpen = !filtersOpen">
+      <mat-icon>filter_alt</mat-icon>
+      {{ 'iot-hub.filter' | translate }}
+      @if (activeFilterCount > 0) {
+        <span class="tb-search-filter-count">{{ activeFilterCount }}</span>
+      }
+    </button>
+  }
   <div class="tb-search-input-field flex flex-1 items-center">
     <input class="tb-search-input"
            [placeholder]="searchPlaceholderKey | translate"
@@ -43,7 +55,7 @@
 </div>
 
 <!-- Results count + Pagination (shown when results exist) -->
-<div class="tb-search-pagination-row" [class.lt-md:!hidden]="totalElements === 0">
+<div class="tb-search-pagination-row tb-search-pad" [class.lt-md:!hidden]="totalElements === 0">
   <span class="tb-search-results-count">
     {{ 'iot-hub.results-count' | translate:{ count: totalElements } }}
   </span>
@@ -76,62 +88,102 @@
 
 <div class="tb-search-divider"></div>
 
-<div class="relative min-h-0">
+<!-- Facets, rendered once and projected into the sidebar or the drawer -->
+<ng-template #facetPanel>
+  <div class="tb-search-facets">
+    @if (activeFilterCount > 0) {
+      <button mat-button color="primary" class="tb-search-facets-clear" (click)="clearFilters()">
+        {{ 'iot-hub.clear-filters' | translate }}
+      </button>
+    }
+    <tb-iot-hub-facet-list label="iot-hub.item-type"
+                           [options]="typeOptions"
+                           [selected]="activeTypes"
+                           [labelFor]="getTypeLabel"
+                           (toggled)="onTypeToggle($event)">
+    </tb-iot-hub-facet-list>
+    @if (categoryOptions.length > 0) {
+      <!-- Closed by default: six item types are a short, fixed list worth showing outright,
+           while categories and use cases run to dozens and would push each other off screen. -->
+      <tb-iot-hub-facet-list label="iot-hub.category"
+                             [expanded]="false"
+                             [options]="categoryOptions"
+                             [selected]="activeCategories"
+                             (toggled)="onCategoryToggle($event)">
+      </tb-iot-hub-facet-list>
+    }
+    @if (useCaseOptions.length > 0) {
+      <tb-iot-hub-facet-list label="iot-hub.use-case"
+                             [expanded]="false"
+                             [options]="useCaseOptions"
+                             [selected]="activeUseCases"
+                             (toggled)="onUseCaseToggle($event)">
+      </tb-iot-hub-facet-list>
+    }
+  </div>
+</ng-template>
 
-  <div class="tb-results-container">
-    <!-- Error -->
-    @if (hasError) {
-      <div class="tb-search-empty flex flex-col items-center py-10">
-        <div class="tb-no-service-bg"></div>
-        <h3>{{ 'iot-hub.network-server-unavailable' | translate }}</h3>
-        <p>{{ 'iot-hub.network-server-unavailable-text' | translate }}</p>
-        <button mat-flat-button color="primary" (click)="retryLoadResults()">
-          {{ 'iot-hub.try-again' | translate }}
-        </button>
-      </div>
+<div class="relative min-h-0 flex-1">
+
+  <!-- Plain flex row, deliberately not a mat-drawer-container: that component owns its own
+       height and overflow, and a facet list taller than the card grid escaped its box and
+       painted over the page behind it. Below lt-lg the same panel becomes a block above the
+       results, opened by the Filter button. -->
+  <div class="tb-search-layout">
+    @if (showFilters) {
+      <aside class="tb-search-facets-desktop" [class.opened]="filtersOpen">
+        <div class="tb-search-facets-header flex items-center justify-between">
+          <span>{{ 'iot-hub.filter' | translate }}</span>
+          <button mat-icon-button (click)="filtersOpen = false">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+        <ng-container *ngTemplateOutlet="facetPanel"></ng-container>
+      </aside>
     }
 
-    <!-- No results -->
-    @if (!hasError && totalElements === 0 && searchText?.trim()) {
-      <div class="tb-search-empty flex flex-col items-center py-10">
-        <div class="tb-no-data-bg"></div>
-        <h3>{{ 'iot-hub.no-items-found' | translate }}</h3>
-        <p>{{ 'iot-hub.try-adjusting-search' | translate }}</p>
-      </div>
-    }
+    <div class="tb-results-container">
+      <!-- Error -->
+      @if (hasError) {
+        <div class="tb-search-empty flex flex-col items-center py-10">
+          <div class="tb-no-service-bg"></div>
+          <h3>{{ 'iot-hub.network-server-unavailable' | translate }}</h3>
+          <p>{{ 'iot-hub.network-server-unavailable-text' | translate }}</p>
+          <button mat-flat-button color="primary" (click)="retryLoadResults()">
+            {{ 'iot-hub.try-again' | translate }}
+          </button>
+        </div>
+      }
 
-    <!-- Results grouped by type -->
-    @if (resultGroups.length > 0) {
-      <div class="tb-search-categories">
-        @for (group of resultGroups; track group.type) {
-          <div class="tb-search-section">
-            <!-- Section header -->
-            <button mat-button class="tb-search-section-header" (click)="navigateToType(group.type)">
-              {{ getTypeLabel(group.type) }}
-              <mat-icon>chevron_right</mat-icon>
-            </button>
-            <!-- Card grid -->
-            <div class="tb-search-card-grid" [class.tb-search-card-grid-compact]="isCompactType(group.type)">
-              @for (item of group.items; track item.id) {
-                <tb-iot-hub-item-card
-                  [item]="item"
-                  [installedItem]="getInstalledItem(item)"
-                  [installedItemsCount]="getInstalledItemsCount(item)"
-                  [showTypeChip]="false"
-                  [showSubtype]="false"
-                  [showCreator]="showCreator"
-                  (cardClick)="openItemDetail($event)"
-                  (creatorClick)="navigateToCreator($event)"
-                  (installClick)="installItem($event)"
-                  (updateClick)="updateItem($event)"
-                  (deleteClick)="deleteInstalledItem($event)">
-                </tb-iot-hub-item-card>
-              }
-            </div>
-          </div>
-        }
-      </div>
-    }
+      <!-- No results -->
+      @if (!hasError && totalElements === 0 && searchText?.trim()) {
+        <div class="tb-search-empty flex flex-col items-center py-10">
+          <div class="tb-no-data-bg"></div>
+          <h3>{{ 'iot-hub.no-items-found' | translate }}</h3>
+          <p>{{ 'iot-hub.try-adjusting-search' | translate }}</p>
+        </div>
+      }
+
+      <!-- Results -->
+      @if (results.length > 0) {
+        <div class="tb-search-card-grid">
+          @for (item of results; track item.id) {
+            <tb-iot-hub-item-card
+              layout="preview"
+              [item]="item"
+              [installedItem]="getInstalledItem(item)"
+              [installedItemsCount]="getInstalledItemsCount(item)"
+              [showCreator]="showCreator"
+              (cardClick)="openItemDetail($event)"
+              (creatorClick)="navigateToCreator($event)"
+              (installClick)="installItem($event)"
+              (updateClick)="updateItem($event)"
+              (deleteClick)="deleteInstalledItem($event)">
+            </tb-iot-hub-item-card>
+          }
+        </div>
+      }
+    </div>
   </div>
 
   <!-- Loading -->
