@@ -225,6 +225,7 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
   }
 
   onSearchFocus(): void {
+    this.enterHandledByRow = false;
     if (!this.searchLoaded) {
       this.searchLoading = true;
       this.searchSubject.next(this.searchText || '');
@@ -236,6 +237,7 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
   };
 
   clearSearch(): void {
+    this.enterHandledByRow = false;
     this.searchText = '';
     this.searchSubject.next('');
     this.searchInputRef?.nativeElement?.focus();
@@ -244,26 +246,30 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
 
   /**
    * Gate on every row's selection: false for the panel's own bookkeeping, true when the user
-   * picked the row - and then it records that this keystroke has been dealt with.
+   * picked the row - and then it records whether a keyup is still coming for it.
    *
    * One Enter reaches two handlers. The autocomplete trigger acts on keydown, the field's own
-   * handler on keyup, and preventDefault on the first does not stop the second. The trigger's
-   * activeOption cannot tell them apart either: it clears it inside that same keydown, so by
-   * keyup it reads empty whether or not a row acted. The row that acted says so instead, which
-   * does not depend on the order the two handlers run in.
+   * handler on keyup, and preventDefault on the first does not stop the second. Only the
+   * keyboard leaves that second half to deal with, so only the keyboard arms the flag: a pointer
+   * selection is finished when it returns, and a flag left standing there would swallow the next
+   * onSearch - which the magnifier button can raise with no keystroke at all.
+   *
+   * activeOption is what tells the two apart, and it is readable only here: the trigger holds it
+   * while it calls _selectViaInteraction and clears it on the next line of its own handler, so by
+   * keyup it reads empty either way. A pointer never sets it.
    */
   rowSelectedByUser(event: MatOptionSelectionChange): boolean {
     if (!event.isUserInput) {
       return false;
     }
-    this.enterHandledByRow = true;
+    this.enterHandledByRow = !!this.searchAutoTrigger?.activeOption;
     return true;
   }
 
   /**
    * Enter in the field opens the search page, unless a row has just acted on this same press.
-   * The flag is also cleared on input, since a pointer selection sets it with no keyup to follow
-   * and would otherwise swallow the next Enter.
+   * Every path that re-enters the field clears the flag too, so nothing survives the keystroke
+   * it belongs to - including an arrow-then-click, the one selection that arms it by pointer.
    */
   onSearch(): void {
     if (this.enterHandledByRow) {
