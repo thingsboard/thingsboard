@@ -216,7 +216,7 @@ transport:
     bootstrap:
       # Enable/disable Bootstrap Server
       enabled: "${LWM2M_ENABLED_BS:true}"
-      # Short Server ID for Bootstrap Server is not applicable according to OMA LwM2M spec (Object 0 Resource 10 must be omitted/null); left empty by default, and any provided value is normalized to null by the validator upon save.
+      # Deprecated: Short Server ID is not applicable for Bootstrap Server per OMA spec (Object 0 Resource 10) and is forced to null.
       id: "${LWM2M_SERVER_ID_BS:}"
       # LwM2M bootstrap server bind address. Bind to all interfaces by default
       bind_address: "${LWM2M_BS_BIND_ADDRESS:0.0.0.0}"
