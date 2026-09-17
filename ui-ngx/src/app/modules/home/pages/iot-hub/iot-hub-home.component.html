@@ -86,7 +86,7 @@
         } @else {
           @for (group of searchResultGroups; track group.type) {
             <mat-option class="tb-search-popup-group-header" [value]="searchText"
-                        (onSelectionChange)="$event.isUserInput && navigateToSection(group.type)">
+                        (onSelectionChange)="rowSelectedByUser($event) && navigateToSection(group.type)">
               <span class="tb-search-popup-group-label">{{ getSearchGroupLabel(group.type) }}</span>
               @if (group.remaining > 0) {
                 <span class="tb-search-popup-group-more">
@@ -96,8 +96,8 @@
               }
             </mat-option>
             @for (item of group.items; track item.id) {
-              <mat-option [value]="searchText"
-                          (onSelectionChange)="$event.isUserInput && openItemDetail(item)">
+              <mat-option class="tb-search-popup-item" [value]="searchText"
+                          (onSelectionChange)="rowSelectedByUser($event) && openItemDetail(item)">
                 @if (isCompactType(item.type)) {
                   <div class="tb-search-popup-icon-square" [style.background]="item.color || '#048ad3'">
                     <tb-icon class="tb-search-popup-icon-inner">{{ getCompactIcon(item) }}</tb-icon>
@@ -123,7 +123,7 @@
           }
         }
         <mat-option class="tb-search-popup-footer" [value]="searchText"
-                    (onSelectionChange)="$event.isUserInput && seeAllResults()">
+                    (onSelectionChange)="rowSelectedByUser($event) && seeAllResults()">
           @if (searchText?.trim(); as query) {
             {{ 'iot-hub.see-results-for' | translate:{ search: query } }}
           } @else {

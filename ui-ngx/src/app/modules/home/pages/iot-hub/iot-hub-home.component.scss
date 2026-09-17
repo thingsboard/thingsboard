@@ -220,6 +220,27 @@
     0 114px 46px 0 rgba(0, 0, 0, 0.01),
     0 178px 50px 0 rgba(0, 0, 0, 0);
 
+  // Every row of the panel shares the flex line and the highlight; the boxes differ per kind
+  // below. Each kind is selected by its own class rather than by leaning on source order, since
+  // .mat-mdc-option.<kind> and .mat-mdc-option:not(...) tie on specificity.
+  .mat-mdc-option {
+    .mdc-list-item__primary-text {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      width: 100%;
+    }
+
+    &:hover:not(.mdc-list-item--disabled),
+    &.mat-mdc-option-active:not(.mdc-list-item--disabled) {
+      background: rgba(0, 0, 0, 0.04);
+    }
+
+    .mat-icon, tb-icon {
+      margin-right: 0;
+    }
+  }
+
   // Section header — an option like every other row, not a button beside them, so the arrow keys
   // reach it and a screen reader reads it in the list. It IS the way into the type page: title
   // left, how much is not shown plus a chevron right. There is deliberately no per-section
@@ -268,26 +289,10 @@
   }
 
   // Item row — Design: 8px V / 16px H, 16px gap, centered
-  .mat-mdc-option:not(.mat-mdc-option-multiple) {
+  .mat-mdc-option.tb-search-popup-item {
     padding: 8px 16px;
     min-height: auto;
     height: auto;
-
-    &:hover:not(.mdc-list-item--disabled),
-    &.mat-mdc-option-active:not(.mdc-list-item--disabled) {
-      background: rgba(0, 0, 0, 0.04);
-    }
-
-    .mat-icon, tb-icon {
-      margin-right: 0;
-    }
-
-    .mdc-list-item__primary-text {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      width: 100%;
-    }
   }
 
   // Thumbnail — Design: 99px x 56px, 4px radius, 1px border, 4% bg
@@ -392,6 +397,7 @@
   .tb-search-popup-no-results {
     pointer-events: none;
     opacity: 1 !important;
+    padding: 8px 16px;
   }
 
   .tb-search-popup-no-results-content {

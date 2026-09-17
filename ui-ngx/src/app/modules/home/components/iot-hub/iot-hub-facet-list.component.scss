@@ -45,32 +45,7 @@
       overflow-y: auto;
     }
 
-    &::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    &::-webkit-scrollbar-track {
-      background-color: transparent;
-    }
-
-    &::-webkit-scrollbar-thumb {
-      background-color: transparent;
-      border-radius: 3px;
-    }
-
-    &:hover {
-      &::-webkit-scrollbar-track {
-        background-color: rgba(0, 0, 0, 0.04);
-      }
-
-      &::-webkit-scrollbar-thumb {
-        background-color: rgba(0, 0, 0, 0.2);
-
-        &:hover {
-          background-color: rgba(0, 0, 0, 0.35);
-        }
-      }
-    }
+    @include tb-iot-hub-hover-scrollbar;
   }
 
   .tb-iot-hub-facet-search {

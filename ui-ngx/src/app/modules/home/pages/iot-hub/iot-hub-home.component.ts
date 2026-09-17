@@ -3,6 +3,7 @@
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
+import { MatOptionSelectionChange } from '@angular/material/core';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { forkJoin, of, Subject, Subscription } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
@@ -66,6 +67,7 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
   searchLoading = false;
   @ViewChild(MatAutocompleteTrigger) searchAutoTrigger: MatAutocompleteTrigger;
   @ViewChild('searchInput', {read: ElementRef}) searchInputRef: ElementRef;
+  private enterHandledByRow = false;
   private searchSubject = new Subject<string>();
   private searchSubscription: Subscription;
 
@@ -217,6 +219,7 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
   }
 
   onSearchInput(): void {
+    this.enterHandledByRow = false;
     this.searchLoading = true;
     this.searchSubject.next(this.searchText || '');
   }
@@ -240,13 +243,31 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Enter in the field opens the search page - unless the panel has an option highlighted, which
-   * the trigger has already acted on during keydown. This runs on keyup, which preventDefault on
-   * the keydown does not stop, so without the guard one Enter would both open a result and
-   * navigate away from it.
+   * Gate on every row's selection: false for the panel's own bookkeeping, true when the user
+   * picked the row - and then it records that this keystroke has been dealt with.
+   *
+   * One Enter reaches two handlers. The autocomplete trigger acts on keydown, the field's own
+   * handler on keyup, and preventDefault on the first does not stop the second. The trigger's
+   * activeOption cannot tell them apart either: it clears it inside that same keydown, so by
+   * keyup it reads empty whether or not a row acted. The row that acted says so instead, which
+   * does not depend on the order the two handlers run in.
+   */
+  rowSelectedByUser(event: MatOptionSelectionChange): boolean {
+    if (!event.isUserInput) {
+      return false;
+    }
+    this.enterHandledByRow = true;
+    return true;
+  }
+
+  /**
+   * Enter in the field opens the search page, unless a row has just acted on this same press.
+   * The flag is also cleared on input, since a pointer selection sets it with no keyup to follow
+   * and would otherwise swallow the next Enter.
    */
   onSearch(): void {
-    if (this.searchAutoTrigger?.activeOption) {
+    if (this.enterHandledByRow) {
+      this.enterHandledByRow = false;
       return;
     }
     this.seeAllResults();
