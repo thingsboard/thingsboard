@@ -220,7 +220,7 @@ class DeviceProfileDataValidatorTest {
                 (Lwm2mDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration();
 
         return transportConfig.getBootstrap().stream()
-                .filter(credential -> ((NoSecLwM2MBootstrapServerCredential)credential).isBootstrapServerIs())
+                .filter(credential -> ((AbstractLwM2MBootstrapServerCredential)credential).isBootstrapServerIs())
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("Bootstrap server not found in profile"));
     }
@@ -231,7 +231,7 @@ class DeviceProfileDataValidatorTest {
         validator.validateDataImpl(tenantId, deviceProfile);
         verify(validator).validateString("Device profile name", deviceProfile.getName());
         LwM2MBootstrapServerCredential bsCredential = getBootstrapCredential(deviceProfile);
-        assertThat(((NoSecLwM2MBootstrapServerCredential)bsCredential).getShortServerId());
+        assertThat(((AbstractLwM2MBootstrapServerCredential) bsCredential).getShortServerId()).isNull();
     }
 
 }

@@ -28,23 +28,33 @@ public class LwM2MServiceImpl implements LwM2MService {
     public LwM2MServerSecurityConfigDefault getServerSecurityInfo(boolean bootstrapServer) {
         LwM2MSecureServerConfig bsServerConfig = bootstrapServer ? bootstrapConfig.orElse(null) : serverConfig;
         if (bsServerConfig!= null) {
-            LwM2MServerSecurityConfigDefault result = getServerSecurityConfig(bsServerConfig);
-            result.setBootstrapServerIs(bootstrapServer);
-            if (bootstrapServer) {
-                result.setShortServerId(null);
-            }
-            return result;
+            return getServerSecurityConfig(bsServerConfig, bootstrapServer);
         }
         else {
             return  null;
         }
     }
 
-    private LwM2MServerSecurityConfigDefault getServerSecurityConfig(LwM2MSecureServerConfig bsServerConfig) {
+    private LwM2MServerSecurityConfigDefault getServerSecurityConfig(LwM2MSecureServerConfig bsServerConfig, boolean bootstrapServer) {
         LwM2MServerSecurityConfigDefault bsServ = new LwM2MServerSecurityConfigDefault();
-        bsServ.setShortServerId(bsServerConfig.getId());
         bsServ.setHost(bsServerConfig.getHost());
         bsServ.setPort(bsServerConfig.getPort());
+        bsServ.setBootstrapServerIs(bootstrapServer);
+        if (bootstrapServer) {
+            if (bsServerConfig.getId() != null) {
+                log.warn("Ignoring Short Server ID [{}] on the Bootstrap Server entry: cleared to null for backward compatibility (ThingsBoard <= 4.2).",
+                        bsServerConfig.getId());
+            }
+            bsServ.setShortServerId(null);
+        } else {
+            Integer configId = bsServerConfig.getId();
+            if (configId == null || configId <= 0 || configId >= 65535) {
+                log.warn("Invalid Short Server ID [{}] for LwM2M Server entry: defaulting to [1] for backward compatibility (ThingsBoard <= 4.2).",
+                        configId);
+                configId = 1;
+            }
+            bsServ.setShortServerId(configId);
+        }
         bsServ.setSecurityHost(bsServerConfig.getSecureHost());
         bsServ.setSecurityPort(bsServerConfig.getSecurePort());
         byte[] publicKeyBase64 = getPublicKey(bsServerConfig);
