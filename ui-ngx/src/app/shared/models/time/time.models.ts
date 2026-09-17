@@ -164,6 +164,8 @@ export interface Timewindow {
   hideAggregation?: boolean;
   hideAggInterval?: boolean;
   hideTimezone?: boolean;
+  hideRealtime?: boolean;
+  hideHistory?: boolean;
   selectedTab?: TimewindowType;
   realtime?: RealtimeWindow;
   history?: HistoryWindow;
@@ -335,8 +337,19 @@ export const initModelFromDefaultTimewindow = (value: Timewindow, quickIntervalO
     if (value.hideSaveAsDefault) {
       model.hideSaveAsDefault = value.hideSaveAsDefault;
     }
+    if (value.hideRealtime) {
+      model.hideRealtime = value.hideRealtime;
+    }
+    if (value.hideHistory) {
+      model.hideHistory = value.hideHistory;
+    }
 
     model.selectedTab = getTimewindowType(value);
+    if (model.hideRealtime && model.selectedTab === TimewindowType.REALTIME) {
+      model.selectedTab = TimewindowType.HISTORY;
+    } else if (model.hideHistory && model.selectedTab === TimewindowType.HISTORY) {
+      model.selectedTab = TimewindowType.REALTIME;
+    }
 
     // for backward compatibility
     if ((value as any).hideInterval) {
@@ -1122,6 +1135,12 @@ export const cloneSelectedTimewindow = (timewindow: Timewindow): Timewindow => {
   }
   if (timewindow.hideSaveAsDefault) {
     cloned.hideSaveAsDefault = timewindow.hideSaveAsDefault;
+  }
+  if (timewindow.hideRealtime) {
+    cloned.hideRealtime = timewindow.hideRealtime;
+  }
+  if (timewindow.hideHistory) {
+    cloned.hideHistory = timewindow.hideHistory;
   }
   if (isDefined(timewindow.selectedTab)) {
     cloned.selectedTab = timewindow.selectedTab;

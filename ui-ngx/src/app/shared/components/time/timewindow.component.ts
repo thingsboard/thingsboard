@@ -395,15 +395,24 @@ export class TimewindowComponent implements ControlValueAccessor, OnInit, OnChan
   }
 
   private isTimewindowDisabled(): boolean {
-    return this.disabled ||
-      (!this.isEdit && (!this.innerValue || (
-        ((this.innerValue.realtime?.hideInterval && this.innerValue.history?.hideInterval) ||
-          (this.innerValue.realtime?.hideLastInterval && this.innerValue.realtime?.hideQuickInterval &&
-            this.innerValue.history?.hideLastInterval && this.innerValue.history?.hideFixedInterval &&
-            this.innerValue.history?.hideQuickInterval)) &&
-        (!this.aggregation || this.innerValue.hideAggregation && this.innerValue.hideAggInterval) &&
-        (!this.timezone || this.innerValue.hideTimezone)
-      )));
+    if (this.disabled || this.isEdit) {
+      return this.disabled;
+    }
+    if (!this.innerValue) {
+      return true;
+    }
+    if (this.innerValue.hideRealtime && this.innerValue.hideHistory) {
+      return true;
+    }
+    return (
+      (this.innerValue.hideRealtime || (this.innerValue.realtime?.hideInterval ||
+        (this.innerValue.realtime?.hideLastInterval && this.innerValue.realtime?.hideQuickInterval))) &&
+      (this.innerValue.hideHistory || (this.innerValue.history?.hideInterval ||
+        (this.innerValue.history?.hideLastInterval && this.innerValue.history?.hideFixedInterval &&
+          this.innerValue.history?.hideQuickInterval))) &&
+      (!this.aggregation || (this.innerValue.hideAggregation && this.innerValue.hideAggInterval)) &&
+      (!this.timezone || this.innerValue.hideTimezone)
+    );
   }
 
   private createPanel() {

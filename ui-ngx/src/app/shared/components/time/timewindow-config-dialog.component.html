@@ -33,176 +33,206 @@
   </div>
   <div class="tb-timewindow-form-content tb-form-panel no-border">
     @if (timewindowForm.get('selectedTab').value === timewindowTypes.REALTIME) {
-      <section
-        formGroupName="realtime" class="tb-form-panel">
-        <div class="tb-form-panel-title">{{ 'timewindow.timewindow' | translate }}</div>
+      <section class="tb-form-panel">
         <div class="tb-form-row">
-          <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="hideInterval">
-            {{ 'timewindow.hide-timewindow-section' | translate }}
+          <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="hideRealtime">
+            {{ 'timewindow.hide-realtime-tab' | translate }}
           </mat-slide-toggle>
         </div>
-        @if (realtimeTypeSelectionAvailable) {
-          <tb-toggle-select
-            appearance="stroked" [options]="realtimeTimewindowOptions" formControlName="realtimeType">
-          </tb-toggle-select>
+      </section>
+      @if (!timewindowForm.get('hideRealtime').value) {
+        @if (timewindowForm.hasError('realtimeSectionEmpty')) {
+          <div class="tb-form-hint tb-section-empty-hint flex items-start gap-2" role="alert">
+            <mat-icon>error</mat-icon>
+            <span translate>timewindow.realtime-section-empty</span>
+          </div>
         }
-        @if (timewindowForm.get('realtime.realtimeType').value === realtimeTypes.LAST_INTERVAL) {
+        <section
+          formGroupName="realtime" class="tb-form-panel">
+          <div class="tb-form-panel-title">{{ 'timewindow.timewindow' | translate }}</div>
           <div class="tb-form-row">
-            <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="disableCustomInterval">
-              {{ 'timewindow.disable-custom-interval' | translate }}
+            <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="hideInterval">
+              {{ 'timewindow.hide-timewindow-section' | translate }}
             </mat-slide-toggle>
           </div>
-          <div class="tb-form-row column-xs">
-            @if (!quickIntervalOnly) {
-              <mat-slide-toggle
-                class="mat-slide" formControlName="hideLastInterval">
-                <div tb-hint-tooltip-icon="{{'timewindow.hide-last-interval' | translate}}">
-                  {{ 'timewindow.hide' | translate }}
-                </div>
-              </mat-slide-toggle>
+          @if (!timewindowForm.get('realtime.hideInterval').value) {
+            @if (realtimeTypeSelectionAvailable) {
+              <tb-toggle-select
+                appearance="stroked" [options]="realtimeTimewindowOptions" formControlName="realtimeType">
+              </tb-toggle-select>
             }
-            <tb-timeinterval
-              formControlName="timewindowMs"
-              subscriptSizing="dynamic"
-              appearance="outline"
-              [allowedIntervals]="timewindowForm.get('realtime.advancedParams.allowedLastIntervals').value"
-              [disabledAdvanced]="timewindowForm.get('realtime.disableCustomInterval').value"
-            [required]="timewindowForm.get('selectedTab').value === timewindowTypes.REALTIME &&
-                            timewindowForm.get('realtime.realtimeType').value === realtimeTypes.LAST_INTERVAL">
-              @if (!(timewindowForm.get('realtime.hideLastInterval').value ||
-                timewindowForm.get('realtime.hideInterval').value)) {
-                <button
-                  matSuffix mat-icon-button type="button"
-                  (click)="configureRealtimeLastIntervalOptions($event)">
-                  <mat-icon>edit</mat-icon>
-                </button>
-              }
-            </tb-timeinterval>
-          </div>
-        }
-        @if (timewindowForm.get('realtime.realtimeType').value === realtimeTypes.INTERVAL) {
-          <div
-            class="tb-form-row column-xs">
-            @if (!quickIntervalOnly) {
-              <mat-slide-toggle
-                class="mat-slide" formControlName="hideQuickInterval">
-                <div tb-hint-tooltip-icon="{{'timewindow.hide-relative-interval' | translate}}">
-                  {{ 'timewindow.hide' | translate }}
-                </div>
-              </mat-slide-toggle>
+            @if (timewindowForm.get('realtime.realtimeType').value === realtimeTypes.LAST_INTERVAL) {
+              <div class="tb-form-row">
+                <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="disableCustomInterval">
+                  {{ 'timewindow.disable-custom-interval' | translate }}
+                </mat-slide-toggle>
+              </div>
+              <div class="tb-form-row column-xs">
+                @if (!quickIntervalOnly) {
+                  <mat-slide-toggle
+                    class="mat-slide" formControlName="hideLastInterval">
+                    <div tb-hint-tooltip-icon="{{'timewindow.hide-last-interval' | translate}}">
+                      {{ 'timewindow.hide' | translate }}
+                    </div>
+                  </mat-slide-toggle>
+                }
+                <tb-timeinterval
+                  formControlName="timewindowMs"
+                  subscriptSizing="dynamic"
+                  appearance="outline"
+                  [allowedIntervals]="timewindowForm.get('realtime.advancedParams.allowedLastIntervals').value"
+                  [disabledAdvanced]="timewindowForm.get('realtime.disableCustomInterval').value"
+                [required]="timewindowForm.get('selectedTab').value === timewindowTypes.REALTIME &&
+                                timewindowForm.get('realtime.realtimeType').value === realtimeTypes.LAST_INTERVAL">
+                  @if (!timewindowForm.get('realtime.hideLastInterval').value) {
+                    <button
+                      matSuffix mat-icon-button type="button"
+                      (click)="configureRealtimeLastIntervalOptions($event)">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                  }
+                </tb-timeinterval>
+              </div>
             }
-            <tb-quick-time-interval
-              displayLabel="false"
-              formControlName="quickInterval"
-              onlyCurrentInterval="true"
-              subscriptSizing="dynamic"
-              appearance="outline"
-              [allowedIntervals]="timewindowForm.get('realtime.advancedParams.allowedQuickIntervals').value"
-          [required]="timewindowForm.get('selectedTab').value === timewindowTypes.REALTIME &&
-                          timewindowForm.get('realtime.realtimeType').value === realtimeTypes.INTERVAL">
-              @if (!(timewindowForm.get('realtime.hideQuickInterval').value ||
-                timewindowForm.get('realtime.hideInterval').value)) {
-                <button
-                  matSuffix mat-icon-button type="button"
-                  (click)="configureRealtimeQuickIntervalOptions($event)">
-                  <mat-icon>edit</mat-icon>
-                </button>
-              }
-            </tb-quick-time-interval>
-          </div>
-        }
-      </section>
+            @if (timewindowForm.get('realtime.realtimeType').value === realtimeTypes.INTERVAL) {
+              <div class="tb-form-row column-xs">
+                @if (!quickIntervalOnly) {
+                  <mat-slide-toggle
+                    class="mat-slide" formControlName="hideQuickInterval">
+                    <div tb-hint-tooltip-icon="{{'timewindow.hide-relative-interval' | translate}}">
+                      {{ 'timewindow.hide' | translate }}
+                    </div>
+                  </mat-slide-toggle>
+                }
+                <tb-quick-time-interval
+                  displayLabel="false"
+                  formControlName="quickInterval"
+                  onlyCurrentInterval="true"
+                  subscriptSizing="dynamic"
+                  appearance="outline"
+                  [allowedIntervals]="timewindowForm.get('realtime.advancedParams.allowedQuickIntervals').value"
+              [required]="timewindowForm.get('selectedTab').value === timewindowTypes.REALTIME &&
+                              timewindowForm.get('realtime.realtimeType').value === realtimeTypes.INTERVAL">
+                  @if (!timewindowForm.get('realtime.hideQuickInterval').value) {
+                    <button
+                      matSuffix mat-icon-button type="button"
+                      (click)="configureRealtimeQuickIntervalOptions($event)">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                  }
+                </tb-quick-time-interval>
+              </div>
+            }
+          }
+        </section>
+      }
     }
 
     @if (timewindowForm.get('selectedTab').value === timewindowTypes.HISTORY) {
-      <section
-        formGroupName="history" class="tb-form-panel">
-        <div class="tb-form-panel-title">{{ 'timewindow.timewindow' | translate }}</div>
+      <section class="tb-form-panel">
         <div class="tb-form-row">
-          <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="hideInterval">
-            {{ 'timewindow.hide-timewindow-section' | translate }}
+          <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="hideHistory">
+            {{ 'timewindow.hide-history-tab' | translate }}
           </mat-slide-toggle>
         </div>
-        <tb-toggle-select appearance="stroked" [options]="historyTimewindowOptions" formControlName="historyType">
-        </tb-toggle-select>
-        @if (timewindowForm.get('history.historyType').value === historyTypes.LAST_INTERVAL) {
-          <div class="tb-form-row">
-            <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="disableCustomInterval">
-              {{ 'timewindow.disable-custom-interval' | translate }}
-            </mat-slide-toggle>
-          </div>
-          <div class="tb-form-row column-xs">
-            <mat-slide-toggle class="mat-slide" formControlName="hideLastInterval">
-              <div tb-hint-tooltip-icon="{{'timewindow.hide-last-interval' | translate}}">
-                {{ 'timewindow.hide' | translate }}
-              </div>
-            </mat-slide-toggle>
-            <tb-timeinterval
-              formControlName="timewindowMs"
-              subscriptSizing="dynamic"
-              appearance="outline"
-              [allowedIntervals]="timewindowForm.get('history.advancedParams.allowedLastIntervals').value"
-              [disabledAdvanced]="timewindowForm.get('history.disableCustomInterval').value"
-            [required]="timewindowForm.get('selectedTab').value === timewindowTypes.HISTORY &&
-                          timewindowForm.get('history.historyType').value === historyTypes.LAST_INTERVAL">
-              @if (!(timewindowForm.get('history.hideLastInterval').value ||
-                timewindowForm.get('history.hideInterval').value)) {
-                <button
-                  matSuffix mat-icon-button type="button"
-                  (click)="configureHistoryLastIntervalOptions($event)">
-                  <mat-icon>edit</mat-icon>
-                </button>
-              }
-            </tb-timeinterval>
-          </div>
-        }
-        @if (timewindowForm.get('history.historyType').value === historyTypes.FIXED) {
-          <div class="tb-form-row column-xs">
-            <mat-slide-toggle class="mat-slide" formControlName="hideFixedInterval">
-              <div tb-hint-tooltip-icon="{{'timewindow.hide-fixed-interval' | translate}}">
-                {{ 'timewindow.hide' | translate }}
-              </div>
-            </mat-slide-toggle>
-            <tb-datetime-period
-              formControlName="fixedTimewindow"
-              subscriptSizing="dynamic"
-              appearance="outline"
-              class="history-time-input"
-          [required]="timewindowForm.get('selectedTab').value === timewindowTypes.HISTORY &&
-                        timewindowForm.get('history.historyType').value === historyTypes.FIXED">
-            </tb-datetime-period>
-          </div>
-        }
-        @if (timewindowForm.get('history.historyType').value === historyTypes.INTERVAL) {
-          <div class="tb-form-row column-xs">
-            <mat-slide-toggle class="mat-slide" formControlName="hideQuickInterval">
-              <div tb-hint-tooltip-icon="{{'timewindow.hide-relative-interval' | translate}}">
-                {{ 'timewindow.hide' | translate }}
-              </div>
-            </mat-slide-toggle>
-            <tb-quick-time-interval
-              displayLabel="false"
-              formControlName="quickInterval"
-              subscriptSizing="dynamic"
-              appearance="outline"
-              [allowedIntervals]="timewindowForm.get('history.advancedParams.allowedQuickIntervals').value"
-            [required]="timewindowForm.get('selectedTab').value === timewindowTypes.HISTORY &&
-                        timewindowForm.get('history.historyType').value === historyTypes.INTERVAL">
-              @if (!(timewindowForm.get('history.hideQuickInterval').value ||
-                timewindowForm.get('history.hideInterval').value)) {
-                <button
-                  matSuffix mat-icon-button type="button"
-                  (click)="configureHistoryQuickIntervalOptions($event)">
-                  <mat-icon>edit</mat-icon>
-                </button>
-              }
-            </tb-quick-time-interval>
-          </div>
-        }
       </section>
+      @if (!timewindowForm.get('hideHistory').value) {
+        @if (timewindowForm.hasError('historySectionEmpty')) {
+          <div class="tb-form-hint tb-section-empty-hint flex items-start gap-2" role="alert">
+            <mat-icon>error</mat-icon>
+            <span translate>timewindow.history-section-empty</span>
+          </div>
+        }
+        <section
+          formGroupName="history" class="tb-form-panel">
+          <div class="tb-form-panel-title">{{ 'timewindow.timewindow' | translate }}</div>
+          <div class="tb-form-row">
+            <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="hideInterval">
+              {{ 'timewindow.hide-timewindow-section' | translate }}
+            </mat-slide-toggle>
+          </div>
+          @if (!timewindowForm.get('history.hideInterval').value) {
+            <tb-toggle-select appearance="stroked" [options]="historyTimewindowOptions" formControlName="historyType">
+            </tb-toggle-select>
+            @if (timewindowForm.get('history.historyType').value === historyTypes.LAST_INTERVAL) {
+              <div class="tb-form-row">
+                <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="disableCustomInterval">
+                  {{ 'timewindow.disable-custom-interval' | translate }}
+                </mat-slide-toggle>
+              </div>
+              <div class="tb-form-row column-xs">
+                <mat-slide-toggle class="mat-slide" formControlName="hideLastInterval">
+                  <div tb-hint-tooltip-icon="{{'timewindow.hide-last-interval' | translate}}">
+                    {{ 'timewindow.hide' | translate }}
+                  </div>
+                </mat-slide-toggle>
+                <tb-timeinterval
+                  formControlName="timewindowMs"
+                  subscriptSizing="dynamic"
+                  appearance="outline"
+                  [allowedIntervals]="timewindowForm.get('history.advancedParams.allowedLastIntervals').value"
+                  [disabledAdvanced]="timewindowForm.get('history.disableCustomInterval').value"
+                [required]="timewindowForm.get('selectedTab').value === timewindowTypes.HISTORY &&
+                              timewindowForm.get('history.historyType').value === historyTypes.LAST_INTERVAL">
+                  @if (!timewindowForm.get('history.hideLastInterval').value) {
+                    <button
+                      matSuffix mat-icon-button type="button"
+                      (click)="configureHistoryLastIntervalOptions($event)">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                  }
+                </tb-timeinterval>
+              </div>
+            }
+            @if (timewindowForm.get('history.historyType').value === historyTypes.FIXED) {
+              <div class="tb-form-row column-xs">
+                <mat-slide-toggle class="mat-slide" formControlName="hideFixedInterval">
+                  <div tb-hint-tooltip-icon="{{'timewindow.hide-fixed-interval' | translate}}">
+                    {{ 'timewindow.hide' | translate }}
+                  </div>
+                </mat-slide-toggle>
+                <tb-datetime-period
+                  formControlName="fixedTimewindow"
+                  subscriptSizing="dynamic"
+                  appearance="outline"
+                  class="history-time-input"
+              [required]="timewindowForm.get('selectedTab').value === timewindowTypes.HISTORY &&
+                            timewindowForm.get('history.historyType').value === historyTypes.FIXED">
+                </tb-datetime-period>
+              </div>
+            }
+            @if (timewindowForm.get('history.historyType').value === historyTypes.INTERVAL) {
+              <div class="tb-form-row column-xs">
+                <mat-slide-toggle class="mat-slide" formControlName="hideQuickInterval">
+                  <div tb-hint-tooltip-icon="{{'timewindow.hide-relative-interval' | translate}}">
+                    {{ 'timewindow.hide' | translate }}
+                  </div>
+                </mat-slide-toggle>
+                <tb-quick-time-interval
+                  displayLabel="false"
+                  formControlName="quickInterval"
+                  subscriptSizing="dynamic"
+                  appearance="outline"
+                  [allowedIntervals]="timewindowForm.get('history.advancedParams.allowedQuickIntervals').value"
+                [required]="timewindowForm.get('selectedTab').value === timewindowTypes.HISTORY &&
+                            timewindowForm.get('history.historyType').value === historyTypes.INTERVAL">
+                  @if (!timewindowForm.get('history.hideQuickInterval').value) {
+                    <button
+                      matSuffix mat-icon-button type="button"
+                      (click)="configureHistoryQuickIntervalOptions($event)">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                  }
+                </tb-quick-time-interval>
+              </div>
+            }
+          }
+        </section>
+      }
     }
 
-    @if (aggregation) {
+    @if (!selectedTabHidden) {
+      @if (aggregation) {
       <section class="tb-form-panel">
         <div class="tb-form-panel-title">{{ 'aggregation.aggregation' | translate }}</div>
         <div class="tb-form-row column-xs">
@@ -327,6 +357,7 @@
           </mat-slide-toggle>
         </div>
       </section>
+    }
     }
   </div>
   <mat-divider></mat-divider>

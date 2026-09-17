@@ -116,15 +116,13 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
   saveTimewindow: boolean;
   saveTimewindowControl: FormControl;
 
-  timewindowTypeOptions: ToggleHeaderOption[] = [{
-    name: this.translate.instant('timewindow.history'),
-    value: this.timewindowTypes.HISTORY
-  }];
+  timewindowTypeOptions: ToggleHeaderOption[] = [];
 
   realtimeTimewindowOptions: ToggleHeaderOption[] = [];
 
   historyTimewindowOptions: ToggleHeaderOption[] = [];
 
+  timewindowTypeSelectionAvailable: boolean;
   realtimeTypeSelectionAvailable: boolean;
   realtimeIntervalSelectionAvailable: boolean;
   historyTypeSelectionAvailable: boolean;
@@ -167,21 +165,51 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
 
     this.updateTimewindowAdvancedParams();
 
-    if (!this.historyOnly) {
-      this.timewindowTypeOptions.unshift({
+    this.realtimeIntervalSelectionAvailable = !(this.timewindow.realtime?.hideInterval ||
+      (this.timewindow.realtime?.hideLastInterval && this.timewindow.realtime?.hideQuickInterval));
+    this.historyIntervalSelectionAvailable = !(this.timewindow.history?.hideInterval ||
+      (this.timewindow.history?.hideLastInterval && this.timewindow.history?.hideQuickInterval && this.timewindow.history?.hideFixedInterval));
+    this.aggregationOptionsAvailable = this.aggregation &&
+      !(this.timewindow.hideAggregation && this.timewindow.hideAggInterval);
+
+    const timezoneAvailable = this.timezone && !this.timewindow.hideTimezone;
+
+    // Whether a tab has anything left to show; steers the selected tab away from one that would render empty.
+    const realtimeHasContent = this.realtimeIntervalSelectionAvailable || this.aggregationOptionsAvailable || timezoneAvailable;
+    const historyHasContent = this.historyIntervalSelectionAvailable || this.aggregationOptionsAvailable || timezoneAvailable;
+
+    if (this.timewindow.selectedTab === TimewindowType.REALTIME && !realtimeHasContent && historyHasContent) {
+      this.timewindow.selectedTab = TimewindowType.HISTORY;
+    } else if (this.timewindow.selectedTab === TimewindowType.HISTORY && !historyHasContent && realtimeHasContent) {
+      this.timewindow.selectedTab = TimewindowType.REALTIME;
+    }
+
+    // When only one tab is hidden, the other stays the sole tab as usual (no switcher, hidden one unreachable).
+    // Only when BOTH are hidden does edit mode need a way back to either tab to configure their defaults.
+    const bothTabsHidden = this.timewindow.hideRealtime && this.timewindow.hideHistory;
+
+    if (!this.historyOnly && (!this.timewindow.hideRealtime || (this.isEdit && bothTabsHidden)) && realtimeHasContent) {
+      this.timewindowTypeOptions.push({
         name: this.translate.instant('timewindow.realtime'),
         value: this.timewindowTypes.REALTIME
       });
     }
 
-    if ((this.isEdit || !this.timewindow.realtime?.hideLastInterval) && !this.quickIntervalOnly) {
+    if ((!this.timewindow.hideHistory || (this.isEdit && bothTabsHidden)) && historyHasContent) {
+      this.timewindowTypeOptions.push({
+        name: this.translate.instant('timewindow.history'),
+        value: this.timewindowTypes.HISTORY
+      });
+    }
+
+    if (!this.timewindow.realtime?.hideLastInterval && !this.quickIntervalOnly) {
       this.realtimeTimewindowOptions.push({
         name: this.translate.instant(realtimeWindowTypeTranslations.get(RealtimeWindowType.LAST_INTERVAL)),
         value: this.realtimeTypes.LAST_INTERVAL
       });
     }
 
-    if (this.isEdit || !this.timewindow.realtime?.hideQuickInterval || this.quickIntervalOnly) {
+    if (!this.timewindow.realtime?.hideQuickInterval || this.quickIntervalOnly) {
       this.realtimeTimewindowOptions.push({
         name: this.translate.instant(realtimeWindowTypeTranslations.get(RealtimeWindowType.INTERVAL)),
         value: this.realtimeTypes.INTERVAL
@@ -195,36 +223,30 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
       });
     }
 
-    if (this.isEdit || !this.timewindow.history?.hideLastInterval) {
+    if (!this.timewindow.history?.hideLastInterval) {
       this.historyTimewindowOptions.push({
         name: this.translate.instant(historyWindowTypeTranslations.get(HistoryWindowType.LAST_INTERVAL)),
         value: this.historyTypes.LAST_INTERVAL
       });
     }
 
-    if (this.isEdit || !this.timewindow.history?.hideFixedInterval) {
+    if (!this.timewindow.history?.hideFixedInterval) {
       this.historyTimewindowOptions.push({
         name: this.translate.instant(historyWindowTypeTranslations.get(HistoryWindowType.FIXED)),
         value: this.historyTypes.FIXED
       });
     }
 
-    if (this.isEdit || !this.timewindow.history?.hideQuickInterval) {
+    if (!this.timewindow.history?.hideQuickInterval) {
       this.historyTimewindowOptions.push({
         name: this.translate.instant(historyWindowTypeTranslations.get(HistoryWindowType.INTERVAL)),
         value: this.historyTypes.INTERVAL
       });
     }
 
+    this.timewindowTypeSelectionAvailable = this.timewindowTypeOptions.length > 1;
     this.realtimeTypeSelectionAvailable = this.realtimeTimewindowOptions.length > 1;
     this.historyTypeSelectionAvailable = this.historyTimewindowOptions.length > 1;
-    this.realtimeIntervalSelectionAvailable = this.isEdit || !(this.timewindow.realtime?.hideInterval ||
-      (this.timewindow.realtime?.hideLastInterval && this.timewindow.realtime?.hideQuickInterval));
-    this.historyIntervalSelectionAvailable = this.isEdit || !(this.timewindow.history?.hideInterval ||
-      (this.timewindow.history?.hideLastInterval && this.timewindow.history?.hideQuickInterval && this.timewindow.history?.hideFixedInterval));
-
-    this.aggregationOptionsAvailable = this.aggregation && (this.isEdit ||
-      !(this.timewindow.hideAggregation && this.timewindow.hideAggInterval));
 
     this.saveAsDefaultAvailable = this.data.showSaveAsDefault && (!this.timewindow.hideSaveAsDefault || this.isEdit);
   }
@@ -238,34 +260,32 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
     const history = this.timewindow.history;
     const aggregation = this.timewindow.aggregation;
 
-    if (!this.isEdit) {
-      if (realtime?.hideLastInterval && !realtime?.hideQuickInterval) {
-        realtime.realtimeType = RealtimeWindowType.INTERVAL;
-      }
-      if (realtime?.hideQuickInterval && !realtime?.hideLastInterval) {
-        realtime.realtimeType = RealtimeWindowType.LAST_INTERVAL;
-      }
+    if (realtime?.hideLastInterval && !realtime?.hideQuickInterval) {
+      realtime.realtimeType = RealtimeWindowType.INTERVAL;
+    }
+    if (realtime?.hideQuickInterval && !realtime?.hideLastInterval) {
+      realtime.realtimeType = RealtimeWindowType.LAST_INTERVAL;
+    }
 
-      if (history?.hideLastInterval) {
-        if (!history.hideFixedInterval) {
-          history.historyType = HistoryWindowType.FIXED;
-        } else if (!history.hideQuickInterval) {
-          history.historyType = HistoryWindowType.INTERVAL;
-        }
+    if (history?.hideLastInterval) {
+      if (!history.hideFixedInterval) {
+        history.historyType = HistoryWindowType.FIXED;
+      } else if (!history.hideQuickInterval) {
+        history.historyType = HistoryWindowType.INTERVAL;
       }
-      if (history?.hideFixedInterval) {
-        if (!history.hideLastInterval) {
-          history.historyType = HistoryWindowType.LAST_INTERVAL;
-        } else if (!history.hideQuickInterval) {
-          history.historyType = HistoryWindowType.INTERVAL;
-        }
+    }
+    if (history?.hideFixedInterval) {
+      if (!history.hideLastInterval) {
+        history.historyType = HistoryWindowType.LAST_INTERVAL;
+      } else if (!history.hideQuickInterval) {
+        history.historyType = HistoryWindowType.INTERVAL;
       }
-      if (history?.hideQuickInterval) {
-        if (!history.hideLastInterval) {
-          history.historyType = HistoryWindowType.LAST_INTERVAL;
-        } else if (!history.hideFixedInterval) {
-          history.historyType = HistoryWindowType.FIXED;
-        }
+    }
+    if (history?.hideQuickInterval) {
+      if (!history.hideLastInterval) {
+        history.historyType = HistoryWindowType.LAST_INTERVAL;
+      } else if (!history.hideFixedInterval) {
+        history.historyType = HistoryWindowType.FIXED;
       }
     }
 
