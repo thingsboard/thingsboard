@@ -169,7 +169,7 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
             List<LwM2MBootstrapServerCredential> lwM2MBootstrapServersConfigurations = ((Lwm2mDeviceProfileTransportConfiguration) transportConfiguration).getBootstrap();
             if (lwM2MBootstrapServersConfigurations != null) {
                 validateLwm2mServersConfigOfBootstrapForClient(lwM2MBootstrapServersConfigurations,
-                        ((Lwm2mDeviceProfileTransportConfiguration) transportConfiguration).isBootstrapServerUpdateEnable(), deviceProfile.getName(), tenantId);
+                        ((Lwm2mDeviceProfileTransportConfiguration) transportConfiguration).isBootstrapServerUpdateEnable(), deviceProfile);
                 for (LwM2MBootstrapServerCredential bootstrapServerCredential : lwM2MBootstrapServersConfigurations) {
                     validateLwm2mServersCredentialOfBootstrapForClient(bootstrapServerCredential);
                 }
@@ -348,7 +348,7 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
            Only one Bootstrap Server configuration is allowed per transport setup.
     */
     private void validateLwm2mServersConfigOfBootstrapForClient(List<LwM2MBootstrapServerCredential> lwM2MBootstrapServersConfigurations,
-                                                                boolean isBootstrapServerUpdateEnable, String deviceProfileName, TenantId tenantId) {
+                                                                boolean isBootstrapServerUpdateEnable, DeviceProfile deviceProfile) {
         Set<String> uris = new HashSet<>();
         Set<Integer> shortServerIds = new HashSet<>();
         boolean hasBootstrapServer = false;
@@ -368,7 +368,7 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
                 // 2. Normalize legacy shortServerId to null for backward compatibility
                 if (serverConfig.getShortServerId() != null) {
                     log.warn("[{}] [{}] Ignoring Short Server ID [{}] on the Bootstrap Server entry: cleared to null for backward compatibility (ThingsBoard <= 4.2).",
-                            tenantId, deviceProfileName, serverConfig.getShortServerId());
+                            deviceProfile.getTenantId(), deviceProfile.getName(), serverConfig.getShortServerId());
 
                     serverConfig.setShortServerId(null);
                 }
