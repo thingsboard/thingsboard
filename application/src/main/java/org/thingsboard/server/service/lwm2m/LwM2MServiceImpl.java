@@ -14,6 +14,8 @@ import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportBootstrapConf
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 
 import java.util.Optional;
+import static org.thingsboard.server.common.data.device.credentials.lwm2m.Lwm2mServerIdentifier.LWM2M_SERVER_MAX;
+import static org.thingsboard.server.common.data.device.credentials.lwm2m.Lwm2mServerIdentifier.PRIMARY_LWM2M_SERVER;
 
 @Slf4j
 @Service
@@ -49,9 +51,10 @@ public class LwM2MServiceImpl implements LwM2MService {
         } else {
             Integer configId = bsServerConfig.getId();
             if (configId == null || configId <= 0 || configId >= 65535) {
-                log.warn("Invalid Short Server ID [{}] for LwM2M Server entry: defaulting to [1] for backward compatibility (ThingsBoard <= 4.2).",
-                        configId);
-                configId = 1;
+                throw new IllegalArgumentException(String.format(
+                        "Invalid LwM2M Server ShortServerId [%s] in configuration (transport.lwm2m.server.id). Must be in range [%d - %d]!",
+                        configId, PRIMARY_LWM2M_SERVER.getId(), LWM2M_SERVER_MAX.getId()
+                ));
             }
             bsServ.setShortServerId(configId);
         }
