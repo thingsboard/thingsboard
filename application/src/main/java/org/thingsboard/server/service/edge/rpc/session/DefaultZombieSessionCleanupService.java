@@ -21,7 +21,7 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
+import java.util.function.Consumer;
 
 @Service
 @Slf4j
@@ -59,8 +59,11 @@ public class DefaultZombieSessionCleanupService implements ZombieSessionCleanupS
 
     private void cleanupZombieSessions() {
         try {
+            // Compare-and-remove: destroy() above is not instantaneous, so the edge may have reconnected and
+            // put a live session under this id in the meantime. Removing it unconditionally would leave a
+            // connected edge with no entry keyed by edge id, silently no-opping every downlink lookup.
             tryToDestroyZombieSessions(getZombieSessions(edgeSessionsHolder.getSessions().values()),
-                    s -> edgeSessionsHolder.removeByEdgeId(s.getState().getEdge().getId()));
+                    s -> edgeSessionsHolder.removeByEdgeIdIfCurrent(s.getState().getEdge().getId(), s));
 
             tryToDestroyZombieSessions(getZombieSessions(edgeSessionsHolder.getSessionsById().values()),
                     s -> edgeSessionsHolder.removeBySessionId(s.getState().getSessionId()));
@@ -107,11 +110,11 @@ public class DefaultZombieSessionCleanupService implements ZombieSessionCleanupS
         return false;
     }
 
-    private void tryToDestroyZombieSessions(List<EdgeGrpcSessionManager> sessionsToRemove, Function<EdgeGrpcSessionManager, EdgeGrpcSessionManager> removeFunc) {
+    private void tryToDestroyZombieSessions(List<EdgeGrpcSessionManager> sessionsToRemove, Consumer<EdgeGrpcSessionManager> removeFunc) {
         for (EdgeGrpcSessionManager toRemove : sessionsToRemove) {
             log.info("[{}] Destroying session for edge because edge is not connected", toRemove.getState().getEdge().getId());
             if (toRemove.destroy()) {
-                removeFunc.apply(toRemove);
+                removeFunc.accept(toRemove);
             }
         }
     }
