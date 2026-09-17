@@ -92,6 +92,7 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
@@ -251,21 +252,33 @@ public class DefaultTransportApiService implements TransportApiService {
             if (credentials != null && DeviceCredentialsType.X509_CERTIFICATE.equals(credentials.getCredentialsType())) {
                 return getDeviceInfo(credentials);
             }
-            DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileByProvisionDeviceKey(certificateHash);
-            if (deviceProfile != null && DeviceProfileProvisionType.X509_CERTIFICATE_CHAIN.equals(deviceProfile.getProvisionType())) {
+            List<DeviceProfile> deviceProfiles = deviceProfileService.findDeviceProfilesByProvisionDeviceKey(certificateHash);
+            List<DeviceProfile> x509DeviceProfiles = new ArrayList<>(deviceProfiles.size());
+            for (DeviceProfile deviceProfile : deviceProfiles) {
+                if (DeviceProfileProvisionType.X509_CERTIFICATE_CHAIN.equals(deviceProfile.getProvisionType())) {
+                    x509DeviceProfiles.add(deviceProfile);
+                } else {
+                    log.warn("[{}][{}] Device Profile provision configuration mismatched: expected {}, actual {}", deviceProfile.getTenantId(), deviceProfile.getId(), DeviceProfileProvisionType.X509_CERTIFICATE_CHAIN, deviceProfile.getProvisionType());
+                }
+            }
+            if (!x509DeviceProfiles.isEmpty()) {
                 String updatedDeviceProvisionSecret = chain.get(0);
                 ProvisionRequest provisionRequest = createProvisionRequest(updatedDeviceProvisionSecret);
                 try {
-                    ProvisionResponse provisionResponse = deviceProvisionService.provisionDeviceViaX509Chain(deviceProfile, provisionRequest);
+                    ProvisionResponse provisionResponse = deviceProvisionService.provisionDeviceViaX509Chain(x509DeviceProfiles, provisionRequest);
                     if (ProvisionResponseStatus.SUCCESS.equals(provisionResponse.getResponseStatus())) {
                         return getDeviceInfo(provisionResponse.getDeviceCredentials());
                     }
                 } catch (ProvisionFailedException e) {
-                    log.debug("[{}][{}] Failed to provision device with cert chain: {}", deviceProfile.getTenantId(), deviceProfile.getId(), provisionRequest, e);
+                    if (x509DeviceProfiles.size() == 1) {
+                        DeviceProfile deviceProfile = x509DeviceProfiles.get(0);
+                        log.debug("[{}][{}] Failed to provision device with cert chain: {}", deviceProfile.getTenantId(), deviceProfile.getId(), provisionRequest, e);
+                    } else {
+                        log.debug("Failed to provision device with cert chain against {} device profiles sharing the certificate: {}",
+                                x509DeviceProfiles.size(), provisionRequest, e);
+                    }
                     return getEmptyTransportApiResponse();
                 }
-            } else if (deviceProfile != null) {
-                log.warn("[{}][{}] Device Profile provision configuration mismatched: expected {}, actual {}", deviceProfile.getTenantId(), deviceProfile.getId(), DeviceProfileProvisionType.X509_CERTIFICATE_CHAIN, deviceProfile.getProvisionType());
             }
         }
         return getEmptyTransportApiResponse();
