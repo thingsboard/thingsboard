@@ -13,6 +13,7 @@ import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
@@ -120,12 +121,12 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
         }
 
         if (!perTenantLimitReached) {
-            try {
+            AsyncTaskContext<T, V> taskCtx = new AsyncTaskContext<>(UUID.randomUUID(), task, settableFuture, System.currentTimeMillis());
+            if (queue.offer(taskCtx)) {
                 stats.getTotalAdded().increment();
-                queue.add(new AsyncTaskContext<>(UUID.randomUUID(), task, settableFuture, System.currentTimeMillis()));
-            } catch (IllegalStateException e) {
+            } else {
                 stats.getTotalRejected().increment();
-                settableFuture.setException(e);
+                settableFuture.setException(new RateLimitExceededException("Queue capacity limit reached for " + bufferName));
             }
         }
         return result;
@@ -165,8 +166,11 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
             int curLvl = concurrencyLevel.get();
             AsyncTaskContext<T, V> taskCtx = null;
             try {
-                if (curLvl <= concurrencyLimit) {
-                    taskCtx = queue.take();
+                if (curLvl < concurrencyLimit) {
+                    taskCtx = queue.poll(pollMs, TimeUnit.MILLISECONDS);
+                    if (taskCtx == null) {
+                        continue;
+                    }
                     final AsyncTaskContext<T, V> finalTaskCtx = taskCtx;
                     if (printQueriesFreq > 0) {
                         if (printQueriesIdx.incrementAndGet() >= printQueriesFreq) {
@@ -182,12 +186,19 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
                         stats.getTotalLaunched().increment();
                         ListenableFuture<V> result = execute(finalTaskCtx);
                         result = Futures.withTimeout(result, timeout, TimeUnit.MILLISECONDS, timeoutExecutor);
+                        final AtomicInteger released = new AtomicInteger(0);
+                        Runnable releasePermit = () -> {
+                            if (released.compareAndSet(0, 1)) {
+                                concurrencyLevel.decrementAndGet();
+                            }
+                        };
+                        result.addListener(releasePermit, MoreExecutors.directExecutor());
                         Futures.addCallback(result, new FutureCallback<V>() {
                             @Override
                             public void onSuccess(@Nullable V result) {
                                 logTask("Releasing", finalTaskCtx);
                                 stats.getTotalReleased().increment();
-                                concurrencyLevel.decrementAndGet();
+                                releasePermit.run();
                                 finalTaskCtx.getFuture().set(result);
                             }
 
@@ -199,7 +210,7 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
                                     logTask("Failed", finalTaskCtx);
                                 }
                                 stats.getTotalFailed().increment();
-                                concurrencyLevel.decrementAndGet();
+                                releasePermit.run();
                                 finalTaskCtx.getFuture().setException(t);
                                 log.debug("[{}] Failed to execute task: {}", finalTaskCtx.getId(), finalTaskCtx.getTask(), t);
                             }
@@ -298,7 +309,20 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
                 statsBuilder.append(counter.getName()).append(" = [").append(counter.get()).append("] ");
             });
             statsBuilder.append("totalRateLimitedTenants").append(" = [").append(rateLimitedTenantsCount).append("] ");
-            statsBuilder.append(CONCURRENCY_LEVEL).append(" = [").append(concurrencyLevel.get()).append("] ");
+            int currentLevel = concurrencyLevel.get();
+            statsBuilder.append(CONCURRENCY_LEVEL).append(" = [").append(currentLevel).append("] ");
+
+            // Self-healing watchdog: if queue is empty, no new tasks launched, released, failed, or expired during the interval,
+            // yet concurrencyLevel remains positive, permits have leaked and should be safely reconciled to 0.
+            int launched = stats.getTotalLaunched().get();
+            int released = stats.getTotalReleased().get();
+            int failed = stats.getTotalFailed().get();
+            int expired = stats.getTotalExpired().get();
+            if (queueSize == 0 && currentLevel > 0 && launched == 0 && released == 0 && failed == 0 && expired == 0) {
+                concurrencyLevel.set(0);
+                log.warn("[{}] Detected leaked permits with empty queue and no in-flight task activity (currBuffer was {}), resetting currBuffer to 0",
+                        bufferName, currentLevel);
+            }
 
             stats.getStatsCounters().forEach(StatsCounter::clear);
             log.info("[{}] Permits {}", bufferName, statsBuilder);
