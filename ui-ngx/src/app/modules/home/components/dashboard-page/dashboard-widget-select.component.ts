@@ -137,6 +137,7 @@ export class DashboardWidgetSelectComponent {
         this.iotHubAppliedWidgetTypes.clear();
         this.iotHubAppliedCategories.clear();
         this.iotHubAppliedUseCases.clear();
+        this.iotHubVerifiedCreatorsOnly = false;
         this.iotHubFilterCount = 0;
       }
     }
@@ -260,6 +261,9 @@ export class DashboardWidgetSelectComponent {
   iotHubAppliedWidgetTypes = new Set<string>();
   iotHubAppliedCategories = new Set<string>();
   iotHubAppliedUseCases = new Set<string>();
+  // Standalone boolean facet, not a set — the panel offers one option. Off means "no filter",
+  // never "unverified only", so it reaches the wire only as `true`.
+  iotHubVerifiedCreatorsOnly = false;
 
   iotHubWidgetTypeOptions: FilterParamInfo[] = [];
   iotHubCategoryOptions: FilterParamInfo[] = [];
@@ -314,7 +318,10 @@ export class DashboardWidgetSelectComponent {
         categories: effectiveCategories,
         useCases: this.iotHubAppliedUseCases.size > 0 ? Array.from(this.iotHubAppliedUseCases) : undefined,
         widgetTypes: this.iotHubAppliedWidgetTypes.size > 0 ? Array.from(this.iotHubAppliedWidgetTypes) : undefined,
-        scadaFirst: this.scadaFirst ? true : undefined
+        scadaFirst: this.scadaFirst ? true : undefined,
+        // `undefined`, not `false`: the server matches this parameter, so `false` would answer
+        // with unverified creators only.
+        creatorVerified: this.iotHubVerifiedCreatorsOnly || undefined
       });
       return this.iotHubApiService.getPublishedVersions(query, { ignoreLoading: true });
     };
@@ -337,7 +344,8 @@ export class DashboardWidgetSelectComponent {
     this.iotHubDefaultFetchFunction = (pageSize, page, filter) => {
       const search = typeof filter === 'string' ? filter.split('|')[0] : filter;
       return this.iotHubApiService.getWidgetCategories(search || undefined,
-        this.scadaFirst ? true : undefined, { ignoreLoading: true }).pipe(
+        this.scadaFirst ? true : undefined,
+        this.iotHubVerifiedCreatorsOnly || undefined, { ignoreLoading: true }).pipe(
         map(categories => ({
           data: categories.slice(page * pageSize, page * pageSize + pageSize),
           totalPages: Math.ceil(categories.length / pageSize),
@@ -554,11 +562,22 @@ export class DashboardWidgetSelectComponent {
     this.onIotHubFiltersChanged();
   }
 
+  toggleIotHubVerifiedCreators(): void {
+    this.iotHubVerifiedCreatorsOnly = !this.iotHubVerifiedCreatorsOnly;
+    // The category landing reads the same flag, and `isFilterVisible()` lets the panel be open
+    // on the landing itself while the flag is set — so refetch the categories rather than leave
+    // the grid behind showing the previous answer.
+    this.loadWidgetCategories();
+    this.onIotHubFiltersChanged();
+  }
+
   clearIotHubFilters(): void {
     this.iotHubAppliedWidgetTypes.clear();
     this.iotHubAppliedCategories.clear();
     this.iotHubAppliedUseCases.clear();
+    this.iotHubVerifiedCreatorsOnly = false;
     this.iotHubFilterSearch = {};
+    this.loadWidgetCategories();
     this.onIotHubFiltersChanged();
   }
 
@@ -566,7 +585,8 @@ export class DashboardWidgetSelectComponent {
     this.iotHubFilterCount =
       this.iotHubAppliedWidgetTypes.size +
       (this.iotHubSelectedCategory ? 0 : this.iotHubAppliedCategories.size) +
-      this.iotHubAppliedUseCases.size;
+      this.iotHubAppliedUseCases.size +
+      (this.iotHubVerifiedCreatorsOnly ? 1 : 0);
     this.reloadIotHubWidgets();
   }
 
@@ -591,7 +611,8 @@ export class DashboardWidgetSelectComponent {
     }
     return this.iotHubAppliedWidgetTypes.size > 0
       || this.iotHubAppliedCategories.size > 0
-      || this.iotHubAppliedUseCases.size > 0;
+      || this.iotHubAppliedUseCases.size > 0
+      || this.iotHubVerifiedCreatorsOnly;
   }
 
   clearAllFilters(): void {
@@ -630,7 +651,12 @@ export class DashboardWidgetSelectComponent {
 
   isFilterVisible(): boolean {
     if (this.selectWidgetMode === 'iotHub') {
-      return this.iotHubSubMode !== 'default';
+      // The category landing has no facets of its own, which is why the button is normally
+      // hidden there. The verified filter is the one exception: it reaches the landing too (a
+      // category whose only widgets it hides stops being offered), so while it is on the button
+      // has to be there — otherwise the list is narrowed with nothing on screen saying so and
+      // no way to switch it off without first entering a sub-mode.
+      return this.iotHubSubMode !== 'default' || this.iotHubVerifiedCreatorsOnly;
     }
     return this.installedSubMode === 'allWidgets' || this.widgetsBundle !== null;
   }
@@ -837,6 +863,12 @@ export class DashboardWidgetSelectComponent {
     }
     if (this.iotHubAppliedUseCases.size > 0) {
       filtered = filtered.filter(v => v.useCases?.some(u => this.iotHubAppliedUseCases.has(u)));
+    }
+    if (this.iotHubVerifiedCreatorsOnly) {
+      // This sub-mode filters a cached list instead of asking the server, so the facet has to be
+      // applied by hand here too — otherwise the panel offers the control, the badge counts it,
+      // and the list stays exactly as it was.
+      filtered = filtered.filter(v => v.creatorVerified);
     }
     filtered = this.sortInstalledVersions(filtered);
     const start = page * pageSize;
