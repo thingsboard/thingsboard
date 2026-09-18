@@ -54,6 +54,14 @@ public class EdgeSessionsHolder {
         return sessions.remove(id);
     }
 
+    /**
+     * Claim-once removal: only drops the entry when it still holds {@code expected}. A session that was
+     * replaced concurrently must not be removed by the callback of the session it replaced.
+     */
+    public boolean removeByEdgeIdIfCurrent(EdgeId id, EdgeGrpcSessionManager expected) {
+        return sessions.remove(id, expected);
+    }
+
     public EdgeGrpcSessionManager removeBySessionId(UUID sessionId) {
         return sessionsById.remove(sessionId);
     }

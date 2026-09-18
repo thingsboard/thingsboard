@@ -34,6 +34,7 @@ import org.thingsboard.server.common.data.notification.rule.trigger.EdgeConnecti
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.edge.EdgeEventUpdateMsg;
 import org.thingsboard.server.common.msg.edge.EdgeHighPriorityMsg;
 import org.thingsboard.server.common.msg.edge.EdgeSessionMsg;
@@ -43,6 +44,7 @@ import org.thingsboard.server.gen.edge.v1.EdgeRpcServiceGrpc;
 import org.thingsboard.server.gen.edge.v1.RequestMsg;
 import org.thingsboard.server.gen.edge.v1.ResponseMsg;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
+import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
 import org.thingsboard.server.service.edge.rpc.EdgeRpcService;
@@ -94,6 +96,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private final TbServiceInfoProvider serviceInfoProvider;
     private final TelemetrySubscriptionService tsSubService;
     private final TbTransactionalCache<EdgeId, String> edgeIdServiceIdCache;
+    private final PartitionService partitionService;
 
     private final ConcurrentMap<EdgeId, PendingDisconnect> pendingDisconnectNotifications = new ConcurrentHashMap<>();
     private final ConcurrentMap<UUID, Consumer<FromEdgeSyncResponse>> localSyncEdgeRequests = new ConcurrentHashMap<>();
@@ -208,10 +211,13 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             }
         }
         sessions.put(edgeSession);
+        // Claim ownership before writing the active state, not after: onEdgeDisconnect on the node this edge
+        // just left reads the cache to decide whether to clear the flag, so publishing the claim first keeps
+        // it from seeing a stale owner and clearing a state we have already set.
+        edgeIdServiceIdCache.put(edgeId, serviceInfoProvider.getServiceId());
         save(tenantId, edgeId, ACTIVITY_STATE, true);
         long lastConnectTs = System.currentTimeMillis();
         save(tenantId, edgeId, LAST_CONNECT_TIME, lastConnectTs);
-        edgeIdServiceIdCache.put(edgeId, serviceInfoProvider.getServiceId());
         // If the edge reconnected within the disconnect-notification delay window, suppress the pending
         // "disconnected" notification - the drop was transient (debounce for flapping edges).
         cancelPendingDisconnectNotification(edgeId);
@@ -226,17 +232,33 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         EdgeId edgeId = edge.getId();
         log.info("[{}][{}] edge disconnected!", edgeId, sessionId);
         EdgeGrpcSessionManager current = sessions.getByEdgeId(edgeId);
-        if (current != null && current.getState().getSessionId().equals(sessionId)) {
-            EdgeGrpcSessionManager toRemove = sessions.removeByEdgeId(edgeId);
-            if (toRemove != null) {
-                toRemove.onEdgeDisconnect();
-                toRemove.destroyAndMarkAsZombieIfFailed();
-            }
+        // Claim-once removal: the lookup and the removal are not atomic, so a session that was replaced
+        // between the two would otherwise be dropped from the holder, torn down and marked inactive by this
+        // stale callback even though it is the live one. Losing the race means this callback owns nothing -
+        // fall through to the stale-session branch below.
+        if (current != null && current.getState().getSessionId().equals(sessionId)
+                && sessions.removeByEdgeIdIfCurrent(edgeId, current)) {
+            current.onEdgeDisconnect();
+            current.destroyAndMarkAsZombieIfFailed();
             sessions.removeBySessionId(sessionId);
-            save(tenantId, edgeId, ACTIVITY_STATE, false);
-            long lastDisconnectTs = System.currentTimeMillis();
-            save(tenantId, edgeId, LAST_DISCONNECT_TIME, lastDisconnectTs);
-            pushRuleEngineMessage(tenantId, edge, lastDisconnectTs, TbMsgType.DISCONNECT_EVENT);
+            // The edge may already have been claimed by a newer session - on this node (a replacement that
+            // landed while this stale callback was tearing its own session down) or on another live node.
+            // Either way the edge is connected, so none of the disconnect side effects apply:
+            //   - clearing the flag makes saveEdgeEvent drop assignment events until a full sync;
+            //   - a newer lastDisconnectTime would contradict the live session's lastConnectTime;
+            //   - the DISCONNECT_EVENT payload is {"active": false, ...} with SERVER_SCOPE in the metadata,
+            //     so a rule chain wiring Disconnect Event -> Save Attributes writes active=false straight
+            //     back, re-creating the dropped-event behaviour through the rule engine.
+            // Ownership being unknown (no cache entry) still counts as disconnected, so a genuinely offline
+            // edge is always marked inactive.
+            if (!sessions.hasByEdgeId(edgeId) && !isOwnedByAnotherNode(edgeId)) {
+                save(tenantId, edgeId, ACTIVITY_STATE, false);
+                long lastDisconnectTs = System.currentTimeMillis();
+                save(tenantId, edgeId, LAST_DISCONNECT_TIME, lastDisconnectTs);
+                pushRuleEngineMessage(tenantId, edge, lastDisconnectTs, TbMsgType.DISCONNECT_EVENT);
+            }
+            // Left outside the guard on purpose: fireDelayedDisconnectNotification re-verifies liveness
+            // against the local sessions and the cluster-wide cache before it fires.
             scheduleDisconnectNotification(edge);
         } else {
             log.info("[{}] edge session [{}] is not current anymore. Attempting to destroy it by sessionId.", edgeId, sessionId);
@@ -427,6 +449,30 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private boolean isOwnedByThisNode(EdgeId edgeId) {
         TbCacheValueWrapper<String> wrapper = edgeIdServiceIdCache.get(edgeId);
         return wrapper != null && serviceInfoProvider.getServiceId().equals(wrapper.get());
+    }
+
+    // The edge's service-id cache entry points at a different node that is still a live TB-Core service.
+    // Two cases deliberately do NOT count as "owned by another node", so that the caller falls through and
+    // persists the inactive state:
+    //   - no cache entry: ownership is unknown, not claimed by someone else;
+    //   - entry naming a node that is no longer in the cluster: the edge sessions cache has no TTL by default
+    //     (CACHE_SPECS_EDGE_SESSIONS_TTL=0) and is only ever evicted by the owning node, so a node that died
+    //     without evicting would otherwise keep the edge marked active forever, with no reconciler to correct it.
+    //     Note this covers a node that is gone, not one that restarted under the same service id - that claim
+    //     still resolves as live, leaving the edge marked active until something reconnects. That errs towards
+    //     queueing edge events rather than dropping them, which is the safe direction.
+    // This narrows the race rather than closing it: the attribute is plain last-writer-wins, and two nodes can
+    // still issue their async writes in an order this read cannot see.
+    private boolean isOwnedByAnotherNode(EdgeId edgeId) {
+        TbCacheValueWrapper<String> wrapper = edgeIdServiceIdCache.get(edgeId);
+        if (wrapper == null) {
+            return false;
+        }
+        String ownerServiceId = wrapper.get();
+        if (ownerServiceId == null || serviceInfoProvider.getServiceId().equals(ownerServiceId)) {
+            return false;
+        }
+        return partitionService.getAllServiceIds(ServiceType.TB_CORE).contains(ownerServiceId);
     }
 
     // The edge has a live owner somewhere in the cluster (the cache is cluster-wide), regardless of which node.
