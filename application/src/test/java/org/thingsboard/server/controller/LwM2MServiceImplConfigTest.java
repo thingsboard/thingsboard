@@ -21,7 +21,7 @@ import static org.thingsboard.server.common.data.device.credentials.lwm2m.Lwm2mS
 import static org.thingsboard.server.common.data.device.credentials.lwm2m.Lwm2mServerIdentifier.PRIMARY_LWM2M_SERVER;
 
 @ExtendWith(MockitoExtension.class)
-public class LwM2MServiceImplInvalidConfigTest {
+public class LwM2MServiceImplConfigTest {
 
     @Mock
     private LwM2MTransportServerConfig serverConfig;
