@@ -53,8 +53,8 @@ export class MailTemplatesComponent extends PageComponent implements OnInit, Has
 
   ngOnInit() {
     this.hugeRteOptions = defaultHugeRteOptions({
-      height: 470,
-      content_style: 'body { margin: 0; padding: 10px; }'
+      height: 450,
+      content_style: 'body { margin: 0; padding: 0 6px; }'
     });
 
     if (this.readonly) {
