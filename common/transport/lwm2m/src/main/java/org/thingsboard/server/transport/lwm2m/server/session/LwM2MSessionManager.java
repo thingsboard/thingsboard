@@ -10,5 +10,6 @@ public interface LwM2MSessionManager {
 
     void deregister(TransportProtos.SessionInfoProto sessionInfo);
 
+    void deregister(TransportProtos.SessionInfoProto sessionInfo, boolean notifyCore);
 
 }
