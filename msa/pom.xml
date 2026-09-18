@@ -55,10 +55,7 @@
     </modules>
 
     <profiles>
-        <!-- Mirror of the root-pom skip-deb profile. Required because Maven resolves
-             child <properties> entries (pkg.deb.phase=package above) with higher priority
-             than profile properties from a parent POM. Redeclaring the profile here ensures
-             pkg.deb.phase=none wins when -Dpkg.skip.deb=true is passed. -->
+        <!-- Activated by -Dpkg.skip.deb=true. Skips the .deb enforce/copy executions. -->
         <profile>
             <id>skip-deb</id>
             <activation>
@@ -71,14 +68,39 @@
                 <pkg.deb.phase>none</pkg.deb.phase>
             </properties>
         </profile>
-        <!-- Mirror of the root-pom skip-pkg profile. Same precedence reason as skip-deb above:
-             pkg.deb.phase=package in this POM's <properties> would win over the parent profile,
-             so we must redeclare it here to ensure pkg.deb.phase=none when -Dpkg.skip=true. -->
+        <!-- Activated by -Dpkg.skip=true. Needed alongside skip-deb because profile activation
+             only sees CLI/system properties, so pkg.skip.deb=true set by the root skip-pkg
+             profile does not activate skip-deb. -->
         <profile>
             <id>skip-pkg</id>
             <activation>
                 <property>
                     <name>pkg.skip</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <properties>
+                <pkg.deb.phase>none</pkg.deb.phase>
+            </properties>
+        </profile>
+        <!-- Mirror the root skip-pkg-without-* profiles: no .deb is built when the UI build is skipped. -->
+        <profile>
+            <id>skip-pkg-without-yarn</id>
+            <activation>
+                <property>
+                    <name>skip.yarn</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <properties>
+                <pkg.deb.phase>none</pkg.deb.phase>
+            </properties>
+        </profile>
+        <profile>
+            <id>skip-pkg-without-ui-build</id>
+            <activation>
+                <property>
+                    <name>skip.ui.build</name>
                     <value>true</value>
                 </property>
             </activation>
