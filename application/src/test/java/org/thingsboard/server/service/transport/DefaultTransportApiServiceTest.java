@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -49,9 +50,12 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.BDDMockito.willReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -147,7 +151,7 @@ public class DefaultTransportApiServiceTest {
     @Test
     public void provisionDeviceX509Certificate() {
         var deviceProfile = createDeviceProfile(chain[1]);
-        when(deviceProfileService.findDeviceProfileByProvisionDeviceKey(any())).thenReturn(deviceProfile);
+        when(deviceProfileService.findDeviceProfilesByProvisionDeviceKey(any())).thenReturn(List.of(deviceProfile));
 
         var device = createDevice();
         when(deviceService.findDeviceByTenantIdAndName(any(), any())).thenReturn(device);
@@ -157,22 +161,85 @@ public class DefaultTransportApiServiceTest {
         when(deviceCredentialsService.updateDeviceCredentials(any(), any())).thenReturn(deviceCredentials);
 
         var provisionResponse = createProvisionResponse(deviceCredentials);
-        when(deviceProvisionService.provisionDeviceViaX509Chain(any(), any())).thenReturn(provisionResponse);
+        when(deviceProvisionService.provisionDeviceViaX509Chain(anyList(), any())).thenReturn(provisionResponse);
 
         TransportProtos.TransportApiResponseMsg response = mock(TransportProtos.TransportApiResponseMsg.class);
         willReturn(response).given(service).getDeviceInfo(deviceCredentials);
 
         service.validateOrCreateDeviceX509Certificate(certificateChain);
-        verify(deviceProfileService, times(1)).findDeviceProfileByProvisionDeviceKey(any());
+        verify(deviceProfileService, times(1)).findDeviceProfilesByProvisionDeviceKey(any());
         verify(service, times(1)).getDeviceInfo(any());
         verify(deviceCredentialsService, times(1)).findDeviceCredentialsByCredentialsId(any());
-        verify(deviceProvisionService, times(1)).provisionDeviceViaX509Chain(any(), any());
+        verify(deviceProvisionService, times(1)).provisionDeviceViaX509Chain(anyList(), any());
+    }
+
+    @Test
+    public void provisionDeviceX509CertificateSharedBySeveralDeviceProfiles() {
+        var firstProfile = createDeviceProfile(chain[1], "(devP1-.*)");
+        var secondProfile = createDeviceProfile(chain[1], "(devP2-.*)");
+        when(deviceProfileService.findDeviceProfilesByProvisionDeviceKey(any()))
+                .thenReturn(List.of(firstProfile, secondProfile));
+
+        var device = createDevice();
+        var deviceCredentials = createDeviceCredentials(chain[0], device.getId());
+        when(deviceCredentialsService.findDeviceCredentialsByCredentialsId(any())).thenReturn(null);
+
+        var provisionResponse = createProvisionResponse(deviceCredentials);
+        when(deviceProvisionService.provisionDeviceViaX509Chain(anyList(), any())).thenReturn(provisionResponse);
+
+        TransportProtos.TransportApiResponseMsg response = mock(TransportProtos.TransportApiResponseMsg.class);
+        willReturn(response).given(service).getDeviceInfo(deviceCredentials);
+
+        service.validateOrCreateDeviceX509Certificate(certificateChain);
+
+        ArgumentCaptor<List<DeviceProfile>> captor = ArgumentCaptor.forClass(List.class);
+        verify(deviceProvisionService, times(1)).provisionDeviceViaX509Chain(captor.capture(), any());
+        assertThat(captor.getValue()).containsExactly(firstProfile, secondProfile);
+    }
+
+    @Test
+    public void skipNonX509ProfilesWhenCertificateIsSharedBySeveralDeviceProfiles() {
+        var x509Profile = createDeviceProfile(chain[1], "(devP1-.*)");
+        var disabledProfile = createDeviceProfile(chain[1], "(devP2-.*)");
+        disabledProfile.setProvisionType(DeviceProfileProvisionType.DISABLED);
+        when(deviceProfileService.findDeviceProfilesByProvisionDeviceKey(any()))
+                .thenReturn(List.of(disabledProfile, x509Profile));
+
+        var device = createDevice();
+        var deviceCredentials = createDeviceCredentials(chain[0], device.getId());
+        when(deviceCredentialsService.findDeviceCredentialsByCredentialsId(any())).thenReturn(null);
+
+        var provisionResponse = createProvisionResponse(deviceCredentials);
+        when(deviceProvisionService.provisionDeviceViaX509Chain(anyList(), any())).thenReturn(provisionResponse);
+
+        TransportProtos.TransportApiResponseMsg response = mock(TransportProtos.TransportApiResponseMsg.class);
+        willReturn(response).given(service).getDeviceInfo(deviceCredentials);
+
+        service.validateOrCreateDeviceX509Certificate(certificateChain);
+
+        ArgumentCaptor<List<DeviceProfile>> captor = ArgumentCaptor.forClass(List.class);
+        verify(deviceProvisionService, times(1)).provisionDeviceViaX509Chain(captor.capture(), any());
+        assertThat(captor.getValue()).containsExactly(x509Profile);
+    }
+
+    @Test
+    public void doNotProvisionWhenNoDeviceProfileOwnsTheCertificate() {
+        when(deviceCredentialsService.findDeviceCredentialsByCredentialsId(any())).thenReturn(null);
+        when(deviceProfileService.findDeviceProfilesByProvisionDeviceKey(any())).thenReturn(List.of());
+
+        service.validateOrCreateDeviceX509Certificate(certificateChain);
+
+        verify(deviceProvisionService, never()).provisionDeviceViaX509Chain(anyList(), any());
     }
 
     private DeviceProfile createDeviceProfile(String certificateValue) {
+        return createDeviceProfile(certificateValue, "([^@]+)");
+    }
+
+    private DeviceProfile createDeviceProfile(String certificateValue, String certificateRegExPattern) {
         X509CertificateChainProvisionConfiguration provision = new X509CertificateChainProvisionConfiguration();
         provision.setProvisionDeviceSecret(certificateValue);
-        provision.setCertificateRegExPattern("([^@]+)");
+        provision.setCertificateRegExPattern(certificateRegExPattern);
         provision.setAllowCreateNewDevicesByX509Certificate(true);
 
         DeviceProfileData deviceProfileData = new DeviceProfileData();

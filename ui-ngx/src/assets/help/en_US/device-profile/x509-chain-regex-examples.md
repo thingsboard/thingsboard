@@ -19,3 +19,16 @@ You may also use this [resource](https://regex101.com/) to test your expressions
 * **Pattern:** <code>\\D+\\.(.*)\\.\\d+@company.com</code>- matches characters between not digits prefix followed by period and sequence of digits with "@company.com" ending.
   <br>**CN sample:**<code>region.DeviceA.220423@company.com</code>
   <br>**Pattern matches:** <code>DeviceA</code>
+
+##### Routing products to different device profiles
+
+When several device profiles of the same tenant share one issuing CA certificate, the expression also selects
+which device profile the device belongs to. Capture the whole common name so that the device names stay distinct.
+
+* **Device profile "Sensor" pattern:** <code>^(sensor-.*)$</code>
+  <br>**CN sample:** <code>sensor-SN00042</code>
+  <br>**Result:** <code>sensor-SN00042</code>
+
+* **Device profile "Gateway" pattern:** <code>^(gateway-.*)$</code>
+  <br>**CN sample:** <code>gateway-SN00042</code>
+  <br>**Result:** <code>gateway-SN00042</code>
