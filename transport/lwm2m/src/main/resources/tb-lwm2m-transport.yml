@@ -174,7 +174,7 @@ transport:
       # <li> A value that are > 4: MultiNodeConnectionIdGenerator is used </li> </ul>
       connection_id_length: "${LWM2M_DTLS_CONNECTION_ID_LENGTH:8}"
     server:
-      # LwM2M Server ID
+      # LwM2M Server Short Server ID [1 - 65534]: 0 and 65535 are reserved. An invalid or missing value is ignored and 1 is used instead.
       id: "${LWM2M_SERVER_ID:123}"
       # LwM2M server bind address. Bind to all interfaces by default
       bind_address: "${LWM2M_BIND_ADDRESS:0.0.0.0}"

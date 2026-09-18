@@ -15,7 +15,6 @@ import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 import static org.thingsboard.server.common.data.device.credentials.lwm2m.Lwm2mServerIdentifier.NOT_USED_IDENTIFYING_LWM2M_SERVER_MAX;
 import static org.thingsboard.server.common.data.device.credentials.lwm2m.Lwm2mServerIdentifier.PRIMARY_LWM2M_SERVER;
@@ -64,32 +63,37 @@ public class LwM2MServiceImplInvalidConfigTest {
     }
 
     @Test
-    void testGetServerSecurityInfo_DmServer_Less_PRIMARY_LWM2M_SERVER_ThrowsIllegalArgumentException() {
+    void testGetServerSecurityInfo_Server_Less_PRIMARY_LWM2M_SERVER_DefaultsToOneAndLogsWarn() {
         Integer shortServerId = PRIMARY_LWM2M_SERVER.getId() - 1;
         given(serverConfig.getId()).willReturn(shortServerId);
 
-        assertThatThrownBy(() -> lwM2MService.getServerSecurityInfo(false))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Invalid LwM2M Server ShortServerId [" + shortServerId + "] in configuration (transport.lwm2m.server.id). Must be in range [1 - 65534]!");
+        LwM2MServerSecurityConfigDefault result = lwM2MService.getServerSecurityInfo(false);
+
+        assertThat(result).isNotNull();
+        assertThat(result.isBootstrapServerIs()).isFalse();
+        assertThat(result.getShortServerId()).isEqualTo(PRIMARY_LWM2M_SERVER.getId());
     }
 
     @Test
-    void testGetServerSecurityInfo_DmServer_NOT_USED_IDENTIFYING_LWM2M_SERVER_MAX_ThrowsIllegalArgumentException() {
+    void testGetServerSecurityInfo_Server_NOT_USED_IDENTIFYING_LWM2M_SERVER_MAX_DefaultsToOneAndLogsWarn() {
         Integer shortServerId = NOT_USED_IDENTIFYING_LWM2M_SERVER_MAX.getId();
         given(serverConfig.getId()).willReturn(shortServerId);
 
-        assertThatThrownBy(() -> lwM2MService.getServerSecurityInfo(false))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Invalid LwM2M Server ShortServerId [" + shortServerId + "] in configuration (transport.lwm2m.server.id). Must be in range [1 - 65534]!");
+        LwM2MServerSecurityConfigDefault result = lwM2MService.getServerSecurityInfo(false);
+
+        assertThat(result).isNotNull();
+        assertThat(result.isBootstrapServerIs()).isFalse();
+        assertThat(result.getShortServerId()).isEqualTo(PRIMARY_LWM2M_SERVER.getId());
     }
 
     @Test
-    void testGetServerSecurityInfo_DmServerWithNullId_ThrowsIllegalArgumentException() {
+    void testGetServerSecurityInfo_ServerWithNullId_DefaultsToOneAndLogsWarn() {
         Integer shortServerId = null;
         given(serverConfig.getId()).willReturn(shortServerId);
 
-        assertThatThrownBy(() -> lwM2MService.getServerSecurityInfo(false))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Invalid LwM2M Server ShortServerId [" + shortServerId + "] in configuration (transport.lwm2m.server.id). Must be in range [1 - 65534]!");
-    }
+        LwM2MServerSecurityConfigDefault result = lwM2MService.getServerSecurityInfo(false);
+
+        assertThat(result).isNotNull();
+        assertThat(result.isBootstrapServerIs()).isFalse();
+        assertThat(result.getShortServerId()).isEqualTo(PRIMARY_LWM2M_SERVER.getId());    }
 }

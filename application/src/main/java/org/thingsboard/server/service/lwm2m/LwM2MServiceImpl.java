@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.Lwm2mServerIdentifier;
 import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.LwM2MServerSecurityConfigDefault;
 import org.thingsboard.server.common.transport.config.ssl.SslCredentials;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -50,11 +51,11 @@ public class LwM2MServiceImpl implements LwM2MService {
             bsServ.setShortServerId(null);
         } else {
             Integer configId = bsServerConfig.getId();
-            if (configId == null || configId <= 0 || configId >= 65535) {
-                throw new IllegalArgumentException(String.format(
-                        "Invalid LwM2M Server ShortServerId [%s] in configuration (transport.lwm2m.server.id). Must be in range [%d - %d]!",
-                        configId, PRIMARY_LWM2M_SERVER.getId(), LWM2M_SERVER_MAX.getId()
-                ));
+            if (Lwm2mServerIdentifier.isNotLwm2mServer(configId)) {
+                log.warn("Invalid LwM2M Server ShortServerId [{}] in configuration (transport.lwm2m.server.id). " +
+                                "Must be in range [{} - {}]. Using [{}] instead.",
+                        configId, PRIMARY_LWM2M_SERVER.getId(), LWM2M_SERVER_MAX.getId(), PRIMARY_LWM2M_SERVER.getId());
+                configId = PRIMARY_LWM2M_SERVER.getId();
             }
             bsServ.setShortServerId(configId);
         }
