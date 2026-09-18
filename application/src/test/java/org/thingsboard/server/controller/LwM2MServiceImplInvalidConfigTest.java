@@ -16,6 +16,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
+import static org.thingsboard.server.common.data.device.credentials.lwm2m.Lwm2mServerIdentifier.LWM2M_SERVER_MAX;
 import static org.thingsboard.server.common.data.device.credentials.lwm2m.Lwm2mServerIdentifier.NOT_USED_IDENTIFYING_LWM2M_SERVER_MAX;
 import static org.thingsboard.server.common.data.device.credentials.lwm2m.Lwm2mServerIdentifier.PRIMARY_LWM2M_SERVER;
 
@@ -38,11 +39,7 @@ public class LwM2MServiceImplInvalidConfigTest {
     @Test
     void testGetServerSecurityInfo_BsServerWithNonEmptyId_ClearsToNullAndLogsWarn() {
         given(bootstrapConfig.getId()).willReturn(111);
-        given(bootstrapConfig.getHost()).willReturn("0.0.0.0");
-        given(bootstrapConfig.getPort()).willReturn(5687);
-
         LwM2MServerSecurityConfigDefault result = lwM2MService.getServerSecurityInfo(true);
-
         assertThat(result).isNotNull();
         assertThat(result.isBootstrapServerIs()).isTrue();
         assertThat(result.getShortServerId()).isNull();
@@ -52,11 +49,27 @@ public class LwM2MServiceImplInvalidConfigTest {
     void testGetServerSecurityInfo_DmServerWithValidId_Success() {
         Integer validShortServerId = 123;
         given(serverConfig.getId()).willReturn(validShortServerId);
-        given(serverConfig.getHost()).willReturn("0.0.0.0");
-        given(serverConfig.getPort()).willReturn(5685);
-
         LwM2MServerSecurityConfigDefault result = lwM2MService.getServerSecurityInfo(false);
+        assertThat(result).isNotNull();
+        assertThat(result.isBootstrapServerIs()).isFalse();
+        assertThat(result.getShortServerId()).isEqualTo(validShortServerId);
+    }
 
+    @Test
+    void testGetServerSecurityInfo_DmServerWithMinValidId_ReturnedUnchanged() {
+        Integer validShortServerId = PRIMARY_LWM2M_SERVER.getId();
+        given(serverConfig.getId()).willReturn(validShortServerId);
+        LwM2MServerSecurityConfigDefault result = lwM2MService.getServerSecurityInfo(false);
+        assertThat(result).isNotNull();
+        assertThat(result.isBootstrapServerIs()).isFalse();
+        assertThat(result.getShortServerId()).isEqualTo(validShortServerId);
+    }
+
+    @Test
+    void testGetServerSecurityInfo_DmServerWithMaxValidId_ReturnedUnchanged() {
+        Integer validShortServerId = LWM2M_SERVER_MAX.getId();
+        given(serverConfig.getId()).willReturn(validShortServerId);
+        LwM2MServerSecurityConfigDefault result = lwM2MService.getServerSecurityInfo(false);
         assertThat(result).isNotNull();
         assertThat(result.isBootstrapServerIs()).isFalse();
         assertThat(result.getShortServerId()).isEqualTo(validShortServerId);
@@ -64,11 +77,9 @@ public class LwM2MServiceImplInvalidConfigTest {
 
     @Test
     void testGetServerSecurityInfo_Server_Less_PRIMARY_LWM2M_SERVER_DefaultsToOneAndLogsWarn() {
-        Integer shortServerId = PRIMARY_LWM2M_SERVER.getId() - 1;
-        given(serverConfig.getId()).willReturn(shortServerId);
-
+        Integer inValidShortServerId = PRIMARY_LWM2M_SERVER.getId() - 1;
+        given(serverConfig.getId()).willReturn(inValidShortServerId);
         LwM2MServerSecurityConfigDefault result = lwM2MService.getServerSecurityInfo(false);
-
         assertThat(result).isNotNull();
         assertThat(result.isBootstrapServerIs()).isFalse();
         assertThat(result.getShortServerId()).isEqualTo(PRIMARY_LWM2M_SERVER.getId());
@@ -76,11 +87,9 @@ public class LwM2MServiceImplInvalidConfigTest {
 
     @Test
     void testGetServerSecurityInfo_Server_NOT_USED_IDENTIFYING_LWM2M_SERVER_MAX_DefaultsToOneAndLogsWarn() {
-        Integer shortServerId = NOT_USED_IDENTIFYING_LWM2M_SERVER_MAX.getId();
-        given(serverConfig.getId()).willReturn(shortServerId);
-
+        Integer inValidShortServerId = NOT_USED_IDENTIFYING_LWM2M_SERVER_MAX.getId();
+        given(serverConfig.getId()).willReturn(inValidShortServerId);
         LwM2MServerSecurityConfigDefault result = lwM2MService.getServerSecurityInfo(false);
-
         assertThat(result).isNotNull();
         assertThat(result.isBootstrapServerIs()).isFalse();
         assertThat(result.getShortServerId()).isEqualTo(PRIMARY_LWM2M_SERVER.getId());
@@ -88,12 +97,11 @@ public class LwM2MServiceImplInvalidConfigTest {
 
     @Test
     void testGetServerSecurityInfo_ServerWithNullId_DefaultsToOneAndLogsWarn() {
-        Integer shortServerId = null;
-        given(serverConfig.getId()).willReturn(shortServerId);
-
+        Integer inValidShortServerId = null;
+        given(serverConfig.getId()).willReturn(inValidShortServerId);
         LwM2MServerSecurityConfigDefault result = lwM2MService.getServerSecurityInfo(false);
-
         assertThat(result).isNotNull();
         assertThat(result.isBootstrapServerIs()).isFalse();
-        assertThat(result.getShortServerId()).isEqualTo(PRIMARY_LWM2M_SERVER.getId());    }
+        assertThat(result.getShortServerId()).isEqualTo(PRIMARY_LWM2M_SERVER.getId());
+    }
 }
