@@ -49,6 +49,11 @@ export class TbIotHubItemDetailDialogComponent extends DialogComponent<TbIotHubI
   installedItem?: IotHubInstalledItem;
   installedItemsCount = 0;
   carouselImages: string[] = [];
+  // The carousel keeps its own timer, and the lightbox covering it counts as the pointer leaving,
+  // so without this it advances behind the open image: closing would land on a different slide,
+  // and PhotoSwipe — which re-reads the thumbnail's position at close time — would animate the
+  // zoom-out towards a slide that has since scrolled out of the preview box.
+  lightboxOpen = false;
   carouselIndex = 0;
   // Built-in marker rides on the version line rather than as a standalone badge.
   versionLabel: string;
@@ -278,17 +283,58 @@ export class TbIotHubItemDetailDialogComponent extends DialogComponent<TbIotHubI
     this.dialogRef.close();
   }
 
+  /**
+   * Gallery order follows thingsboard.io: the item's own image leads, the creator's screenshots
+   * follow. A single entry is not a carousel — the template renders it as the plain preview image,
+   * which is what an item without screenshots looked like before.
+   */
   private buildCarouselImages(): void {
-    if (this.item.type !== ItemType.SOLUTION_TEMPLATE || !this.item.resources?.length) {
+    // Derived from the layout rather than listed separately: every type that is not compact shows
+    // an image, so an item type this build does not know about still gets one instead of dropping
+    // through to the placeholder icon.
+    if (this.isCompactLayout()) {
       return;
     }
-    const screenshotResources = this.item.resources.filter(r => r.type === 'SCREENSHOT');
-    const allResources = screenshotResources.length > 0
-      ? screenshotResources
-      : this.item.resources.filter(r => r.type === 'ICON');
-    this.carouselImages = allResources.map(r =>
-      this.iotHubApiService.resolveResourceUrl(`/api/resources/${r.id}`)
-    );
+    const urls: string[] = [];
+    const previewUrl = this.getPreviewUrl();
+    if (previewUrl) {
+      urls.push(previewUrl);
+    }
+    // The preview may point at one of the screenshots, and must not then show up twice. Compared
+    // by resource id, not by URL: item.image is a stored path that can carry a query string or a
+    // /preview suffix (see the catalogue card), so the same resource resolves to a different URL.
+    const previewResourceId = this.item.image?.match(/\/api\/resources\/([^/?#]+)/)?.[1];
+    for (const resource of this.item.resources || []) {
+      if (resource.type === 'SCREENSHOT' && resource.id !== previewResourceId) {
+        urls.push(this.resourceUrl(resource.id));
+      }
+    }
+    if (!urls.length) {
+      // Last resort, and deliberately the same order resolveIotHubItemImageUrl uses everywhere
+      // else (iot-hub-utils.ts): image, then screenshot, then icon. An icon stands in for an item
+      // with nothing to show; it is not gallery material. This does change one case — the previous
+      // version ignored item.image, so it fell back to the icons whenever there were no
+      // screenshots, and an item with an image and two or more icons showed them as a carousel.
+      // Now the image leads the list, so that item never reaches here and renders its image
+      // instead. That is the intent: the carousel is for screenshots, not for chrome.
+      for (const resource of this.item.resources || []) {
+        if (resource.type === 'ICON') {
+          urls.push(this.resourceUrl(resource.id));
+        }
+      }
+    }
+    this.carouselImages = urls;
+  }
+
+  onLightboxClosed(index: number): void {
+    this.lightboxOpen = false;
+    if (index >= 0 && index < this.carouselImages.length) {
+      this.carouselIndex = index;
+    }
+  }
+
+  private resourceUrl(id: string): string {
+    return this.iotHubApiService.resolveResourceUrl(`/api/resources/${encodeURIComponent(id)}`);
   }
 
   private loadReadme(): void {
