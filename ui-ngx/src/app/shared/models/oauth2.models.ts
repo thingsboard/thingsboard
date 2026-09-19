@@ -101,7 +101,8 @@ export enum MapperType {
   BASIC = 'BASIC',
   CUSTOM = 'CUSTOM',
   GITHUB = 'GITHUB',
-  APPLE = 'APPLE'
+  APPLE = 'APPLE',
+  DINGTALK = 'DINGTALK'
 }
 
 export interface OAuth2BasicMapperConfig {
@@ -160,7 +161,8 @@ export enum Provider {
   FACEBOOK = 'Facebook',
   GOOGLE = 'Google',
   GITHUB = 'Github',
-  APPLE = 'Apple'
+  APPLE = 'Apple',
+  DINGTALK = 'DingTalk'
 }
 
 const providerHelpLinkMap = new Map<Provider, string>(
@@ -170,5 +172,6 @@ const providerHelpLinkMap = new Map<Provider, string>(
     [Provider.FACEBOOK, 'oauth2Facebook'],
     [Provider.GITHUB, 'oauth2Github'],
     [Provider.GOOGLE, 'oauth2Google'],
+    [Provider.DINGTALK, 'oauth2DingTalk'],
   ]
 )
