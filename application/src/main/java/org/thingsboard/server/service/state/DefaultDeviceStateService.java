@@ -63,6 +63,7 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.stats.TbApiUsageReportClient;
+import org.thingsboard.server.dao.attributes.AttributesDao;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.sql.query.EntityQueryRepository;
@@ -145,6 +146,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
 
     private final DeviceService deviceService;
     private final AttributesService attributesService;
+    private final AttributesDao attributesDao;
     private final TimeseriesService tsService;
     private final TbClusterService clusterService;
     private final PartitionService partitionService;
@@ -546,7 +548,9 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                     && (state.getLastInactivityAlarmTime() == 0L || state.getLastInactivityAlarmTime() <= state.getLastActivityTime())
                     && stateData.getDeviceCreationTime() + state.getInactivityTimeout() <= ts) {
                 if (partitionService.resolve(ServiceType.TB_CORE, stateData.getTenantId(), deviceId).isMyPartition()) {
-                    reportInactivity(ts, stateData);
+                    // Local state may be stale (see reconcileThenReportInactivity), so confirm against storage
+                    // before persisting active=false.
+                    reconcileThenReportInactivity(ts, deviceId, stateData);
                 } else {
                     cleanupEntity(deviceId);
                 }
@@ -555,6 +559,60 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
             log.debug("[{}] Device that belongs to other server is detected and removed.", deviceId);
             cleanupEntity(deviceId);
         }
+    }
+
+    /**
+     * A node can hold a device whose activity is actually handled by another node - after a rebalance, or while this
+     * node's view of the cluster is still catching up. Its in-memory {@code lastActivityTime} is then frozen while
+     * the real owner keeps the device alive, and reporting inactivity from here would flip the shared
+     * {@code active} flag to false for a device that is not inactive at all.
+     *
+     * <p>So before persisting {@code active=false}, confirm against storage: re-read {@code lastActivityTime},
+     * reconcile local state if storage is ahead, and re-evaluate. Only a device that still looks inactive against
+     * the reconciled state is reported. If storage says the device is alive while local state says inactive, drive
+     * the state back to active rather than leaving it wrong until the next activity event happens to land here.
+     *
+     * <p>Runs on {@code deviceStateCallbackExecutor}: the read must not block the single-threaded scheduler, which
+     * also serves partition-change processing.
+     */
+    private void reconcileThenReportInactivity(long ts, DeviceId deviceId, DeviceStateData stateData) {
+        Futures.addCallback(findPersistedLastActivityTime(deviceId), new FutureCallback<>() {
+            @Override
+            public void onSuccess(Long persistedLastActivityTime) {
+                DeviceState state = stateData.getState();
+                if (persistedLastActivityTime > state.getLastActivityTime()) {
+                    state.setLastActivityTime(persistedLastActivityTime);
+                }
+                // Re-check against current local state, not only the reconciled value: a real activity event may
+                // have arrived on another executor while the read was in flight.
+                if (isActive(ts, state)) {
+                    if (!state.isActive()) {
+                        onDeviceActivityStatusChange(true, stateData);
+                    }
+                    return;
+                }
+                reportInactivity(ts, stateData);
+            }
+
+            @Override
+            public void onFailure(@NonNull Throwable t) {
+                // Fail safe: fall back to the pre-existing behaviour of reporting inactivity from local state.
+                log.warn("[{}] Failed to re-read persisted lastActivityTime; proceeding with local state.", deviceId, t);
+                reportInactivity(ts, stateData);
+            }
+        }, deviceStateCallbackExecutor);
+    }
+
+    private ListenableFuture<Long> findPersistedLastActivityTime(DeviceId deviceId) {
+        if (persistToTelemetry) {
+            return Futures.transform(tsService.findLatest(TenantId.SYS_TENANT_ID, deviceId, LAST_ACTIVITY_TIME),
+                    entry -> entry.flatMap(KvEntry::getLongValue).orElse(0L), MoreExecutors.directExecutor());
+        }
+        // Deliberately goes to the DAO rather than AttributesService: with the default node-local caffeine cache,
+        // CachedAttributesService.find would serve this node's own last write back to it - which is exactly the
+        // stale value being checked against.
+        return deviceStateExecutor.submit(() -> attributesDao.find(TenantId.SYS_TENANT_ID, deviceId, AttributeScope.SERVER_SCOPE, LAST_ACTIVITY_TIME)
+                .flatMap(KvEntry::getLongValue).orElse(0L));
     }
 
     private void reportInactivity(long ts, DeviceStateData stateData) {
