@@ -3888,6 +3888,8 @@
         "tag": {
             "tag": "Tag",
             "on-click-action": "On click action",
+            "on-double-click-action": "On double click action",
+            "on-right-click-action": "On right click action",
             "no-tags": "No tags configured",
             "delete-tag-text": "Are you sure you want to delete tag<br/><b>{{tag}}</b> from <b>{{elementType}}</b> element?",
             "update-tag": "Update tag",
