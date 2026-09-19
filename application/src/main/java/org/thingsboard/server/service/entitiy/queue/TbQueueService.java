@@ -3,6 +3,7 @@
 package org.thingsboard.server.service.entitiy.queue;
 
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.queue.Queue;
@@ -11,9 +12,9 @@ import java.util.List;
 
 public interface TbQueueService {
 
-    Queue saveQueue(Queue queue);
+    Queue saveQueue(Queue queue, User user);
 
-    void deleteQueue(TenantId tenantId, QueueId queueId);
+    void deleteQueue(TenantId tenantId, QueueId queueId, User user);
 
     void deleteQueueByQueueName(TenantId tenantId, String queueName);
 
