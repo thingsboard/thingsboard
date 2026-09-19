@@ -3870,6 +3870,7 @@
         "update-confirm": "Update '{{name}}' to version {{version}}?",
         "update-confirm-title": "Update '{{name}}'?",
         "update-desc": "Updating this will replace the current version with the latest and reconfigure the associated resources within your tenant",
+        "update-desc-solution-template": "Updating this solution template will delete and recreate all entities it created, including dashboards, rule chains, devices, and other associated resources within your tenant. Any changes you made to them will be lost",
         "update-success-desc": "'{{name}}' has been updated successfully",
         "updating": "Updating...",
         "update-success-title": "Update Successful",
