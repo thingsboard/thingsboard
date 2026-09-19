@@ -3850,6 +3850,7 @@
         "goto-main-dashboard": "Go to main dashboard",
         "install-error-title": "Installation Failed",
         "install-error-message": "Failed to install '{{name}}'.",
+        "install-dependency-error": "Failed to install the dependency '{{name}}': {{error}}",
         "install-plan-title": "Install '{{name}}' and its dependencies",
         "install-plan-will-install": "{{count}} item(s) will be installed.",
         "install-plan-will-update": "{{count}} item(s) already installed and will be skipped.",
