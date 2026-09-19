@@ -6,6 +6,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatcher;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -13,25 +14,36 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.server.cache.SimpleTbCacheValueWrapper;
 import org.thingsboard.server.cache.TbTransactionalCache;
+import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.rule.trigger.EdgeConnectionTrigger;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTrigger;
+import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
+import org.thingsboard.server.service.edge.rpc.EdgeEventStorageSettings;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import java.util.Set;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -61,7 +73,16 @@ public class EdgeGrpcServiceTest {
     private TelemetrySubscriptionService tsSubService;
 
     @Mock
+    private TbClusterService clusterService;
+
+    @Mock
     private PartitionService partitionService;
+
+    @Mock
+    private EdgeEventStorageSettings edgeEventStorageSettings;
+
+    @Mock
+    private ScheduledExecutorService edgeEventProcessingExecutorService;
 
     @InjectMocks
     private EdgeGrpcService edgeGrpcService;
@@ -218,6 +239,80 @@ public class EdgeGrpcServiceTest {
     }
 
     @Test
+    public void givenSessionReplacedOnThisNodeAfterRemoval_whenStaleCallbackRuns_thenNoDisconnectSideEffects() {
+        // The stale callback wins the compare-and-remove, then tearing its own session down takes a while
+        // (for the Kafka session this stops a consumer). The edge reconnects to THIS node in that gap, so the
+        // ownership cache legitimately names us and isOwnedByAnotherNode cannot help. None of the disconnect
+        // side effects may run: not the flag, not the timestamp, not the DISCONNECT_EVENT push.
+        UUID sessionId = UUID.randomUUID();
+        EdgeGrpcSession stale = mock(EdgeGrpcSession.class);
+        when(stale.getSessionId()).thenReturn(sessionId);
+        when(stale.getEdge()).thenReturn(edge);
+        when(stale.destroy()).thenAnswer(invocation -> {
+            sessions().put(edgeId, mock(EdgeGrpcSession.class));
+            return true;
+        });
+        sessions().put(edgeId, stale);
+
+        onEdgeDisconnect(sessionId);
+
+        verify(tsSubService, never()).saveAttributes(argThat(inactiveStateWrite()));
+        verify(clusterService, never()).pushMsgToRuleEngine(any(TenantId.class), any(EntityId.class), any(TbMsg.class), isNull());
+        verify(edgeIdServiceIdCache, never()).evict(edgeId);
+    }
+
+    @Test
+    public void givenEdgeReconnectedToAnotherNode_whenDisconnect_thenDisconnectEventNotPushed() {
+        // The DISCONNECT_EVENT payload is {"active": false, ...} with SERVER_SCOPE, so a rule chain wiring
+        // Disconnect Event -> Save Attributes would persist active=false back and re-create the bug.
+        EdgeSessionStub stub = registerSession();
+        when(serviceInfoProvider.getServiceId()).thenReturn(THIS_NODE);
+        when(edgeIdServiceIdCache.get(edgeId)).thenReturn(SimpleTbCacheValueWrapper.wrap(OTHER_NODE));
+        when(partitionService.getAllServiceIds(ServiceType.TB_CORE)).thenReturn(Set.of(THIS_NODE, OTHER_NODE));
+
+        onEdgeDisconnect(stub.sessionId());
+
+        verify(clusterService, never()).pushMsgToRuleEngine(any(TenantId.class), any(EntityId.class), any(TbMsg.class), isNull());
+    }
+
+    @Test
+    public void givenEdgeGenuinelyDisconnected_whenDisconnect_thenDisconnectEventPushed() {
+        // Also proves the never() assertions above are not vacuous: the push does happen on this path.
+        EdgeSessionStub stub = registerSession();
+        when(serviceInfoProvider.getServiceId()).thenReturn(THIS_NODE);
+        when(edgeIdServiceIdCache.get(edgeId)).thenReturn(SimpleTbCacheValueWrapper.wrap(THIS_NODE));
+
+        onEdgeDisconnect(stub.sessionId());
+
+        verify(clusterService, times(1)).pushMsgToRuleEngine(any(TenantId.class), any(EntityId.class), any(TbMsg.class), isNull());
+    }
+
+    // --- onEdgeConnect ownership publish order ---
+
+    @Test
+    public void givenConnect_whenClaimingOwnership_thenCachePutHappensBeforeActiveStateWrite() {
+        // Load-bearing ordering: the previous node's onEdgeDisconnect reads this cache entry to decide whether
+        // to clear the flag, so the claim must be visible before active=true is written. Nothing else pins the
+        // order, and a tidy-up that groups the save(...) calls together would silently restore the race.
+        EdgeGrpcSession session = mock(EdgeGrpcSession.class);
+        when(session.getSessionId()).thenReturn(UUID.randomUUID());
+        when(session.getEdge()).thenReturn(edge);
+        when(serviceInfoProvider.getServiceId()).thenReturn(THIS_NODE);
+        when(ctx.getEdgeEventStorageSettings()).thenReturn(edgeEventStorageSettings);
+        ReflectionTestUtils.setField(edgeGrpcService, "edgeEventProcessingExecutorService", edgeEventProcessingExecutorService);
+        when(edgeEventProcessingExecutorService.schedule(any(Runnable.class), anyLong(), any(TimeUnit.class)))
+                .thenAnswer(invocation -> mock(ScheduledFuture.class));
+
+        ReflectionTestUtils.invokeMethod(edgeGrpcService, "onEdgeConnect", edgeId, session);
+
+        InOrder inOrder = inOrder(edgeIdServiceIdCache, tsSubService);
+        inOrder.verify(edgeIdServiceIdCache).put(edgeId, THIS_NODE);
+        inOrder.verify(tsSubService).saveAttributes(argThat(activeStateWrite()));
+    }
+
+    // --- service-id cache eviction guard ---
+
+    @Test
     public void givenEdgeOwnedByThisNode_whenDisconnect_thenInactiveStateIsPersisted() {
         UUID sessionId = UUID.randomUUID();
         sessions().put(edgeId, sessionFor(sessionId));
@@ -244,6 +339,23 @@ public class EdgeGrpcServiceTest {
 
     private void onEdgeDisconnect(UUID sessionId) {
         ReflectionTestUtils.invokeMethod(edgeGrpcService, "onEdgeDisconnect", edge, sessionId);
+    }
+
+    private EdgeSessionStub registerSession() {
+        UUID sessionId = UUID.randomUUID();
+        sessions().put(edgeId, sessionFor(sessionId));
+        return new EdgeSessionStub(sessionId);
+    }
+
+    private record EdgeSessionStub(UUID sessionId) {
+    }
+
+    private ArgumentMatcher<AttributesSaveRequest> activeStateWrite() {
+        return request -> request != null
+                && edgeId.equals(request.getEntityId())
+                && request.getEntries().stream().anyMatch(entry ->
+                        ACTIVITY_STATE.equals(entry.getKey())
+                                && Boolean.TRUE.equals(entry.getBooleanValue().orElse(null)));
     }
 
     private EdgeGrpcSession sessionFor(UUID sessionId) {
