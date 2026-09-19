@@ -34,6 +34,9 @@ import org.thingsboard.server.gen.edge.v1.ResourceUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RuleChainMetadataRequestMsg;
 import org.thingsboard.server.gen.edge.v1.RuleChainMetadataUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RuleChainUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.SendEmailUplinkMsg;
+import org.thingsboard.server.gen.edge.v1.SendNotificationUplinkMsg;
+import org.thingsboard.server.gen.edge.v1.SendSmsUplinkMsg;
 import org.thingsboard.server.gen.edge.v1.UplinkMsg;
 import org.thingsboard.server.gen.edge.v1.UserCredentialsRequestMsg;
 import org.thingsboard.server.gen.edge.v1.UserCredentialsUpdateMsg;
@@ -171,6 +174,21 @@ public class EdgeUplinkMessageDispatcher {
             if (uplinkMsg.getEntityViewsRequestMsgCount() > 0) {
                 for (EntityViewsRequestMsg entityViewRequestMsg : uplinkMsg.getEntityViewsRequestMsgList()) {
                     result.add(ctx.getEdgeRequestsService().processEntityViewsRequestMsg(edge.getTenantId(), edge, entityViewRequestMsg));
+                }
+            }
+            if (uplinkMsg.getSendEmailUplinkMsgCount() > 0) {
+                for (SendEmailUplinkMsg sendEmailUplinkMsg : uplinkMsg.getSendEmailUplinkMsgList()) {
+                    result.add(ctx.getEdgeRequestsService().processSendEmailMsg(edge.getTenantId(), edge, sendEmailUplinkMsg));
+                }
+            }
+            if (uplinkMsg.getSendSmsUplinkMsgCount() > 0) {
+                for (SendSmsUplinkMsg sendSmsUplinkMsg : uplinkMsg.getSendSmsUplinkMsgList()) {
+                    result.add(ctx.getEdgeRequestsService().processSendSmsMsg(edge.getTenantId(), edge, sendSmsUplinkMsg));
+                }
+            }
+            if (uplinkMsg.getSendNotificationUplinkMsgCount() > 0) {
+                for (SendNotificationUplinkMsg sendNotificationUplinkMsg : uplinkMsg.getSendNotificationUplinkMsgList()) {
+                    result.add(ctx.getEdgeRequestsService().processSendNotificationMsg(edge.getTenantId(), edge, sendNotificationUplinkMsg));
                 }
             }
             if (uplinkMsg.getCalculatedFieldUpdateMsgCount() > 0) {
