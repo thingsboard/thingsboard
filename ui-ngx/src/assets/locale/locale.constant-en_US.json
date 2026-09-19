@@ -3824,7 +3824,7 @@
                 "community-string": "SNMP community string"
             },
             "isgateway": "Is Gateway",
-            "activity-time-from-gateway-device": "Activity time from gateway device",
+            "overwrite-activity-time": "Overwrite activity time for connected device",
             "description": "Description",
             "routing-key": "Edge key",
             "secret": "Edge secret"
