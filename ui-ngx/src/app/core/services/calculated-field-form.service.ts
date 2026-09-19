@@ -9,6 +9,7 @@ import {
   CalculatedFieldConfiguration,
   CalculatedFieldEventArguments,
   CalculatedFieldType,
+  defaultComputeOn,
   OutputStrategyType
 } from '@shared/models/calculated-field.models';
 import { isDefined } from '@core/utils';
@@ -27,6 +28,7 @@ export class CalculatedFieldFormService {
       name: ['', [Validators.required, Validators.maxLength(255)]],
       entityId: [null, Validators.required],
       type: [CalculatedFieldType.SIMPLE],
+      computeOn: [defaultComputeOn],
       debugSettings: [],
       configuration: this.fb.control<CalculatedFieldConfiguration>({} as CalculatedFieldConfiguration),
     });
