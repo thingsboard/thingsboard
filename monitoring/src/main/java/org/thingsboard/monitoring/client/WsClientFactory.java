@@ -19,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class WsClientFactory {
 
+    private final TbClient tbClient;
     private final MonitoringReporter monitoringReporter;
     private final TbStopWatch stopWatch;
     @Value("${monitoring.ws.base_url}")
@@ -26,8 +27,8 @@ public class WsClientFactory {
     @Value("${monitoring.ws.request_timeout_ms}")
     private int requestTimeoutMs;
 
-    public WsClient createClient(String accessToken) throws Exception {
-        URI uri = new URI(baseUrl + "/api/ws/plugins/telemetry?token=" + accessToken);
+    public WsClient createClient(String tokenOrApiKey) throws Exception {
+        URI uri = new URI(baseUrl + "/api/ws");
         stopWatch.start();
         WsClient wsClient = new WsClient(uri, requestTimeoutMs);
         if (baseUrl.startsWith("wss")) {
@@ -39,6 +40,7 @@ public class WsClientFactory {
         if (!connected) {
             throw new IllegalStateException("Failed to establish WS session");
         }
+        wsClient.authenticate(tbClient.getAuthMode(), tokenOrApiKey);
         monitoringReporter.reportLatency(Latencies.WS_CONNECT, stopWatch.getTime());
         return wsClient;
     }
