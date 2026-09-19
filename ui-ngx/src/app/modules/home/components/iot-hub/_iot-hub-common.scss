@@ -119,3 +119,39 @@
     pointer-events: none;
   }
 }
+
+// Scroll area that shows its thumb only while the container is hovered — the filter panels'
+// own treatment, kept here so the two that use it cannot drift apart.
+//
+// Not the app-wide one: theme.scss keeps its thumb permanently visible. Whether these panels
+// should do the same, and whether to add the standardised scrollbar-width / scrollbar-color
+// that Firefox reads, is a question for the IoT Hub filter UI as a whole rather than for one
+// panel; iot-hub-browse and dashboard-widget-select carry copies of this same treatment.
+@mixin tb-iot-hub-hover-scrollbar {
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background-color: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: transparent;
+    border-radius: 3px;
+  }
+
+  &:hover {
+    &::-webkit-scrollbar-track {
+      background-color: rgba(0, 0, 0, 0.04);
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background-color: rgba(0, 0, 0, 0.2);
+
+      &:hover {
+        background-color: rgba(0, 0, 0, 0.35);
+      }
+    }
+  }
+}
