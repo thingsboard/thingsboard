@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.ExceptionUtil;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.Dashboard;
@@ -993,12 +994,13 @@ public class DefaultIotHubService implements IotHubService {
                     } catch (Exception e) {
                         log.error("[{}] Cascade install failed at entry {} ({}): {}", tenantId,
                                 entry.getName(), entry.getVersionId(), e.getMessage(), e);
-                        resultEntry.setErrorMessage(e.getMessage());
+                        String failureMessage = ExceptionUtil.getMessage(e);
+                        resultEntry.setErrorMessage(failureMessage);
                         resultEntries.add(resultEntry);
                         boolean rolledBack = rollbackInstalledItems(user, rollbackIds);
                         result.setSuccess(false);
                         result.setRolledBack(rolledBack);
-                        result.setErrorMessage("Failed to install '" + entry.getName() + "': " + e.getMessage());
+                        result.setErrorMessage(failureMessage);
                         result.setEntries(resultEntries);
                         result.setMissingItemIds(missingItemIds);
                         return result;
