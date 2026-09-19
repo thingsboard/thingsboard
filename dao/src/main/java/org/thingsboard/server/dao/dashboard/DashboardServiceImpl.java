@@ -142,6 +142,11 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     }
 
     @Override
+    protected boolean isUpdateTransactional() {
+        return false; // entry points had no @Transactional before the fix, update stays without an ambient transaction
+    }
+
+    @Override
     public Dashboard saveDashboard(Dashboard dashboard) {
         return saveDashboard(dashboard, true);
     }
@@ -164,7 +169,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
             imageService.updateImagesUsage(dashboard);
             resourceService.updateResourcesUsage(tenantId, dashboard);
 
-            var saved = dashboardDao.save(tenantId, dashboard);
+            var saved = dashboardDao.saveAndFlush(tenantId, dashboard);
             publishEvictEvent(new DashboardTitleEvictEvent(saved.getId()));
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId)
                     .entityId(saved.getId()).entity(saved).created(dashboard.getId() == null).build());
