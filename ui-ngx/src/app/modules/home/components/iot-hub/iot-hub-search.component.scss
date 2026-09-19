@@ -8,6 +8,14 @@
   flex-direction: column;
 }
 
+// The page hands this component the card's full width and its own side padding as a variable.
+// Rows that are ordinary content pad themselves back in; the divider and the filter rail are
+// the two things that are supposed to reach the edge, so they do not.
+.tb-search-pad {
+  padding-left: var(--tb-search-side-pad, 0px);
+  padding-right: var(--tb-search-side-pad, 0px);
+}
+
 .tb-search-results-count-mobile {
   display: none;
   margin-left: auto;
@@ -143,38 +151,102 @@
   overflow: auto;
 }
 
-// Categories / sections
-.tb-search-categories {
-  display: flex;
-  flex-direction: column;
-  gap: 48px;
-}
-
-// Section header
-.tb-search-section-header {
-  font-size: 18px;
-  font-weight: 500;
-  line-height: 24px;
-  color: rgba(0, 0, 0, 0.87);
-  padding: 0;
-  margin-bottom: 12px;
-
-  mat-icon {
-    font-size: 24px;
-    width: 24px;
-    height: 24px;
-  }
-}
-
 // Card grid
 .tb-search-card-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 20px;
 
-  &.tb-search-card-grid-compact {
-    grid-template-columns: repeat(3, 1fr);
+  // Probe: zero-height element used only to read the computed column count.
+  // Keeps display: grid and non-zero width so grid-template-columns resolves.
+  &.tb-search-card-grid-probe {
+    width: 100%;
+    height: 0;
+    gap: 0;
+    overflow: hidden;
+    visibility: hidden;
+    pointer-events: none;
   }
+}
+
+// Filter button — the drawer's trigger, and where the active count is shown
+.tb-search-filter-btn {
+  flex-shrink: 0;
+}
+
+.tb-search-filter-count {
+  margin-left: 6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: rgba(0, 0, 0, 0.08);
+  font-size: 12px;
+  line-height: 18px;
+  font-variant-numeric: tabular-nums;
+}
+
+// Content: facet sidebar beside the grid
+// The page gives this component the viewport's remaining height and expects its body to scroll
+// inside, not to grow past the white card. So the row takes that height and BOTH columns scroll
+// themselves — the grid as it always did, the facets likewise. A facet list can then be any
+// length at all without reaching the page behind it.
+.tb-search-layout {
+  display: flex;
+  gap: 24px;
+  height: 100%;
+  min-height: 0;
+
+  .tb-results-container {
+    flex: 1;
+    min-width: 0;
+    // Only on the right: the gap to the rail already separates it on the left.
+    padding-right: var(--tb-search-side-pad, 0px);
+  }
+}
+
+.tb-search-facets-desktop {
+  width: 232px;
+  flex-shrink: 0;
+  border-right: 1px solid rgba(0, 0, 0, 0.12);
+
+  // The component is already full-bleed, so this column starts at the card's edge with no
+  // margin of its own and every rule drawn across it reaches that edge. The indent goes INSIDE
+  // each facet — padding here would inset the rules too — and matches the page's own margin, so
+  // the words line up with the heading above them.
+  --tb-facet-indent: var(--tb-search-side-pad, 16px);
+
+  align-self: stretch;
+  height: 100%;
+  overflow-y: auto;
+  padding-top: 20px;
+
+  @include tb-iot-hub-hover-scrollbar;
+}
+
+// The close button and heading belong to the narrow layout only.
+.tb-search-facets-header {
+  display: none;
+  height: 48px;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.tb-search-facets {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 24px;
+
+  // The type pages put a rule between filter sections. No gap and no padding around it: the
+  // rule sits flush between two sections, edge to edge, rather than floating inside a gap.
+  tb-iot-hub-facet-list + tb-iot-hub-facet-list {
+    border-top: 1px solid rgba(0, 0, 0, 0.12);
+  }
+}
+
+.tb-search-facets-clear {
+  align-self: flex-start;
+  margin-left: calc(var(--tb-facet-indent, 16px) - 16px);
 }
 
 // Responsive
@@ -182,30 +254,18 @@
 @media #{$mat-gt-xxl} {
   .tb-search-card-grid {
     grid-template-columns: repeat(6, 1fr);
-
-    &.tb-search-card-grid-compact {
-      grid-template-columns: repeat(4, 1fr);
-    }
   }
 }
 
 @media #{$mat-lt-xl} {
   .tb-search-card-grid {
     grid-template-columns: repeat(4, 1fr);
-
-    &.tb-search-card-grid-compact {
-      grid-template-columns: repeat(3, 1fr);
-    }
   }
 }
 
 @media #{$mat-lt-xmd} {
   .tb-search-card-grid {
     grid-template-columns: repeat(3, 1fr);
-
-    &.tb-search-card-grid-compact {
-      grid-template-columns: repeat(2, 1fr);
-    }
   }
 }
 
@@ -228,10 +288,6 @@
 
   .tb-search-card-grid {
     grid-template-columns: repeat(2, 1fr);
-
-    &.tb-search-card-grid-compact {
-      grid-template-columns: repeat(1, 1fr);
-    }
   }
 }
 
@@ -266,5 +322,40 @@
 
   .tb-search-page-size {
     margin-left: 0;
+  }
+}
+
+// The sidebar costs a whole card column, so below this width it stops being a column: the
+// panel collapses, and the Filter button opens it as a block above the results.
+@media #{$mat-lt-lg} {
+  .tb-search-layout {
+    flex-direction: column;
+  }
+
+  .tb-search-facets-desktop {
+    display: none;
+    // As a block above the results it is ordinary content, not a rail, so it lines up with
+    // the rows above it rather than with the card's edge.
+    width: 100%;
+    height: auto;
+    max-height: 60vh;
+    border-right: none;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+    padding-right: 0;
+
+    &.opened {
+      display: block;
+    }
+  }
+
+  .tb-search-facets-header {
+    display: flex;
+  }
+}
+
+// Wide enough for the sidebar, so the button that opens the block has nothing to open.
+@media #{$mat-gt-md} {
+  .tb-search-filter-btn {
+    display: none;
   }
 }

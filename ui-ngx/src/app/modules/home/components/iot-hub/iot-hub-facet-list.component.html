@@ -1,0 +1,31 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<mat-expansion-panel [expanded]="expanded" class="tb-iot-hub-facet-panel">
+  <mat-expansion-panel-header>
+    <mat-panel-title>{{ label | translate }}</mat-panel-title>
+  </mat-expansion-panel-header>
+
+  @if (searchable) {
+    <div class="tb-iot-hub-facet-search">
+      <mat-icon>search</mat-icon>
+      <input [placeholder]="'iot-hub.search' | translate" [(ngModel)]="search">
+      @if (search) {
+        <button mat-icon-button class="tb-iot-hub-facet-search-clear" (click)="search = ''">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </div>
+  }
+
+  <div class="tb-iot-hub-facet-items" [class.scrollable]="scrollable">
+    @for (option of visibleOptions; track option.key) {
+      <mat-checkbox [checked]="isSelected(option.key)" (change)="onToggle(option.key)">
+        {{ labelFor(option.key) }}
+      </mat-checkbox>
+    }
+  </div>
+</mat-expansion-panel>
