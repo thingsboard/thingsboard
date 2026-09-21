@@ -95,6 +95,12 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   wizardSteps: WizardStep[] = [];
   wizardStarted = false;
   reviewMode = false;
+  /**
+   * Set once the server has an installed item for this device. From that moment every way out of
+   * the wizard — including the header X and the Cancel button on a still-pending later step —
+   * has to report 'installed', or the caller keeps showing pre-install counts and badges.
+   */
+  private installRegistered = false;
 
   // Variable resolution state
   formValues: Record<string, any> = {};
@@ -357,7 +363,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   }
 
   cancel(): void {
-    this.dialogRef.close(false);
+    this.dialogRef.close(this.installRegistered ? 'installed' : false);
   }
 
   retryEntitySteps(step: WizardStep): void {
@@ -809,6 +815,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
           { ignoreLoading: true }
         )
       );
+      this.installRegistered = true;
     } catch (_e) {
       // Non-critical — entities are created, tracking registration failed
       console.error('Failed to register device install', _e);
