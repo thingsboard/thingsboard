@@ -143,6 +143,7 @@ public class PdfReportService extends AbstractReportService {
 
         log.trace("[{}] Executing generateReport, reportRequest [{}]", tenantId, task);
         PdfReportTemplateConfig configuration = (PdfReportTemplateConfig) task.getReportTemplateConfig();
+        resolveReportTimeRange(ctx);
 
         Dimension pageSize = computePageSize(configuration);
         Insets pageMargins = computePageMargins(configuration);

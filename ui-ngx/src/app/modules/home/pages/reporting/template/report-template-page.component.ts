@@ -240,6 +240,11 @@ export class ReportTemplatePageComponent extends PageComponent
   ngOnInit() {
     this.homeService.setHideMainToolbar(true);
     this.reportComponentContext = {
+      reportComponents: () => [
+        ...(this.pdfConfiguration?.header?.components ?? []),
+        ...(this.reportTemplate?.configuration?.components ?? []),
+        ...(this.pdfConfiguration?.footer?.components ?? [])
+      ],
       translate: this.translate,
       utils: this.utils,
       entityService: this.entityService,

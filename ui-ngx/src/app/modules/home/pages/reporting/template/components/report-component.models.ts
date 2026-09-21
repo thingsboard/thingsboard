@@ -81,7 +81,13 @@ import {
 import { TbReportFormat } from '@shared/models/report.models';
 import { Font } from '@shared/models/widget-settings.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { AggregationType, DAY, historyInterval } from '@shared/models/time/time.models';
+import {
+  AggregationType,
+  DAY,
+  historyInterval,
+  HistoryWindowType,
+  Timewindow
+} from '@shared/models/time/time.models';
 import { DividerPreviewComponent } from '@home/pages/reporting/template/components/divider-preview.component';
 import { DividerConfigComponent } from '@home/pages/reporting/template/components/divider-config.component';
 import { Direction } from '@shared/models/page/sort-order';
@@ -150,7 +156,7 @@ export const reportComponentGroups = new Map<string, Array<string>>(
     ],
     [
       ReportComponentLibraryGroup.reportInfoAndLayout,
-      ['splitView', 'pageNumber', 'createdTime', 'divider', 'pageBreak']
+      ['splitView', 'pageNumber', 'createdTime', 'timeRange', 'divider', 'pageBreak']
     ]
   ]
 );
@@ -1398,6 +1404,38 @@ export const reportComponentsLibrary = new Map<string, ReportComponentLibraryIte
       }
     ],
     [
+      'timeRange',
+      {
+        title: 'report-template.component.time-range',
+        previewImage: '/assets/report/components/time-range.svg',
+        type: ReportComponentType.HEADING,
+        defaultConfig: {
+          type: ReportComponentType.HEADING,
+          value: 'Time Range: ${reportStartTime} – ${reportEndTime}',
+          font: {
+            size: 9,
+            sizeUnit: 'pt',
+            weight: '500',
+            style: 'normal',
+            family: 'Roboto'
+          } as Font,
+          color: '#000',
+          textAlignment: 'center',
+          verticalAlignment: 'middle',
+          height: undefined,
+          dataSources: [],
+          margins: null,
+          paddings: {
+            top: 6,
+            bottom: 6,
+            left: 6,
+            right: 6
+          },
+          background: null
+        } as HeadingReportComponentConfig
+      }
+    ],
+    [
       'divider',
       {
         title: 'report-template.component.divider.type',
@@ -1818,6 +1856,7 @@ export class ReportDragDropContext {
 
 
 export interface ReportComponentContext {
+  reportComponents: () => ReportComponentConfig[];
   translate: TranslateService,
   utils: UtilsService,
   entityService: EntityService;
@@ -1826,6 +1865,69 @@ export interface ReportComponentContext {
   format: TbReportFormat;
   dragDropCtx: ReportDragDropContext;
 }
+
+const collectTimewindows = (value: any, result: Timewindow[]): void => {
+  if (!value || typeof value !== 'object') {
+    return;
+  }
+  if (Array.isArray(value)) {
+    value.forEach(item => collectTimewindows(item, result));
+    return;
+  }
+  for (const key of Object.keys(value)) {
+    if (key === 'timewindow' && value[key] && typeof value[key] === 'object') {
+      result.push(value[key]);
+    } else {
+      collectTimewindows(value[key], result);
+    }
+  }
+};
+
+/**
+ * Mirrors ReportTimeRangeResolver on the backend: a time window is identified by the fields that determine
+ * the range it resolves to, so windows differing only in aggregation, grouping interval or in the leftover
+ * defaults of the other history types count as one. Windows without a range of their own - for all time -
+ * are skipped, exactly as the backend skips them.
+ */
+const reportTimeRangeKey = (timewindow: Timewindow): string => {
+  const history = timewindow?.history;
+  switch (history?.historyType) {
+    case HistoryWindowType.LAST_INTERVAL:
+      return `last:${history.timewindowMs}`;
+    case HistoryWindowType.FIXED:
+      return history.fixedTimewindow ?
+        `fixed:${history.fixedTimewindow.startTimeMs}:${history.fixedTimewindow.endTimeMs}` : null;
+    case HistoryWindowType.INTERVAL:
+      return history.quickInterval ? `quick:${history.quickInterval}` : null;
+    default:
+      return null;
+  }
+};
+
+/**
+ * Whether the report components resolve to more than one time range, which leaves the report time range,
+ * and with it the ${reportStartTime} and ${reportEndTime} variables, undefined.
+ *
+ * Deliberately narrower than the backend resolver: it ignores the time windows of sub report templates,
+ * which are not loaded in the editor, and the timezone of a time window, which falls back to the timezone of
+ * the scheduled report the template knows nothing about. Both only make it miss a mismatch the backend sees,
+ * never report one that isn't there.
+ */
+export const hasDifferentReportTimeRanges = (components: ReportComponentConfig[]): boolean => {
+  const timewindows: Timewindow[] = [];
+  collectTimewindows(components, timewindows);
+  const timeRangeKeys = new Set<string>();
+  for (const timewindow of timewindows) {
+    const key = reportTimeRangeKey(timewindow);
+    if (key) {
+      timeRangeKeys.add(key);
+      if (timeRangeKeys.size > 1) {
+        return true;
+      }
+    }
+  }
+  return false;
+};
 
 export const assignReportComponent = (reportComponent: ReportComponentConfig, sourceReportComponent: ReportComponentConfig): void => {
   const ignoreFields: string[] = [];
@@ -1884,6 +1986,14 @@ export const pageVariables: ReportVariable[] = [
   {
     type: 'pageVariable',
     name: 'reportCreatedTime'
+  },
+  {
+    type: 'pageVariable',
+    name: 'reportStartTime'
+  },
+  {
+    type: 'pageVariable',
+    name: 'reportEndTime'
   }
 ];
 
