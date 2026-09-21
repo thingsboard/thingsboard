@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 /**
  * Copyright © 2016-2026 The Thingsboard Authors
  *
