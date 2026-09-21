@@ -10,6 +10,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.server.cache.SimpleTbCacheValueWrapper;
 import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.common.data.edge.Edge;
@@ -18,12 +19,17 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.rule.trigger.EdgeConnectionTrigger;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTrigger;
 import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
+import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
+import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
@@ -31,6 +37,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.thingsboard.server.service.state.DefaultDeviceStateService.ACTIVITY_STATE;
 
 @ExtendWith(MockitoExtension.class)
 public class EdgeGrpcServiceTest {
@@ -49,6 +56,12 @@ public class EdgeGrpcServiceTest {
 
     @Mock
     private NotificationRuleProcessor ruleProcessor;
+
+    @Mock
+    private TelemetrySubscriptionService tsSubService;
+
+    @Mock
+    private PartitionService partitionService;
 
     @InjectMocks
     private EdgeGrpcService edgeGrpcService;
@@ -149,6 +162,103 @@ public class EdgeGrpcServiceTest {
         destroy();
 
         verify(ruleProcessor, never()).process(any());
+    }
+
+    // --- activity-state write guard on disconnect ---
+
+    @Test
+    public void givenEdgeReconnectedToAnotherNode_whenDisconnect_thenInactiveStateNotPersisted() {
+        // A newer session on another node already set active=true. This stale session's disconnect must not
+        // clobber it - otherwise the edge stays marked inactive while connected, and the server silently
+        // drops every assignment event for it.
+        UUID sessionId = UUID.randomUUID();
+        sessions().put(edgeId, sessionFor(sessionId));
+        when(serviceInfoProvider.getServiceId()).thenReturn(THIS_NODE);
+        when(edgeIdServiceIdCache.get(edgeId)).thenReturn(SimpleTbCacheValueWrapper.wrap(OTHER_NODE));
+        when(partitionService.getAllServiceIds(ServiceType.TB_CORE)).thenReturn(Set.of(THIS_NODE, OTHER_NODE));
+
+        onEdgeDisconnect(sessionId);
+
+        verify(tsSubService, never()).saveAttributes(argThat(inactiveStateWrite()));
+    }
+
+    @Test
+    public void givenOwnerNodeNoLongerInCluster_whenDisconnect_thenInactiveStateIsPersisted() {
+        // The recorded owner died without evicting its claim. The edge sessions cache has no TTL by default
+        // and only the owner ever evicts, so honouring a dead claim would leave the edge active forever.
+        UUID sessionId = UUID.randomUUID();
+        sessions().put(edgeId, sessionFor(sessionId));
+        when(serviceInfoProvider.getServiceId()).thenReturn(THIS_NODE);
+        when(edgeIdServiceIdCache.get(edgeId)).thenReturn(SimpleTbCacheValueWrapper.wrap(OTHER_NODE));
+        when(partitionService.getAllServiceIds(ServiceType.TB_CORE)).thenReturn(Set.of(THIS_NODE));
+
+        onEdgeDisconnect(sessionId);
+
+        verify(tsSubService, times(1)).saveAttributes(argThat(inactiveStateWrite()));
+    }
+
+    @Test
+    public void givenSessionReplacedDuringDisconnect_whenStaleCallbackRuns_thenLiveSessionKept() {
+        // Reproduces the get()/remove() interleaving on a single node: onEdgeConnect swaps in a new session
+        // right after the stale callback's id check passes. The stale callback must not evict or tear down
+        // the live session, nor clear the activity state.
+        UUID staleSessionId = UUID.randomUUID();
+        EdgeGrpcSession live = mock(EdgeGrpcSession.class);
+        EdgeGrpcSession stale = mock(EdgeGrpcSession.class);
+        when(stale.getSessionId()).thenAnswer(invocation -> {
+            sessions().put(edgeId, live);
+            return staleSessionId;
+        });
+        sessions().put(edgeId, stale);
+
+        onEdgeDisconnect(staleSessionId);
+
+        assertThat(sessions().get(edgeId)).isSameAs(live);
+        verify(tsSubService, never()).saveAttributes(argThat(inactiveStateWrite()));
+    }
+
+    @Test
+    public void givenEdgeOwnedByThisNode_whenDisconnect_thenInactiveStateIsPersisted() {
+        UUID sessionId = UUID.randomUUID();
+        sessions().put(edgeId, sessionFor(sessionId));
+        when(serviceInfoProvider.getServiceId()).thenReturn(THIS_NODE);
+        when(edgeIdServiceIdCache.get(edgeId)).thenReturn(SimpleTbCacheValueWrapper.wrap(THIS_NODE));
+
+        onEdgeDisconnect(sessionId);
+
+        verify(tsSubService, times(1)).saveAttributes(argThat(inactiveStateWrite()));
+    }
+
+    @Test
+    public void givenNoCacheEntry_whenDisconnect_thenInactiveStateIsPersisted() {
+        // Ownership unknown (entry absent or expired): keep the pre-guard behaviour, otherwise a genuinely
+        // disconnected edge would stay marked active forever.
+        UUID sessionId = UUID.randomUUID();
+        sessions().put(edgeId, sessionFor(sessionId));
+        when(edgeIdServiceIdCache.get(edgeId)).thenReturn(null);
+
+        onEdgeDisconnect(sessionId);
+
+        verify(tsSubService, times(1)).saveAttributes(argThat(inactiveStateWrite()));
+    }
+
+    private void onEdgeDisconnect(UUID sessionId) {
+        ReflectionTestUtils.invokeMethod(edgeGrpcService, "onEdgeDisconnect", edge, sessionId);
+    }
+
+    private EdgeGrpcSession sessionFor(UUID sessionId) {
+        EdgeGrpcSession session = mock(EdgeGrpcSession.class);
+        when(session.getSessionId()).thenReturn(sessionId);
+        when(session.getEdge()).thenReturn(edge);
+        return session;
+    }
+
+    private ArgumentMatcher<AttributesSaveRequest> inactiveStateWrite() {
+        return request -> request != null
+                && edgeId.equals(request.getEntityId())
+                && request.getEntries().stream().anyMatch(entry ->
+                        ACTIVITY_STATE.equals(entry.getKey())
+                                && Boolean.FALSE.equals(entry.getBooleanValue().orElse(null)));
     }
 
     private void destroy() {
