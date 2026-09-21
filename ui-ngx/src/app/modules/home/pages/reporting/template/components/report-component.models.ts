@@ -1874,6 +1874,9 @@ const collectTimewindows = (value: any, result: Timewindow[]): void => {
     value.forEach(item => collectTimewindows(item, result));
     return;
   }
+  if (value.type === ReportComponentType.DASHBOARD) {
+    return;
+  }
   for (const key of Object.keys(value)) {
     if (key === 'timewindow' && value[key] && typeof value[key] === 'object') {
       result.push(value[key]);

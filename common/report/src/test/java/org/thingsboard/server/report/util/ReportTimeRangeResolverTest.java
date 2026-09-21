@@ -4,13 +4,17 @@ package org.thingsboard.server.report.util;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.dashboardreport.DashboardReportConfig;
 import org.thingsboard.server.common.data.id.ReportTemplateId;
 import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.report.ReportTemplate;
 import org.thingsboard.server.common.data.report.configuration.DataKey;
 import org.thingsboard.server.common.data.report.configuration.DataSource;
+import org.thingsboard.server.common.data.report.configuration.HeaderFooter;
 import org.thingsboard.server.common.data.report.configuration.PdfReportTemplateConfig;
 import org.thingsboard.server.common.data.report.configuration.ReportTemplateConfig;
+import org.thingsboard.server.common.data.report.configuration.components.DashboardComponent;
 import org.thingsboard.server.common.data.report.configuration.components.HeadingComponent;
 import org.thingsboard.server.common.data.report.configuration.components.ReportComponent;
 import org.thingsboard.server.common.data.report.configuration.components.SplitViewComponent;
@@ -21,12 +25,13 @@ import org.thingsboard.server.common.data.report.configuration.timewindow.FixedT
 import org.thingsboard.server.common.data.report.configuration.timewindow.History;
 import org.thingsboard.server.common.data.report.configuration.timewindow.Interval;
 import org.thingsboard.server.common.data.report.configuration.timewindow.QuickTimeInterval;
-import org.thingsboard.server.common.data.report.configuration.timewindow.TimeIntervalCalculator.TimeRange;
 import org.thingsboard.server.common.data.report.configuration.timewindow.TimeWindowConfiguration;
 import org.thingsboard.server.report.context.TbReportCtx;
+import org.thingsboard.server.report.util.ReportTimeRangeResolver.ReportTimeRange;
 import org.thingsboard.server.report.datasource.ReportDataService;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
@@ -59,35 +64,35 @@ public class ReportTimeRangeResolverTest {
 
     @Test
     void testResolveFixedTimeWindow() {
-        TimeRange range = resolver.resolve(config(chart(fixedWindow(1000, 2000))), ctx);
+        ReportTimeRange range = resolver.resolve(config(chart(fixedWindow(1000, 2000))), ctx);
 
-        assertThat(range.startTs).isEqualTo(1000);
-        assertThat(range.endTs).isEqualTo(2000);
+        assertThat(range.startTs()).isEqualTo(1000);
+        assertThat(range.endTs()).isEqualTo(2000);
     }
 
     @Test
     void testResolveLastIntervalTimeWindow() {
         long before = System.currentTimeMillis();
-        TimeRange range = resolver.resolve(config(chart(lastIntervalWindow(DAY_MS))), ctx);
+        ReportTimeRange range = resolver.resolve(config(chart(lastIntervalWindow(DAY_MS))), ctx);
         long after = System.currentTimeMillis();
 
-        assertThat(range.endTs).isBetween(before, after);
-        assertThat(range.endTs - range.startTs).isEqualTo(DAY_MS);
+        assertThat(range.endTs()).isBetween(before, after);
+        assertThat(range.endTs() - range.startTs()).isEqualTo(DAY_MS);
     }
 
     @Test
     void testResolveQuickIntervalTimeWindow() {
         long yesterdayStart = LocalDate.now(ZoneOffset.UTC).minusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli();
 
-        TimeRange range = resolver.resolve(config(chart(quickWindow(QuickTimeInterval.YESTERDAY))), ctx);
+        ReportTimeRange range = resolver.resolve(config(chart(quickWindow(QuickTimeInterval.YESTERDAY))), ctx);
 
-        assertThat(range.startTs).isEqualTo(yesterdayStart);
-        assertThat(range.endTs).isEqualTo(yesterdayStart + DAY_MS - 1);
+        assertThat(range.startTs()).isEqualTo(yesterdayStart);
+        assertThat(range.endTs()).isEqualTo(yesterdayStart + DAY_MS - 1);
     }
 
     @Test
     void testResolveForAllTimeWindowIsUndefined() {
-        TimeRange range = resolver.resolve(config(chart(forAllTimeWindow())), ctx);
+        ReportTimeRange range = resolver.resolve(config(chart(forAllTimeWindow())), ctx);
 
         assertUndefined(range);
     }
@@ -101,10 +106,10 @@ public class ReportTimeRangeResolverTest {
     void testResolveEqualTimeWindowsOfSeveralComponents() {
         ReportTemplateConfig config = config(chart(fixedWindow(1000, 2000)), chart(fixedWindow(1000, 2000)));
 
-        TimeRange range = resolver.resolve(config, ctx);
+        ReportTimeRange range = resolver.resolve(config, ctx);
 
-        assertThat(range.startTs).isEqualTo(1000);
-        assertThat(range.endTs).isEqualTo(2000);
+        assertThat(range.startTs()).isEqualTo(1000);
+        assertThat(range.endTs()).isEqualTo(2000);
     }
 
     @Test
@@ -137,10 +142,10 @@ public class ReportTimeRangeResolverTest {
         TimeWindowConfiguration withExplicitTimezone = quickWindow(QuickTimeInterval.CURRENT_DAY);
         withExplicitTimezone.setTimezone(UTC);
 
-        TimeRange range = resolver.resolve(config(chart(withContextTimezone), chart(withExplicitTimezone)), ctx);
+        ReportTimeRange range = resolver.resolve(config(chart(withContextTimezone), chart(withExplicitTimezone)), ctx);
 
         long todayStart = LocalDate.now(ZoneOffset.UTC).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli();
-        assertThat(range.startTs).isEqualTo(todayStart);
+        assertThat(range.startTs()).isEqualTo(todayStart);
     }
 
     @Test
@@ -150,10 +155,10 @@ public class ReportTimeRangeResolverTest {
         TimeWindowConfiguration sumWindow = fixedWindow(1000, 2000);
         sumWindow.setAggregation(aggregation(Aggregation.SUM));
 
-        TimeRange range = resolver.resolve(config(chart(avgWindow), chart(sumWindow)), ctx);
+        ReportTimeRange range = resolver.resolve(config(chart(avgWindow), chart(sumWindow)), ctx);
 
-        assertThat(range.startTs).isEqualTo(1000);
-        assertThat(range.endTs).isEqualTo(2000);
+        assertThat(range.startTs()).isEqualTo(1000);
+        assertThat(range.endTs()).isEqualTo(2000);
     }
 
     @Test
@@ -169,9 +174,9 @@ public class ReportTimeRangeResolverTest {
         newerWindow.getHistory().setQuickInterval(QuickTimeInterval.CURRENT_WEEK);
         newerWindow.getHistory().setInterval(Interval.of(HOUR_MS));
 
-        TimeRange range = resolver.resolve(config(chart(olderWindow), chart(newerWindow)), ctx);
+        ReportTimeRange range = resolver.resolve(config(chart(olderWindow), chart(newerWindow)), ctx);
 
-        assertThat(range.endTs - range.startTs).isEqualTo(DAY_MS);
+        assertThat(range.endTs() - range.startTs()).isEqualTo(DAY_MS);
     }
 
     @Test
@@ -199,10 +204,10 @@ public class ReportTimeRangeResolverTest {
         ReportTemplateId templateId = new ReportTemplateId(UUID.randomUUID());
         givenSubReportTemplate(templateId, config(chart(fixedWindow(1000, 2000))));
 
-        TimeRange range = resolver.resolve(config(chart(fixedWindow(1000, 2000)), subReport(templateId)), ctx);
+        ReportTimeRange range = resolver.resolve(config(chart(fixedWindow(1000, 2000)), subReport(templateId)), ctx);
 
-        assertThat(range.startTs).isEqualTo(1000);
-        assertThat(range.endTs).isEqualTo(2000);
+        assertThat(range.startTs()).isEqualTo(1000);
+        assertThat(range.endTs()).isEqualTo(2000);
     }
 
     @Test
@@ -230,10 +235,115 @@ public class ReportTimeRangeResolverTest {
         ReportTemplateId templateId = new ReportTemplateId(UUID.randomUUID());
         givenSubReportTemplate(templateId, config(chart(fixedWindow(1000, 2000)), subReport(templateId)));
 
-        TimeRange range = resolver.resolve(config(subReport(templateId)), ctx);
+        ReportTimeRange range = resolver.resolve(config(subReport(templateId)), ctx);
 
-        assertThat(range.startTs).isEqualTo(1000);
-        assertThat(range.endTs).isEqualTo(2000);
+        assertThat(range.startTs()).isEqualTo(1000);
+        assertThat(range.endTs()).isEqualTo(2000);
+    }
+
+    @Test
+    void testResolveIgnoresDashboardTimeWindow() {
+        ReportTemplateConfig config = config(chart(fixedWindow(1000, 2000)), dashboard(DAY_MS));
+
+        ReportTimeRange range = resolver.resolve(config, ctx);
+
+        assertThat(range.startTs()).isEqualTo(1000);
+        assertThat(range.endTs()).isEqualTo(2000);
+    }
+
+    @Test
+    void testResolveTakesEnabledHeaderTimeWindowIntoAccount() {
+        ReportTemplateConfig config = config(headerFooter(true, chart(fixedWindow(1000, 3000))), null,
+                chart(fixedWindow(1000, 2000)));
+
+        assertUndefined(resolver.resolve(config, ctx));
+    }
+
+    @Test
+    void testResolveIgnoresDisabledHeaderTimeWindow() {
+        ReportTemplateConfig config = config(headerFooter(false, chart(fixedWindow(1000, 3000))), null,
+                chart(fixedWindow(1000, 2000)));
+
+        ReportTimeRange range = resolver.resolve(config, ctx);
+
+        assertThat(range.startTs()).isEqualTo(1000);
+        assertThat(range.endTs()).isEqualTo(2000);
+    }
+
+    @Test
+    void testResolveIgnoresDisabledFooterTimeWindow() {
+        ReportTemplateConfig config = config(null, headerFooter(false, chart(fixedWindow(1000, 3000))),
+                chart(fixedWindow(1000, 2000)));
+
+        ReportTimeRange range = resolver.resolve(config, ctx);
+
+        assertThat(range.startTs()).isEqualTo(1000);
+        assertThat(range.endTs()).isEqualTo(2000);
+    }
+
+    @Test
+    void testResolveTakesEnabledFirstPageHeaderTimeWindowIntoAccount() {
+        HeaderFooter header = headerFooter(false, chart(fixedWindow(1000, 4000)));
+        header.setFirstPage(headerFooter(true, chart(fixedWindow(1000, 3000))));
+
+        ReportTemplateConfig config = config(header, null, chart(fixedWindow(1000, 2000)));
+
+        assertUndefined(resolver.resolve(config, ctx));
+    }
+
+    @Test
+    void testResolveIgnoresDisabledFirstPageHeaderTimeWindow() {
+        HeaderFooter header = headerFooter(true, chart(fixedWindow(1000, 2000)));
+        header.setFirstPage(headerFooter(false, chart(fixedWindow(1000, 3000))));
+
+        ReportTemplateConfig config = config(header, null, chart(fixedWindow(1000, 2000)));
+
+        ReportTimeRange range = resolver.resolve(config, ctx);
+
+        assertThat(range.startTs()).isEqualTo(1000);
+        assertThat(range.endTs()).isEqualTo(2000);
+    }
+
+    @Test
+    void testResolveTakesSubReportOfHeaderIntoAccount() {
+        ReportTemplateId templateId = new ReportTemplateId(UUID.randomUUID());
+        givenSubReportTemplate(templateId, config(chart(fixedWindow(1000, 3000))));
+
+        ReportTemplateConfig config = config(headerFooter(true, subReport(templateId)), null,
+                chart(fixedWindow(1000, 2000)));
+
+        assertUndefined(resolver.resolve(config, ctx));
+    }
+
+    @Test
+    void testResolveIgnoresHeaderOfSubReportTemplate() {
+        ReportTemplateId templateId = new ReportTemplateId(UUID.randomUUID());
+        givenSubReportTemplate(templateId, config(headerFooter(true, chart(fixedWindow(1000, 3000))), null,
+                chart(fixedWindow(1000, 2000))));
+
+        ReportTimeRange range = resolver.resolve(config(chart(fixedWindow(1000, 2000)), subReport(templateId)), ctx);
+
+        assertThat(range.startTs()).isEqualTo(1000);
+        assertThat(range.endTs()).isEqualTo(2000);
+    }
+
+    @Test
+    void testResolveKeepsTimezoneOfTimeWindow() {
+        TimeWindowConfiguration window = quickWindow(QuickTimeInterval.CURRENT_DAY);
+        window.setTimezone("Asia/Tokyo");
+
+        ReportTimeRange range = resolver.resolve(config(chart(window)), ctx);
+
+        assertThat(range.timezone()).isEqualTo("Asia/Tokyo");
+        assertThat(range.startTs()).isEqualTo(LocalDate.now(ZoneId.of("Asia/Tokyo"))
+                .atStartOfDay(ZoneId.of("Asia/Tokyo")).toInstant().toEpochMilli());
+    }
+
+    @Test
+    void testResolveFallsBackToContextTimezone() {
+        ReportTimeRange range = resolver.resolve(config(chart(quickWindow(QuickTimeInterval.CURRENT_DAY))), ctx);
+
+        assertThat(range.timezone()).isEqualTo(UTC);
     }
 
     private void givenSubReportTemplate(ReportTemplateId templateId, ReportTemplateConfig configuration) {
@@ -246,13 +356,34 @@ public class ReportTimeRangeResolverTest {
         }
     }
 
-    private static void assertUndefined(TimeRange range) {
-        assertThat(range.startTs).isZero();
-        assertThat(range.endTs).isZero();
+    private static void assertUndefined(ReportTimeRange range) {
+        assertThat(range.startTs()).isZero();
+        assertThat(range.endTs()).isZero();
     }
 
     private static ReportTemplateConfig config(ReportComponent... components) {
         return PdfReportTemplateConfig.builder().components(List.of(components)).build();
+    }
+
+    private static ReportTemplateConfig config(HeaderFooter header, HeaderFooter footer, ReportComponent... components) {
+        return PdfReportTemplateConfig.builder().components(List.of(components)).header(header).footer(footer).build();
+    }
+
+    private static HeaderFooter headerFooter(boolean enabled, ReportComponent... components) {
+        HeaderFooter headerFooter = new HeaderFooter();
+        headerFooter.setEnabled(enabled);
+        headerFooter.setComponents(List.of(components));
+        return headerFooter;
+    }
+
+    private static DashboardComponent dashboard(long timewindowMs) {
+        DashboardReportConfig config = new DashboardReportConfig();
+        config.setUseDashboardTimewindow(true);
+        config.setTimewindow(JacksonUtil.toJsonNode(
+                "{\"selectedTab\":1,\"history\":{\"historyType\":0,\"timewindowMs\":" + timewindowMs + "}}"));
+        DashboardComponent component = new DashboardComponent();
+        component.setConfig(config);
+        return component;
     }
 
     private static TimeseriesChartComponent chart(TimeWindowConfiguration timewindow) {

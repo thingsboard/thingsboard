@@ -40,6 +40,7 @@ import org.thingsboard.server.report.context.ComponentData;
 import org.thingsboard.server.report.context.TbReportCtx;
 import org.thingsboard.server.report.datasource.ReportDataService;
 import org.thingsboard.server.report.util.ReportTimeRangeResolver;
+import org.thingsboard.server.report.util.ReportTimeRangeResolver.ReportTimeRange;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -318,18 +319,18 @@ public abstract class AbstractReportService implements ReportService {
      * rendering starts: sub-report contexts copy the params on creation, so the cached value is what makes all
      * components of the report, including the ones of nested sub-reports, render the same time range.
      */
-    protected TimeIntervalCalculator.TimeRange resolveReportTimeRange(TbReportCtx ctx) {
-        return (TimeIntervalCalculator.TimeRange) ctx.getParams()
+    protected ReportTimeRange resolveReportTimeRange(TbReportCtx ctx) {
+        return (ReportTimeRange) ctx.getParams()
                 .computeIfAbsent(REPORT_TIME_RANGE, key -> timeRangeResolver.resolve(ctx.getConfiguration(), ctx));
     }
 
     protected void populateReportVars(ComponentData componentData, TbReportCtx ctx) {
         Map<String, Object> variables = componentData.getVariables();
         variables.put("reportCreatedTime", ctx.getReportCreatedTime());
-        TimeIntervalCalculator.TimeRange timeRange = resolveReportTimeRange(ctx);
+        ReportTimeRange timeRange = resolveReportTimeRange(ctx);
         String timeDataPattern = ctx.getConfiguration().getTimeDataPattern();
-        variables.put("reportStartTime", formatTimestamp(timeRange.startTs, timeDataPattern, ctx.getTimeZone()));
-        variables.put("reportEndTime", formatTimestamp(timeRange.endTs, timeDataPattern, ctx.getTimeZone()));
+        variables.put("reportStartTime", formatTimestamp(timeRange.startTs(), timeDataPattern, ctx, timeRange.timezone()));
+        variables.put("reportEndTime", formatTimestamp(timeRange.endTs(), timeDataPattern, ctx, timeRange.timezone()));
     }
 
     private void putLatestValues(List<DataKey> dataKeys, Map<String, String> data, Map<EntityKeyType, Map<String, TsValue>> latest, TbReportCtx ctx, String timezone) {

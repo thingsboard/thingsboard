@@ -10,7 +10,10 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.ReportTemplateId;
 import org.thingsboard.server.common.data.report.ReportTemplate;
+import org.thingsboard.server.common.data.report.configuration.HeaderFooter;
+import org.thingsboard.server.common.data.report.configuration.PdfReportTemplateConfig;
 import org.thingsboard.server.common.data.report.configuration.ReportTemplateConfig;
+import org.thingsboard.server.common.data.report.configuration.components.DashboardComponent;
 import org.thingsboard.server.common.data.report.configuration.components.ReportComponent;
 import org.thingsboard.server.common.data.report.configuration.components.SplitViewComponent;
 import org.thingsboard.server.common.data.report.configuration.components.SubReportComponent;
@@ -22,8 +25,10 @@ import org.thingsboard.server.common.data.report.configuration.timewindow.TimeWi
 import org.thingsboard.server.report.context.TbReportCtx;
 import org.thingsboard.server.report.datasource.ReportDataService;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -34,7 +39,7 @@ public class ReportTimeRangeResolver {
     private static final int LAST_INTERVAL_HISTORY_TYPE = 0;
     private static final int FIXED_HISTORY_TYPE = 1;
     private static final int QUICK_INTERVAL_HISTORY_TYPE = 2;
-    private static final TimeIntervalCalculator.TimeRange UNDEFINED_TIME_RANGE = new TimeIntervalCalculator.TimeRange(0, 0);
+    private static final ReportTimeRange UNDEFINED_TIME_RANGE = new ReportTimeRange(0, 0, null);
 
     private final ReportDataService dataService;
 
@@ -42,24 +47,96 @@ public class ReportTimeRangeResolver {
         this.dataService = dataService;
     }
 
-    public TimeIntervalCalculator.TimeRange resolve(ReportTemplateConfig reportTemplateConfig, TbReportCtx ctx) {
+    public ReportTimeRange resolve(ReportTemplateConfig reportTemplateConfig, TbReportCtx ctx) {
         Map<TimeWindowKey, History> timeWindows = new HashMap<>();
-        if (!collect(reportTemplateConfig, ctx, timeWindows, new HashSet<>()) || timeWindows.size() != 1) {
+        if (!collect(renderedComponents(reportTemplateConfig), ctx, timeWindows, new HashSet<>()) || timeWindows.size() != 1) {
             return UNDEFINED_TIME_RANGE;
         }
         Map.Entry<TimeWindowKey, History> timeWindow = timeWindows.entrySet().iterator().next();
         TimeWindowConfiguration config = new TimeWindowConfiguration();
         config.setHistory(timeWindow.getValue());
-        return TimeIntervalCalculator.getTimeRange(config, timeWindow.getKey().timezone());
+        String timezone = timeWindow.getKey().timezone();
+        TimeIntervalCalculator.TimeRange range = TimeIntervalCalculator.getTimeRange(config, timezone);
+        return new ReportTimeRange(range.startTs, range.endTs, timezone);
     }
 
     /**
-     * Collects distinct time windows of the template and of all sub-report templates it references.
+     * Collects distinct time windows of the given components and of all sub-report templates they reference.
      * Returns false as soon as the time range is known to be undefined: either the collected time windows
      * differ, or a referenced sub-report template can't be fetched.
      */
-    private boolean collect(ReportTemplateConfig config, TbReportCtx ctx, Map<TimeWindowKey, History> timeWindows, Set<ReportTemplateId> visitedTemplates) {
-        for (JsonNode node : JacksonUtil.valueToTree(config).findValues("timewindow")) {
+    private boolean collect(List<ReportComponent> components, TbReportCtx ctx, Map<TimeWindowKey, History> timeWindows, Set<ReportTemplateId> visitedTemplates) {
+        for (ReportComponent component : components) {
+            if (!collectComponent(component, ctx, timeWindows, visitedTemplates)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * The components that end up on the page: the body ones, plus the header and footer ones of the blocks that
+     * are enabled. Disabling a header or a footer in the UI only flips the flag and keeps the components, and
+     * PdfReportService renders a block only while it is enabled, so the components of a disabled one carry time
+     * windows nothing on the page uses. The first page block is enabled on its own, as it is rendered on its own.
+     */
+    private static List<ReportComponent> renderedComponents(ReportTemplateConfig config) {
+        List<ReportComponent> components = new ArrayList<>();
+        addComponents(components, config.getComponents());
+        if (config instanceof PdfReportTemplateConfig pdfConfig) {
+            addEnabledComponents(components, pdfConfig.getHeader());
+            addEnabledComponents(components, pdfConfig.getFooter());
+        }
+        return components;
+    }
+
+    private static void addEnabledComponents(List<ReportComponent> components, HeaderFooter headerFooter) {
+        if (headerFooter == null) {
+            return;
+        }
+        if (headerFooter.isEnabled()) {
+            addComponents(components, headerFooter.getComponents());
+        }
+        HeaderFooter firstPage = headerFooter.getFirstPage();
+        if (firstPage != null && firstPage.isEnabled()) {
+            addComponents(components, firstPage.getComponents());
+        }
+    }
+
+    /**
+     * A sub-report puts only the body components of its template on the page: PdfReportService.renderSubReport
+     * passes exactly those to renderContent, so the header and the footer of a sub-report template are never
+     * rendered and the time windows they carry are none of this report's business.
+     */
+    private static List<ReportComponent> subReportComponents(ReportTemplateConfig config) {
+        return config.getComponents() != null ? config.getComponents() : List.of();
+    }
+
+    private static void addComponents(List<ReportComponent> components, List<ReportComponent> toAdd) {
+        if (toAdd != null) {
+            components.addAll(toAdd);
+        }
+    }
+
+    private boolean collectComponent(ReportComponent component, TbReportCtx ctx, Map<TimeWindowKey, History> timeWindows, Set<ReportTemplateId> visitedTemplates) {
+        if (component instanceof SplitViewComponent splitView) {
+            return (splitView.getLeftView() == null || collectComponent(splitView.getLeftView(), ctx, timeWindows, visitedTemplates))
+                    && (splitView.getRightView() == null || collectComponent(splitView.getRightView(), ctx, timeWindows, visitedTemplates));
+        }
+        if (component instanceof DashboardComponent) {
+            return true;
+        }
+        if (!collectTimeWindows(component, ctx, timeWindows)) {
+            return false;
+        }
+        if (component instanceof SubReportComponent subReport) {
+            return collectSubReport(subReport, ctx, timeWindows, visitedTemplates);
+        }
+        return true;
+    }
+
+    private static boolean collectTimeWindows(ReportComponent component, TbReportCtx ctx, Map<TimeWindowKey, History> timeWindows) {
+        for (JsonNode node : JacksonUtil.valueToTree(component).findValues("timewindow")) {
             if (!node.isObject()) {
                 continue;
             }
@@ -78,22 +155,10 @@ public class ReportTimeRangeResolver {
                 return false;
             }
         }
-        for (ReportComponent component : config.getComponents()) {
-            if (!collectSubReports(component, ctx, timeWindows, visitedTemplates)) {
-                return false;
-            }
-        }
         return true;
     }
 
-    private boolean collectSubReports(ReportComponent component, TbReportCtx ctx, Map<TimeWindowKey, History> timeWindows, Set<ReportTemplateId> visitedTemplates) {
-        if (component instanceof SplitViewComponent splitView) {
-            return (splitView.getLeftView() == null || collectSubReports(splitView.getLeftView(), ctx, timeWindows, visitedTemplates))
-                    && (splitView.getRightView() == null || collectSubReports(splitView.getRightView(), ctx, timeWindows, visitedTemplates));
-        }
-        if (!(component instanceof SubReportComponent subReport)) {
-            return true;
-        }
+    private boolean collectSubReport(SubReportComponent subReport, TbReportCtx ctx, Map<TimeWindowKey, History> timeWindows, Set<ReportTemplateId> visitedTemplates) {
         ReportTemplateId templateId = subReport.getTemplateId();
         if (templateId == null) {
             return true;
@@ -111,7 +176,7 @@ public class ReportTimeRangeResolver {
         if (template == null || template.getConfiguration() == null) {
             return false;
         }
-        return collect(template.getConfiguration(), ctx, timeWindows, visitedTemplates);
+        return collect(subReportComponents(template.getConfiguration()), ctx, timeWindows, visitedTemplates);
     }
 
     /**
@@ -138,5 +203,11 @@ public class ReportTimeRangeResolver {
 
     private record TimeWindowKey(int historyType, long timewindowMs, long fixedStartTs, long fixedEndTs,
                                  QuickTimeInterval quickInterval, String timezone) {}
+
+    /**
+     * The resolved time range together with the timezone it was resolved in. A time window can carry a timezone
+     * of its own, which is the one the range was computed in, so it is also the one it has to be formatted in.
+     */
+    public record ReportTimeRange(long startTs, long endTs, String timezone) {}
 
 }

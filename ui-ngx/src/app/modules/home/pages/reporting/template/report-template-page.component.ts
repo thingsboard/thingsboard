@@ -241,9 +241,9 @@ export class ReportTemplatePageComponent extends PageComponent
     this.homeService.setHideMainToolbar(true);
     this.reportComponentContext = {
       reportComponents: () => [
-        ...(this.pdfConfiguration?.header?.components ?? []),
+        ...this.renderedHeaderFooterComponents(this.pdfConfiguration?.header),
         ...(this.reportTemplate?.configuration?.components ?? []),
-        ...(this.pdfConfiguration?.footer?.components ?? [])
+        ...this.renderedHeaderFooterComponents(this.pdfConfiguration?.footer)
       ],
       translate: this.translate,
       utils: this.utils,
@@ -348,6 +348,16 @@ export class ReportTemplatePageComponent extends PageComponent
   public enabledHeaderFooterChanged() {
     this.updatePageLayout();
     this.isDirty = true;
+  }
+
+  private renderedHeaderFooterComponents(headerFooter: HeaderFooter): ReportComponentConfig[] {
+    if (!headerFooter) {
+      return [];
+    }
+    return [
+      ...(headerFooter.enabled ? headerFooter.components ?? [] : []),
+      ...(headerFooter.firstPage?.enabled ? headerFooter.firstPage.components ?? [] : [])
+    ];
   }
 
   public headerFooterExpandAnimationStart() {
