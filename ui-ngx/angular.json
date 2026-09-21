@@ -74,8 +74,8 @@
               },
               {
                 "glob": "**/*",
-                "input": "node_modules/tinymce",
-                "output": "/assets/tinymce/"
+                "input": "node_modules/hugerte",
+                "output": "/assets/hugerte/"
               },
               {
                 "glob": "marker-icon-2x.png",
