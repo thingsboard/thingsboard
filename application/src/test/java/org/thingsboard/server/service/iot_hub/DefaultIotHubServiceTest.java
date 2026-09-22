@@ -332,6 +332,64 @@ class DefaultIotHubServiceTest {
     }
 
     @Test
+    void installPlan_errorMessageIsTheFailureItselfWithoutAnyPrefix() throws Exception {
+        mockTenant();
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        String rootVersionId = UUID.randomUUID().toString();
+        InstallPlanEntry root = willInstall(rootVersionId, true);
+
+        when(iotHubInstalledItemService.findInstalledItemIdsByTenantIdAndItemIdIn(eq(tenantId), any())).thenReturn(List.of());
+        doThrow(new IllegalStateException("install failed")).when(service).doInstallVersion(eq(user), eq(rootVersionId), any(), any());
+
+        InstallPlanResult result = service.installPlan(user, new InstallPlan(rootVersionId, List.of(root)), null, request);
+
+        // the sentence around the failure belongs to the dialog, which localizes it
+        assertThat(result.getErrorMessage()).isEqualTo("install failed");
+    }
+
+    @Test
+    void installPlan_dependencyFails_failureIsReportedOnTheEntryAndAsTheResultMessage() throws Exception {
+        mockTenant();
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        String depVersionId = UUID.randomUUID().toString();
+        String rootVersionId = UUID.randomUUID().toString();
+        InstallPlanEntry dep = willInstall(depVersionId, false);
+        InstallPlanEntry root = willInstall(rootVersionId, true);
+
+        when(iotHubInstalledItemService.findInstalledItemIdsByTenantIdAndItemIdIn(eq(tenantId), any())).thenReturn(List.of());
+        doThrow(new IllegalStateException("install failed")).when(service).doInstallVersion(eq(user), eq(depVersionId), any(), any());
+
+        InstallPlanResult result = service.installPlan(user, new InstallPlan(rootVersionId, List.of(dep, root)), null, request);
+
+        // the dialog names the failing dependency itself, from the entry it finds in the result
+        assertThat(result.getErrorMessage()).isEqualTo("install failed");
+        assertThat(result.getEntries()).anySatisfy(entry -> {
+            assertThat(entry.getName()).isEqualTo("Dep");
+            assertThat(entry.isRoot()).isFalse();
+            assertThat(entry.getErrorMessage()).isEqualTo("install failed");
+        });
+        verify(service, never()).doInstallVersion(eq(user), eq(rootVersionId), any(), any());
+    }
+
+    @Test
+    void installPlan_failureWithoutMessage_reportsTheExceptionType() throws Exception {
+        mockTenant();
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        String rootVersionId = UUID.randomUUID().toString();
+        InstallPlanEntry root = willInstall(rootVersionId, true);
+
+        when(iotHubInstalledItemService.findInstalledItemIdsByTenantIdAndItemIdIn(eq(tenantId), any())).thenReturn(List.of());
+        doThrow(new NullPointerException()).when(service).doInstallVersion(eq(user), eq(rootVersionId), any(), any());
+
+        InstallPlanResult result = service.installPlan(user, new InstallPlan(rootVersionId, List.of(root)), null, request);
+
+        // the dialog looks the failing entry up by its error message, so it must never be blank
+        assertThat(result.getErrorMessage()).isEqualTo("NullPointerException");
+        assertThat(result.getEntries()).allSatisfy(entry ->
+                assertThat(entry.getErrorMessage()).isEqualTo("NullPointerException"));
+    }
+
+    @Test
     void installPlan_rollbackFailure_reportsNotFullyRolledBack() throws Exception {
         mockTenant();
         HttpServletRequest request = mock(HttpServletRequest.class);
