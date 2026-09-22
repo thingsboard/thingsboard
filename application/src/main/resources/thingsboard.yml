@@ -1638,6 +1638,10 @@ edges:
     max_inbound_message_size: "${EDGES_RPC_MAX_INBOUND_MESSAGE_SIZE:4194304}"
     # Maximum length of telemetry (time-series and attributes) message the cloud sends to the edge. By default, there is no limitation.
     max_telemetry_message_size: "${EDGES_RPC_MAX_TELEMETRY_MESSAGE_SIZE:0}"
+    # Maximum time the cloud spends on a mail/SMS/notification send delegated by the edge before failing it.
+    # Must stay below the edge's 'cloud.uplink_pack_timeout_sec' (60 seconds by default): if the uplink is not
+    # answered in time the edge resends everything still unacknowledged, which delivers the same mail or SMS twice.
+    delegated_send_timeout_sec: "${EDGES_RPC_DELEGATED_SEND_TIMEOUT_SEC:20}"
   storage:
     # Max records of edge event to read from DB and sent to the edge
     max_read_records_count: "${EDGES_STORAGE_MAX_READ_RECORDS_COUNT:50}"

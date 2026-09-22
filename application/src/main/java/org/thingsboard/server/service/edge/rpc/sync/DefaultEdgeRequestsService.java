@@ -8,12 +8,16 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.ListeningExecutor;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.rule.engine.api.notification.FirebaseService;
@@ -70,16 +74,22 @@ import org.thingsboard.server.gen.edge.v1.WidgetBundleTypesRequestMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.entityview.TbEntityViewService;
 import org.thingsboard.server.service.mail.EdgeMailRequest;
+import org.thingsboard.server.service.mail.MailExecutorService;
 import org.thingsboard.server.service.notification.EdgeNotificationRequest;
 import org.thingsboard.server.service.sms.EdgeSmsRequest;
+import org.thingsboard.server.service.sms.SmsExecutorService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
+import org.thingsboard.server.service.executors.NotificationExecutorService;
 import org.thingsboard.server.service.state.DefaultDeviceStateService;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @TbCoreComponent
@@ -128,6 +138,26 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
 
     @Autowired
     private NotificationSettingsService notificationSettingsService;
+
+    @Autowired
+    private MailExecutorService mailExecutor;
+
+    @Autowired
+    private SmsExecutorService smsExecutor;
+
+    @Autowired
+    private NotificationExecutorService notificationExecutor;
+
+    @Value("${edges.rpc.delegated_send_timeout_sec:20}")
+    private int delegatedSendTimeoutSec;
+
+    private final ScheduledExecutorService sendTimeoutScheduler =
+            ThingsBoardExecutors.newSingleThreadScheduledExecutor("edge-delegated-send-watchdog");
+
+    @PreDestroy
+    public void destroy() {
+        sendTimeoutScheduler.shutdownNow();
+    }
 
     @Override
     public ListenableFuture<Void> processRuleChainMetadataRequestMsg(TenantId tenantId, Edge edge, RuleChainMetadataRequestMsg ruleChainMetadataRequestMsg) {
@@ -452,11 +482,11 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
 
     @Override
     public ListenableFuture<Void> processSendEmailMsg(TenantId tenantId, Edge edge, SendEmailUplinkMsg sendEmailUplinkMsg) {
-        return submitEdgeSend(tenantId, edge, "email", () -> sendEmailForEdge(tenantId, sendEmailUplinkMsg));
+        return submitEdgeSend(tenantId, edge, "email", mailExecutor, () -> sendEmailForEdge(tenantId, sendEmailUplinkMsg));
     }
 
     private void sendEmailForEdge(TenantId tenantId, SendEmailUplinkMsg sendEmailUplinkMsg) throws Exception {
-        EdgeMailRequest request = JacksonUtil.fromString(sendEmailUplinkMsg.getRequest(), EdgeMailRequest.class);
+        EdgeMailRequest request = parseSendRequest(sendEmailUplinkMsg.getRequest(), EdgeMailRequest.class);
         if (request == null || request.getMethod() == null) {
             log.warn("[{}] Received empty send email request from edge", tenantId);
             return;
@@ -487,11 +517,11 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
 
     @Override
     public ListenableFuture<Void> processSendSmsMsg(TenantId tenantId, Edge edge, SendSmsUplinkMsg sendSmsUplinkMsg) {
-        return submitEdgeSend(tenantId, edge, "sms", () -> sendSmsForEdge(tenantId, sendSmsUplinkMsg));
+        return submitEdgeSend(tenantId, edge, "sms", smsExecutor, () -> sendSmsForEdge(tenantId, sendSmsUplinkMsg));
     }
 
     private void sendSmsForEdge(TenantId tenantId, SendSmsUplinkMsg sendSmsUplinkMsg) throws Exception {
-        EdgeSmsRequest request = JacksonUtil.fromString(sendSmsUplinkMsg.getRequest(), EdgeSmsRequest.class);
+        EdgeSmsRequest request = parseSendRequest(sendSmsUplinkMsg.getRequest(), EdgeSmsRequest.class);
         if (request == null || request.getMethod() == null) {
             log.warn("[{}] Received empty send sms request from edge", tenantId);
             return;
@@ -506,24 +536,31 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
 
     @Override
     public ListenableFuture<Void> processSendNotificationMsg(TenantId tenantId, Edge edge, SendNotificationUplinkMsg sendNotificationUplinkMsg) {
-        return submitEdgeSend(tenantId, edge, "notification", () -> sendNotificationForEdge(tenantId, sendNotificationUplinkMsg));
+        return submitEdgeSend(tenantId, edge, "notification", notificationExecutor, () -> sendNotificationForEdge(tenantId, sendNotificationUplinkMsg));
     }
 
-    private ListenableFuture<Void> submitEdgeSend(TenantId tenantId, Edge edge, String what, EdgeSendTask task) {
+    private ListenableFuture<Void> submitEdgeSend(TenantId tenantId, Edge edge, String what,
+                                                  ListeningExecutor executor, EdgeSendTask task) {
         log.trace("[{}] processing edge-delegated {} send [{}]", tenantId, what, edge.getName());
-        dbCallbackExecutorService.submit(() -> {
-            try {
-                task.execute();
-            } catch (Exception e) {
-                log.warn("[{}] Failed to send {} requested by edge [{}]", tenantId, what, edge.getName(), e);
-            }
+        ListenableFuture<Void> future = Futures.withTimeout(executor.submit(() -> {
+            task.execute();
             return null;
-        });
-        return Futures.immediateFuture(null);
+        }), delegatedSendTimeoutSec, TimeUnit.SECONDS, sendTimeoutScheduler);
+        Futures.addCallback(future, new FutureCallback<>() {
+            @Override
+            public void onSuccess(@Nullable Void result) {
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                log.warn("[{}] Failed to send {} requested by edge [{}]", tenantId, what, edge.getName(), t);
+            }
+        }, dbCallbackExecutorService);
+        return future;
     }
 
     private void sendNotificationForEdge(TenantId tenantId, SendNotificationUplinkMsg sendNotificationUplinkMsg) throws Exception {
-        EdgeNotificationRequest request = JacksonUtil.fromString(sendNotificationUplinkMsg.getRequest(), EdgeNotificationRequest.class);
+        EdgeNotificationRequest request = parseSendRequest(sendNotificationUplinkMsg.getRequest(), EdgeNotificationRequest.class);
         if (request == null || request.getMethod() == null) {
             log.warn("[{}] Received empty send notification request from edge", tenantId);
             return;
@@ -572,6 +609,10 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
             config = (MobileAppNotificationDeliveryMethodConfig) settings.getDeliveryMethodsConfigs().get(NotificationDeliveryMethod.MOBILE_APP);
         }
         return config;
+    }
+
+    private static <T> T parseSendRequest(String request, Class<T> clazz) throws IOException {
+        return request != null ? JacksonUtil.IGNORE_UNKNOWN_PROPERTIES_JSON_MAPPER.readValue(request, clazz) : null;
     }
 
     private ListenableFuture<Void> saveEdgeEvent(TenantId tenantId,
