@@ -35,7 +35,8 @@
   <!-- Browse component (without tabs) -->
   <tb-iot-hub-browse
     [activeType]="config.type"
-    [hideTabs]="true">
+    [hideTabs]="true"
+    (installedItemsChanged)="loadInstalledCount()">
   </tb-iot-hub-browse>
 
   <!-- Become a Creator footer -->
