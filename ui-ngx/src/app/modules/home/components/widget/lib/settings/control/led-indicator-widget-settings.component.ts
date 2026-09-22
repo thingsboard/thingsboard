@@ -1,12 +1,20 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
-import { Component } from '@angular/core';
-import { TargetDevice, WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
+import { Component, OnInit } from '@angular/core';
+import {
+  TargetDevice,
+  TargetDeviceType,
+  targetDeviceValid,
+  WidgetSettings,
+  WidgetSettingsComponent
+} from '@shared/models/widget.models';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { WidgetService } from '@core/http/widget.service';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
+import { EntityFilter, singleEntityFilterFromDeviceId } from '@shared/models/query/query.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
     selector: 'tb-led-indicator-widget-settings',
@@ -14,7 +22,7 @@ import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
     styleUrls: ['./../widget-settings.scss'],
     standalone: false
 })
-export class LedIndicatorWidgetSettingsComponent extends WidgetSettingsComponent {
+export class LedIndicatorWidgetSettingsComponent extends WidgetSettingsComponent implements OnInit {
 
   functionScopeVariables = this.widgetService.getWidgetScopeVariables();
 
@@ -24,12 +32,29 @@ export class LedIndicatorWidgetSettingsComponent extends WidgetSettingsComponent
 
   dataKeyType = DataKeyType;
 
+  entityFilter: EntityFilter;
+
   ledIndicatorWidgetSettingsForm: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
               private widgetService: WidgetService,
               private fb: UntypedFormBuilder) {
     super(store);
+  }
+
+  ngOnInit() {
+    super.ngOnInit();
+    const targetDevice = this.targetDevice;
+    if (!targetDeviceValid(targetDevice)) {
+      return;
+    }
+    if (targetDevice.type === TargetDeviceType.device) {
+      this.entityFilter = singleEntityFilterFromDeviceId(targetDevice.deviceId);
+    } else {
+      this.aliasController.getAliasInfo(targetDevice.entityAliasId).pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe(aliasInfo => this.entityFilter = aliasInfo.entityFilter);
+    }
   }
 
   protected settingsForm(): UntypedFormGroup {

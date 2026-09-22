@@ -51,17 +51,18 @@
           </mat-select>
         </mat-form-field>
       </div>
-      <div class="tb-form-row" [class.!hidden]="ledIndicatorWidgetSettingsForm.get('performCheckStatus').value">
-        <tb-device-key-autocomplete class="flex-1"
-                                    [aliasController]="aliasController"
-                                    [targetDevice]="targetDevice"
-                                    appearance="outline"
-                                    [keyType]="ledIndicatorWidgetSettingsForm.get('retrieveValueMethod').value === 'attribute' ? dataKeyType.attribute : dataKeyType.timeseries"
-                                    attributeLabel="widgets.rpc.led-status-value-attribute"
-                                    timeseriesLabel="widgets.rpc.led-status-value-timeseries"
-                                    required
-                                    formControlName="valueAttribute">
-        </tb-device-key-autocomplete>
+      <div class="tb-form-row column-xs" [class.!hidden]="ledIndicatorWidgetSettingsForm.get('performCheckStatus').value">
+        <div class="fixed-title-width tb-required">
+          {{ (ledIndicatorWidgetSettingsForm.get('retrieveValueMethod').value === 'attribute'
+            ? 'widgets.rpc.led-status-value-attribute'
+            : 'widgets.rpc.led-status-value-timeseries') | translate }}
+        </div>
+        <tb-entity-key-autocomplete class="flex-1"
+                                    formControlName="valueAttribute"
+                                    [dataKeyType]="ledIndicatorWidgetSettingsForm.get('retrieveValueMethod').value === 'attribute' ? dataKeyType.attribute : dataKeyType.timeseries"
+                                    [entityFilter]="entityFilter"
+                                    [enableAutocomplete]="!!entityFilter">
+        </tb-entity-key-autocomplete>
       </div>
       <div class="tb-form-row column-xs" [class.!hidden]="!ledIndicatorWidgetSettingsForm.get('performCheckStatus').value">
         <div class="fixed-title-width tb-required" translate>widgets.rpc.check-status-method</div>
