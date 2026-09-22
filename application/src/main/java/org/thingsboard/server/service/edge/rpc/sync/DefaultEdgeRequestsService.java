@@ -8,6 +8,8 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+import com.google.firebase.messaging.FirebaseMessagingException;
+import com.google.firebase.messaging.MessagingErrorCode;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -580,7 +582,7 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
         slackService.sendMessage(tenantId, config.getBotToken(), request.getConversationId(), request.getMessage());
     }
 
-    private void sendMobilePushForEdge(TenantId tenantId, EdgeNotificationRequest request) {
+    private void sendMobilePushForEdge(TenantId tenantId, EdgeNotificationRequest request) throws Exception {
         MobileAppNotificationDeliveryMethodConfig config = getMobileAppConfig(tenantId);
         if (config == null || request.getFcmTokens() == null) {
             log.warn("[{}] Mobile app notifications are not configured on the cloud; dropping edge-delegated push", tenantId);
@@ -590,8 +592,14 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
         for (String fcmToken : request.getFcmTokens()) {
             try {
                 firebaseService.sendMessage(tenantId, credentials, fcmToken, request.getSubject(), request.getBody(), request.getData(), request.getBadge());
-            } catch (Exception e) {
-                log.warn("[{}] Failed to push edge-delegated notification to FCM token", tenantId, e);
+            } catch (FirebaseMessagingException e) {
+                MessagingErrorCode errorCode = e.getMessagingErrorCode();
+                if (MessagingErrorCode.UNREGISTERED == errorCode || MessagingErrorCode.INVALID_ARGUMENT == errorCode
+                        || MessagingErrorCode.SENDER_ID_MISMATCH == errorCode) {
+                    log.debug("[{}] Edge-delegated push rejected, FCM token is no longer valid: {}", tenantId, errorCode);
+                    continue;
+                }
+                throw e;
             }
         }
     }
