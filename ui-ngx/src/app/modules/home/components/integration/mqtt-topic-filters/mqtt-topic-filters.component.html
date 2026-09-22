@@ -10,11 +10,14 @@
     @for (topicFilter of mqttFiltersFromArray.controls; track topicFilter; let i = $index) {
       <div class="flex flex-1 flex-row items-center justify-start gap-2"
            [formGroup]="topicFilter">
-        <mat-form-field appearance="outline" floatLabel="always" hideRequiredMarker class="mat-block flex-1">
+        <mat-form-field appearance="outline" floatLabel="always" class="mat-block flex-1">
           @if (i === 0) {
             <mat-label>{{"integration.topic" | translate }}</mat-label>
           }
           <input matInput required name="topicFilterTopic" formControlName="filter">
+          @if (topicFilter.get('filter').hasError('required')) {
+            <mat-error translate>integration.topics-required</mat-error>
+          }
         </mat-form-field>
         <mat-form-field appearance="outline" floatLabel="always" hideRequiredMarker class="mat-block flex-1">
           @if (i === 0) {
