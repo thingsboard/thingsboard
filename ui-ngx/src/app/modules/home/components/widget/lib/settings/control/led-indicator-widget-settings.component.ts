@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
-import { Component, OnInit } from '@angular/core';
+import { Component, DoCheck } from '@angular/core';
 import {
   TargetDevice,
   TargetDeviceType,
@@ -15,6 +15,9 @@ import { WidgetService } from '@core/http/widget.service';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { EntityFilter, singleEntityFilterFromDeviceId } from '@shared/models/query/query.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Observable, of, Subject } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
+import { isEqual } from '@core/utils';
 
 @Component({
     selector: 'tb-led-indicator-widget-settings',
@@ -22,7 +25,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
     styleUrls: ['./../widget-settings.scss'],
     standalone: false
 })
-export class LedIndicatorWidgetSettingsComponent extends WidgetSettingsComponent implements OnInit {
+export class LedIndicatorWidgetSettingsComponent extends WidgetSettingsComponent implements DoCheck {
 
   functionScopeVariables = this.widgetService.getWidgetScopeVariables();
 
@@ -36,25 +39,37 @@ export class LedIndicatorWidgetSettingsComponent extends WidgetSettingsComponent
 
   ledIndicatorWidgetSettingsForm: UntypedFormGroup;
 
+  private currentTargetDevice: TargetDevice;
+  private targetDeviceChanged = new Subject<TargetDevice>();
+
   constructor(protected store: Store<AppState>,
               private widgetService: WidgetService,
               private fb: UntypedFormBuilder) {
     super(store);
+    this.targetDeviceChanged.pipe(
+      switchMap(targetDevice => this.resolveEntityFilter(targetDevice)),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(entityFilter => this.entityFilter = entityFilter);
   }
 
-  ngOnInit() {
-    super.ngOnInit();
+  ngDoCheck() {
     const targetDevice = this.targetDevice;
+    if (!isEqual(targetDevice, this.currentTargetDevice)) {
+      this.currentTargetDevice = targetDevice;
+      this.targetDeviceChanged.next(targetDevice);
+    }
+  }
+
+  private resolveEntityFilter(targetDevice: TargetDevice): Observable<EntityFilter> {
     if (!targetDeviceValid(targetDevice)) {
-      return;
+      return of(null);
     }
     if (targetDevice.type === TargetDeviceType.device) {
-      this.entityFilter = singleEntityFilterFromDeviceId(targetDevice.deviceId);
-    } else {
-      this.aliasController.getAliasInfo(targetDevice.entityAliasId).pipe(
-        takeUntilDestroyed(this.destroyRef)
-      ).subscribe(aliasInfo => this.entityFilter = aliasInfo.entityFilter);
+      return of(singleEntityFilterFromDeviceId(targetDevice.deviceId));
     }
+    return this.aliasController.getAliasInfo(targetDevice.entityAliasId).pipe(
+      map(aliasInfo => aliasInfo.entityFilter)
+    );
   }
 
   protected settingsForm(): UntypedFormGroup {

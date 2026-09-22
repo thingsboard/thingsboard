@@ -21,7 +21,7 @@ import {
   Validator,
   Validators
 } from '@angular/forms';
-import { map, startWith, switchMap } from 'rxjs/operators';
+import { catchError, map, startWith, switchMap } from 'rxjs/operators';
 import { combineLatest, of, Subject } from 'rxjs';
 import { EntityService } from '@core/http/entity.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -78,10 +78,23 @@ export class EntityKeyAutocompleteComponent implements ControlValueAccessor, Val
         if (!this.enableAutocomplete) {
           return of([] as string[]);
         }
-        return this.cachedResult ? of(this.cachedResult) : this.entityService.findEntityKeysByQuery({
-          pageLink: { page: 0, pageSize: 100 },
-          entityFilter: this.entityFilter(),
-        }, this.dataKeyType() === DataKeyType.attribute, this.dataKeyType() === DataKeyType.timeseries, this.keyScopeType(), {ignoreLoading: true});
+
+        const result$ = this.cachedResult
+          ? of(this.cachedResult)
+          : this.entityService.findEntityKeysByQuery({
+              pageLink: { page: 0, pageSize: 100 },
+              entityFilter: this.entityFilter(),
+            },
+            this.dataKeyType() === DataKeyType.attribute,
+            this.dataKeyType() === DataKeyType.timeseries,
+            this.keyScopeType(),
+            {ignoreLoading: true, ignoreErrors: true}
+          );
+
+        return result$.pipe(
+          startWith([] as string[]),
+          catchError(() => of([] as string[]))
+        );
       }),
       map(result => {
         if (Array.isArray(result)) {
@@ -116,10 +129,12 @@ export class EntityKeyAutocompleteComponent implements ControlValueAccessor, Val
       .pipe(takeUntilDestroyed())
       .subscribe(value => this.propagateChange(value));
     effect(() => {
-      if (this.keyScopeType() || this.entityFilter() && this.dataKeyType()) {
-        this.cachedResult = null;
-        this.searchText = '';
-      }
+      this.entityFilter();
+      this.dataKeyType();
+      this.keyScopeType();
+
+      this.cachedResult = null;
+      this.searchText = '';
     });
   }
 
@@ -131,11 +146,8 @@ export class EntityKeyAutocompleteComponent implements ControlValueAccessor, Val
     const keyTypeChanged = changes.dataKeyType?.previousValue &&
       changes.dataKeyType.currentValue !== changes.dataKeyType.previousValue;
 
-    if (filterChanged || keyScopeChanged || keyTypeChanged) {
-      this.cachedResult = null;
-      if (!this.keyControl.disabled) {
-        this.keyControl.setValue('', {emitEvent: false});
-      }
+    if ((filterChanged || keyScopeChanged || keyTypeChanged) && !this.keyControl.disabled) {
+      this.keyControl.setValue('');
     }
   }
 
