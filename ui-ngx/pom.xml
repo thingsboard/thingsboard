@@ -9,7 +9,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>4.3.1.5-SNAPSHOT</version>
+        <version>4.3.1.6-SNAPSHOT</version>
         <artifactId>thingsboard</artifactId>
     </parent>
     <groupId>org.thingsboard</groupId>
@@ -37,6 +37,9 @@
                 <configuration>
                     <installDirectory>target</installDirectory>
                     <workingDirectory>${basedir}</workingDirectory>
+                    <!-- Declared at plugin level so that it covers every execution of this plugin,
+                         including the ones contributed by the profiles below. -->
+                    <skip>${skip.ui.build}</skip>
                 </configuration>
                 <executions>
                     <execution>
@@ -69,6 +72,14 @@
                             <directory>${basedir}/node_modules</directory>
                         </fileset>
                     </filesets>
+                </configuration>
+            </plugin>
+            <plugin>
+                <!-- Only consumed in-reactor by application and msa/web-ui -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
                 </configuration>
             </plugin>
         </plugins>
