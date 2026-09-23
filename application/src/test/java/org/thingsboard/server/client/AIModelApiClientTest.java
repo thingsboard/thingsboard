@@ -3,6 +3,10 @@
 package org.thingsboard.server.client;
 
 import org.junit.Test;
+import org.thingsboard.client.api.ThingsboardApi.DeleteAiModelByIdArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetAiModelByIdArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetAiModelsArgs;
+import org.thingsboard.client.api.ThingsboardApi.SaveAiModelArgs;
 import org.thingsboard.client.model.AiModel;
 import org.thingsboard.client.model.OpenAiChatModelConfig;
 import org.thingsboard.client.model.OpenAiProviderConfig;
@@ -27,14 +31,18 @@ public class AIModelApiClientTest extends AbstractApiClientTest {
         String name = AI_PREFIX + "save_" + ts;
 
         AiModel model = buildAiModel(name, "gpt-4o", 0.7);
-        AiModel saved = client.saveAiModel(model);
+        AiModel saved = client.saveAiModel(SaveAiModelArgs.builder()
+                .aiModel(model)
+                .build());
         assertNotNull(saved);
         assertNotNull(saved.getId());
         assertEquals(name, saved.getName());
         assertNotNull(saved.getConfiguration());
 
         // get by id
-        AiModel fetched = client.getAiModelById(saved.getId().getId());
+        AiModel fetched = client.getAiModelById(GetAiModelByIdArgs.builder()
+                .modelUuid(saved.getId().getId())
+                .build());
         assertNotNull(fetched);
         assertEquals(name, fetched.getName());
         assertEquals(saved.getId().getId(), fetched.getId().getId());
@@ -45,7 +53,9 @@ public class AIModelApiClientTest extends AbstractApiClientTest {
         long ts = System.currentTimeMillis();
         AiModel saved = createAiModel("getbyid_" + ts);
 
-        AiModel fetched = client.getAiModelById(saved.getId().getId());
+        AiModel fetched = client.getAiModelById(GetAiModelByIdArgs.builder()
+                .modelUuid(saved.getId().getId())
+                .build());
         assertNotNull(fetched);
         assertEquals(saved.getName(), fetched.getName());
         assertEquals(saved.getId().getId(), fetched.getId().getId());
@@ -69,7 +79,9 @@ public class AIModelApiClientTest extends AbstractApiClientTest {
         updatedConfig.setProvider("OPENAI");
         saved.setConfiguration(updatedConfig);
 
-        AiModel updated = client.saveAiModel(saved);
+        AiModel updated = client.saveAiModel(SaveAiModelArgs.builder()
+                .aiModel(saved)
+                .build());
         assertNotNull(updated);
         assertEquals(saved.getId().getId(), updated.getId().getId());
         assertEquals(AI_PREFIX + "updated_" + ts, updated.getName());
@@ -81,12 +93,18 @@ public class AIModelApiClientTest extends AbstractApiClientTest {
         AiModel saved = createAiModel("delete_" + ts);
 
         UUID modelId = saved.getId().getId();
-        client.getAiModelById(modelId);
+        client.getAiModelById(GetAiModelByIdArgs.builder()
+                .modelUuid(modelId)
+                .build());
 
-        Boolean deleted = client.deleteAiModelById(modelId);
+        Boolean deleted = client.deleteAiModelById(DeleteAiModelByIdArgs.builder()
+                .modelUuid(modelId)
+                .build());
         assertTrue(deleted);
 
-        assertReturns404(() -> client.getAiModelById(modelId));
+        assertReturns404(() -> client.getAiModelById(GetAiModelByIdArgs.builder()
+                .modelUuid(modelId)
+                .build()));
     }
 
     @Test
@@ -97,7 +115,11 @@ public class AIModelApiClientTest extends AbstractApiClientTest {
             createAiModel("list_" + ts + "_" + i);
         }
 
-        PageDataAiModel page = client.getAiModels(100, 0, AI_PREFIX + "list_" + ts, null, null);
+        PageDataAiModel page = client.getAiModels(GetAiModelsArgs.builder()
+                .pageSize(100)
+                .page(0)
+                .textSearch(AI_PREFIX + "list_" + ts)
+                .build());
         assertNotNull(page);
         assertEquals(3, page.getTotalElements().intValue());
         for (AiModel m : page.getData()) {
@@ -108,7 +130,9 @@ public class AIModelApiClientTest extends AbstractApiClientTest {
     @Test
     public void testGetAiModelById_notFound() {
         UUID nonExistentId = UUID.randomUUID();
-        assertReturns404(() -> client.getAiModelById(nonExistentId));
+        assertReturns404(() -> client.getAiModelById(GetAiModelByIdArgs.builder()
+                .modelUuid(nonExistentId)
+                .build()));
     }
 
     @Test
@@ -119,14 +143,22 @@ public class AIModelApiClientTest extends AbstractApiClientTest {
             createAiModel("paged_" + ts + "_" + i);
         }
 
-        PageDataAiModel page1 = client.getAiModels(2, 0, AI_PREFIX + "paged_" + ts, null, null);
+        PageDataAiModel page1 = client.getAiModels(GetAiModelsArgs.builder()
+                .pageSize(2)
+                .page(0)
+                .textSearch(AI_PREFIX + "paged_" + ts)
+                .build());
         assertNotNull(page1);
         assertEquals(5, page1.getTotalElements().intValue());
         assertEquals(3, page1.getTotalPages().intValue());
         assertEquals(2, page1.getData().size());
         assertTrue(page1.getHasNext());
 
-        PageDataAiModel lastPage = client.getAiModels(2, 2, AI_PREFIX + "paged_" + ts, null, null);
+        PageDataAiModel lastPage = client.getAiModels(GetAiModelsArgs.builder()
+                .pageSize(2)
+                .page(2)
+                .textSearch(AI_PREFIX + "paged_" + ts)
+                .build());
         assertEquals(1, lastPage.getData().size());
         assertFalse(lastPage.getHasNext());
     }
@@ -149,7 +181,9 @@ public class AIModelApiClientTest extends AbstractApiClientTest {
     }
 
     private AiModel createAiModel(String suffix) throws Exception {
-        return client.saveAiModel(buildAiModel(AI_PREFIX + suffix, "gpt-4o", 0.7));
+        return client.saveAiModel(SaveAiModelArgs.builder()
+                .aiModel(buildAiModel(AI_PREFIX + suffix, "gpt-4o", 0.7))
+                .build());
     }
 
 }

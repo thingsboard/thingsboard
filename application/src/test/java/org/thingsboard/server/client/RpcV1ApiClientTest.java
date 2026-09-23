@@ -4,6 +4,10 @@ package org.thingsboard.server.client;
 
 import org.junit.Test;
 import org.thingsboard.client.ApiException;
+import org.thingsboard.client.api.ThingsboardApi.DeleteDeviceArgs;
+import org.thingsboard.client.api.ThingsboardApi.HandleOneWayDeviceRPCRequestV1Args;
+import org.thingsboard.client.api.ThingsboardApi.HandleTwoWayDeviceRPCRequestV1Args;
+import org.thingsboard.client.api.ThingsboardApi.SaveDeviceArgs;
 import org.thingsboard.client.model.Device;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
@@ -24,13 +28,18 @@ public class RpcV1ApiClientTest extends AbstractApiClientTest {
         String deviceId = device.getId().getId().toString();
 
         try {
-            client.handleOneWayDeviceRPCRequestV1(deviceId, ONE_WAY_BODY);
+            client.handleOneWayDeviceRPCRequestV1(HandleOneWayDeviceRPCRequestV1Args.builder()
+                    .deviceId(deviceId)
+                    .body(ONE_WAY_BODY)
+                    .build());
         } catch (ApiException e) {
             assertEquals("handleOneWayDeviceRPCRequest got an unexpected HTTP error: " + e.getCode(),
                     0, e.getCode());
         }
 
-        client.deleteDevice(deviceId);
+        client.deleteDevice(DeleteDeviceArgs.builder()
+                .deviceId(deviceId)
+                .build());
     }
 
     @Test
@@ -40,20 +49,27 @@ public class RpcV1ApiClientTest extends AbstractApiClientTest {
         String deviceId = device.getId().getId().toString();
 
         try {
-            client.handleTwoWayDeviceRPCRequestV1(deviceId, TWO_WAY_BODY);
+            client.handleTwoWayDeviceRPCRequestV1(HandleTwoWayDeviceRPCRequestV1Args.builder()
+                    .deviceId(deviceId)
+                    .body(TWO_WAY_BODY)
+                    .build());
         } catch (ApiException e) {
             assertEquals("handleTwoWayDeviceRPCRequest got an unexpected HTTP error: " + e.getCode(),
                     0, e.getCode());
         }
 
-        client.deleteDevice(deviceId);
+        client.deleteDevice(DeleteDeviceArgs.builder()
+                .deviceId(deviceId)
+                .build());
     }
 
     private Device createNewDevice(String name) throws ApiException {
         Device device = new Device();
         device.setName(name);
         device.setType("default");
-        return client.saveDevice(device, null, null, null, null);
+        return client.saveDevice(SaveDeviceArgs.builder()
+                .device(device)
+                .build());
     }
 
 }
