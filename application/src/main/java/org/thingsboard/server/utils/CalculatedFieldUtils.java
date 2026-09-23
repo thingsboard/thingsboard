@@ -263,13 +263,13 @@ public class CalculatedFieldUtils {
 
         proto.getSingleValueArgumentsList().forEach(argProto ->
                 state.getArguments().put(argProto.getArgName(), fromSingleValueArgumentProto(argProto)));
+        proto.getRollingValueArgumentsList().forEach(argProto ->
+                state.getArguments().put(argProto.getKey(), fromRollingArgumentProto(argProto)));
 
         switch (type) {
-            case SCRIPT -> restoreRollingArguments(state, proto);
             case GEOFENCING -> proto.getGeofencingArgumentsList().forEach(argProto ->
                     state.getArguments().put(argProto.getArgName(), fromGeofencingArgumentProto(argProto)));
             case PROPAGATION -> {
-                restoreRollingArguments(state, proto);
                 List<EntityId> propagationEntityIds = proto.getPropagationEntityIdsList().stream().map(ProtoUtils::fromProto).toList();
                 state.getArguments().put(PROPAGATION_CONFIG_ARGUMENT, new PropagationArgumentEntry(propagationEntityIds));
             }
@@ -287,11 +287,6 @@ public class CalculatedFieldUtils {
         }
 
         return state;
-    }
-
-    private static void restoreRollingArguments(CalculatedFieldState state, CalculatedFieldStateProto proto) {
-        proto.getRollingValueArgumentsList().forEach(argProto ->
-                state.getArguments().put(argProto.getKey(), fromRollingArgumentProto(argProto)));
     }
 
     public static SingleValueArgumentEntry fromSingleValueArgumentProto(SingleValueArgumentProto proto) {
