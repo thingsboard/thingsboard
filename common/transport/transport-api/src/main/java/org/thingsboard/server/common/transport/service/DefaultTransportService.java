@@ -383,7 +383,8 @@ public class DefaultTransportService extends TransportActivityManager implements
 
     @Override
     public void process(DeviceTransportType transportType, TransportProtos.ValidateOrCreateDeviceX509CertRequestMsg msg, TransportServiceCallback<ValidateDeviceCredentialsResponse> callback) {
-        log.trace("Processing msg: {}", msg);
+        msg = msg.toBuilder().setTransportType(transportType.name()).build();
+        log.trace("Processing X.509 certificate-chain request for {}", transportType);
         TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(UUID.randomUUID(), TransportApiRequestMsg.newBuilder().setValidateOrCreateX509CertRequestMsg(msg).build());
         doProcess(transportType, protoMsg, callback);
     }
