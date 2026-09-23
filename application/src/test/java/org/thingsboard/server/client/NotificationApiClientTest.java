@@ -3,6 +3,26 @@
 package org.thingsboard.server.client;
 
 import org.junit.Test;
+import org.thingsboard.client.api.ThingsboardApi.CreateNotificationRequestArgs;
+import org.thingsboard.client.api.ThingsboardApi.DeleteNotificationRequestArgs;
+import org.thingsboard.client.api.ThingsboardApi.DeleteNotificationRuleArgs;
+import org.thingsboard.client.api.ThingsboardApi.DeleteNotificationTargetByIdArgs;
+import org.thingsboard.client.api.ThingsboardApi.DeleteNotificationTemplateByIdArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetNotificationRequestByIdArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetNotificationRequestsArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetNotificationRuleByIdArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetNotificationRulesArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetNotificationTargetByIdArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetNotificationTargetsArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetNotificationTemplateByIdArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetNotificationTemplatesArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetNotificationsArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetUnreadNotificationsCountArgs;
+import org.thingsboard.client.api.ThingsboardApi.MarkAllNotificationsAsReadArgs;
+import org.thingsboard.client.api.ThingsboardApi.MarkNotificationAsReadArgs;
+import org.thingsboard.client.api.ThingsboardApi.SaveNotificationRuleArgs;
+import org.thingsboard.client.api.ThingsboardApi.SaveNotificationTargetArgs;
+import org.thingsboard.client.api.ThingsboardApi.SaveNotificationTemplateArgs;
 import org.thingsboard.client.model.EntityActionNotificationRuleTriggerConfig;
 import org.thingsboard.client.model.EntityActionRecipientsConfig;
 import org.thingsboard.client.model.EntityType;
@@ -52,19 +72,26 @@ public class NotificationApiClientTest extends AbstractApiClientTest {
                         .name("Test Target " + timestamp)
                         ._configuration(targetConfig);
 
-        NotificationTarget savedTarget = client.saveNotificationTarget(target);
+        NotificationTarget savedTarget = client.saveNotificationTarget(SaveNotificationTargetArgs.builder()
+                .notificationTarget(target)
+                .build());
         assertNotNull(savedTarget);
         assertNotNull(savedTarget.getId());
         assertEquals("Test Target " + timestamp, savedTarget.getName());
 
         // Get target by ID
         NotificationTarget fetchedTarget =
-                client.getNotificationTargetById(savedTarget.getId().getId());
+                client.getNotificationTargetById(GetNotificationTargetByIdArgs.builder()
+                        .id(savedTarget.getId().getId())
+                        .build());
         assertEquals(savedTarget.getName(), fetchedTarget.getName());
 
         // List targets
         PageDataNotificationTarget targetsPage =
-                client.getNotificationTargets(100, 0, null, null, null);
+                client.getNotificationTargets(GetNotificationTargetsArgs.builder()
+                        .pageSize(100)
+                        .page(0)
+                        .build());
         assertNotNull(targetsPage);
         assertNotNull(targetsPage.getData());
         assertTrue(
@@ -73,7 +100,9 @@ public class NotificationApiClientTest extends AbstractApiClientTest {
 
         // Update target
         savedTarget.setName("Updated Target " + timestamp);
-        NotificationTarget updatedTarget = client.saveNotificationTarget(savedTarget);
+        NotificationTarget updatedTarget = client.saveNotificationTarget(SaveNotificationTargetArgs.builder()
+                .notificationTarget(savedTarget)
+                .build());
         assertEquals("Updated Target " + timestamp, updatedTarget.getName());
 
         // === 2. Notification Template CRUD ===
@@ -93,20 +122,27 @@ public class NotificationApiClientTest extends AbstractApiClientTest {
                         .notificationType(NotificationType.GENERAL)
                         ._configuration(templateConfig);
 
-        NotificationTemplate savedTemplate = client.saveNotificationTemplate(template);
+        NotificationTemplate savedTemplate = client.saveNotificationTemplate(SaveNotificationTemplateArgs.builder()
+                .notificationTemplate(template)
+                .build());
         assertNotNull(savedTemplate);
         assertNotNull(savedTemplate.getId());
         assertEquals("Test Template " + timestamp, savedTemplate.getName());
 
         // Get template by ID
         NotificationTemplate fetchedTemplate =
-                client.getNotificationTemplateById(savedTemplate.getId().getId());
+                client.getNotificationTemplateById(GetNotificationTemplateByIdArgs.builder()
+                        .id(savedTemplate.getId().getId())
+                        .build());
         assertEquals(savedTemplate.getName(), fetchedTemplate.getName());
         assertEquals(NotificationType.GENERAL, fetchedTemplate.getNotificationType());
 
         // List templates
         PageDataNotificationTemplate templatesPage =
-                client.getNotificationTemplates(100, 0, null, null, null, null);
+                client.getNotificationTemplates(GetNotificationTemplatesArgs.builder()
+                        .pageSize(100)
+                        .page(0)
+                        .build());
         assertNotNull(templatesPage);
         assertTrue(
                 templatesPage.getData().stream()
@@ -114,7 +150,9 @@ public class NotificationApiClientTest extends AbstractApiClientTest {
 
         // Update template
         savedTemplate.setName("Updated Template " + timestamp);
-        NotificationTemplate updatedTemplate = client.saveNotificationTemplate(savedTemplate);
+        NotificationTemplate updatedTemplate = client.saveNotificationTemplate(SaveNotificationTemplateArgs.builder()
+                .notificationTemplate(savedTemplate)
+                .build());
         assertEquals("Updated Template " + timestamp, updatedTemplate.getName());
 
         // === 3. Send notification & read notifications ===
@@ -124,39 +162,54 @@ public class NotificationApiClientTest extends AbstractApiClientTest {
                 new NotificationRequest()
                         .targets(List.of(savedTarget.getId().getId()))
                         .templateId(savedTemplate.getId());
-        NotificationRequest sentRequest = client.createNotificationRequest(request);
+        NotificationRequest sentRequest = client.createNotificationRequest(CreateNotificationRequestArgs.builder()
+                .notificationRequest(request)
+                .build());
         assertNotNull(sentRequest);
         assertNotNull(sentRequest.getId());
 
         // Get request by ID
         NotificationRequestInfo fetchedRequest =
-                client.getNotificationRequestById(sentRequest.getId().getId());
+                client.getNotificationRequestById(GetNotificationRequestByIdArgs.builder()
+                        .id(sentRequest.getId().getId())
+                        .build());
         assertNotNull(fetchedRequest);
 
         // List requests
         PageDataNotificationRequestInfo requestsPage =
-                client.getNotificationRequests(100, 0, null, null, null);
+                client.getNotificationRequests(GetNotificationRequestsArgs.builder()
+                        .pageSize(100)
+                        .page(0)
+                        .build());
         assertNotNull(requestsPage);
         assertFalse(requestsPage.getData().isEmpty());
 
         // Get notifications for current user
         PageDataNotification notificationsPage =
-                client.getNotifications(100, 0, null, null, null, null, null);
+                client.getNotifications(GetNotificationsArgs.builder()
+                        .pageSize(100)
+                        .page(0)
+                        .build());
         assertNotNull(notificationsPage);
         assertFalse(notificationsPage.getData().isEmpty());
 
         // Get unread count
-        Integer unreadCount = client.getUnreadNotificationsCount("WEB");
+        Integer unreadCount = client.getUnreadNotificationsCount(GetUnreadNotificationsCountArgs.builder()
+                .deliveryMethod("WEB")
+                .build());
         assertNotNull(unreadCount);
         assertTrue("Expected at least one unread notification", unreadCount > 0);
 
         // Mark single notification as read
-        client.markNotificationAsRead(
-                notificationsPage.getData().get(0).getId().getId());
+        client.markNotificationAsRead(MarkNotificationAsReadArgs.builder()
+                .id(notificationsPage.getData().get(0).getId().getId())
+                .build());
 
         // Mark all as read
-        client.markAllNotificationsAsRead(null);
-        Integer unreadAfterMarkAll = client.getUnreadNotificationsCount(null);
+        client.markAllNotificationsAsRead(MarkAllNotificationsAsReadArgs.builder()
+                .build());
+        Integer unreadAfterMarkAll = client.getUnreadNotificationsCount(GetUnreadNotificationsCountArgs.builder()
+                .build());
         assertEquals("Expected no unread notifications after marking all as read", 0, unreadAfterMarkAll.intValue());
 
         // === 4. Notification Settings ===
@@ -171,16 +224,28 @@ public class NotificationApiClientTest extends AbstractApiClientTest {
         // === 5. Cleanup ===
 
         // Delete notification request
-        client.deleteNotificationRequest(sentRequest.getId().getId());
-        assertReturns404(() -> client.getNotificationRequestById(sentRequest.getId().getId()));
+        client.deleteNotificationRequest(DeleteNotificationRequestArgs.builder()
+                .id(sentRequest.getId().getId())
+                .build());
+        assertReturns404(() -> client.getNotificationRequestById(GetNotificationRequestByIdArgs.builder()
+                .id(sentRequest.getId().getId())
+                .build()));
 
         // Delete template
-        client.deleteNotificationTemplateById(savedTemplate.getId().getId());
-        assertReturns404(() -> client.getNotificationTemplateById(savedTemplate.getId().getId()));
+        client.deleteNotificationTemplateById(DeleteNotificationTemplateByIdArgs.builder()
+                .id(savedTemplate.getId().getId())
+                .build());
+        assertReturns404(() -> client.getNotificationTemplateById(GetNotificationTemplateByIdArgs.builder()
+                .id(savedTemplate.getId().getId())
+                .build()));
 
         // Delete target
-        client.deleteNotificationTargetById(savedTarget.getId().getId());
-        assertReturns404(() -> client.getNotificationTargetById(savedTarget.getId().getId()));
+        client.deleteNotificationTargetById(DeleteNotificationTargetByIdArgs.builder()
+                .id(savedTarget.getId().getId())
+                .build());
+        assertReturns404(() -> client.getNotificationTargetById(GetNotificationTargetByIdArgs.builder()
+                .id(savedTarget.getId().getId())
+                .build()));
     }
 
     @Test
@@ -195,7 +260,9 @@ public class NotificationApiClientTest extends AbstractApiClientTest {
                 new NotificationTarget()
                         .name("Rule Test Target " + timestamp)
                         ._configuration(targetConfig);
-        NotificationTarget savedTarget = client.saveNotificationTarget(target);
+        NotificationTarget savedTarget = client.saveNotificationTarget(SaveNotificationTargetArgs.builder()
+                .notificationTarget(target)
+                .build());
 
         // Create a template of type ENTITY_ACTION
         WebDeliveryMethodNotificationTemplate webTemplate =
@@ -211,7 +278,9 @@ public class NotificationApiClientTest extends AbstractApiClientTest {
                         .name("Rule Test Template " + timestamp)
                         .notificationType(NotificationType.ENTITY_ACTION)
                         ._configuration(templateConfig);
-        NotificationTemplate savedTemplate = client.saveNotificationTemplate(template);
+        NotificationTemplate savedTemplate = client.saveNotificationTemplate(SaveNotificationTemplateArgs.builder()
+                .notificationTemplate(template)
+                .build());
 
         // Build trigger config: fire on DEVICE create/update
         EntityActionNotificationRuleTriggerConfig triggerConfig =
@@ -234,7 +303,9 @@ public class NotificationApiClientTest extends AbstractApiClientTest {
                 .triggerConfig(triggerConfig)
                 .recipientsConfig(recipientsConfig);
 
-        NotificationRule savedRule = client.saveNotificationRule(rule);
+        NotificationRule savedRule = client.saveNotificationRule(SaveNotificationRuleArgs.builder()
+                .notificationRule(rule)
+                .build());
         assertNotNull(savedRule);
         assertNotNull(savedRule.getId());
         assertEquals("Test Rule " + timestamp, savedRule.getName());
@@ -242,24 +313,37 @@ public class NotificationApiClientTest extends AbstractApiClientTest {
         assertEquals(Boolean.TRUE, savedRule.getEnabled());
 
         // getNotificationRuleById
-        NotificationRuleInfo fetchedRule = client.getNotificationRuleById(savedRule.getId().getId());
+        NotificationRuleInfo fetchedRule = client.getNotificationRuleById(GetNotificationRuleByIdArgs.builder()
+                .id(savedRule.getId().getId())
+                .build());
         assertNotNull(fetchedRule);
         assertEquals(savedRule.getName(), fetchedRule.getName());
         assertEquals(NotificationRuleTriggerType.ENTITY_ACTION, fetchedRule.getTriggerType());
 
         // getNotificationRules - verify it appears in the list
-        PageDataNotificationRuleInfo rulesPage = client.getNotificationRules(100, 0, null, null, null);
+        PageDataNotificationRuleInfo rulesPage = client.getNotificationRules(GetNotificationRulesArgs.builder()
+                .pageSize(100)
+                .page(0)
+                .build());
         assertNotNull(rulesPage);
         assertTrue(rulesPage.getData().stream()
                 .anyMatch(r -> r.getId().getId().equals(savedRule.getId().getId())));
 
         // deleteNotificationRule
-        client.deleteNotificationRule(savedRule.getId().getId());
-        assertReturns404(() -> client.getNotificationRuleById(savedRule.getId().getId()));
+        client.deleteNotificationRule(DeleteNotificationRuleArgs.builder()
+                .id(savedRule.getId().getId())
+                .build());
+        assertReturns404(() -> client.getNotificationRuleById(GetNotificationRuleByIdArgs.builder()
+                .id(savedRule.getId().getId())
+                .build()));
 
         // Cleanup
-        client.deleteNotificationTemplateById(savedTemplate.getId().getId());
-        client.deleteNotificationTargetById(savedTarget.getId().getId());
+        client.deleteNotificationTemplateById(DeleteNotificationTemplateByIdArgs.builder()
+                .id(savedTemplate.getId().getId())
+                .build());
+        client.deleteNotificationTargetById(DeleteNotificationTargetByIdArgs.builder()
+                .id(savedTarget.getId().getId())
+                .build());
     }
 
 }

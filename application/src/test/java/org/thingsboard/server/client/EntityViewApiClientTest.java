@@ -3,6 +3,17 @@
 package org.thingsboard.server.client;
 
 import org.junit.Test;
+import org.thingsboard.client.api.ThingsboardApi.AssignEntityViewToCustomerArgs;
+import org.thingsboard.client.api.ThingsboardApi.DeleteEntityViewArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetCustomerEntityViewInfosArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetCustomerEntityViewsArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetEntityViewByIdArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetEntityViewInfoByIdArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetTenantEntityViewInfosArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetTenantEntityViewsArgs;
+import org.thingsboard.client.api.ThingsboardApi.SaveDeviceArgs;
+import org.thingsboard.client.api.ThingsboardApi.SaveEntityViewArgs;
+import org.thingsboard.client.api.ThingsboardApi.UnassignEntityViewFromCustomerArgs;
 import org.thingsboard.client.model.AttributesEntityView;
 import org.thingsboard.client.model.Device;
 import org.thingsboard.client.model.EntitySubtype;
@@ -45,7 +56,9 @@ public class EntityViewApiClientTest extends AbstractApiClientTest {
         ev.setStartTimeMs(1000L);
         ev.setEndTimeMs(2000L);
 
-        EntityView saved = client.saveEntityView(ev, null, null, null);
+        EntityView saved = client.saveEntityView(SaveEntityViewArgs.builder()
+                .entityView(ev)
+                .build());
         assertNotNull(saved);
         assertNotNull(saved.getId());
         assertEquals(ev.getName(), saved.getName());
@@ -57,7 +70,9 @@ public class EntityViewApiClientTest extends AbstractApiClientTest {
 
         // get by id
         String evId = saved.getId().getId().toString();
-        EntityView fetched = client.getEntityViewById(evId);
+        EntityView fetched = client.getEntityViewById(GetEntityViewByIdArgs.builder()
+                .entityViewId(evId)
+                .build());
         assertNotNull(fetched);
         assertEquals(saved.getName(), fetched.getName());
         assertEquals(saved.getType(), fetched.getType());
@@ -70,7 +85,9 @@ public class EntityViewApiClientTest extends AbstractApiClientTest {
         Device device = createTestDevice(String.valueOf(ts));
         EntityView saved = createEntityView(EV_PREFIX + "info_" + ts, "infoType", device);
 
-        EntityViewInfo info = client.getEntityViewInfoById(saved.getId().getId().toString());
+        EntityViewInfo info = client.getEntityViewInfoById(GetEntityViewInfoByIdArgs.builder()
+                .entityViewId(saved.getId().getId().toString())
+                .build());
         assertNotNull(info);
         assertEquals(saved.getName(), info.getName());
         assertEquals("infoType", info.getType());
@@ -91,7 +108,9 @@ public class EntityViewApiClientTest extends AbstractApiClientTest {
                         .ss(List.of())
                         .sh(List.of())));
 
-        EntityView updated = client.saveEntityView(saved, null, null, null);
+        EntityView updated = client.saveEntityView(SaveEntityViewArgs.builder()
+                .entityView(saved)
+                .build());
         assertEquals(EV_PREFIX + "updated_" + ts, updated.getName());
         assertEquals(List.of("temperature", "pressure"), updated.getKeys().getTimeseries());
         assertEquals(saved.getId().getId(), updated.getId().getId());
@@ -104,11 +123,17 @@ public class EntityViewApiClientTest extends AbstractApiClientTest {
         EntityView saved = createEntityView(EV_PREFIX + "delete_" + ts, "default", device);
 
         String evId = saved.getId().getId().toString();
-        client.getEntityViewById(evId);
+        client.getEntityViewById(GetEntityViewByIdArgs.builder()
+                .entityViewId(evId)
+                .build());
 
-        client.deleteEntityView(evId);
+        client.deleteEntityView(DeleteEntityViewArgs.builder()
+                .entityViewId(evId)
+                .build());
 
-        assertReturns404(() -> client.getEntityViewById(evId));
+        assertReturns404(() -> client.getEntityViewById(GetEntityViewByIdArgs.builder()
+                .entityViewId(evId)
+                .build()));
     }
 
     @Test
@@ -120,7 +145,11 @@ public class EntityViewApiClientTest extends AbstractApiClientTest {
             createEntityView(EV_PREFIX + "tenant_" + ts + "_" + i, "tenantViewType", device);
         }
 
-        PageDataEntityView page = client.getTenantEntityViews(100, 0, null, EV_PREFIX + "tenant_" + ts, null, null);
+        PageDataEntityView page = client.getTenantEntityViews(GetTenantEntityViewsArgs.builder()
+                .pageSize(100)
+                .page(0)
+                .textSearch(EV_PREFIX + "tenant_" + ts)
+                .build());
         assertNotNull(page);
         assertEquals(3, page.getTotalElements().intValue());
         for (EntityView ev : page.getData()) {
@@ -134,7 +163,11 @@ public class EntityViewApiClientTest extends AbstractApiClientTest {
         Device device = createTestDevice(String.valueOf(ts));
         createEntityView(EV_PREFIX + "tinfo_" + ts, "default", device);
 
-        PageDataEntityViewInfo page = client.getTenantEntityViewInfos(100, 0, null, EV_PREFIX + "tinfo_" + ts, null, null);
+        PageDataEntityViewInfo page = client.getTenantEntityViewInfos(GetTenantEntityViewInfosArgs.builder()
+                .pageSize(100)
+                .page(0)
+                .textSearch(EV_PREFIX + "tinfo_" + ts)
+                .build());
         assertNotNull(page);
         assertEquals(1, page.getTotalElements().intValue());
         assertEquals(EV_PREFIX + "tinfo_" + ts, page.getData().get(0).getName());
@@ -150,22 +183,35 @@ public class EntityViewApiClientTest extends AbstractApiClientTest {
         String customerId = savedClientCustomer.getId().getId().toString();
 
         // assign to customer
-        EntityView assigned = client.assignEntityViewToCustomer(customerId, evId);
+        EntityView assigned = client.assignEntityViewToCustomer(AssignEntityViewToCustomerArgs.builder()
+                .customerId(customerId)
+                .entityViewId(evId)
+                .build());
         assertNotNull(assigned);
         assertEquals(savedClientCustomer.getId().getId(), assigned.getCustomerId().getId());
 
         // verify in customer entity views
-        PageDataEntityView customerViews = client.getCustomerEntityViews(
-                customerId, 100, 0, null, EV_PREFIX + "assign_" + ts, null, null);
+        PageDataEntityView customerViews = client.getCustomerEntityViews(GetCustomerEntityViewsArgs.builder()
+                .customerId(customerId)
+                .pageSize(100)
+                .page(0)
+                .textSearch(EV_PREFIX + "assign_" + ts)
+                .build());
         assertEquals(1, customerViews.getTotalElements().intValue());
         assertEquals(saved.getName(), customerViews.getData().get(0).getName());
 
         // unassign from customer
-        EntityView unassigned = client.unassignEntityViewFromCustomer(evId);
+        EntityView unassigned = client.unassignEntityViewFromCustomer(UnassignEntityViewFromCustomerArgs.builder()
+                .entityViewId(evId)
+                .build());
         assertNotNull(unassigned);
 
-        PageDataEntityView afterUnassign = client.getCustomerEntityViews(
-                customerId, 100, 0, null, EV_PREFIX + "assign_" + ts, null, null);
+        PageDataEntityView afterUnassign = client.getCustomerEntityViews(GetCustomerEntityViewsArgs.builder()
+                .customerId(customerId)
+                .pageSize(100)
+                .page(0)
+                .textSearch(EV_PREFIX + "assign_" + ts)
+                .build());
         assertEquals(0, afterUnassign.getTotalElements().intValue());
     }
 
@@ -178,10 +224,17 @@ public class EntityViewApiClientTest extends AbstractApiClientTest {
         String evId = saved.getId().getId().toString();
         String customerId = savedClientCustomer.getId().getId().toString();
 
-        client.assignEntityViewToCustomer(customerId, evId);
+        client.assignEntityViewToCustomer(AssignEntityViewToCustomerArgs.builder()
+                .customerId(customerId)
+                .entityViewId(evId)
+                .build());
 
-        PageDataEntityViewInfo infos = client.getCustomerEntityViewInfos(
-                customerId, 100, 0, null, EV_PREFIX + "cinfo_" + ts, null, null);
+        PageDataEntityViewInfo infos = client.getCustomerEntityViewInfos(GetCustomerEntityViewInfosArgs.builder()
+                .customerId(customerId)
+                .pageSize(100)
+                .page(0)
+                .textSearch(EV_PREFIX + "cinfo_" + ts)
+                .build());
         assertNotNull(infos);
         assertEquals(1, infos.getTotalElements().intValue());
         assertEquals(saved.getName(), infos.getData().get(0).getName());
@@ -206,7 +259,9 @@ public class EntityViewApiClientTest extends AbstractApiClientTest {
     @Test
     public void testGetEntityViewById_notFound() {
         String nonExistentId = UUID.randomUUID().toString();
-        assertReturns404(() -> client.getEntityViewById(nonExistentId));
+        assertReturns404(() -> client.getEntityViewById(GetEntityViewByIdArgs.builder()
+                .entityViewId(nonExistentId)
+                .build()));
     }
 
     @Test
@@ -218,14 +273,22 @@ public class EntityViewApiClientTest extends AbstractApiClientTest {
             createEntityView(EV_PREFIX + "paged_" + ts + "_" + i, "default", device);
         }
 
-        PageDataEntityView page1 = client.getTenantEntityViews(2, 0, null, EV_PREFIX + "paged_" + ts, null, null);
+        PageDataEntityView page1 = client.getTenantEntityViews(GetTenantEntityViewsArgs.builder()
+                .pageSize(2)
+                .page(0)
+                .textSearch(EV_PREFIX + "paged_" + ts)
+                .build());
         assertNotNull(page1);
         assertEquals(5, page1.getTotalElements().intValue());
         assertEquals(3, page1.getTotalPages().intValue());
         assertEquals(2, page1.getData().size());
         assertTrue(page1.getHasNext());
 
-        PageDataEntityView lastPage = client.getTenantEntityViews(2, 2, null, EV_PREFIX + "paged_" + ts, null, null);
+        PageDataEntityView lastPage = client.getTenantEntityViews(GetTenantEntityViewsArgs.builder()
+                .pageSize(2)
+                .page(2)
+                .textSearch(EV_PREFIX + "paged_" + ts)
+                .build());
         assertEquals(1, lastPage.getData().size());
         assertFalse(lastPage.getHasNext());
     }
@@ -234,7 +297,9 @@ public class EntityViewApiClientTest extends AbstractApiClientTest {
         Device device = new Device();
         device.setName(EV_PREFIX + "device_" + suffix);
         device.setType("default");
-        return client.saveDevice(device, null, null, null, null);
+        return client.saveDevice(SaveDeviceArgs.builder()
+                .device(device)
+                .build());
     }
 
     private EntityView createEntityView(String name, String type, Device device) throws Exception {
@@ -248,7 +313,9 @@ public class EntityViewApiClientTest extends AbstractApiClientTest {
                         .cs(List.of())
                         .ss(List.of())
                         .sh(List.of())));
-        return client.saveEntityView(ev, null, null, null);
+        return client.saveEntityView(SaveEntityViewArgs.builder()
+                .entityView(ev)
+                .build());
     }
 
 }

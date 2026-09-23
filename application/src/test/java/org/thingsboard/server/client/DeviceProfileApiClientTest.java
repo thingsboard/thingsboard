@@ -3,6 +3,13 @@
 package org.thingsboard.server.client;
 
 import org.junit.Test;
+import org.thingsboard.client.api.ThingsboardApi.DeleteDeviceProfileArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetDeviceProfileByIdArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetDeviceProfileInfosArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetDeviceProfileNamesArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetDeviceProfilesArgs;
+import org.thingsboard.client.api.ThingsboardApi.SaveDeviceProfileArgs;
+import org.thingsboard.client.api.ThingsboardApi.SetDefaultDeviceProfileArgs;
 import org.thingsboard.client.model.DefaultDeviceProfileConfiguration;
 import org.thingsboard.client.model.DefaultDeviceProfileTransportConfiguration;
 import org.thingsboard.client.model.DeviceProfile;
@@ -33,7 +40,10 @@ public class DeviceProfileApiClientTest extends AbstractApiClientTest {
         List<DeviceProfile> createdProfiles = new ArrayList<>();
 
         // Get initial count (there should be a default profile)
-        PageDataDeviceProfile initialProfiles = client.getDeviceProfiles(100, 0, null, null, null);
+        PageDataDeviceProfile initialProfiles = client.getDeviceProfiles(GetDeviceProfilesArgs.builder()
+                .pageSize(100)
+                .page(0)
+                .build());
         assertNotNull(initialProfiles);
         int initialSize = initialProfiles.getData().size();
         assertTrue("Expected at least 1 default device profile", initialSize >= 1);
@@ -62,7 +72,9 @@ public class DeviceProfileApiClientTest extends AbstractApiClientTest {
             deviceProfile.setDefault(false);
             deviceProfile.setDefaultRuleChainId(null);
 
-            DeviceProfile created = client.saveDeviceProfile(deviceProfile);
+            DeviceProfile created = client.saveDeviceProfile(SaveDeviceProfileArgs.builder()
+                    .deviceProfile(deviceProfile)
+                    .build());
             assertNotNull(created);
             assertNotNull(created.getId());
             assertEquals(deviceProfile.getName(), created.getName());
@@ -75,23 +87,35 @@ public class DeviceProfileApiClientTest extends AbstractApiClientTest {
         }
 
         // Find all, check count
-        PageDataDeviceProfile allProfiles = client.getDeviceProfiles(100, 0, null, null, null);
+        PageDataDeviceProfile allProfiles = client.getDeviceProfiles(GetDeviceProfilesArgs.builder()
+                .pageSize(100)
+                .page(0)
+                .build());
         assertNotNull(allProfiles);
         assertEquals(initialSize + 5, allProfiles.getData().size());
 
         // Find all with text search
-        PageDataDeviceProfile filteredProfiles = client.getDeviceProfiles(100, 0, "Test Device Profile " + timestamp, null, null);
+        PageDataDeviceProfile filteredProfiles = client.getDeviceProfiles(GetDeviceProfilesArgs.builder()
+                .pageSize(100)
+                .page(0)
+                .textSearch("Test Device Profile " + timestamp)
+                .build());
         assertEquals(5, filteredProfiles.getData().size());
 
         // Get by id
         DeviceProfile searchProfile = createdProfiles.get(2);
-        DeviceProfile fetchedProfile = client.getDeviceProfileById(searchProfile.getId().getId().toString(), false);
+        DeviceProfile fetchedProfile = client.getDeviceProfileById(GetDeviceProfileByIdArgs.builder()
+                .deviceProfileId(searchProfile.getId().getId().toString())
+                .inlineImages(false)
+                .build());
         assertEquals(searchProfile.getName(), fetchedProfile.getName());
         assertEquals(searchProfile.getDescription(), fetchedProfile.getDescription());
 
         // Update device profile
         fetchedProfile.setDescription("Updated description");
-        DeviceProfile updatedProfile = client.saveDeviceProfile(fetchedProfile);
+        DeviceProfile updatedProfile = client.saveDeviceProfile(SaveDeviceProfileArgs.builder()
+                .deviceProfile(fetchedProfile)
+                .build());
         assertEquals("Updated description", updatedProfile.getDescription());
         assertEquals(fetchedProfile.getName(), updatedProfile.getName());
 
@@ -102,13 +126,18 @@ public class DeviceProfileApiClientTest extends AbstractApiClientTest {
         assertEquals(DeviceTransportType.DEFAULT, profileInfo.getTransportType());
 
         // Get device profile infos (paginated)
-        PageDataDeviceProfileInfo profileInfos = client.getDeviceProfileInfos(100, 0, null, null, null, null);
+        PageDataDeviceProfileInfo profileInfos = client.getDeviceProfileInfos(GetDeviceProfileInfosArgs.builder()
+                .pageSize(100)
+                .page(0)
+                .build());
         assertNotNull(profileInfos);
         assertEquals(initialSize + 5, profileInfos.getData().size());
 
         // Set a profile as default
         DeviceProfile profileToSetDefault = createdProfiles.get(1);
-        DeviceProfile newDefault = client.setDefaultDeviceProfile(profileToSetDefault.getId().getId().toString());
+        DeviceProfile newDefault = client.setDefaultDeviceProfile(SetDefaultDeviceProfileArgs.builder()
+                .deviceProfileId(profileToSetDefault.getId().getId().toString())
+                .build());
         assertNotNull(newDefault);
         assertTrue(newDefault.getDefault());
 
@@ -117,20 +146,30 @@ public class DeviceProfileApiClientTest extends AbstractApiClientTest {
         assertEquals(profileToSetDefault.getName(), newDefaultInfo.getName());
 
         // Get device profile names
-        List<EntityInfo> profileNames = client.getDeviceProfileNames(false);
+        List<EntityInfo> profileNames = client.getDeviceProfileNames(GetDeviceProfileNamesArgs.builder()
+                .activeOnly(false)
+                .build());
         assertNotNull(profileNames);
         assertEquals(createdProfiles.size() + 1, profileNames.size());
 
         // Delete device profile (cannot delete the default one, so delete a non-default one)
         UUID profileToDeleteId = createdProfiles.get(0).getId().getId();
-        client.deleteDeviceProfile(profileToDeleteId.toString());
+        client.deleteDeviceProfile(DeleteDeviceProfileArgs.builder()
+                .deviceProfileId(profileToDeleteId.toString())
+                .build());
 
         // Verify the profile is deleted
         assertReturns404(() ->
-                client.getDeviceProfileById(profileToDeleteId.toString(), false));
+                client.getDeviceProfileById(GetDeviceProfileByIdArgs.builder()
+                        .deviceProfileId(profileToDeleteId.toString())
+                        .inlineImages(false)
+                        .build()));
 
         // Verify count after deletion
-        PageDataDeviceProfile profilesAfterDelete = client.getDeviceProfiles(100, 0, null, null, null);
+        PageDataDeviceProfile profilesAfterDelete = client.getDeviceProfiles(GetDeviceProfilesArgs.builder()
+                .pageSize(100)
+                .page(0)
+                .build());
         assertEquals(initialSize + 4, profilesAfterDelete.getData().size());
 
         // Restore original default profile
@@ -138,7 +177,9 @@ public class DeviceProfileApiClientTest extends AbstractApiClientTest {
                 .filter(DeviceProfile::getDefault)
                 .findFirst()
                 .orElseThrow();
-        client.setDefaultDeviceProfile(originalDefault.getId().getId().toString());
+        client.setDefaultDeviceProfile(SetDefaultDeviceProfileArgs.builder()
+                .deviceProfileId(originalDefault.getId().getId().toString())
+                .build());
     }
 
 }

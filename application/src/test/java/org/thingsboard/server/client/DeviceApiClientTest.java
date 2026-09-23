@@ -3,6 +3,14 @@
 package org.thingsboard.server.client;
 
 import org.junit.Test;
+import org.thingsboard.client.api.ThingsboardApi.AssignDeviceToCustomerArgs;
+import org.thingsboard.client.api.ThingsboardApi.DeleteDeviceArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetCustomerDevicesArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetDeviceByIdArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetDeviceCredentialsByDeviceIdArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetTenantDevicesArgs;
+import org.thingsboard.client.api.ThingsboardApi.SaveDeviceArgs;
+import org.thingsboard.client.api.ThingsboardApi.SaveDeviceWithCredentialsArgs;
 import org.thingsboard.client.model.Device;
 import org.thingsboard.client.model.DeviceCredentials;
 import org.thingsboard.client.model.DeviceCredentialsType;
@@ -33,7 +41,9 @@ public class DeviceApiClientTest extends AbstractApiClientTest {
             device.setLabel("Test Device " + i);
             device.setType(((i % 2 == 0) ? "default" : "thermostat"));
 
-            Device createdDevice = client.saveDevice(device, null, null, null, null);
+            Device createdDevice = client.saveDevice(SaveDeviceArgs.builder()
+                    .device(device)
+                    .build());
             assertNotNull(createdDevice);
             assertNotNull(createdDevice.getId());
             assertEquals(deviceName, createdDevice.getName());
@@ -42,7 +52,10 @@ public class DeviceApiClientTest extends AbstractApiClientTest {
         }
 
         // find all, check count
-        PageDataDevice allDevices = client.getTenantDevices(100, 0, null, null, null, null);
+        PageDataDevice allDevices = client.getTenantDevices(GetTenantDevicesArgs.builder()
+                .pageSize(100)
+                .page(0)
+                .build());
 
         assertNotNull(allDevices);
         assertNotNull(allDevices.getData());
@@ -50,12 +63,18 @@ public class DeviceApiClientTest extends AbstractApiClientTest {
         assertEquals("Expected at least 20 devices, but got " + allDevices.getData().size(), 20, initialSize);
 
         //find all with search text, check count
-        PageDataDevice allDevicesBySearchText = client.getTenantDevices(10, 0, null, TEST_PREFIX_2, null, null);
+        PageDataDevice allDevicesBySearchText = client.getTenantDevices(GetTenantDevicesArgs.builder()
+                .pageSize(10)
+                .page(0)
+                .textSearch(TEST_PREFIX_2)
+                .build());
         assertEquals("Expected exactly 10 test devices", 10, allDevicesBySearchText.getData().size());
 
         // find by id
         Device searchDevice = createdDevices.get(10);
-        Device device = client.getDeviceById(searchDevice.getId().getId().toString());
+        Device device = client.getDeviceById(GetDeviceByIdArgs.builder()
+                .deviceId(searchDevice.getId().getId().toString())
+                .build());
         assertEquals(searchDevice.getName(), device.getName());
 
         // create device with credentials
@@ -70,29 +89,47 @@ public class DeviceApiClientTest extends AbstractApiClientTest {
         request.setDevice(deviceWithCreds);
         request.setCredentials(creds);
 
-        Device savedDeviceWithCreds = client.saveDeviceWithCredentials(request, null, null, null);
+        Device savedDeviceWithCreds = client.saveDeviceWithCredentials(SaveDeviceWithCredentialsArgs.builder()
+                .saveDeviceWithCredentialsRequest(request)
+                .build());
         assertEquals("device-with-creds", savedDeviceWithCreds.getName());
 
         // find credentials by device id
-        DeviceCredentials fetchedCreds = client.getDeviceCredentialsByDeviceId(savedDeviceWithCreds.getId().getId().toString());
+        DeviceCredentials fetchedCreds = client.getDeviceCredentialsByDeviceId(GetDeviceCredentialsByDeviceIdArgs.builder()
+                .deviceId(savedDeviceWithCreds.getId().getId().toString())
+                .build());
         assertEquals(creds.getCredentialsId(), fetchedCreds.getCredentialsId());
 
         // delete device
         UUID deviceToDeleteId = createdDevices.get(0).getId().getId();
-        client.deleteDevice(deviceToDeleteId.toString());
+        client.deleteDevice(DeleteDeviceArgs.builder()
+                .deviceId(deviceToDeleteId.toString())
+                .build());
 
         // Verify the device is deleted
-        PageDataDevice devicesAfterDelete = client.getTenantDevices(100, 0, null, null, null, null);
+        PageDataDevice devicesAfterDelete = client.getTenantDevices(GetTenantDevicesArgs.builder()
+                .pageSize(100)
+                .page(0)
+                .build());
         assertEquals(initialSize, devicesAfterDelete.getData().size());
 
         assertReturns404(() ->
-                client.getDeviceById(deviceToDeleteId.toString()));
+                client.getDeviceById(GetDeviceByIdArgs.builder()
+                        .deviceId(deviceToDeleteId.toString())
+                        .build()));
 
         // assign device to customer
-        client.assignDeviceToCustomer(savedClientCustomer.getId().getId().toString(), savedDeviceWithCreds.getId().getId().toString());
+        client.assignDeviceToCustomer(AssignDeviceToCustomerArgs.builder()
+                .customerId(savedClientCustomer.getId().getId().toString())
+                .deviceId(savedDeviceWithCreds.getId().getId().toString())
+                .build());
 
         // check customer devices
-        PageDataDevice pageDataDevice = client.getCustomerDevices(savedClientCustomer.getId().getId().toString(), 100, 0, null, null, null, null);
+        PageDataDevice pageDataDevice = client.getCustomerDevices(GetCustomerDevicesArgs.builder()
+                .customerId(savedClientCustomer.getId().getId().toString())
+                .pageSize(100)
+                .page(0)
+                .build());
         List<Device> data = pageDataDevice.getData();
         assertEquals(1, data.size());
         assertEquals(savedDeviceWithCreds.getName(), data.get(0).getName());

@@ -3,6 +3,11 @@
 package org.thingsboard.server.client;
 
 import org.junit.Test;
+import org.thingsboard.client.api.ThingsboardApi.DeleteCalculatedFieldArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetCalculatedFieldByIdArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetCalculatedFieldsByEntityIdArgs;
+import org.thingsboard.client.api.ThingsboardApi.SaveCalculatedFieldArgs;
+import org.thingsboard.client.api.ThingsboardApi.SaveDeviceArgs;
 import org.thingsboard.client.model.AlarmCalculatedFieldConfiguration;
 import org.thingsboard.client.model.AlarmConditionValueAlarmSchedule;
 import org.thingsboard.client.model.AlarmRule;
@@ -44,12 +49,16 @@ public class CalculatedFieldApiClientTest extends AbstractApiClientTest {
         Device device1 = new Device();
         device1.setName("CalcFieldDevice1_" + timestamp);
         device1.setType("default");
-        Device createdDevice1 = client.saveDevice(device1, null, null, null, null);
+        Device createdDevice1 = client.saveDevice(SaveDeviceArgs.builder()
+                .device(device1)
+                .build());
 
         Device device2 = new Device();
         device2.setName("CalcFieldDevice2_" + timestamp);
         device2.setType("default");
-        Device createdDevice2 = client.saveDevice(device2, null, null, null, null);
+        Device createdDevice2 = client.saveDevice(SaveDeviceArgs.builder()
+                .device(device2)
+                .build());
 
         // create calculated fields on device1
         for (int i = 0; i < 5; i++) {
@@ -76,7 +85,9 @@ public class CalculatedFieldApiClientTest extends AbstractApiClientTest {
 
             cf.setConfiguration(config);
 
-            CalculatedField created = client.saveCalculatedField(cf);
+            CalculatedField created = client.saveCalculatedField(SaveCalculatedFieldArgs.builder()
+                    .calculatedField(cf)
+                    .build());
             assertNotNull(created);
             assertNotNull(created.getId());
             assertEquals(cf.getName(), created.getName());
@@ -109,27 +120,39 @@ public class CalculatedFieldApiClientTest extends AbstractApiClientTest {
 
             cf.setConfiguration(config);
 
-            CalculatedField created = client.saveCalculatedField(cf);
+            CalculatedField created = client.saveCalculatedField(SaveCalculatedFieldArgs.builder()
+                    .calculatedField(cf)
+                    .build());
             assertNotNull(created);
             createdFields.add(created);
         }
 
         // get calculated fields by entity id for device1
-        PageDataCalculatedField device1Fields = client.getCalculatedFieldsByEntityId(
-                EntityType.DEVICE.toString(), createdDevice1.getId().getId().toString(),
-                100, 0, CalculatedFieldType.SIMPLE, null, null, null);
+        PageDataCalculatedField device1Fields = client.getCalculatedFieldsByEntityId(GetCalculatedFieldsByEntityIdArgs.builder()
+                .entityType(EntityType.DEVICE.toString())
+                .entityId(createdDevice1.getId().getId().toString())
+                .pageSize(100)
+                .page(0)
+                .type(CalculatedFieldType.SIMPLE)
+                .build());
         assertNotNull(device1Fields);
         assertEquals(5, device1Fields.getData().size());
 
         // get calculated fields by entity id for device2
-        PageDataCalculatedField device2Fields = client.getCalculatedFieldsByEntityId(
-                EntityType.DEVICE.toString(), createdDevice2.getId().getId().toString(),
-                100, 0, CalculatedFieldType.SIMPLE, null, null, null);
+        PageDataCalculatedField device2Fields = client.getCalculatedFieldsByEntityId(GetCalculatedFieldsByEntityIdArgs.builder()
+                .entityType(EntityType.DEVICE.toString())
+                .entityId(createdDevice2.getId().getId().toString())
+                .pageSize(100)
+                .page(0)
+                .type(CalculatedFieldType.SIMPLE)
+                .build());
         assertEquals(3, device2Fields.getData().size());
 
         // get by id
         CalculatedField searchField = createdFields.get(2);
-        CalculatedField fetchedField = client.getCalculatedFieldById(searchField.getId().getId().toString());
+        CalculatedField fetchedField = client.getCalculatedFieldById(GetCalculatedFieldByIdArgs.builder()
+                .calculatedFieldId(searchField.getId().getId().toString())
+                .build());
         assertEquals(searchField.getName(), fetchedField.getName());
         assertEquals(searchField.getType(), fetchedField.getType());
         assertNotNull(fetchedField.getConfiguration());
@@ -140,7 +163,9 @@ public class CalculatedFieldApiClientTest extends AbstractApiClientTest {
         // update calculated field
         fetchedField.setName(fetchedField.getName() + "_updated");
         fetchedConfig.setExpression("temp * 100");
-        CalculatedField updatedField = client.saveCalculatedField(fetchedField);
+        CalculatedField updatedField = client.saveCalculatedField(SaveCalculatedFieldArgs.builder()
+                .calculatedField(fetchedField)
+                .build());
         assertEquals(fetchedField.getName(), updatedField.getName());
         SimpleCalculatedFieldConfiguration updatedConfig =
                 (SimpleCalculatedFieldConfiguration) updatedField.getConfiguration();
@@ -148,16 +173,23 @@ public class CalculatedFieldApiClientTest extends AbstractApiClientTest {
 
         // delete calculated field
         UUID fieldToDeleteId = createdFields.get(0).getId().getId();
-        client.deleteCalculatedField(fieldToDeleteId.toString());
+        client.deleteCalculatedField(DeleteCalculatedFieldArgs.builder()
+                .calculatedFieldId(fieldToDeleteId.toString())
+                .build());
 
         // verify deletion
         assertReturns404(() ->
-                client.getCalculatedFieldById(fieldToDeleteId.toString())
+                client.getCalculatedFieldById(GetCalculatedFieldByIdArgs.builder()
+                        .calculatedFieldId(fieldToDeleteId.toString())
+                        .build())
         );
 
-        PageDataCalculatedField device1FieldsAfterDelete = client.getCalculatedFieldsByEntityId(
-                EntityType.DEVICE.toString(), createdDevice1.getId().getId().toString(),
-                100, 0, null, null, null, null);
+        PageDataCalculatedField device1FieldsAfterDelete = client.getCalculatedFieldsByEntityId(GetCalculatedFieldsByEntityIdArgs.builder()
+                .entityType(EntityType.DEVICE.toString())
+                .entityId(createdDevice1.getId().getId().toString())
+                .pageSize(100)
+                .page(0)
+                .build());
         assertEquals(4, device1FieldsAfterDelete.getData().size());
     }
 
@@ -169,7 +201,9 @@ public class CalculatedFieldApiClientTest extends AbstractApiClientTest {
         Device device = new Device();
         device.setName("AlarmCalcFieldDevice_" + timestamp);
         device.setType("default");
-        Device createdDevice = client.saveDevice(device, null, null, null, null);
+        Device createdDevice = client.saveDevice(SaveDeviceArgs.builder()
+                .device(device)
+                .build());
 
         // build the alarm calculated field configuration
         AlarmCalculatedFieldConfiguration config = new AlarmCalculatedFieldConfiguration();
@@ -217,7 +251,9 @@ public class CalculatedFieldApiClientTest extends AbstractApiClientTest {
         cf.setEntityId(createdDevice.getId());
         cf.setConfiguration(config);
 
-        CalculatedField created = client.saveCalculatedField(cf);
+        CalculatedField created = client.saveCalculatedField(SaveCalculatedFieldArgs.builder()
+                .calculatedField(cf)
+                .build());
         assertNotNull(created);
         assertNotNull(created.getId());
         assertEquals(cf.getName(), created.getName());
@@ -228,7 +264,9 @@ public class CalculatedFieldApiClientTest extends AbstractApiClientTest {
         assertEquals(Set.of(3), staticSchedule.getDaysOfWeek());
 
         // get by id and verify configuration
-        CalculatedField fetched = client.getCalculatedFieldById(created.getId().getId().toString());
+        CalculatedField fetched = client.getCalculatedFieldById(GetCalculatedFieldByIdArgs.builder()
+                .calculatedFieldId(created.getId().getId().toString())
+                .build());
         assertNotNull(fetched);
         assertEquals(created.getName(), fetched.getName());
         assertEquals(CalculatedFieldType.ALARM, fetched.getType());
@@ -251,23 +289,33 @@ public class CalculatedFieldApiClientTest extends AbstractApiClientTest {
         fetchedConfig.putCreateRulesItem(AlarmSeverity.INDETERMINATE.name(), criticalRule);
         fetched.setConfiguration(fetchedConfig);
 
-        CalculatedField updated = client.saveCalculatedField(fetched);
+        CalculatedField updated = client.saveCalculatedField(SaveCalculatedFieldArgs.builder()
+                .calculatedField(fetched)
+                .build());
         AlarmCalculatedFieldConfiguration updatedConfig =
                 (AlarmCalculatedFieldConfiguration) updated.getConfiguration();
         assertEquals(2, updatedConfig.getCreateRules().size());
         assertTrue(updatedConfig.getCreateRules().containsKey("INDETERMINATE"));
 
         // filter by entity and ALARM type
-        PageDataCalculatedField deviceFields = client.getCalculatedFieldsByEntityId(
-                EntityType.DEVICE.toString(), createdDevice.getId().getId().toString(),
-                100, 0, CalculatedFieldType.ALARM, null, null, null);
+        PageDataCalculatedField deviceFields = client.getCalculatedFieldsByEntityId(GetCalculatedFieldsByEntityIdArgs.builder()
+                .entityType(EntityType.DEVICE.toString())
+                .entityId(createdDevice.getId().getId().toString())
+                .pageSize(100)
+                .page(0)
+                .type(CalculatedFieldType.ALARM)
+                .build());
         assertNotNull(deviceFields);
         assertEquals(1, deviceFields.getData().size());
 
         // delete and verify
         UUID fieldId = created.getId().getId();
-        client.deleteCalculatedField(fieldId.toString());
-        assertReturns404(() -> client.getCalculatedFieldById(fieldId.toString()));
+        client.deleteCalculatedField(DeleteCalculatedFieldArgs.builder()
+                .calculatedFieldId(fieldId.toString())
+                .build());
+        assertReturns404(() -> client.getCalculatedFieldById(GetCalculatedFieldByIdArgs.builder()
+                .calculatedFieldId(fieldId.toString())
+                .build()));
     }
 
 }

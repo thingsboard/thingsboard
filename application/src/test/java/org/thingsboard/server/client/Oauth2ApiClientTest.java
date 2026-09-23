@@ -3,6 +3,11 @@
 package org.thingsboard.server.client;
 
 import org.junit.Test;
+import org.thingsboard.client.api.ThingsboardApi.DeleteOauth2ClientArgs;
+import org.thingsboard.client.api.ThingsboardApi.FindOAuth2ClientInfosArgs;
+import org.thingsboard.client.api.ThingsboardApi.FindTenantOAuth2ClientInfosByIdsArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetOAuth2ClientByIdArgs;
+import org.thingsboard.client.api.ThingsboardApi.SaveOAuth2ClientArgs;
 import org.thingsboard.client.model.MapperType;
 import org.thingsboard.client.model.OAuth2BasicMapperConfig;
 import org.thingsboard.client.model.OAuth2Client;
@@ -65,7 +70,9 @@ public class Oauth2ApiClientTest extends AbstractApiClientTest {
                     "client_id_" + timestamp + "_" + i,
                     "client_secret_" + timestamp + "_" + i);
 
-            OAuth2Client created = client.saveOAuth2Client(oAuth2Client);
+            OAuth2Client created = client.saveOAuth2Client(SaveOAuth2ClientArgs.builder()
+                    .oauth2Client(oAuth2Client)
+                    .build());
             assertNotNull(created);
             assertNotNull(created.getId());
             assertEquals(title, created.getTitle());
@@ -77,14 +84,19 @@ public class Oauth2ApiClientTest extends AbstractApiClientTest {
         }
 
         // list tenant OAuth2 client infos
-        PageDataOAuth2ClientInfo clientInfos = client.findOAuth2ClientInfos(100, 0,
-                TEST_PREFIX + "OAuth2_" + timestamp, null, null);
+        PageDataOAuth2ClientInfo clientInfos = client.findOAuth2ClientInfos(FindOAuth2ClientInfosArgs.builder()
+                .pageSize(100)
+                .page(0)
+                .textSearch(TEST_PREFIX + "OAuth2_" + timestamp)
+                .build());
         assertNotNull(clientInfos);
         assertEquals(5, clientInfos.getData().size());
 
         // get OAuth2 client by id
         OAuth2Client searchClient = createdClients.get(2);
-        OAuth2Client fetchedClient = client.getOAuth2ClientById(searchClient.getId().getId());
+        OAuth2Client fetchedClient = client.getOAuth2ClientById(GetOAuth2ClientByIdArgs.builder()
+                .id(searchClient.getId().getId())
+                .build());
         assertEquals(searchClient.getTitle(), fetchedClient.getTitle());
         assertEquals(searchClient.getClientId(), fetchedClient.getClientId());
         assertEquals(searchClient.getAuthorizationUri(), fetchedClient.getAuthorizationUri());
@@ -95,30 +107,43 @@ public class Oauth2ApiClientTest extends AbstractApiClientTest {
                 createdClients.get(0).getId().getId().toString(),
                 createdClients.get(1).getId().getId().toString()
         );
-        List<OAuth2ClientInfo> fetchedInfos = client.findTenantOAuth2ClientInfosByIds(idsToFetch);
+        List<OAuth2ClientInfo> fetchedInfos = client.findTenantOAuth2ClientInfosByIds(FindTenantOAuth2ClientInfosByIdsArgs.builder()
+                .clientIds(idsToFetch)
+                .build());
         assertEquals(2, fetchedInfos.size());
 
         // update OAuth2 client
-        OAuth2Client clientToUpdate = client.getOAuth2ClientById(createdClients.get(3).getId().getId());
+        OAuth2Client clientToUpdate = client.getOAuth2ClientById(GetOAuth2ClientByIdArgs.builder()
+                .id(createdClients.get(3).getId().getId())
+                .build());
         clientToUpdate.setTitle(clientToUpdate.getTitle() + "_updated");
         clientToUpdate.setLoginButtonLabel("Updated Login");
         clientToUpdate.setPlatforms(List.of(PlatformType.WEB, PlatformType.ANDROID));
-        OAuth2Client updatedClient = client.saveOAuth2Client(clientToUpdate);
+        OAuth2Client updatedClient = client.saveOAuth2Client(SaveOAuth2ClientArgs.builder()
+                .oauth2Client(clientToUpdate)
+                .build());
         assertEquals(clientToUpdate.getTitle(), updatedClient.getTitle());
         assertEquals("Updated Login", updatedClient.getLoginButtonLabel());
         assertEquals(2, updatedClient.getPlatforms().size());
 
         // delete OAuth2 client
         UUID clientToDeleteId = createdClients.get(0).getId().getId();
-        client.deleteOauth2Client(clientToDeleteId);
+        client.deleteOauth2Client(DeleteOauth2ClientArgs.builder()
+                .id(clientToDeleteId)
+                .build());
 
         // verify deletion
         assertReturns404(() ->
-                client.getOAuth2ClientById(clientToDeleteId)
+                client.getOAuth2ClientById(GetOAuth2ClientByIdArgs.builder()
+                        .id(clientToDeleteId)
+                        .build())
         );
 
-        PageDataOAuth2ClientInfo clientsAfterDelete = client.findOAuth2ClientInfos(100, 0,
-                TEST_PREFIX + "OAuth2_" + timestamp, null, null);
+        PageDataOAuth2ClientInfo clientsAfterDelete = client.findOAuth2ClientInfos(FindOAuth2ClientInfosArgs.builder()
+                .pageSize(100)
+                .page(0)
+                .textSearch(TEST_PREFIX + "OAuth2_" + timestamp)
+                .build());
         assertEquals(4, clientsAfterDelete.getData().size());
     }
 

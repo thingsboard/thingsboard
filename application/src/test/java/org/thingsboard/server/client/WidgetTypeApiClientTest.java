@@ -4,6 +4,18 @@ package org.thingsboard.server.client;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.Test;
+import org.thingsboard.client.api.ThingsboardApi.DeleteWidgetTypeArgs;
+import org.thingsboard.client.api.ThingsboardApi.DeleteWidgetsBundleArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetBundleWidgetTypeFqnsArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetBundleWidgetTypesDetailsArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetBundleWidgetTypesInfosArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetWidgetTypeByIdArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetWidgetTypeInfoByIdArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetWidgetTypesArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetWidgetsBundleByIdArgs;
+import org.thingsboard.client.api.ThingsboardApi.SaveWidgetTypeArgs;
+import org.thingsboard.client.api.ThingsboardApi.SaveWidgetsBundleArgs;
+import org.thingsboard.client.api.ThingsboardApi.UpdateWidgetsBundleWidgetTypesArgs;
 import org.thingsboard.client.model.PageDataWidgetTypeInfo;
 import org.thingsboard.client.model.WidgetTypeDetails;
 import org.thingsboard.client.model.WidgetTypeInfo;
@@ -42,7 +54,9 @@ public class WidgetTypeApiClientTest extends AbstractApiClientTest {
         WidgetsBundle bundle = new WidgetsBundle(null, null, null,
                 TEST_PREFIX + "Bundle_" + timestamp, null, false,
                 "Test bundle description", null, null);
-        WidgetsBundle savedBundle = client.saveWidgetsBundle(bundle);
+        WidgetsBundle savedBundle = client.saveWidgetsBundle(SaveWidgetsBundleArgs.builder()
+                .widgetsBundle(bundle)
+                .build());
         assertNotNull(savedBundle);
         assertNotNull(savedBundle.getId());
         assertEquals(bundle.getTitle(), savedBundle.getTitle());
@@ -57,7 +71,10 @@ public class WidgetTypeApiClientTest extends AbstractApiClientTest {
             widgetType.setDeprecated(false);
             widgetType.setTags(List.of("test", "automated"));
 
-            WidgetTypeDetails created = client.saveWidgetType(widgetType, false);
+            WidgetTypeDetails created = client.saveWidgetType(SaveWidgetTypeArgs.builder()
+                    .widgetTypeDetails(widgetType)
+                    .updateExistingByFqn(false)
+                    .build());
             assertNotNull(created);
             assertNotNull(created.getId());
             assertEquals(name, created.getName());
@@ -67,75 +84,110 @@ public class WidgetTypeApiClientTest extends AbstractApiClientTest {
         }
 
         // list widget types with text search (tenant only)
-        PageDataWidgetTypeInfo filteredTypes = client.getWidgetTypes(100, 0,
-                TEST_PREFIX + "Widget_" + timestamp, null, null,
-                true, false, null, null, null);
+        PageDataWidgetTypeInfo filteredTypes = client.getWidgetTypes(GetWidgetTypesArgs.builder()
+                .pageSize(100)
+                .page(0)
+                .textSearch(TEST_PREFIX + "Widget_" + timestamp)
+                .tenantOnly(true)
+                .fullSearch(false)
+                .build());
         assertNotNull(filteredTypes);
         assertEquals(5, filteredTypes.getData().size());
 
         // get widget type details by id
         WidgetTypeDetails searchWidget = createdWidgetTypes.get(2);
-        WidgetTypeDetails fetchedDetails = client.getWidgetTypeById(
-                searchWidget.getId().getId().toString(), true);
+        WidgetTypeDetails fetchedDetails = client.getWidgetTypeById(GetWidgetTypeByIdArgs.builder()
+                .widgetTypeId(searchWidget.getId().getId().toString())
+                .includeResources(true)
+                .build());
         assertEquals(searchWidget.getName(), fetchedDetails.getName());
         assertEquals(searchWidget.getFqn(), fetchedDetails.getFqn());
         assertEquals("Test widget 2", fetchedDetails.getDescription());
 
         // get widget type info by id
-        WidgetTypeInfo fetchedInfo = client.getWidgetTypeInfoById(
-                searchWidget.getId().getId().toString());
+        WidgetTypeInfo fetchedInfo = client.getWidgetTypeInfoById(GetWidgetTypeInfoByIdArgs.builder()
+                .widgetTypeId(searchWidget.getId().getId().toString())
+                .build());
         assertEquals(searchWidget.getName(), fetchedInfo.getName());
 
         // add widget types to bundle
         List<String> widgetTypeIds = createdWidgetTypes.stream()
                 .map(wt -> wt.getId().getId().toString())
                 .collect(Collectors.toList());
-        client.updateWidgetsBundleWidgetTypes(savedBundle.getId().getId().toString(), widgetTypeIds);
+        client.updateWidgetsBundleWidgetTypes(UpdateWidgetsBundleWidgetTypesArgs.builder()
+                .widgetsBundleId(savedBundle.getId().getId().toString())
+                .requestBody(widgetTypeIds)
+                .build());
 
         // get bundle widget type fqns
-        List<String> bundleFqns = client.getBundleWidgetTypeFqns(savedBundle.getId().getId().toString());
+        List<String> bundleFqns = client.getBundleWidgetTypeFqns(GetBundleWidgetTypeFqnsArgs.builder()
+                .widgetsBundleId(savedBundle.getId().getId().toString())
+                .build());
         assertEquals(5, bundleFqns.size());
 
         // get bundle widget types details
-        List<WidgetTypeDetails> bundleDetails = client.getBundleWidgetTypesDetails(
-                savedBundle.getId().getId().toString(), false);
+        List<WidgetTypeDetails> bundleDetails = client.getBundleWidgetTypesDetails(GetBundleWidgetTypesDetailsArgs.builder()
+                .widgetsBundleId(savedBundle.getId().getId().toString())
+                .includeResources(false)
+                .build());
         assertEquals(5, bundleDetails.size());
 
         // get bundle widget types infos (paginated)
-        PageDataWidgetTypeInfo bundleInfos = client.getBundleWidgetTypesInfos(
-                savedBundle.getId().getId().toString(), 100, 0,
-                null, null, null, null, null, null);
+        PageDataWidgetTypeInfo bundleInfos = client.getBundleWidgetTypesInfos(GetBundleWidgetTypesInfosArgs.builder()
+                .widgetsBundleId(savedBundle.getId().getId().toString())
+                .pageSize(100)
+                .page(0)
+                .build());
         assertEquals(5, bundleInfos.getData().size());
 
         // update widget type
-        WidgetTypeDetails widgetToUpdate = client.getWidgetTypeById(
-                createdWidgetTypes.get(3).getId().getId().toString(), true);
+        WidgetTypeDetails widgetToUpdate = client.getWidgetTypeById(GetWidgetTypeByIdArgs.builder()
+                .widgetTypeId(createdWidgetTypes.get(3).getId().getId().toString())
+                .includeResources(true)
+                .build());
         widgetToUpdate.setDescription("Updated description");
         widgetToUpdate.setDeprecated(true);
         widgetToUpdate.setTags(List.of("test", "updated"));
-        WidgetTypeDetails updatedWidget = client.saveWidgetType(widgetToUpdate, false);
+        WidgetTypeDetails updatedWidget = client.saveWidgetType(SaveWidgetTypeArgs.builder()
+                .widgetTypeDetails(widgetToUpdate)
+                .updateExistingByFqn(false)
+                .build());
         assertEquals("Updated description", updatedWidget.getDescription());
         assertEquals(true, updatedWidget.getDeprecated());
 
         // delete widget type
         String widgetToDeleteId = createdWidgetTypes.get(0).getId().getId().toString();
-        client.deleteWidgetType(widgetToDeleteId);
+        client.deleteWidgetType(DeleteWidgetTypeArgs.builder()
+                .widgetTypeId(widgetToDeleteId)
+                .build());
 
         // verify deletion
         assertReturns404(() ->
-                client.getWidgetTypeById(widgetToDeleteId, false)
+                client.getWidgetTypeById(GetWidgetTypeByIdArgs.builder()
+                        .widgetTypeId(widgetToDeleteId)
+                        .includeResources(false)
+                        .build())
         );
 
-        PageDataWidgetTypeInfo typesAfterDelete = client.getWidgetTypes(100, 0,
-                TEST_PREFIX + "Widget_" + timestamp, null, null,
-                true, false, null, null, null);
+        PageDataWidgetTypeInfo typesAfterDelete = client.getWidgetTypes(GetWidgetTypesArgs.builder()
+                .pageSize(100)
+                .page(0)
+                .textSearch(TEST_PREFIX + "Widget_" + timestamp)
+                .tenantOnly(true)
+                .fullSearch(false)
+                .build());
         assertEquals(4, typesAfterDelete.getData().size());
 
         // delete widgets bundle
-        client.deleteWidgetsBundle(savedBundle.getId().getId().toString());
+        client.deleteWidgetsBundle(DeleteWidgetsBundleArgs.builder()
+                .widgetsBundleId(savedBundle.getId().getId().toString())
+                .build());
 
         assertReturns404(() ->
-                client.getWidgetsBundleById(savedBundle.getId().getId().toString(), false)
+                client.getWidgetsBundleById(GetWidgetsBundleByIdArgs.builder()
+                        .widgetsBundleId(savedBundle.getId().getId().toString())
+                        .inlineImages(false)
+                        .build())
         );
     }
 
