@@ -143,6 +143,24 @@ export const chartFillTypeTranslations = new Map<ChartFillType, string>(
   ]
 );
 
+export enum ChartFillAreaBaseline {
+  auto = 'auto',
+  axisMin = 'axisMin',
+  axisMax = 'axisMax',
+  value = 'value'
+}
+
+export const chartFillAreaBaselines = Object.keys(ChartFillAreaBaseline) as ChartFillAreaBaseline[];
+
+export const chartFillAreaBaselineTranslations = new Map<ChartFillAreaBaseline, string>(
+  [
+    [ChartFillAreaBaseline.auto, 'widgets.chart.fill-area-baseline-auto'],
+    [ChartFillAreaBaseline.axisMin, 'widgets.chart.fill-area-baseline-axis-min'],
+    [ChartFillAreaBaseline.axisMax, 'widgets.chart.fill-area-baseline-axis-max'],
+    [ChartFillAreaBaseline.value, 'widgets.chart.fill-area-baseline-value']
+  ]
+);
+
 export enum ChartLabelPosition {
   top = 'top',
   bottom = 'bottom'
