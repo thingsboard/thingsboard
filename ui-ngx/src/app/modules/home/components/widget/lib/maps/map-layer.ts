@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Copyright The Thingsboard Authors
 // SPDX-License-Identifier: Apache-2.0
 import {
+  cartoDbLayerTypes,
   CustomMapLayerSettings,
   defaultCustomMapLayerSettings,
   defaultGoogleMapLayerSettings,
@@ -10,6 +11,7 @@ import {
   defaultTencentMapLayerSettings,
   GoogleMapLayerSettings,
   HereMapLayerSettings,
+  hereV3Provider,
   MapLayerSettings,
   MapProvider,
   OpenStreetMapLayerSettings,
@@ -206,7 +208,8 @@ class TbOpenStreetMapLayer extends TbMapLayer<OpenStreetMapLayerSettings> {
   }
 
   protected createLayer(): Observable<L.Layer> {
-    const layer = L.tileLayer.provider(this.settings.layerType);
+    const layer = L.tileLayer.provider(this.settings.layerType,
+      cartoDbLayerTypes.includes(this.settings.layerType) && this.settings.apiKey ? {apikey: this.settings.apiKey} : undefined);
     return of(layer);
   }
 
@@ -293,7 +296,7 @@ class TbHereMapLayer extends TbMapLayer<HereMapLayerSettings> {
 
   protected createLayer(): Observable<L.Layer> {
     const apiKey = this.settings.apiKey || defaultHereMapLayerSettings.apiKey;
-    const layer = L.tileLayer.provider(this.settings.layerType, {useV3: true, apiKey} as any);
+    const layer = L.tileLayer.provider(hereV3Provider(this.settings.layerType), {apiKey});
     return of(layer);
   }
 
@@ -311,7 +314,9 @@ class TbCustomMapLayer extends TbMapLayer<CustomMapLayerSettings> {
   }
 
   protected createLayer(): Observable<L.Layer> {
-    const layer = L.tileLayer(this.settings.tileUrl);
+    const layer = L.tileLayer(this.settings.tileUrl, this.settings.customAttribution ? {
+      attribution: this.settings.customAttribution
+    } : undefined);
     return of(layer);
   }
 

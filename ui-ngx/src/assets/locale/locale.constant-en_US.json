@@ -8589,7 +8589,9 @@
                     },
                     "custom": {
                         "title": "Custom",
-                        "tile-url": "Tile URL"
+                        "tile-url": "Tile URL",
+                        "attribution": "Copyright text",
+                        "attribution-hint": "Displayed at the bottom of the map. Required by most tile providers."
                     }
                 },
                 "credentials": {

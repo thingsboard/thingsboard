@@ -62,7 +62,13 @@
         <input matInput formControlName="tileUrl" required placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
     </div>
-    <div *ngIf="[MapProvider.google, MapProvider.here].includes(layerFormGroup.get('provider').value)" class="tb-form-panel stroked">
+    <div *ngIf="MapProvider.custom === layerFormGroup.get('provider').value" class="tb-form-row space-between column-xs">
+      <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'widgets.maps.layer.provider.custom.attribution-hint' | translate }}" translate>widgets.maps.layer.provider.custom.attribution</div>
+      <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="customAttribution" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+    <div *ngIf="requiresApiKey()" class="tb-form-panel stroked">
       <div class="tb-form-panel-title" translate>widgets.maps.layer.credentials.credentials</div>
       <div class="tb-form-row space-between column-xs">
         <div class="fixed-title-width" translate>widgets.maps.layer.credentials.api-key</div>

@@ -15,6 +15,7 @@ import {
   MapProvider,
   mapProviders,
   mapProviderTranslationMap,
+  mapLayerRequiresApiKey,
   openStreetLayerTypes,
   openStreetMapLayerTranslationMap, referenceLayerTypes, referenceLayerTypeTranslationMap,
   tencentLayerTranslationMap,
@@ -81,6 +82,7 @@ export class MapLayerSettingsPanelComponent implements OnInit {
         provider: [null, [Validators.required]],
         layerType: [null, [Validators.required]],
         tileUrl: [null, [Validators.required]],
+        customAttribution: [null, []],
         apiKey: [null, [Validators.required]],
         referenceLayer: [null, []]
       }
@@ -92,6 +94,11 @@ export class MapLayerSettingsPanelComponent implements OnInit {
       takeUntilDestroyed(this.destroyRef)
     ).subscribe((newProvider: MapProvider) => {
       this.onProviderChanged(newProvider);
+    });
+    this.layerFormGroup.get('layerType').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
+      this.updateValidators();
     });
     this.updateValidators();
   }
@@ -106,6 +113,10 @@ export class MapLayerSettingsPanelComponent implements OnInit {
       translationKey = 'widget-config.set';
     }
     return this.translate.instant(translationKey);
+  }
+
+  requiresApiKey(): boolean {
+    return mapLayerRequiresApiKey(this.layerFormGroup.get('provider').value, this.layerFormGroup.get('layerType').value);
   }
 
   applyLayerSettings() {
@@ -126,12 +137,14 @@ export class MapLayerSettingsPanelComponent implements OnInit {
     const provider: MapProvider = this.layerFormGroup.get('provider').value;
     if (provider === MapProvider.custom) {
       this.layerFormGroup.get('tileUrl').enable({emitEvent: false});
+      this.layerFormGroup.get('customAttribution').enable({emitEvent: false});
       this.layerFormGroup.get('layerType').disable({emitEvent: false});
     } else {
       this.layerFormGroup.get('tileUrl').disable({emitEvent: false});
+      this.layerFormGroup.get('customAttribution').disable({emitEvent: false});
       this.layerFormGroup.get('layerType').enable({emitEvent: false});
     }
-    if ([MapProvider.google, MapProvider.here].includes(provider)) {
+    if (mapLayerRequiresApiKey(provider, this.layerFormGroup.get('layerType').value)) {
       this.layerFormGroup.get('apiKey').enable({emitEvent: false});
     } else {
       this.layerFormGroup.get('apiKey').disable({emitEvent: false});

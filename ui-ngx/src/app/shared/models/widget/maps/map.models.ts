@@ -939,6 +939,11 @@ export enum OpenStreetLayerType {
 
 export const openStreetLayerTypes = Object.values(OpenStreetLayerType) as OpenStreetLayerType[];
 
+export const cartoDbLayerTypes: OpenStreetLayerType[] = [
+  OpenStreetLayerType.cartoDbPositron,
+  OpenStreetLayerType.cartoDbDarkMatter
+];
+
 export const openStreetMapLayerTranslationMap = new Map<OpenStreetLayerType, string>(
   [
     [OpenStreetLayerType.openStreetMapnik, 'widgets.maps.layer.provider.openstreet.mapnik'],
@@ -954,6 +959,7 @@ export const openStreetMapLayerTranslationMap = new Map<OpenStreetLayerType, str
 export interface OpenStreetMapLayerSettings extends MapLayerSettings {
   provider: MapProvider.openstreet;
   layerType: OpenStreetLayerType;
+  apiKey?: string;
 }
 
 export const defaultOpenStreetMapLayerSettings: OpenStreetMapLayerSettings = {
@@ -1021,6 +1027,16 @@ export const defaultHereMapLayerSettings: HereMapLayerSettings = {
   apiKey: 'kVXykxAfZ6LS4EbCTO02soFVfjA7HoBzNVVH9u7nzoE'
 }
 
+const hereV3Variants: {[v2Variant: string]: string} = {
+  normalDay: 'exploreDay',
+  normalNight: 'exploreNight',
+  hybridDay: 'exploreSatelliteDay',
+  terrainDay: 'topoDay'
+};
+
+export const hereV3Provider = (layerType: string): string =>
+  `HERE.${hereV3Variants[layerType?.split('.')[1]] || hereV3Variants.normalDay}`;
+
 export enum TencentLayerType {
   tencentNormal = 'Tencent.Normal',
   tencentSatellite = 'Tencent.Satellite',
@@ -1050,12 +1066,17 @@ export const defaultTencentMapLayerSettings: TencentMapLayerSettings = {
 export interface CustomMapLayerSettings extends MapLayerSettings {
   provider: MapProvider.custom;
   tileUrl: string;
+  customAttribution?: string;
 }
 
 export const defaultCustomMapLayerSettings: CustomMapLayerSettings = {
   provider: MapProvider.custom,
   tileUrl: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
 }
+
+export const mapLayerRequiresApiKey = (provider: MapProvider, layerType: string): boolean =>
+  [MapProvider.google, MapProvider.here].includes(provider) ||
+  (provider === MapProvider.openstreet && cartoDbLayerTypes.includes(layerType as OpenStreetLayerType));
 
 export const defaultMapLayerSettings = (provider: MapProvider): MapLayerSettings => {
   switch (provider) {
