@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.housekeeper.processor;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTask;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTaskType;
@@ -16,6 +17,10 @@ public abstract class HousekeeperTaskProcessor<T extends HousekeeperTask> {
 
     public abstract void process(T task) throws Exception;
 
+    public ListenableFuture<Void> processAsync(T task) {
+        throw new UnsupportedOperationException("Async processing is not supported by " + getClass().getSimpleName());
+    }
+
     public abstract HousekeeperTaskType getTaskType();
 
     public <V> V wait(Future<V> future) throws Exception {
@@ -25,6 +30,10 @@ public abstract class HousekeeperTaskProcessor<T extends HousekeeperTask> {
             future.cancel(true); // interrupting the underlying task
             throw e;
         }
+    }
+
+    public boolean supportsAsyncProcessing() {
+        return false;
     }
 
 }
