@@ -91,6 +91,7 @@
     "tooltipster": "^4.2.8",
     "tslib": "^2.8.1",
     "typeface-roboto": "^1.1.13",
+    "typeface-roboto-mono": "^1.1.13",
     "zone.js": "~0.15.1"
   },
   "devDependencies": {
