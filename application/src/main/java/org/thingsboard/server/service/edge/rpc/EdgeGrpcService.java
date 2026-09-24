@@ -555,19 +555,34 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             //   - a newer lastDisconnectTime would contradict the live session's lastConnectTime;
             //   - the DISCONNECT_EVENT payload is {"active": false, ...} with SERVER_SCOPE in the metadata,
             //     so a rule chain wiring Disconnect Event -> Save Attributes writes active=false straight
-            //     back, re-creating the dropped-event behaviour through the rule engine.
+            //     back, re-creating the dropped-event behaviour through the rule engine;
+            //   - the user-facing 'edge disconnected' notification would contradict a live session.
             // Ownership being unknown (no cache entry) still counts as disconnected, so a genuinely offline
             // edge is always marked inactive.
-            if (!sessions.containsKey(edgeId) && !isOwnedByAnotherNode(edgeId)) {
+            boolean replacedOnThisNode = sessions.containsKey(edgeId);
+            if (!replacedOnThisNode && !isOwnedByAnotherNode(edgeId)) {
                 save(tenantId, edgeId, ACTIVITY_STATE, false);
                 long lastDisconnectTs = System.currentTimeMillis();
                 save(tenantId, edgeId, LAST_DISCONNECT_TIME, lastDisconnectTs);
                 pushStateEventToRuleEngine(toRemove.getEdge().getTenantId(), edge, lastDisconnectTs, TbMsgType.DISCONNECT_EVENT);
+                // Inside the guard, not after it. fireDelayedDisconnectNotification does re-verify liveness,
+                // but only on the debounced path: with EDGES_DISCONNECT_NOTIFICATION_DELAY_MS=0
+                // scheduleDisconnectNotification notifies straight away and skips that re-verify, so a live
+                // replacement would still raise a false 'edge disconnected'. The guard above has already
+                // answered the same question, so use it. On the debounced path this only saves a task that
+                // would have re-verified and dropped the notification anyway.
+                scheduleDisconnectNotification(edge);
             }
-            // Left outside the guard on purpose: fireDelayedDisconnectNotification re-verifies liveness
-            // against the local sessions and the cluster-wide cache before it fires.
-            scheduleDisconnectNotification(edge);
-            cancelScheduleEdgeEventsCheck(edgeId);
+            // sessionEdgeEventChecks is keyed by edgeId, not by session, so a replacement that landed on this
+            // node while this stale callback was running has already scheduled its check under the same key.
+            // Cancelling it here would leave the live session with no check loop - the loop only reschedules
+            // itself from inside the task, so a cancelled task never runs again - and downlinks, the migration
+            // check and high-priority events would stall silently until the edge reconnects. When the edge is
+            // owned by another node there is nothing live to protect: the check is node-local and belongs to
+            // the session we just tore down.
+            if (!replacedOnThisNode) {
+                cancelScheduleEdgeEventsCheck(edgeId);
+            }
         } else {
             log.info("[{}] edge session [{}] is not current anymore. Attempting to destroy it by sessionId.", edgeId, sessionId);
             EdgeGrpcSession stale = sessionsById.remove(sessionId);

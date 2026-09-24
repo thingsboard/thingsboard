@@ -24,6 +24,10 @@ import org.thingsboard.server.common.data.notification.rule.trigger.Notification
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.gen.transport.TransportProtos.ToEdgeEventNotificationMsg;
+import org.thingsboard.server.queue.TbQueueConsumer;
+import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.common.consumer.QueueConsumerManager;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
@@ -39,6 +43,7 @@ import java.util.concurrent.ConcurrentMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -50,6 +55,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.thingsboard.server.service.state.DefaultDeviceStateService.ACTIVITY_STATE;
+import static org.thingsboard.server.service.state.DefaultDeviceStateService.LAST_DISCONNECT_TIME;
 
 @ExtendWith(MockitoExtension.class)
 public class EdgeGrpcServiceTest {
@@ -201,6 +207,7 @@ public class EdgeGrpcServiceTest {
         onEdgeDisconnect(sessionId);
 
         verify(tsSubService, never()).saveAttributes(argThat(inactiveStateWrite()));
+        verify(tsSubService, never()).saveAttributes(argThat(lastDisconnectTimeWrite()));
     }
 
     @Test
@@ -257,6 +264,7 @@ public class EdgeGrpcServiceTest {
         onEdgeDisconnect(sessionId);
 
         verify(tsSubService, never()).saveAttributes(argThat(inactiveStateWrite()));
+        verify(tsSubService, never()).saveAttributes(argThat(lastDisconnectTimeWrite()));
         verify(clusterService, never()).pushMsgToRuleEngine(any(TenantId.class), any(EntityId.class), any(TbMsg.class), isNull());
         verify(edgeIdServiceIdCache, never()).evict(edgeId);
     }
@@ -285,6 +293,93 @@ public class EdgeGrpcServiceTest {
         onEdgeDisconnect(stub.sessionId());
 
         verify(clusterService, times(1)).pushMsgToRuleEngine(any(TenantId.class), any(EntityId.class), any(TbMsg.class), isNull());
+    }
+
+    @Test
+    public void givenSessionReplacedOnThisNode_whenStaleCallbackRuns_thenReplacementEdgeEventsCheckNotCancelled() {
+        // sessionEdgeEventChecks is keyed by edgeId, not by session, so the replacement's check sits under the
+        // same key as the one this callback is tearing down. The check loop only reschedules itself from inside
+        // the task, so cancelling it here would leave a connected edge with nothing to restart downlink
+        // delivery - the same silent stall this guard exists to prevent.
+        UUID sessionId = UUID.randomUUID();
+        EdgeGrpcSession stale = mock(EdgeGrpcSession.class);
+        when(stale.getSessionId()).thenReturn(sessionId);
+        when(stale.getEdge()).thenReturn(edge);
+        ScheduledFuture<?> replacementCheck = mock(ScheduledFuture.class);
+        when(stale.destroy()).thenAnswer(invocation -> {
+            sessions().put(edgeId, mock(EdgeGrpcSession.class));
+            sessionEdgeEventChecks().put(edgeId, replacementCheck);
+            return true;
+        });
+        sessions().put(edgeId, stale);
+
+        onEdgeDisconnect(sessionId);
+
+        verify(replacementCheck, never()).cancel(anyBoolean());
+        assertThat(sessionEdgeEventChecks()).containsEntry(edgeId, replacementCheck);
+    }
+
+    @Test
+    public void givenEdgeGenuinelyDisconnected_whenDisconnect_thenEdgeEventsCheckCancelled() {
+        // Counterpart to the test above: proves the cancel still runs on a real disconnect, so the guard is
+        // not simply disabling it.
+        UUID sessionId = UUID.randomUUID();
+        sessions().put(edgeId, sessionFor(sessionId));
+        ScheduledFuture<?> check = mock(ScheduledFuture.class);
+        sessionEdgeEventChecks().put(edgeId, check);
+
+        onEdgeDisconnect(sessionId);
+
+        verify(check, times(1)).cancel(anyBoolean());
+        assertThat(sessionEdgeEventChecks()).doesNotContainKey(edgeId);
+    }
+
+    // --- zombie session cleanup ---
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void givenZombieSessionReplacedDuringDestroy_whenCleanupRuns_thenReplacementKept() {
+        // destroy() stops a Kafka consumer and is not instantaneous. If the edge reconnects in that gap, an
+        // unconditional sessions.remove(edgeId) would drop the live session, leaving a connected edge with no
+        // map entry - every downlink lookup then silently no-ops.
+        KafkaEdgeGrpcSession zombie = mock(KafkaEdgeGrpcSession.class);
+        when(zombie.getEdge()).thenReturn(edge);
+        when(zombie.isConnected()).thenReturn(false);
+        QueueConsumerManager<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> consumerManager = mock(QueueConsumerManager.class);
+        TbQueueConsumer<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> consumer = mock(TbQueueConsumer.class);
+        when(consumer.isStopped()).thenReturn(false);
+        when(consumerManager.getConsumer()).thenReturn(consumer);
+        when(zombie.getConsumer()).thenReturn(consumerManager);
+        EdgeGrpcSession replacement = mock(EdgeGrpcSession.class);
+        when(zombie.destroy()).thenAnswer(invocation -> {
+            sessions().put(edgeId, replacement);
+            return true;
+        });
+        sessions().put(edgeId, zombie);
+
+        ReflectionTestUtils.invokeMethod(edgeGrpcService, "cleanupZombieSessions");
+
+        assertThat(sessions()).containsEntry(edgeId, replacement);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void givenZombieSessionStillCurrent_whenCleanupRuns_thenItIsRemoved() {
+        // Counterpart: with no replacement, the compare-and-remove must still drop the zombie.
+        KafkaEdgeGrpcSession zombie = mock(KafkaEdgeGrpcSession.class);
+        when(zombie.getEdge()).thenReturn(edge);
+        when(zombie.isConnected()).thenReturn(false);
+        QueueConsumerManager<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> consumerManager = mock(QueueConsumerManager.class);
+        TbQueueConsumer<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> consumer = mock(TbQueueConsumer.class);
+        when(consumer.isStopped()).thenReturn(false);
+        when(consumerManager.getConsumer()).thenReturn(consumer);
+        when(zombie.getConsumer()).thenReturn(consumerManager);
+        when(zombie.destroy()).thenReturn(true);
+        sessions().put(edgeId, zombie);
+
+        ReflectionTestUtils.invokeMethod(edgeGrpcService, "cleanupZombieSessions");
+
+        assertThat(sessions()).doesNotContainKey(edgeId);
     }
 
     // --- onEdgeConnect ownership publish order ---
@@ -322,6 +417,7 @@ public class EdgeGrpcServiceTest {
         onEdgeDisconnect(sessionId);
 
         verify(tsSubService, times(1)).saveAttributes(argThat(inactiveStateWrite()));
+        verify(tsSubService, times(1)).saveAttributes(argThat(lastDisconnectTimeWrite()));
     }
 
     @Test
@@ -335,6 +431,43 @@ public class EdgeGrpcServiceTest {
         onEdgeDisconnect(sessionId);
 
         verify(tsSubService, times(1)).saveAttributes(argThat(inactiveStateWrite()));
+        verify(tsSubService, times(1)).saveAttributes(argThat(lastDisconnectTimeWrite()));
+    }
+
+    // --- disconnect notification guard ---
+
+    @Test
+    public void givenZeroDelayAndSessionReplacedOnThisNode_whenStaleCallbackRuns_thenNoDisconnectNotification() {
+        // EDGES_DISCONNECT_NOTIFICATION_DELAY_MS=0 makes scheduleDisconnectNotification notify immediately and
+        // skip fireDelayedDisconnectNotification's liveness re-verify, so the disconnect guard is the only
+        // thing standing between a live replacement and a false 'edge disconnected' notification.
+        UUID sessionId = UUID.randomUUID();
+        EdgeGrpcSession stale = mock(EdgeGrpcSession.class);
+        when(stale.getSessionId()).thenReturn(sessionId);
+        when(stale.getEdge()).thenReturn(edge);
+        when(stale.destroy()).thenAnswer(invocation -> {
+            sessions().put(edgeId, mock(EdgeGrpcSession.class));
+            return true;
+        });
+        lenient().when(ctx.getRuleProcessor()).thenReturn(ruleProcessor);
+        sessions().put(edgeId, stale);
+
+        onEdgeDisconnect(sessionId);
+
+        verify(ruleProcessor, never()).process(argThat(disconnectTrigger()));
+    }
+
+    @Test
+    public void givenZeroDelayAndEdgeGenuinelyDisconnected_whenDisconnect_thenNotificationSent() {
+        // Counterpart: the immediate path must still fire for a real disconnect.
+        UUID sessionId = UUID.randomUUID();
+        sessions().put(edgeId, sessionFor(sessionId));
+        when(edgeIdServiceIdCache.get(edgeId)).thenReturn(null);
+        when(ctx.getRuleProcessor()).thenReturn(ruleProcessor);
+
+        onEdgeDisconnect(sessionId);
+
+        verify(ruleProcessor, times(1)).process(argThat(disconnectTrigger()));
     }
 
     private void onEdgeDisconnect(UUID sessionId) {
@@ -363,6 +496,11 @@ public class EdgeGrpcServiceTest {
         when(session.getSessionId()).thenReturn(sessionId);
         when(session.getEdge()).thenReturn(edge);
         return session;
+    }
+
+    @SuppressWarnings("unchecked")
+    private ConcurrentMap<EdgeId, ScheduledFuture<?>> sessionEdgeEventChecks() {
+        return (ConcurrentMap<EdgeId, ScheduledFuture<?>>) ReflectionTestUtils.getField(edgeGrpcService, "sessionEdgeEventChecks");
     }
 
     private ArgumentMatcher<AttributesSaveRequest> inactiveStateWrite() {
@@ -398,6 +536,12 @@ public class EdgeGrpcServiceTest {
 
     private static ArgumentMatcher<NotificationRuleTrigger> disconnectTrigger() {
         return trigger -> trigger instanceof EdgeConnectionTrigger edgeTrigger && !edgeTrigger.isConnected();
+    }
+
+    private ArgumentMatcher<AttributesSaveRequest> lastDisconnectTimeWrite() {
+        return request -> request != null
+                && edgeId.equals(request.getEntityId())
+                && request.getEntries().stream().anyMatch(entry -> LAST_DISCONNECT_TIME.equals(entry.getKey()));
     }
 
 }
