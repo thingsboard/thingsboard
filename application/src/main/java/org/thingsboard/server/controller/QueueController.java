@@ -124,7 +124,7 @@ public class QueueController extends BaseController {
         switch (type) {
             case TB_RULE_ENGINE:
                 queue.setTenantId(getTenantId());
-                Queue savedQueue = tbQueueService.saveQueue(queue);
+                Queue savedQueue = tbQueueService.saveQueue(queue, getCurrentUser());
                 checkNotNull(savedQueue);
                 return savedQueue;
             default:
@@ -141,6 +141,6 @@ public class QueueController extends BaseController {
         checkParameter("queueId", queueIdStr);
         QueueId queueId = new QueueId(toUUID(queueIdStr));
         checkQueueId(queueId, Operation.DELETE);
-        tbQueueService.deleteQueue(getTenantId(), queueId);
+        tbQueueService.deleteQueue(getTenantId(), queueId, getCurrentUser());
     }
 }
