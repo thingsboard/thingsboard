@@ -20,6 +20,7 @@ import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
 import { mergeMap, tap } from 'rxjs/operators';
 import { randomAlphanumeric, validateEmail } from '@core/utils';
 import { AuthService } from '@core/auth/auth.service';
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { DialogService } from '@core/services/dialog.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Observable, of } from 'rxjs';
@@ -37,6 +38,8 @@ export class SecuritySettingsComponent extends PageComponent implements HasConfi
   jwtSecuritySettingsFormGroup: UntypedFormGroup;
 
   showMainLoadingBar = false;
+
+  readonly maxActivationLinkTtl = getCurrentAuthState(this.store).maxActivationLinkTtl;
 
   private securitySettings: SecuritySettings;
   private jwtSettings: JwtSettings;
@@ -64,7 +67,7 @@ export class SecuritySettingsComponent extends PageComponent implements HasConfi
     this.securitySettingsFormGroup = this.fb.group({
       maxFailedLoginAttempts: [null, [Validators.min(0)]],
       userLockoutNotificationEmail: ['', [validateEmail]],
-      userActivationTokenTtl: [24, [Validators.required, Validators.min(1), Validators.max(24)]],
+      userActivationTokenTtl: [24, [Validators.required, Validators.min(1), Validators.max(this.maxActivationLinkTtl)]],
       passwordResetTokenTtl: [24, [Validators.required, Validators.min(1), Validators.max(24)]],
       mobileSecretKeyLength: [null, [Validators.min(1)]],
       passwordPolicy: this.fb.group(
