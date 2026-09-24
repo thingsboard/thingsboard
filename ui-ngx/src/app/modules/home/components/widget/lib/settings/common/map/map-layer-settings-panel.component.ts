@@ -5,6 +5,8 @@ import { TbPopoverComponent } from '@shared/components/popover.component';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
+  cartoLayerTranslationMap,
+  cartoLayerTypes,
   defaultLayerTitle,
   defaultMapLayerSettings,
   googleMapLayerTranslationMap,
@@ -15,7 +17,8 @@ import {
   MapProvider,
   mapProviders,
   mapProviderTranslationMap,
-  mapLayerRequiresApiKey,
+  mapProviderHasApiKey,
+  mapProviderRequiresApiKey,
   openStreetLayerTypes,
   openStreetMapLayerTranslationMap, referenceLayerTypes, referenceLayerTypeTranslationMap,
   tencentLayerTranslationMap,
@@ -42,6 +45,10 @@ export class MapLayerSettingsPanelComponent implements OnInit {
   openStreetLayerTypes = openStreetLayerTypes;
 
   openStreetMapLayerTranslationMap = openStreetMapLayerTranslationMap;
+
+  cartoLayerTypes = cartoLayerTypes;
+
+  cartoLayerTranslationMap = cartoLayerTranslationMap;
 
   googleMapLayerTypes = googleMapLayerTypes;
 
@@ -95,11 +102,6 @@ export class MapLayerSettingsPanelComponent implements OnInit {
     ).subscribe((newProvider: MapProvider) => {
       this.onProviderChanged(newProvider);
     });
-    this.layerFormGroup.get('layerType').valueChanges.pipe(
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe(() => {
-      this.updateValidators();
-    });
     this.updateValidators();
   }
 
@@ -115,8 +117,8 @@ export class MapLayerSettingsPanelComponent implements OnInit {
     return this.translate.instant(translationKey);
   }
 
-  requiresApiKey(): boolean {
-    return mapLayerRequiresApiKey(this.layerFormGroup.get('provider').value, this.layerFormGroup.get('layerType').value);
+  hasApiKey(): boolean {
+    return mapProviderHasApiKey(this.layerFormGroup.get('provider').value);
   }
 
   applyLayerSettings() {
@@ -144,7 +146,8 @@ export class MapLayerSettingsPanelComponent implements OnInit {
       this.layerFormGroup.get('customAttribution').disable({emitEvent: false});
       this.layerFormGroup.get('layerType').enable({emitEvent: false});
     }
-    if (mapLayerRequiresApiKey(provider, this.layerFormGroup.get('layerType').value)) {
+    if (mapProviderHasApiKey(provider)) {
+      this.layerFormGroup.get('apiKey').setValidators(mapProviderRequiresApiKey(provider) ? [Validators.required] : []);
       this.layerFormGroup.get('apiKey').enable({emitEvent: false});
     } else {
       this.layerFormGroup.get('apiKey').disable({emitEvent: false});

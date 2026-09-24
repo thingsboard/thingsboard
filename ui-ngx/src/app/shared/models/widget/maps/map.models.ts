@@ -832,6 +832,7 @@ export const defaultMapActionButtonSettings: MapActionButtonSettings = {
 
 export enum MapProvider {
   openstreet = 'openstreet',
+  carto = 'carto',
   google = 'google',
   here = 'here',
   tencent = 'tencent',
@@ -843,6 +844,7 @@ export const mapProviders = Object.keys(MapProvider) as MapProvider[];
 export const mapProviderTranslationMap = new Map<MapProvider, string>(
   [
     [MapProvider.openstreet, 'widgets.maps.layer.provider.openstreet.title'],
+    [MapProvider.carto, 'widgets.maps.layer.provider.carto.title'],
     [MapProvider.google, 'widgets.maps.layer.provider.google.title'],
     [MapProvider.here, 'widgets.maps.layer.provider.here.title'],
     [MapProvider.tencent, 'widgets.maps.layer.provider.tencent.title'],
@@ -880,6 +882,9 @@ export const mapLayerValid = (layer: MapLayerSettings): boolean => {
     case MapProvider.openstreet:
       const openStreetLayer = layer as OpenStreetMapLayerSettings;
       return !!openStreetLayer.layerType;
+    case MapProvider.carto:
+      const cartoLayer = layer as CartoMapLayerSettings;
+      return !!cartoLayer.layerType;
     case MapProvider.google:
       const googleLayer = layer as GoogleMapLayerSettings;
       return !!googleLayer.layerType;
@@ -913,6 +918,9 @@ export const defaultLayerTitle = (layer: MapLayerSettings): string => {
     case MapProvider.openstreet:
       const openStreetLayer = layer as OpenStreetMapLayerSettings;
       return openStreetMapLayerTranslationMap.get(openStreetLayer.layerType);
+    case MapProvider.carto:
+      const cartoLayer = layer as CartoMapLayerSettings;
+      return cartoLayerTranslationMap.get(cartoLayer.layerType);
     case MapProvider.google:
       const googleLayer = layer as GoogleMapLayerSettings;
       return googleMapLayerTranslationMap.get(googleLayer.layerType);
@@ -932,17 +940,10 @@ export enum OpenStreetLayerType {
   openStreetHot = 'OpenStreetMap.HOT',
   esriWorldStreetMap = 'Esri.WorldStreetMap',
   esriWorldTopoMap = 'Esri.WorldTopoMap',
-  esriWorldImagery = 'Esri.WorldImagery',
-  cartoDbPositron = 'CartoDB.Positron',
-  cartoDbDarkMatter = 'CartoDB.DarkMatter'
+  esriWorldImagery = 'Esri.WorldImagery'
 }
 
 export const openStreetLayerTypes = Object.values(OpenStreetLayerType) as OpenStreetLayerType[];
-
-export const cartoDbLayerTypes: OpenStreetLayerType[] = [
-  OpenStreetLayerType.cartoDbPositron,
-  OpenStreetLayerType.cartoDbDarkMatter
-];
 
 export const openStreetMapLayerTranslationMap = new Map<OpenStreetLayerType, string>(
   [
@@ -950,21 +951,44 @@ export const openStreetMapLayerTranslationMap = new Map<OpenStreetLayerType, str
     [OpenStreetLayerType.openStreetHot, 'widgets.maps.layer.provider.openstreet.hot'],
     [OpenStreetLayerType.esriWorldStreetMap, 'widgets.maps.layer.provider.openstreet.esri-street'],
     [OpenStreetLayerType.esriWorldTopoMap, 'widgets.maps.layer.provider.openstreet.esri-topo'],
-    [OpenStreetLayerType.esriWorldImagery, 'widgets.maps.layer.provider.openstreet.esri-imagery'],
-    [OpenStreetLayerType.cartoDbPositron, 'widgets.maps.layer.provider.openstreet.cartodb-positron'],
-    [OpenStreetLayerType.cartoDbDarkMatter, 'widgets.maps.layer.provider.openstreet.cartodb-dark-matter']
+    [OpenStreetLayerType.esriWorldImagery, 'widgets.maps.layer.provider.openstreet.esri-imagery']
   ]
 );
 
 export interface OpenStreetMapLayerSettings extends MapLayerSettings {
   provider: MapProvider.openstreet;
   layerType: OpenStreetLayerType;
-  apiKey?: string;
 }
 
 export const defaultOpenStreetMapLayerSettings: OpenStreetMapLayerSettings = {
   provider: MapProvider.openstreet,
   layerType: OpenStreetLayerType.openStreetMapnik
+}
+
+export enum CartoLayerType {
+  cartoPositron = 'CartoDB.Positron',
+  cartoDarkMatter = 'CartoDB.DarkMatter'
+}
+
+export const cartoLayerTypes = Object.values(CartoLayerType) as CartoLayerType[];
+
+export const cartoLayerTranslationMap = new Map<CartoLayerType, string>(
+  [
+    [CartoLayerType.cartoPositron, 'widgets.maps.layer.provider.carto.positron'],
+    [CartoLayerType.cartoDarkMatter, 'widgets.maps.layer.provider.carto.dark-matter']
+  ]
+);
+
+export interface CartoMapLayerSettings extends MapLayerSettings {
+  provider: MapProvider.carto;
+  layerType: CartoLayerType;
+  apiKey?: string;
+}
+
+export const defaultCartoMapLayerSettings: CartoMapLayerSettings = {
+  provider: MapProvider.carto,
+  layerType: CartoLayerType.cartoPositron,
+  apiKey: null
 }
 
 export enum GoogleLayerType {
@@ -1074,14 +1098,29 @@ export const defaultCustomMapLayerSettings: CustomMapLayerSettings = {
   tileUrl: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
 }
 
-export const mapLayerRequiresApiKey = (provider: MapProvider, layerType: string): boolean =>
-  [MapProvider.google, MapProvider.here].includes(provider) ||
-  (provider === MapProvider.openstreet && cartoDbLayerTypes.includes(layerType as OpenStreetLayerType));
+export const mapProviderHasApiKey = (provider: MapProvider): boolean =>
+  [MapProvider.carto, MapProvider.google, MapProvider.here].includes(provider);
+
+export const mapProviderRequiresApiKey = (provider: MapProvider): boolean =>
+  [MapProvider.google, MapProvider.here].includes(provider);
+
+const legacyOpenStreetCartoLayerTypes = new Set<string>(cartoLayerTypes);
+
+// CARTO layers used to be stored under the OpenStreetMap provider, keep reading them as CARTO layers
+export const normalizeMapLayerSettings = (layer: MapLayerSettings): MapLayerSettings => {
+  if (layer?.provider === MapProvider.openstreet &&
+    legacyOpenStreetCartoLayerTypes.has((layer as OpenStreetMapLayerSettings).layerType)) {
+    return {...layer, provider: MapProvider.carto};
+  }
+  return layer;
+};
 
 export const defaultMapLayerSettings = (provider: MapProvider): MapLayerSettings => {
   switch (provider) {
     case MapProvider.openstreet:
       return defaultOpenStreetMapLayerSettings;
+    case MapProvider.carto:
+      return defaultCartoMapLayerSettings;
     case MapProvider.google:
       return defaultGoogleMapLayerSettings;
     case MapProvider.here:

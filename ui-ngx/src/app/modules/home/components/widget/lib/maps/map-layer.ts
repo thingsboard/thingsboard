@@ -1,8 +1,9 @@
 // SPDX-FileCopyrightText: Copyright The Thingsboard Authors
 // SPDX-License-Identifier: Apache-2.0
 import {
-  cartoDbLayerTypes,
+  CartoMapLayerSettings,
   CustomMapLayerSettings,
+  defaultCartoMapLayerSettings,
   defaultCustomMapLayerSettings,
   defaultGoogleMapLayerSettings,
   defaultHereMapLayerSettings,
@@ -14,6 +15,7 @@ import {
   hereV3Provider,
   MapLayerSettings,
   MapProvider,
+  normalizeMapLayerSettings,
   OpenStreetMapLayerSettings,
   ReferenceLayerType,
   TencentMapLayerSettings, WEBGL_ERROR_EVENT
@@ -48,9 +50,12 @@ export abstract class TbMapLayer<S extends MapLayerSettings> {
   static fromSettings(ctx: WidgetContext,
                       inputSettings: DeepPartial<MapLayerSettings>) {
 
+    inputSettings = normalizeMapLayerSettings(inputSettings as MapLayerSettings);
     switch (inputSettings.provider) {
       case MapProvider.openstreet:
         return new TbOpenStreetMapLayer(ctx, inputSettings);
+      case MapProvider.carto:
+        return new TbCartoMapLayer(ctx, inputSettings);
       case MapProvider.google:
         return new TbGoogleMapLayer(ctx, inputSettings);
       case MapProvider.tencent:
@@ -208,8 +213,25 @@ class TbOpenStreetMapLayer extends TbMapLayer<OpenStreetMapLayerSettings> {
   }
 
   protected createLayer(): Observable<L.Layer> {
-    const layer = L.tileLayer.provider(this.settings.layerType,
-      cartoDbLayerTypes.includes(this.settings.layerType) && this.settings.apiKey ? {apikey: this.settings.apiKey} : undefined);
+    const layer = L.tileLayer.provider(this.settings.layerType);
+    return of(layer);
+  }
+
+}
+
+class TbCartoMapLayer extends TbMapLayer<CartoMapLayerSettings> {
+
+  constructor(protected ctx: WidgetContext,
+              protected inputSettings: DeepPartial<MapLayerSettings>) {
+    super(ctx, inputSettings);
+  }
+
+  protected defaultSettings(): CartoMapLayerSettings {
+    return defaultCartoMapLayerSettings;
+  }
+
+  protected createLayer(): Observable<L.Layer> {
+    const layer = L.tileLayer.provider(this.settings.layerType, {apikey: this.settings.apiKey || ''});
     return of(layer);
   }
 

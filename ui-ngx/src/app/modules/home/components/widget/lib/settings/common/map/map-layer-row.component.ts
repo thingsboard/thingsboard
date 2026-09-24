@@ -25,6 +25,8 @@ import { TbPopoverService } from '@shared/components/popover.service';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
+  cartoLayerTranslationMap,
+  cartoLayerTypes,
   defaultLayerTitle,
   defaultMapLayerSettings,
   googleMapLayerTranslationMap,
@@ -35,7 +37,8 @@ import {
   MapProvider,
   mapProviders,
   mapProviderTranslationMap,
-  mapLayerRequiresApiKey,
+  mapProviderHasApiKey,
+  mapProviderRequiresApiKey,
   openStreetLayerTypes,
   openStreetMapLayerTranslationMap,
   tencentLayerTranslationMap,
@@ -71,6 +74,10 @@ export class MapLayerRowComponent implements ControlValueAccessor, OnInit {
   openStreetLayerTypes = openStreetLayerTypes;
 
   openStreetMapLayerTranslationMap = openStreetMapLayerTranslationMap;
+
+  cartoLayerTypes = cartoLayerTypes;
+
+  cartoLayerTranslationMap = cartoLayerTranslationMap;
 
   googleMapLayerTypes = googleMapLayerTypes;
 
@@ -124,11 +131,6 @@ export class MapLayerRowComponent implements ControlValueAccessor, OnInit {
       takeUntilDestroyed(this.destroyRef)
     ).subscribe((newProvider: MapProvider) => {
       this.onProviderChanged(newProvider);
-    });
-    this.layerFormGroup.get('layerType').valueChanges.pipe(
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe(() => {
-      this.updateValidators();
     });
   }
 
@@ -216,7 +218,8 @@ export class MapLayerRowComponent implements ControlValueAccessor, OnInit {
       this.layerFormGroup.get('customAttribution').disable({emitEvent: false});
       this.layerFormGroup.get('layerType').enable({emitEvent: false});
     }
-    if (mapLayerRequiresApiKey(provider, this.layerFormGroup.get('layerType').value)) {
+    if (mapProviderHasApiKey(provider)) {
+      this.layerFormGroup.get('apiKey').setValidators(mapProviderRequiresApiKey(provider) ? [Validators.required] : []);
       this.layerFormGroup.get('apiKey').enable({emitEvent: false});
     } else {
       this.layerFormGroup.get('apiKey').disable({emitEvent: false});
