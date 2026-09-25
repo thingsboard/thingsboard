@@ -43,7 +43,8 @@ server:
   # HTTP settings
   http:
     # Semi-colon-separated list of urlPattern=maxPayloadSize pairs that define max http request size for specified url pattern. After first match all other will be skipped
-    max_payload_size: "${HTTP_MAX_PAYLOAD_SIZE_LIMIT_CONFIGURATION:/api/image*/**=52428800;/api/resource/**=52428800;/api/**=16777216}"
+    # The /api/communityGrant/offline/run entry must precede /api/** to allow instance checker uploads; it is prepended automatically if missing
+    max_payload_size: "${HTTP_MAX_PAYLOAD_SIZE_LIMIT_CONFIGURATION:/api/communityGrant/offline/run=35651584;/api/image*/**=52428800;/api/resource/**=52428800;/api/**=16777216}"
   # HTTP/2 support (takes effect only if server SSL is enabled)
   http2:
     # Enable/disable HTTP/2 support
@@ -2237,3 +2238,18 @@ iot-hub:
   max-uncompressed-entry-bytes: "${IOT_HUB_MAX_UNCOMPRESSED_ENTRY_BYTES:52428800}" # maximum uncompressed size in bytes for any single entry inside a solution template archive.
   max-archive-entry-count: "${IOT_HUB_MAX_ARCHIVE_ENTRY_COUNT:10000}" # maximum number of entries allowed inside a solution template archive.
   max-install-timeout-ms: "${IOT_HUB_MAX_INSTALL_TIMEOUT_MS:60000}" # upper clamp in milliseconds for the post-install wait declared in a solution template's solution.json. Prevents a malicious or misconfigured template from pinning an HTTP worker thread.
+
+community-grant:
+  enabled: "${COMMUNITY_GRANT_ENABLED:true}" # enables the community grant enrollment flow; when disabled, no flow can be started and no outbound calls are made.
+  base-url: "${COMMUNITY_GRANT_BASE_URL:https://license.thingsboard.io}" # base URL of the license portal.
+  connect-timeout-sec: "${COMMUNITY_GRANT_CONNECT_TIMEOUT_SEC:5}" # timeout in seconds to connect to the license portal.
+  read-timeout-sec: "${COMMUNITY_GRANT_READ_TIMEOUT_SEC:10}" # timeout in seconds to read from the license portal.
+  fast-poll-interval-ms: "${COMMUNITY_GRANT_FAST_POLL_INTERVAL_MS:3000}" # interval in milliseconds between portal polls during the initial polling window; a node never polls more often than every 2000 ms.
+  fast-poll-window-ms: "${COMMUNITY_GRANT_FAST_POLL_WINDOW_MS:120000}" # duration in milliseconds of the initial polling window, after which the slow interval is used.
+  slow-poll-interval-ms: "${COMMUNITY_GRANT_SLOW_POLL_INTERVAL_MS:30000}" # interval in milliseconds between portal polls after the initial polling window.
+  supervise-interval-ms: "${COMMUNITY_GRANT_SUPERVISE_INTERVAL_MS:30000}" # interval in milliseconds at which the node owning the system tenant partition picks up enrollment flows started on other nodes.
+  sign-up-deadline-ms: "${COMMUNITY_GRANT_SIGN_UP_DEADLINE_MS:86400000}" # how long in milliseconds to poll for an uncompleted sign-up before the flow is stopped and can be restarted.
+  max-checker-size-bytes: "${COMMUNITY_GRANT_MAX_CHECKER_SIZE_BYTES:33554432}" # maximum size in bytes of the instance checker, downloaded or uploaded; keep below the /api/communityGrant/offline/run limit in server.http.max_payload_size.
+  checker-timeout-sec: "${COMMUNITY_GRANT_CHECKER_TIMEOUT_SEC:600}" # maximum time in seconds the instance checker may run before it is terminated; an offline run still unfinished 2 minutes later is reported as interrupted.
+  max-report-size-bytes: "${COMMUNITY_GRANT_MAX_REPORT_SIZE_BYTES:1048576}" # maximum size in bytes of the output accepted from the instance checker.
+  checker-release-public-keys: "${COMMUNITY_GRANT_CHECKER_RELEASE_PUBLIC_KEYS:1:Xwg49dWb+Ofzx4FzIvxqYMS9EV9hqzlTGmphtTYZtw4=}" # comma-separated keyId:base64Key list (keyId 1-255, raw 32-byte Ed25519 key) trusted to sign the instance checker; if empty or unparseable, no instance checker is run.
