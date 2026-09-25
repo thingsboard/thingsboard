@@ -7,6 +7,7 @@
 CREATE TABLE IF NOT EXISTS tb_cluster (
     cluster_id uuid NOT NULL,
     license_claim_token varchar,
+    license_secret varchar,
     CONSTRAINT tb_cluster_pkey PRIMARY KEY (cluster_id)
 );
 

@@ -9,6 +9,7 @@ import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.client.ClientHttpRequest;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.stereotype.Component;
@@ -40,6 +41,7 @@ public class CommunityGrantPortalClient {
 
     private static final String BASE_PATH = "/api/noauth/communityGrant";
     private static final String CLUSTER_STATUS_PATH = BASE_PATH + "/clusterStatus?clusterId={clusterId}";
+    private static final String LICENSE_CLAIM_PATH = "/api/noauth/freeLicense/claim";
 
     /** A header rather than a query parameter, which would be written to access and proxy logs. */
     private static final String CLAIM_TOKEN_HEADER = "X-TB-Claim-Token";
@@ -207,6 +209,29 @@ public class CommunityGrantPortalClient {
         CommunityGrantReportResponse response = restTemplate.postForObject(url,
                 new CommunityGrantReportRequest(token, report), CommunityGrantReportResponse.class);
         return response == null ? null : response.status();
+    }
+
+    /**
+     * This route reads the claim token from the body, not from the header the grant routes use.
+     *
+     * @return the granted license key, or {@code null} while the portal has none to hand over yet
+     * @throws CommunityGrantLicenseClaimRefusedException if the portal refuses the claim
+     */
+    public String claimLicense(String token) {
+        String url = baseUrl + LICENSE_CLAIM_PATH;
+        CommunityGrantLicenseClaimResponse response;
+        try {
+            response = restTemplate.postForObject(url, new CommunityGrantLicenseClaimRequest(token),
+                    CommunityGrantLicenseClaimResponse.class);
+        } catch (HttpStatusCodeException e) {
+            // A rate-limited claim is the one client error that is worth trying again.
+            if (e.getStatusCode().is4xxClientError()
+                    && e.getStatusCode().value() != HttpStatus.TOO_MANY_REQUESTS.value()) {
+                throw new CommunityGrantLicenseClaimRefusedException(e);
+            }
+            throw e;
+        }
+        return response != null && response.activated() ? response.secret() : null;
     }
 
     /**

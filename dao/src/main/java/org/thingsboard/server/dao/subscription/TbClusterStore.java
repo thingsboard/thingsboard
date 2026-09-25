@@ -11,7 +11,10 @@ import org.springframework.stereotype.Component;
 import java.util.Optional;
 import java.util.UUID;
 
-/** Accessor for the single {@code tb_cluster} row: the cluster id and the license portal claim token. */
+/**
+ * Accessor for the single {@code tb_cluster} row: the cluster id, the license portal claim token and the
+ * license key the portal granted.
+ */
 @Component
 @Profile("!install")
 @RequiredArgsConstructor
@@ -23,6 +26,14 @@ public class TbClusterStore {
     public Optional<UUID> getClusterId() {
         return jdbcTemplate.query("SELECT cluster_id FROM tb_cluster ORDER BY cluster_id LIMIT 1",
                 rs -> rs.next() ? Optional.ofNullable(rs.getObject("cluster_id", UUID.class)) : Optional.empty());
+    }
+
+    public Optional<String> getLicenseSecret() {
+        return getColumn("license_secret");
+    }
+
+    public void saveLicenseSecret(String secret) {
+        updateColumn("license_secret", secret, "license secret");
     }
 
     public Optional<String> getLicenseClaimToken() {
