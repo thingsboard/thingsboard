@@ -75,7 +75,7 @@
     <!-- Main content -->
     <div class="dlg-main">
       @if (isCompactLayout()) {
-        <!-- CF/RC/Device: description + author (no image) -->
+        <!-- Calculated field/alarm rule/rule chain: description + author (no image) -->
         <div class="dlg-info dlg-info-compact">
           <div class="dlg-info-text">
             @if (item.description) {
@@ -86,11 +86,15 @@
           </div>
         </div>
       } @else {
-        <!-- Widget/Dashboard/Solution: image + description side by side -->
+        <!-- Widget/Dashboard/Device/Solution: image + description side by side -->
         <div class="flex gap-6 lt-md:flex-col">
           <div class="dlg-preview"
-               [class.dlg-preview-carousel]="item.type === ItemType.SOLUTION_TEMPLATE && carouselImages.length > 1">
-            @if (item.type === ItemType.SOLUTION_TEMPLATE && carouselImages.length > 1) {
+               [class.dlg-preview-carousel]="carouselImages.length > 1"
+               tbPhotoSwipeGallery galleryChildrenSelector=".dlg-carousel-item, .dlg-preview-img"
+               (lightboxOpened)="lightboxOpen = true"
+               (slideChanged)="carouselIndex = $event"
+               (lightboxClosed)="onLightboxClosed($event)">
+            @if (carouselImages.length > 1) {
               <div class="dlg-hero-carousel">
                 <ngx-hm-carousel
                   [(ngModel)]="carouselIndex"
@@ -98,7 +102,7 @@
                   [infinite]="true"
                   [autoplay-speed]="3000"
                   [between-delay]="0"
-                  [autoplay]="true"
+                  [autoplay]="!lightboxOpen"
                   [mouse-enable]="true"
                   [show-num]="1"
                   class="dlg-carousel">
@@ -131,7 +135,10 @@
                 </div>
               </div>
             } @else {
-              @if (getPreviewUrl(); as url) {
+              <!-- One image is not a carousel. Reading it off the same list keeps this in step with
+                   the gallery: it is the item's image when there is one, and the single screenshot
+                   otherwise, rather than the placeholder an empty item.image used to leave here. -->
+              @if (carouselImages[0]; as url) {
                 <img [src]="url" alt="" class="dlg-preview-img">
               } @else {
                 <div class="dlg-preview-placeholder">
