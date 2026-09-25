@@ -3,14 +3,26 @@
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
+import { MatOptionSelectionChange } from '@angular/material/core';
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { forkJoin, Subject, Subscription } from 'rxjs';
-import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { forkJoin, of, Subject, Subscription } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { MediaBreakpoints } from '@shared/models/constants';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
-import { MpItemVersionQuery, MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
-import { getItemTypeIcon, ItemType, itemTypeTranslations } from '@shared/models/iot-hub/iot-hub-item.models';
+import {
+  MpItemVersionGroupedQuery,
+  MpItemVersionQuery,
+  MpItemVersionSection,
+  MpItemVersionView
+} from '@shared/models/iot-hub/iot-hub-version.models';
+import {
+  CROSS_TYPE_ITEM_TYPES,
+  getItemTypeIcon,
+  ItemType,
+  itemTypeTranslations,
+  RELEVANCE_SORT_PROPERTY
+} from '@shared/models/iot-hub/iot-hub-item.models';
 import { IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -35,12 +47,9 @@ interface HeroTypeConfig {
 interface SearchResultGroup {
   type: ItemType;
   items: MpItemVersionView[];
+  /** How many rows of this type the header offers beyond the ones shown. Zero renders no "+N more". */
+  remaining: number;
 }
-
-const SEARCH_GROUP_ORDER: ItemType[] = [
-  ItemType.DEVICE, ItemType.SOLUTION_TEMPLATE, ItemType.WIDGET,
-  ItemType.CALCULATED_FIELD, ItemType.ALARM_RULE, ItemType.RULE_CHAIN
-];
 
 @Component({
   selector: 'tb-iot-hub-home',
@@ -53,12 +62,12 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
   readonly ItemType = ItemType;
 
   searchText = '';
-  searchResults: MpItemVersionView[] = [];
   searchResultGroups: SearchResultGroup[] = [];
   searchLoaded = false;
   searchLoading = false;
   @ViewChild(MatAutocompleteTrigger) searchAutoTrigger: MatAutocompleteTrigger;
   @ViewChild('searchInput', {read: ElementRef}) searchInputRef: ElementRef;
+  private enterHandledByRow = false;
   private searchSubject = new Subject<string>();
   private searchSubscription: Subscription;
 
@@ -156,14 +165,19 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
       distinctUntilChanged(),
       switchMap(text => {
         this.searchLoading = true;
-        const sortOrder: SortOrder = { property: 'totalInstallCount', direction: Direction.DESC };
-        const pageLink = new PageLink(10, 0, text.trim() || null, sortOrder);
-        const query = new MpItemVersionQuery(pageLink);
-        return this.iotHubApiService.getPublishedVersions(query, { ignoreLoading: true });
+        const trimmed = text.trim();
+        // Relevance in both states, the same value every other IoT Hub surface sends: with an
+        // empty field the backend serves the install count under this key, so the panel opens on
+        // popularity without this component having to know it.
+        const query = new MpItemVersionGroupedQuery({}, trimmed, RELEVANCE_SORT_PROPERTY);
+        // A failed request must not end the subscription: the interceptor reports it, and the
+        // panel goes back to an empty answer the next keystroke can replace.
+        return this.iotHubApiService.getPublishedVersionsGrouped(query, { ignoreLoading: true }).pipe(
+          catchError(() => of([] as MpItemVersionSection[]))
+        );
       })
-    ).subscribe(result => {
-      this.searchResults = result.data;
-      this.searchResultGroups = this.groupSearchResults(result.data);
+    ).subscribe(sections => {
+      this.searchResultGroups = this.toResultGroups(sections);
       this.searchLoaded = true;
       this.searchLoading = false;
     });
@@ -205,11 +219,13 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
   }
 
   onSearchInput(): void {
+    this.enterHandledByRow = false;
     this.searchLoading = true;
     this.searchSubject.next(this.searchText || '');
   }
 
   onSearchFocus(): void {
+    this.enterHandledByRow = false;
     if (!this.searchLoaded) {
       this.searchLoading = true;
       this.searchSubject.next(this.searchText || '');
@@ -221,13 +237,45 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
   };
 
   clearSearch(): void {
+    this.enterHandledByRow = false;
     this.searchText = '';
     this.searchSubject.next('');
     this.searchInputRef?.nativeElement?.focus();
     setTimeout(() => this.searchAutoTrigger?.openPanel());
   }
 
+  /**
+   * Gate on every row's selection: false for the panel's own bookkeeping, true when the user
+   * picked the row - and then it records whether a keyup is still coming for it.
+   *
+   * One Enter reaches two handlers. The autocomplete trigger acts on keydown, the field's own
+   * handler on keyup, and preventDefault on the first does not stop the second. Only the
+   * keyboard leaves that second half to deal with, so only the keyboard arms the flag: a pointer
+   * selection is finished when it returns, and a flag left standing there would swallow the next
+   * onSearch - which the magnifier button can raise with no keystroke at all.
+   *
+   * activeOption is what tells the two apart, and it is readable only here: the trigger holds it
+   * while it calls _selectViaInteraction and clears it on the next line of its own handler, so by
+   * keyup it reads empty either way. A pointer never sets it.
+   */
+  rowSelectedByUser(event: MatOptionSelectionChange): boolean {
+    if (!event.isUserInput) {
+      return false;
+    }
+    this.enterHandledByRow = !!this.searchAutoTrigger?.activeOption;
+    return true;
+  }
+
+  /**
+   * Enter in the field opens the search page, unless a row has just acted on this same press.
+   * Every path that re-enters the field clears the flag too, so nothing survives the keystroke
+   * it belongs to - including an arrow-then-click, the one selection that arms it by pointer.
+   */
   onSearch(): void {
+    if (this.enterHandledByRow) {
+      this.enterHandledByRow = false;
+      return;
+    }
     this.seeAllResults();
   }
 
@@ -235,6 +283,17 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
     this.searchAutoTrigger?.closePanel();
     const search = this.searchText?.trim() || undefined;
     void this.router.navigate(['/iot-hub/search'], { queryParams: { search } });
+  }
+
+  /**
+   * The section header is the way into the rest of a type - the panel carries no per-section
+   * "see all" row, which would put six identical calls to action on one panel. The query goes
+   * with it, so the type page opens on the same search rather than on the whole type.
+   */
+  navigateToSection(type: ItemType): void {
+    this.searchAutoTrigger?.closePanel();
+    const search = this.searchText?.trim() || undefined;
+    void this.router.navigate(['/iot-hub', this.getTypeRoute(type)], { queryParams: { search } });
   }
 
   isCompactType(type: ItemType): boolean {
@@ -523,21 +582,26 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
     });
   }
 
-  private groupSearchResults(items: MpItemVersionView[]): SearchResultGroup[] {
-    const groupMap = new Map<ItemType, MpItemVersionView[]>();
-    for (const item of items) {
-      if (!SEARCH_GROUP_ORDER.includes(item.type)) {
-        continue;
-      }
-      let list = groupMap.get(item.type);
-      if (!list) {
-        list = [];
-        groupMap.set(item.type, list);
-      }
-      list.push(item);
-    }
-    return SEARCH_GROUP_ORDER
-      .filter(type => groupMap.has(type))
-      .map(type => ({ type, items: groupMap.get(type) }));
+  /**
+   * Reads the sections the server built: they arrive capped and in the order to render them, so
+   * this only drops the types this panel has no layout for - the platform publishes no dashboards
+   * - and works out each header's "+N more".
+   *
+   * `items` is defaulted because the response is an unvalidated cast of a new endpoint, and a
+   * throw here lands in a subscribe callback, where it would leave the panel on its spinner
+   * rather than reaching the catchError upstream.
+   */
+  private toResultGroups(sections: MpItemVersionSection[]): SearchResultGroup[] {
+    return sections
+      .filter(section => CROSS_TYPE_ITEM_TYPES.includes(section.itemType))
+      .map(section => {
+        const items = section.items ?? [];
+        return {
+          type: section.itemType,
+          items,
+          remaining: Math.max(0, section.total - items.length)
+        };
+      });
   }
+
 }

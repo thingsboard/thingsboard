@@ -8,12 +8,18 @@
   height: 100%;
 }
 
+// Same frame as the type pages (iot-hub-items-page): one even padding on the card, the hero
+// inside it, and the component below pulled out to the card's edges. It replaces four
+// breakpoints' worth of hand-written negative margins — one per element that needed to reach
+// an edge — and is why the filter rail, the heading and the grid now line up by construction.
+.tb-search-page {
+  padding: 40px 40px 48px;
+}
 
 // Back button
 .tb-search-back-btn {
   align-self: flex-start;
-  margin-top: 40px;
-  margin-left: 123px;
+  margin-left: -8px;
 }
 
 // Title
@@ -30,100 +36,37 @@
   color: rgba(0, 0, 0, 0.54);
 }
 
+// Full bleed, and it pads its own rows back in through --tb-search-side-pad. The rail and the
+// dividers are the parts that must reach the edge; everything else lines up with the hero.
 tb-iot-hub-search {
   flex: 1;
   min-height: 0;
-  padding-left: 123px;
-  padding-right: 123px;
-
-  ::ng-deep {
-    .tb-search-divider {
-      margin-left: -123px;
-      margin-right: -123px;
-    }
-
-    .tb-results-container {
-      padding-right: 123px;
-      padding-bottom: 40px;
-      margin-right: -123px;
-    }
-  }
-}
-
-// Responsive
-@media #{$mat-lt-xxl} {
-  .tb-search-back-btn {
-    margin-left: 40px;
-  }
-
-  tb-iot-hub-search {
-    padding-left: 40px;
-    padding-right: 40px;
-
-    ::ng-deep {
-      .tb-search-divider {
-        margin-left: -40px;
-        margin-right: -40px;
-      }
-
-      .tb-results-container {
-        padding-right: 40px;
-        margin-right: -40px;
-      }
-    }
-  }
+  --tb-search-side-pad: 40px;
+  margin-left: -40px;
+  margin-right: -40px;
 }
 
 @media #{$mat-lt-lg} {
-  .tb-search-back-btn {
-    margin-top: 24px;
-    margin-left: 24px;
+  .tb-search-page {
+    padding: 24px 24px 32px;
   }
 
   tb-iot-hub-search {
-    padding-left: 24px;
-    padding-right: 24px;
-
-    ::ng-deep {
-      .tb-search-divider {
-        margin-left: -24px;
-        margin-right: -24px;
-      }
-
-      .tb-results-container {
-        padding-right: 24px;
-        padding-bottom: 24px;
-        margin-right: -24px;
-      }
-    }
+    --tb-search-side-pad: 24px;
+    margin-left: -24px;
+    margin-right: -24px;
   }
 }
 
 @media #{$mat-lt-sm} {
   .tb-search-page {
+    padding: 16px 16px 24px;
     gap: 16px;
   }
 
-  .tb-search-back-btn {
-    margin-top: 16px;
-    margin-left: 16px;
-  }
-
   tb-iot-hub-search {
-    padding-left: 16px;
-    padding-right: 16px;
-
-    ::ng-deep {
-      .tb-search-divider {
-        margin-left: -16px;
-        margin-right: -16px;
-      }
-
-      .tb-results-container {
-        padding-right: 16px;
-        padding-bottom: 16px;
-        margin-right: -16px;
-      }
-    }
+    --tb-search-side-pad: 16px;
+    margin-left: -16px;
+    margin-right: -16px;
   }
 }
