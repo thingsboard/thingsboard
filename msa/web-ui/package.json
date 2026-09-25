@@ -1,7 +1,7 @@
 {
   "name": "thingsboard-web-ui",
   "private": true,
-  "version": "4.3.1.5",
+  "version": "4.3.1.6",
   "description": "ThingsBoard Web UI Microservice",
   "main": "server.ts",
   "bin": "server.js",
@@ -13,7 +13,7 @@
     "build": "tsc"
   },
   "dependencies": {
-    "compression": "^1.8.1",
+    "compression": "^1.8.2",
     "config": "^3.3.12",
     "connect-history-api-fallback": "1.6.0",
     "express": "^5.1.0",
