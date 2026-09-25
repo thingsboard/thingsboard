@@ -1,23 +1,12 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
-import { Component, DoCheck } from '@angular/core';
-import {
-  TargetDevice,
-  TargetDeviceType,
-  targetDeviceValid,
-  WidgetSettings,
-  WidgetSettingsComponent
-} from '@shared/models/widget.models';
+import { Component } from '@angular/core';
+import { TargetDevice, WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { WidgetService } from '@core/http/widget.service';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { EntityFilter, singleEntityFilterFromDeviceId } from '@shared/models/query/query.models';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Observable, of, Subject } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
-import { isEqual } from '@core/utils';
 
 @Component({
     selector: 'tb-led-indicator-widget-settings',
@@ -25,7 +14,7 @@ import { isEqual } from '@core/utils';
     styleUrls: ['./../widget-settings.scss'],
     standalone: false
 })
-export class LedIndicatorWidgetSettingsComponent extends WidgetSettingsComponent implements DoCheck {
+export class LedIndicatorWidgetSettingsComponent extends WidgetSettingsComponent {
 
   functionScopeVariables = this.widgetService.getWidgetScopeVariables();
 
@@ -35,41 +24,12 @@ export class LedIndicatorWidgetSettingsComponent extends WidgetSettingsComponent
 
   dataKeyType = DataKeyType;
 
-  entityFilter: EntityFilter;
-
   ledIndicatorWidgetSettingsForm: UntypedFormGroup;
-
-  private currentTargetDevice: TargetDevice;
-  private targetDeviceChanged = new Subject<TargetDevice>();
 
   constructor(protected store: Store<AppState>,
               private widgetService: WidgetService,
               private fb: UntypedFormBuilder) {
     super(store);
-    this.targetDeviceChanged.pipe(
-      switchMap(targetDevice => this.resolveEntityFilter(targetDevice)),
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe(entityFilter => this.entityFilter = entityFilter);
-  }
-
-  ngDoCheck() {
-    const targetDevice = this.targetDevice;
-    if (!isEqual(targetDevice, this.currentTargetDevice)) {
-      this.currentTargetDevice = targetDevice;
-      this.targetDeviceChanged.next(targetDevice);
-    }
-  }
-
-  private resolveEntityFilter(targetDevice: TargetDevice): Observable<EntityFilter> {
-    if (!targetDeviceValid(targetDevice)) {
-      return of(null);
-    }
-    if (targetDevice.type === TargetDeviceType.device) {
-      return of(singleEntityFilterFromDeviceId(targetDevice.deviceId));
-    }
-    return this.aliasController.getAliasInfo(targetDevice.entityAliasId).pipe(
-      map(aliasInfo => aliasInfo.entityFilter)
-    );
   }
 
   protected settingsForm(): UntypedFormGroup {
