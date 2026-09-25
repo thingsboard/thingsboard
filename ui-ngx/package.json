@@ -61,7 +61,7 @@
     "jszip": "^3.10.1",
     "leaflet": "1.9.4",
     "leaflet-polylinedecorator": "1.6.0",
-    "leaflet-providers": "2.0.0",
+    "leaflet-providers": "4.0.0",
     "leaflet.gridlayer.googlemutant": "0.15.0",
     "leaflet.markercluster": "1.5.3",
     "libphonenumber-js": "^1.12.35",
