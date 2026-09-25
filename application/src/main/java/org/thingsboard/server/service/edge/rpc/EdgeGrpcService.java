@@ -76,7 +76,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import static org.thingsboard.server.service.state.DefaultDeviceStateService.ACTIVITY_STATE;
 import static org.thingsboard.server.service.state.DefaultDeviceStateService.LAST_CONNECT_TIME;
@@ -545,17 +544,36 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             destroySession(toRemove);
             sessionsById.remove(sessionId);
             TenantId tenantId = toRemove.getEdge().getTenantId();
-            // A newer session on another node may have already claimed this edge and set active=true.
-            // Clearing the flag here would leave the edge marked inactive while it is in fact connected,
-            // which silently drops every downlink event that is not queued for offline edges.
-            // When ownership is unknown (no cache entry) fall through and persist the inactive state.
-            if (!isOwnedByAnotherNode(edgeId)) {
+            // The edge may already have been claimed by a newer session - on this node (a replacement that
+            // landed while this stale callback was tearing its own session down) or on another live node.
+            // Either way the edge is connected, so none of the disconnect side effects apply:
+            //   - clearing the flag makes saveEdgeEvent drop assignment events until a full sync;
+            //   - a newer lastDisconnectTime would contradict the live session's lastConnectTime;
+            //   - the DISCONNECT_EVENT payload is {"active": false, ...} with SERVER_SCOPE in the metadata,
+            //     so a rule chain wiring Disconnect Event -> Save Attributes writes active=false straight
+            //     back, re-creating the dropped-event behaviour through the rule engine;
+            //   - on this branch the EDGE_CONNECTION (disconnected) notification is raised from inside
+            //     pushRuleEngineMessage, so it is suppressed together with the event. That is the point: a
+            //     connected edge must not produce a 'disconnected' notification, and this branch has no
+            //     delayed re-verify to withdraw one after the fact.
+            // Ownership being unknown (no cache entry) still counts as disconnected, so a genuinely offline
+            // edge is always marked inactive.
+            boolean replacedOnThisNode = sessions.containsKey(edgeId);
+            if (!replacedOnThisNode && !isOwnedByAnotherNode(edgeId)) {
                 save(tenantId, edgeId, ACTIVITY_STATE, false);
+                long lastDisconnectTs = System.currentTimeMillis();
+                save(tenantId, edgeId, LAST_DISCONNECT_TIME, lastDisconnectTs);
+                pushRuleEngineMessage(toRemove.getEdge().getTenantId(), edge, lastDisconnectTs, TbMsgType.DISCONNECT_EVENT);
             }
-            long lastDisconnectTs = System.currentTimeMillis();
-            save(tenantId, edgeId, LAST_DISCONNECT_TIME, lastDisconnectTs);
-            pushRuleEngineMessage(toRemove.getEdge().getTenantId(), edge, lastDisconnectTs, TbMsgType.DISCONNECT_EVENT);
-            cancelScheduleEdgeEventsCheck(edgeId);
+            // sessionEdgeEventChecks is keyed by edgeId, not by session, so a replacement that landed on this
+            // node while this stale callback was running has already scheduled its check under the same key.
+            // Cancelling it here would leave the live session with no check loop - the loop only reschedules
+            // itself from inside the task, so a cancelled task never runs again - and downlinks would stall
+            // silently until the edge reconnects. When the edge is owned by another node there is nothing live
+            // to protect: the check is node-local and belongs to the session we just tore down.
+            if (!replacedOnThisNode) {
+                cancelScheduleEdgeEventsCheck(edgeId);
+            }
         } else {
             log.info("[{}] edge session [{}] is not current anymore. Attempting to destroy it by sessionId.", edgeId, sessionId);
             EdgeGrpcSession stale = sessionsById.remove(sessionId);
@@ -570,10 +588,10 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                 log.debug("[{}] No session found by sessionId [{}] to destroy", edgeId, sessionId);
             }
         }
-        // Only evict if the cache still points at this node. If the edge already reconnected to another
-        // TB-Core node, that node has overwritten the entry and owns it - evicting here would wipe the live
-        // owner's claim and defeat the activity-state guard above.
-        if (isOwnedByThisNode(edgeId)) {
+        // Only evict if no live session holds this edge on this node any more and the cache still points
+        // here. If the edge already reconnected - to this node or to another one - that session owns the
+        // entry, and evicting it would wipe the live owner's claim and defeat the activity-state guard above.
+        if (!sessions.containsKey(edgeId) && isOwnedByThisNode(edgeId)) {
             edgeIdServiceIdCache.evict(edgeId);
         }
     }
@@ -585,6 +603,11 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     //   - entry naming a node that is no longer in the cluster: the edge sessions cache has no TTL by default
     //     (CACHE_SPECS_EDGE_SESSIONS_TTL=0) and is only ever evicted by the owning node, so a node that died
     //     without evicting would otherwise keep the edge marked active forever, with no reconciler to correct it.
+    //     Note this covers a node that is gone, not one that restarted under the same service id - that claim
+    //     still resolves as live, leaving the edge marked active until something reconnects. That errs towards
+    //     queueing edge events rather than dropping them, which is the safe direction.
+    // This narrows the race rather than closing it: the attribute is plain last-writer-wins, and two nodes can
+    // still issue their async writes in an order this read cannot see.
     private boolean isOwnedByAnotherNode(EdgeId edgeId) {
         TbCacheValueWrapper<String> wrapper = edgeIdServiceIdCache.get(edgeId);
         if (wrapper == null) {
@@ -722,7 +745,10 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
 
     private void cleanupZombieSessions() {
         try {
-            tryToDestroyZombieSessions(getZombieSessions(sessions.values()), s -> sessions.remove(s.getEdge().getId()));
+            // Compare-and-remove: destroy() above is not instantaneous, so the edge may have reconnected and
+            // put a live session under this id in the meantime. Removing it unconditionally would leave a
+            // connected edge with no entry in 'sessions', silently no-opping every downlink lookup.
+            tryToDestroyZombieSessions(getZombieSessions(sessions.values()), s -> sessions.remove(s.getEdge().getId(), s));
             tryToDestroyZombieSessions(getZombieSessions(sessionsById.values()), s -> sessionsById.remove(s.getSessionId()));
 
             zombieSessions.removeIf(zombie -> {
@@ -751,11 +777,11 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         return result;
     }
 
-    private void tryToDestroyZombieSessions(List<EdgeGrpcSession> sessionsToRemove, Function<EdgeGrpcSession, EdgeGrpcSession> removeFunc) {
+    private void tryToDestroyZombieSessions(List<EdgeGrpcSession> sessionsToRemove, Consumer<EdgeGrpcSession> removeFunc) {
         for (EdgeGrpcSession toRemove : sessionsToRemove) {
             log.info("[{}] Destroying session for edge because edge is not connected", toRemove.getEdge().getId());
             if (toRemove.destroy()) {
-                removeFunc.apply(toRemove);
+                removeFunc.accept(toRemove);
             }
         }
     }
