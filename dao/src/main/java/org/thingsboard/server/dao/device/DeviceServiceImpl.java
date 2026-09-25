@@ -9,6 +9,9 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.asn1.x500.style.BCStyle;
+import org.bouncycastle.asn1.x500.style.IETFUtils;
+import org.bouncycastle.cert.X509CertificateHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -22,6 +25,7 @@ import org.thingsboard.server.common.data.DeviceIdInfo;
 import org.thingsboard.server.common.data.DeviceInfo;
 import org.thingsboard.server.common.data.DeviceInfoFilter;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntitySubtype;
@@ -35,6 +39,10 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MBootstrapClientCredentials;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MDeviceCredentials;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecBootstrapClientCredential;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.X509ClientCredential;
 import org.thingsboard.server.common.data.device.data.CoapDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceConfiguration;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceTransportConfiguration;
@@ -75,6 +83,7 @@ import org.thingsboard.server.dao.sql.JpaExecutorService;
 import org.thingsboard.server.dao.tenant.TenantService;
 
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -592,6 +601,13 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
     @Transactional
     public Device saveDevice(ProvisionRequest provisionRequest, DeviceProfile profile) {
         Device device = new Device();
+        if (provisionRequest.getCredentialsType() == DeviceCredentialsType.LWM2M_CREDENTIALS) {
+            if (profile.getTransportType() != DeviceTransportType.LWM2M
+                    || profile.getProvisionType() != DeviceProfileProvisionType.X509_CERTIFICATE_CHAIN) {
+                throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
+            }
+            device.setDeviceProfileId(profile.getId());
+        }
         device.setName(provisionRequest.getDeviceName());
         device.setType(profile.getName());
         device.setTenantId(profile.getTenantId());
@@ -627,6 +643,7 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
                     deviceCredentials.setCredentialsValue(provisionRequest.getCredentialsData().getX509CertHash());
                     break;
                 case LWM2M_CREDENTIALS:
+                    deviceCredentials.setCredentialsValue(createLwm2mX509Credentials(provisionRequest.getCredentialsData().getX509CertHash()));
                     break;
             }
             try {
@@ -639,6 +656,24 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
         publishEvictEvent(new DeviceCacheEvictEvent(savedDevice.getTenantId(), savedDevice.getId(), provisionRequest.getDeviceName(), null));
         countService.publishCountEntityEvictEvent(savedDevice.getTenantId(), EntityType.DEVICE);
         return savedDevice;
+    }
+
+    private String createLwm2mX509Credentials(String certificate) {
+        try {
+            var subject = new X509CertificateHolder(Base64.getDecoder().decode(certificate)).getSubject();
+            X509ClientCredential client = new X509ClientCredential();
+            client.setEndpoint(IETFUtils.valueToString(subject.getRDNs(BCStyle.CN)[0].getFirst().getValue()));
+            client.setCert(certificate);
+            LwM2MDeviceCredentials credentials = new LwM2MDeviceCredentials();
+            credentials.setClient(client);
+            LwM2MBootstrapClientCredentials bootstrap = new LwM2MBootstrapClientCredentials();
+            bootstrap.setBootstrapServer(new NoSecBootstrapClientCredential());
+            bootstrap.setLwm2mServer(new NoSecBootstrapClientCredential());
+            credentials.setBootstrap(bootstrap);
+            return JacksonUtil.toString(credentials);
+        } catch (Exception e) {
+            throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
+        }
     }
 
     @Override

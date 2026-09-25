@@ -157,6 +157,36 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
                         log.error(e.getMessage(), e);
                     }
                 }
+                if (!x509CredentialsFound && chain.length > 1 && chain[0].getBasicConstraints() < 0
+                        && chain[chain.length - 1].getBasicConstraints() >= 0
+                        && (chain[chain.length - 1].getKeyUsage() == null || chain[chain.length - 1].getKeyUsage()[5])) {
+                    // Validate the supplied path before asking the core to authorize its profile CA.
+                    CertificateVerificationResult verified = StaticNewAdvancedCertificateVerifier.builder()
+                            .setTrustedCertificates(chain[chain.length - 1]).build()
+                            .verifyCertificate(cid, serverName, remotePeer, clientUsage, verifySubject, truncateCertificatePath, message);
+                    if (verified.getException() != null) {
+                        throw verified.getException();
+                    }
+                    try {
+                        chain[chain.length - 1].checkValidity();
+                        TbLwM2MSecurityInfo securityInfo = securityInfoValidator.provisionX509CertificateChain(chain);
+                        if (securityInfo != null && securityInfo.getMsg() != null
+                                && securityInfo.getMsg().hasDeviceInfo() && securityInfo.getDeviceProfile() != null) {
+                            LwM2MClientCredentials credentials = JacksonUtil.fromString(securityInfo.getMsg().getCredentials(), LwM2MClientCredentials.class);
+                            if (credentials.getClient() instanceof X509ClientCredential x509
+                                    && SslUtil.getCertificateString(chain[0]).equals(x509.getCert())
+                                    && SslUtil.parseCommonName(chain[0]).equals(x509.getEndpoint())) {
+                                securityStore.putX509(securityInfo);
+                                sessionStorage.put(x509.getEndpoint(), new TbX509DtlsSessionInfo(
+                                        chain[0].getSubjectX500Principal().getName(), securityInfo.getMsg()));
+                                x509CredentialsFound = true;
+                            }
+                        }
+                    } catch (CertificateEncodingException | CertificateExpiredException | CertificateNotYetValidException
+                             | LwM2MAuthException | NonUniqueSecurityInfoException e) {
+                        log.debug("LwM2M X.509 provisioning failed ({})", e.getClass().getSimpleName());
+                    }
+                }
                 if (!x509CredentialsFound) {
                     AlertMessage alert = new AlertMessage(AlertMessage.AlertLevel.FATAL, AlertMessage.AlertDescription.INTERNAL_ERROR);
                     throw new HandshakeException("x509 verification not enabled!", alert);

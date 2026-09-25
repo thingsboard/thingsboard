@@ -34,6 +34,8 @@ import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException
 import org.thingsboard.server.dao.service.validator.DeviceCredentialsDataValidator;
 import org.thingsboard.server.exception.DataValidationException;
 
+import java.io.ByteArrayInputStream;
+import java.security.cert.CertificateFactory;
 import java.util.Objects;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -288,9 +290,10 @@ public class DeviceCredentialsServiceImpl extends AbstractCachedEntityService<St
                     try {
                         String certClient = EncryptionUtil.certTrimNewLines(x509CCredentials.getCert());
                         x509CCredentials.setCert(certClient);
-                        SecurityUtil.certificate.decode(x509CCredentials.getDecoded());
+                        CertificateFactory.getInstance("X.509")
+                                .generateCertificate(new ByteArrayInputStream(x509CCredentials.getDecoded()));
                     } catch (Exception e) {
-                        throw new DeviceCredentialsValidationException("LwM2M client X509 certificate must be in DER-encoded X509v3 format and support only EC algorithm and then encoded to Base64 format!");
+                        throw new DeviceCredentialsValidationException("LwM2M client X509 certificate must be a Base64-encoded DER X509 certificate!");
                     }
                 }
                 break;

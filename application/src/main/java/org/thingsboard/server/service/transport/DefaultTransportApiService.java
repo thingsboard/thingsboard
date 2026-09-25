@@ -177,7 +177,9 @@ public class DefaultTransportApiService implements TransportApiService {
         } else if (transportApiRequestMsg.hasValidateOrCreateX509CertRequestMsg()) {
             TransportProtos.ValidateOrCreateDeviceX509CertRequestMsg msg = transportApiRequestMsg.getValidateOrCreateX509CertRequestMsg();
             final String certChain = msg.getCertificateChain();
-            return validateOrCreateDeviceX509Certificate(certChain);
+            DeviceTransportType transportType = DeviceTransportType.LWM2M.name().equals(msg.getTransportType())
+                    ? DeviceTransportType.LWM2M : DeviceTransportType.MQTT;
+            return validateOrCreateDeviceX509Certificate(certChain, transportType);
         } else if (transportApiRequestMsg.hasGetOrCreateDeviceRequestMsg()) {
             return handle(transportApiRequestMsg.getGetOrCreateDeviceRequestMsg());
         } else if (transportApiRequestMsg.hasEntityProfileRequestMsg()) {
@@ -243,25 +245,36 @@ public class DefaultTransportApiService implements TransportApiService {
     }
 
     protected TransportApiResponseMsg validateOrCreateDeviceX509Certificate(String certificateChain) {
+        return validateOrCreateDeviceX509Certificate(certificateChain, DeviceTransportType.MQTT);
+    }
+
+    private TransportApiResponseMsg validateOrCreateDeviceX509Certificate(String certificateChain, DeviceTransportType transportType) {
+        DeviceCredentialsType credentialsType = transportType == DeviceTransportType.LWM2M
+                ? DeviceCredentialsType.LWM2M_CREDENTIALS : DeviceCredentialsType.X509_CERTIFICATE;
         List<String> chain = X509_CERTIFICATE_TRIM_CHAIN_PATTERN.matcher(certificateChain).results().map(match ->
                 EncryptionUtil.certTrimNewLines(match.group())).collect(Collectors.toList());
         for (String certificateValue : chain) {
             String certificateHash = EncryptionUtil.getSha3Hash(certificateValue);
             DeviceCredentials credentials = deviceCredentialsService.findDeviceCredentialsByCredentialsId(certificateHash);
-            if (credentials != null && DeviceCredentialsType.X509_CERTIFICATE.equals(credentials.getCredentialsType())) {
+            if (credentials != null && credentialsType.equals(credentials.getCredentialsType())) {
                 return getDeviceInfo(credentials);
             }
             DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileByProvisionDeviceKey(certificateHash);
             if (deviceProfile != null && DeviceProfileProvisionType.X509_CERTIFICATE_CHAIN.equals(deviceProfile.getProvisionType())) {
+                if ((transportType == DeviceTransportType.LWM2M && deviceProfile.getTransportType() != DeviceTransportType.LWM2M)
+                        || (transportType != DeviceTransportType.LWM2M && deviceProfile.getTransportType() == DeviceTransportType.LWM2M)) {
+                    continue;
+                }
                 String updatedDeviceProvisionSecret = chain.get(0);
                 ProvisionRequest provisionRequest = createProvisionRequest(updatedDeviceProvisionSecret);
+                provisionRequest.setCredentialsType(credentialsType);
                 try {
                     ProvisionResponse provisionResponse = deviceProvisionService.provisionDeviceViaX509Chain(deviceProfile, provisionRequest);
                     if (ProvisionResponseStatus.SUCCESS.equals(provisionResponse.getResponseStatus())) {
                         return getDeviceInfo(provisionResponse.getDeviceCredentials());
                     }
                 } catch (ProvisionFailedException e) {
-                    log.debug("[{}][{}] Failed to provision device with cert chain: {}", deviceProfile.getTenantId(), deviceProfile.getId(), provisionRequest, e);
+                    log.debug("[{}][{}] Failed to provision device with certificate chain", deviceProfile.getTenantId(), deviceProfile.getId());
                     return getEmptyTransportApiResponse();
                 }
             } else if (deviceProfile != null) {

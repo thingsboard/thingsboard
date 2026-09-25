@@ -438,6 +438,7 @@ message ValidateDeviceX509CertRequestMsg {
 
 message ValidateOrCreateDeviceX509CertRequestMsg {
   string certificateChain = 1;
+  string transportType = 2;
 }
 
 message ValidateBasicMqttCredRequestMsg {
