@@ -9163,9 +9163,12 @@
                         "hot": "HOT",
                         "esri-street": "WorldStreetMap",
                         "esri-topo": "WorldTopoMap",
-                        "esri-imagery": "WorldImagery",
-                        "cartodb-positron": "Positron",
-                        "cartodb-dark-matter": "DarkMatter"
+                        "esri-imagery": "WorldImagery"
+                    },
+                    "carto": {
+                        "title": "CARTO",
+                        "positron": "Positron",
+                        "dark-matter": "DarkMatter"
                     },
                     "google": {
                         "title": "Google",
@@ -9189,7 +9192,9 @@
                     },
                     "custom": {
                         "title": "Custom",
-                        "tile-url": "Tile URL"
+                        "tile-url": "Tile URL",
+                        "attribution": "Copyright text",
+                        "attribution-hint": "Displayed at the bottom of the map. Required by most tile providers."
                     }
                 },
                 "credentials": {
@@ -9486,10 +9491,7 @@
             "here-map-hybrid-day": "HERE.hybridDay",
             "here-map-terrain-day": "HERE.terrainDay",
             "credentials": "Credentials",
-            "here-app-id": "HERE app id",
-            "here-app-code": "HERE app code",
             "here-api-key": "HERE API key",
-            "here-use-new-version-api-3": "Use API version 3",
             "tencent-maps-api-key": "Tencent Maps API Key",
             "tencent-map-type-roadmap": "Roadmap",
             "tencent-map-type-satelite": "Satellite",

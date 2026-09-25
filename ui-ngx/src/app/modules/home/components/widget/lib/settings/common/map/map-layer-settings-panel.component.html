@@ -33,6 +33,14 @@
           </mat-option>
         </mat-select>
       </mat-form-field>
+      <mat-form-field *ngIf="MapProvider.carto === layerFormGroup.get('provider').value"
+                      class="flex"  appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="layerType" required>
+          <mat-option *ngFor="let layerType of cartoLayerTypes" [value]="layerType">
+            {{ cartoLayerTranslationMap.get(layerType) | translate }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
       <mat-form-field *ngIf="MapProvider.google === layerFormGroup.get('provider').value"
                       class="flex"  appearance="outline" subscriptSizing="dynamic">
         <mat-select formControlName="layerType" required>
@@ -62,12 +70,18 @@
         <input matInput formControlName="tileUrl" required placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
     </div>
-    <div *ngIf="[MapProvider.google, MapProvider.here].includes(layerFormGroup.get('provider').value)" class="tb-form-panel stroked">
+    <div *ngIf="MapProvider.custom === layerFormGroup.get('provider').value" class="tb-form-row space-between column-xs">
+      <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'widgets.maps.layer.provider.custom.attribution-hint' | translate }}" translate>widgets.maps.layer.provider.custom.attribution</div>
+      <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="customAttribution" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+    <div *ngIf="hasApiKey()" class="tb-form-panel stroked">
       <div class="tb-form-panel-title" translate>widgets.maps.layer.credentials.credentials</div>
       <div class="tb-form-row space-between column-xs">
         <div class="fixed-title-width" translate>widgets.maps.layer.credentials.api-key</div>
         <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
-          <input matInput formControlName="apiKey" required placeholder="{{ 'widget-config.set' | translate }}">
+          <input matInput formControlName="apiKey" placeholder="{{ 'widget-config.set' | translate }}">
         </mat-form-field>
       </div>
     </div>
