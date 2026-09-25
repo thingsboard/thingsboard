@@ -46,7 +46,8 @@ public class LtsMigrationIntegrationTest extends AbstractControllerTest {
 
     // Versions whose family is older than the current package family ship SQL-less beans intentionally
     // (their schema/data changes are reproduced by the current-family migrations), so a missing dir is OK.
-    private static final Set<String> SQL_LESS_ALLOWED = Set.of();
+    // Data-only migrations (4.3.1.5 re-points IoT Hub installed items) have no SQL to ship either.
+    private static final Set<String> SQL_LESS_ALLOWED = Set.of("4.3.1.5");
 
     @Autowired
     private LtsMigrationService ltsMigrationService;
