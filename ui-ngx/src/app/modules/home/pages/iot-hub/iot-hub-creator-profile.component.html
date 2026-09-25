@@ -96,7 +96,10 @@
       <div class="tb-creator-divider"></div>
 
       <!-- Right: published items -->
-      <tb-iot-hub-search class="tb-creator-items" [creatorId]="creatorId" [showCreator]="false">
+      <!-- No filter panel here: the list is already scoped to one creator, and the site's
+           profile has none either. -->
+      <tb-iot-hub-search class="tb-creator-items" [creatorId]="creatorId" [showCreator]="false"
+                         [showFilters]="false">
         <h3 class="tb-creator-items-heading">
           {{ 'iot-hub.published-items' | translate }} ({{ creator.publishedCount }})
         </h3>

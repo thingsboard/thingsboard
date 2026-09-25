@@ -108,6 +108,17 @@ export interface MpItemVersionView {
   checksum?: string;
 }
 
+/**
+ * One item type's share of a grouped search: the rows to show and how many exist behind them.
+ * A grouped answer is a list of these, in the server's section order, and a type nothing matched
+ * has no section — so a "+N more" header is `total - items.length`.
+ */
+export interface MpItemVersionSection {
+  itemType: ItemType;
+  total: number;
+  items: MpItemVersionView[];
+}
+
 // 404 body shapes returned by the public listing item-version endpoint
 // (GET /api/listings/public/by-slug/{slug}/item-version) when no
 // version matches the caller's edition / platform combination.
@@ -118,7 +129,15 @@ export interface ListingItemVersionNotFound {
 }
 
 export interface MpItemVersionQueryOptions {
+  /** Single item type, for a surface pinned to one (the type pages, the add-item dialog). */
   type?: string;
+  /**
+   * Several item types at once, for a cross-type surface whose Type facet is multi-select.
+   * Emitted as a repeated `type` parameter, which is the shape the backend reads
+   * (`@RequestParam List<ItemType> type`). Kept separate from `type` rather than widening it,
+   * so a caller that means "exactly this type" cannot be handed an array by accident.
+   */
+  types?: string[];
   peOnly?: boolean;
   creatorId?: string;
   categories?: string[];
@@ -133,51 +152,86 @@ export interface MpItemVersionQueryOptions {
   scadaFirst?: boolean;
 }
 
+/** Every filter, as `&name=value` pairs - shared by both query shapes below. */
+function filtersToQuery(o: MpItemVersionQueryOptions): string {
+  let query = '';
+  if (o.type) {
+    query += `&type=${encodeURIComponent(o.type)}`;
+  }
+  if (o.types?.length) {
+    query += o.types.map(t => `&type=${encodeURIComponent(t)}`).join('');
+  }
+  if (o.peOnly != null) {
+    query += `&peOnly=${o.peOnly}`;
+  }
+  if (o.creatorId) {
+    query += `&creatorId=${encodeURIComponent(o.creatorId)}`;
+  }
+  if (o.categories?.length) {
+    query += o.categories.map(c => `&categories=${encodeURIComponent(c)}`).join('');
+  }
+  if (o.useCases?.length) {
+    query += o.useCases.map(u => `&useCases=${encodeURIComponent(u)}`).join('');
+  }
+  if (o.cfTypes?.length) {
+    query += o.cfTypes.map(t => `&cfTypes=${encodeURIComponent(t)}`).join('');
+  }
+  if (o.widgetTypes?.length) {
+    query += o.widgetTypes.map(t => `&widgetTypes=${encodeURIComponent(t)}`).join('');
+  }
+  if (o.ruleChainTypes?.length) {
+    query += o.ruleChainTypes.map(t => `&ruleChainTypes=${encodeURIComponent(t)}`).join('');
+  }
+  if (o.tbVersion != null) {
+    query += `&tbVersion=${o.tbVersion}`;
+  }
+  if (o.hardwareTypes?.length) {
+    query += o.hardwareTypes.map(ht => `&hardwareTypes=${encodeURIComponent(ht)}`).join('');
+  }
+  if (o.connectivity?.length) {
+    query += o.connectivity.map(c => `&connectivity=${encodeURIComponent(c)}`).join('');
+  }
+  if (o.vendors?.length) {
+    query += o.vendors.map(v => `&vendors=${encodeURIComponent(v)}`).join('');
+  }
+  if (o.scadaFirst != null) {
+    query += `&scadaFirst=${o.scadaFirst}`;
+  }
+  return query;
+}
+
+/** A paged read: the filters, and the page to cut out of them. */
 export class MpItemVersionQuery {
   constructor(public pageLink: PageLink, public options: MpItemVersionQueryOptions = {}) {}
 
   public toQuery(): string {
-    let query = this.pageLink.toQuery();
-    const o = this.options;
-    if (o.type) {
-      query += `&type=${o.type}`;
+    return this.pageLink.toQuery() + filtersToQuery(this.options);
+  }
+}
+
+/**
+ * A sectioned read: the filters, what to search for, and which key orders a section.
+ *
+ * No `PageLink`, because the grouped endpoint takes no page and no page size - it sizes its own
+ * answer from the section limit - and no sort direction either, each key's direction being fixed
+ * by the chain the server switches on. A page link here could only carry values nobody sends.
+ */
+export class MpItemVersionGroupedQuery {
+  constructor(public options: MpItemVersionQueryOptions = {},
+              public textSearch?: string,
+              public sortProperty?: string) {}
+
+  public toQuery(): string {
+    const parts: string[] = [];
+    const text = this.textSearch?.trim();
+    if (text?.length) {
+      parts.push(`textSearch=${encodeURIComponent(text)}`);
     }
-    if (o.peOnly != null) {
-      query += `&peOnly=${o.peOnly}`;
+    if (this.sortProperty) {
+      parts.push(`sortProperty=${this.sortProperty}`);
     }
-    if (o.creatorId) {
-      query += `&creatorId=${o.creatorId}`;
-    }
-    if (o.categories?.length) {
-      query += o.categories.map(c => `&categories=${encodeURIComponent(c)}`).join('');
-    }
-    if (o.useCases?.length) {
-      query += o.useCases.map(u => `&useCases=${encodeURIComponent(u)}`).join('');
-    }
-    if (o.cfTypes?.length) {
-      query += o.cfTypes.map(t => `&cfTypes=${encodeURIComponent(t)}`).join('');
-    }
-    if (o.widgetTypes?.length) {
-      query += o.widgetTypes.map(t => `&widgetTypes=${encodeURIComponent(t)}`).join('');
-    }
-    if (o.ruleChainTypes?.length) {
-      query += o.ruleChainTypes.map(t => `&ruleChainTypes=${encodeURIComponent(t)}`).join('');
-    }
-    if (o.tbVersion != null) {
-      query += `&tbVersion=${o.tbVersion}`;
-    }
-    if (o.hardwareTypes?.length) {
-      query += o.hardwareTypes.map(ht => `&hardwareTypes=${encodeURIComponent(ht)}`).join('');
-    }
-    if (o.connectivity?.length) {
-      query += o.connectivity.map(c => `&connectivity=${encodeURIComponent(c)}`).join('');
-    }
-    if (o.vendors?.length) {
-      query += o.vendors.map(v => `&vendors=${encodeURIComponent(v)}`).join('');
-    }
-    if (o.scadaFirst != null) {
-      query += `&scadaFirst=${o.scadaFirst}`;
-    }
-    return query;
+    // filtersToQuery() emits leading ampersands, which is what a page link needs in front of it;
+    // here they may be the whole query string, so the first one is dropped.
+    return `?${`${parts.join('&')}${filtersToQuery(this.options)}`.replace(/^&/, '')}`;
   }
 }
