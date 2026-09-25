@@ -2342,7 +2342,6 @@
                 "lwm2m-server-public-key-id": "LwM2M伺服器公鑰或ID"
             },
             "isgateway": "是閘道",
-            "activity-time-from-gateway-device": "來自閘道設備的活動時間",
             "description": "描述",
             "routing-key": "邊緣鍵",
             "secret": "邊緣密鑰"

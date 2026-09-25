@@ -3807,7 +3807,6 @@
         "community-string": "SNMP κοινόχρηστη συμβολοσειρά"
       },
       "isgateway": "Είναι Πύλη",
-      "activity-time-from-gateway-device": "Χρόνος δραστηριότητας από συσκευή πύλης",
       "description": "Περιγραφή",
       "routing-key": "Κλειδί Edge",
       "secret": "Μυστικό Edge"

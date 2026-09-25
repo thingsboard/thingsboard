@@ -3807,7 +3807,6 @@
         "community-string": "Строка спільноти SNMP"
       },
       "isgateway": "Є Gateway",
-      "activity-time-from-gateway-device": "Час активності з gateway пристрою",
       "description": "Опис",
       "routing-key": "Ключ Edge",
       "secret": "Секрет Edge"

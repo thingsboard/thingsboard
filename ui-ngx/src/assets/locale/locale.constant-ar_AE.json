@@ -3316,7 +3316,6 @@
                 "community-string": "سلسلة المجتمع SNMP"
             },
             "isgateway": "هل هو بوابة",
-            "activity-time-from-gateway-device": "وقت النشاط من جهاز البوابة",
             "description": "الوصف",
             "edge-license-key": "مفتاح الترخيص",
             "cloud-endpoint": "نقطة نهاية السحابة",
