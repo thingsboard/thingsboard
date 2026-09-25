@@ -11,6 +11,7 @@
 CREATE TABLE IF NOT EXISTS tb_cluster (
     cluster_id uuid NOT NULL,
     license_claim_token varchar,
+    license_secret varchar,
     CONSTRAINT tb_cluster_pkey PRIMARY KEY (cluster_id)
 );
 
@@ -19,3 +20,10 @@ CREATE TABLE IF NOT EXISTS tb_cluster (
 CREATE UNIQUE INDEX IF NOT EXISTS tb_cluster_single_row ON tb_cluster ((true));
 
 -- TB_CLUSTER END
+
+-- TB_CLUSTER LICENSE SECRET START
+
+-- The CREATE above is a no-op on a database that already carries tb_cluster.
+ALTER TABLE tb_cluster ADD COLUMN IF NOT EXISTS license_secret varchar;
+
+-- TB_CLUSTER LICENSE SECRET END

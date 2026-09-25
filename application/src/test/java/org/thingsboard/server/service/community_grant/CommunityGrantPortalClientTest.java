@@ -39,6 +39,7 @@ import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.content;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.headerDoesNotExist;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
@@ -223,6 +224,53 @@ class CommunityGrantPortalClientTest {
         String status = client.uploadReport(TOKEN, "-----BEGIN TB INSTANCE CHECK-----\nbody");
 
         assertThat(status).isNull();
+        mockServer.verify();
+    }
+
+    @Test
+    void testClaimLicenseSendsTheTokenInTheBodyAndReturnsTheKey() {
+        mockServer.expect(requestTo(BASE_URL + "/api/noauth/freeLicense/claim"))
+                .andExpect(method(HttpMethod.POST))
+                .andExpect(content().json("{\"claimToken\":\"" + TOKEN + "\"}"))
+                .andExpect(headerDoesNotExist(CLAIM_TOKEN_HEADER))
+                .andRespond(withSuccess("{\"activated\":true,\"secret\":\"granted-key\"}", MediaType.APPLICATION_JSON));
+
+        assertThat(client.claimLicense(TOKEN)).isEqualTo("granted-key");
+        mockServer.verify();
+    }
+
+    @Test
+    void testClaimLicenseReturnsNothingWhileThePortalHasNoKeyYet() {
+        mockServer.expect(requestTo(BASE_URL + "/api/noauth/freeLicense/claim"))
+                .andRespond(withSuccess("{\"activated\":false}", MediaType.APPLICATION_JSON));
+
+        assertThat(client.claimLicense(TOKEN)).isNull();
+        mockServer.verify();
+    }
+
+    @Test
+    void testClaimLicenseTurnsAClientErrorIntoARefusal() {
+        mockServer.expect(requestTo(BASE_URL + "/api/noauth/freeLicense/claim"))
+                .andRespond(withStatus(HttpStatus.BAD_REQUEST));
+
+        assertThatThrownBy(() -> client.claimLicense(TOKEN))
+                .isInstanceOf(CommunityGrantLicenseClaimRefusedException.class);
+        mockServer.verify();
+    }
+
+    @Test
+    void testClaimLicenseLeavesARetryableAnswerToTheCaller() {
+        mockServer.expect(requestTo(BASE_URL + "/api/noauth/freeLicense/claim"))
+                .andRespond(withStatus(HttpStatus.TOO_MANY_REQUESTS));
+        mockServer.expect(requestTo(BASE_URL + "/api/noauth/freeLicense/claim"))
+                .andRespond(withServerError());
+
+        assertThatThrownBy(() -> client.claimLicense(TOKEN))
+                .isInstanceOf(HttpStatusCodeException.class)
+                .isNotInstanceOf(CommunityGrantLicenseClaimRefusedException.class);
+        assertThatThrownBy(() -> client.claimLicense(TOKEN))
+                .isInstanceOf(HttpStatusCodeException.class)
+                .isNotInstanceOf(CommunityGrantLicenseClaimRefusedException.class);
         mockServer.verify();
     }
 
