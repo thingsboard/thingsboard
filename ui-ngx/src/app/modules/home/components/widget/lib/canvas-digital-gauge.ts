@@ -756,8 +756,7 @@ function drawDigitalValue(context: DigitalGaugeCanvasRenderingContext2D, options
   const textX = Math.round(baseX + width / 2);
   const textY = valueY;
 
-  let text = options.valueText || padValue(options.valueFormat.format(value), options.valueDec);
-  text += options.symbol;
+  let text = options.valueText ? options.valueText : padValue(options.valueFormat.format(value), options.valueDec) + options.symbol;
 
   context.save();
   context.textAlign = 'center';
