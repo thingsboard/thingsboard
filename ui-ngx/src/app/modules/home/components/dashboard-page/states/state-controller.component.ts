@@ -3,7 +3,7 @@
 import { IStateControllerComponent, StateControllerState } from '@home/components/dashboard-page/states/state-controller.models';
 import { IDashboardController } from '../dashboard-page.models';
 import { DashboardState } from '@app/shared/models/dashboard.models';
-import { BehaviorSubject, Observable, Subject, Subscription } from 'rxjs';
+import { Observable, Subject, Subscription } from 'rxjs';
 import { NgZone, OnDestroy, OnInit, Directive } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { StatesControllerService } from '@home/components/dashboard-page/states/states-controller.service';
@@ -96,10 +96,10 @@ export abstract class StateControllerComponent implements IStateControllerCompon
           const newState = this.decodeStateParam(paramMap.get('state'));
           if (this.currentState !== newState) {
             this.currentState = newState;
-            this.stateChangedSubject.next(this.currentState);
             if (this.inited) {
               this.onStateChanged();
             }
+            this.stateChangedSubject.next(this.currentState);
           }
         }
       }));

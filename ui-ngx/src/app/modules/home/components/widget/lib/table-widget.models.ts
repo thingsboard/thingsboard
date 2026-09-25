@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { EntityId } from '@shared/models/id/entity-id';
 import { DataKey, FormattedData, WidgetActionDescriptor, WidgetConfig } from '@shared/models/widget.models';
-import { getDescendantProp, isDefined, isNotEmptyStr } from '@core/utils';
+import { getDescendantProp, isDefined, isEqual, isNotEmptyStr } from '@core/utils';
 import { AlarmDataInfo, alarmFields } from '@shared/models/alarm.models';
 import tinycolor from 'tinycolor2';
 import { Direction } from '@shared/models/page/sort-order';
@@ -18,8 +18,10 @@ import {
   isNotEmptyTbFunction,
   TbFunction
 } from '@shared/models/js-function.models';
-import { forkJoin, Observable, of, ReplaySubject } from 'rxjs';
-import { catchError, map, share } from 'rxjs/operators';
+import { forkJoin, Observable, of, ReplaySubject, Subscription } from 'rxjs';
+import { catchError, distinctUntilChanged, map, share, skip, startWith } from 'rxjs/operators';
+import { MatPaginator } from '@angular/material/paginator';
+import { MatSort } from '@angular/material/sort';
 import type { ValueFormatProcessor } from '@shared/models/widget-settings.models';
 
 type ColumnVisibilityOptions = 'visible' | 'hidden' | 'hidden-mobile';
@@ -501,4 +503,27 @@ export function isValidPageStepIncrement(value: number): boolean {
 
 export function isValidPageStepCount(value: number): boolean {
   return Number.isInteger(value) && value > 0 && value <= 100;
+}
+
+export function setupPaginationResets(ctx: WidgetContext,
+                                      paginator: MatPaginator,
+                                      sort: MatSort): Subscription {
+  const subscription = new Subscription();
+
+  subscription.add(
+    sort.sortChange.subscribe(() => paginator.pageIndex = 0)
+  );
+
+  const stateController = ctx.stateController;
+  if (stateController) {
+    subscription.add(
+      stateController.stateChanged().pipe(
+        map(() => stateController.getStateParams()),
+        startWith(stateController.getStateParams()),
+        distinctUntilChanged(isEqual),
+        skip(1)
+      ).subscribe(() => paginator.firstPage())
+    );
+  }
+  return subscription;
 }
