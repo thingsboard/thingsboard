@@ -195,7 +195,11 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
 
         boolean sent = false;
         int requestId = rpcRequest.getRequestId();
-        if (systemContext.isEdgesEnabled() && edgeId != null) {
+        // A device assigned to an edge normally has no transport session here: it talks to the edge,
+        // so its RPCs go through the edge queue. If it does hold an RPC-subscribed session here (it
+        // connected to this server directly, e.g. because it cannot reach its edge), deliver over that
+        // session like for any other device, since the edge cannot reach the device right now.
+        if (systemContext.isEdgesEnabled() && edgeId != null && rpcSubscriptions.isEmpty()) {
             log.debug("[{}][{}] device is related to edge: [{}]. Saving RPC request: [{}][{}] to edge queue", tenantId, deviceId, edgeId.getId(), rpcId, requestId);
             try {
                 if (systemContext.getEdgeService().isEdgeActiveAsync(tenantId, edgeId, DefaultDeviceStateService.ACTIVITY_STATE).get()) {
