@@ -4343,6 +4343,7 @@
         "goto-main-dashboard": "Go to main dashboard",
         "install-error-title": "Installation Failed",
         "install-error-message": "Failed to install '{{name}}'.",
+        "install-dependency-error": "Failed to install the dependency '{{name}}': {{error}}",
         "install-plan-title": "Install '{{name}}' and its dependencies",
         "install-plan-will-install": "{{count}} item(s) will be installed.",
         "install-plan-will-update": "{{count}} item(s) already installed and will be skipped.",
@@ -9201,9 +9202,12 @@
                         "hot": "HOT",
                         "esri-street": "WorldStreetMap",
                         "esri-topo": "WorldTopoMap",
-                        "esri-imagery": "WorldImagery",
-                        "cartodb-positron": "Positron",
-                        "cartodb-dark-matter": "DarkMatter"
+                        "esri-imagery": "WorldImagery"
+                    },
+                    "carto": {
+                        "title": "CARTO",
+                        "positron": "Positron",
+                        "dark-matter": "DarkMatter"
                     },
                     "google": {
                         "title": "Google",
@@ -9535,10 +9539,7 @@
             "here-map-hybrid-day": "HERE.hybridDay",
             "here-map-terrain-day": "HERE.terrainDay",
             "credentials": "Credentials",
-            "here-app-id": "HERE app id",
-            "here-app-code": "HERE app code",
             "here-api-key": "HERE API key",
-            "here-use-new-version-api-3": "Use API version 3",
             "tencent-maps-api-key": "Tencent Maps API Key",
             "tencent-map-type-roadmap": "Roadmap",
             "tencent-map-type-satelite": "Satellite",

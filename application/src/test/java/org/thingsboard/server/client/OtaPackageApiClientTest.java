@@ -3,6 +3,14 @@
 package org.thingsboard.server.client;
 
 import org.junit.Test;
+import org.thingsboard.client.api.ThingsboardApi.DeleteOtaPackageArgs;
+import org.thingsboard.client.api.ThingsboardApi.DownloadOtaPackageArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetOtaPackageByIdArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetOtaPackageInfoByIdArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetOtaPackagesArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetOtaPackagesByDeviceProfileAndTypeArgs;
+import org.thingsboard.client.api.ThingsboardApi.SaveOtaPackageDataArgs;
+import org.thingsboard.client.api.ThingsboardApi.SaveOtaPackageInfoArgs;
 import org.thingsboard.client.model.ChecksumAlgorithm;
 import org.thingsboard.client.model.DeviceProfileId;
 import org.thingsboard.client.model.DeviceProfileInfo;
@@ -50,7 +58,9 @@ public class OtaPackageApiClientTest extends AbstractApiClientTest {
         SaveOtaPackageInfoRequest request = buildOtaPackageInfoRequest(
                 OTA_PREFIX + suffix, "1.0." + System.currentTimeMillis(),
                 OtaPackageType.FIRMWARE, profileId, false, null);
-        return client.saveOtaPackageInfo(request);
+        return client.saveOtaPackageInfo(SaveOtaPackageInfoArgs.builder()
+                .saveOtaPackageInfoRequest(request)
+                .build());
     }
 
     private OtaPackageInfo createFirmwareWithUrl(String suffix) throws Exception {
@@ -58,7 +68,9 @@ public class OtaPackageApiClientTest extends AbstractApiClientTest {
         SaveOtaPackageInfoRequest request = buildOtaPackageInfoRequest(
                 OTA_PREFIX + suffix, "1.0." + System.currentTimeMillis(),
                 OtaPackageType.FIRMWARE, profileId, true, "https://example.com/firmware.bin");
-        return client.saveOtaPackageInfo(request);
+        return client.saveOtaPackageInfo(SaveOtaPackageInfoArgs.builder()
+                .saveOtaPackageInfoRequest(request)
+                .build());
     }
 
     @Test
@@ -71,7 +83,9 @@ public class OtaPackageApiClientTest extends AbstractApiClientTest {
         SaveOtaPackageInfoRequest request = buildOtaPackageInfoRequest(
                 title, version, OtaPackageType.FIRMWARE, profileId, true, "https://example.com/fw.bin");
 
-        OtaPackageInfo saved = client.saveOtaPackageInfo(request);
+        OtaPackageInfo saved = client.saveOtaPackageInfo(SaveOtaPackageInfoArgs.builder()
+                .saveOtaPackageInfoRequest(request)
+                .build());
         assertNotNull(saved);
         assertNotNull(saved.getId());
         assertEquals(title, saved.getTitle());
@@ -81,7 +95,9 @@ public class OtaPackageApiClientTest extends AbstractApiClientTest {
 
         // get info by id
         String pkgId = saved.getId().getId().toString();
-        OtaPackageInfo fetched = client.getOtaPackageInfoById(pkgId);
+        OtaPackageInfo fetched = client.getOtaPackageInfoById(GetOtaPackageInfoByIdArgs.builder()
+                .otaPackageId(pkgId)
+                .build());
         assertNotNull(fetched);
         assertEquals(title, fetched.getTitle());
         assertEquals(version, fetched.getVersion());
@@ -92,7 +108,9 @@ public class OtaPackageApiClientTest extends AbstractApiClientTest {
         long ts = System.currentTimeMillis();
         OtaPackageInfo saved = createFirmwareWithUrl("getbyid_" + ts);
 
-        OtaPackage fullPkg = client.getOtaPackageById(saved.getId().getId().toString());
+        OtaPackage fullPkg = client.getOtaPackageById(GetOtaPackageByIdArgs.builder()
+                .otaPackageId(saved.getId().getId().toString())
+                .build());
         assertNotNull(fullPkg);
         assertEquals(saved.getTitle(), fullPkg.getTitle());
         assertEquals(saved.getVersion(), fullPkg.getVersion());
@@ -107,7 +125,9 @@ public class OtaPackageApiClientTest extends AbstractApiClientTest {
         SaveOtaPackageInfoRequest request = buildOtaPackageInfoRequest(
                 title, "2.0." + ts, OtaPackageType.SOFTWARE, profileId, true, "https://example.com/sw.bin");
 
-        OtaPackageInfo saved = client.saveOtaPackageInfo(request);
+        OtaPackageInfo saved = client.saveOtaPackageInfo(SaveOtaPackageInfoArgs.builder()
+                .saveOtaPackageInfoRequest(request)
+                .build());
         assertNotNull(saved);
         assertEquals(OtaPackageType.SOFTWARE, saved.getType());
         assertEquals(title, saved.getTitle());
@@ -124,8 +144,11 @@ public class OtaPackageApiClientTest extends AbstractApiClientTest {
             writer.write("test firmware content " + ts);
         }
 
-        OtaPackageInfo updated = client.saveOtaPackageData(
-                info.getId().getId().toString(), "MD5", tempFile, null);
+        OtaPackageInfo updated = client.saveOtaPackageData(SaveOtaPackageDataArgs.builder()
+                .otaPackageId(info.getId().getId().toString())
+                .checksumAlgorithm("MD5")
+                ._file(tempFile)
+                .build());
         assertNotNull(updated);
         assertTrue(updated.getHasData());
         assertNotNull(updated.getFileName());
@@ -146,9 +169,15 @@ public class OtaPackageApiClientTest extends AbstractApiClientTest {
             writer.write(content);
         }
 
-        client.saveOtaPackageData(info.getId().getId().toString(), "MD5", tempFile, null);
+        client.saveOtaPackageData(SaveOtaPackageDataArgs.builder()
+                .otaPackageId(info.getId().getId().toString())
+                .checksumAlgorithm("MD5")
+                ._file(tempFile)
+                .build());
 
-        File downloaded = client.downloadOtaPackage(info.getId().getId().toString());
+        File downloaded = client.downloadOtaPackage(DownloadOtaPackageArgs.builder()
+                .otaPackageId(info.getId().getId().toString())
+                .build());
         assertNotNull(downloaded);
         assertTrue(downloaded.length() > 0);
         String downloadedContent = Files.readString(downloaded.toPath());
@@ -161,11 +190,17 @@ public class OtaPackageApiClientTest extends AbstractApiClientTest {
         OtaPackageInfo saved = createFirmwareWithUrl("delete_" + ts);
 
         String pkgId = saved.getId().getId().toString();
-        client.getOtaPackageInfoById(pkgId);
+        client.getOtaPackageInfoById(GetOtaPackageInfoByIdArgs.builder()
+                .otaPackageId(pkgId)
+                .build());
 
-        client.deleteOtaPackage(pkgId);
+        client.deleteOtaPackage(DeleteOtaPackageArgs.builder()
+                .otaPackageId(pkgId)
+                .build());
 
-        assertReturns404(() -> client.getOtaPackageInfoById(pkgId));
+        assertReturns404(() -> client.getOtaPackageInfoById(GetOtaPackageInfoByIdArgs.builder()
+                .otaPackageId(pkgId)
+                .build()));
     }
 
     @Test
@@ -176,7 +211,11 @@ public class OtaPackageApiClientTest extends AbstractApiClientTest {
             createFirmwareWithUrl("list_" + ts + "_" + i);
         }
 
-        PageDataOtaPackageInfo page = client.getOtaPackages(100, 0, OTA_PREFIX + "list_" + ts, null, null);
+        PageDataOtaPackageInfo page = client.getOtaPackages(GetOtaPackagesArgs.builder()
+                .pageSize(100)
+                .page(0)
+                .textSearch(OTA_PREFIX + "list_" + ts)
+                .build());
         assertNotNull(page);
         assertEquals(3, page.getTotalElements().intValue());
         for (OtaPackageInfo pkg : page.getData()) {
@@ -192,9 +231,13 @@ public class OtaPackageApiClientTest extends AbstractApiClientTest {
         createFirmwareWithUrl("byprofile_" + ts + "_0");
         createFirmwareWithUrl("byprofile_" + ts + "_1");
 
-        PageDataOtaPackageInfo page = client.getOtaPackagesByDeviceProfileAndType(
-                profileId.getId().toString(), "FIRMWARE", 100, 0,
-                OTA_PREFIX + "byprofile_" + ts, null, null);
+        PageDataOtaPackageInfo page = client.getOtaPackagesByDeviceProfileAndType(GetOtaPackagesByDeviceProfileAndTypeArgs.builder()
+                .deviceProfileId(profileId.getId().toString())
+                .type("FIRMWARE")
+                .pageSize(100)
+                .page(0)
+                .textSearch(OTA_PREFIX + "byprofile_" + ts)
+                .build());
         assertNotNull(page);
         assertEquals(2, page.getTotalElements().intValue());
     }
@@ -202,7 +245,9 @@ public class OtaPackageApiClientTest extends AbstractApiClientTest {
     @Test
     public void testGetOtaPackageInfoById_notFound() {
         String nonExistentId = UUID.randomUUID().toString();
-        assertReturns404(() -> client.getOtaPackageInfoById(nonExistentId));
+        assertReturns404(() -> client.getOtaPackageInfoById(GetOtaPackageInfoByIdArgs.builder()
+                .otaPackageId(nonExistentId)
+                .build()));
     }
 
     @Test
@@ -213,14 +258,22 @@ public class OtaPackageApiClientTest extends AbstractApiClientTest {
             createFirmwareWithUrl("paged_" + ts + "_" + i);
         }
 
-        PageDataOtaPackageInfo page1 = client.getOtaPackages(2, 0, OTA_PREFIX + "paged_" + ts, null, null);
+        PageDataOtaPackageInfo page1 = client.getOtaPackages(GetOtaPackagesArgs.builder()
+                .pageSize(2)
+                .page(0)
+                .textSearch(OTA_PREFIX + "paged_" + ts)
+                .build());
         assertNotNull(page1);
         assertEquals(5, page1.getTotalElements().intValue());
         assertEquals(3, page1.getTotalPages().intValue());
         assertEquals(2, page1.getData().size());
         assertTrue(page1.getHasNext());
 
-        PageDataOtaPackageInfo lastPage = client.getOtaPackages(2, 2, OTA_PREFIX + "paged_" + ts, null, null);
+        PageDataOtaPackageInfo lastPage = client.getOtaPackages(GetOtaPackagesArgs.builder()
+                .pageSize(2)
+                .page(2)
+                .textSearch(OTA_PREFIX + "paged_" + ts)
+                .build());
         assertEquals(1, lastPage.getData().size());
         assertFalse(lastPage.getHasNext());
     }
@@ -239,7 +292,9 @@ public class OtaPackageApiClientTest extends AbstractApiClientTest {
         updateReq.setUrl(saved.getUrl());
         updateReq.setAdditionalInfo(OBJECT_MAPPER.createObjectNode().put("infoKey", "infoValue"));
 
-        OtaPackageInfo updated = client.saveOtaPackageInfo(updateReq);
+        OtaPackageInfo updated = client.saveOtaPackageInfo(SaveOtaPackageInfoArgs.builder()
+                .saveOtaPackageInfoRequest(updateReq)
+                .build());
         assertNotNull(updated);
         assertEquals(saved.getId().getId(), updated.getId().getId());
         assertEquals("infoValue", updated.getAdditionalInfo().get("infoKey").asText());

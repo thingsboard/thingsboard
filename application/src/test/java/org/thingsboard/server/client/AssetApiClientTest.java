@@ -3,6 +3,10 @@
 package org.thingsboard.server.client;
 
 import org.junit.Test;
+import org.thingsboard.client.api.ThingsboardApi.DeleteAssetArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetAssetByIdArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetTenantAssetsArgs;
+import org.thingsboard.client.api.ThingsboardApi.SaveAssetArgs;
 import org.thingsboard.client.model.Asset;
 import org.thingsboard.client.model.PageDataAsset;
 import org.thingsboard.server.dao.service.DaoSqlTest;
@@ -30,7 +34,9 @@ public class AssetApiClientTest extends AbstractApiClientTest {
             asset.setLabel("Test Asset " + i);
             asset.setType(((i % 2 == 0) ? "default" : "building"));
 
-            Asset createdAsset = client.saveAsset(asset, null, null, null);
+            Asset createdAsset = client.saveAsset(SaveAssetArgs.builder()
+                    .asset(asset)
+                    .build());
             assertNotNull(createdAsset);
             assertNotNull(createdAsset.getId());
             assertEquals(assetName, createdAsset.getName());
@@ -39,7 +45,10 @@ public class AssetApiClientTest extends AbstractApiClientTest {
         }
 
         // find all, check count
-        PageDataAsset allAssets = client.getTenantAssets(100, 0, null, null, null, null);
+        PageDataAsset allAssets = client.getTenantAssets(GetTenantAssetsArgs.builder()
+                .pageSize(100)
+                .page(0)
+                .build());
 
         assertNotNull(allAssets);
         assertNotNull(allAssets.getData());
@@ -47,24 +56,37 @@ public class AssetApiClientTest extends AbstractApiClientTest {
         assertEquals("Expected at least 20 assets, but got " + allAssets.getData().size(), 20, initialSize);
 
         //find all with search text, check count
-        PageDataAsset allAssetsBySearchText = client.getTenantAssets(100, 0, null, TEST_PREFIX_2, null, null);
+        PageDataAsset allAssetsBySearchText = client.getTenantAssets(GetTenantAssetsArgs.builder()
+                .pageSize(100)
+                .page(0)
+                .textSearch(TEST_PREFIX_2)
+                .build());
         assertEquals("Expected exactly 10 test assets", 10, allAssetsBySearchText.getData().size());
 
         // find by id
         Asset searchAsset = createdAssets.get(10);
-        Asset asset = client.getAssetById(searchAsset.getId().getId().toString());
+        Asset asset = client.getAssetById(GetAssetByIdArgs.builder()
+                .assetId(searchAsset.getId().getId().toString())
+                .build());
         assertEquals(searchAsset.getName(), asset.getName());
 
         // delete asset
         UUID assetToDeleteId = createdAssets.get(0).getId().getId();
-        client.deleteAsset(assetToDeleteId.toString());
+        client.deleteAsset(DeleteAssetArgs.builder()
+                .assetId(assetToDeleteId.toString())
+                .build());
 
         // Verify the asset is deleted
-        PageDataAsset assetsAfterDelete = client.getTenantAssets(100, 0, null, null, null, null);
+        PageDataAsset assetsAfterDelete = client.getTenantAssets(GetTenantAssetsArgs.builder()
+                .pageSize(100)
+                .page(0)
+                .build());
         assertEquals(initialSize - 1, assetsAfterDelete.getData().size());
 
         assertReturns404(() ->
-                client.getAssetById(assetToDeleteId.toString())
+                client.getAssetById(GetAssetByIdArgs.builder()
+                        .assetId(assetToDeleteId.toString())
+                        .build())
         );
     }
 

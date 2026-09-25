@@ -3,6 +3,14 @@
 package org.thingsboard.server.client;
 
 import org.junit.Test;
+import org.thingsboard.client.api.ThingsboardApi.DeleteResourceArgs;
+import org.thingsboard.client.api.ThingsboardApi.DownloadResourceArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetResourceByIdArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetResourceInfoByIdArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetResourcesArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetSystemOrTenantResourcesByIdsArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetTenantResourcesArgs;
+import org.thingsboard.client.api.ThingsboardApi.SaveResourceArgs;
 import org.thingsboard.client.model.PageDataTbResourceInfo;
 import org.thingsboard.client.model.ResourceType;
 import org.thingsboard.client.model.TbResource;
@@ -38,7 +46,9 @@ public class TbResourceApiClientTest extends AbstractApiClientTest {
             String jsContent = "export default function test" + i + "() { return " + i + "; }";
             resource.setData(Base64.getEncoder().encodeToString(jsContent.getBytes()));
 
-            TbResourceInfo created = client.saveResource(resource);
+            TbResourceInfo created = client.saveResource(SaveResourceArgs.builder()
+                    .tbResource(resource)
+                    .build());
             assertNotNull(created);
             assertNotNull(created.getId());
             assertEquals(resource.getTitle(), created.getTitle());
@@ -48,36 +58,52 @@ public class TbResourceApiClientTest extends AbstractApiClientTest {
         }
 
         // get tenant resources, check count
-        PageDataTbResourceInfo tenantResources = client.getTenantResources(100, 0, null, null, null);
+        PageDataTbResourceInfo tenantResources = client.getTenantResources(GetTenantResourcesArgs.builder()
+                .pageSize(100)
+                .page(0)
+                .build());
         assertNotNull(tenantResources);
         assertNotNull(tenantResources.getData());
         int initialSize = tenantResources.getData().size();
         assertTrue("Expected at least 5 resources, but got " + initialSize, initialSize >= 5);
 
         // find with text search
-        PageDataTbResourceInfo filteredResources = client.getTenantResources(100, 0,
-                TEST_PREFIX + "Resource_" + timestamp, null, null);
+        PageDataTbResourceInfo filteredResources = client.getTenantResources(GetTenantResourcesArgs.builder()
+                .pageSize(100)
+                .page(0)
+                .textSearch(TEST_PREFIX + "Resource_" + timestamp)
+                .build());
         assertEquals(5, filteredResources.getData().size());
 
         // get resources with type filter
-        PageDataTbResourceInfo jsResources = client.getResources(100, 0,
-                ResourceType.JS_MODULE.getValue(), null, TEST_PREFIX + "Resource_" + timestamp, null, null);
+        PageDataTbResourceInfo jsResources = client.getResources(GetResourcesArgs.builder()
+                .pageSize(100)
+                .page(0)
+                .resourceType(ResourceType.JS_MODULE.getValue())
+                .textSearch(TEST_PREFIX + "Resource_" + timestamp)
+                .build());
         assertEquals(5, jsResources.getData().size());
 
         // get resource info by id
         TbResourceInfo searchResource = createdResources.get(2);
-        TbResourceInfo fetchedInfo = client.getResourceInfoById(searchResource.getId().getId().toString());
+        TbResourceInfo fetchedInfo = client.getResourceInfoById(GetResourceInfoByIdArgs.builder()
+                .resourceId(searchResource.getId().getId().toString())
+                .build());
         assertEquals(searchResource.getTitle(), fetchedInfo.getTitle());
         assertEquals(searchResource.getResourceKey(), fetchedInfo.getResourceKey());
 
         // get full resource by id (includes data)
-        TbResource fullResource = client.getResourceById(searchResource.getId().getId().toString());
+        TbResource fullResource = client.getResourceById(GetResourceByIdArgs.builder()
+                .resourceId(searchResource.getId().getId().toString())
+                .build());
         assertNotNull(fullResource);
         assertEquals(searchResource.getTitle(), fullResource.getTitle());
         assertNotNull(fullResource.getData());
 
         // download resource
-        File downloadedFile = client.downloadResource(searchResource.getId().getId().toString());
+        File downloadedFile = client.downloadResource(DownloadResourceArgs.builder()
+                .resourceId(searchResource.getId().getId().toString())
+                .build());
         assertNotNull(downloadedFile);
         assertTrue(downloadedFile.exists());
         assertTrue(downloadedFile.length() > 0);
@@ -87,28 +113,42 @@ public class TbResourceApiClientTest extends AbstractApiClientTest {
                 createdResources.get(0).getId().getId().toString(),
                 createdResources.get(1).getId().getId().toString()
         );
-        List<TbResourceInfo> resourceList = client.getSystemOrTenantResourcesByIds(idsToFetch);
+        List<TbResourceInfo> resourceList = client.getSystemOrTenantResourcesByIds(GetSystemOrTenantResourcesByIdsArgs.builder()
+                .resourceIds(idsToFetch)
+                .build());
         assertEquals(2, resourceList.size());
 
         // update resource
-        TbResource resourceToUpdate = client.getResourceById(createdResources.get(3).getId().getId().toString());
+        TbResource resourceToUpdate = client.getResourceById(GetResourceByIdArgs.builder()
+                .resourceId(createdResources.get(3).getId().getId().toString())
+                .build());
         resourceToUpdate.setTitle(resourceToUpdate.getTitle() + "_updated");
         String updatedContent = "export default function updated() { return 42; }";
         resourceToUpdate.setData(Base64.getEncoder().encodeToString(updatedContent.getBytes()));
-        TbResourceInfo updatedResource = client.saveResource(resourceToUpdate);
+        TbResourceInfo updatedResource = client.saveResource(SaveResourceArgs.builder()
+                .tbResource(resourceToUpdate)
+                .build());
         assertEquals(resourceToUpdate.getTitle(), updatedResource.getTitle());
 
         // delete resource
         UUID resourceToDeleteId = createdResources.get(0).getId().getId();
-        client.deleteResource(resourceToDeleteId.toString(), false);
+        client.deleteResource(DeleteResourceArgs.builder()
+                .resourceId(resourceToDeleteId.toString())
+                .force(false)
+                .build());
 
         // verify deletion
         assertReturns404(() ->
-                client.getResourceInfoById(resourceToDeleteId.toString())
+                client.getResourceInfoById(GetResourceInfoByIdArgs.builder()
+                        .resourceId(resourceToDeleteId.toString())
+                        .build())
         );
 
-        PageDataTbResourceInfo resourcesAfterDelete = client.getTenantResources(100, 0,
-                TEST_PREFIX + "Resource_" + timestamp, null, null);
+        PageDataTbResourceInfo resourcesAfterDelete = client.getTenantResources(GetTenantResourcesArgs.builder()
+                .pageSize(100)
+                .page(0)
+                .textSearch(TEST_PREFIX + "Resource_" + timestamp)
+                .build());
         assertEquals(4, resourcesAfterDelete.getData().size());
     }
 

@@ -8,6 +8,12 @@ import org.junit.After;
 import org.junit.Before;
 import org.thingsboard.client.ApiException;
 import org.thingsboard.client.ThingsboardClient;
+import org.thingsboard.client.api.ThingsboardApi.ActivateUserArgs;
+import org.thingsboard.client.api.ThingsboardApi.DeleteTenantArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetActivationLinkArgs;
+import org.thingsboard.client.api.ThingsboardApi.SaveCustomerArgs;
+import org.thingsboard.client.api.ThingsboardApi.SaveTenantArgs;
+import org.thingsboard.client.api.ThingsboardApi.SaveUserArgs;
 import org.thingsboard.client.model.ActivateUserRequest;
 import org.thingsboard.client.model.Authority;
 import org.thingsboard.client.model.JwtPair;
@@ -48,33 +54,45 @@ public abstract class AbstractApiClientTest extends AbstractControllerTest {
 
         org.thingsboard.client.model.Tenant tenant = new org.thingsboard.client.model.Tenant();
         tenant.setTitle("Java client test tenant");
-        savedClientTenant = client.saveTenant(tenant);
+        savedClientTenant = client.saveTenant(SaveTenantArgs.builder()
+                .tenant(tenant)
+                .build());
 
         clientTenantAdmin = new User();
         clientTenantAdmin.setAuthority(Authority.TENANT_ADMIN);
         clientTenantAdmin.setTenantId(savedClientTenant.getId());
         clientTenantAdmin.setEmail(TENANT_ADMIN_USERNAME);
-        clientTenantAdmin = client.saveUser(clientTenantAdmin, "false");
+        clientTenantAdmin = client.saveUser(SaveUserArgs.builder()
+                .user(clientTenantAdmin)
+                .sendActivationMail("false")
+                .build());
         activateUserAndAuthorize(clientTenantAdmin);
 
         org.thingsboard.client.model.Customer customer = new org.thingsboard.client.model.Customer();
         customer.setTitle("Java client test customer");
         customer.setTenantId(savedClientTenant.getId());
-        savedClientCustomer = client.saveCustomer(customer, null, null, null);
+        savedClientCustomer = client.saveCustomer(SaveCustomerArgs.builder()
+                .customer(customer)
+                .build());
 
         User customerUser = new User();
         customerUser.setAuthority(Authority.CUSTOMER_USER);
         customerUser.setTenantId(savedClientTenant.getId());
         customerUser.setCustomerId(savedClientCustomer.getId());
         customerUser.setEmail(CUSTOMER_USERNAME);
-        savedClientCustomerUser = client.saveUser(customerUser, "false");
+        savedClientCustomerUser = client.saveUser(SaveUserArgs.builder()
+                .user(customerUser)
+                .sendActivationMail("false")
+                .build());
         activateUser(savedClientCustomerUser.getId(), "password123", false);
     }
 
     @After
     public void tearDownJavaClient() {
         client.login("sysadmin@thingsboard.org", "sysadmin");
-        client.deleteTenant(savedClientTenant.getId().getId().toString());
+        client.deleteTenant(DeleteTenantArgs.builder()
+                .tenantId(savedClientTenant.getId().getId().toString())
+                .build());
     }
 
     protected String getBaseUrl() {
@@ -90,12 +108,17 @@ public abstract class AbstractApiClientTest extends AbstractControllerTest {
         ActivateUserRequest activateRequest = new ActivateUserRequest();
         activateRequest.setActivateToken(getActivateToken(userId));
         activateRequest.setPassword(password);
-        return client.activateUser(activateRequest, sendActivationMail);
+        return client.activateUser(ActivateUserArgs.builder()
+                .activateUserRequest(activateRequest)
+                .sendActivationMail(sendActivationMail)
+                .build());
     }
 
     protected String getActivateToken(UserId userId) throws ApiException {
         String activateTokenRegex = "/api/noauth/activate?activateToken=";
-        String activationLink = client.getActivationLink(userId.getId().toString());
+        String activationLink = client.getActivationLink(GetActivationLinkArgs.builder()
+                .userId(userId.getId().toString())
+                .build());
         return activationLink.substring(activationLink.lastIndexOf(activateTokenRegex) + activateTokenRegex.length());
     }
 

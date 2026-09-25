@@ -4,6 +4,9 @@ package org.thingsboard.server.client;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Test;
+import org.thingsboard.client.api.ThingsboardApi.GetAdminSettingsArgs;
+import org.thingsboard.client.api.ThingsboardApi.SaveAdminSettingsArgs;
+import org.thingsboard.client.api.ThingsboardApi.SaveSecuritySettingsArgs;
 import org.thingsboard.client.model.AdminSettings;
 import org.thingsboard.client.model.FeaturesInfo;
 import org.thingsboard.client.model.JwtSettings;
@@ -26,14 +29,18 @@ public class AdminApiClientTest extends AbstractApiClientTest {
         client.login("sysadmin@thingsboard.org", "sysadmin");
 
         // get mail settings
-        AdminSettings mailSettings = client.getAdminSettings("mail");
+        AdminSettings mailSettings = client.getAdminSettings(GetAdminSettingsArgs.builder()
+                .key("mail")
+                .build());
         assertNotNull(mailSettings);
         assertNotNull(mailSettings.getKey());
         assertEquals("mail", mailSettings.getKey());
         assertNotNull(mailSettings.getJsonValue());
 
         // get general settings
-        AdminSettings generalSettings = client.getAdminSettings("general");
+        AdminSettings generalSettings = client.getAdminSettings(GetAdminSettingsArgs.builder()
+                .key("general")
+                .build());
         assertNotNull(generalSettings);
         assertEquals("general", generalSettings.getKey());
         assertNotNull(generalSettings.getJsonValue());
@@ -41,7 +48,9 @@ public class AdminApiClientTest extends AbstractApiClientTest {
 
         // update general settings and restore
         ((ObjectNode) generalSettings.getJsonValue()).put("prohibitDifferentUrl", true);
-        AdminSettings updatedGeneralSettings = client.saveAdminSettings(generalSettings);
+        AdminSettings updatedGeneralSettings = client.saveAdminSettings(SaveAdminSettingsArgs.builder()
+                .adminSettings(generalSettings)
+                .build());
         assertTrue(updatedGeneralSettings.getJsonValue().get("prohibitDifferentUrl").asBoolean());
 
         // get security settings
@@ -52,13 +61,17 @@ public class AdminApiClientTest extends AbstractApiClientTest {
 
         // update security settings
         securitySettings.setMaxFailedLoginAttempts(10);
-        SecuritySettings updatedSecurity = client.saveSecuritySettings(securitySettings);
+        SecuritySettings updatedSecurity = client.saveSecuritySettings(SaveSecuritySettingsArgs.builder()
+                .securitySettings(securitySettings)
+                .build());
         assertNotNull(updatedSecurity);
         assertEquals(10, updatedSecurity.getMaxFailedLoginAttempts().intValue());
 
         // restore original security settings
         updatedSecurity.setMaxFailedLoginAttempts(originalMaxAttempts);
-        client.saveSecuritySettings(updatedSecurity);
+        client.saveSecuritySettings(SaveSecuritySettingsArgs.builder()
+                .securitySettings(updatedSecurity)
+                .build());
 
         // get JWT settings
         JwtSettings jwtSettings = client.getJwtSettings();

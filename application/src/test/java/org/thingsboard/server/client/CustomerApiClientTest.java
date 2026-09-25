@@ -3,6 +3,15 @@
 package org.thingsboard.server.client;
 
 import org.junit.Test;
+import org.thingsboard.client.api.ThingsboardApi.AssignDeviceToCustomerArgs;
+import org.thingsboard.client.api.ThingsboardApi.DeleteCustomerArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetCustomerByIdArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetCustomerDevicesArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetCustomersArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetTenantCustomerArgs;
+import org.thingsboard.client.api.ThingsboardApi.SaveCustomerArgs;
+import org.thingsboard.client.api.ThingsboardApi.SaveDeviceArgs;
+import org.thingsboard.client.api.ThingsboardApi.UnassignDeviceFromCustomerArgs;
 import org.thingsboard.client.model.Customer;
 import org.thingsboard.client.model.Device;
 import org.thingsboard.client.model.PageDataCustomer;
@@ -31,7 +40,9 @@ public class CustomerApiClientTest extends AbstractApiClientTest {
             customer.setTitle(customerTitle);
             customer.setEmail("customer_" + timestamp + "_" + i + "@test.com");
 
-            Customer createdCustomer = client.saveCustomer(customer, null, null, null);
+            Customer createdCustomer = client.saveCustomer(SaveCustomerArgs.builder()
+                    .customer(customer)
+                    .build());
             assertNotNull(createdCustomer);
             assertNotNull(createdCustomer.getId());
             assertEquals(customerTitle, createdCustomer.getTitle());
@@ -40,29 +51,42 @@ public class CustomerApiClientTest extends AbstractApiClientTest {
         }
 
         // find all, check count (includes savedClientCustomer from AbstractApiClientTest setup)
-        PageDataCustomer allCustomers = client.getCustomers(100, 0, null, null, null);
+        PageDataCustomer allCustomers = client.getCustomers(GetCustomersArgs.builder()
+                .pageSize(100)
+                .page(0)
+                .build());
         assertNotNull(allCustomers);
         assertNotNull(allCustomers.getData());
         int initialSize = allCustomers.getData().size();
         assertEquals("Expected 21 customers (20 created + 1 from setup), but got " + initialSize, 21, initialSize);
 
         // find all with search text, check count
-        PageDataCustomer filteredCustomers = client.getCustomers(100, 0, TEST_PREFIX_2, null, null);
+        PageDataCustomer filteredCustomers = client.getCustomers(GetCustomersArgs.builder()
+                .pageSize(100)
+                .page(0)
+                .textSearch(TEST_PREFIX_2)
+                .build());
         assertEquals("Expected exactly 10 customers matching prefix", 10, filteredCustomers.getData().size());
 
         // find by id
         Customer searchCustomer = createdCustomers.get(10);
-        Customer fetchedCustomer = client.getCustomerById(searchCustomer.getId().getId().toString());
+        Customer fetchedCustomer = client.getCustomerById(GetCustomerByIdArgs.builder()
+                .customerId(searchCustomer.getId().getId().toString())
+                .build());
         assertEquals(searchCustomer.getTitle(), fetchedCustomer.getTitle());
 
         // find by title
-        Customer fetchedByTitle = client.getTenantCustomer(searchCustomer.getTitle());
+        Customer fetchedByTitle = client.getTenantCustomer(GetTenantCustomerArgs.builder()
+                .customerTitle(searchCustomer.getTitle())
+                .build());
         assertEquals(searchCustomer.getId().getId(), fetchedByTitle.getId().getId());
 
         // update customer
         fetchedCustomer.setCity("New York");
         fetchedCustomer.setCountry("US");
-        Customer updatedCustomer = client.saveCustomer(fetchedCustomer, null, null, null);
+        Customer updatedCustomer = client.saveCustomer(SaveCustomerArgs.builder()
+                .customer(fetchedCustomer)
+                .build());
         assertEquals("New York", updatedCustomer.getCity());
         assertEquals("US", updatedCustomer.getCountry());
 
@@ -70,30 +94,52 @@ public class CustomerApiClientTest extends AbstractApiClientTest {
         Device device = new Device();
         device.setName("CustomerTestDevice_" + timestamp);
         device.setType("default");
-        Device createdDevice = client.saveDevice(device, null, null, null, null);
+        Device createdDevice = client.saveDevice(SaveDeviceArgs.builder()
+                .device(device)
+                .build());
 
         String customerId = createdCustomers.get(0).getId().getId().toString();
-        client.assignDeviceToCustomer(customerId, createdDevice.getId().getId().toString());
+        client.assignDeviceToCustomer(AssignDeviceToCustomerArgs.builder()
+                .customerId(customerId)
+                .deviceId(createdDevice.getId().getId().toString())
+                .build());
 
-        PageDataDevice customerDevices = client.getCustomerDevices(customerId, 100, 0, null, null, null, null);
+        PageDataDevice customerDevices = client.getCustomerDevices(GetCustomerDevicesArgs.builder()
+                .customerId(customerId)
+                .pageSize(100)
+                .page(0)
+                .build());
         assertEquals(1, customerDevices.getData().size());
         assertEquals(createdDevice.getName(), customerDevices.getData().get(0).getName());
 
         // unassign device from customer
-        client.unassignDeviceFromCustomer(createdDevice.getId().getId().toString());
-        PageDataDevice devicesAfterUnassign = client.getCustomerDevices(customerId, 100, 0, null, null, null, null);
+        client.unassignDeviceFromCustomer(UnassignDeviceFromCustomerArgs.builder()
+                .deviceId(createdDevice.getId().getId().toString())
+                .build());
+        PageDataDevice devicesAfterUnassign = client.getCustomerDevices(GetCustomerDevicesArgs.builder()
+                .customerId(customerId)
+                .pageSize(100)
+                .page(0)
+                .build());
         assertEquals(0, devicesAfterUnassign.getData().size());
 
         // delete customer
         UUID customerToDeleteId = createdCustomers.get(0).getId().getId();
-        client.deleteCustomer(customerToDeleteId.toString());
+        client.deleteCustomer(DeleteCustomerArgs.builder()
+                .customerId(customerToDeleteId.toString())
+                .build());
 
         // verify deletion
-        PageDataCustomer customersAfterDelete = client.getCustomers(100, 0, null, null, null);
+        PageDataCustomer customersAfterDelete = client.getCustomers(GetCustomersArgs.builder()
+                .pageSize(100)
+                .page(0)
+                .build());
         assertEquals(initialSize - 1, customersAfterDelete.getData().size());
 
         assertReturns404(() ->
-                client.getCustomerById(customerToDeleteId.toString())
+                client.getCustomerById(GetCustomerByIdArgs.builder()
+                        .customerId(customerToDeleteId.toString())
+                        .build())
         );
     }
 

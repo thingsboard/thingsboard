@@ -3,6 +3,8 @@
 package org.thingsboard.server.client;
 
 import org.junit.Test;
+import org.thingsboard.client.api.ThingsboardApi.GenerateTwoFaAccountConfigArgs;
+import org.thingsboard.client.api.ThingsboardApi.SavePlatformTwoFaSettingsArgs;
 import org.thingsboard.client.model.AccountTwoFaSettings;
 import org.thingsboard.client.model.PlatformTwoFaSettings;
 import org.thingsboard.client.model.TotpTwoFaAccountConfig;
@@ -37,7 +39,9 @@ public class TwoFactorAuthApiClientTest extends AbstractApiClientTest {
         newSettings.setTotalAllowedTimeForVerification(300);
         newSettings.setMaxVerificationFailuresBeforeUserLockout(5);
 
-        PlatformTwoFaSettings savedSettings = client.savePlatformTwoFaSettings(newSettings);
+        PlatformTwoFaSettings savedSettings = client.savePlatformTwoFaSettings(SavePlatformTwoFaSettingsArgs.builder()
+                .platformTwoFaSettings(newSettings)
+                .build());
         assertNotNull(savedSettings);
         assertNotNull(savedSettings.getProviders());
         assertFalse(savedSettings.getProviders().isEmpty());
@@ -54,7 +58,9 @@ public class TwoFactorAuthApiClientTest extends AbstractApiClientTest {
         assertNull(accountSettings);
 
         // generate TOTP account config
-        TwoFaAccountConfig generatedConfig = client.generateTwoFaAccountConfig(TwoFaProviderType.TOTP.getValue());
+        TwoFaAccountConfig generatedConfig = client.generateTwoFaAccountConfig(GenerateTwoFaAccountConfigArgs.builder()
+                .providerType(TwoFaProviderType.TOTP.getValue())
+                .build());
         assertNotNull(generatedConfig);
         TotpTwoFaAccountConfig totpConfig = (TotpTwoFaAccountConfig) generatedConfig;
         assertNotNull(totpConfig);
