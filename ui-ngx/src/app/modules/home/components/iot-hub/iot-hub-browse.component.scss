@@ -97,6 +97,22 @@
   }
 }
 
+// Sidebar-only panel title, at the drawer header's 18px so the two variants name the panel the
+// same way. The rule underneath is what keeps a title this much larger than the 14px section
+// titles from reading as a caption for the control below it. Same 56px inset, so title,
+// sections and options share one left column.
+.tb-iot-hub-filters-header {
+  padding: 16px 16px 12px 56px;
+  font-size: 18px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+// The title and its rule carry the top spacing the sections' block would otherwise repeat.
+.tb-iot-hub-filters-desktop .tb-iot-hub-filters-inner {
+  padding-top: 8px;
+}
+
 .tb-iot-hub-filters-wrapper {
   position: sticky;
   max-height: calc(100vh - var(--mat-toolbar-standard-height, 64px));
@@ -167,6 +183,11 @@
     padding: 0;
   }
 
+  .tb-iot-hub-filter-standalone {
+    // 24px section-title inset, less the checkbox's own 11px — see the sidebar rule above.
+    padding-left: 13px;
+  }
+
   .tb-iot-hub-filter-panel.mat-expansion-panel {
     .mat-expansion-panel-header {
       padding-left: 24px;
@@ -197,6 +218,24 @@
 .tb-iot-hub-filter-divider {
   height: 1px;
   background: rgba(0, 0, 0, 0.12);
+}
+
+// Standalone boolean control above the facet sections. Having no expansion panel of its own it
+// borrows the checkbox geometry those panels give their options — same hover, and a left inset
+// of 56px (the section titles') less the 11px the checkbox insets itself by (half the overhang
+// of its 40px state layer around the 18px box), so the box starts exactly where "Type" and
+// "Category" do.
+.tb-iot-hub-filter-standalone {
+  padding-left: 45px;
+
+  mat-checkbox {
+    display: block;
+    overflow: hidden;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.04);
+    }
+  }
 }
 
 // Filter expansion panels — Design: no shadow, pl-40 for content
