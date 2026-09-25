@@ -4,6 +4,7 @@ import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   ElementRef,
   Input,
   OnDestroy,
@@ -12,6 +13,7 @@ import {
   TemplateRef,
   ViewChild
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   aggregatedValueCardDefaultSettings,
   AggregatedValueCardKeyPosition,
@@ -29,6 +31,7 @@ import {
   DateFormatProcessor,
   getDataKey,
   getLatestSingleTsValue,
+  LastUpdateAgoDateFormatProcessor,
   overlayStyle,
   textStyle
 } from '@shared/models/widget-settings.models';
@@ -107,7 +110,8 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
   constructor(private imagePipe: ImagePipe,
               private sanitizer: DomSanitizer,
               private renderer: Renderer2,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit(): void {
@@ -153,6 +157,12 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
     this.dateFormat = DateFormatProcessor.fromSettings(this.ctx.$injector, this.settings.dateFormat);
     this.dateStyle = textStyle(this.settings.dateFont);
     this.dateColor = this.settings.dateColor;
+
+    if (this.showDate && this.settings.dateFormat?.lastUpdateAgo) {
+      (this.dateFormat as LastUpdateAgoDateFormatProcessor).tick$.pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe(() => this.cd.detectChanges());
+    }
 
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
@@ -267,6 +277,7 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
     if (this.showChart) {
       this.lineChart.destroy();
     }
+    this.dateFormat.destroy();
   }
 
   private updateLastUpdateTs(ts: number) {

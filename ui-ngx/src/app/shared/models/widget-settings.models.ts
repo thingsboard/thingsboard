@@ -19,13 +19,13 @@ import {
   TargetDeviceType,
   widgetType
 } from '@shared/models/widget.models';
-import { EventEmitter, Injector } from '@angular/core';
+import { EventEmitter, Injector, NgZone } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { DateAgoPipe } from '@shared/pipe/date-ago.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { AlarmFilterConfig } from '@shared/models/query/query.models';
 import { AlarmSearchStatus } from '@shared/models/alarm.models';
-import { EMPTY, Observable, of } from 'rxjs';
+import { EMPTY, Observable, of, Subject, Subscription, timer } from 'rxjs';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { map } from 'rxjs/operators';
 import { DomSanitizer } from '@angular/platform-browser';
@@ -767,6 +767,8 @@ export abstract class DateFormatProcessor {
 
   abstract update(ts: string | number | Date, interval?: Interval): string;
 
+  destroy(): void {}
+
 }
 
 export class SimpleDateFormatProcessor extends DateFormatProcessor {
@@ -792,29 +794,74 @@ export class SimpleDateFormatProcessor extends DateFormatProcessor {
 
 export class LastUpdateAgoDateFormatProcessor extends DateFormatProcessor {
 
+  readonly tick$ = new Subject<void>();
+
   private dateAgoPipe: DateAgoPipe;
   private translate: TranslateService;
+  private ngZone: NgZone;
+  private lastTs: string | number | Date;
+  private timerSub: Subscription;
 
   constructor(protected $injector: Injector,
               protected settings: DateFormatSettings) {
     super($injector, settings);
     this.dateAgoPipe = $injector.get(DateAgoPipe);
     this.translate = $injector.get(TranslateService);
+    this.ngZone = $injector.get(NgZone);
   }
 
-  update(ts: string| number | Date): string {
+  update(ts: string | number | Date): string {
+    this.cancelTimer();
+    this.lastTs = ts;
     if (ts) {
-      const agoText = this.dateAgoPipe.transform(ts, {applyAgo: true, short: true, textPart: true});
-      if (this.settings.hideLastUpdatePrefix) {
-        this.formatted = agoText;
-      } else {
-        this.formatted = this.translate.instant('date.last-update-n-ago-text',
-          {agoText});
-      }
+      this.refreshFormatted();
+      this.scheduleNext(+new Date(ts));
     } else {
       this.formatted = '&nbsp;';
     }
     return this.formatted;
+  }
+
+  destroy(): void {
+    this.cancelTimer();
+    this.tick$.complete();
+  }
+
+  private refreshFormatted(): void {
+    const agoText = this.dateAgoPipe.transform(this.lastTs, {applyAgo: true, short: true, textPart: true});
+    this.formatted = this.settings.hideLastUpdatePrefix
+      ? agoText
+      : this.translate.instant('date.last-update-n-ago-text', {agoText});
+  }
+
+  private scheduleNext(ts: number): void {
+    const delay = this.computeDelay(ts);
+    this.ngZone.runOutsideAngular(() => {
+      this.timerSub = timer(delay).subscribe(() => {
+        this.refreshFormatted();
+        this.scheduleNext(+new Date(this.lastTs));
+        this.tick$.next();
+      });
+    });
+  }
+
+  private cancelTimer(): void {
+    this.timerSub?.unsubscribe();
+    this.timerSub = null;
+  }
+
+  private computeDelay(ts: number): number {
+    const age = Date.now() - ts;
+    if (age < 29 * SECOND) {
+      return 29 * SECOND - age;
+    } else if (age < MINUTE) {
+      return SECOND - (age % SECOND);
+    } else if (age < HOUR) {
+      return MINUTE - (age % MINUTE);
+    } else if (age < DAY) {
+      return HOUR - (age % HOUR);
+    }
+    return DAY - (age % DAY);
   }
 
 }

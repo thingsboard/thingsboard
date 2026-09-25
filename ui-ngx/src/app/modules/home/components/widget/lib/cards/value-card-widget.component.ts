@@ -4,6 +4,7 @@ import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   ElementRef,
   Input,
   OnDestroy,
@@ -12,6 +13,7 @@ import {
   TemplateRef,
   ViewChild
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { isDefinedAndNotNull } from '@core/utils';
 import {
@@ -23,6 +25,7 @@ import {
   getLabel,
   getSingleTsValue,
   iconStyle,
+  LastUpdateAgoDateFormatProcessor,
   overlayStyle,
   resolveCssSize,
   textStyle,
@@ -89,12 +92,14 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
 
   private horizontal = false;
   private valueFormat: ValueFormatProcessor;
+  private lastUpdateTs: number;
 
   constructor(private imagePipe: ImagePipe,
               private sanitizer: DomSanitizer,
               private renderer: Renderer2,
               private widgetComponent: WidgetComponent,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit(): void {
@@ -125,6 +130,12 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
     this.dateStyle = textStyle(this.settings.dateFont);
     this.dateColor = ColorProcessor.fromSettings(this.settings.dateColor);
 
+    if (this.showDate && this.settings.dateFormat?.lastUpdateAgo) {
+      (this.dateFormat as LastUpdateAgoDateFormatProcessor).tick$.pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe(() => this.cd.detectChanges());
+    }
+
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
     this.padding = this.settings.background.overlay.enabled ? undefined : this.settings.padding;
@@ -151,6 +162,7 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
     if (this.panelResize$) {
       this.panelResize$.disconnect();
     }
+    this.dateFormat.destroy();
   }
 
   public onInit() {
@@ -170,12 +182,17 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
     } else {
       this.valueText = 'N/A';
     }
-    this.dateFormat.update(ts);
+    this.updateLastUpdateTs(ts);
     this.iconColor.update(value);
     this.labelColor.update(value);
     this.valueColor.update(value);
     this.dateColor.update(value);
     this.cd.detectChanges();
+  }
+
+  private updateLastUpdateTs(ts: number) {
+    this.lastUpdateTs = ts;
+    this.dateFormat.update(ts);
   }
 
   private onResize() {
