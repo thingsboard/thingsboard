@@ -65,7 +65,7 @@
     "leaflet.gridlayer.googlemutant": "0.15.0",
     "leaflet.markercluster": "1.5.3",
     "libphonenumber-js": "^1.12.35",
-    "maplibre-gl": "5.2.0",
+    "maplibre-gl": "6.11.2",
     "marked": "~16.4.2",
     "moment": "^2.31.0",
     "moment-timezone": "^0.6.0",
