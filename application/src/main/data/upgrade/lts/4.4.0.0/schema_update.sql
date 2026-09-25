@@ -12,3 +12,20 @@
 ALTER TABLE rule_chain ADD COLUMN IF NOT EXISTS notes varchar(1000000);
 
 -- RULE CHAIN NOTES MIGRATION END
+
+-- DEVICE PROFILE SHARED X509 PROVISION CERTIFICATE START
+
+DO
+$$
+    BEGIN
+        IF EXISTS(SELECT 1 FROM pg_constraint WHERE conname = 'device_provision_key_unq_key') THEN
+            ALTER TABLE device_profile DROP CONSTRAINT device_provision_key_unq_key;
+        END IF;
+    END;
+$$;
+
+CREATE UNIQUE INDEX IF NOT EXISTS device_provision_key_unq_key
+    ON device_profile (provision_device_key,
+                       COALESCE(profile_data -> 'provisionConfiguration' ->> 'certificateRegExPattern', ''));
+
+-- DEVICE PROFILE SHARED X509 PROVISION CERTIFICATE END
