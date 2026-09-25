@@ -41,6 +41,18 @@
       </mat-select>
     </mat-form-field>
   }
+  @if (MapProvider.carto === layerFormGroup.get('provider').value) {
+    <mat-form-field
+      class="tb-inline-field tb-layer-field" appearance="outline" subscriptSizing="dynamic">
+      <mat-select formControlName="layerType" required>
+        @for (layerType of cartoLayerTypes; track layerType) {
+          <mat-option [value]="layerType">
+            {{ cartoLayerTranslationMap.get(layerType) | translate }}
+          </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  }
   @if (MapProvider.google === layerFormGroup.get('provider').value) {
     <mat-form-field
       class="tb-inline-field tb-layer-field" appearance="outline" subscriptSizing="dynamic">

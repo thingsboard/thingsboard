@@ -25,6 +25,8 @@ import { TbPopoverService } from '@shared/components/popover.service';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
+  cartoLayerTranslationMap,
+  cartoLayerTypes,
   defaultLayerTitle,
   defaultMapLayerSettings,
   googleMapLayerTranslationMap,
@@ -37,6 +39,8 @@ import {
   mapProviderTranslationMap,
   openFreeMapStyleTranslationMap,
   openFreeMapStyleTypes,
+  mapProviderHasApiKey,
+  mapProviderRequiresApiKey,
   openStreetLayerTypes,
   openStreetMapLayerTranslationMap,
   tencentLayerTranslationMap,
@@ -76,6 +80,10 @@ export class MapLayerRowComponent implements ControlValueAccessor, OnInit {
   openStreetLayerTypes = openStreetLayerTypes;
 
   openStreetMapLayerTranslationMap = openStreetMapLayerTranslationMap;
+
+  cartoLayerTypes = cartoLayerTypes;
+
+  cartoLayerTranslationMap = cartoLayerTranslationMap;
 
   googleMapLayerTypes = googleMapLayerTypes;
 
@@ -219,7 +227,8 @@ export class MapLayerRowComponent implements ControlValueAccessor, OnInit {
       this.layerFormGroup.get('customAttribution').disable({emitEvent: false});
       this.layerFormGroup.get('layerType').enable({emitEvent: false});
     }
-    if ([MapProvider.google, MapProvider.here].includes(provider)) {
+    if (mapProviderHasApiKey(provider)) {
+      this.layerFormGroup.get('apiKey').setValidators(mapProviderRequiresApiKey(provider) ? [Validators.required] : []);
       this.layerFormGroup.get('apiKey').enable({emitEvent: false});
     } else {
       this.layerFormGroup.get('apiKey').disable({emitEvent: false});
