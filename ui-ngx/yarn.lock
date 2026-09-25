@@ -7576,10 +7576,10 @@ leaflet-polylinedecorator@1.6.0:
   dependencies:
     leaflet-rotatedmarker "^0.2.0"
 
-leaflet-providers@2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/leaflet-providers/-/leaflet-providers-2.0.0.tgz#dfdab9ca2dccc57c79e1462bc3dd20f78910afcb"
-  integrity sha512-CWwKEnHd66Qsx0m4o5q5ZOa60s00B91pMxnlr4Y22msubfs7dhbZhdMIz8bvZQkrZqi67ppI1fsZRS6vtrLcOA==
+leaflet-providers@4.0.0:
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/leaflet-providers/-/leaflet-providers-4.0.0.tgz#a98c5631a671c366739d8658e40be1d02e2c57cb"
+  integrity sha512-4m3Q4t0e+cHVNIPzlkW9HFWEgplImFRv8cnUFJYOfFoS6p2KosAfmh2Do6qk4HMdqutqbHMpv3F7sn/CUSw6oQ==
 
 leaflet-rotatedmarker@^0.2.0:
   version "0.2.0"

@@ -121,9 +121,6 @@ export const hereMapProviderTranslationMap = new Map<HereMapProvider, string>(
 export interface HereMapProviderSettings {
   mapProviderHere: HereMapProvider;
   credentials: {
-    useV3: boolean;
-    app_id: string;
-    app_code: string;
     apiKey: string;
   };
 }
@@ -131,9 +128,6 @@ export interface HereMapProviderSettings {
 export const defaultHereMapProviderSettings: HereMapProviderSettings = {
   mapProviderHere: HereMapProvider.hereNormalDay,
   credentials: {
-    useV3: true,
-    app_id: 'AhM6TzD9ThyK78CT3ptx',
-    app_code: 'p6NPiITB3Vv0GMUFnkLOOg',
     apiKey: 'kVXykxAfZ6LS4EbCTO02soFVfjA7HoBzNVVH9u7nzoE'
   }
 };
