@@ -15,6 +15,11 @@ public enum RpcStatus {
     FAILED(false),
     DELETED(false);
 
+    /**
+     * {@code true} while the RPC is still pending in the device actor (not yet delivered/answered).
+     * Note: TIMEOUT is not intermediate, but it is not final either - the device actor may retry
+     * the delivery (TIMEOUT -> SENT/DELIVERED/QUEUED) until retries are exhausted (then FAILED).
+     */
     @Getter
     private final boolean intermediate;
 

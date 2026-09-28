@@ -228,7 +228,7 @@ public class RpcV2Controller extends AbstractRpcController {
                 tbClusterService.pushMsgToCore(removeMsg, null);
             }
 
-            tbRpcService.deleteRpc(getTenantId(), rpcId);
+            tbRpcService.deleteRpc(getTenantId(), rpc);
             rpc.setStatus(RpcStatus.DELETED);
 
             TbMsg msg = TbMsg.newMsg()
