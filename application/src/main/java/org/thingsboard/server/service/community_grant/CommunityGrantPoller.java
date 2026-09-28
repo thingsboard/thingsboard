@@ -358,9 +358,7 @@ public class CommunityGrantPoller extends TbApplicationEventListener<PartitionCh
             log.debug("Ignoring a portal status response with no status value");
             return;
         }
-        CommunityGrantState terminalState = terminalStateFor(statusValue);
-        if (terminalState != null) {
-            retire(token, terminalState, now, null);
+        if (applyIfTerminal(token, statusValue, now)) {
             return;
         }
         switch (statusValue) {
@@ -370,6 +368,38 @@ public class CommunityGrantPoller extends TbApplicationEventListener<PartitionCh
             case "EXPIRED" -> park(token, now, CommunityGrantParkReason.LINK_EXPIRED);
             default -> log.debug("Ignoring an unrecognized portal status");
         }
+    }
+
+    /** @return whether the status was a terminal one, even when the flow could not be ended on this poll. */
+    private boolean applyIfTerminal(String token, String status, long now) {
+        CommunityGrantState terminalState = terminalStateFor(status);
+        if (terminalState == null) {
+            return false;
+        }
+        if (terminalState == CommunityGrantState.REGISTERED) {
+            onDone(token, now);
+        } else {
+            retire(token, terminalState, now, null);
+        }
+        return true;
+    }
+
+    /** The key is stored before the token is cleared, so a failure above it leaves the next poll to retry. */
+    private void onDone(String token, long now) {
+        String licenseSecret;
+        try {
+            licenseSecret = portalClient.claimLicense(token);
+        } catch (CommunityGrantLicenseClaimRefusedException e) {
+            log.warn("The license portal did not hand over the license key for this registration ({}). "
+                    + "The registration stands and the key can be entered by hand later", e.getMessage());
+            retire(token, CommunityGrantState.REGISTERED, now, null);
+            return;
+        }
+        if (StringUtils.isEmpty(licenseSecret)) {
+            return;
+        }
+        tbClusterStore.saveLicenseSecret(licenseSecret);
+        retire(token, CommunityGrantState.REGISTERED, now, null);
     }
 
     /** @return the state the flow ends in, or {@code null} if the status is not a terminal one. */
@@ -450,10 +480,10 @@ public class CommunityGrantPoller extends TbApplicationEventListener<PartitionCh
         if (uploadedStatus == null) {
             return;
         }
-        CommunityGrantState terminalState = terminalStateFor(uploadedStatus);
-        if (terminalState != null) {
-            retire(token, terminalState, now, null);
-        } else if ("UNDER_REVIEW".equals(uploadedStatus)) {
+        if (applyIfTerminal(token, uploadedStatus, now)) {
+            return;
+        }
+        if ("UNDER_REVIEW".equals(uploadedStatus)) {
             onUnderReview(token, now);
         } else {
             log.debug("Ignoring an unrecognized portal status after the upload");

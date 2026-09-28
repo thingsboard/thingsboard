@@ -9,10 +9,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.community_grant.CommunityGrantFlowState;
 import org.thingsboard.server.common.data.community_grant.CommunityGrantMode;
@@ -42,6 +46,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -53,6 +58,7 @@ import static org.mockito.Mockito.when;
 class CommunityGrantPollerTest {
 
     private static final String TOKEN = "token-one";
+    private static final String LICENSE_SECRET = "granted-license-key";
     private static final String SIGN_UP_URL =
             "https://portal.example/communityGrant?clusterId=c1&claimToken=t1";
     private static final UUID CLUSTER_ID = UUID.fromString("2f0a5b1e-1111-4a2b-9c3d-4e5f60718293");
@@ -105,6 +111,7 @@ class CommunityGrantPollerTest {
             return stored;
         });
         lenient().when(tbClusterStore.getLicenseClaimToken()).thenReturn(Optional.of(TOKEN));
+        lenient().when(portalClient.claimLicense(TOKEN)).thenReturn(LICENSE_SECRET);
         lenient().when(tbClusterStore.getClusterId()).thenReturn(Optional.of(CLUSTER_ID));
         lenient().doReturn(scheduledPoll).when(scheduler).schedule(any(Runnable.class), anyLong(), any());
         // Non-null, so the supervisor's already-running guard can trip.
@@ -316,6 +323,55 @@ class CommunityGrantPollerTest {
         poller.apply(TOKEN, status("DONE", null));
         assertThat(stored.getState()).isEqualTo(CommunityGrantState.REGISTERED);
         verify(tbClusterStore).clearLicenseClaimToken(TOKEN);
+    }
+
+    @Test
+    void testDoneStoresTheGrantedLicenseKeyBeforeClearingTheToken() {
+        poller.apply(TOKEN, status("DONE", null));
+
+        InOrder inOrder = inOrder(tbClusterStore);
+        inOrder.verify(tbClusterStore).saveLicenseSecret(LICENSE_SECRET);
+        inOrder.verify(tbClusterStore).clearLicenseClaimToken(TOKEN);
+        assertThat(stored.getState()).isEqualTo(CommunityGrantState.REGISTERED);
+    }
+
+    @Test
+    void testDoneWithNoKeyToHandOverYetLeavesTheFlowForTheNextPoll() {
+        when(portalClient.claimLicense(TOKEN)).thenReturn(null);
+
+        poller.apply(TOKEN, status("DONE", null));
+
+        assertThat(stored.getState()).isEqualTo(CommunityGrantState.AWAITING_SIGNUP);
+        assertThat(poller.isArmed()).isTrue();
+        verify(tbClusterStore, never()).saveLicenseSecret(anyString());
+        verify(tbClusterStore, never()).clearLicenseClaimToken(anyString());
+    }
+
+    @Test
+    void testDoneWithARefusedClaimRegistersWithoutAKey() {
+        when(portalClient.claimLicense(TOKEN)).thenThrow(new CommunityGrantLicenseClaimRefusedException(
+                new HttpClientErrorException(HttpStatus.BAD_REQUEST)));
+
+        poller.apply(TOKEN, status("DONE", null));
+
+        assertThat(stored.getState()).isEqualTo(CommunityGrantState.REGISTERED);
+        assertThat(poller.isArmed()).isFalse();
+        verify(tbClusterStore, never()).saveLicenseSecret(anyString());
+        verify(tbClusterStore).clearLicenseClaimToken(TOKEN);
+    }
+
+    @Test
+    void testDoneWithAnUnreachablePortalIsLeftToTheFailureBackoff() {
+        when(portalClient.getStatus(TOKEN, CLUSTER_ID)).thenReturn(status("DONE", null));
+        when(portalClient.claimLicense(TOKEN)).thenThrow(new ResourceAccessException("connection refused"));
+        clearInvocations(scheduler);
+
+        poller.pollAndReschedule();
+
+        assertThat(stored.getState()).isEqualTo(CommunityGrantState.AWAITING_SIGNUP);
+        assertThat(poller.isArmed()).isTrue();
+        verify(tbClusterStore, never()).clearLicenseClaimToken(anyString());
+        verify(scheduler).schedule(any(Runnable.class), eq(3000L), eq(TimeUnit.MILLISECONDS));
     }
 
     @Test

@@ -72,6 +72,33 @@ public class TbClusterStoreTest extends AbstractServiceTest {
     }
 
     @Test
+    public void testSaveAndReadLicenseSecret() {
+        assertThat(tbClusterStore.getLicenseSecret()).isEmpty();
+        tbClusterStore.saveLicenseSecret("secret-one");
+        assertThat(tbClusterStore.getLicenseSecret()).contains("secret-one");
+        tbClusterStore.saveLicenseSecret("secret-two");
+        assertThat(tbClusterStore.getLicenseSecret()).contains("secret-two");
+    }
+
+    @Test
+    public void testLicenseSecretAndClaimTokenAreStoredApart() {
+        tbClusterStore.saveLicenseSecret("secret-one");
+        tbClusterStore.saveLicenseClaimToken("token-one");
+        tbClusterStore.clearLicenseClaimToken("token-one");
+
+        assertThat(tbClusterStore.getLicenseSecret()).contains("secret-one");
+        assertThat(tbClusterStore.getLicenseClaimToken()).isEmpty();
+    }
+
+    @Test
+    public void testSaveLicenseSecretFailsWhenClusterRowIsMissing() {
+        jdbcTemplate.update("DELETE FROM tb_cluster");
+        assertThatThrownBy(() -> tbClusterStore.saveLicenseSecret("secret-one"))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(tbClusterStore.getLicenseSecret()).isEqualTo(Optional.empty());
+    }
+
+    @Test
     public void testClearLicenseClaimToken() {
         tbClusterStore.saveLicenseClaimToken("token-one");
         tbClusterStore.forceClearLicenseClaimToken();
