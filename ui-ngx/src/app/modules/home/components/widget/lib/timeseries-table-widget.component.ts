@@ -1039,7 +1039,11 @@ class TimeseriesDatasource implements DataSource<TimeseriesRow> {
       switchMap(() => {
         return this.allRows$.pipe(
           map((data) => {
-            const fetchData = pageLink.filterData(data);
+            let fetchData = pageLink.filterData(data);
+            if (pageLink.page > 0 && pageLink.page >= fetchData.totalPages) {
+              pageLink.page = Math.max(fetchData.totalPages - 1, 0);
+              fetchData = pageLink.filterData(data);
+            }
             if (this.cellButtonActions.length) {
               let maxCellButtonAction: number;
               if (this.usedShowCellActionFunction && !this.reserveSpaceForHiddenAction) {
