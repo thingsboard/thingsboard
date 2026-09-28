@@ -31,13 +31,15 @@ kafka:
   connectionTimeout: "1000" # Time in milliseconds to wait when establishing a connection to a Kafka broker
   compression: "none" # Message compression codec for the producer: gzip, lz4 or none
   topic_properties: "retention.ms:604800000;segment.bytes:52428800;retention.bytes:104857600;partitions:100;min.insync.replicas:1" # Semicolon-separated Kafka topic configuration properties applied on topic creation
-  use_confluent_cloud: false # Set to true to enable Confluent Cloud-specific configuration (SSL + SASL)
+  use_confluent_cloud: "false" # Set to true to enable SASL authentication (Confluent Cloud or any SASL-enabled broker); SSL is derived from confluent.security.protocol
   client_id: "kafkajs" # Kafka client identifier; inject the pod name to easily identify the client via kafka-consumer-groups.sh
   ssl:
-    enabled: false # Enable SSL/TLS for Kafka broker connections
+    enabled: "false" # Enable SSL/TLS for Kafka broker connections
   confluent:
     sasl:
       mechanism: "PLAIN" # SASL mechanism for Confluent Cloud authentication: PLAIN, SCRAM-SHA-256, or SCRAM-SHA-512
+    security:
+      protocol: "SASL_SSL" # Protocol used to communicate with brokers, applied only when use_confluent_cloud is true. Valid values are: PLAINTEXT, SSL, SASL_PLAINTEXT, SASL_SSL
 
 # Logging configuration
 # Controls log verbosity, output directory, and log file naming pattern for the JS executor service.
