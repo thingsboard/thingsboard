@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, Inject, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
@@ -127,7 +128,14 @@ export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDia
     this.alarmFormGroup.get('type').patchValue(this.utils.customTranslation(alarm.type, alarm.type));
     this.alarmFormGroup.get('alarmStatus')
       .patchValue(this.translate.instant(alarmStatusTranslations.get(alarm.status)));
-    this.alarmFormGroup.get('alarmDetails').patchValue(alarm.details);
+    if (alarm.details) {
+      let stringDetails = JSON.stringify(alarm.details, undefined, 2);
+      stringDetails = this.utils.customTranslation(stringDetails, stringDetails);
+      const details = JSON.parse(stringDetails);
+      this.alarmFormGroup.get('alarmDetails').patchValue(details);
+    } else {
+      this.alarmFormGroup.get('alarmDetails').patchValue(null);
+    }
   }
 
   close(): void {

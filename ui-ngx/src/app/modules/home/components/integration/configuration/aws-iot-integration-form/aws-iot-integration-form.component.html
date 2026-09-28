@@ -1,0 +1,99 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="awsIotIntegrationConfigForm" class="flex flex-col">
+  <fieldset formGroupName="clientConfiguration">
+    <mat-form-field appearance="outline" class="mat-block flex-1">
+      <mat-label translate>integration.aws-iot-endpoint</mat-label>
+      <input matInput required formControlName="host">
+      @if (awsIotIntegrationConfigForm.get('clientConfiguration.host').hasError('required')) {
+        <mat-error translate>
+          integration.aws-iot-endpoint-required
+        </mat-error>
+      }
+      @if (awsIotIntegrationConfigForm.get('clientConfiguration.host').hasError('privateNetwork')) {
+        <mat-error translate>
+          integration.host-private
+        </mat-error>
+      }
+    </mat-form-field>
+    <tb-integration-credentials formControlName="credentials"
+      [allowCredentialTypes]="[IntegrationCredentialType.CertPEM]">
+    </tb-integration-credentials>
+  </fieldset>
+  <tb-mqtt-topic-filters formControlName="topicFilters" [excludeQos]="[MqttQos.EXACTLY_ONCE]">
+  </tb-mqtt-topic-filters>
+  <ng-container [ngTemplateOutlet]="executeRemotelyTemplate">
+  </ng-container>
+  <mat-expansion-panel class="configuration-panel" formGroupName="clientConfiguration">
+    <mat-expansion-panel-header>
+      <mat-panel-description class="flex items-stretch justify-end" translate>
+        integration.advanced-settings
+      </mat-panel-description>
+    </mat-expansion-panel-header>
+    <ng-template matExpansionPanelContent>
+      <tb-mqtt-version-select subscriptSizing="fixed" appearance="outline" formControlName="protocolVersion"></tb-mqtt-version-select>
+      <mat-form-field appearance="outline" class="mat-block">
+        <mat-label translate>integration.client-id</mat-label>
+        <input matInput formControlName="clientId" autocomplete="new-clientId">
+      </mat-form-field>
+      <div class="tb-hint client-id" [class.invisible]="awsIotIntegrationConfigForm.get('clientConfiguration.clientId').errors" translate>
+        integration.client-id-hint
+      </div>
+      <section class="row flex flex-row xs:flex-col gt-xs:gap-2">
+        <mat-form-field appearance="outline" class="mat-block flex-1">
+          <mat-label translate>integration.max-bytes-in-message</mat-label>
+          <input matInput type="number" formControlName="maxBytesInMessage">
+          @if ((awsIotIntegrationConfigForm.get('clientConfiguration.maxBytesInMessage').hasError('min') || awsIotIntegrationConfigForm.get('clientConfiguration.maxBytesInMessage').hasError('max')) && awsIotIntegrationConfigForm.get('clientConfiguration.maxBytesInMessage').touched) {
+            <mat-icon matSuffix class="tb-error tb-mat-20"
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
+                      [matTooltip]="'integration.max-bytes-in-message-range' | translate">
+              warning
+            </mat-icon>
+          }
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="mat-block flex-1">
+          <mat-label translate>integration.connect-timeout</mat-label>
+          <input matInput type="number" step="1" min="1" max="200" required formControlName="connectTimeoutSec">
+          @if (awsIotIntegrationConfigForm.get('clientConfiguration.connectTimeoutSec').hasError('required') && awsIotIntegrationConfigForm.get('clientConfiguration.connectTimeoutSec').touched) {
+            <mat-icon matSuffix class="tb-error tb-mat-20"
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
+                      [matTooltip]="'integration.connect-timeout-required' | translate">
+              warning
+            </mat-icon>
+          }
+          @if ((awsIotIntegrationConfigForm.get('clientConfiguration.connectTimeoutSec').hasError('min') || awsIotIntegrationConfigForm.get('clientConfiguration.connectTimeoutSec').hasError('max')) && awsIotIntegrationConfigForm.get('clientConfiguration.connectTimeoutSec').touched) {
+            <mat-icon matSuffix class="tb-error tb-mat-20"
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
+                      [matTooltip]="'integration.connect-timeout-range' | translate">
+              warning
+            </mat-icon>
+          }
+        </mat-form-field>
+        <ng-container *ngTemplateOutlet="downlinkTopicPattern"></ng-container>
+      </section>
+      <ng-container [ngTemplateOutlet]="genericAdditionalInfoTemplate">
+      </ng-container>
+    </ng-template>
+  </mat-expansion-panel>
+  <ng-template #downlinkTopicPattern>
+    <mat-form-field appearance="outline" class="mat-block flex-1">
+      <mat-label translate>integration.downlink-topic-pattern</mat-label>
+      <input matInput required formControlName="downlinkTopicPattern">
+      @if (awsIotIntegrationConfigForm.get('downlinkTopicPattern').hasError('required') && awsIotIntegrationConfigForm.get('downlinkTopicPattern').touched) {
+        <mat-icon matSuffix class="tb-error tb-mat-20"
+                  matTooltipPosition="above"
+                  matTooltipClass="tb-error-tooltip"
+                  [matTooltip]="'integration.downlink-topic-pattern-required' | translate">
+          warning
+        </mat-icon>
+      }
+    </mat-form-field>
+  </ng-template>
+</section>

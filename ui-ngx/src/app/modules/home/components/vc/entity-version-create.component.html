@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 @if (!versionCreateResult$) {
@@ -28,7 +29,13 @@
             {{ 'version-control.version-name-required' | translate }}
           </mat-error>
         </mat-form-field>
-        <mat-checkbox [class.hidden]="entityId.entityType !== entityTypes.DEVICE" formControlName="saveCredentials" style="margin-bottom: 16px;">
+        <mat-checkbox [class.hidden]="!(entityId.entityType === entityTypes.ENTITY_GROUP && entityTypes.USER !== groupType)" formControlName="saveGroupEntities" style="margin-bottom: 16px;">
+          {{ 'version-control.export-group-entities' | translate }}
+        </mat-checkbox>
+        <mat-checkbox [class.hidden]="!(entityId.entityType === entityTypes.ENTITY_GROUP && entityTypes.USER === groupType)" formControlName="savePermissions" style="margin-bottom: 16px;">
+          {{ 'version-control.export-roles' | translate }}
+        </mat-checkbox>
+        <mat-checkbox [class.hidden]="!(entityId.entityType === entityTypes.DEVICE || entityTypes.DEVICE === groupType)" formControlName="saveCredentials" style="margin-bottom: 16px;">
           {{ 'version-control.export-credentials' | translate }}
         </mat-checkbox>
         <mat-checkbox [class.hidden]="entityTypesWithoutRelatedData.has(entityId.entityType)" formControlName="saveAttributes" style="margin-bottom: 16px;">

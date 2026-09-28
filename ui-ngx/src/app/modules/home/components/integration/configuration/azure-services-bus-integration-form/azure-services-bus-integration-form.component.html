@@ -1,0 +1,62 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="azureServicesBusIntegrationConfigForm">
+
+  <tb-secret-key-input formControlName="connectionString" class="mat-block flex-1"
+                       required
+                       appearance="outline"
+                       label="{{ 'integration.connection-string' | translate }}"
+                       requiredText="{{ 'integration.connection-string-required' | translate }}">
+  </tb-secret-key-input>
+  <div class="flex flex-row xs:flex-col gt-xs:gap-2">
+    <mat-form-field appearance="outline" class="mat-block flex-1">
+      <mat-label translate>integration.topic-name</mat-label>
+      <input matInput required formControlName="topicName">
+      @if (azureServicesBusIntegrationConfigForm.get('topicName').hasError('required')) {
+        <mat-error translate>integration.topic-name-required</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="mat-block flex-1">
+      <mat-label translate>integration.sub-name</mat-label>
+      <input matInput required formControlName="subName">
+      @if (azureServicesBusIntegrationConfigForm.get('subName').hasError('required')) {
+        <mat-error translate>integration.sub-name-required</mat-error>
+      }
+    </mat-form-field>
+  </div>
+
+  <ng-container [ngTemplateOutlet]="executeRemotelyTemplate">
+  </ng-container>
+
+  <mat-expansion-panel class="configuration-panel">
+    <mat-expansion-panel-header>
+      <mat-panel-description class="flex items-stretch justify-end" translate>
+        integration.advanced-settings
+      </mat-panel-description>
+    </mat-expansion-panel-header>
+    <ng-template matExpansionPanelContent>
+
+      <tb-secret-key-input formControlName="downlinkConnectionString" class="mat-block flex-1" appearance="outline"
+                           label="{{ 'integration.downlink-connection-string' | translate }}">
+      </tb-secret-key-input>
+      <mat-form-field appearance="outline" class="mat-block">
+        <mat-label translate>integration.downlink-topic-name</mat-label>
+        <input matInput formControlName="downlinkTopicName">
+        @if (azureServicesBusIntegrationConfigForm.get('downlinkTopicName').hasError('required')) {
+          <mat-error translate>
+            integration.downlink-topic-name-required
+          </mat-error>
+        }
+      </mat-form-field>
+
+      <ng-container [ngTemplateOutlet]="genericAdditionalInfoTemplate">
+      </ng-container>
+    </ng-template>
+  </mat-expansion-panel>
+
+</section>

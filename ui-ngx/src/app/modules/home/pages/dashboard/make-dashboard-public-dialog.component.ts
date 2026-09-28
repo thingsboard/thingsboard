@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, Inject, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
@@ -38,7 +39,7 @@ export class MakeDashboardPublicDialogComponent extends DialogComponent<MakeDash
     super(store, router, dialogRef);
 
     this.dashboard = data.dashboard;
-    this.publicLink = dashboardService.getPublicDashboardLink(this.dashboard);
+   //  this.publicLink = dashboardService.getPublicDashboardLink(this.dashboard);
   }
 
   ngOnInit(): void {

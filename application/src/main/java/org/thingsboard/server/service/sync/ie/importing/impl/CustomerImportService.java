@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.sync.ie.importing.impl;
 
 import lombok.RequiredArgsConstructor;
@@ -25,12 +26,13 @@ public class CustomerImportService extends BaseEntityImportService<CustomerId, C
     @Override
     protected void setOwner(TenantId tenantId, Customer customer, IdProvider idProvider) {
         customer.setTenantId(tenantId);
+        customer.setParentCustomerId(idProvider.getInternalId(customer.getParentCustomerId()));
     }
 
     @Override
     protected Customer prepare(EntitiesImportCtx ctx, Customer customer, Customer old, EntityExportData<Customer> exportData, IdProvider idProvider) {
         if (customer.isPublic()) {
-            Customer publicCustomer = customerService.findOrCreatePublicCustomer(ctx.getTenantId());
+            Customer publicCustomer = customerService.findOrCreatePublicCustomer(ctx.getTenantId(), customer.getOwnerId());
             publicCustomer.setExternalId(customer.getExternalId());
             return publicCustomer;
         } else {
@@ -47,7 +49,6 @@ public class CustomerImportService extends BaseEntityImportService<CustomerId, C
         }
     }
 
-    @Override
     protected Customer deepCopy(Customer customer) {
         return new Customer(customer);
     }

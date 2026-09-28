@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.customer;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
@@ -8,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -63,18 +65,41 @@ public class JpaCustomerDaoTest extends AbstractJpaDaoTest {
 
     @Test
     public void testFindPublicCustomerByTenantId() {
-        UUID tenantId = Uuids.timeBased();
+        UUID tenantUUID = Uuids.timeBased();
 
-        Optional<Customer> customerOpt = customerDao.findPublicCustomerByTenantId(tenantId);
+        Optional<Customer> customerOpt = customerDao.findPublicCustomerByTenantIdAndOwnerId(tenantUUID, tenantUUID);
         assertTrue(customerOpt.isEmpty());
 
         String publicCustomerTitle = StringUtils.randomAlphanumeric(10);
-        createPublicCustomer(tenantId, publicCustomerTitle);
-        customerOpt = customerDao.findPublicCustomerByTenantId(tenantId);
+        createPublicCustomer(TenantId.fromUUID(tenantUUID), publicCustomerTitle);
+        customerOpt = customerDao.findPublicCustomerByTenantIdAndOwnerId(tenantUUID, tenantUUID);
         assertTrue(customerOpt.isPresent());
         Customer customer = customerOpt.get();
         assertTrue(customer.isPublic());
         assertEquals(publicCustomerTitle, customer.getTitle());
+    }
+
+    @Test
+    public void testFindPublicCustomerByTenantIdAndParentCustomerId() {
+        UUID tenantUUID = Uuids.timeBased();
+        String parentCustomerTitle = "CUSTOMER_0";
+
+        createCustomer(tenantUUID, 0);
+
+        Optional<Customer> customerOpt = customerDao.findCustomerByTenantIdAndTitle(tenantUUID, parentCustomerTitle);
+        assertTrue(customerOpt.isPresent());
+        Customer parentCustomer = customerOpt.get();
+        assertEquals(parentCustomerTitle, parentCustomer.getTitle());
+        CustomerId parentCustomerId = parentCustomer.getId();
+
+        String publicCustomerTitle = StringUtils.randomAlphanumeric(10);
+        createPublicCustomer(TenantId.fromUUID(tenantUUID), parentCustomerId, publicCustomerTitle);
+        customerOpt = customerDao.findPublicCustomerByTenantIdAndOwnerId(tenantUUID, parentCustomerId.getId());
+        assertTrue(customerOpt.isPresent());
+        Customer customer = customerOpt.get();
+        assertTrue(customer.isPublic());
+        assertEquals(publicCustomerTitle, customer.getTitle());
+        assertEquals(parentCustomerId, customer.getParentCustomerId());
     }
 
     private void createCustomer(UUID tenantId, int index) {
@@ -85,12 +110,20 @@ public class JpaCustomerDaoTest extends AbstractJpaDaoTest {
         customerDao.save(TenantId.fromUUID(tenantId), customer);
     }
 
-    private void createPublicCustomer(UUID tenantId, String publicCustomerTitle) {
+    private void createPublicCustomer(TenantId tenantId, String publicCustomerTitle) {
+        createPublicCustomer(tenantId, null, publicCustomerTitle);
+    }
+
+    private void createPublicCustomer(TenantId tenantId, EntityId ownerId, String publicCustomerTitle) {
         Customer customer = new Customer();
         customer.setId(new CustomerId(Uuids.timeBased()));
-        customer.setTenantId(TenantId.fromUUID(tenantId));
+        customer.setTenantId(tenantId);
+        if (ownerId != null) {
+            customer.setOwnerId(ownerId);
+        }
         customer.setTitle(publicCustomerTitle);
         customer.setAdditionalInfo(CustomerServiceImpl.PUBLIC_CUSTOMER_ADDITIONAL_INFO_JSON);
-        customerDao.save(TenantId.fromUUID(tenantId), customer);
+        customerDao.save(tenantId, customer);
     }
+
 }

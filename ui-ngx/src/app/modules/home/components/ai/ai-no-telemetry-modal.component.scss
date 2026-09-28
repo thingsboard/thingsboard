@@ -1,0 +1,24 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+.no-telemetry-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 32px 16px 0;
+  text-align: center;
+
+  .error-icon {
+    font-size: 72px;
+    width: 72px;
+    height: 72px;
+  }
+
+  .message {
+    max-width: 360px;
+    white-space: pre-line;
+    line-height: 1.6;
+    color: rgba(0, 0, 0, 0.6);
+  }
+}

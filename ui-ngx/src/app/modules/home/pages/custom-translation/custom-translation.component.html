@@ -1,0 +1,45 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<mat-card appearance="outlined" class="settings-card tb-absolute-fill">
+  <mat-card-header>
+    <mat-card-title class="page-title">
+      <button mat-icon-button
+        class="back-button tb-mat-40"
+        matTooltip="{{ 'action.back' | translate }}"
+        matTooltipPosition="above"
+        (click)="goBack()">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <span class="mat-headline-5">{{ 'custom-translation.translation-name' | translate: {name: localeName, country: countryName} }}</span>
+    </mat-card-title>
+    <span class="flex-1"></span>
+    <tb-toggle-select appearance="fill" selectMediaBreakpoint="xs" [formControl]="mode" class="tb-center">
+      <tb-toggle-option value="basic">{{ 'widget.basic-mode' | translate }}</tb-toggle-option>
+      <tb-toggle-option value="advanced">{{ 'widget.advanced-mode' | translate }}</tb-toggle-option>
+    </tb-toggle-select>
+  </mat-card-header>
+  <mat-card-content>
+    @if (mode.value === 'basic') {
+      <tb-translation-map-table [localeCode]="localeCode"
+        [localeName]="localeName"
+        [readonly]="readonly"
+        tb-fullscreen
+        [fullscreen]="tableFullScreen"
+        (changeFullscreen)="changeTableFullScreen($event)">
+      </tb-translation-map-table>
+    }
+    @if (mode.value === 'advanced') {
+      <tb-translation-map-advanced
+        tb-fullscreen
+        [readonly]="readonly"
+        [localeName]="localeName"
+        [fullscreen]="editorFullScreen"
+        (changeFullscreen)="changeditorFullScreen($event)">
+      </tb-translation-map-advanced>
+    }
+  </mat-card-content>
+</mat-card>

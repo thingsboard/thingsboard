@@ -1,0 +1,55 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+@if (mode === 'install') {
+  <tb-agent-app-install-flow
+    [agentId]="agentId"
+    [agent]="agent"
+    [lockedType]="lockedType"
+    [lockedRelatedEntity]="lockedRelatedEntity"
+    [navigateToAgentOnFinish]="navigateToAgentOnFinish"
+    [selectAgent]="selectAgent"
+    [embedded]="embedded"
+    [showBack]="showBack"
+    [stepperOrientation]="stepperOrientation"
+    [stepperLabelPosition]="stepperLabelPosition"
+    (finished)="onFinished($event)"
+    (cancelled)="onCancelled($event)"
+    (back)="onBack()">
+  </tb-agent-app-install-flow>
+}
+
+@if (mode === 'update') {
+  <tb-agent-app-update-flow
+    [agentId]="agentId"
+    [agent]="agent"
+    [existingApplication]="application"
+    [lockedRelatedEntity]="lockedRelatedEntity"
+    [embedded]="embedded"
+    [showBack]="showBack"
+    [stepperOrientation]="stepperOrientation"
+    [stepperLabelPosition]="stepperLabelPosition"
+    (finished)="onFinished($event)"
+    (cancelled)="onCancelled($event)"
+    (back)="onBack()">
+  </tb-agent-app-update-flow>
+}
+
+@if (mode === 'upgrade') {
+  <tb-agent-app-upgrade-flow
+    [agentId]="agentId"
+    [agent]="agent"
+    [existingApplication]="application"
+    [lockedRelatedEntity]="lockedRelatedEntity"
+    [embedded]="embedded"
+    [showBack]="showBack"
+    [stepperOrientation]="stepperOrientation"
+    [stepperLabelPosition]="stepperLabelPosition"
+    (finished)="onFinished($event)"
+    (cancelled)="onCancelled($event)"
+    (back)="onBack()">
+  </tb-agent-app-upgrade-flow>
+}

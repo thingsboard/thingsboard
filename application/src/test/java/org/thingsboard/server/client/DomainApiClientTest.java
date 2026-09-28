@@ -1,10 +1,9 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.client;
 
-import org.junit.After;
 import org.junit.Test;
-import org.thingsboard.client.ApiException;
 import org.thingsboard.client.api.ThingsboardApi.DeleteDomainArgs;
 import org.thingsboard.client.api.ThingsboardApi.GetDomainInfoByIdArgs;
 import org.thingsboard.client.api.ThingsboardApi.GetDomainInfosArgs;
@@ -24,28 +23,10 @@ import static org.junit.Assert.assertNotNull;
 @DaoSqlTest
 public class DomainApiClientTest extends AbstractApiClientTest {
 
-    List<Domain> createdDomains = new ArrayList<>();
-
-    @After
-    public void afterDomainTest() {
-        createdDomains.forEach(domain -> {
-            try {
-                client.deleteDomain(DeleteDomainArgs.builder()
-                        .id(domain.getId().getId())
-                        .build());
-            } catch (ApiException e) {
-                // ignore
-            }
-        });
-    }
-
     @Test
     public void testDomainLifecycle() throws Exception {
-        client.login("sysadmin@thingsboard.org", "sysadmin");
+        List<Domain> createdDomains = new ArrayList<>();
 
-        long timestamp = System.currentTimeMillis();
-
-        // create 5 domains
         for (int i = 0; i < 5; i++) {
             Domain domain = new Domain();
             domain.setName("domain." + i + ".com");
@@ -72,7 +53,6 @@ public class DomainApiClientTest extends AbstractApiClientTest {
         assertNotNull(filteredDomains);
         assertEquals(5, filteredDomains.getData().size());
 
-        // get domain info by id
         Domain searchDomain = createdDomains.get(2);
         DomainInfo fetchedInfo = client.getDomainInfoById(GetDomainInfoByIdArgs.builder()
                 .id(searchDomain.getId().getId())
@@ -81,7 +61,6 @@ public class DomainApiClientTest extends AbstractApiClientTest {
         assertEquals(searchDomain.getOauth2Enabled(), fetchedInfo.getOauth2Enabled());
         assertNotNull(fetchedInfo.getOauth2ClientInfos());
 
-        // update domain
         Domain domainToUpdate = createdDomains.get(3);
         domainToUpdate.setPropagateToEdge(true);
         Domain updatedDomain = client.saveDomain(SaveDomainArgs.builder()
@@ -89,14 +68,12 @@ public class DomainApiClientTest extends AbstractApiClientTest {
                 .build());
         assertEquals(true, updatedDomain.getPropagateToEdge());
 
-        // delete domain
         UUID domainToDeleteId = createdDomains.get(0).getId().getId();
         createdDomains.remove(0);
         client.deleteDomain(DeleteDomainArgs.builder()
                 .id(domainToDeleteId)
                 .build());
 
-        // verify deletion
         assertReturns404(() ->
                 client.getDomainInfoById(GetDomainInfoByIdArgs.builder()
                         .id(domainToDeleteId)

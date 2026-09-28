@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, DestroyRef, OnInit, QueryList, ViewChildren } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
@@ -14,8 +15,12 @@ import {
   TwoFactorAuthSettings,
   TwoFactorAuthSettingsForm
 } from '@shared/models/two-factor-auth.models';
-import { isDefined, isNotEmptyStr } from '@core/utils';
+import { isDefined, isNotEmptyStr, isUndefined } from '@core/utils';
 import { MatExpansionPanel } from '@angular/material/expansion';
+import { Authority } from '@shared/models/authority.enum';
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
+import { Operation, Resource } from '@shared/models/security.models';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
 import { NotificationTargetConfigType, NotificationTargetConfigTypeInfoMap } from '@shared/models/notification.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -29,6 +34,11 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 export class TwoFactorAuthSettingsComponent extends PageComponent implements OnInit, HasConfirmForm {
 
   private readonly posIntValidation = [Validators.required, Validators.min(1), Validators.pattern(/^\d*$/)];
+
+  authState = getCurrentAuthState(this.store);
+  authUser = this.authState.authUser;
+
+  readonly = this.isTenantAdmin() && !this.userPermissionsService.hasGenericPermission(Resource.WHITE_LABELING, Operation.WRITE);
 
   twoFaFormGroup: UntypedFormGroup;
   twoFactorAuthProviderType = TwoFactorAuthProviderType;
@@ -47,6 +57,7 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
 
   constructor(protected store: Store<AppState>,
               private twoFaService: TwoFactorAuthenticationService,
+              private userPermissionsService: UserPermissionsService,
               private fb: UntypedFormBuilder,
               private destroyRef: DestroyRef) {
     super(store);
@@ -63,6 +74,10 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
 
   confirmForm(): UntypedFormGroup {
     return this.twoFaFormGroup;
+  }
+
+  isTenantAdmin(): boolean {
+    return this.authUser.authority === Authority.TENANT_ADMIN;
   }
 
   save() {
@@ -112,6 +127,7 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
 
   private build2faSettingsForm(): void {
     this.twoFaFormGroup = this.fb.group({
+      useSystemTwoFactorAuthSettings: [this.isTenantAdmin()],
       enforceTwoFa: [false],
       enforcedUsersFilter: this.fb.group({
         type: [NotificationTargetConfigType.ALL_USERS],
@@ -172,15 +188,18 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
         this.twoFaFormGroup.get('enforcedUsersFilter').disable({emitEvent: false});
       }
     });
+    if (this.readonly) {
+      this.twoFaFormGroup.disable({emitEvent: false});
+    }
   }
 
   get atListOneProvider():boolean {
-    if (this.twoFaFormGroup.get('enforceTwoFa').value) {
+    if ((this.isTenantAdmin() && !this.twoFaFormGroup.get('useSystemTwoFactorAuthSettings').value) ||
+      (!this.isTenantAdmin() && this.twoFaFormGroup.get('enforceTwoFa').value)) {
       return this.providersForm.value.some(value => value.enable);
     }
     return true;
   }
-
   private setAuthConfigFormValue(settings: TwoFactorAuthSettings) {
     const [checkRateLimitNumber, checkRateLimitTime] = this.splitRateLimit(settings?.verificationCodeCheckRateLimit);
     const allowProvidersConfig = settings?.providers.map(provider => provider.providerType) || [];
@@ -205,9 +224,15 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
         processFormValue.providers.push({enable: false});
       }
     });
+    if (this.isTenantAdmin() && isUndefined(settings?.useSystemTwoFactorAuthSettings)) {
+      processFormValue.useSystemTwoFactorAuthSettings = true;
+    }
     this.twoFaFormGroup.patchValue(processFormValue);
     this.filterByTenants = isDefined(this.filterByTenants) ? this.filterByTenants : !Array.isArray(settings?.enforcedUsersFilter?.tenantProfilesIds);
     this.twoFaFormGroup.get('enforcedUsersFilter.filterByTenants').patchValue(this.filterByTenants, {onlySelf: true});
+    if (this.readonly) {
+      this.twoFaFormGroup.disable({emitEvent: false});
+    }
   }
 
   private buildProvidersSettingsForm(provider: TwoFactorAuthProviderType) {

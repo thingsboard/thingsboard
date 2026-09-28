@@ -1,12 +1,13 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { ActivationEnd, Router } from '@angular/router';
 import { Inject, Injectable, DOCUMENT } from '@angular/core';
 import { select, Store } from '@ngrx/store';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, TranslateStore } from '@ngx-translate/core';
 import { merge } from 'rxjs';
-import { distinctUntilChanged, filter, map, tap, withLatestFrom } from 'rxjs/operators';
+import { filter, tap, withLatestFrom } from 'rxjs/operators';
 
 import { SettingsActions, SettingsActionTypes, } from './settings.actions';
 import { selectSettingsState } from './settings.selectors';
@@ -15,9 +16,11 @@ import { LocalStorageService } from '@app/core/local-storage/local-storage.servi
 import { TitleService } from '@app/core/services/title.service';
 import { updateUserLang } from '@app/core/settings/settings.utils';
 import { UtilsService } from '@core/services/utils.service';
-import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { getCurrentAuthState, getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { ActionAuthUpdateLastPublicDashboardId } from '../auth/auth.actions';
 
+import { FaviconService } from '@core/services/favicon.service';
+import { DashboardReportService } from '@core/http/dashboard-report.service';
 
 export const SETTINGS_KEY = 'SETTINGS';
 
@@ -31,7 +34,10 @@ export class SettingsEffects {
     private localStorageService: LocalStorageService,
     private titleService: TitleService,
     private translate: TranslateService,
+    private translateStore: TranslateStore,
     @Inject(DOCUMENT) private document: Document,
+    private faviconService: FaviconService,
+    private reportService: DashboardReportService,
   ) {
   }
 
@@ -40,16 +46,18 @@ export class SettingsEffects {
       SettingsActionTypes.CHANGE_LANGUAGE,
     ),
     withLatestFrom(this.store.pipe(select(selectSettingsState))),
-    map(settings => settings[1]),
-    distinctUntilChanged((a, b) => a?.userLang === b?.userLang),
-    tap(setting => {
-      this.localStorageService.setItem(SETTINGS_KEY, setting);
-      updateUserLang(this.translate, this.document, setting.userLang);
+    tap(([action, settings]) => {
+      this.localStorageService.setItem(SETTINGS_KEY, {userLang: settings.userLang});
+      if (!settings.ignoredLoad) {
+        const availableLocales = getCurrentAuthState(this.store)?.availableLocales;
+        updateUserLang(this.translate, this.translateStore, this.document, settings.userLang, availableLocales, settings.reload)
+          .subscribe(() => {});
+      }
     })
   ), {dispatch: false});
 
   setTitle = createEffect(() => merge(
-    this.actions$.pipe(ofType(SettingsActionTypes.CHANGE_LANGUAGE)),
+    this.actions$.pipe(ofType(SettingsActionTypes.CHANGE_LANGUAGE, SettingsActionTypes.CHANGE_WHITE_LABELING)),
     this.router.events.pipe(filter(event => event instanceof ActivationEnd))
   ).pipe(
     tap(() => {
@@ -60,13 +68,21 @@ export class SettingsEffects {
     })
   ), {dispatch: false});
 
+  setFavicon = createEffect(() => merge(
+    this.actions$.pipe(ofType(SettingsActionTypes.CHANGE_WHITE_LABELING)),
+  ).pipe(
+    tap(() => {
+      this.faviconService.setFavicon();
+    })
+  ), {dispatch: false});
+
   setPublicId = createEffect(() => merge(
     this.router.events.pipe(filter(event => event instanceof ActivationEnd))
   ).pipe(
     tap((event) => {
       const authUser = getCurrentAuthUser(this.store);
       const snapshot = (event as ActivationEnd).snapshot;
-      if (authUser && authUser.isPublic && snapshot.url && snapshot.url.length
+      if (!this.reportService.reportView && authUser && authUser.isPublic && snapshot.url && snapshot.url.length
           && snapshot.url[0].path === 'dashboard') {
         this.utils.updateQueryParam('publicId', authUser.sub);
         this.store.dispatch(new ActionAuthUpdateLastPublicDashboardId(

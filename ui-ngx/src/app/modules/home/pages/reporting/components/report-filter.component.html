@@ -1,0 +1,94 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+@if (panelMode) {
+  <ng-container *ngTemplateOutlet="reportFilterPanel"></ng-container>
+} @else {
+  @if (buttonMode) {
+    <button color="primary"
+      matTooltip="{{ 'report.report-filter' | translate }}"
+      matTooltipPosition="above"
+      mat-stroked-button
+      (click)="toggleReportFilterPanel($event)">
+      <mat-icon>filter_list</mat-icon>{{ 'report.report-filter' | translate }}
+    </button>
+  } @else {
+    <div class="tb-form-panel tb-report-filter-component no-padding no-border" [formGroup]="reportFilterForm">
+      <div class="tb-form-row space-between">
+        <div class="fixed-title-width" translate>report-template.report-template</div>
+        <tb-report-template-autocomplete
+          class="w-64"
+          inlineField
+          placeholder="{{ 'report.filter-not-set' | translate }}"
+          [type]="ReportTemplateType.REPORT"
+          formControlName="reportTemplateId">
+        </tb-report-template-autocomplete>
+      </div>
+      <div class="tb-form-row space-between">
+        <div class="fixed-title-width" translate>user.user</div>
+        <tb-entity-autocomplete
+          class="w-64"
+          inlineField
+          placeholder="{{ 'report.filter-not-set' | translate }}"
+          useFullEntityId
+          [entityType]="EntityType.USER"
+          formControlName="userId">
+        </tb-entity-autocomplete>
+      </div>
+    </div>
+  }
+}
+<ng-template #reportFilterPanel>
+  <form class="mat-content mat-padding flex flex-col" (ngSubmit)="update()">
+    <ng-container *ngTemplateOutlet="reportFilterContent"></ng-container>
+    <div class="tb-panel-actions flex flex-row items-center justify-end">
+      <button type="button"
+        mat-button
+        color="primary"
+        (click)="reset()">
+        {{ 'action.reset' | translate }}
+      </button>
+      <span class="flex-1"></span>
+      <button type="button"
+        mat-button
+        (click)="cancel()">
+        {{ 'action.cancel' | translate }}
+      </button>
+      <button type="submit"
+        mat-raised-button
+        color="primary"
+        [disabled]="reportFilterForm.invalid || !reportFilterForm.dirty">
+        {{ 'action.update' | translate }}
+      </button>
+    </div>
+  </form>
+</ng-template>
+<ng-template #reportFilterContent>
+  <div class="tb-form-panel tb-report-filter-component no-padding no-border" [formGroup]="reportFilterForm">
+    <div class="tb-form-row space-between">
+      <div class="fixed-title-width" translate>report-template.report-template</div>
+      <tb-report-template-autocomplete
+        class="w-64"
+        inlineField
+        placeholder="{{ 'report.filter-not-set' | translate }}"
+        [type]="ReportTemplateType.REPORT"
+        includeCustomers
+        formControlName="reportTemplateId">
+      </tb-report-template-autocomplete>
+    </div>
+    <div class="tb-form-row space-between">
+      <div class="fixed-title-width" translate>user.user</div>
+      <tb-entity-autocomplete
+        class="w-64"
+        inlineField
+        placeholder="{{ 'report.filter-not-set' | translate }}"
+        useFullEntityId
+        [entityType]="EntityType.USER"
+        formControlName="userId">
+      </tb-entity-autocomplete>
+    </div>
+  </div>
+</ng-template>

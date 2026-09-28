@@ -1,19 +1,16 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.client;
 
 import org.junit.Test;
-import org.thingsboard.client.api.ThingsboardApi.AssignEntityViewToCustomerArgs;
 import org.thingsboard.client.api.ThingsboardApi.DeleteEntityViewArgs;
-import org.thingsboard.client.api.ThingsboardApi.GetCustomerEntityViewInfosArgs;
-import org.thingsboard.client.api.ThingsboardApi.GetCustomerEntityViewsArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetAllEntityViewInfosArgs;
 import org.thingsboard.client.api.ThingsboardApi.GetEntityViewByIdArgs;
 import org.thingsboard.client.api.ThingsboardApi.GetEntityViewInfoByIdArgs;
-import org.thingsboard.client.api.ThingsboardApi.GetTenantEntityViewInfosArgs;
 import org.thingsboard.client.api.ThingsboardApi.GetTenantEntityViewsArgs;
 import org.thingsboard.client.api.ThingsboardApi.SaveDeviceArgs;
 import org.thingsboard.client.api.ThingsboardApi.SaveEntityViewArgs;
-import org.thingsboard.client.api.ThingsboardApi.UnassignEntityViewFromCustomerArgs;
 import org.thingsboard.client.model.AttributesEntityView;
 import org.thingsboard.client.model.Device;
 import org.thingsboard.client.model.EntitySubtype;
@@ -163,81 +160,15 @@ public class EntityViewApiClientTest extends AbstractApiClientTest {
         Device device = createTestDevice(String.valueOf(ts));
         createEntityView(EV_PREFIX + "tinfo_" + ts, "default", device);
 
-        PageDataEntityViewInfo page = client.getTenantEntityViewInfos(GetTenantEntityViewInfosArgs.builder()
+        PageDataEntityViewInfo page = client.getAllEntityViewInfos(GetAllEntityViewInfosArgs.builder()
                 .pageSize(100)
                 .page(0)
+                .type("default")
                 .textSearch(EV_PREFIX + "tinfo_" + ts)
                 .build());
         assertNotNull(page);
         assertEquals(1, page.getTotalElements().intValue());
         assertEquals(EV_PREFIX + "tinfo_" + ts, page.getData().get(0).getName());
-    }
-
-    @Test
-    public void testAssignAndUnassignEntityViewToCustomer() throws Exception {
-        long ts = System.currentTimeMillis();
-        Device device = createTestDevice(String.valueOf(ts));
-        EntityView saved = createEntityView(EV_PREFIX + "assign_" + ts, "default", device);
-
-        String evId = saved.getId().getId().toString();
-        String customerId = savedClientCustomer.getId().getId().toString();
-
-        // assign to customer
-        EntityView assigned = client.assignEntityViewToCustomer(AssignEntityViewToCustomerArgs.builder()
-                .customerId(customerId)
-                .entityViewId(evId)
-                .build());
-        assertNotNull(assigned);
-        assertEquals(savedClientCustomer.getId().getId(), assigned.getCustomerId().getId());
-
-        // verify in customer entity views
-        PageDataEntityView customerViews = client.getCustomerEntityViews(GetCustomerEntityViewsArgs.builder()
-                .customerId(customerId)
-                .pageSize(100)
-                .page(0)
-                .textSearch(EV_PREFIX + "assign_" + ts)
-                .build());
-        assertEquals(1, customerViews.getTotalElements().intValue());
-        assertEquals(saved.getName(), customerViews.getData().get(0).getName());
-
-        // unassign from customer
-        EntityView unassigned = client.unassignEntityViewFromCustomer(UnassignEntityViewFromCustomerArgs.builder()
-                .entityViewId(evId)
-                .build());
-        assertNotNull(unassigned);
-
-        PageDataEntityView afterUnassign = client.getCustomerEntityViews(GetCustomerEntityViewsArgs.builder()
-                .customerId(customerId)
-                .pageSize(100)
-                .page(0)
-                .textSearch(EV_PREFIX + "assign_" + ts)
-                .build());
-        assertEquals(0, afterUnassign.getTotalElements().intValue());
-    }
-
-    @Test
-    public void testGetCustomerEntityViewInfos() throws Exception {
-        long ts = System.currentTimeMillis();
-        Device device = createTestDevice(String.valueOf(ts));
-        EntityView saved = createEntityView(EV_PREFIX + "cinfo_" + ts, "default", device);
-
-        String evId = saved.getId().getId().toString();
-        String customerId = savedClientCustomer.getId().getId().toString();
-
-        client.assignEntityViewToCustomer(AssignEntityViewToCustomerArgs.builder()
-                .customerId(customerId)
-                .entityViewId(evId)
-                .build());
-
-        PageDataEntityViewInfo infos = client.getCustomerEntityViewInfos(GetCustomerEntityViewInfosArgs.builder()
-                .customerId(customerId)
-                .pageSize(100)
-                .page(0)
-                .textSearch(EV_PREFIX + "cinfo_" + ts)
-                .build());
-        assertNotNull(infos);
-        assertEquals(1, infos.getTotalElements().intValue());
-        assertEquals(saved.getName(), infos.getData().get(0).getName());
     }
 
     @Test

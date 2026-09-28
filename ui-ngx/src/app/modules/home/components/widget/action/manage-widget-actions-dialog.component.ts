@@ -1,6 +1,7 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
-import { WidgetActionType, widgetType } from '@shared/models/widget.models';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { widgetActionTypes, WidgetActionType, widgetType } from '@shared/models/widget.models';
 import {
   WidgetActionCallbacks,
   WidgetActionsData
@@ -14,6 +15,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 
 export interface ManageWidgetActionsDialogData {
+  widgetName: string;
   widgetTitle: string;
   actionsData: WidgetActionsData;
   callbacks: WidgetActionCallbacks;
@@ -31,6 +33,8 @@ export interface ManageWidgetActionsDialogData {
 })
 export class ManageWidgetActionsDialogComponent extends DialogComponent<ManageWidgetActionsDialogComponent,
   WidgetActionsData> implements OnInit {
+
+  widgetActionTypesList = widgetActionTypes;
 
   actionSources = this.data.actionsData.actionSources;
   actionsSettings: UntypedFormGroup;

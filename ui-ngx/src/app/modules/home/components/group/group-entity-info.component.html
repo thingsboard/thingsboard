@@ -1,0 +1,29 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="flex flex-1 flex-col">
+  @if (displayOwner) {
+    <mat-form-field [appearance]="appearance">
+      <mat-label>{{ ownerLabel | translate }}</mat-label>
+      <input matInput disabled [ngModel]="groupEntity?.ownerName">
+    </mat-form-field>
+  }
+  @if (groupEntity?.groups?.length) {
+    <mat-form-field [appearance]="appearance">
+      <mat-label translate>entity.groups</mat-label>
+      <mat-chip-grid #chipGrid [ngModel]="groupEntity?.groups" disabled>
+        @for (group of groupEntity?.groups; track group) {
+          <mat-chip-row class="tb-group-chip">
+            <a routerLink="{{groupPrefixUrl}}/{{group.id.id}}" (click)="$event.stopPropagation();">
+              {{ group.name }}
+            </a>
+          </mat-chip-row>
+        }
+      </mat-chip-grid>
+      <input class="!hidden" [matChipInputFor]="chipGrid"/>
+    </mat-form-field>
+  }
+</div>

@@ -1,0 +1,39 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="customIntegrationConfigForm">
+  <mat-form-field appearance="outline" class="mat-block">
+    <mat-label translate>integration.integration-clazz</mat-label>
+    <input matInput required formControlName="clazz">
+    @if (customIntegrationConfigForm.get('clazz').hasError('required')) {
+      <mat-error translate>
+        integration.integration-clazz-required
+      </mat-error>
+    }
+  </mat-form-field>
+  <tb-json-content
+    formControlName="configuration"
+    label="{{ 'integration.integration-configuration' | translate }}"
+    [contentType]="contentType.JSON"
+    validateContent
+    validateOnChange>
+  </tb-json-content>
+
+  <ng-container [ngTemplateOutlet]="executeRemotelyTemplate">
+  </ng-container>
+
+  <mat-expansion-panel class="configuration-panel">
+    <mat-expansion-panel-header>
+      <mat-panel-description class="flex items-stretch justify-end" translate>
+        integration.advanced-settings
+      </mat-panel-description>
+    </mat-expansion-panel-header>
+    <ng-template matExpansionPanelContent>
+      <ng-container [ngTemplateOutlet]="genericAdditionalInfoTemplate">
+      </ng-container>
+    </ng-template>
+  </mat-expansion-panel>
+</section>

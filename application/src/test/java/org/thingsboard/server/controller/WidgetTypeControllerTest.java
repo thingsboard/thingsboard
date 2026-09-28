@@ -1,16 +1,25 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.group.EntityGroup;
+import org.thingsboard.server.common.data.permission.GroupPermission;
+import org.thingsboard.server.common.data.role.Role;
+import org.thingsboard.server.common.data.role.RoleType;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
@@ -176,7 +185,33 @@ public class WidgetTypeControllerTest extends AbstractControllerTest {
 
         Assert.assertEquals(widgetTypes, loadedWidgetTypes);
 
-        loginCustomerUser();
+        // Create customer with widget type permissions
+        Customer customer = new Customer();
+        customer.setTitle("Test Customer");
+        customer.setTenantId(savedTenant.getId());
+        Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
+
+        EntityGroup userGroup = new EntityGroup();
+        userGroup.setType(EntityType.USER);
+        userGroup.setName("UserGroup" + RandomStringUtils.randomAlphabetic(5));
+        userGroup = doPost("/api/entityGroup", userGroup, EntityGroup.class);
+
+        Role role = createWidgetTypeGenericReadRole(RandomStringUtils.randomAlphabetic(10));
+        role = doPost("/api/role", role, Role.class);
+
+        GroupPermission groupPermission = new GroupPermission();
+        groupPermission.setRoleId(role.getId());
+        groupPermission.setUserGroupId(userGroup.getId());
+        doPost("/api/groupPermission", groupPermission, GroupPermission.class);
+
+        User customerUser = new User();
+        customerUser.setAuthority(Authority.CUSTOMER_USER);
+        customerUser.setTenantId(savedTenant.getId());
+        customerUser.setCustomerId(savedCustomer.getId());
+        customerUser.setEmail("testCustomer" + RandomStringUtils.randomAlphabetic(5) + "@thingsboard.io");
+        customerUser = createUser(customerUser, "password", userGroup.getId());
+
+        login(customerUser.getEmail(), "password");
 
         List<WidgetType> loadedWidgetTypesCustomer = doGetTyped("/api/widgetTypes?widgetsBundleId={widgetsBundleId}",
                 new TypeReference<>() {}, widgetsBundle.getId().getId().toString());
@@ -213,6 +248,156 @@ public class WidgetTypeControllerTest extends AbstractControllerTest {
                 WidgetType.class, "tenant." + savedWidgetType.getFqn());
         Assert.assertNotNull(foundWidgetType);
         Assert.assertEquals(new WidgetType(savedWidgetType), foundWidgetType);
+    }
+
+    @Test
+    public void testWidgetTypeAccessIfTenantUserHasGroupDashboardPermission() throws Exception {
+        User tenantUser = new User();
+        tenantUser.setAuthority(Authority.TENANT_ADMIN);
+        tenantUser.setTenantId(tenantId);
+        tenantUser.setEmail("testEmail" + RandomStringUtils.randomAlphabetic(5) + "@thingsboard.io");
+
+        checkUserWithGroupDashboardPermissionHasWidgetTypeReadPermission(tenantUser);
+    }
+
+    @Test
+    public void testWidgetTypeAccessIfCustomerUserHasGroupDashboardPermission() throws Exception {
+        Customer customer = new Customer();
+        customer.setTitle("Customer");
+        customer.setTenantId(savedTenant.getId());
+        Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
+
+        User customerUser = new User();
+        customerUser.setAuthority(Authority.CUSTOMER_USER);
+        customerUser.setTenantId(savedTenant.getId());
+        customerUser.setCustomerId(savedCustomer.getId());
+        customerUser.setEmail("testEmail" + RandomStringUtils.randomAlphabetic(5) + "@thingsboard.io");
+
+        checkUserWithGroupDashboardPermissionHasWidgetTypeReadPermission(customerUser);
+    }
+
+    @Test
+    public void testWidgetTypeAccessIfTenantUserHasGenericDashboardPermission() throws Exception {
+        User tenantUser = new User();
+        tenantUser.setAuthority(Authority.TENANT_ADMIN);
+        tenantUser.setTenantId(savedTenant.getId());
+        tenantUser.setEmail("testEmail" + RandomStringUtils.randomAlphabetic(5) + "@thingsboard.io");
+
+        checkUserWithGenericDashboardPermissionHasWidgetTypeReadPermission(tenantUser);
+    }
+
+    @Test
+    public void testWidgetTypeAccessIfCustomerUserHasGenericDashboardPermission() throws Exception {
+        Customer customer = new Customer();
+        customer.setTitle("Customer");
+        customer.setTenantId(savedTenant.getId());
+        Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
+
+        User customerUser = new User();
+        customerUser.setAuthority(Authority.CUSTOMER_USER);
+        customerUser.setTenantId(savedTenant.getId());
+        customerUser.setCustomerId(savedCustomer.getId());
+        customerUser.setEmail("testEmail" + RandomStringUtils.randomAlphabetic(5) + "@thingsboard.io");
+
+        checkUserWithGenericDashboardPermissionHasWidgetTypeReadPermission(customerUser);
+    }
+
+    private void checkUserWithGroupDashboardPermissionHasWidgetTypeReadPermission(User user) throws Exception {
+        WidgetTypeDetails widgetType = new WidgetTypeDetails();
+        widgetType.setName("Widget Type");
+        widgetType.setDescriptor(JacksonUtil.fromString("{ \"someKey\": \"someValue\" }", JsonNode.class));
+        WidgetTypeDetails savedWidgetType = doPost("/api/widgetType", widgetType, WidgetTypeDetails.class);
+
+        EntityGroup userGroup = new EntityGroup();
+        userGroup.setType(EntityType.USER);
+        userGroup.setName("UserGroup" + RandomStringUtils.randomAlphabetic(5));
+        userGroup = doPost("/api/entityGroup", userGroup, EntityGroup.class);
+
+        EntityGroup dashboardGroup = new EntityGroup();
+        dashboardGroup.setType(EntityType.DASHBOARD);
+        dashboardGroup.setName("Dashboard group");
+        dashboardGroup = doPost("/api/entityGroup", dashboardGroup, EntityGroup.class);
+
+        Role savedGroupRole = createReadGroupRole(RandomStringUtils.randomAlphabetic(10));
+        savedGroupRole = doPost("/api/role", savedGroupRole, Role.class);
+
+        GroupPermission groupPermission = new GroupPermission();
+        groupPermission.setRoleId(savedGroupRole.getId());
+        groupPermission.setUserGroupId(userGroup.getId());
+        groupPermission.setEntityGroupId(dashboardGroup.getId());
+        groupPermission.setEntityGroupType(dashboardGroup.getType());
+
+        groupPermission = doPost("/api/groupPermission", groupPermission, GroupPermission.class);
+        doPost("/api/groupPermission", groupPermission)
+                .andExpect(status().isBadRequest());
+
+        user = createUser(user, "password", userGroup.getId());
+        login(user.getEmail(), "password");
+
+        WidgetType foundWidgetType = doGet("/api/widgetType?fqn={fqn}",
+                WidgetType.class, "tenant." + savedWidgetType.getFqn());
+        Assert.assertNotNull(foundWidgetType);
+        Assert.assertEquals(new WidgetType(savedWidgetType), foundWidgetType);
+    }
+
+    private void checkUserWithGenericDashboardPermissionHasWidgetTypeReadPermission(User user) throws Exception {
+        WidgetTypeDetails widgetType = new WidgetTypeDetails();
+        widgetType.setName("Widget Type");
+        widgetType.setDescriptor(JacksonUtil.fromString("{ \"someKey\": \"someValue\" }", JsonNode.class));
+        WidgetTypeDetails savedWidgetType = doPost("/api/widgetType", widgetType, WidgetTypeDetails.class);
+
+        EntityGroup userGroup = new EntityGroup();
+        userGroup.setType(EntityType.USER);
+        userGroup.setName("UserGroup" + RandomStringUtils.randomAlphabetic(5));
+        userGroup = doPost("/api/entityGroup", userGroup, EntityGroup.class);
+
+        Role role = createGenericReadRole(RandomStringUtils.randomAlphabetic(10));
+        role = doPost("/api/role", role, Role.class);
+
+        GroupPermission groupPermission = new GroupPermission();
+        groupPermission.setRoleId(role.getId());
+        groupPermission.setUserGroupId(userGroup.getId());
+
+        groupPermission = doPost("/api/groupPermission", groupPermission, GroupPermission.class);
+        doPost("/api/groupPermission", groupPermission)
+                .andExpect(status().isBadRequest());
+
+        user = createUser(user, "password", userGroup.getId());
+        login(user.getEmail(), "password");
+
+        WidgetType foundWidgetType = doGet("/api/widgetType?fqn={fqn}",
+                WidgetType.class, "tenant." + savedWidgetType.getFqn());
+        Assert.assertNotNull(foundWidgetType);
+        Assert.assertEquals(new WidgetType(savedWidgetType), foundWidgetType);
+    }
+
+    private Role createReadGroupRole(String roleName) {
+        Role role = new Role();
+        role.setTenantId(savedTenant.getId());
+        role.setName(roleName);
+        role.setType(RoleType.GROUP);
+        ArrayNode readPermissions = JacksonUtil.newArrayNode();
+        readPermissions.add("READ");
+        role.setPermissions(readPermissions);
+        return role;
+    }
+
+    private Role createGenericReadRole(String roleName) {
+        Role role = new Role();
+        role.setTenantId(savedTenant.getId());
+        role.setName(roleName);
+        role.setType(RoleType.GENERIC);
+        role.setPermissions(JacksonUtil.toJsonNode("{\"ALL\":[\"READ\"]}"));
+        return role;
+    }
+
+    private Role createWidgetTypeGenericReadRole(String roleName) {
+        Role role = new Role();
+        role.setTenantId(savedTenant.getId());
+        role.setName(roleName);
+        role.setType(RoleType.GENERIC);
+        role.setPermissions(JacksonUtil.toJsonNode("{\"WIDGET_TYPE\":[\"READ\"]}"));
+        return role;
     }
 
 }

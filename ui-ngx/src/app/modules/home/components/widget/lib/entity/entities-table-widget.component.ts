@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   AfterViewInit,
   ChangeDetectorRef,
@@ -22,28 +23,63 @@ import {
   DataKey,
   Datasource,
   DatasourceData,
+  DatasourceType,
   WidgetActionDescriptor,
   WidgetConfig
 } from '@shared/models/widget.models';
 import { IWidgetSubscription } from '@core/api/widget-api.models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
-import { deepClone, hashCode, isDefined, isDefinedAndNotNull, isObject, isUndefined } from '@core/utils';
+import {
+  checkNumericStringAndConvert,
+  deepClone,
+  hashCode,
+  isDefined,
+  isDefinedAndNotNull,
+  isObject,
+  isUndefined
+} from '@core/utils';
 import cssjs from '@core/css/css';
 import { CollectionViewer, DataSource } from '@angular/cdk/collections';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { BehaviorSubject, fromEvent, merge, Observable, of, Subject } from 'rxjs';
+import {
+  BehaviorSubject,
+  EMPTY,
+  firstValueFrom,
+  forkJoin,
+  from,
+  fromEvent,
+  merge,
+  Observable,
+  of,
+  ReplaySubject,
+  Subject,
+  switchMap
+} from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
-import { catchError, debounceTime, distinctUntilChanged, map, takeUntil, tap } from 'rxjs/operators';
+import {
+  catchError,
+  concatMap,
+  debounceTime,
+  distinctUntilChanged,
+  expand,
+  map,
+  share,
+  takeUntil,
+  tap,
+  toArray
+} from 'rxjs/operators';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort, SortDirection } from '@angular/material/sort';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import {
+  CellContentFunctionInfo,
   CellContentInfo,
   CellStyleInfo,
   checkHasActions,
+  columnExportOptions,
   constructTableCssString,
   DisplayColumn,
   EntityColumn,
@@ -81,20 +117,24 @@ import {
 import { Direction } from '@shared/models/page/sort-order';
 import {
   dataKeyToEntityKey,
+  EntityData as QueryEntityData,
   EntityDataPageLink,
   entityDataPageLinkSortDirection,
+  EntityDataQuery,
   EntityKeyType,
+  getLatestDataValue,
   KeyFilter
 } from '@shared/models/query/query.models';
 import { SortColumnType, sortItems } from '@shared/models/page/page-link';
 import { entityFields } from '@shared/models/entity.models';
 import { DatePipe } from '@angular/common';
+import { EntityService } from '@core/http/entity.service';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { hidePageSizePixelValue } from '@shared/models/constants';
 import { AggregationType } from '@shared/models/time/time.models';
 import { FormBuilder } from '@angular/forms';
 import { DEFAULT_OVERLAY_POSITIONS } from '@shared/models/overlay.models';
-import { CompiledTbFunction } from '@shared/models/js-function.models';
+import { CompiledTbFunction, compileTbFunction, isNotEmptyTbFunction } from '@shared/models/js-function.models';
 import { ValueFormatProcessor } from '@shared/models/widget-settings.models';
 
 interface EntitiesTableWidgetSettings extends TableWidgetSettings {
@@ -159,6 +199,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   private columnWidth: {[key: string]: string} = {};
   private columnDefaultVisibility: {[key: string]: boolean} = {};
   private columnSelectionAvailability: {[key: string]: boolean} = {};
+  private columnExportParameters: {[key: string]: columnExportOptions} = {};
   private columnsWithCellClick: Array<number> = [];
 
   private rowStylesInfo: Observable<RowStyleInfo>;
@@ -181,11 +222,14 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     }
   };
 
+  private postProcessingFunctionMap = new Map<string, Observable<CompiledTbFunction<any>>>();
+
   constructor(protected store: Store<AppState>,
               private elementRef: ElementRef,
               private ngZone: NgZone,
               private overlay: Overlay,
               private viewContainerRef: ViewContainerRef,
+              private entityService: EntityService,
               private utils: UtilsService,
               private datePipe: DatePipe,
               private translate: TranslateService,
@@ -288,6 +332,8 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   private initializeConfig() {
     this.ctx.widgetActions = [this.searchAction, this.columnDisplayAction];
 
+    this.ctx.customDataExport = this.customDataExport.bind(this);
+
     this.setCellButtonAction = !!this.ctx.actionsApi.getActionDescriptors('actionCellButton').length;
 
     this.hasRowAction = !!this.ctx.actionsApi.getActionDescriptors('rowClick').length ||
@@ -386,6 +432,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
       this.columnWidth.entityName = '0px';
       this.columnDefaultVisibility.entityName = true;
       this.columnSelectionAvailability.entityName = true;
+      this.columnExportParameters.entityName = columnExportOptions.onlyVisible;
     }
     if (displayEntityLabel) {
       this.columns.push(
@@ -412,6 +459,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
       this.columnWidth.entityLabel = '0px';
       this.columnDefaultVisibility.entityLabel = true;
       this.columnSelectionAvailability.entityLabel = true;
+      this.columnExportParameters.entityLabel = columnExportOptions.onlyVisible;
     }
     if (displayEntityType) {
       this.columns.push(
@@ -443,6 +491,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
       this.columnWidth.entityType = '0px';
       this.columnDefaultVisibility.entityType = true;
       this.columnSelectionAvailability.entityType = true;
+      this.columnExportParameters.entityType = columnExportOptions.onlyVisible;
     }
 
     const dataKeys: Array<DataKey> = [];
@@ -484,6 +533,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
         this.columnWidth[dataKey.def] = getColumnWidth(keySettings);
         this.columnDefaultVisibility[dataKey.def] = getColumnDefaultVisibility(keySettings, this.ctx);
         this.columnSelectionAvailability[dataKey.def] = getColumnSelectionAvailability(keySettings);
+        this.columnExportParameters[dataKey.def] = keySettings.columnExportOption;
         this.columns.push(dataKey);
       });
       this.displayedColumns.push(...this.columns.filter(column => this.columnDefaultVisibility[column.def])
@@ -707,11 +757,11 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     return style$;
   }
 
-  public cellContent(entity: EntityData, key: EntityColumn, row: number): Observable<SafeHtml> {
+  public cellContent(entity: EntityData, key: EntityColumn, row: number, useSafeHtml = true, isExport = false): Observable<SafeHtml> {
     let content$: Observable<SafeHtml>;
     const col = this.columns.indexOf(key);
     const index = row * this.columns.length + col;
-    const res = this.cellContentCache[index];
+    const res = useSafeHtml ? this.cellContentCache[index] : undefined;
     if (isUndefined(res)) {
       const contentInfo = this.contentsInfo[key.def];
       content$ = contentInfo.contentFunction.pipe(
@@ -720,20 +770,17 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
           if (entity && key) {
             const contentInfo = this.contentsInfo[key.def];
             const value = getEntityValue(entity, key);
-            if (contentFunction.useCellContentFunction && contentFunction.cellContentFunction) {
-              try {
-                content = contentFunction.cellContentFunction.execute(value, entity, this.ctx);
-              } catch (e) {
-                content = '' + value;
-              }
+            if (contentFunction.useCellContentFunction && contentFunction.cellContentFunction && !isExport) {
+              content = this.applyCellContentFunction(entity, contentFunction, value);
             } else {
-              content = this.defaultContent(key, contentInfo, value);
+              content = contentFunction.useCellContentFunctionOnExport ? this.applyCellContentFunction(entity, contentFunction, value)
+                : this.defaultContent(key, contentInfo, value);
             }
             if (isDefined(content)) {
               content = this.utils.customTranslation(content, content);
               switch (typeof content) {
                 case 'string':
-                  content = this.domSanitizer.bypassSecurityTrustHtml(content);
+                  content = useSafeHtml ? this.domSanitizer.bypassSecurityTrustHtml(content) : content;
                   break;
               }
             }
@@ -743,13 +790,25 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
       );
       content$ = content$.pipe(
         tap((content) => {
-          this.cellContentCache[index] = content;
+          if (useSafeHtml) {
+            this.cellContentCache[index] = content;
+          }
         })
       );
     } else {
       content$ = of(res);
     }
     return content$;
+  }
+
+  private applyCellContentFunction(entity: EntityData, contentFunction: CellContentFunctionInfo, value: any) {
+    let content: string;
+    try {
+      content = contentFunction.cellContentFunction.execute(value, entity, this.ctx);
+    } catch (e) {
+      content = '' + value;
+    }
+    return content;
   }
 
   private defaultContent(key: EntityColumn, contentInfo: WithOptional<CellContentInfo, 'valueFormat'>, value: any): any {
@@ -828,11 +887,196 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     this.ctx.actionsApi.handleWidgetAction($event, actionDescriptor, entityId, entityName, {entity}, entityLabel);
   }
 
+  customDataExport(): Observable<Map<string, any>[]> {
+    const datasource = this.subscription.datasources[0];
+    if (datasource && datasource.type === DatasourceType.entity && datasource.entityFilter) {
+      const pageLink = deepClone(this.pageLink);
+      pageLink.dynamic = false;
+      pageLink.page = 0;
+      pageLink.pageSize = 1000;
+      const query: EntityDataQuery = {
+        entityFilter: datasource.entityFilter,
+        keyFilters: datasource.keyFilters,
+        pageLink
+      };
+      const allColumns = this.columns.filter(c => c.entityKey);
+      const exportedColumns = this.columns.filter(
+        c => this.includeColumnInExport(c) && c.entityKey);
+
+      query.entityFields = allColumns.filter(c => c.entityKey.type === EntityKeyType.ENTITY_FIELD &&
+                                                       entityFields[c.entityKey.key]).map(c => c.entityKey);
+      query.latestValues = allColumns.filter(c => c.entityKey.type === EntityKeyType.ATTRIBUTE ||
+                                                       c.entityKey.type === EntityKeyType.TIME_SERIES).map(c => c.entityKey);
+
+      if (query.entityFields.every(entityField => entityField.key !== entityFields.name.keyName)) {
+        query.entityFields.push({ key: entityFields.name.keyName, type: EntityKeyType.ENTITY_FIELD });
+      }
+      if (query.entityFields.every(entityField => entityField.key !== entityFields.label.keyName)) {
+        query.entityFields.push({ key: entityFields.label.keyName, type: EntityKeyType.ENTITY_FIELD });
+      }
+
+      return this.entityService.findEntityDataByQuery(query).pipe(
+        expand(data => {
+            if (data.hasNext) {
+              pageLink.page += 1;
+              return this.entityService.findEntityDataByQuery(query);
+            } else {
+              return EMPTY;
+            }
+        }),
+        concatMap(data => from(data.data)),
+        toArray(),
+        switchMap(rawData => rawData.length ?
+          forkJoin(rawData.map(e => from(this.queryEntityDataToEntity(e, allColumns)))) : of([] as EntityData[])),
+        map(entities => this.sortEntitiesForExport(entities)),
+        switchMap(entities => entities.length ?
+          forkJoin(entities.map((entity, index) =>
+            from(this.entityToExportedData(entity, index, exportedColumns)))) : of([] as {[key: string]: any}[])),
+        map(rows => rows.map(rowObject => new Map(Object.entries(rowObject))))
+      );
+    } else {
+      const exportedData: Observable<Map<string, any>>[] = [];;
+      const entitiesToExport = this.entityDatasource.entities;
+      entitiesToExport.forEach((entity, index) => {
+        const dataMap = new Map<string, Observable<any>>();
+        this.columns.forEach((column) => {
+          if (this.includeColumnInExport(column)) {
+            dataMap.set(column.title, this.cellContent(entity, column, index, false, true));
+          }
+        });
+        if (dataMap.size > 0) {
+          const orderedKeys = Array.from(dataMap.keys());
+          const orderedObservables = Array.from(dataMap.values());
+
+          exportedData.push(
+            forkJoin(orderedObservables).pipe(
+              map(resolvedValues => {
+                const orderedRow = new Map<string, any>();
+                orderedKeys.forEach((key, i) => {
+                  orderedRow.set(key, resolvedValues[i]);
+                });
+                return orderedRow;
+              })
+            )
+          );
+        } else {
+          exportedData.push(of(new Map<string, any>()))
+        }
+      });
+      if (exportedData.length) {
+        return forkJoin(exportedData);
+      } else {
+        return of([]);
+      }
+    }
+  }
+
+  private includeColumnInExport(column: EntityColumn): boolean {
+    switch (this.columnExportParameters[column.def]) {
+      case columnExportOptions.always:
+        return true;
+      case columnExportOptions.never:
+        return false;
+      default:
+        return this.displayedColumns.indexOf(column.def) > -1;
+    }
+  }
+
+  private async queryEntityDataToEntity(queryEntityData: QueryEntityData,
+                                        allColumns: EntityColumn[]): Promise<EntityData> {
+    const entity: EntityData = {
+      entityName: '',
+      id: queryEntityData.entityId,
+      entityType: this.translate.instant(entityTypeTranslations.get(queryEntityData.entityId.entityType).type)
+    };
+    const latest = queryEntityData.latest;
+    if (latest) {
+      entity.entityName = getLatestDataValue(latest, EntityKeyType.ENTITY_FIELD, 'name', '');
+      entity.entityLabel = getLatestDataValue(latest, EntityKeyType.ENTITY_FIELD, 'label', entity.entityName);
+    }
+    for (const column of allColumns) {
+      if (!['entityName', 'entityLabel', 'entityType'].includes(column.label)) {
+        if (latest) {
+          let dataValue: any = '';
+          let tsValue;
+          const fields = latest[column.entityKey.type];
+          if (fields) {
+            tsValue = fields[column.entityKey.key];
+            if (tsValue && isDefinedAndNotNull(tsValue.value)) {
+              dataValue = tsValue.value;
+            }
+          }
+          dataValue = checkNumericStringAndConvert(dataValue);
+          if (column.usePostProcessing && isNotEmptyTbFunction(column.postFuncBody)) {
+            if (!this.postProcessingFunctionMap.has(column.label)) {
+              const postFunction = compileTbFunction(this.ctx.http, column.postFuncBody,
+                'time', 'value', 'prevValue', 'timePrev', 'prevOrigValue').pipe(
+                catchError(() => { return of(null) }),
+                share({
+                  connector: () => new ReplaySubject(1),
+                  resetOnError: false,
+                  resetOnComplete: false,
+                  resetOnRefCountZero: false
+                })
+              );
+              this.postProcessingFunctionMap.set(column.label, postFunction);
+            }
+            let dataTs = 0;
+            if (tsValue && isDefinedAndNotNull(tsValue.ts)) {
+              dataTs = tsValue.ts;
+            }
+            dataValue = await firstValueFrom(this.postProcessingFunctionMap.get(column.label).pipe(
+              map(compiled => {
+                if (compiled) {
+                  return compiled.execute(dataTs, dataValue, 0, 0, 0);
+                } else {
+                  return dataValue;
+                }
+              })
+            ));
+          }
+          entity[column.label] = dataValue;
+        } else {
+          entity[column.label] = '';
+        }
+      }
+    }
+    return entity;
+  }
+
+  private async entityToExportedData(entity: EntityData,
+                                     index: number,
+                                     exportedColumns: EntityColumn[]): Promise<{[key: string]: any}> {
+    const dataObj: { [key: string]: any } = {};
+    for (const column of exportedColumns) {
+      dataObj[column.title] = await firstValueFrom(this.cellContent(entity, column, index, false, true));
+    }
+    return dataObj;
+  }
+
+  private sortEntitiesForExport(entities: EntityData[]): EntityData[] {
+    if (!entities.length || !this.pageLink.sortOrder || !this.sort?.active) {
+      return entities;
+    }
+    const sortOrderLabel = fromEntityColumnDef(this.sort.active, this.columns);
+    if (!sortOrderLabel) {
+      return entities;
+    }
+    const key = findEntityKeyByColumnDef(this.sort.active, this.columns);
+    const sortColumnType: SortColumnType = key
+      ? (key.type === EntityKeyType.ENTITY_FIELD ? 'entityField'
+         : key.type === EntityKeyType.TIME_SERIES ? 'timeseries' : 'attribute')
+      : 'entityField';
+    const asc = this.pageLink.sortOrder.direction === Direction.ASC;
+    return entities.sort((a, b) => sortItems(a, b, sortOrderLabel, asc, sortColumnType));
+  }
+
   private clearCache() {
     this.cellContentCache.length = 0;
     this.cellStyleCache.length = 0;
     this.rowStyleCache.length = 0;
   }
+
 }
 
 class EntityDatasource implements DataSource<EntityData> {
@@ -842,6 +1086,7 @@ class EntityDatasource implements DataSource<EntityData> {
 
   private currentEntity: EntityData = null;
 
+  public entities: EntityData[] = [];
   public dataLoading = true;
   public countCellButtonAction = 0;
 
@@ -899,6 +1144,7 @@ class EntityDatasource implements DataSource<EntityData> {
   }
 
   private clear() {
+    this.entities = [];
     this.entitiesSubject.next([]);
     this.pageDataSubject.next(emptyPageData<EntityData>());
   }
@@ -921,6 +1167,7 @@ class EntityDatasource implements DataSource<EntityData> {
         const asc = this.appliedPageLink.sortOrder.direction === Direction.ASC;
         entities = entities.sort((a, b) => sortItems(a, b, this.appliedSortOrderLabel, asc, this.appliedSortColumnType));
       }
+      this.entities = entities;
       if (!dynamicWidthCellButtonActions && this.cellButtonActions.length && entities.length) {
         maxCellButtonAction = entities[0].actionCellButtons.length;
       }

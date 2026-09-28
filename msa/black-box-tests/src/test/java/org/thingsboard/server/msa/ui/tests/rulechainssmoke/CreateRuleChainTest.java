@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.msa.ui.tests.rulechainssmoke;
 
 import io.qameta.allure.Description;
@@ -42,9 +43,9 @@ public class CreateRuleChainTest extends AbstractRuleChainTest {
         ruleChainsPage.addBtnC().click();
         ruleChainsPage.refreshBtn().click();
         ruleChainsPage.detailsBtn(ruleChainName).click();
-        ruleChainsPage.setHeaderName();
+        ruleChainsPage.setRuleChainHeaderName();
 
-        assertThat(ruleChainsPage.getHeaderName()).as("Header of rule chain details tab").isEqualTo(ruleChainName);
+        assertThat(ruleChainsPage.getRuleChainHeaderName()).as("Header of rule chain details tab").isEqualTo(ruleChainName);
         assertThat(ruleChainsPage.descriptionEntityView().getAttribute("value"))
                 .as("Description in rule chain details tab").isEqualTo(ruleChainName);
     }
@@ -104,12 +105,12 @@ public class CreateRuleChainTest extends AbstractRuleChainTest {
     @Test(priority = 40, groups = "smoke")
     @Description("Go to rule chain documentation page")
     public void documentation() {
-        String urlPath = "docs/user-guide/ui/rule-chains/";
+        String urlPath = "docs/pe/user-guide/ui/rule-chains/";
 
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.setRuleChainNameWithoutRoot();
         ruleChainsPage.detailsBtn(ruleChainsPage.getRuleChainName()).click();
-        ruleChainsPage.goToHelpPage();
+        ruleChainsPage.goToHelpEntityGroupPage();
 
         assertThat(urlContains(urlPath)).as("Redirected URL contains " + urlPath).isTrue();
     }

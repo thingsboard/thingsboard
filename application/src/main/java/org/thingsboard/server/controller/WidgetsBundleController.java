@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import io.swagger.v3.oas.annotations.Hidden;
@@ -24,6 +25,8 @@ import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.common.data.widget.WidgetsBundleFilter;
@@ -31,10 +34,9 @@ import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.widgets.bundle.TbWidgetsBundleService;
-import org.thingsboard.server.service.security.permission.Operation;
-import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -47,6 +49,7 @@ import static org.thingsboard.server.controller.ControllerConstants.NEW_LINE;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.RBAC_READ_CHECK;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH;
@@ -109,7 +112,6 @@ public class WidgetsBundleController extends BaseController {
         }
 
         checkEntity(widgetsBundle.getId(), widgetsBundle, Resource.WIDGETS_BUNDLE);
-
         return tbWidgetsBundleService.save(widgetsBundle, currentUser);
     }
 
@@ -125,6 +127,7 @@ public class WidgetsBundleController extends BaseController {
             @RequestBody List<String> strWidgetTypeIds) throws Exception {
         checkParameter("widgetsBundleId", strWidgetsBundleId);
         WidgetsBundleId widgetsBundleId = new WidgetsBundleId(toUUID(strWidgetsBundleId));
+        checkWidgetsBundleId(widgetsBundleId, Operation.WRITE);
         checkNotNull(strWidgetTypeIds);
         Set<WidgetTypeId> widgetTypeIds = new LinkedHashSet<>();
         var currentUser = getCurrentUser();
@@ -151,6 +154,7 @@ public class WidgetsBundleController extends BaseController {
             @RequestBody List<String> widgetTypeFqns) throws Exception {
         checkParameter("widgetsBundleId", strWidgetsBundleId);
         WidgetsBundleId widgetsBundleId = new WidgetsBundleId(toUUID(strWidgetsBundleId));
+        checkWidgetsBundleId(widgetsBundleId, Operation.WRITE);
         checkNotNull(widgetTypeFqns);
         var currentUser = getCurrentUser();
         tbWidgetsBundleService.updateWidgetsBundleWidgetFqns(widgetsBundleId, widgetTypeFqns, currentUser);
@@ -192,6 +196,7 @@ public class WidgetsBundleController extends BaseController {
             @RequestParam(required = false) Boolean fullSearch,
             @Parameter(description = SCADA_FIRST_PARAM_DESCRIPTION)
             @RequestParam(required = false) Boolean scadaFirst) throws ThingsboardException {
+        accessControlService.checkPermission(getCurrentUser(), Resource.WIDGETS_BUNDLE, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         WidgetsBundleFilter widgetsBundleFilter = WidgetsBundleFilter.builder()
                 .tenantId(getTenantId())
@@ -213,6 +218,7 @@ public class WidgetsBundleController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/widgetsBundles")
     public List<WidgetsBundle> getWidgetsBundlesV1() throws ThingsboardException {
+        accessControlService.checkPermission(getCurrentUser(), Resource.WIDGETS_BUNDLE, Operation.READ);
         if (Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
             return checkNotNull(widgetsBundleService.findSystemWidgetsBundles(getTenantId()));
         } else {
@@ -234,6 +240,9 @@ public class WidgetsBundleController extends BaseController {
     @GetMapping(value = "/widgetsBundles", params = {"widgetsBundleIds"})
     public List<WidgetsBundle> getWidgetsBundlesByIds(
             @RequestParam("widgetsBundleIds") Set<UUID> widgetsBundleUUIDs) throws ThingsboardException {
+        if (!accessControlService.hasPermission(getCurrentUser(), Resource.WIDGETS_BUNDLE, Operation.READ)) {
+            return Collections.emptyList();
+        }
         List<WidgetsBundleId> widgetsBundleIds = new ArrayList<>();
         for (UUID widgetsBundleUUID : widgetsBundleUUIDs) {
             widgetsBundleIds.add(new WidgetsBundleId(widgetsBundleUUID));
@@ -243,9 +252,9 @@ public class WidgetsBundleController extends BaseController {
 
     @ApiOperation(value = "Get Widgets Bundles By Ids (getWidgetsBundlesList)",
             notes = "Requested widgets bundles must be system level or owned by tenant of the user which is performing the request. " +
-                    NEW_LINE)
+                    NEW_LINE + RBAC_READ_CHECK)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @GetMapping(value = "/widgetsBundles/list", params = {"widgetsBundleIds"})
+    @GetMapping(value = "/widgetsBundles/list")
     public List<WidgetsBundle> getWidgetsBundlesList(
             @Parameter(description = "A list of widgets bundle ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
             @RequestParam("widgetsBundleIds") Set<UUID> widgetsBundleUUIDs) throws ThingsboardException {

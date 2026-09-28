@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, Inject, OnInit, SkipSelf } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -168,41 +169,42 @@ export class AddWidgetToDashboardDialogComponent extends
       datasourceAliases: {},
       targetDeviceAlias: null
     };
-    aliasesInfo.datasourceAliases[0] = {
-      alias: this.data.entityName,
-      filter: this.dashboardUtils.createSingleEntityFilter(this.data.entityId)
-    };
-    const filtersInfo: FiltersInfo = {
-      datasourceFilters: {}
-    };
-    this.itembuffer.addWidgetToDashboard(dashboard, targetState,
-      targetLayout, this.data.widget, aliasesInfo, filtersInfo, null, null,
-      48, null, -1, -1).pipe(
-      mergeMap((theDashboard) => {
-        return this.dashboardService.saveDashboard(theDashboard);
-      })
-    ).subscribe(
-      (theDashboard) => {
-        const openDashboard: boolean = this.addWidgetFormGroup.get('openDashboard').value;
-        this.dialogRef.close();
-        if (openDashboard) {
-          let url;
-          const stateIds = Object.keys(dashboard.configuration.states);
-          const stateIndex = stateIds.indexOf(targetState);
-          if (stateIndex > 0) {
-            const stateObject: StateObject = {
-              id: targetState,
-              params: {}
-            };
-            const state = objToBase64URI([ stateObject ]);
-            url = `/dashboards/${theDashboard.id.id}?state=${state}`;
-          } else {
-            url = `/dashboards/${theDashboard.id.id}`;
+    this.dashboardUtils.createSingleEntityFilter(this.data.entityId).subscribe((filter) => {
+      aliasesInfo.datasourceAliases[0] = {
+        alias: this.data.entityName,
+        filter
+      };
+      const filtersInfo: FiltersInfo = {
+        datasourceFilters: {}
+      };
+      this.itembuffer.addWidgetToDashboard(dashboard, targetState,
+        targetLayout, this.data.widget, aliasesInfo, filtersInfo,  null, null,
+        48, null, -1, -1).pipe(
+        mergeMap((theDashboard) => {
+          return this.dashboardService.saveDashboard(theDashboard);
+        })
+      ).subscribe(
+        (theDashboard) => {
+          const openDashboard: boolean = this.addWidgetFormGroup.get('openDashboard').value;
+          this.dialogRef.close();
+          if (openDashboard) {
+            let url;
+            const stateIds = Object.keys(dashboard.configuration.states);
+            const stateIndex = stateIds.indexOf(targetState);
+            if (stateIndex > 0) {
+              const stateObject: StateObject = {
+                id: targetState,
+                params: {}
+              };
+              const state = objToBase64URI([ stateObject ]);
+              url = `/dashboards/${theDashboard.id.id}?state=${state}&edit=true`;
+            } else {
+              url = `/dashboards/${theDashboard.id.id}?edit=true`;
+            }
+            this.router.navigateByUrl(url);
           }
-          const urlTree = this.router.parseUrl(url);
-          this.router.navigateByUrl(url);
         }
-      }
-    );
+      );
+    });
   }
 }

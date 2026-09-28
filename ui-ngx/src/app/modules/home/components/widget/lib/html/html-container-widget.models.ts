@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { TbFunction } from '@shared/models/js-function.models';
 import { WidgetContext } from '@home/models/widget-component.models';

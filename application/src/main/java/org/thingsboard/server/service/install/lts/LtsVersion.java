@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.install.lts;
 
 public record LtsVersion(int major, int minor, int maintenance, int patch) implements Comparable<LtsVersion> {
@@ -30,6 +31,14 @@ public record LtsVersion(int major, int minor, int maintenance, int patch) imple
      */
     public boolean isInRange(LtsVersion from, LtsVersion to) {
         return compareTo(from) > 0 && compareTo(to) <= 0;
+    }
+
+    /**
+     * Closed range check: {@code from <= this <= to}. Only for a run an operator has forced past its version check,
+     * where the source's own migration has to be re-run (see {@link LtsMigrationService}).
+     */
+    public boolean isInClosedRange(LtsVersion from, LtsVersion to) {
+        return compareTo(from) >= 0 && compareTo(to) <= 0;
     }
 
     @Override

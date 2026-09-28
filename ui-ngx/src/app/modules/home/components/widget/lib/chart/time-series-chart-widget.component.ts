@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   AfterViewInit,
   ChangeDetectorRef,
@@ -7,7 +8,7 @@ import {
   ElementRef,
   Input,
   OnDestroy,
-  OnInit,
+  OnInit, Optional,
   Renderer2,
   TemplateRef,
   ViewChild,
@@ -30,6 +31,8 @@ import {
 } from '@home/components/widget/lib/chart/time-series-chart-widget.models';
 import { mergeDeep } from '@core/utils';
 import { WidgetComponent } from '@home/components/widget/widget.component';
+import { coerceBoolean } from '@shared/decorators/coercion';
+import { ChartWidgetComponent } from '@home/components/widget/lib/chart/chart.models';
 
 @Component({
     selector: 'tb-time-series-chart-widget',
@@ -38,7 +41,7 @@ import { WidgetComponent } from '@home/components/widget/widget.component';
     encapsulation: ViewEncapsulation.None,
     standalone: false
 })
-export class TimeSeriesChartWidgetComponent implements OnInit, OnDestroy, AfterViewInit {
+export class TimeSeriesChartWidgetComponent implements ChartWidgetComponent, OnInit, OnDestroy, AfterViewInit {
 
   @ViewChild('chartShape', {static: false})
   chartShape: ElementRef<HTMLElement>;
@@ -50,6 +53,10 @@ export class TimeSeriesChartWidgetComponent implements OnInit, OnDestroy, AfterV
 
   @Input()
   widgetTitlePanel: TemplateRef<any>;
+
+  @Input()
+  @coerceBoolean()
+  reportMode = false;
 
   horizontalLegendPosition = false;
 
@@ -72,7 +79,7 @@ export class TimeSeriesChartWidgetComponent implements OnInit, OnDestroy, AfterV
 
   private timeSeriesChart: TbTimeSeriesChart;
 
-  constructor(public widgetComponent: WidgetComponent,
+  constructor(@Optional() public widgetComponent: WidgetComponent,
               private imagePipe: ImagePipe,
               private sanitizer: DomSanitizer,
               private renderer: Renderer2,
@@ -142,11 +149,17 @@ export class TimeSeriesChartWidgetComponent implements OnInit, OnDestroy, AfterV
     if (this.timeSeriesChart) {
       this.timeSeriesChart.update();
     }
+    if (this.reportMode) {
+      this.cd.detectChanges();
+    }
   }
 
   public onLatestDataUpdated() {
     if (this.timeSeriesChart) {
       this.timeSeriesChart.latestUpdated();
+    }
+    if (this.reportMode) {
+      this.cd.detectChanges();
     }
   }
 

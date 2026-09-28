@@ -1,0 +1,17 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="flex flex-row items-center gap-4">
+  <tb-report-filter
+    [ngModel]="entitiesTableConfig.componentsData.reportFilter"
+    (ngModelChange)="reportFilterChanged($event)">
+  </tb-report-filter>
+  <mat-slide-toggle
+    [ngModel]="entitiesTableConfig.componentsData.includeCustomers"
+    (ngModelChange)="includeCustomersChanged($event)">
+    {{ includeCustomersLabel | translate }}
+  </mat-slide-toggle>
+</div>

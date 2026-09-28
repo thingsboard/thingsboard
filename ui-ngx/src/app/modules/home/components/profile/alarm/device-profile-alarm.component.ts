@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, DestroyRef, EventEmitter, forwardRef, Input, OnInit, Output } from '@angular/core';
 import {
   ControlValueAccessor,
@@ -88,6 +89,7 @@ export class DeviceProfileAlarmComponent implements ControlValueAccessor, OnInit
       propagate: [null],
       propagateRelationTypes: [null],
       propagateToOwner: [null],
+      propagateToOwnerHierarchy: [null],
       propagateToTenant: [null]
     }, { validators: deviceProfileAlarmValidator });
     this.alarmFormGroup.valueChanges.pipe(

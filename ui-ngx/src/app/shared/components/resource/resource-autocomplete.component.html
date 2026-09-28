@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <mat-form-field [formGroup]="resourceFormGroup"
@@ -29,7 +30,7 @@
   <mat-autocomplete class="tb-autocomplete"
                     #entityAutocomplete="matAutocomplete"
                     [displayWith]="displayResourceFn">
-    @for (resource of filteredResources$ | async; track resource) {
+    @for (resource of filteredResources$ | async; track resource.id.id) {
       <mat-option [value]="resource">
         <span [innerHTML]="resource.title | highlight:searchText"></span>
       </mat-option>

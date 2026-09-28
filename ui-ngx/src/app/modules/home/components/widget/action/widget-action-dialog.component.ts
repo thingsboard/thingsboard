@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, DestroyRef, Inject, OnInit, SkipSelf, ViewChild } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
@@ -45,10 +46,13 @@ export interface WidgetActionDialogData {
   isAdd: boolean;
   callbacks: WidgetActionCallbacks;
   actionsData: WidgetActionsData;
+  actionTypes: WidgetActionType[];
+  customFunctionArgs: string[];
   action?: WidgetActionDescriptorInfo;
   widgetType: widgetType;
   defaultIconColor?: string;
   additionalWidgetActionTypes?: WidgetActionType[];
+  isEntityGroup?: boolean;
 }
 
 @Component({
@@ -66,6 +70,9 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
   isAdd: boolean;
   action: WidgetActionDescriptorInfo;
 
+  customFunctionArgs = this.data.customFunctionArgs;
+  widgetActionTypes = this.data.actionTypes;
+
   defaultIconColor: string;
 
   customActionEditorCompleter = CustomActionEditorCompleter;
@@ -73,6 +80,8 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
   submitted = false;
 
   functionScopeVariables: string[];
+
+  private isEntityGroup = this.data.isEntityGroup;
 
   configuredColumns: Array<CellClickColumnInfo> = [];
   usedCellClickColumns: Array<number> = [];
@@ -102,7 +111,7 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
         id: this.utils.guid(),
         name: '',
         icon: 'more_horiz',
-        ...defaultWidgetAction(data.widgetType !== widgetType.static)
+        ...defaultWidgetAction(this.isEntityGroup, data.widgetType !== widgetType.static)
       };
     } else {
       this.action = this.data.action;
@@ -122,7 +131,7 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
       showIcon: [{ value: this.action.showIcon ?? true, disabled: true}, []],
       icon: [this.action.icon, Validators.required],
       buttonColor: [{ value: this.action.buttonColor ?? this.defaultIconColor, disabled: true}, []],
-      buttonFillColor: [{ value: this.action.buttonFillColor ?? '#305680', disabled: true}, []],
+      buttonFillColor: [{ value: this.action.buttonFillColor ?? 'var(--tb-primary-500)', disabled: true}, []],
       buttonBorderColor: [{ value: this.action.buttonBorderColor ?? '#0000001F', disabled: true}, []],
       customButtonStyle: [{ value: this.action.customButtonStyle ?? {}, disabled: true}, []],
       useShowWidgetActionFunction: [this.action.useShowWidgetActionFunction],
@@ -186,7 +195,7 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
       if ([WidgetHeaderActionButtonType.raised, WidgetHeaderActionButtonType.flat, WidgetHeaderActionButtonType.miniFab].includes(buttonType)) {
         this.widgetActionFormGroup.get('buttonColor').patchValue('#ffffff', {emitEvent: false});
       } else if ([WidgetHeaderActionButtonType.stroked].includes(buttonType)) {
-        this.widgetActionFormGroup.get('buttonColor').patchValue('#305680', {emitEvent: false});
+        this.widgetActionFormGroup.get('buttonColor').patchValue('var(--tb-primary-500)', {emitEvent: false});
       } else {
         this.widgetActionFormGroup.get('buttonColor').patchValue(this.defaultIconColor, {emitEvent: false});
       }
@@ -218,6 +227,15 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
 
   displayShowWidgetActionForm(): boolean {
     return !!this.data.actionsData.actionSources[this.widgetActionFormGroup.get('actionSourceId').value]?.hasShowCondition;
+  }
+
+  customFunctionHelpId(): string {
+      return this.isEntityGroup ? 'entity_group/action/custom_action_fn' : 'widget/action/custom_action_fn';
+  }
+
+  entityGroupRowClickHint(): string {
+    return this.isEntityGroup && this.widgetActionFormGroup.get('actionSourceId').value === 'rowClick' ?
+      this.translate.instant('widget-config.entity-group-row-click-hint') : '';
   }
 
   getWidgetActionFunctionHelpId(): string | undefined {

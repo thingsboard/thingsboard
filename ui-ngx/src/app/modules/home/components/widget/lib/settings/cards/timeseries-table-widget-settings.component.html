@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <ng-container [formGroup]="timeseriesTableWidgetSettingsForm">
@@ -20,11 +21,29 @@
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widgets.table.columns</div>
 
-    <div  class="tb-form-row column-xs">
+    <div class="tb-form-row column-xs">
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showTimestamp">
         {{ 'widgets.table.display-timestamp' | translate }}
       </mat-slide-toggle>
       <tb-date-format-select class="flex-1" excludeLastUpdateAgo formControlName="dateFormat"></tb-date-format-select>
+    </div>
+    <div class="tb-form-row column-xs">
+      <div class="fixed-title-width">
+        {{ 'widgets.table.include-timestamp-in-export' | translate }}
+      </div>
+      <mat-form-field class="medium-width flex-1" appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="timestampExportOption">
+          <mat-option [value]="'always'">
+            {{ 'widgets.table.column-export-option-always' | translate }}
+          </mat-option>
+          <mat-option [value]="'onlyVisible'">
+            {{ 'widgets.table.column-export-option-only-visible' | translate }}
+          </mat-option>
+          <mat-option [value]="'never'">
+            {{ 'widgets.table.column-export-option-never' | translate }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
     </div>
 
     <mat-slide-toggle class="mat-slide"  formControlName="enableStickyAction">

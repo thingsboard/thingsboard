@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { OverlayContainer } from "@angular/cdk/overlay";
 import { inject, Injectable, InjectionToken } from "@angular/core";

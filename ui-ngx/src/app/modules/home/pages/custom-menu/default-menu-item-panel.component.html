@@ -1,0 +1,86 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-default-menu-item-panel" [formGroup]="menuItemFormGroup">
+  <div class="tb-default-menu-item-title-container">
+    <div class="tb-default-menu-item-title">{{ (isHomeMenuItem ? 'custom-menu.edit-home-menu-item' : 'custom-menu.edit-menu-item') | translate }}</div>
+    @if (!disabled) {
+      <button
+        [disabled]="!isCleanupEnabled"
+        type="button"
+        mat-stroked-button
+        class="tb-box-button"
+        matTooltip="{{ 'custom-menu.reset-to-menu-item-defaults' | translate }}"
+        matTooltipPosition="above"
+        (click)="cleanup()">
+        <tb-icon [color]="isCleanupEnabled ? 'primary' : null" matButtonIcon>mdi:broom</tb-icon>
+      </button>
+    }
+  </div>
+  <div class="tb-default-menu-item-panel-content">
+    @if (!isHomeMenuItem) {
+      <div class="tb-form-row space-between">
+        <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="visible">
+          {{ 'custom-menu.visible' | translate }}
+        </mat-slide-toggle>
+      </div>
+    }
+    <div class="flex flex-row items-center justify-center gap-2">
+      <tb-material-icon-select asBoxInput
+        allowedCustomIcon
+        color="var(--tb-primary-500)"
+        formControlName="icon">
+      </tb-material-icon-select>
+      <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic" floatLabel="always">
+        <mat-label translate>custom-menu.menu-item-name</mat-label>
+        <input matInput formControlName="name" placeholder="{{ defaultItemName }}">
+      </mat-form-field>
+    </div>
+    @if (isHomeTypeEditable) {
+      <div class="tb-form-row no-border no-padding space-between">
+        <div>{{ 'custom-menu.home-page-type' | translate }}</div>
+        <tb-toggle-select formControlName="homeType">
+          @for (type of homeMenuItemTypes; track type) {
+            <tb-toggle-option [value]="type">{{ homeMenuItemTypeTranslations.get(type) | translate }}</tb-toggle-option>
+          }
+        </tb-toggle-select>
+      </div>
+      @if (menuItemFormGroup.get('homeType').value === HomeMenuItemType.DASHBOARD) {
+        <tb-dashboard-autocomplete class="flex-1"
+          formControlName="dashboardId"
+          required
+          label="{{ 'dashboard.dashboard' | translate }}"
+          floatLabel="always"
+          appearance="outline"
+          subscriptSizing="dynamic"
+          requiredText="dashboard.dashboard-required"
+          placeholder="{{ 'dashboard.select-dashboard' | translate }}"
+          [selectFirstDashboard]="false"
+        ></tb-dashboard-autocomplete>
+        <div class="tb-form-row space-between">
+          <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="hideDashboardToolbar">
+            {{ 'custom-menu.hide-toolbar' | translate }}
+          </mat-slide-toggle>
+        </div>
+      }
+    }
+  </div>
+  <div class="tb-default-menu-item-panel-buttons">
+    <button mat-button
+      color="primary"
+      type="button"
+      (click)="cancel()">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button
+      color="primary"
+      type="button"
+      (click)="apply()"
+      [disabled]="menuItemFormGroup.invalid || !menuItemFormGroup.dirty">
+      {{ 'action.apply' | translate }}
+    </button>
+  </div>
+</div>

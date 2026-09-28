@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, Renderer2, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
@@ -22,6 +23,7 @@ import {
   CsvToJsonResult,
   ImportEntityColumnType
 } from '@shared/import-export/import-export.models';
+import { CustomerId } from '@shared/models/id/customer-id';
 import { ImportExportService } from '@shared/import-export/import-export.service';
 import { TableColumnsAssignmentComponent } from '@shared/import-export/table-columns-assignment.component';
 import { Ace } from 'ace-builds';
@@ -29,8 +31,10 @@ import { getAce, updateEditorSize } from '@shared/models/ace/ace.models';
 
 export interface ImportDialogCsvData {
   entityType: EntityType;
+  customerId: CustomerId;
   importTitle: string;
   importFileLabel: string;
+  entityGroupId: string;
 }
 
 @Component({
@@ -54,6 +58,8 @@ export class ImportDialogCsvComponent extends DialogComponent<ImportDialogCsvCom
   entityType: EntityType;
   importTitle: string;
   importFileLabel: string;
+  customerId: CustomerId;
+  entityGroupId: string;
 
   delimiters: { key: CSVDelimiter; value: string }[] = [{
     key: ',',
@@ -96,6 +102,8 @@ export class ImportDialogCsvComponent extends DialogComponent<ImportDialogCsvCom
     this.entityType = data.entityType;
     this.importTitle = data.importTitle;
     this.importFileLabel = data.importFileLabel;
+    this.customerId = data.customerId;
+    this.entityGroupId = data.entityGroupId;
 
     this.selectFileFormGroup = this.fb.group(
       {
@@ -212,6 +220,8 @@ export class ImportDialogCsvComponent extends DialogComponent<ImportDialogCsvCom
   private addEntities() {
     const entitiesData: BulkImportRequest = {
       file: this.selectFileFormGroup.get('importData').value,
+      customerId: this.customerId,
+      entityGroupId: this.entityGroupId,
       mapping: {
         columns: this.processingColumnsParams(),
         delimiter: this.importParametersFormGroup.get('delim').value,

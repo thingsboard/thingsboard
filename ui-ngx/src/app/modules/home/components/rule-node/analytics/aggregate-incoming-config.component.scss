@@ -1,0 +1,20 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host {
+  .mat-expansion-panel {
+    margin: 0 0 16px;
+  }
+
+  .mat-accordion {
+    margin: 0 0 16px;
+
+    .mat-expansion-panel {
+      margin: 0;
+
+      &.mat-expanded {
+        margin: 0 0 16px;
+      }
+    }
+  }
+
+}

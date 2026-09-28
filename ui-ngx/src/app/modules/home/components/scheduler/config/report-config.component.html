@@ -1,0 +1,61 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div [formGroup]="reportConfigFormGroup" class="tb-form-panel outlined">
+  <tb-report-template-autocomplete
+    required
+    appearance="outline"
+    [type]="ReportTemplateType.REPORT"
+    includeCustomers
+    formControlName="reportTemplateId">
+  </tb-report-template-autocomplete>
+  <tb-entity-autocomplete
+    appearance="outline"
+    required
+    useFullEntityId
+    [entityType]="entityType.USER"
+    formControlName="userId">
+  </tb-entity-autocomplete>
+  <tb-timezone-select
+    appearance="outline"
+    userTimezoneByDefault
+    required
+    formControlName="timezone">
+  </tb-timezone-select>
+  <div class="tb-form-row">
+    <mat-slide-toggle class="mat-slide" formControlName="makePublic">
+      <div tb-hint-tooltip-icon="{{'report.public-status-hint' | translate}}">
+        {{ 'report.public-status' | translate }}
+      </div>
+    </mat-slide-toggle>
+  </div>
+  @if (showRecipients) {
+    <div class="tb-form-panel outlined padding stroked">
+      <div class="tb-form-panel-title" translate>notification.recipients</div>
+      <tb-entity-list
+        appearance="outline"
+        syncIdsWithDB
+        formControlName="targets"
+        labelText="{{ 'notification.recipients' | translate }}"
+        placeholderText="{{ 'notification.recipient' | translate }}"
+        [entityType]="entityType.NOTIFICATION_TARGET"
+        [entitySubType]="NotificationType.GENERAL">
+        <button #createTargetButton
+                type="button"
+                mat-button color="primary" matSuffix
+                (click)="createTarget($event, createTargetButton)">
+          <span style="white-space: nowrap">{{ 'notification.create-new' | translate }}</span>
+        </button>
+      </tb-entity-list>
+      <tb-template-autocomplete
+        appearance="outline"
+        allowCreate allowEdit
+        formControlName="notificationTemplateId"
+        [notificationTypes]="NotificationType.REPORT_GENERATED">
+      </tb-template-autocomplete>
+    </div>
+  }
+</div>

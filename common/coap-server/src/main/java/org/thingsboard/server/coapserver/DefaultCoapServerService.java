@@ -1,10 +1,12 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.coapserver;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.californium.core.CoapResource;
 import org.eclipse.californium.core.CoapServer;
 import org.eclipse.californium.core.config.CoapConfig;
 import org.eclipse.californium.core.network.CoapEndpoint;
@@ -21,6 +23,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledExecutorService;
@@ -92,6 +95,34 @@ public class DefaultCoapServerService implements CoapServerService, SmartInitial
         return tbDtlsCertificateVerifier != null ? tbDtlsCertificateVerifier.getTbCoapDtlsSessionsMap() : null;
     }
 
+    @Override
+    public synchronized Resource addResourceHierarchicallyAndReturnLast(List<String> resourceHierarchy) throws UnknownHostException {
+        Resource childResource = null;
+        CoapServer coapServer = getCoapServer();
+        Resource root = coapServer.getRoot();
+        for (String name : resourceHierarchy) {
+            if (resourceHierarchy.get(0).equals(name)) {
+                childResource = root.getChild(name);
+                if (childResource == null) {
+                    childResource = new CoapResource(name);
+                    coapServer.add(childResource);
+                }
+            } else {
+                if (childResource != null) {
+                    Resource child = childResource.getChild(name);
+                    if (child == null) {
+                        child = new CoapResource(name);
+                        childResource.add(child);
+                        childResource = child;
+                    } else {
+                        childResource = child;
+                    }
+                }
+            }
+        }
+        return childResource;
+    }
+
     private CoapServer createCoapServer() throws UnknownHostException {
         Configuration networkConfig = createNetworkConfiguration();
         try {
@@ -137,7 +168,7 @@ public class DefaultCoapServerService implements CoapServerService, SmartInitial
         }
     }
 
-    private boolean isDtlsEnabled() {
+    public boolean isDtlsEnabled() {
         return coapServerContext.getDtlsSettings() != null;
     }
 

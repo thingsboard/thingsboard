@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.alarm;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -23,6 +24,7 @@ import org.thingsboard.server.dao.sql.JpaPartitionedAbstractDao;
 import org.thingsboard.server.dao.sqlts.insert.sql.SqlPartitioningRepository;
 import org.thingsboard.server.dao.util.SqlDao;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -57,6 +59,15 @@ public class JpaAlarmCommentDao extends JpaPartitionedAbstractDao<AlarmCommentEn
     public ListenableFuture<AlarmComment> findAlarmCommentByIdAsync(TenantId tenantId, UUID key) {
         log.trace("Try to find alarm comment by id using [{}]", key);
         return findByIdAsync(tenantId, key);
+    }
+
+    @Override
+    public int deleteByAlarmIds(List<UUID> alarmIds) {
+        log.trace("Try to delete alarm comments by alarm ids [{}]", alarmIds);
+        if (alarmIds.size() == 1) {
+            return alarmCommentRepository.deleteByAlarmId(alarmIds.get(0));
+        }
+        return alarmCommentRepository.deleteByAlarmIdIn(alarmIds);
     }
 
     @Override

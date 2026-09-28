@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 @if (layoutCtx.widgets.isLoading()) {
@@ -26,11 +27,25 @@
         </span>
       }
       @if (isEdit && !widgetEditMode) {
-        <button mat-button class="tb-add-new-widget"
-                (click)="addWidget($event)">
-          <mat-icon class="tb-mat-96">add</mat-icon>
-          <span>{{ 'dashboard.add-widget' | translate }}</span>
-        </button>
+        <div class="flex flex-col items-stretch gap-4"
+             style="pointer-events: auto;">
+          <button mat-button class="tb-add-new-widget"
+                  [class.tb-compact]="aiConfigurableForDashboard"
+                  (click)="addWidget($event)">
+            <mat-icon matButtonIcon
+                      [class.tb-mat-32]="aiConfigurableForDashboard"
+                      [class.tb-mat-96]="!aiConfigurableForDashboard">add</mat-icon>
+            <span>{{ 'dashboard.add-widget' | translate }}</span>
+          </button>
+          @if (aiConfigurableForDashboard) {
+            <button mat-button color="primary"
+                    class="tb-configure-with-ai"
+                    (click)="configureWithAi($event)">
+              <tb-icon matButtonIcon class="tb-mat-32">mdi:creation</tb-icon>
+              <span>{{ 'ai-assistant.configure-with-ai' | translate }}</span>
+            </button>
+          }
+        </div>
       }
     </section>
   }

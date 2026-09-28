@@ -1,0 +1,287 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="selfRegistrationForm" class="flex flex-col">
+  <mat-slide-toggle formControlName="enabled" class="mb-4">
+    {{ 'mobile.enable-self-registration' | translate }}
+  </mat-slide-toggle>
+  <mat-form-field appearance="outline">
+    <mat-label translate>mobile.self-registration.page-title</mat-label>
+    <input matInput required formControlName="title">
+    @if (selfRegistrationForm.get('title').hasError('required')) {
+      <mat-error>
+        {{ 'mobile.self-registration.page-title-required' | translate }}
+      </mat-error>
+    }
+    @if (selfRegistrationForm.get('title').hasError('pattern')) {
+      <mat-error>
+        {{ 'mobile.self-registration.page-title-cannot-contain-only-spaces' | translate }}
+      </mat-error>
+    }
+    @if (selfRegistrationForm.get('title').hasError('maxlength')) {
+      <mat-error>
+        {{ 'mobile.self-registration.page-title-max-length' | translate }}
+      </mat-error>
+    }
+  </mat-form-field>
+  <tb-entity-autocomplete
+    required
+    allowCreateNew
+    useFullEntityId
+    appearance="outline"
+    formControlName="notificationRecipient"
+    labelText="self-registration.notification-recipient"
+    requiredText="self-registration.notification-recipient-required"
+    [entityType]="EntityType.NOTIFICATION_TARGET"
+    (createNew)="createTarget($event)">
+  </tb-entity-autocomplete>
+  <section class="tb-form-panel no-padding-bottom stroked mb-5.5" formGroupName="redirect">
+    <section class="tb-form-panel-title" translate>mobile.self-registration.redirect-settings</section>
+    <div class="flex flex-row items-center justify-start gap-2">
+      <mat-form-field class="mat-block flex-1" floatLabel="always" appearance="outline">
+        <mat-label translate>self-registration.mobile-app-scheme</mat-label>
+        <input matInput formControlName="scheme" placeholder="{{ 'self-registration.mobile-app-scheme-placeholder' | translate }}" required>
+        @if (selfRegistrationForm.get('redirect.scheme').hasError('required')) {
+          <mat-error>
+            {{'self-registration.mobile-app-scheme-required' | translate}}
+          </mat-error>
+        }
+        @if (selfRegistrationForm.get('redirect.scheme').hasError('pattern')) {
+          <mat-error>
+            {{'self-registration.mobile-app-scheme-cannot-contain-only-spaces' | translate}}
+          </mat-error>
+        }
+        @if (selfRegistrationForm.get('redirect.scheme').hasError('maxlength')) {
+          <mat-error>
+            {{'self-registration.mobile-app-scheme-max-length' | translate}}
+          </mat-error>
+        }
+      </mat-form-field>
+      <span class="mb-5.5">://</span>
+      <mat-form-field class="mat-block flex-1" floatLabel="always" appearance="outline">
+        <mat-label translate>self-registration.mobile-app-host</mat-label>
+        <input matInput formControlName="host" placeholder="{{ 'self-registration.mobile-app-host-placeholder' | translate }}" required>
+        @if (selfRegistrationForm.get('redirect.host').hasError('required')) {
+          <mat-error>
+            {{'self-registration.mobile-app-host-required' | translate}}
+          </mat-error>
+        }
+        @if (selfRegistrationForm.get('redirect.host').hasError('pattern')) {
+          <mat-error>
+            {{'self-registration.mobile-app-host-cannot-contain-only-spaces' | translate}}
+          </mat-error>
+        }
+        @if (selfRegistrationForm.get('redirect.host').hasError('maxlength')) {
+          <mat-error>
+            {{'self-registration.mobile-app-host-max-length' | translate}}
+          </mat-error>
+        }
+      </mat-form-field>
+    </div>
+  </section>
+  <tb-mobile-registration-fields-panel formControlName="signUpFields" class="mb-5.5">
+  </tb-mobile-registration-fields-panel>
+  <section class="tb-form-panel stroked mb-5.5">
+    <mat-expansion-panel class="tb-settings" expanded="true" formGroupName="captcha">
+      <mat-expansion-panel-header>
+        {{ "mobile.self-registration.captcha-properties" | translate }}
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        <section>
+          <mat-form-field class="mat-block" appearance="outline">
+            <mat-label translate>self-registration.captcha-version</mat-label>
+            <mat-select formControlName="version">
+              <mat-option [value]="'v2'">v2 (Deprecated)</mat-option>
+              <mat-option [value]="'v3'">v3</mat-option>
+              <mat-option [value]="'enterprise'">Enterprise</mat-option>
+            </mat-select>
+          </mat-form-field>
+          @if (selfRegistrationForm.get('captcha.version').value !== 'enterprise') {
+            <mat-form-field class="mat-block" appearance="outline">
+              <mat-label translate>self-registration.captcha-site-key</mat-label>
+              <input matInput required formControlName="siteKey"/>
+              @if (selfRegistrationForm.get('captcha.siteKey').hasError('required')) {
+                <mat-error>
+                  {{ 'self-registration.captcha-site-key-required' | translate }}
+                </mat-error>
+              }
+              @if (selfRegistrationForm.get('captcha.siteKey').hasError('pattern')) {
+                <mat-error>
+                  {{'self-registration.captcha-site-key-cannot-contain-only-spaces' | translate}}
+                </mat-error>
+              }
+              @if (selfRegistrationForm.get('captcha.siteKey').hasError('maxlength')) {
+                <mat-error>
+                  {{'self-registration.captcha-site-key-max-length' | translate}}
+                </mat-error>
+              }
+            </mat-form-field>
+            <mat-form-field class="mat-block" appearance="outline">
+              <mat-label translate>self-registration.captcha-secret-key</mat-label>
+              <input matInput required formControlName="secretKey"/>
+              @if (selfRegistrationForm.get('captcha.secretKey').hasError('required')) {
+                <mat-error>
+                  {{ 'self-registration.captcha-secret-key-required' | translate }}
+                </mat-error>
+              }
+              @if (selfRegistrationForm.get('captcha.secretKey').hasError('pattern')) {
+                <mat-error>
+                  {{'self-registration.captcha-secret-key-cannot-contain-only-spaces' | translate}}
+                </mat-error>
+              }
+              @if (selfRegistrationForm.get('captcha.secretKey').hasError('maxlength')) {
+                <mat-error>
+                  {{'self-registration.captcha-secret-key-max-length' | translate}}
+                </mat-error>
+              }
+            </mat-form-field>
+          }
+          @if (selfRegistrationForm.get('captcha.version').value === 'enterprise') {
+            <mat-form-field class="mat-block" appearance="outline">
+              <mat-label translate>self-registration.project-id</mat-label>
+              <input matInput required formControlName="projectId"/>
+              @if (selfRegistrationForm.get('captcha.projectId').hasError('required')) {
+                <mat-error>
+                  {{ 'self-registration.project-id-required' | translate }}
+                </mat-error>
+              }
+            </mat-form-field>
+            <tb-file-input formControlName="serviceAccountCredentials"
+              required
+              dropLabel="{{ 'self-registration.select-recaptcha-enterprise-service-account-file' | translate }}"
+              label="{{ 'self-registration.recaptcha-enterprise-service-account-file' | translate }}"
+              accept=".json,application/json"
+              allowedExtensions="json"
+              [existingFileName]="selfRegistrationForm.get('captcha.serviceAccountCredentialsFileName')?.value"
+              (fileNameChanged)="selfRegistrationForm.get('captcha.serviceAccountCredentialsFileName').patchValue($event)">
+            </tb-file-input>
+            <mat-form-field class="mat-block" appearance="outline">
+              <mat-label translate>self-registration.android-key</mat-label>
+              <input matInput [required]="androidApp" formControlName="androidKey"/>
+              @if (selfRegistrationForm.get('captcha.androidKey').hasError('required')) {
+                <mat-error>
+                  {{ 'self-registration.android-key-required' | translate }}
+                </mat-error>
+              }
+            </mat-form-field>
+            <mat-form-field class="mat-block" appearance="outline">
+              <mat-label translate>self-registration.ios-key</mat-label>
+              <input matInput [required]="iOSApp" formControlName="iosKey"/>
+              @if (selfRegistrationForm.get('captcha.iosKey').hasError('required')) {
+                <mat-error>
+                  {{ 'self-registration.ios-key-required' | translate }}
+                </mat-error>
+              }
+            </mat-form-field>
+          }
+          @if (selfRegistrationForm.get('captcha.version').value !== 'v2') {
+            <mat-form-field
+              class="mat-block" subscriptSizing="dynamic"
+              appearance="outline">
+              <mat-label translate>self-registration.captcha-action</mat-label>
+              <input matInput formControlName="logActionName"/>
+            </mat-form-field>
+          }
+        </section>
+      </ng-template>
+    </mat-expansion-panel>
+  </section>
+  <div class="tb-form-row space-between mb-5.5">
+    <mat-slide-toggle class="mat-slide" formControlName="showPrivacyPolicy">
+      {{ 'self-registration.show-privacy-policy' | translate }}
+    </mat-slide-toggle>
+    <button
+      mat-stroked-button
+      type="button"
+      matTooltip="{{ 'self-registration.privacy-policy-text' | translate }}"
+      matTooltipPosition="above"
+      class="tb-box-button"
+      #editPrivacyButton
+      [disabled]="selfRegistrationForm.get('privacyPolicy').disabled"
+      (click)="editPolicy($event, editPrivacyButton, true)">
+      <tb-icon matButtonIcon>mdi:text-box-edit</tb-icon>
+    </button>
+  </div>
+  <div class="tb-form-row space-between mb-5.5">
+    <mat-slide-toggle class="mat-slide" formControlName="showTermsOfUse">
+      {{ 'self-registration.show-terms-of-use' | translate }}
+    </mat-slide-toggle>
+    <button
+      mat-stroked-button
+      type="button"
+      matTooltip="{{ 'self-registration.terms-of-use-text' | translate }}"
+      matTooltipPosition="above"
+      class="tb-box-button"
+      #editTernUseButton
+      [disabled]="selfRegistrationForm.get('termsOfUse').disabled"
+      (click)="editPolicy($event, editTernUseButton, false)">
+      <tb-icon matButtonIcon>mdi:text-box-edit</tb-icon>
+    </button>
+  </div>
+  <tb-user-group-panel formControlName="permissions" class="mb-5.5">
+  </tb-user-group-panel>
+  <section class="tb-form-panel stroked mb-5.5">
+    <mat-expansion-panel class="tb-settings" expanded="true">
+      <mat-expansion-panel-header>
+        {{ "mobile.self-registration.advanced-settings" | translate }}
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        <section>
+          <tb-entity-group-autocomplete
+            appearance="outline"
+            useFullEntityId
+            placeholderText="mobile.self-registration.customer-group"
+            notFoundText="mobile.self-registration.no-customer-groups-matching"
+            [groupType]="EntityType.CUSTOMER"
+            formControlName="customerGroupId"
+          ></tb-entity-group-autocomplete>
+          <mat-form-field class="mat-block" appearance="outline">
+            <mat-label translate>mobile.self-registration.customer-title-prefix</mat-label>
+            <input matInput formControlName="customerTitlePrefix">
+          </mat-form-field>
+          <tb-custom-menu-autocomplete
+            formControlName="customMenuId"
+            appearance="outline"
+            [scope]="CMScope.CUSTOMER"
+            [assigneeType]="CMAssigneeType.CUSTOMERS">
+          </tb-custom-menu-autocomplete>
+          <section class="tb-form-panel stroked mb-5.5" formGroupName="defaultDashboard">
+            <div class="tb-form-panel-title" translate>user.default-dashboard</div>
+            <section>
+              <tb-entity-autocomplete
+                class="flex-1"
+                [entityType]="EntityType.DASHBOARD"
+                appearance="outline"
+                formControlName="id">
+              </tb-entity-autocomplete>
+              <div class="tb-form-row">
+                <mat-slide-toggle class="mat-slide" formControlName="fullscreen">
+                  {{ 'user.always-fullscreen' | translate }}
+                </mat-slide-toggle>
+              </div>
+            </section>
+          </section>
+          <section class="tb-form-panel stroked" formGroupName="homeDashboard">
+            <div class="tb-form-panel-title" translate>dashboard.home-dashboard</div>
+            <section>
+              <tb-entity-autocomplete
+                class="flex-1"
+                [entityType]="EntityType.DASHBOARD"
+                appearance="outline"
+                formControlName="id">
+              </tb-entity-autocomplete>
+              <div class="tb-form-row">
+                <mat-slide-toggle class="mat-slide" formControlName="hideToolbar">
+                  {{ 'dashboard.home-dashboard-hide-toolbar' | translate }}
+                </mat-slide-toggle>
+              </div>
+            </section>
+          </section>
+        </section>
+      </ng-template>
+    </mat-expansion-panel>
+  </section>
+</section>

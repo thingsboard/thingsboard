@@ -1,46 +1,66 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <mat-sidenav-container [class.tb-desktop]="sidenavDesktop()"
                        [class.tb-collapsed]="sidenavCollapsed()">
   <mat-sidenav #sidenav class="tb-site-sidenav mat-elevation-z2"
-               [disableClose]="sidenavOpened"
-               (click)="sidenavClicked()"
-               [mode]="sidenavMode"
-               [opened]="sidenavOpened && !forceFullscreen">
-    <header class="tb-nav-header">
-      <mat-toolbar class="tb-nav-header-toolbar">
-        <tb-logo
-          [src]="logo" class="tb-logo-title">
+    [class.tb-collapsed]="menuCollapsed()"
+    [disableClose]="sidenavOpened"
+    (click)="sidenavClicked()"
+    [mode]="sidenavMode"
+    [opened]="sidenavOpened && !forceFullscreen">
+    <header #navHeader class="tb-nav-header">
+      <mat-toolbar color="tb-primary" class="tb-nav-header-toolbar tb-right-border">
+        <tb-logo [src]="wl.logoImageUrl$() | async | image | async"
+                 [embed]="wl.isDefaultLogoImageUrl$() | async"
+                 [style.height.px]="wl.logoImageHeight$() | async" class="tb-logo-title">
         </tb-logo>
         @if (sidenavDesktop()) {
-          <button mat-icon-button class="tb-sidenav-toggle tb-mat-32" (click)="toggleSidenav()">
+          <button mat-icon-button class="tb-sidenav-toggle tb-mat-40" (click)="toggleSidenav()">
             @if (sidenavCollapsed()) {
               <div class="tb-collapsed-logo-container">
-                <img class="tb-collapsed-logo" [src]="collapsedLogo" aria-label="logo" alt="Logo"/>
-                <tb-icon class="tb-mat-20 tb-open-icon">sidebar-open</tb-icon>
+                @if (wl.collapsedLogoImageUrl$() | async; as collapsedLogoImageUrl) {
+                  @if (wl.isDefaultCollapsedLogoImageUrl$() | async) {
+                    <span class="tb-collapsed-logo" [innerHTML]="collapsedLogoImageUrl | safeSvg | async"></span>
+                  } @else {
+                    <img class="tb-collapsed-logo" [src]="collapsedLogoImageUrl | image | async" aria-label="logo" alt="Logo"/>
+                  }
+                  <tb-icon class="tb-open-icon">mdi:menu-close</tb-icon>
+                } @else {
+                  <tb-icon class="tb-open-icon tb-no-collapsed-icon">mdi:menu-close</tb-icon>
+                }
               </div>
             } @else {
-              <tb-icon class="tb-mat-20">sidebar-close</tb-icon>
+              <tb-icon matButtonIcon>mdi:menu-open</tb-icon>
             }
           </button>
         }
       </mat-toolbar>
+      <tb-goto-menu [collapsed]="menuCollapsed()"
+                    (searchBtnClicked)="toggleSidenav()"
+                    (linkClicked)="sidenavClicked()"></tb-goto-menu>
     </header>
-    <mat-toolbar class="tb-side-menu-toolbar flex flex-1 flex-col" role="navigation">
-      <div class="w-full flex-1 overflow-y-auto overflow-x-hidden">
-        <tb-side-menu  [collapsed]="menuCollapsed()"></tb-side-menu>
+    <mat-toolbar color="tb-primary" class="tb-side-menu-toolbar tb-right-border flex flex-1 flex-col" role="navigation">
+      <div #sidebarScroll class="w-full flex-1 overflow-y-auto overflow-x-hidden">
+        <tb-side-menu #sideMenu  [collapsed]="menuCollapsed()"></tb-side-menu>
       </div>
-      <tb-user-menu [collapsed]="menuCollapsed()" (menuClicked)="sidenavClicked()"></tb-user-menu>
+      <div #sidebarBottom class="tb-sidebar-bottom flex flex-col">
+        @if (wl.isShowVersion$() | async) {
+          <div class="tb-version" [innerHTML]="platformNameAndVersion$() | async">
+          </div>
+        }
+        <tb-user-menu [collapsed]="menuCollapsed()" (menuClicked)="sidenavClicked()"></tb-user-menu>
+      </div>
     </mat-toolbar>
   </mat-sidenav>
   <mat-sidenav-content class="tb-site-content" [class.tb-force-fullscreen]="forceFullscreen">
     <div class="flex flex-col" role="main" style="height: 100%;">
       @if ((homeService.hideMainToolbar$ | async) === false) {
-        <mat-toolbar class="tb-primary-toolbar flex flex-row">
+        <mat-toolbar color="tb-primary" class="tb-primary-toolbar tb-bottom-border flex flex-row">
           <button mat-icon-button id="main"
                   [class.!hidden]="forceFullscreen || displaySearchMode()"
                   class="gt-sm:!hidden" (click)="sidenav.toggle()">
@@ -56,7 +76,7 @@
             class="mat-toolbar-tools flex-1">
           </tb-breadcrumb>
           @if (searchEnabled) {
-            <div [class.!hidden]="!showSearch" [class.mr-4]="!textSearch.value" class="flex flex-1 flex-row">
+            <div [class.!hidden]="!showSearch" [class.tb-dark]="wl.isPrimaryColorPanels$() | async" [class.mr-4]="!textSearch.value" class="flex flex-1 flex-row">
               <mat-form-field class="tb-appearance-transparent flex-1">
                 <input #searchInput matInput
                        [formControl]="textSearch"
@@ -72,7 +92,7 @@
               <mat-icon>close</mat-icon>
             </button>
           }
-          <tb-github-badge class="lt-md:!hidden"></tb-github-badge>
+          <!--tb-github-badge class="lt-md:!hidden"></tb-github-badge-->
           @if (fullscreenEnabled) {
             <button
               class="lt-md:!hidden"
@@ -91,8 +111,14 @@
           </mat-progress-bar>
         }
       }
-      <div #mainContent tb-toast class="tb-main-content flex flex-1 flex-col">
-        <router-outlet (activate)="activeComponentChanged($event)"></router-outlet>
+      <div class="tb-main-content-wrapper">
+        <div #mainContent tb-toast class="tb-main-content flex flex-1 flex-col"
+             [class.openAiAssistant]="panelService.open()">
+          <router-outlet (activate)="activeComponentChanged($event)"></router-outlet>
+        </div>
+        @if (authState.aiEnabled) {
+          <tb-ai-assistant-panel></tb-ai-assistant-panel>
+        }
       </div>
     </div>
   </mat-sidenav-content>

@@ -1,11 +1,14 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.sync.ie.importing.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.sync.ie.DeviceExportData;
@@ -79,6 +82,11 @@ public class DeviceImportService extends BaseEntityImportService<DeviceId, Devic
             }
         }
         return updated;
+    }
+
+    @Override
+    protected void onEntitySaved(User user, Device savedDevice, Device oldDevice) throws ThingsboardException {
+        super.onEntitySaved(user, savedDevice, oldDevice);
     }
 
     @Override

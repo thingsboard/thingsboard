@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.edqs.fields;
 
 import lombok.Data;
@@ -27,11 +28,13 @@ public class ApiUsageStateFields extends AbstractEntityFields {
     private ApiUsageStateValue emailExecState;
     private ApiUsageStateValue smsExecState;
     private ApiUsageStateValue alarmExecState;
+    private ApiUsageStateValue reportExecState;
+    private ApiUsageStateValue aiState;
 
     public ApiUsageStateFields(UUID id, long createdTime, UUID tenantId, UUID entityId, String entityType, ApiUsageStateValue transportState, ApiUsageStateValue dbStorageState,
                                ApiUsageStateValue reExecState, ApiUsageStateValue jsExecState, ApiUsageStateValue tbelExecState,
                                ApiUsageStateValue emailExecState, ApiUsageStateValue smsExecState, ApiUsageStateValue alarmExecState,
-                               Long version) {
+                               ApiUsageStateValue reportExecState, ApiUsageStateValue aiState, Long version) {
         super(id, createdTime, tenantId, null, null, version);
         this.entityId = (entityType != null && entityId != null) ? EntityIdFactory.getByTypeAndUuid(entityType, entityId) : null;
         this.transportState = transportState;
@@ -42,5 +45,8 @@ public class ApiUsageStateFields extends AbstractEntityFields {
         this.emailExecState = emailExecState;
         this.smsExecState = smsExecState;
         this.alarmExecState = alarmExecState;
+        this.reportExecState = reportExecState;
+        this.aiState = aiState;
     }
+
 }

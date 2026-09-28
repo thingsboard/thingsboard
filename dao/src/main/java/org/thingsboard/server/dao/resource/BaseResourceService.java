@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.resource;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -33,6 +34,7 @@ import org.thingsboard.server.common.data.TbResourceDataInfo;
 import org.thingsboard.server.common.data.TbResourceDeleteResult;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.TbResourceInfoFilter;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TbResourceId;
@@ -40,17 +42,18 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
+import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.ResourceContainerDao;
 import org.thingsboard.server.dao.dashboard.DashboardInfoDao;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
-import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.rule.RuleChainDao;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.service.validator.ResourceDataValidator;
 import org.thingsboard.server.dao.widget.WidgetTypeDao;
+import org.thingsboard.server.exception.DataValidationException;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -151,9 +154,9 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
                     .entity(saved).created(resource.getId() == null).build());
             return saved;
         } catch (Exception t) {
-            publishEvictEvent(new ResourceInfoEvictEvent(tenantId, resource.getId()));
-            ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
-            if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("resource_unq_key")) {
+            publishEvictEvent(new ResourceInfoEvictEvent(resource.getTenantId(), resource.getId()));
+            ConstraintViolationException e = DaoUtil.extractConstraintViolationException(t).orElse(null);
+            if (e != null && DaoUtil.constraintNameMatches(e.getConstraintName(), "resource_unq_key")) {
                 throw new DataValidationException("Resource with such key already exists!");
             } else {
                 throw t;
@@ -243,7 +246,7 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     }
 
     @Override
-    public void importResources(TenantId tenantId, List<ResourceExportData> resources) {
+    public void importResources(TenantId tenantId, CustomerId customerId, List<ResourceExportData> resources) {
         for (ResourceExportData resourceData : resources) {
             if (resourceData.getNewLink() != null) {
                 continue; // already imported
@@ -251,13 +254,13 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
 
             TbResource resource;
             if (resourceData.getType() == ResourceType.IMAGE) {
-                resource = imageService.toImage(tenantId, resourceData, true);
+                resource = imageService.toImage(tenantId, customerId, resourceData, true);
                 if (resource.getData() != null) {
                     imageService.saveImage(resource);
                 }
             } else {
                 resource = toResource(tenantId, resourceData);
-                if (resource.getData() != null) {
+                if (resource.getData() != null && (customerId == null || customerId.isNullUid())) {
                     saveResource(resource);
                 }
             }
@@ -407,7 +410,8 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     @Override
     public PageData<TbResourceInfo> findTenantResourcesByTenantId(TbResourceInfoFilter filter, PageLink pageLink) {
         TenantId tenantId = filter.getTenantId();
-        log.trace("Executing findTenantResourcesByTenantId [{}]", tenantId);
+        CustomerId customerId = filter.getCustomerId();
+        log.trace("Executing findTenantResourcesByFilter [{}]", filter);
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         return resourceInfoDao.findTenantResourcesByTenantId(filter, pageLink);
     }
@@ -667,7 +671,7 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
             Dashboard dashboard = JacksonUtil.fromBytes(data, Dashboard.class);
             dashboard.setTenantId(TenantId.SYS_TENANT_ID);
             if (CollectionUtils.isNotEmpty(dashboard.getResources())) {
-                importResources(dashboard.getTenantId(), dashboard.getResources());
+                importResources(dashboard.getTenantId(), null, dashboard.getResources());
             }
             imageService.updateImagesUsage(dashboard);
             updateResourcesUsage(dashboard.getTenantId(), dashboard);

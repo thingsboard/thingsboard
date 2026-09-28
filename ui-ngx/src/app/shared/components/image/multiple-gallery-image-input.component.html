@@ -1,12 +1,13 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div class="tb-container">
   @if (label) {
-    <label class="tb-title" [class]="{'tb-error': !disabled && (required && !imageUrls.length), 'tb-required': !disabled && required}">{{label}}</label>
+    <label class="tb-title" tb-hint-tooltip-icon="{{ hint }}" [class.pointer-event]="hint" [class]="{'tb-error': !disabled && (required && !imageUrls.length), 'tb-required': !disabled && required}">{{label}}</label>
   }
   <div class="images-container flex flex-row gap-2" dndDropzone [dndHorizontal]="true" dndEffectAllowed="move"
        [class.no-images]="!imageUrls.length"

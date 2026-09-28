@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.sync.ie.exporting.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -24,6 +25,7 @@ public class DashboardExportService extends BaseEntityExportService<DashboardId,
 
     @Override
     protected void setRelatedEntities(EntitiesExportCtx<?> ctx, Dashboard dashboard, EntityExportData<Dashboard> exportData) {
+        dashboard.setCustomerId(getExternalIdOrElseInternal(ctx, dashboard.getCustomerId()));
         if (CollectionUtils.isNotEmpty(dashboard.getAssignedCustomers())) {
             dashboard.getAssignedCustomers().forEach(customerInfo -> {
                 customerInfo.setCustomerId(getExternalIdOrElseInternal(ctx, customerInfo.getCustomerId()));

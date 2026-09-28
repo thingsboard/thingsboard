@@ -1,0 +1,48 @@
+{
+  "reprocessingOrder": 1,
+  "type": "SCRIPT",
+  "name": "Calculate irrigation water consumption",
+  "entityId": {
+    "entityType": "ASSET_PROFILE",
+    "id": "0d58a217-f0d9-4ab6-b8be-d7d41fb36437"
+  },
+  "debugSettings": {
+    "failuresEnabled": true,
+    "allEnabled": false,
+    "allEnabledUntil": 0
+  },
+  "configurationVersion": 0,
+  "configuration": {
+    "type": "SCRIPT",
+    "arguments": {
+      "currentIrrigationWaterConsumption": {
+        "refEntityKey": {
+          "key": "currentIrrigationWaterConsumption",
+          "type": "TS_LATEST"
+        },
+        "defaultValue": "0"
+      },
+      "irrigationState": {
+        "refEntityKey": {
+          "key": "irrigationState",
+          "type": "TS_LATEST"
+        },
+        "defaultValue": ""
+      },
+      "waterConsumption": {
+        "refEntityKey": {
+          "key": "waterConsumption",
+          "type": "TS_LATEST"
+        },
+        "defaultValue": ""
+      }
+    },
+    "expression": "if (irrigationState == 'ON') {\n    var currentWaterConsumption = currentIrrigationWaterConsumption + waterConsumption;\n    return {\n        ts: ctx.latestTs,\n        values: {\n            \"currentIrrigationWaterConsumption\": toFixed(currentWaterConsumption, 2)\n        }\n    }\n}\nreturn {};",
+    "output": {
+      "type": "TIME_SERIES",
+      "strategy": {
+        "type": "RULE_CHAIN"
+      }
+    }
+  }
+}

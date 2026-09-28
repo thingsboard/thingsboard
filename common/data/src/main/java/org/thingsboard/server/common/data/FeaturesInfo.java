@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -8,6 +9,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 @JsonPropertyOrder({
+        "whiteLabelingEnabled",
         "emailEnabled",
         "smsEnabled",
         "notificationEnabled",
@@ -17,6 +19,8 @@ import lombok.Data;
 @Schema
 @Data
 public class FeaturesInfo {
+    @JsonProperty("whiteLabelingEnabled")
+    boolean whiteLabelingEnabled;
     @JsonProperty("emailEnabled")
     boolean isEmailEnabled;
     @JsonProperty("smsEnabled")

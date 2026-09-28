@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { NotificationId } from '@shared/models/id/notification-id';
 import { NotificationRequestId } from '@shared/models/id/notification-request-id';
 import { UserId } from '@shared/models/id/user-id';
@@ -13,7 +14,15 @@ import { AlarmSearchStatus, AlarmSeverity, AlarmStatus } from '@shared/models/al
 import { EntityType } from '@shared/models/entity-type.models';
 import { ApiFeature, ApiUsageStateValue } from '@shared/models/api-usage.models';
 import { LimitedApi } from '@shared/models/limited-api.models';
-import { HasTenantId } from '@shared/models/entity.models';
+import { IntegrationType } from '@shared/models/integration.models';
+import { ReportTemplateId } from '@shared/models/id/report-template-id';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { TranslateService } from '@ngx-translate/core';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
+import { Operation, Resource } from '@shared/models/security.models';
+import { AiAssistantPanelConfig, AiAssistantViewType } from '@shared/models/ai-chat.models';
 
 export interface Notification {
   readonly id: NotificationId;
@@ -88,7 +97,8 @@ interface SlackNotificationDeliveryMethodConfig {
   botToken: string;
 }
 
-interface MobileNotificationDeliveryMethodConfig {
+export interface MobileNotificationDeliveryMethodConfig {
+  useSystemSettings?: boolean;
   firebaseServiceAccountCredentials: string;
   firebaseServiceAccountCredentialsFileName: string;
 }
@@ -102,7 +112,7 @@ export interface SlackConversation {
   type: string;
 }
 
-export interface NotificationRule extends Omit<BaseData<NotificationRuleId>, 'label'>, HasTenantId, ExportableEntity<NotificationRuleId> {
+export interface NotificationRule extends Omit<BaseData<NotificationRuleId>, 'label'>, ExportableEntity<NotificationRuleId> {
   tenantId: TenantId;
   enabled: boolean;
   templateId: NotificationTemplateId;
@@ -115,7 +125,8 @@ export interface NotificationRule extends Omit<BaseData<NotificationRuleId>, 'la
 export type NotificationRuleTriggerConfig = Partial<AlarmNotificationRuleTriggerConfig & DeviceInactivityNotificationRuleTriggerConfig &
   EntityActionNotificationRuleTriggerConfig & AlarmCommentNotificationRuleTriggerConfig & AlarmAssignmentNotificationRuleTriggerConfig &
   RuleEngineLifecycleEventNotificationRuleTriggerConfig & EntitiesLimitNotificationRuleTriggerConfig &
-  ApiUsageLimitNotificationRuleTriggerConfig & RateLimitsNotificationRuleTriggerConfig & ResourceUsageShortageNotificationRuleTriggerConfig>;
+  ApiUsageLimitNotificationRuleTriggerConfig & RateLimitsNotificationRuleTriggerConfig & ResourceUsageShortageNotificationRuleTriggerConfig &
+  IntegrationLifecycleEventNotificationRuleTriggerConfig>;
 
 export interface AlarmNotificationRuleTriggerConfig {
   alarmTypes?: Array<string>;
@@ -184,6 +195,13 @@ export interface RateLimitsNotificationRuleTriggerConfig {
   apis: LimitedApi[];
 }
 
+export interface IntegrationLifecycleEventNotificationRuleTriggerConfig {
+  integrationTypes?: Array<IntegrationType>;
+  integrations?: Array<string>;
+  notifyOn: Array<ComponentLifecycleEvent>;
+  onlyOnError: boolean;
+}
+
 export enum ComponentLifecycleEvent {
   STARTED = 'STARTED',
   UPDATED = 'UPDATED',
@@ -240,7 +258,7 @@ export interface NonConfirmedNotificationEscalation {
   targets: Array<string>;
 }
 
-export interface NotificationTarget extends Omit<BaseData<NotificationTargetId>, 'label'>, HasTenantId,
+export interface NotificationTarget extends Omit<BaseData<NotificationTargetId>, 'label'>,
   ExportableEntity<NotificationTargetId> {
   tenantId: TenantId;
   configuration: NotificationTargetConfig;
@@ -257,7 +275,7 @@ export interface PlatformUsersNotificationTargetConfig {
 }
 
 export interface UsersFilter extends
-  Partial<UserListFilter & CustomerUsersFilter & TenantAdministratorsFilter>{
+  Partial<UserListFilter & CustomerUsersFilter & TenantAdministratorsFilter & UserGroupListFilter & UserRoleFilter>{
   type: NotificationTargetConfigType;
 }
 
@@ -267,6 +285,14 @@ interface UserListFilter {
 
 interface CustomerUsersFilter {
   customerId: string;
+}
+
+interface UserGroupListFilter {
+  groupsIds: Array<string>;
+}
+
+interface UserRoleFilter {
+  rolesIds: Array<string>;
 }
 
 interface TenantAdministratorsFilter {
@@ -297,7 +323,7 @@ export const NotificationTargetTypeTranslationMap = new Map<NotificationTargetTy
 ]);
 
 export interface NotificationTemplate extends Omit<BaseData<NotificationTemplateId>, 'label'>,
-  HasTenantId, ExportableEntity<NotificationTemplateId> {
+  ExportableEntity<NotificationTemplateId> {
   tenantId: TenantId;
   notificationType: NotificationType;
   configuration: NotificationTemplateConfig;
@@ -305,6 +331,10 @@ export interface NotificationTemplate extends Omit<BaseData<NotificationTemplate
 
 interface NotificationTemplateConfig {
   deliveryMethodsTemplates: DeliveryMethodsTemplates;
+  attachReport: boolean;
+  reportTemplateId: ReportTemplateId;
+  userId: UserId;
+  timezone: string;
 }
 
 export type DeliveryMethodsTemplates = {
@@ -344,6 +374,7 @@ interface NotificationButtonConfig {
   dashboardId?: string;
   dashboardState?: string;
   setEntityIdInState?: boolean;
+  entityType?: EntityType;
 }
 
 interface EmailDeliveryMethodNotificationTemplate {
@@ -447,8 +478,10 @@ export const SlackChanelTypesTranslateMap = new Map<SlackChanelType, string>([
 export enum NotificationTargetConfigType {
   ALL_USERS = 'ALL_USERS',
   TENANT_ADMINISTRATORS = 'TENANT_ADMINISTRATORS',
-  CUSTOMER_USERS = 'CUSTOMER_USERS',
   USER_LIST = 'USER_LIST',
+  USER_GROUP_LIST = 'USER_GROUP_LIST',
+  CUSTOMER_USERS = 'CUSTOMER_USERS',
+  USER_ROLE = 'USER_ROLE',
   ORIGINATOR_ENTITY_OWNER_USERS = 'ORIGINATOR_ENTITY_OWNER_USERS',
   AFFECTED_USER = 'AFFECTED_USER',
   SYSTEM_ADMINISTRATORS = 'SYSTEM_ADMINISTRATORS',
@@ -500,6 +533,16 @@ export const NotificationTargetConfigTypeInfoMap = new Map<NotificationTargetCon
     {
       name: 'notification.recipient-type.affected-tenant-administrators'
     }
+  ],
+  [NotificationTargetConfigType.USER_ROLE,
+    {
+      name: 'notification.recipient-type.user-role'
+    }
+  ],
+  [NotificationTargetConfigType.USER_GROUP_LIST,
+    {
+      name: 'notification.recipient-type.user-group-list'
+    }
   ]
 ]);
 
@@ -513,14 +556,21 @@ export enum NotificationType {
   RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT = 'RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT',
   ENTITIES_LIMIT = 'ENTITIES_LIMIT',
   ENTITIES_LIMIT_INCREASE_REQUEST = 'ENTITIES_LIMIT_INCREASE_REQUEST',
+  ADDON_ACCESS_REQUEST = 'ADDON_ACCESS_REQUEST',
+  ADDON_ACCESS_ERROR = 'ADDON_ACCESS_ERROR',
+  PLAN_UPGRADE_REQUEST = 'PLAN_UPGRADE_REQUEST',
   API_USAGE_LIMIT = 'API_USAGE_LIMIT',
   NEW_PLATFORM_VERSION = 'NEW_PLATFORM_VERSION',
   RULE_NODE = 'RULE_NODE',
+  INTEGRATION_LIFECYCLE_EVENT = 'INTEGRATION_LIFECYCLE_EVENT',
   RATE_LIMITS = 'RATE_LIMITS',
   EDGE_CONNECTION = 'EDGE_CONNECTION',
   EDGE_COMMUNICATION_FAILURE = 'EDGE_COMMUNICATION_FAILURE',
   TASK_PROCESSING_FAILURE = 'TASK_PROCESSING_FAILURE',
-  RESOURCES_SHORTAGE = 'RESOURCES_SHORTAGE'
+  RESOURCES_SHORTAGE = 'RESOURCES_SHORTAGE',
+  USER_ACTIVATED = 'USER_ACTIVATED',
+  USER_REGISTERED = 'USER_REGISTERED',
+  REPORT_GENERATED = 'REPORT_GENERATED'
 }
 
 export const NotificationTypeIcons = new Map<NotificationType, string | null>([
@@ -532,9 +582,14 @@ export const NotificationTypeIcons = new Map<NotificationType, string | null>([
   [NotificationType.RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT, 'settings_ethernet'],
   [NotificationType.ENTITIES_LIMIT, 'data_thresholding'],
   [NotificationType.ENTITIES_LIMIT_INCREASE_REQUEST, 'mdi:file-cog'],
+  [NotificationType.ADDON_ACCESS_REQUEST, 'pending_actions'],
+  [NotificationType.ADDON_ACCESS_ERROR, 'warning'],
+  [NotificationType.PLAN_UPGRADE_REQUEST, 'mdi:file-cog'],
   [NotificationType.API_USAGE_LIMIT, 'insert_chart'],
+  [NotificationType.INTEGRATION_LIFECYCLE_EVENT, 'integration_instructions'],
   [NotificationType.TASK_PROCESSING_FAILURE, 'warning'],
-  [NotificationType.RESOURCES_SHORTAGE, 'warning']
+  [NotificationType.RESOURCES_SHORTAGE, 'warning'],
+  [NotificationType.REPORT_GENERATED, 'description']
 ]);
 
 export enum ActionButtonLinkType {
@@ -607,6 +662,24 @@ export const NotificationTemplateTypeTranslateMap = new Map<NotificationType, No
       helpId: 'notification/entities_limit_increase_request'
     }
   ],
+  [NotificationType.ADDON_ACCESS_REQUEST,
+    {
+      name: 'notification.template-type.addon-access-request',
+      helpId: 'notification/addon_access_request'
+    }
+  ],
+  [NotificationType.ADDON_ACCESS_ERROR,
+    {
+      name: 'notification.template-type.addon-access-error',
+      helpId: 'notification/addon_access_error'
+    }
+  ],
+  [NotificationType.PLAN_UPGRADE_REQUEST,
+    {
+      name: 'notification.template-type.plan-upgrade-request',
+      helpId: 'notification/plan_upgrade_request'
+    }
+  ],
   [NotificationType.API_USAGE_LIMIT,
     {
       name: 'notification.template-type.api-usage-limit',
@@ -623,6 +696,12 @@ export const NotificationTemplateTypeTranslateMap = new Map<NotificationType, No
     {
       name: 'notification.template-type.rule-node',
       helpId: 'notification/rule_node'
+    }
+  ],
+  [NotificationType.INTEGRATION_LIFECYCLE_EVENT,
+    {
+      name: 'notification.template-type.integration-lifecycle-event',
+      helpId: 'notification/integration_lifecycle_event'
     }
   ],
   [NotificationType.RATE_LIMITS,
@@ -649,10 +728,28 @@ export const NotificationTemplateTypeTranslateMap = new Map<NotificationType, No
       helpId: 'notification/task_processing_failure'
     }
   ],
+  [NotificationType.USER_ACTIVATED,
+    {
+      name: 'notification.template-type.user-activated',
+      helpId: 'notification/user_activated'
+    }
+  ],
+  [NotificationType.USER_REGISTERED,
+    {
+      name: 'notification.template-type.user-registered',
+      helpId: 'notification/user_registered'
+    }
+  ],
   [NotificationType.RESOURCES_SHORTAGE,
     {
       name: 'notification.template-type.resources-shortage',
       helpId: 'notification/resources_shortage'
+    }
+  ],
+  [NotificationType.REPORT_GENERATED,
+    {
+      name: 'notification.template-type.report-generated',
+      helpId: 'notification/report_generated'
     }
   ]
 ]);
@@ -666,6 +763,7 @@ export enum TriggerType {
   RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT = 'RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT',
   ENTITIES_LIMIT = 'ENTITIES_LIMIT',
   API_USAGE_LIMIT = 'API_USAGE_LIMIT',
+  INTEGRATION_LIFECYCLE_EVENT = 'INTEGRATION_LIFECYCLE_EVENT',
   NEW_PLATFORM_VERSION = 'NEW_PLATFORM_VERSION',
   RATE_LIMITS = 'RATE_LIMITS',
   EDGE_CONNECTION = 'EDGE_CONNECTION',
@@ -683,6 +781,7 @@ export const TriggerTypeTranslationMap = new Map<TriggerType, string>([
   [TriggerType.RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT, 'notification.trigger.rule-engine-lifecycle-event'],
   [TriggerType.ENTITIES_LIMIT, 'notification.trigger.entities-limit'],
   [TriggerType.API_USAGE_LIMIT, 'notification.trigger.api-usage-limit'],
+  [TriggerType.INTEGRATION_LIFECYCLE_EVENT, 'notification.trigger.integration-lifecycle-event'],
   [TriggerType.NEW_PLATFORM_VERSION, 'notification.trigger.new-platform-version'],
   [TriggerType.RATE_LIMITS, 'notification.trigger.rate-limits'],
   [TriggerType.EDGE_CONNECTION, 'notification.trigger.edge-connection'],
@@ -698,4 +797,39 @@ export interface NotificationUserSettings {
 export interface NotificationUserSetting {
   enabled: boolean;
   enabledDeliveryMethods: {[key: string]: boolean};
+}
+
+export const singleNotificationTypeTemplate = (type: NotificationType) => {
+  return type === NotificationType.USER_ACTIVATED ||
+         type === NotificationType.USER_REGISTERED ||
+         type === NotificationType.ENTITIES_LIMIT_INCREASE_REQUEST;
+}
+
+export function notificationAiAssistantConfig(store: Store<AppState>,
+                                              userPermissionsService: UserPermissionsService,
+                                              translate: TranslateService,
+                                              listView: AiAssistantViewType): AiAssistantPanelConfig | null {
+  const hasPermission = getCurrentAuthState(store).aiEnabled &&
+    userPermissionsService.hasGenericPermission(Resource.AI, Operation.ALL) &&
+    userPermissionsService.hasGenericPermission(Resource.NOTIFICATION, Operation.WRITE);
+  if (!hasPermission) {
+    return null;
+  }
+  return {
+    view: {
+      listView
+    },
+    initialPromptPlaceholder: translate.instant('notification.ai-assistant-initial-prompt-placeholder'),
+    promptExamples: [
+      {
+        label: translate.instant('notification.ai-assistant-example-explain-label'),
+        message: translate.instant('notification.ai-assistant-example-explain-message')
+      },
+      {
+        label: translate.instant('notification.ai-assistant-example-inactivity-label'),
+        message: translate.instant('notification.ai-assistant-example-inactivity-message')
+      }
+    ],
+    showButton: false
+  };
 }

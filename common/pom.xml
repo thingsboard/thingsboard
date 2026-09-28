@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -15,7 +16,7 @@
     <artifactId>common</artifactId>
     <packaging>pom</packaging>
 
-    <name>Thingsboard Server Commons</name>
+    <name>ThingsBoard Server Commons</name>
     <url>https://thingsboard.io</url>
 
     <properties>
@@ -30,16 +31,19 @@
         <module>actor</module>
         <module>queue</module>
         <module>transport</module>
+        <module>integration</module>
         <module>dao-api</module>
         <module>cluster-api</module>
         <module>stats</module>
         <module>cache</module>
         <module>coap-server</module>
         <module>edge-api</module>
+        <module>agent-api</module>
         <module>version-control</module>
         <module>script</module>
         <module>edqs</module>
         <module>discovery-api</module>
+        <module>report</module>
     </modules>
 
 </project>

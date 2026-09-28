@@ -1,0 +1,69 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="updateAttributesFormGroup" class="tb-form-panel no-border no-padding flex flex-col">
+  <div class="tb-form-panel stroked no-padding-bottom">
+    <div class="tb-form-panel-title" translate>scheduler.target</div>
+    <tb-originator-select
+      required
+      (currentGroupType)="currentGroupType = $event"
+      formControlName="originatorId">
+    </tb-originator-select>
+  </div>
+  @if (updateAttributesFormGroup.get('originatorId').value) {
+    <fieldset class="tb-form-panel stroked">
+      <div class="tb-form-panel-title" translate>attribute.attributes</div>
+      <div formGroupName="metadata" class="flex flex-col">
+        @if (updateAttributesFormGroup.get('originatorId').value?.entityType === entityType.DEVICE ||
+        updateAttributesFormGroup.get('originatorId').value?.entityType === entityType.ENTITY_GROUP &&
+        currentGroupType === entityType.DEVICE) {
+          <mat-form-field class="mat-block" appearance="outline">
+            <mat-label translate>attribute.attributes-scope</mat-label>
+            <mat-select matInput formControlName="scope">
+              @for (scope of attributeScopes; track scope) {
+                <mat-option [value]="scope">
+                  {{ telemetryTypeTranslationsMap.get(scope) | translate }}
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        }
+      </div>
+      @if (updateAttributesFormGroup.get('metadata').get('scope').value === attributeScope.SERVER_SCOPE) {
+        <mat-expansion-panel
+          [expanded]="true">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <div class="tb-panel-title" translate>attribute.scope-server</div>
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <tb-attribute-key-value-table
+            titleText="attribute.scope-server"
+            required
+            requiredPrompt="attribute.add-attribute-prompt"
+            formControlName="serverAttributes"
+          ></tb-attribute-key-value-table>
+        </mat-expansion-panel>
+      }
+      @if (updateAttributesFormGroup.get('metadata').get('scope').value === attributeScope.SHARED_SCOPE) {
+        <mat-expansion-panel
+          [expanded]="true">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <div class="tb-panel-title" translate>attribute.scope-shared</div>
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <tb-attribute-key-value-table
+            titleText="attribute.scope-shared"
+            required
+            requiredPrompt="attribute.add-attribute-prompt"
+            formControlName="sharedAttributes"
+          ></tb-attribute-key-value-table>
+        </mat-expansion-panel>
+      }
+    </fieldset>
+  }
+</section>

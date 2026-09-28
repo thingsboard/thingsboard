@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.sync.ie.importing.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -19,13 +20,16 @@ import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.HasDefaultOption;
+import org.thingsboard.server.common.data.HasOwnerId;
 import org.thingsboard.server.common.data.HasVersion;
+import org.thingsboard.server.common.data.TenantEntity;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.configuration.AlarmCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentsBasedCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -39,6 +43,8 @@ import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.sync.ie.AttributeExportData;
@@ -47,10 +53,14 @@ import org.thingsboard.server.common.data.sync.ie.EntityImportResult;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.relation.RelationDao;
 import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.dao.secret.SecretConfigurationService;
 import org.thingsboard.server.service.action.EntityActionService;
 import org.thingsboard.server.service.entitiy.TbLogEntityActionService;
+import org.thingsboard.server.service.security.permission.AccessControlService;
+import org.thingsboard.server.service.security.permission.OwnersCacheService;
 import org.thingsboard.server.service.sync.ie.exporting.ExportableEntitiesService;
 import org.thingsboard.server.service.sync.ie.importing.EntityImportService;
+import org.thingsboard.server.service.sync.ie.importing.MissingEntityException;
 import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
@@ -70,7 +80,10 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
 
     @Autowired
     @Lazy
-    private ExportableEntitiesService entitiesService;
+    protected ExportableEntitiesService entitiesService;
+    @Autowired
+    @Lazy
+    protected OwnersCacheService ownersCacheService;
     @Autowired
     private CalculatedFieldService calculatedFieldService;
     @Autowired
@@ -85,9 +98,13 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
     protected TbClusterService clusterService;
     @Autowired
     protected TbLogEntityActionService logEntityActionService;
+    @Autowired
+    protected SecretConfigurationService secretConfigurationService;
+    @Autowired
+    protected AccessControlService accessControlService;
 
     @Override
-    public EntityImportResult<E> importEntity(EntitiesImportCtx ctx, D exportData) throws ThingsboardException {
+    public EntityImportResult<E> importEntity(EntitiesImportCtx ctx, D exportData) throws Exception {
         EntityImportResult<E> importResult = new EntityImportResult<>();
         ctx.setCurrentImportResult(importResult);
         importResult.setEntityType(getEntityType());
@@ -96,10 +113,11 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
         E entity = exportData.getEntity();
         entity.setExternalId(entity.getId());
 
+        setOwner(ctx.getTenantId(), entity, idProvider);
+
         E existingEntity = findExistingEntity(ctx, entity, idProvider);
         importResult.setOldEntity(existingEntity);
 
-        setOwner(ctx.getTenantId(), entity, idProvider);
         if (existingEntity == null) {
             entity.setId(null);
         } else {
@@ -107,12 +125,28 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
             entity.setCreatedTime(existingEntity.getCreatedTime());
         }
 
+        checkImportPermission(ctx, entity, existingEntity);
+
         E prepared = prepare(ctx, entity, existingEntity, exportData, idProvider);
 
         CompareResult compareResult = compare(ctx, exportData, prepared, existingEntity);
 
         if (compareResult.isUpdateNeeded()) {
+            boolean changeOwner = false;
+            if (existingEntity != null && prepared instanceof HasOwnerId) {
+                EntityId newOwnerId = ((HasOwnerId) prepared).getOwnerId();
+                EntityId oldOwnerId = ((HasOwnerId) existingEntity).getOwnerId();
+                changeOwner = !newOwnerId.equals(oldOwnerId);
+                if (changeOwner) {
+                    checkChangeOwnerPermission(ctx, existingEntity);
+                    ownersCacheService.changeEntityOwner(ctx.getTenantId(), existingEntity.getId(), newOwnerId, oldOwnerId);
+                }
+            }
             E savedEntity = saveOrUpdate(ctx, prepared, exportData, idProvider, compareResult);
+            if (changeOwner) {
+                importResult.addSendEventsCallback(() ->
+                        logEntityActionService.logEntityAction(ctx.getTenantId(), savedEntity.getId(), entity, ActionType.CHANGE_OWNER, ctx.getUser(), ((HasOwnerId) savedEntity).getOwnerId()));
+            }
             boolean created = existingEntity == null;
             importResult.setCreated(created);
             importResult.setUpdated(!created);
@@ -132,6 +166,7 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
     @Data
     @AllArgsConstructor
     static class CompareResult {
+
         private boolean updateNeeded;
         private boolean externalIdChangedOnly;
 
@@ -192,7 +227,7 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
         e.setExternalId(null);
     }
 
-    protected abstract E saveOrUpdate(EntitiesImportCtx ctx, E entity, D exportData, IdProvider idProvider, CompareResult compareResult);
+    protected abstract E saveOrUpdate(EntitiesImportCtx ctx, E entity, D exportData, IdProvider idProvider, CompareResult compareResult) throws Exception;
 
     protected void processAfterSaved(EntitiesImportCtx ctx, EntityImportResult<E> importResult, D exportData, IdProvider idProvider) throws ThingsboardException {
         E savedEntity = importResult.getSavedEntity();
@@ -240,10 +275,9 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
                     if (relation == null) {
                         importResult.setUpdatedRelatedEntities(true);
                         relationService.deleteRelation(ctx.getTenantId(), existingRelation.getFrom(), existingRelation.getTo(), existingRelation.getType(), existingRelation.getTypeGroup());
-                        importResult.addSendEventsCallback(() -> {
-                            logEntityActionService.logEntityRelationAction(tenantId, null,
-                                    existingRelation, ctx.getUser(), ActionType.RELATION_DELETED, null, existingRelation);
-                        });
+                        importResult.addSendEventsCallback(() ->
+                                logEntityActionService.logEntityRelationAction(tenantId, null,
+                                        existingRelation, ctx.getUser(), ActionType.RELATION_DELETED, null, existingRelation));
                     } else if (Objects.equal(relation.getAdditionalInfo(), existingRelation.getAdditionalInfo())) {
                         relationsMap.remove(relation);
                     }
@@ -371,6 +405,29 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
                 oldEntity == null ? ActionType.ADDED : ActionType.UPDATED, user);
     }
 
+    protected void checkImportPermission(EntitiesImportCtx ctx, E entity, E existingEntity) throws ThingsboardException {
+        Resource resource = Resource.resourceFromEntityType(getEntityType());
+        if (resource == null) {
+            throw new ThingsboardException("Permission denied", ThingsboardErrorCode.PERMISSION_DENIED);
+        }
+        if (existingEntity == null) {
+            accessControlService.checkPermission(ctx.getUser(), resource, Operation.CREATE,
+                    null, (TenantEntity) entity);
+        } else {
+            accessControlService.checkPermission(ctx.getUser(), resource, Operation.WRITE,
+                    existingEntity.getId(), (TenantEntity) existingEntity);
+        }
+    }
+
+    protected void checkChangeOwnerPermission(EntitiesImportCtx ctx, E existingEntity) throws ThingsboardException {
+        Resource resource = Resource.resourceFromEntityType(getEntityType());
+        if (resource == null) {
+            throw new ThingsboardException("Permission denied", ThingsboardErrorCode.PERMISSION_DENIED);
+        }
+        accessControlService.checkPermission(ctx.getUser(), resource, Operation.CHANGE_OWNER,
+                existingEntity.getId(), (TenantEntity) existingEntity);
+    }
+
     @SuppressWarnings("unchecked")
     protected E findExistingEntity(EntitiesImportCtx ctx, E entity, IdProvider idProvider) {
         return (E) Optional.ofNullable(entitiesService.findEntityByTenantIdAndExternalId(ctx.getTenantId(), entity.getId()))
@@ -394,7 +451,7 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
     }
 
     @SuppressWarnings("unchecked")
-    private <ID extends EntityId> HasId<ID> findInternalEntity(TenantId tenantId, ID externalId) {
+    protected <ID extends EntityId> HasId<ID> findInternalEntity(TenantId tenantId, ID externalId) {
         return (HasId<ID>) Optional.ofNullable(entitiesService.findEntityByTenantIdAndExternalId(tenantId, externalId))
                 .or(() -> Optional.ofNullable(entitiesService.findEntityByTenantIdAndId(tenantId, externalId)))
                 .orElseThrow(() -> new MissingEntityException(externalId));

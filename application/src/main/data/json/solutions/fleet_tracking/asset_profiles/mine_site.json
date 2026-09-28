@@ -1,0 +1,12 @@
+{
+  "name": "Mine site",
+  "description": "Represents a clay mine site that groups all zones and machinery for geofencing monitoring and analytics.",
+  "image": null,
+  "defaultRuleChainId": null,
+  "defaultEdgeRuleChainId": null,
+  "defaultDashboardId": null,
+  "defaultQueueName": null,
+  "externalId": null,
+  "default": false,
+  "jsonId": "41d774a9-a4e5-4ea3-9824-530c25dbb422"
+}

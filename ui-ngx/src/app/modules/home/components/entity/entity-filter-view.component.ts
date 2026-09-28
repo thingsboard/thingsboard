@@ -1,10 +1,13 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
-import { Component, forwardRef } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { Component, forwardRef, Input } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { AliasFilterType, EntityAliasFilter } from '@shared/models/alias.models';
 import { AliasEntityType, EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { TranslateService } from '@ngx-translate/core';
+import { defaultSchedulerEventConfigTypes } from '@home/components/scheduler/scheduler-event-config.models';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
     selector: 'tb-entity-filter-view',
@@ -20,6 +23,14 @@ import { TranslateService } from '@ngx-translate/core';
     standalone: false
 })
 export class EntityFilterViewComponent implements ControlValueAccessor {
+
+  @Input()
+  @coerceBoolean()
+  reportMode = false;
+
+  @Input()
+  @coerceBoolean()
+  subReport = false;
 
   constructor(private translate: TranslateService) {}
 
@@ -45,15 +56,28 @@ export class EntityFilterViewComponent implements ControlValueAccessor {
       let relationTypeText;
       let rootEntityText;
       let directionText;
+      let count: number;
       switch (this.filter.type) {
         case AliasFilterType.singleEntity:
           entityType = this.filter.singleEntity.entityType;
           this.filterDisplayValue = this.translate.instant(entityTypeTranslations.get(entityType).list,
             {count: 1});
           break;
+        case AliasFilterType.entityGroup:
+          if (this.filter.groupStateEntity) {
+            if (this.reportMode) {
+              this.filterDisplayValue = this.translate.instant(this.subReport ? 'alias.entities-of-group-master-report-entity' : 'alias.entities-of-group-originator-entity');
+            } else {
+              this.filterDisplayValue = this.translate.instant('alias.entities-of-group-state-entity');
+            }
+          } else {
+            entityType = this.filter.groupType;
+            this.filterDisplayValue = this.translate.instant(entityTypeTranslations.get(entityType).group);
+          }
+          break;
         case AliasFilterType.entityList:
           entityType = this.filter.entityType;
-          const count = this.filter.entityList.length;
+          count = this.filter.entityList.length;
           this.filterDisplayValue = this.translate.instant(entityTypeTranslations.get(entityType).list,
             {count});
           break;
@@ -67,8 +91,36 @@ export class EntityFilterViewComponent implements ControlValueAccessor {
           entityType = this.filter.entityType;
           this.filterDisplayValue = this.translate.instant(entityTypeTranslations.get(entityType).typePlural);
           break;
+        case AliasFilterType.entityGroupList:
+          entityType = this.filter.groupType;
+          count = this.filter.entityGroupList.length;
+          this.filterDisplayValue = this.translate.instant(entityTypeTranslations.get(entityType).groupList,
+            {count});
+          break;
+        case AliasFilterType.entityGroupName:
+          entityType = this.filter.groupType;
+          prefix = this.filter.entityGroupNameFilter;
+          this.filterDisplayValue = this.translate.instant(entityTypeTranslations.get(entityType).groupNameStartsWith,
+            {prefix});
+          break;
+        case AliasFilterType.entitiesByGroupName:
+          entityType = this.filter.groupType;
+          prefix = this.filter.entityGroupNameFilter;
+          this.filterDisplayValue = this.translate.instant(entityTypeTranslations.get(entityType).group) + ': ' + prefix;
+          break;
         case AliasFilterType.stateEntity:
-          this.filterDisplayValue = this.translate.instant('alias.filter-type-state-entity-description');
+          if (this.reportMode) {
+            this.filterDisplayValue = this.translate.instant(this.subReport ? 'alias.filter-type-state-entity-master-report-description' : 'alias.filter-type-state-entity-originator-description');
+          } else {
+            this.filterDisplayValue = this.translate.instant('alias.filter-type-state-entity-description');
+          }
+          break;
+        case AliasFilterType.stateEntityOwner:
+          if (this.reportMode) {
+            this.filterDisplayValue = this.translate.instant(this.subReport ? 'alias.filter-type-state-entity-owner-master-report-description' : 'alias.filter-type-state-entity-owner-originator-description');
+          } else {
+            this.filterDisplayValue = this.translate.instant('alias.filter-type-state-entity-owner-description');
+          }
           break;
         case AliasFilterType.assetType:
           const assetTypesQuoted = [];
@@ -100,21 +152,6 @@ export class EntityFilterViewComponent implements ControlValueAccessor {
               {deviceTypes});
           }
           break;
-        case AliasFilterType.edgeType:
-          const edgeTypesQuoted = [];
-          this.filter.edgeTypes.forEach((filterEdgeType) => {
-            edgeTypesQuoted.push(`'${filterEdgeType}'`);
-          });
-          const edgeTypes = edgeTypesQuoted.join(', ');
-          prefix = this.filter.edgeNameFilter;
-          if (prefix && prefix.length) {
-            this.filterDisplayValue = this.translate.instant('alias.filter-type-edge-type-and-name-description',
-              {edgeTypes, prefix});
-          } else {
-            this.filterDisplayValue = this.translate.instant('alias.filter-type-edge-type-description',
-              {edgeTypes});
-          }
-          break;
         case AliasFilterType.apiUsageState:
           this.filterDisplayValue = this.translate.instant('alias.filter-type-apiUsageState');
           break;
@@ -133,11 +170,30 @@ export class EntityFilterViewComponent implements ControlValueAccessor {
               {entityViewTypes});
           }
           break;
+        case AliasFilterType.edgeType:
+          const edgeTypesQuoted = [];
+          this.filter.edgeTypes.forEach((filterEdgeType) => {
+            edgeTypesQuoted.push(`'${filterEdgeType}'`);
+          });
+          const edgeTypes = edgeTypesQuoted.join(', ');
+          prefix = this.filter.edgeNameFilter;
+          if (prefix && prefix.length) {
+            this.filterDisplayValue = this.translate.instant('alias.filter-type-edge-type-and-name-description',
+              {edgeTypes, prefix});
+          } else {
+            this.filterDisplayValue = this.translate.instant('alias.filter-type-edge-type-description',
+              {edgeTypes});
+          }
+          break;
         case AliasFilterType.relationsQuery:
           allEntitiesText = this.translate.instant('alias.all-entities');
           anyRelationText = this.translate.instant('alias.any-relation');
           if (this.filter.rootStateEntity) {
-            rootEntityText = this.translate.instant('alias.state-entity');
+            if (this.reportMode) {
+              rootEntityText = this.translate.instant(this.subReport ? 'alias.master-report-entity' : 'alias.originator-entity');
+            } else {
+              rootEntityText = this.translate.instant('alias.state-entity');
+            }
           } else {
             rootEntityText = this.translate.instant(entityTypeTranslations.get(this.filter.rootEntity.entityType).type);
           }
@@ -192,7 +248,11 @@ export class EntityFilterViewComponent implements ControlValueAccessor {
           allEntitiesText = this.translate.instant('alias.all-entities');
           anyRelationText = this.translate.instant('alias.any-relation');
           if (this.filter.rootStateEntity) {
-            rootEntityText = this.translate.instant('alias.state-entity');
+            if (this.reportMode) {
+              rootEntityText = this.translate.instant(this.subReport ? 'alias.master-report-entity' : 'alias.originator-entity');
+            } else {
+              rootEntityText = this.translate.instant('alias.state-entity');
+            }
           } else {
             rootEntityText = this.translate.instant(entityTypeTranslations.get(this.filter.rootEntity.entityType).type);
           }
@@ -249,6 +309,32 @@ export class EntityFilterViewComponent implements ControlValueAccessor {
             this.filterDisplayValue = this.translate.instant('alias.filter-type-entity-view-search-query-description',
               translationValues
             );
+          }
+          break;
+        case AliasFilterType.schedulerEvent:
+          if (this.filter.eventType) {
+            let eventTypeName = this.filter.eventType;
+            if (defaultSchedulerEventConfigTypes[this.filter.eventType]) {
+              eventTypeName = defaultSchedulerEventConfigTypes[this.filter.eventType].name;
+            }
+            const interpolateParams = {
+              eventType: eventTypeName
+            };
+            if (this.filter.originator || this.filter.originatorStateEntity) {
+              this.filterDisplayValue = this.translate.instant('alias.filter-type-scheduler-event-type-originator-description',
+                interpolateParams
+              );
+            } else {
+              this.filterDisplayValue = this.translate.instant('alias.filter-type-scheduler-event-type-description',
+                interpolateParams
+              );
+            }
+          } else {
+            if (this.filter.originator || this.filter.originatorStateEntity) {
+              this.filterDisplayValue = this.translate.instant('alias.filter-type-scheduler-event-originator-description');
+            } else {
+              this.filterDisplayValue = this.translate.instant('alias.filter-type-scheduler-event');
+            }
           }
           break;
         default:

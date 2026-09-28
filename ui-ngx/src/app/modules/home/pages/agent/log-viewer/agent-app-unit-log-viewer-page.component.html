@@ -1,0 +1,62 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section class="tb-log-page">
+  <header class="tb-log-page-header">
+    <div class="tb-log-page-header-top">
+      <button mat-icon-button
+        class="tb-log-page-back"
+        [matTooltip]="'agent.app-units' | translate"
+        (click)="back()"
+        tabindex="-1"
+        [attr.aria-label]="'agent.log-back-to-application' | translate">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div class="tb-log-page-header-title">
+        <span class="tb-log-page-header-eyebrow" translate>agent.app-unit-logs</span>
+        <span class="tb-log-page-header-subject" data-test="unit-identifier">
+          {{ unitIdentifier || '—' }}
+        </span>
+      </div>
+      <span class="tb-log-page-header-spacer"></span>
+      <span class="tb-log-page-status"
+        [class.tb-log-page-status--online]="agentOnline"
+        [class.tb-log-page-status--offline]="!agentOnline"
+        data-test="agent-status">
+        <span class="tb-log-page-status-dot"></span>
+        <span class="tb-log-page-status-label">
+          {{ (agentOnline ? 'agent.log-agent-online' : 'agent.log-agent-offline-paused') | translate }}
+        </span>
+      </span>
+      <div tb-help="agentAppLogs"></div>
+    </div>
+    <div class="tb-log-page-header-meta">
+      @if (appType) {
+        <span class="tb-log-page-chip">
+          <span class="tb-log-page-chip-label" translate>agent.log-chip-app</span>
+          <span class="tb-log-page-chip-value">{{ appType }}</span>
+        </span>
+      }
+      @if (image) {
+        <span class="tb-log-page-chip">
+          <span class="tb-log-page-chip-label" translate>agent.app-unit-image</span>
+          <span class="tb-log-page-chip-value tb-log-page-chip-value--mono">{{ image }}</span>
+        </span>
+      }
+      @if (state) {
+        <span class="tb-log-page-chip">
+          <span class="tb-log-page-chip-label" translate>agent.app-unit-state</span>
+          <span class="tb-log-page-chip-value"
+          [attr.data-state]="state">{{ state }}</span>
+        </span>
+      }
+      <tb-agent-metrics-strip [snapshot]="metrics" [compact]="true" [aggregated]="false"></tb-agent-metrics-strip>
+    </div>
+  </header>
+  <main class="tb-log-page-body">
+    <tb-log-viewer [filenamePrefix]="unitIdentifier"></tb-log-viewer>
+  </main>
+</section>

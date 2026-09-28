@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   createNgModule,
   Inject,
@@ -20,7 +21,7 @@ import { forkJoin, from, Observable, ReplaySubject, throwError } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { IModulesMap } from '@modules/common/modules-map.models';
 import { TbResourceId } from '@shared/models/id/tb-resource-id';
-import { camelCase, isObject, isUndefined } from '@core/utils';
+import { camelCase, getFilenameFromHttpHeader, isObject, isUndefined } from '@core/utils';
 import { AuthService } from '@core/auth/auth.service';
 import { select, Store } from '@ngrx/store';
 import { selectIsAuthenticated } from '@core/auth/auth.selectors';
@@ -161,7 +162,7 @@ export class ResourcesService {
     }}).pipe(
       map((response) => {
         const headers = response.headers;
-        const filename = headers.get('x-filename');
+        const filename = getFilenameFromHttpHeader(headers);
         const contentType = headers.get('content-type');
         const linkElement = document.createElement('a');
         try {
@@ -169,14 +170,8 @@ export class ResourcesService {
           const url = URL.createObjectURL(blob);
           linkElement.setAttribute('href', url);
           linkElement.setAttribute('download', filename);
-          const clickEvent = new MouseEvent('click',
-            {
-              view: window,
-              bubbles: true,
-              cancelable: false
-            }
-          );
-          linkElement.dispatchEvent(clickEvent);
+          linkElement.click();
+          setTimeout(() => URL.revokeObjectURL(url), 0);
           return null;
         } catch (e) {
           throw e;

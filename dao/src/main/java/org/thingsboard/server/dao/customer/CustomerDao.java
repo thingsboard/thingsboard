@@ -1,14 +1,17 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.customer;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.id.CustomMenuId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.Dao;
-import org.thingsboard.server.dao.ExportableEntityDao;
+import org.thingsboard.server.dao.ExportableCustomerEntityDao;
 import org.thingsboard.server.dao.TenantEntityDao;
 
 import java.util.List;
@@ -18,7 +21,7 @@ import java.util.UUID;
 /**
  * The Interface CustomerDao.
  */
-public interface CustomerDao extends Dao<Customer>, TenantEntityDao<Customer>, ExportableEntityDao<CustomerId, Customer> {
+public interface CustomerDao extends Dao<Customer>, TenantEntityDao<Customer>, ExportableCustomerEntityDao<Customer, CustomerId> {
 
     /**
      * Save or update customer object
@@ -47,12 +50,28 @@ public interface CustomerDao extends Dao<Customer>, TenantEntityDao<Customer>, E
     Optional<Customer> findCustomerByTenantIdAndTitle(UUID tenantId, String title);
 
     /**
-     * Find public customer by tenantId.
+     * Find public customer by tenantId and ownerId.
      *
      * @param tenantId the tenantId
+     * @param ownerId the ownerId
      * @return the optional public customer object
      */
-    Optional<Customer> findPublicCustomerByTenantId(UUID tenantId);
+    Optional<Customer> findPublicCustomerByTenantIdAndOwnerId(UUID tenantId, UUID ownerId);
+
+    /**
+     * Find customers by tenantId and customer Ids.
+     *
+     * @param tenantId the tenantId
+     * @param customerIds the customer Ids
+     * @return the list of customer objects
+     */
+    ListenableFuture<List<Customer>> findCustomersByTenantIdAndIdsAsync(UUID tenantId, List<UUID> customerIds);
+
+    List<Customer> findCustomersByTenantIdAndIds(UUID tenantId, List<UUID> customerIds);
+
+    PageData<Customer> findCustomersByEntityGroupId(UUID groupId, PageLink pageLink);
+
+    PageData<Customer> findCustomersByEntityGroupIds(List<UUID> groupIds, List<UUID> additionalCustomerIds, PageLink pageLink);
 
 
     /**
@@ -66,6 +85,10 @@ public interface CustomerDao extends Dao<Customer>, TenantEntityDao<Customer>, E
      */
     PageData<Customer> findCustomersWithTheSameTitle(PageLink pageLink);
 
-    List<Customer> findCustomersByTenantIdAndIds(UUID tenantId, List<UUID> customerIds);
+    List<Customer> findCustomersByCustomMenuId(CustomMenuId id);
+
+    void updateCustomersCustomMenuId(List<CustomerId> customerIds, CustomMenuId customMenuId);
+
+    PageData<Customer> findByTenantIdAndParentCustomerId(TenantId tenantId, CustomerId parentCustomerId, PageLink pageLink);
 
 }

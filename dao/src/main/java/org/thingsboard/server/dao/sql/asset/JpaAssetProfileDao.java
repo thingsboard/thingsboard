@@ -1,12 +1,15 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.asset;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.AssetProfileCacheInfo;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.asset.AssetProfile;
@@ -66,6 +69,16 @@ public class JpaAssetProfileDao extends JpaAbstractDao<AssetProfileEntity, Asset
     }
 
     @Override
+    public ListenableFuture<List<AssetProfileInfo>> findAssetProfilesByTenantIdAndIdsAsync(UUID tenantId, List<UUID> assetProfileIds) {
+        return service.submit(() -> assetProfileRepository.findAssetProfileInfosByTenantIdAndIdIn(tenantId, assetProfileIds));
+    }
+
+    @Override
+    public List<AssetProfileInfo> findAssetProfilesByTenantIdAndIds(UUID tenantId, List<UUID> assetProfileIds) {
+        return assetProfileRepository.findAssetProfileInfosByTenantIdAndIdIn(tenantId, assetProfileIds);
+    }
+
+    @Override
     public AssetProfile findDefaultAssetProfile(TenantId tenantId) {
         return DaoUtil.getData(assetProfileRepository.findByDefaultTrueAndTenantId(tenantId.getId()));
     }
@@ -90,11 +103,6 @@ public class JpaAssetProfileDao extends JpaAbstractDao<AssetProfileEntity, Asset
         return activeOnly ?
                 assetProfileRepository.findActiveTenantAssetProfileNames(tenantId) :
                 assetProfileRepository.findAllTenantAssetProfileNames(tenantId);
-    }
-
-    @Override
-    public List<AssetProfileInfo> findAssetProfilesByTenantIdAndIds(UUID tenantId, List<UUID> assetProfileIds) {
-        return assetProfileRepository.findAssetProfileInfosByTenantIdAndIdIn(tenantId, assetProfileIds);
     }
 
     @Override
@@ -141,6 +149,11 @@ public class JpaAssetProfileDao extends JpaAbstractDao<AssetProfileEntity, Asset
     @Override
     public List<AssetProfileFields> findNextBatch(UUID id, int batchSize) {
         return assetProfileRepository.findNextBatch(id, Limit.of(batchSize));
+    }
+
+    @Override
+    public List<AssetProfileCacheInfo> findAssetProfileCacheInfos(UUID id, int batchSize) {
+        return assetProfileRepository.findAssetProfileCacheInfos(id, Limit.of(batchSize));
     }
 
     @Override

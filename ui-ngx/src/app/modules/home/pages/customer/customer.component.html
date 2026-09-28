@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div class="tb-details-buttons xs:flex xs:flex-col">
@@ -11,44 +12,78 @@
           [class.!hidden]="isEdit || isDetailsPage">
     {{'common.open-details-page' | translate }}
   </button>
-  <button mat-stroked-button color="primary"
-          [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'manageUsers')"
-          [class.!hidden]="isEdit || isPublic">
-    {{'customer.manage-users' | translate }}
-  </button>
-  <button mat-stroked-button color="primary"
-          [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'manageAssets')"
-          [class.!hidden]="isEdit">
-    {{'customer.manage-assets' | translate }}
-  </button>
-  <button mat-stroked-button color="primary"
-          [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'manageDevices')"
-          [class.!hidden]="isEdit">
-    {{'customer.manage-devices' | translate }}
-  </button>
-  <button mat-stroked-button color="primary"
-          [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'manageDashboards')"
-          [class.!hidden]="isEdit">
-    {{'customer.manage-dashboards' | translate }}
-  </button>
-  @if (edgesSupportEnabled()) {
+  @if (resource.USER | hasGenericPermission: operation.READ) {
+    <button mat-stroked-button color="primary"
+            [disabled]="(isLoading$ | async)"
+            (click)="onEntityAction($event, 'manageUsers')"
+            [class.!hidden]="hideManageUsers() || isEdit || isPublic">
+      {{'customer.manage-users' | translate }}
+    </button>
+  }
+  @if (resource.CUSTOMER | hasGenericPermission: operation.READ) {
+    <button mat-stroked-button color="primary"
+            [disabled]="(isLoading$ | async)"
+            (click)="onEntityAction($event, 'manageCustomers')"
+            [class.!hidden]="hideManageCustomers() || isEdit || isPublic">
+      {{'customer.manage-customers' | translate }}
+    </button>
+  }
+  @if (resource.ASSET | hasGenericPermission: operation.READ) {
+    <button mat-stroked-button color="primary"
+            [disabled]="(isLoading$ | async)"
+            (click)="onEntityAction($event, 'manageAssets')"
+            [class.!hidden]="hideManageAssets() || isEdit">
+      {{'customer.manage-assets' | translate }}
+    </button>
+  }
+  @if (resource.DEVICE | hasGenericPermission: operation.READ) {
+    <button mat-stroked-button color="primary"
+            [disabled]="(isLoading$ | async)"
+            (click)="onEntityAction($event, 'manageDevices')"
+            [class.!hidden]="hideManageDevices() || isEdit">
+      {{'customer.manage-devices' | translate }}
+    </button>
+  }
+  @if (resource.ENTITY_VIEW | hasGenericPermission: operation.READ) {
+    <button mat-stroked-button color="primary"
+            [disabled]="(isLoading$ | async)"
+            (click)="onEntityAction($event, 'manageEntityViews')"
+            [class.!hidden]="hideManageEntityViews() || isEdit">
+      {{'customer.manage-entity-views' | translate }}
+    </button>
+  }
+  @if (edgesSupportEnabled && (resource.EDGE | hasGenericPermission: operation.READ)) {
     <button mat-stroked-button color="primary"
             [disabled]="(isLoading$ | async)"
             (click)="onEntityAction($event, 'manageEdges')"
-            [class.!hidden]="isEdit">
+            [class.!hidden]="hideManageEdges() || isEdit">
       {{'customer.manage-edges' | translate }}
     </button>
   }
-  <button mat-stroked-button color="primary"
-          [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'delete')"
-          [class.!hidden]="hideDelete() || isEdit || isPublic">
-    {{'customer.delete' | translate }}
-  </button>
+  @if (resource.DASHBOARD | hasGenericPermission: operation.READ) {
+    <button mat-stroked-button color="primary"
+            [disabled]="(isLoading$ | async)"
+            (click)="onEntityAction($event, 'manageDashboards')"
+            [class.!hidden]="hideManageDashboards() || isEdit">
+      {{ 'customer.manage-dashboards' | translate }}
+    </button>
+  }
+  @if (canManageOwnerAndGroups()) {
+    <button mat-stroked-button color="primary"
+            [disabled]="(isLoading$ | async)"
+            (click)="onEntityAction($event, 'manageOwnerAndGroups')"
+            [class.!hidden]="isEdit">
+      {{'entity-group.manage-owner-and-groups' | translate }}
+    </button>
+  }
+  @if (entityGroup | hasGroupEntityOrGenericPermission: resource.CUSTOMER: operation.DELETE) {
+    <button mat-stroked-button color="primary"
+            [disabled]="(isLoading$ | async)"
+            (click)="onEntityAction($event, 'delete')"
+            [class.!hidden]="hideDelete() || isEdit || isPublic">
+      {{'customer.delete' | translate }}
+    </button>
+  }
   <div class="flex flex-row xs:flex-col">
     <button mat-stroked-button
             ngxClipboard
@@ -75,18 +110,22 @@
       </mat-form-field>
       <tb-contact [parentForm]="entityForm" [isEdit]="isEdit"></tb-contact>
       <div formGroupName="additionalInfo" class="flex flex-col">
-        @if (entity?.id) {
-          <section class="tb-default-dashboard flex flex-1 flex-col">
+        <mat-checkbox [class.!hidden]="!allowCustomerWhiteLabeling"
+                      class="flex-1" formControlName="allowWhiteLabeling" style="padding-bottom: 16px;">
+          {{ 'customer.allow-white-labeling' | translate }}
+        </mat-checkbox>
+        @if (entity?.id?.id && whiteLabelingAllowed && (resource.WHITE_LABELING | hasGenericPermission: operation.WRITE)) {
+          <section [class.!hidden]="!allowCustomerWhiteLabeling"
+                   class="tb-default-dashboard flex flex-1 flex-col">
             <section class="flex flex-1 flex-col gt-sm:flex-row">
               <tb-dashboard-autocomplete
                 class="flex-1"
                 label="{{ 'dashboard.home-dashboard' | translate }}"
                 formControlName="homeDashboardId"
                 appearance="outline"
-                [dashboardsScope]="'customer'"
-                [customerId]="entity?.id.id"
-                [selectFirstDashboard]="false">
-              </tb-dashboard-autocomplete>
+                [selectFirstDashboard]="false"
+                [customerId]="entity.id.id"
+              ></tb-dashboard-autocomplete>
               <mat-checkbox class="flex-1" formControlName="homeDashboardHideToolbar">
                 {{ 'dashboard.home-dashboard-hide-toolbar' | translate }}
               </mat-checkbox>
@@ -99,5 +138,16 @@
         </mat-form-field>
       </div>
     </fieldset>
+    @if (allowCustomerWhiteLabeling && whiteLabelingAllowed && (resource.WHITE_LABELING | hasGenericPermission: operation.WRITE)) {
+      <tb-custom-menu-autocomplete class="flex-1"
+                                   appearance="outline"
+                                   formControlName="customMenuId"
+                                   [scope]="CMScope.CUSTOMER"
+                                   [assigneeType]="CMAssigneeType.CUSTOMERS">
+      </tb-custom-menu-autocomplete>
+    }
   </form>
+  @if (!isEdit) {
+    <tb-group-entity-info [groupEntity]="entity" appearance="outline"></tb-group-entity-info>
+  }
 </div>

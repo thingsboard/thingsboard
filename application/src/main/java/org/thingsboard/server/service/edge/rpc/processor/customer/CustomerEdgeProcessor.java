@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.edge.rpc.processor.customer;
 
 import com.google.common.util.concurrent.Futures;
@@ -8,12 +9,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EdgeUtils;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.EntityGroupId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageDataIterable;
@@ -42,8 +46,9 @@ public class CustomerEdgeProcessor extends BaseEdgeProcessor {
             case ADDED, UPDATED -> {
                 Customer customer = edgeCtx.getCustomerService().findCustomerById(edgeEvent.getTenantId(), customerId);
                 if (customer != null) {
+                    EntityGroupId entityGroupId = edgeEvent.getEntityGroupId() != null ? new EntityGroupId(edgeEvent.getEntityGroupId()) : null;
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-                    CustomerUpdateMsg customerUpdateMsg = EdgeMsgConstructorUtils.constructCustomerUpdatedMsg(msgType, customer);
+                    CustomerUpdateMsg customerUpdateMsg = EdgeMsgConstructorUtils.constructCustomerUpdatedMsg(msgType, customer, entityGroupId);
                     return DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addCustomerUpdateMsg(customerUpdateMsg)
@@ -51,6 +56,7 @@ public class CustomerEdgeProcessor extends BaseEdgeProcessor {
                 }
             }
             case DELETED -> {
+                // case CHANGE_OWNER: TODO: implement
                 CustomerUpdateMsg customerUpdateMsg = EdgeMsgConstructorUtils.constructCustomerDeleteMsg(customerId);
                 return DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
@@ -71,29 +77,40 @@ public class CustomerEdgeProcessor extends BaseEdgeProcessor {
             case ADDED:
                 Customer customerById = edgeCtx.getCustomerService().findCustomerById(tenantId, customerId);
                 if (customerById != null && customerById.isPublic()) {
-                    return findEdgesAndSaveEdgeEvents(link -> edgeCtx.getEdgeService().findEdgesByTenantId(tenantId, link),
-                            tenantId, type, actionType, customerId);
+                    EntityId ownerId = customerById.getOwnerId();
+                    if (EntityType.TENANT.equals(ownerId.getEntityType())) {
+                        List<ListenableFuture<Void>> futures = new ArrayList<>();
+                        PageDataIterable<Edge> edges = new PageDataIterable<>(link -> edgeCtx.getEdgeService().findEdgesByTenantId(tenantId, link), 1024);
+                        for (Edge edge : edges) {
+                            futures.add(saveEdgeEvent(tenantId, edge.getId(), type, actionType, customerId, null));
+                        }
+                        return Futures.transform(Futures.allAsList(futures), voids -> null, dbCallbackExecutorService);
+                    } else {
+                        List<EdgeId> edgesByCustomerId = edgeCtx.getCustomersHierarchyEdgeService().findAllEdgesInHierarchyByCustomerId(tenantId, new CustomerId(ownerId.getId()));
+                        List<ListenableFuture<Void>> futures = new ArrayList<>();
+                        if (edgesByCustomerId != null) {
+                            for (EdgeId edgeId : edgesByCustomerId) {
+                                futures.add(saveEdgeEvent(tenantId, edgeId, type, actionType, customerId, null));
+                            }
+                        }
+                        return Futures.transform(Futures.allAsList(futures), voids -> null, dbCallbackExecutorService);
+                    }
                 }
                 return Futures.immediateFuture(null);
             case UPDATED:
-                return findEdgesAndSaveEdgeEvents(link -> edgeCtx.getEdgeService().findEdgesByTenantIdAndCustomerId(tenantId, customerId, link),
-                        tenantId, type, actionType, customerId);
+                List<EdgeId> edgesByCustomerId = edgeCtx.getCustomersHierarchyEdgeService().findAllEdgesInHierarchyByCustomerId(tenantId, customerId);
+                List<ListenableFuture<Void>> futures = new ArrayList<>();
+                if (edgesByCustomerId != null) {
+                    for (EdgeId edgeId : edgesByCustomerId) {
+                        futures.add(saveEdgeEvent(tenantId, edgeId, type, actionType, customerId, null));
+                    }
+                }
+                return Futures.transform(Futures.allAsList(futures), voids -> null, dbCallbackExecutorService);
             case DELETED:
-                EdgeId edgeId = new EdgeId(new UUID(edgeNotificationMsg.getEdgeIdMSB(), edgeNotificationMsg.getEdgeIdLSB()));
-                return saveEdgeEvent(tenantId, edgeId, type, actionType, customerId, null);
+                return processActionForAllEdges(tenantId, type, actionType, customerId, null, null);
             default:
                 return Futures.immediateFuture(null);
         }
-    }
-
-    public ListenableFuture<Void> findEdgesAndSaveEdgeEvents(PageDataIterable.FetchFunction<Edge> edgeFetcher, TenantId tenantId,
-                                                             EdgeEventType type, EdgeEventActionType actionType, CustomerId customerId) {
-        List<ListenableFuture<Void>> futures = new ArrayList<>();
-        PageDataIterable<Edge> edges = new PageDataIterable<>(edgeFetcher, 1024);
-        for (Edge edge : edges) {
-            futures.add(saveEdgeEvent(tenantId, edge.getId(), type, actionType, customerId, null));
-        }
-        return Futures.transform(Futures.allAsList(futures), voids -> null, dbCallbackExecutorService);
     }
 
     @Override

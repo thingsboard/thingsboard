@@ -1,0 +1,38 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div style="width: 650px; max-width: 90vw;" class="tb-form-panel no-border no-padding" [formGroup]="payloadForm">
+  <div class="tb-form-panel-title">{{ 'converter.update-raw-payload' | translate }}</div>
+  <div class="flex flex-col gap-2 overflow-y-auto">
+    <tb-json-object-edit
+      jsonRequired
+      [editorStyle]="{'min-height': '300px'}"
+      label="{{ 'converter.payload' | translate }}"
+      formControlName="payload">
+    </tb-json-object-edit>
+    <tb-json-object-edit
+      jsonRequired
+      [editorStyle]="{'min-height': '100px'}"
+      label="{{ 'converter.metadata' | translate }}"
+      formControlName="metadata">
+    </tb-json-object-edit>
+  </div>
+  <div class="flex justify-end gap-2">
+    <button mat-button
+            color="primary"
+            type="button"
+            (click)="cancel()">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button
+            color="primary"
+            type="button"
+            (click)="apply()"
+            [disabled]="payloadForm.invalid || !payloadForm.dirty">
+      {{ 'action.apply' | translate }}
+    </button>
+  </div>
+</div>

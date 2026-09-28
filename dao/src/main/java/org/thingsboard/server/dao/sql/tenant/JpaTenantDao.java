@@ -1,9 +1,12 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.tenant;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Limit;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
@@ -56,6 +59,15 @@ public class JpaTenantDao extends JpaAbstractDao<TenantEntity, Tenant> implement
     }
 
     @Override
+    public ListenableFuture<List<Tenant>> findTenantsByIdsAsync(UUID tenantId, List<UUID> tenantIds) {
+        return service.submit(() -> DaoUtil.convertDataList(tenantRepository.findTenantsByIdIn(tenantIds)));
+    }
+
+    @Override
+    public List<Tenant> findTenantsByIds(UUID tenantId, List<UUID> tenantIds) {
+        return DaoUtil.convertDataList(tenantRepository.findTenantsByIdIn(tenantIds));
+    }
+
     public PageData<TenantInfo> findTenantInfos(TenantId tenantId, PageLink pageLink) {
         return DaoUtil.toPageData(tenantRepository
                 .findTenantInfosNextPage(
@@ -68,12 +80,7 @@ public class JpaTenantDao extends JpaAbstractDao<TenantEntity, Tenant> implement
         return DaoUtil.pageToPageData(tenantRepository.findTenantsIds(DaoUtil.toPageable(pageLink))).mapData(TenantId::fromUUID);
     }
 
-    @Override
-    public EntityType getEntityType() {
-        return EntityType.TENANT;
-    }
 
-    @Override
     public List<TenantId> findTenantIdsByTenantProfileId(TenantProfileId tenantProfileId) {
         return tenantRepository.findTenantIdsByTenantProfileId(tenantProfileId.getId()).stream()
                 .map(TenantId::fromUUID)
@@ -86,13 +93,18 @@ public class JpaTenantDao extends JpaAbstractDao<TenantEntity, Tenant> implement
     }
 
     @Override
-    public List<Tenant> findTenantsByIds(UUID tenantId, List<UUID> tenantIds) {
-        return DaoUtil.convertDataList(tenantRepository.findTenantsByIdIn(tenantIds));
+    public List<TenantId> findTenantsIds() {
+        return tenantRepository.findTenantsIds(Pageable.unpaged()).getContent().stream().map(TenantId::fromUUID).collect(Collectors.toList());
     }
 
     @Override
     public List<TenantFields> findNextBatch(UUID id, int batchSize) {
         return tenantRepository.findNextBatch(id, Limit.of(batchSize));
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.TENANT;
     }
 
 }

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   BackgroundSettings,
   BackgroundType,
@@ -43,7 +44,7 @@ export const labelValueCardWidgetDefaultSettings: LabelValueCardWidgetSettings =
   icon: 'thermostat',
   iconSize: 24,
   iconSizeUnit: 'px',
-  iconColor: constantColor('#5469FF'),
+  iconColor: constantColor('var(--tb-primary-500)'),
   valueFont: {
     family: 'Roboto',
     size: 20,

@@ -1,0 +1,84 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="targetEntityFormGroup" class="tb-form-panel no-padding no-border">
+  <div class="flex flex-row items-center justify-between">
+    <div class="tb-form-panel-title">{{ 'widget-action.mobile.target-panel-title' | translate }}</div>
+    <tb-toggle-select formControlName="mode" selectMediaBreakpoint="xs">
+      <tb-toggle-option [value]="targetEntityMode.ENTITY">
+        {{ 'widget-action.mobile.target-mode-entity' | translate }}
+      </tb-toggle-option>
+      <tb-toggle-option [value]="targetEntityMode.FROM_ATTRIBUTE">
+        {{ 'widget-action.mobile.target-from-attribute' | translate }}
+      </tb-toggle-option>
+    </tb-toggle-select>
+  </div>
+  <div class="tb-form-row">
+    <div class="fixed-title-width">
+      {{ (isFromAttribute ? 'widget-action.mobile.target-attribute-source'
+                          : 'widget-action.mobile.target-save-to') | translate }}
+    </div>
+    <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+      <mat-select formControlName="source">
+        @for (source of attributeSources; track source) {
+          <mat-option [value]="source">
+            {{ attributeSourceTranslations.get(source) | translate }}
+          </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </div>
+  @if (aliasNameRequired) {
+    <div class="tb-form-row">
+      <div class="fixed-title-width">{{ 'widget-action.mobile.target-entity-alias-name' | translate }}</div>
+      <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+        <input matInput required formControlName="aliasName"
+               #aliasNameInput
+               [matAutocomplete]="entityAliasNameAutocomplete"
+               placeholder="{{ 'widget-action.mobile.target-entity-alias-name' | translate }}">
+        <mat-autocomplete #entityAliasNameAutocomplete="matAutocomplete" class="tb-autocomplete">
+          @for (name of filteredEntityAliasNames | async; track name) {
+            <mat-option [value]="name">
+              {{ name }}
+            </mat-option>
+          }
+        </mat-autocomplete>
+        @if (targetEntityFormGroup.get('aliasName').value && targetEntityFormGroup.get('aliasName').enabled) {
+          <button type="button"
+                  matSuffix mat-icon-button aria-label="Clear"
+                  (click)="clearAliasName()">
+            <mat-icon class="material-icons">close</mat-icon>
+          </button>
+        } @else if (targetEntityFormGroup.get('aliasName').hasError('required')
+                    && targetEntityFormGroup.get('aliasName').touched) {
+          <mat-icon matSuffix
+                    matTooltipPosition="above"
+                    matTooltipClass="tb-error-tooltip"
+                    [matTooltip]="'widget-action.mobile.target-entity-alias-name-required' | translate"
+                    class="tb-error">
+            warning
+          </mat-icon>
+        }
+      </mat-form-field>
+    </div>
+  }
+  @if (isFromAttribute) {
+    <div class="tb-form-row">
+      <div class="fixed-title-width"
+           tb-hint-tooltip-icon="{{ 'widget-action.mobile.target-attribute-value-hint' | translate }}">
+        {{ 'widget-action.mobile.target-attribute-key' | translate }}
+      </div>
+      <tb-entity-key-autocomplete class="flex-1"
+                                  formControlName="attributeKey"
+                                  [dataKeyType]="DataKeyType.attribute"
+                                  [entityFilter]="attributeSourceEntityFilter"
+                                  [keyScopeType]="AttributeScope.SERVER_SCOPE"
+                                  [enableAutocomplete]="!!attributeSourceEntityFilter"
+                                  requiredText="{{ 'widget-action.mobile.target-attribute-key-required' | translate }}">
+      </tb-entity-key-autocomplete>
+    </div>
+  }
+</section>

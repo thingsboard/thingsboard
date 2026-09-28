@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -16,15 +17,15 @@
     <artifactId>coap</artifactId>
     <packaging>pom</packaging>
 
-    <name>ThingsBoard COAP Transport Microservice</name>
+    <name>ThingsBoard CoAP Transport Microservice</name>
     <url>https://thingsboard.io</url>
-    <description>ThingsBoard COAP Transport Microservice</description>
+    <description>ThingsBoard CoAP Transport Microservice</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <main.dir>${maven.multiModuleProjectDirectory}</main.dir>
         <pkg.name>tb-coap-transport</pkg.name>
-        <docker.name>tb-coap-transport</docker.name>
+        <docker.name>${tb.docker.id}-coap-transport</docker.name>
         <pkg.logFolder>/var/log/${pkg.name}</pkg.logFolder>
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
         <docker.push-arm-amd-image.phase>pre-integration-test</docker.push-arm-amd-image.phase>

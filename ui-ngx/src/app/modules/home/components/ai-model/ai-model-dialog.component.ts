@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, Inject } from '@angular/core';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Store } from '@ngrx/store';
@@ -29,6 +30,7 @@ import { TranslateService } from '@ngx-translate/core';
 export interface AIModelDialogData {
   AIModel?: AiModel;
   isAdd?: boolean;
+  readonly?: boolean;
   name?: string;
 }
 
@@ -59,6 +61,7 @@ export class AIModelDialogComponent extends DialogComponent<AIModelDialogCompone
   aiModelForms: FormGroup;
 
   isAdd = false;
+  readonly = false;
 
   authenticationHint: string;
 
@@ -78,6 +81,9 @@ export class AIModelDialogComponent extends DialogComponent<AIModelDialogCompone
     if (this.data.isAdd) {
       this.isAdd = true;
     }
+    if (this.data.readonly) {
+      this.readonly = true;
+    }
 
     this.provider = this.data.AIModel ? this.data.AIModel.configuration.provider : AiProvider.OPENAI;
 
@@ -94,7 +100,7 @@ export class AIModelDialogComponent extends DialogComponent<AIModelDialogCompone
           projectId: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.projectId : '', [Validators.required, Validators.pattern(/.*\S.*/)]],
           location: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.location : '', [Validators.required, Validators.pattern(/.*\S.*/)]],
           serviceAccountKey: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.serviceAccountKey : '', [Validators.required]],
-          fileName: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.fileName : '', [Validators.required]],
+          fileName: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.fileName : ''],
           region: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.region : '', [Validators.required, Validators.pattern(/.*\S.*/)]],
           accessKeyId: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.accessKeyId : '', [Validators.required, Validators.pattern(/.*\S.*/)]],
           secretAccessKey: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.secretAccessKey : '', [Validators.required, Validators.pattern(/.*\S.*/)]],
@@ -158,7 +164,12 @@ export class AIModelDialogComponent extends DialogComponent<AIModelDialogCompone
       }
     });
 
-    this.updateValidation(this.provider);
+    if (this.readonly) {
+      this.dialogTitle = 'ai-models.ai-model-view';
+      this.aiModelForms.disable({emitEvent: false});
+    } else {
+      this.updateValidation(this.provider);
+    }
   }
 
   fetchOptions(searchText: string): Observable<Array<string>> {

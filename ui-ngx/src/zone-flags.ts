@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 (window as any).__Zone_disable_requestAnimationFrame = false;
 (window as any).__Zone_disable_setTimeout = false;

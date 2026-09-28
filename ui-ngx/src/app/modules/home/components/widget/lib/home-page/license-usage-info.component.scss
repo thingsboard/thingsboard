@@ -1,0 +1,162 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@import "../../../../../../../scss/constants";
+
+:host {
+  .tb-card-content {
+    width: 100%;
+    height: 100%;
+  }
+
+  .tb-card-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    @media #{$mat-md-lg} {
+      margin-bottom: 4px;
+    }
+  }
+
+  .tb-title {
+    font-style: normal;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 20px;
+    letter-spacing: 0.25px;
+    color: rgba(0, 0, 0, 0.54);
+    @media #{$mat-md-lg} {
+      font-size: 12px;
+      line-height: 16px;
+    }
+  }
+
+  .tb-view-all, .tb-license-portal {
+    @media #{$mat-md-lg} {
+      height: 24px;
+      font-size: 12px;
+    }
+  }
+
+  .tb-license-info-container {
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    box-shadow: 0 5px 16px rgba(0, 0, 0, 0.04);
+    border-radius: 10px;
+    padding: 8px 16px 4px 16px;
+    display: flex;
+    flex-direction: column;
+    @media #{$mat-md-lg} {
+      padding: 4px;
+    }
+  }
+
+  .tb-plan-link {
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 24px;
+    letter-spacing: 0.25px;
+    color: rgba(0, 0, 0, 0.76);
+    position: relative;
+    border-bottom: none;
+    @media #{$mat-md-lg} {
+      font-size: 12px;
+      line-height: 16px;
+      color: rgba(0, 0, 0, 0.54);
+    }
+    &:hover, &:focus {
+      border-bottom: none;
+    }
+    &::after {
+      content: 'arrow_forward';
+      display: inline-block;
+      transform: rotate(315deg);
+      font-family: 'Material Icons';
+      font-weight: normal;
+      font-style: normal;
+      font-size: 18px;
+      color: rgba(0, 0, 0, 0.12);
+      vertical-align: bottom;
+      margin-left: 6px;
+    }
+    &:hover::after {
+      color: inherit;
+    }
+  }
+  .tb-feature-text {
+    font-weight: 400;
+    font-size: 14px;
+    color: rgba(0, 0, 0, 0.87);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    @media #{$mat-md-lg} {
+      font-size: 11px;
+      line-height: 16px;
+    }
+    .tb-feature-status {
+      display: inline-block;
+      font-family: 'Material Icons Round';
+      position: relative;
+      border-radius: 4px;
+      width: 22px;
+      height: 22px;
+      margin-right: 8px;
+      @media #{$mat-md-lg} {
+        width: 18px;
+        height: 18px;
+        margin-right: 4px;
+      }
+    }
+    &.ok, &.disabled {
+      .tb-feature-status {
+        font-size: 20px;
+        line-height: 20px;
+        font-weight: 600;
+        padding: 1px;
+        vertical-align: sub;
+        @media #{$mat-md-lg} {
+          font-size: 14px;
+          line-height: 14px;
+          padding: 2px;
+        }
+      }
+    }
+    &.ok {
+      .tb-feature-status {
+        color: #198038;
+        background: transparent;
+        &:before {
+          content: "";
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          border-radius: 4px;
+          background: var(--tb-primary-500);
+          opacity: 0.04;
+        }
+      }
+    }
+    &.disabled {
+      .tb-feature-status {
+        color: rgba(0, 0, 0, 0.12);
+        background: #F4F4F4;
+      }
+    }
+    &.critical {
+      color: #D12730;
+      .tb-feature-status {
+        line-height: 24px;
+        font-size: 24px;
+        font-weight: normal;
+        padding: 0;
+        vertical-align: bottom;
+        @media #{$mat-md-lg} {
+          font-size: 18px;
+          line-height: 18px;
+        }
+      }
+    }
+  }
+}

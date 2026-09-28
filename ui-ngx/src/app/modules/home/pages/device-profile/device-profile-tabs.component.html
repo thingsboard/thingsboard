@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 @if (entity) {
@@ -37,16 +38,23 @@
       </div>
     }
   </mat-tab>
-  @if (authUser.authority === authorities.TENANT_ADMIN && !isEdit) {
+  @if (authUser.authority === authorities.TENANT_ADMIN && !isEdit && (resource.DEVICE_PROFILE | hasGenericPermission: operation.READ_CALCULATED_FIELD)) {
     <mat-tab label="{{ 'entity.type-calculated-fields' | translate }}" #calculatedFieldsTab="matTab">
-      <tb-calculated-fields-table [active]="calculatedFieldsTab.isActive" [entityId]="entity.id" [entityName]="entity.name" [ownerId]="entity.tenantId"/>
+      <tb-calculated-fields-table
+        [active]="calculatedFieldsTab.isActive"
+        [entityId]="entity.id"
+        [entityName]="entity.name"
+        [ownerId]="entity.tenantId"
+        [readonly]="!(resource.DEVICE_PROFILE | hasGenericPermission: operation.WRITE_CALCULATED_FIELD)"
+        [hideClearEventAction]="!(resource.DEVICE_PROFILE | hasGenericPermission: operation.WRITE)"
+      />
     </mat-tab>
   }
 
-  @if (hasOldRules || authUser.authority === authorities.TENANT_ADMIN && !isEdit) {
+  @if (hasOldRules || (authUser.authority === authorities.TENANT_ADMIN && !isEdit && (resource.DEVICE_PROFILE | hasGenericPermission: operation.READ_CALCULATED_FIELD))) {
     <mat-tab #alarmRules="matTab" label="{{'alarm-rule.alarm-rules-tab' | translate }}">
       <section class="flex flex-col h-full">
-        @if (hasOldRules && !isEdit) {
+        @if (hasOldRules && !isEdit && (resource.DEVICE_PROFILE | hasGenericPermission: operation.READ_CALCULATED_FIELD)) {
           <div class="flex flex-row items-center justify-start" style="padding: 16px 16px 0;">
             <tb-toggle-select [(ngModel)]="alarmRulesOldVersion" appearance="fill">
               <tb-toggle-option [value]="false">{{ 'alarm-rule.alarm-rules-actual' | translate }}</tb-toggle-option>
@@ -65,6 +73,8 @@
         } @else {
           <div class="relative h-full">
             <tb-alarm-rules-table [active]="alarmRules.isActive"
+                                  [readonly]="!(resource.DEVICE_PROFILE | hasGenericPermission: operation.WRITE_CALCULATED_FIELD)"
+                                  [hideClearEventAction]="!(resource.DEVICE_PROFILE | hasGenericPermission: operation.WRITE)"
                                   [entityId]="entity.id"
                                   [entityName]="entity.name"
                                   [ownerId]="entity.tenantId">
@@ -85,12 +95,12 @@
       </div>
     }
   </mat-tab>
-  @if (!isEdit) {
+  @if (!isEdit && (resource.AUDIT_LOG | hasGenericPermission: operation.READ)) {
     <mat-tab #auditLogsTab="matTab" label="{{ 'audit-log.audit-logs' | translate }}">
       <tb-audit-log-table detailsMode="true" [active]="auditLogsTab.isActive" [auditLogMode]="auditLogModes.ENTITY" [entityId]="entity.id"></tb-audit-log-table>
     </mat-tab>
   }
-  @if (authUser.authority === authorities.TENANT_ADMIN && !isEdit) {
+  @if (!isEdit && ([resource.VERSION_CONTROL, resource.DEVICE_PROFILE] | hasGenericPermission: operation.READ)) {
     <mat-tab label="{{ 'version-control.version-control' | translate }}" #versionControlTab="matTab">
       <tb-version-control detailsMode="true" singleEntityMode="true"
                           (versionRestored)="entitiesTableConfig.updateData()"

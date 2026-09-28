@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.tenant.profile;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -36,6 +37,12 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private long maxResourcesInBytes;
     private long maxOtaPackagesInBytes;
     private long maxResourceSize;
+    private long maxReportSizeInBytes;
+    private long maxIntegrations;
+    private long maxConverters;
+    private long maxSchedulerEvents;
+    private long maxAgents;
+    private long maxAgentApplications;
 
     @Schema(example = "1000:1,20000:60")
     @RateLimit(fieldName = "Transport tenant messages")
@@ -75,6 +82,15 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private String transportGatewayDeviceTelemetryDataPointsRateLimit;
 
     @Schema(example = "20:1,600:60")
+    @RateLimit(fieldName = "Tenant integration messages")
+    private String integrationMsgsPerTenantRateLimit;
+    @Schema(example = "20:1,600:60")
+    @RateLimit(fieldName = "Device integration messages")
+    private String integrationMsgsPerDeviceRateLimit;
+    @RateLimit(fieldName = "Asset integration messages")
+    private String integrationMsgsPerAssetRateLimit;
+
+    @Schema(example = "20:1,600:60")
     @RateLimit(fieldName = "Entity version creation")
     private String tenantEntityExportRateLimit;
     @Schema(example = "20:1,600:60")
@@ -111,6 +127,10 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private long maxSms;
     @Schema(example = "1000")
     private long maxCreatedAlarms;
+    @Schema(example = "10000")
+    private long maxGeneratedReports;
+    @Schema(example = "10000")
+    private long maxAiCredits;
 
     @RateLimit(fieldName = "REST requests for tenant")
     private String tenantServerRestLimitsConfiguration;
@@ -148,17 +168,28 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     @RateLimit(fieldName = "Edge uplink messages per edge")
     private String edgeUplinkMessagesRateLimitsPerEdge;
 
+    @RateLimit(fieldName = "Agent events")
+    private String agentEventRateLimits;
+    @RateLimit(fieldName = "Agent events per agent")
+    private String agentEventRateLimitsPerAgent;
+    @RateLimit(fieldName = "Agent log chunks")
+    private String agentLogChunkRateLimits;
+    @RateLimit(fieldName = "Agent log chunks per agent")
+    private String agentLogChunkRateLimitsPerAgent;
+
     private int defaultStorageTtlDays;
     private int alarmsTtlDays;
     private int rpcTtlDays;
     private int queueStatsTtlDays;
     private int ruleEngineExceptionsTtlDays;
+    private int blobEntityTtlDays;
+    private int reportTtlDays;
 
     private double warnThreshold;
 
     @Builder.Default
-    @Schema(example = "5")
-    private long maxCalculatedFieldsPerEntity = 5;
+    @Schema(example = "100")
+    private long maxCalculatedFieldsPerEntity = 100;
     @Builder.Default
     @Schema(example = "10")
     private long maxArgumentsPerCF = 10;
@@ -170,19 +201,19 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     @Positive
     private int maxRelationLevelPerCfArgument = 2;
     @Builder.Default
-    @Schema(example = "100")
+    @Schema(example = "1000")
     @Positive
-    private int maxRelatedEntitiesToReturnPerCfArgument = 100;
+    private int maxRelatedEntitiesToReturnPerCfArgument = 1000;
     @Builder.Default
     @Positive
     @Schema(example = "1000")
     private long maxDataPointsPerRollingArg = 1000;
     @Builder.Default
-    @Schema(example = "32")
-    private long maxStateSizeInKBytes = 32;
+    @Schema(example = "512")
+    private long maxStateSizeInKBytes = 512;
     @Builder.Default
-    @Schema(example = "2")
-    private long maxSingleValueArgumentSizeInKBytes = 2;
+    @Schema(example = "32")
+    private long maxSingleValueArgumentSizeInKBytes = 32;
     @Schema(example = "10")
     private long minAllowedDeduplicationIntervalInSecForCF = 10;
     @Schema(example = "60")
@@ -197,6 +228,9 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     @Schema(example = "60")
     private long alarmsReevaluationInterval = 60;
 
+    @RateLimit(fieldName = "AI chat requests per tenant")
+    private String aiChatRequestsPerTenantRateLimit;
+
     @Override
     public long getProfileThreshold(ApiUsageRecordKey key) {
         return switch (key) {
@@ -209,18 +243,18 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
             case EMAIL_EXEC_COUNT -> maxEmails;
             case SMS_EXEC_COUNT -> maxSms;
             case CREATED_ALARMS_COUNT -> maxCreatedAlarms;
+            case GENERATED_REPORTS_COUNT -> maxGeneratedReports;
+            case AI_CREDITS_COUNT -> maxAiCredits;
             default -> 0L;
         };
     }
 
     @Override
     public boolean getProfileFeatureEnabled(ApiUsageRecordKey key) {
-        switch (key) {
-            case SMS_EXEC_COUNT:
-                return smsEnabled == null || Boolean.TRUE.equals(smsEnabled);
-            default:
-                return true;
-        }
+        return switch (key) {
+            case SMS_EXEC_COUNT -> smsEnabled == null || Boolean.TRUE.equals(smsEnabled);
+            default -> true;
+        };
     }
 
     @Override
@@ -237,6 +271,11 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
             case DASHBOARD -> maxDashboards;
             case RULE_CHAIN -> maxRuleChains;
             case EDGE -> maxEdges;
+            case INTEGRATION -> maxIntegrations;
+            case CONVERTER -> maxConverters;
+            case SCHEDULER_EVENT -> maxSchedulerEvents;
+            case AGENT -> maxAgents;
+            case AGENT_APPLICATION -> maxAgentApplications;
             default -> 0;
         };
     }

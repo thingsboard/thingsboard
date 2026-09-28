@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.queue.common;
 
 import com.google.common.util.concurrent.Futures;
@@ -153,18 +154,23 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
 
     void processResponse(Response response) {
         byte[] requestIdHeader = response.getHeaders().get(REQUEST_ID_HEADER);
-        UUID requestId;
         if (requestIdHeader == null) {
             log.error("[{}] Missing requestId in header and body", response);
+            return;
+        }
+        UUID requestId = bytesToUuid(requestIdHeader);
+        log.trace("[{}] Response received: {}", requestId, response);
+        ResponseMetaData<Response> expectedResponse = pendingRequests.remove(requestId);
+        if (expectedResponse == null) {
+            log.debug("[{}] Invalid or stale request, response: {}", requestId, String.valueOf(response).replace("\n", " "));
+            return;
+        }
+        byte[] errorHeader = response.getHeaders().get(ERROR_MESSAGE_HEADER);
+        if (errorHeader == null) {
+            expectedResponse.future.set(response);
         } else {
-            requestId = bytesToUuid(requestIdHeader);
-            log.trace("[{}] Response received: {}", requestId, response);
-            ResponseMetaData<Response> expectedResponse = pendingRequests.remove(requestId);
-            if (expectedResponse == null) {
-                log.debug("[{}] Invalid or stale request, response: {}", requestId, String.valueOf(response).replace("\n", " "));
-            } else {
-                expectedResponse.future.set(response);
-            }
+            String msg = bytesToString(errorHeader);
+            expectedResponse.future.setException(new RuntimeException(msg));
         }
     }
 

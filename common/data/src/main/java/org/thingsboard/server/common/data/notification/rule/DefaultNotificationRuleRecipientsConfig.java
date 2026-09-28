@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.notification.rule;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -40,6 +41,7 @@ public abstract class DefaultNotificationRuleRecipientsConfig implements Notific
             case RATE_LIMITS -> new RateLimitsRecipientsConfig();
             case TASK_PROCESSING_FAILURE -> new TaskProcessingFailureRecipientsConfig();
             case RESOURCES_SHORTAGE -> new ResourceShortageRecipientsConfig();
+            case INTEGRATION_LIFECYCLE_EVENT -> new IntegrationLifecycleEventRecipientsConfig();
             default -> throw new IllegalArgumentException("Unsupported trigger type for default recipients config: " + triggerType);
         };
     }
@@ -132,6 +134,13 @@ public abstract class DefaultNotificationRuleRecipientsConfig implements Notific
         @Override
         public NotificationRuleTriggerType getTriggerType() {
             return NotificationRuleTriggerType.RESOURCES_SHORTAGE;
+        }
+    }
+
+    public static class IntegrationLifecycleEventRecipientsConfig extends DefaultNotificationRuleRecipientsConfig {
+        @Override
+        public NotificationRuleTriggerType getTriggerType() {
+            return NotificationRuleTriggerType.INTEGRATION_LIFECYCLE_EVENT;
         }
     }
 

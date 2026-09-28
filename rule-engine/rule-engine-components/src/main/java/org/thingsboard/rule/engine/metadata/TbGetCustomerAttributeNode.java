@@ -1,8 +1,10 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.rule.engine.metadata;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -22,8 +24,8 @@ import static com.google.common.util.concurrent.Futures.immediateFuture;
 @RuleNode(
         type = ComponentType.ENRICHMENT,
         name = "customer attributes",
-        configClazz = TbGetEntityDataNodeConfiguration.class,
-        version = 1,
+        configClazz = TbGetCustomerAttributeNodeConfiguration.class,
+        version = 2,
         nodeDescription = "Adds message originator customer attributes or latest telemetry into message or message metadata",
         nodeDetails = "Useful in multi-customer solutions where each customer has a different configuration or threshold set " +
                 "that is stored as customer attributes or telemetry data and used for dynamic message filtering, transformation, " +
@@ -34,17 +36,20 @@ import static com.google.common.util.concurrent.Futures.immediateFuture;
 )
 public class TbGetCustomerAttributeNode extends TbAbstractGetEntityDataNode<CustomerId> {
 
+    private boolean preserveOriginatorIfCustomer;
+
     @Override
-    protected TbGetEntityDataNodeConfiguration loadNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException {
-        var config = TbNodeUtils.convert(configuration, TbGetEntityDataNodeConfiguration.class);
+    protected TbGetCustomerAttributeNodeConfiguration loadNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException {
+        var config = TbNodeUtils.convert(configuration, TbGetCustomerAttributeNodeConfiguration.class);
         checkIfMappingIsNotEmptyOrElseThrow(config.getDataMapping());
         checkDataToFetchSupportedOrElseThrow(config.getDataToFetch());
+        preserveOriginatorIfCustomer = config.isPreserveOriginatorIfCustomer();
         return config;
     }
 
     @Override
     protected ListenableFuture<CustomerId> findEntityAsync(TbContext ctx, EntityId originator) {
-        if (originator.getEntityType() == EntityType.CUSTOMER) {
+        if (preserveOriginatorIfCustomer && originator.getEntityType() == EntityType.CUSTOMER) {
             return immediateFuture((CustomerId) originator);
         }
         return ctx.getEntityService().fetchEntityCustomerIdAsync(ctx.getTenantId(), originator)
@@ -61,7 +66,20 @@ public class TbGetCustomerAttributeNode extends TbAbstractGetEntityDataNode<Cust
 
     @Override
     public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
-        return fromVersion == 0 ? upgradeToUseFetchToAndDataToFetch(oldConfiguration) : new TbPair<>(false, oldConfiguration);
+        boolean hasChanges = false;
+        ObjectNode config = (ObjectNode) oldConfiguration;
+        switch (fromVersion) {
+            case 0:
+                config = upgradeConfigToUseFetchToAndDataToFetch((ObjectNode) oldConfiguration);
+                hasChanges = true;
+            case 1:
+                if (!config.has("preserveOriginatorIfCustomer")) {
+                    config.put("preserveOriginatorIfCustomer", true);
+                    hasChanges = true;
+                }
+                break;
+        }
+        return new TbPair<>(hasChanges, config);
     }
 
 }

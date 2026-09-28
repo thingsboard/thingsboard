@@ -44,6 +44,9 @@
       "ace": [
         "node_modules/ace-builds/src-noconflict/ace.js"
       ],
+      "exceljs-hardened": [
+        "node_modules/exceljs-hardened/dist/exceljs.min.js"
+      ],
       "jquery": [
         "node_modules/jquery/dist/jquery.min.js"
       ],

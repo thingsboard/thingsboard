@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.client;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -25,41 +26,37 @@ public class AdminApiClientTest extends AbstractApiClientTest {
 
     @Test
     public void testAdminSettingsLifecycle() throws Exception {
-        // authenticate as sysadmin for admin settings management
         client.login("sysadmin@thingsboard.org", "sysadmin");
 
-        // get mail settings
         AdminSettings mailSettings = client.getAdminSettings(GetAdminSettingsArgs.builder()
                 .key("mail")
+                .systemByDefault(true)
                 .build());
         assertNotNull(mailSettings);
         assertNotNull(mailSettings.getKey());
         assertEquals("mail", mailSettings.getKey());
         assertNotNull(mailSettings.getJsonValue());
 
-        // get general settings
         AdminSettings generalSettings = client.getAdminSettings(GetAdminSettingsArgs.builder()
                 .key("general")
+                .systemByDefault(true)
                 .build());
         assertNotNull(generalSettings);
         assertEquals("general", generalSettings.getKey());
         assertNotNull(generalSettings.getJsonValue());
         assertNotNull(generalSettings.getJsonValue().get("baseUrl").asText());
 
-        // update general settings and restore
         ((ObjectNode) generalSettings.getJsonValue()).put("prohibitDifferentUrl", true);
         AdminSettings updatedGeneralSettings = client.saveAdminSettings(SaveAdminSettingsArgs.builder()
                 .adminSettings(generalSettings)
                 .build());
         assertTrue(updatedGeneralSettings.getJsonValue().get("prohibitDifferentUrl").asBoolean());
 
-        // get security settings
         SecuritySettings securitySettings = client.getSecuritySettings();
         assertNotNull(securitySettings);
         assertNotNull(securitySettings.getPasswordPolicy());
         Integer originalMaxAttempts = securitySettings.getMaxFailedLoginAttempts();
 
-        // update security settings
         securitySettings.setMaxFailedLoginAttempts(10);
         SecuritySettings updatedSecurity = client.saveSecuritySettings(SaveSecuritySettingsArgs.builder()
                 .securitySettings(securitySettings)
@@ -67,13 +64,11 @@ public class AdminApiClientTest extends AbstractApiClientTest {
         assertNotNull(updatedSecurity);
         assertEquals(10, updatedSecurity.getMaxFailedLoginAttempts().intValue());
 
-        // restore original security settings
         updatedSecurity.setMaxFailedLoginAttempts(originalMaxAttempts);
         client.saveSecuritySettings(SaveSecuritySettingsArgs.builder()
                 .securitySettings(updatedSecurity)
                 .build());
 
-        // get JWT settings
         JwtSettings jwtSettings = client.getJwtSettings();
         assertNotNull(jwtSettings);
         assertNotNull(jwtSettings.getTokenExpirationTime());
@@ -81,7 +76,6 @@ public class AdminApiClientTest extends AbstractApiClientTest {
         assertEquals("thingsboard.io", jwtSettings.getTokenIssuer());
         assertNotNull(jwtSettings.getTokenSigningKey());
 
-        // get system info
         SystemInfo systemInfo = client.getSystemInfo();
         assertNotNull(systemInfo);
 
@@ -94,6 +88,32 @@ public class AdminApiClientTest extends AbstractApiClientTest {
         // check updates
         UpdateMessage updateMessage = client.checkUpdates();
         assertNotNull(updateMessage);
+    }
+
+    @Test
+    public void testTenantAdminSettingsAccess() throws Exception {
+        client.login(TENANT_ADMIN_USERNAME, TEST_PASSWORD);
+
+        AdminSettings mailSettings = client.getAdminSettings(GetAdminSettingsArgs.builder()
+                .key("mail")
+                .systemByDefault(true)
+                .build());
+        assertNotNull(mailSettings);
+        assertEquals("mail", mailSettings.getKey());
+        assertNotNull(mailSettings.getJsonValue());
+
+        AdminSettings generalSettings = client.getAdminSettings(GetAdminSettingsArgs.builder()
+                .key("general")
+                .systemByDefault(true)
+                .build());
+        assertNotNull(generalSettings);
+        assertEquals("general", generalSettings.getKey());
+        assertNotNull(generalSettings.getJsonValue());
+
+        assertReturns403(() -> client.getJwtSettings());
+        assertReturns403(() -> client.getSystemInfo());
+        assertReturns403(() -> client.checkUpdates());
+        assertReturns403(() -> client.getSecuritySettings());
     }
 
 }

@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <section [formGroup]="getTelemetryFromDatabaseConfigForm" class="tb-form-panel no-padding no-border">
@@ -17,7 +18,7 @@
          trigger-style="letter-spacing:0.25px; font-size:12px"
          [tb-help-popup-style]="{maxWidth: '820px'}"
     trigger-text="{{ 'rule-node-config.key-val.see-examples' | translate }}"></div>
-    <mat-icon matSuffix class="help-icon margin-8 cursor-pointer" aria-hidden="false" aria-label="help-icon" color="primary"
+    <mat-icon matSuffix class="help-icon m-8 cursor-pointer" aria-hidden="false" aria-label="help-icon" color="primary"
               matTooltip="{{ 'rule-node-config.chip-help' | translate: { inputName: 'rule-node-config.timeseries-key' | translate } }}">help
     </mat-icon>
   </tb-string-items-list>

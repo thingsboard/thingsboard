@@ -1,7 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
-@import "../../../../../../../../../scss/constants";
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 .tb-dynamic-form-array {
   .tb-dynamic-form-array-body {
     display: flex;
@@ -31,7 +30,7 @@
       display: flex;
       align-items: center;
       place-content: center;
-      color: $tb-primary-color;
+      color: var(--tb-primary-500);
       &:before {
         content: "";
         display: block;
@@ -40,7 +39,7 @@
         position: absolute;
         left: 0;
         top: 0;
-        background-color: $tb-primary-color;
+        background-color: var(--tb-primary-500);
         opacity: 0.06;
         border-radius: 100%;
       }

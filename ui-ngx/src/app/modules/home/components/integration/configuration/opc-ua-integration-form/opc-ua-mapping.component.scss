@@ -1,0 +1,60 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host {
+  .index {
+    width: 28px;
+    min-width: 28px;
+    max-width: 28px;
+    height: 28px;
+    margin-top: 8px;
+    margin-right: 8px;
+    background: #F3F6FA;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 28px;
+  }
+
+  .fields-group {
+    padding: 12px 16px 8px;
+    margin-bottom: 0;
+    position: relative;
+
+    &::before {
+      content: "";
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      left: 0;
+      top: 0;
+      background-color: var(--tb-primary-500);
+      opacity: 0.02;
+    }
+  }
+
+  .mapping-setting {
+    box-shadow: none;
+    border: 1px groove rgba(0, 0, 0, .25);
+    border-radius: 4px;
+    margin-bottom: 8px;
+
+    .mat-expansion-panel-header {
+      padding: 0 24px 0 16px;
+    }
+  }
+
+  .invisibility {
+    visibility: hidden;
+  }
+}
+
+:host::ng-deep {
+  .mapping-setting {
+    .mat-expansion-panel-body {
+      padding: 0;
+
+      .mapping-setting-content {
+        margin: 0 16px 16px;
+      }
+    }
+  }
+}

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   BaseMarkerShapeSettings,
   ClusterMarkerColorFunction,
@@ -31,7 +32,7 @@ import {
   isDefined,
   isDefinedAndNotNull,
   isEmptyStr,
-  parseTbFunction,
+  parseTbFunction, plainColorFromVariable,
   safeExecuteTbFunction
 } from '@core/utils';
 import { catchError, map, switchMap } from 'rxjs/operators';
@@ -123,7 +124,7 @@ export class MarkerDataProcessor<S extends MarkersDataLayerSettings = MarkersDat
   }
 
   public createDefaultMarkerIcon(rotationAngle = 0): Observable<MarkerIconInfo> {
-    const color = this.settings.markerShape?.color?.color || '#307FE5';
+    const color = plainColorFromVariable(this.settings.markerShape?.color?.color || '#307FE5');
     return this.createColoredMarkerShape(MarkerShape.markerShape1, tinycolor(color), rotationAngle);
   }
 
@@ -220,7 +221,7 @@ abstract class BaseColorMarkerShapeProcessor<S extends BaseMarkerShapeSettings> 
     this.colorProcessor = new DataLayerColorProcessor(this.dataProcessor.dataLayer, colorSettings);
     const setup$: Observable<void>[] = [this.colorProcessor.setup()];
     if (colorSettings.type === DataLayerColorType.constant) {
-      const color = tinycolor(colorSettings.color);
+      const color = tinycolor(plainColorFromVariable(colorSettings.color));
       setup$.push(
         this.createMarkerShape(color, 0, this.settings.size).pipe(
           map((info) => {

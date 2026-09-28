@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.entitiy.alarm;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -18,11 +19,13 @@ import org.thingsboard.server.common.data.alarm.AlarmCommentSubType;
 import org.thingsboard.server.common.data.alarm.AlarmCommentType;
 import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
+import org.thingsboard.server.common.data.alarm.AlarmRef;
 import org.thingsboard.server.common.data.alarm.AlarmUpdateRequest;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AlarmId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
@@ -92,7 +95,7 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
 
     @Override
     public AlarmInfo ack(Alarm alarm, long ackTs, User user) throws ThingsboardException {
-        AlarmApiCallResult result = alarmSubscriptionService.acknowledgeAlarm(alarm.getTenantId(), alarm.getId(), getOrDefault(ackTs));
+        AlarmApiCallResult result = alarmSubscriptionService.acknowledgeAlarm(alarm.getTenantId(), alarm.getOriginator(), alarm.getId(), getOrDefault(ackTs));
         if (!result.isSuccessful()) {
             throw new ThingsboardException(ThingsboardErrorCode.ITEM_NOT_FOUND);
         }
@@ -114,7 +117,7 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
 
     @Override
     public AlarmInfo clear(Alarm alarm, long clearTs, User user) throws ThingsboardException {
-        AlarmApiCallResult result = alarmSubscriptionService.clearAlarm(alarm.getTenantId(), alarm.getId(), getOrDefault(clearTs), null);
+        AlarmApiCallResult result = alarmSubscriptionService.clearAlarm(alarm.getTenantId(), alarm.getOriginator(), alarm.getId(), getOrDefault(clearTs), null);
         if (!result.isSuccessful()) {
             throw new ThingsboardException(ThingsboardErrorCode.ITEM_NOT_FOUND);
         }
@@ -131,7 +134,7 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
 
     @Override
     public AlarmInfo assign(Alarm alarm, UserId assigneeId, long assignTs, User user) throws ThingsboardException {
-        AlarmApiCallResult result = alarmSubscriptionService.assignAlarm(alarm.getTenantId(), alarm.getId(), assigneeId, getOrDefault(assignTs));
+        AlarmApiCallResult result = alarmSubscriptionService.assignAlarm(alarm.getTenantId(), alarm.getOriginator(), alarm.getId(), assigneeId, getOrDefault(assignTs));
         if (!result.isSuccessful()) {
             throw new ThingsboardException(ThingsboardErrorCode.ITEM_NOT_FOUND);
         }
@@ -149,7 +152,7 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
 
     @Override
     public AlarmInfo unassign(Alarm alarm, long unassignTs, User user) throws ThingsboardException {
-        AlarmApiCallResult result = alarmSubscriptionService.unassignAlarm(alarm.getTenantId(), alarm.getId(), getOrDefault(unassignTs));
+        AlarmApiCallResult result = alarmSubscriptionService.unassignAlarm(alarm.getTenantId(), alarm.getOriginator(), alarm.getId(), getOrDefault(unassignTs));
         if (!result.isSuccessful()) {
             throw new ThingsboardException(ThingsboardErrorCode.ITEM_NOT_FOUND);
         }
@@ -165,18 +168,38 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
     }
 
     @Override
-    public void unassignDeletedUserAlarms(TenantId tenantId, UserId userId, String userTitle, List<UUID> alarms, long unassignTs) {
-        for (UUID alarmId : alarms) {
-            log.trace("[{}] Unassigning alarm {} from user {}", tenantId, alarmId, userId);
-            AlarmApiCallResult result = alarmSubscriptionService.unassignAlarm(tenantId, new AlarmId(alarmId), unassignTs);
-            if (!result.isSuccessful()) {
-                log.error("[{}] Cannot unassign alarm {} from user {}", tenantId, alarmId, userId);
+    public void unassignDeletedUserAlarms(TenantId tenantId, UserId userId, String userTitle, List<AlarmRef> alarmRefs, long unassignTs) {
+        for (AlarmRef ref : alarmRefs) {
+            // The ref already carries the originator, so the unassign routes by it directly with no per-alarm lookup.
+            unassignDeletedUserAlarm(tenantId, userId, userTitle, ref.originator(), ref.alarmId(), unassignTs);
+        }
+    }
+
+    @Deprecated(since = "4.3.1.4", forRemoval = true)
+    @Override
+    public void unassignDeletedUserAlarmsByIds(TenantId tenantId, UserId userId, String userTitle, List<UUID> alarmIds, long unassignTs) {
+        for (UUID alarmId : alarmIds) {
+            AlarmId id = new AlarmId(alarmId);
+            // Legacy payload without originator: resolve it via a by-id lookup so the unassign can route by it. The
+            // plain alarm row suffices -- the alarm_info view joins would only be dead weight here.
+            Alarm alarm = alarmSubscriptionService.findAlarmById(tenantId, id);
+            if (alarm == null) {
                 continue;
             }
-            if (result.isModified()) {
-                addSystemAlarmComment(result.getAlarm(), null, UNASSIGNED_FROM_DELETED_USER, "userName", userTitle);
-                logEntityActionService.logEntityAction(result.getAlarm().getTenantId(), result.getAlarm().getOriginator(), result.getAlarm(), result.getAlarm().getCustomerId(), ActionType.ALARM_UNASSIGNED, null);
-            }
+            unassignDeletedUserAlarm(tenantId, userId, userTitle, alarm.getOriginator(), id, unassignTs);
+        }
+    }
+
+    private void unassignDeletedUserAlarm(TenantId tenantId, UserId userId, String userTitle, EntityId originator, AlarmId alarmId, long unassignTs) {
+        log.trace("[{}] Unassigning alarm {} from user {}", tenantId, alarmId, userId);
+        AlarmApiCallResult result = alarmSubscriptionService.unassignAlarm(tenantId, originator, alarmId, unassignTs);
+        if (!result.isSuccessful()) {
+            log.error("[{}] Cannot unassign alarm {} from user {}", tenantId, alarmId, userId);
+            return;
+        }
+        if (result.isModified()) {
+            addSystemAlarmComment(result.getAlarm(), null, UNASSIGNED_FROM_DELETED_USER, "userName", userTitle);
+            logEntityActionService.logEntityAction(result.getAlarm().getTenantId(), result.getAlarm().getOriginator(), result.getAlarm(), result.getAlarm().getCustomerId(), ActionType.ALARM_UNASSIGNED, null);
         }
     }
 
@@ -188,7 +211,7 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
 
         boolean deleted;
         try {
-            deleted = alarmSubscriptionService.deleteAlarm(tenantId, alarmId);
+            deleted = alarmSubscriptionService.deleteAlarm(tenantId, alarmOriginator, alarmId);
         } catch (Exception e) {
             logEntityActionService.logEntityAction(tenantId, emptyId(alarmOriginator.getEntityType()), ActionType.ALARM_DELETE, user, e, alarmId);
             throw e;

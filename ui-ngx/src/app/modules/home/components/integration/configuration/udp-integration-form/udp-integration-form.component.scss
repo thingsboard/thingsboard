@@ -1,0 +1,16 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host {
+  .fields-group {
+    margin-top: 8px;
+    legend + * {
+      margin-top: 0;
+    }
+  }
+}
+
+:host ::ng-deep {
+  .toggle {
+    margin: 16px 0 12px;
+  }
+}

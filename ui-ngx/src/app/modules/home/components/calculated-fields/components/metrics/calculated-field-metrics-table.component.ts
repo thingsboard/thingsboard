@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   AfterViewInit,
   booleanAttribute,
@@ -69,6 +70,7 @@ export class CalculatedFieldMetricsTableComponent implements OnInit, ControlValu
   @Input() highlightRules: AceHighlightRules;
   @Input({transform: booleanAttribute}) simpleMode: boolean = false;
   @Input({required: true}) testScript: (expression?: string) => Observable<string>;
+  @Input({transform: booleanAttribute}) readonly: boolean;
 
   @ViewChild(MatSort, { static: true }) sort: MatSort;
 

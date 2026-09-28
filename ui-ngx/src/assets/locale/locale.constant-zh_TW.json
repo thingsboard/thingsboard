@@ -382,6 +382,44 @@
             "within-time-required": "時間為必填"
         }
     },
+    "ai-assistant": {
+        "configure-with-ai": "使用 AI 設定",
+        "follow-up-prompt-placeholder": "回覆...",
+        "sub-title": "我可以協助您設定及管理您的設備、儀表板、計算欄位、告警規則和通知——只要描述您的需求，其餘交給我。",
+        "new-chat": "新對話",
+        "no-chats": "尚無對話",
+        "today": "今天",
+        "yesterday": "昨天",
+        "last-7-days": "最近 7 天",
+        "older": "更早",
+        "delete-chat-title": "確定要刪除 '{{name}}' 嗎？",
+        "delete-chat-text": "所有對話訊息將會遺失",
+        "delete-chat-confirm": "是，刪除",
+        "action-approval-required": "動作需要核准",
+        "approve": "核准",
+        "deny": "拒絕",
+        "processing": "處理中...",
+        "approved": "完成",
+        "denied": "已拒絕",
+        "error": "失敗",
+        "thinking": "思考中...",
+        "rename-chat-title": "重新命名此對話",
+        "main-title": "您好！我是您的 AI 助理"
+    },
+    "alarm-rule": {
+        "ai-assistant-example-suggest-rules-label": "建議告警規則",
+        "ai-assistant-example-suggest-rules-message": "查看我的裝置，並建議值得設定的告警規則。",
+        "ai-assistant-example-inactivity-label": "裝置不活動告警",
+        "ai-assistant-example-inactivity-message": "建立一條告警規則，當裝置停止傳送遙測資料超過 10 分鐘時觸發警告。",
+        "ai-assistant-initial-prompt-placeholder": "描述您想要設定的內容..."
+    },
+    "calculated-fields": {
+        "ai-assistant-example-suggest-fields-label": "建議計算欄位",
+        "ai-assistant-example-suggest-fields-message": "查看我的裝置，並建議值得設定的計算欄位。",
+        "ai-assistant-example-aggregate-label": "彙總遙測資料",
+        "ai-assistant-example-aggregate-message": "選擇我的一台裝置，並設定一個計算欄位，彙總它的幾個遙測鍵。描述您將建立的內容，並先請我確認。",
+        "ai-assistant-initial-prompt-placeholder": "描述您想要設定的內容..."
+    },
     "alias": {
         "add": "增加別名",
         "edit": "編輯別名",
@@ -747,6 +785,11 @@
         "time-to": "時間到"
     },
     "dashboard": {
+        "ai-assistant-initial-prompt-placeholder": "描述您想要設定的內容...",
+        "ai-assistant-example-monitor-device-label": "監控一台裝置",
+        "ai-assistant-example-monitor-device-message": "裝置是 ...。我想把這個儀表板設定為該裝置的單一狀態檢視，在頂部以值卡片顯示它的最新遙測資料，下方顯示該遙測資料的時序圖表，底部顯示其活動告警表格。",
+        "ai-assistant-example-monitor-fleet-label": "監控裝置群",
+        "ai-assistant-example-monitor-fleet-message": "裝置類型是 ...。我想為該類型設定一個具有兩個狀態的儀表板。概覽狀態應在實體表格中列出該類型的所有裝置，下方顯示這些裝置的活動告警表格。選擇某台裝置會開啟詳細狀態，在頂部以值卡片顯示該裝置的最新遙測資料，下方顯示該遙測資料的時序圖表，底部顯示其活動告警表格。",
         "dashboard": "儀表板",
         "dashboards": "儀表板庫",
         "management": "儀表板管理",
@@ -979,6 +1022,9 @@
         "toggle-edit-mode": "切換編輯模式"
     },
     "device": {
+        "ai-assistant-initial-prompt-placeholder": "描述您想要設定的內容...",
+        "ai-assistant-example-connect-label": "連接我的設備",
+        "ai-assistant-example-connect-message": "幫我把我的一台設備連接到平台，讓它開始傳送真實的遙測資料。",
         "device": "設備",
         "device-required": "設備必填",
         "devices": "設備",

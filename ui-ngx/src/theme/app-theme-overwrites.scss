@@ -1,0 +1,172 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@use '@angular/material' as mat;
+@use '@angular/material/core/tokens/token-utils';
+@use '@angular/material/core/tokens/m2-utils';
+@use 'sass:meta';
+@use 'sass:color';
+
+@mixin app-theme-overwrites($primary, $config-or-theme) {
+  @include _mat-form-field-overwrites($primary, $config-or-theme);
+  @include _mat-button-overwrites($primary, $config-or-theme);
+  @include _mat-icon-overwrites();
+  @include _mat-select-overwrites($primary, $config-or-theme);
+  @include _mat-fab-overwrites($primary, $config-or-theme);
+  @include _mat-progress-bar-overwrites($primary, $config-or-theme);
+}
+
+@mixin _mat-form-field-overwrites($primary, $config-or-theme) {
+  .mat-mdc-form-field.mat-form-field-appearance-fill {
+    .mdc-text-field--filled, .mat-mdc-form-field-focus-overlay {
+      &:before {
+        content: "";
+        display: block;
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        left: 0;
+        top: 0;
+        background-color: mat.m2-get-color-from-palette($primary);
+      }
+      background-color: transparent;
+    }
+    .mdc-text-field--filled {
+      &:before {
+        opacity: 0.03;
+      }
+      &:not(.mdc-text-field--disabled) {
+        &:before {
+          opacity: 0.06;
+        }
+        background-color: transparent;
+      }
+    }
+    .mat-mdc-form-field-focus-overlay {
+      &:before {
+        opacity: 0.87;
+      }
+    }
+  }
+  .mat-mdc-form-field {
+    .mat-mdc-form-field-hint-wrapper {
+      color: rgba(0, 0, 0, 0.6);
+    }
+  }
+}
+
+@mixin _mat-button-overwrites($primary, $config-or-theme) {
+  .mat-toolbar {
+    .mat-mdc-outlined-button {
+      --mat-button-outlined-outline-color: inherit;
+      &:not(:disabled) {
+        border-color: inherit;
+      }
+    }
+  }
+  .mat-mdc-button-base {
+    .mat-icon {
+      min-height: auto;
+    }
+  }
+}
+
+@mixin _mat-icon-overwrites() {
+  .mat-icon, .mat-icon.mat-primary, .mat-icon.mat-accent, .mat-icon.mat-warn {
+    color: var(--mat-icon-color);
+  }
+}
+
+@mixin _mat-select-overwrites($primary, $config-or-theme) {
+  .mat-toolbar {
+    &.mat-primary {
+      @include _select-variant(
+          mat.m2-get-color-from-palette($primary, default-contrast),
+          mat.m2-get-color-from-palette($primary)
+      );
+    }
+  }
+}
+
+@mixin _mat-fab-overwrites($primary, $config-or-theme) {
+  $config: mat.m2-get-color-config($config-or-theme);
+  $accent: map_get($config, accent);
+  .mat-mdc-fab {
+    &.mat-primary {
+      @include _fab-variant(
+          mat.m2-get-color-from-palette($primary, default-contrast),
+          mat.m2-get-color-from-palette($primary)
+      );
+    }
+    &.mat-accent {
+      @include _fab-variant(
+          mat.m2-get-color-from-palette($accent, default-contrast),
+          mat.m2-get-color-from-palette($accent)
+      );
+    }
+  }
+  .mat-mdc-mini-fab {
+    &.mat-primary {
+      @include _fab-small-variant(
+          mat.m2-get-color-from-palette($primary, default-contrast),
+          mat.m2-get-color-from-palette($primary)
+      );
+    }
+    &.mat-accent {
+      @include _fab-small-variant(
+          mat.m2-get-color-from-palette($accent, default-contrast),
+          mat.m2-get-color-from-palette($accent)
+      );
+    }
+  }
+}
+
+@mixin _mat-progress-bar-overwrites($primary, $config-or-theme) {
+  $config: mat.m2-get-color-config($config-or-theme);
+  $accent: map_get($config, accent);
+  $system: m2-utils.get-system($config-or-theme);
+  $background: map_get($system, background);
+
+  .mat-mdc-progress-bar {
+
+    @include _progress-bar-palette-styles-overwrite($primary, $background);
+
+    &.mat-accent {
+      @include _progress-bar-palette-styles-overwrite($accent, $background);
+    }
+  }
+}
+
+@mixin _select-variant($foreground, $background) {
+  @include token-utils.values((
+    select-enabled-trigger-text-color: $foreground
+  ));
+}
+
+@mixin _fab-variant($foreground, $background) {
+  @include token-utils.values((
+    fab-container-color: $background,
+    fab-foreground-color: $foreground
+  ));
+}
+
+@mixin _fab-small-variant($foreground, $background) {
+  @include token-utils.values((
+    fab-small-container-color: $background,
+    fab-small-foreground-color: $foreground
+  ));
+}
+
+@mixin _progress-bar-palette-styles-overwrite($theme, $background) {
+  @include token-utils.values((
+    progress-bar-track-color: _get-buffer-color($theme, $background)
+  ));
+}
+
+@function _get-buffer-color($theme, $background) {
+  $theme-color: mat.m2-get-color-from-palette($theme);
+  // Return fallback color if the theme uses variables to define colors.
+  @if (meta.type-of($theme-color) != 'color' or meta.type-of($background) != 'color') {
+    @return mat.m2-get-color-from-palette($theme, lighter);
+  }
+  @return color.mix($theme-color, $background, $weight: 25%);
+}

@@ -1,0 +1,19 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host ::ng-deep {
+  // The Units / Events sub-tabs host a full tb-entities-table which expects
+  // its container to provide a concrete height. The default mat-tab-body-content
+  // is overflow:auto with intrinsic height; force a flex column so the entities
+  // table can fill the available space and pin its paginator to the bottom.
+  .mat-mdc-tab-body-content {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .mat-mdc-tab-body-content > tb-agent-app-unit-table,
+  .mat-mdc-tab-body-content > tb-agent-app-event-table {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: block;
+  }
+}

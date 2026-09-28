@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.entitiy.device;
 
 import com.google.common.util.concurrent.Futures;
@@ -16,11 +17,10 @@ import org.thingsboard.server.common.data.NameConflictStrategy;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.group.EntityGroup;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.device.ClaimDevicesService;
@@ -31,6 +31,10 @@ import org.thingsboard.server.dao.device.claim.ClaimResult;
 import org.thingsboard.server.dao.device.claim.ReclaimResult;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
+import org.thingsboard.server.service.security.permission.OwnersCacheService;
+
+import java.util.Collections;
+import java.util.List;
 
 @AllArgsConstructor
 @TbCoreComponent
@@ -41,43 +45,51 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
     private final DeviceService deviceService;
     private final DeviceCredentialsService deviceCredentialsService;
     private final ClaimDevicesService claimDevicesService;
+    private final OwnersCacheService ownersCacheService;
 
     @Override
-    public Device save(Device device, String accessToken, User user) throws Exception {
-        return save(device, accessToken, NameConflictStrategy.DEFAULT, user);
+    public Device save(Device device, EntityGroup entityGroup) throws Exception {
+        return save(device, null, entityGroup, null);
     }
 
     @Override
-    public Device save(Device device, String accessToken, NameConflictStrategy nameConflictStrategy, User user) throws Exception {
+    public Device save(Device device, String accessToken, EntityGroup entityGroup, User user) throws Exception {
+        return save(device, accessToken, entityGroup != null ? Collections.singletonList(entityGroup) : null, user);
+    }
+
+    @Override
+    public Device save(Device device, String accessToken, List<EntityGroup> entityGroups, User user) throws Exception {
+        return save(device, accessToken, entityGroups, NameConflictStrategy.DEFAULT, user);
+    }
+
+    @Override
+    public Device save(Device device, String accessToken, List<EntityGroup> entityGroups, NameConflictStrategy nameConflictStrategy, User user) throws Exception {
         ActionType actionType = device.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = device.getTenantId();
-        try {
-            Device savedDevice = checkNotNull(deviceService.saveDeviceWithAccessToken(device, accessToken, nameConflictStrategy));
-            autoCommit(user, savedDevice.getId());
-            logEntityActionService.logEntityAction(tenantId, savedDevice.getId(), savedDevice, savedDevice.getCustomerId(),
-                    actionType, user);
-
-            return savedDevice;
-        } catch (Exception e) {
-            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.DEVICE), device, actionType, user, e);
-            throw e;
-        }
+        Device savedDevice = checkNotNull(deviceService.saveDeviceWithAccessToken(device, accessToken, nameConflictStrategy));
+        autoCommit(user, savedDevice.getId());
+        createOrUpdateGroupEntity(tenantId, savedDevice, entityGroups, actionType, user);
+        return savedDevice;
     }
 
     @Override
-    public Device saveDeviceWithCredentials(Device device, DeviceCredentials credentials, User user) throws ThingsboardException {
-        return saveDeviceWithCredentials(device, credentials, NameConflictStrategy.DEFAULT, user);
+    public Device saveDeviceWithCredentials(Device device, DeviceCredentials credentials, EntityGroup entityGroup, User user) throws ThingsboardException {
+        return saveDeviceWithCredentials(device, credentials, entityGroup != null ? Collections.singletonList(entityGroup) : null, user);
     }
 
     @Override
-    public Device saveDeviceWithCredentials(Device device, DeviceCredentials credentials, NameConflictStrategy nameConflictStrategy, User user) throws ThingsboardException {
-        ActionType actionType = device.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
+    public Device saveDeviceWithCredentials(Device device, DeviceCredentials credentials, List<EntityGroup> entityGroups, User user) throws ThingsboardException {
+        return saveDeviceWithCredentials(device, credentials, entityGroups, NameConflictStrategy.DEFAULT, user);
+    }
+
+    @Override
+    public Device saveDeviceWithCredentials(Device device, DeviceCredentials credentials, List<EntityGroup> entityGroups, NameConflictStrategy nameConflictStrategy, User user) throws ThingsboardException {
+        boolean isCreate = device.getId() == null;
+        ActionType actionType = isCreate ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = device.getTenantId();
         try {
             Device savedDevice = checkNotNull(deviceService.saveDeviceWithCredentials(device, credentials, nameConflictStrategy));
-            logEntityActionService.logEntityAction(tenantId, savedDevice.getId(), savedDevice, savedDevice.getCustomerId(),
-                    actionType, user);
-
+            createOrUpdateGroupEntity(tenantId, savedDevice, entityGroups, actionType, user);
             return savedDevice;
         } catch (Exception e) {
             logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.DEVICE), device, actionType, user, e);
@@ -103,58 +115,9 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
     }
 
     @Override
-    public Device assignDeviceToCustomer(TenantId tenantId, DeviceId deviceId, Customer customer, User user) throws ThingsboardException {
-        ActionType actionType = ActionType.ASSIGNED_TO_CUSTOMER;
-        CustomerId customerId = customer.getId();
-        try {
-            Device savedDevice = checkNotNull(deviceService.assignDeviceToCustomer(tenantId, deviceId, customerId));
-            logEntityActionService.logEntityAction(tenantId, deviceId, savedDevice, customerId, actionType, user,
-                    deviceId.toString(), customerId.toString(), customer.getName());
-
-            return savedDevice;
-        } catch (Exception e) {
-            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.DEVICE), actionType, user,
-                    e, deviceId.toString(), customerId.toString());
-            throw e;
-        }
-    }
-
-    @Override
-    public Device unassignDeviceFromCustomer(Device device, Customer customer, User user) throws ThingsboardException {
-        ActionType actionType = ActionType.UNASSIGNED_FROM_CUSTOMER;
-        TenantId tenantId = device.getTenantId();
-        DeviceId deviceId = device.getId();
-        try {
-            Device savedDevice = checkNotNull(deviceService.unassignDeviceFromCustomer(tenantId, deviceId));
-            CustomerId customerId = customer.getId();
-
-            logEntityActionService.logEntityAction(tenantId, deviceId, savedDevice, customerId, actionType, user,
-                    deviceId.toString(), customerId.toString(), customer.getName());
-
-            return savedDevice;
-        } catch (Exception e) {
-            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.DEVICE), actionType,
-                    user, e, deviceId.toString());
-            throw e;
-        }
-    }
-
-    @Override
-    public Device assignDeviceToPublicCustomer(TenantId tenantId, DeviceId deviceId, User user) throws ThingsboardException {
-        ActionType actionType = ActionType.ASSIGNED_TO_CUSTOMER;
-        Customer publicCustomer = customerService.findOrCreatePublicCustomer(tenantId);
-        try {
-            Device savedDevice = checkNotNull(deviceService.assignDeviceToCustomer(tenantId, deviceId, publicCustomer.getId()));
-
-            logEntityActionService.logEntityAction(tenantId, deviceId, savedDevice, savedDevice.getCustomerId(),
-                    actionType, user, deviceId.toString(), publicCustomer.getId().toString(), publicCustomer.getName());
-
-            return savedDevice;
-        } catch (Exception e) {
-            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.DEVICE), actionType,
-                    user, e, deviceId.toString());
-            throw e;
-        }
+    public void delete(DeviceId deviceId, User user) {
+        Device device = deviceService.findDeviceById(user.getTenantId(), deviceId);
+        delete(device, user);
     }
 
     @Override
@@ -191,7 +154,8 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
     }
 
     @Override
-    public ListenableFuture<ClaimResult> claimDevice(TenantId tenantId, Device device, CustomerId customerId, String secretKey, User user) {
+    public ListenableFuture<ClaimResult> claimDevice(TenantId tenantId, Device device, CustomerId
+            customerId, String secretKey, User user) {
         ListenableFuture<ClaimResult> future = claimDevicesService.claimDevice(device, customerId, secretKey);
 
         return Futures.transform(future, result -> {
@@ -227,6 +191,7 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
         DeviceId deviceId = device.getId();
         try {
             Device assignedDevice = deviceService.assignDeviceToTenant(newTenantId, device);
+            ownersCacheService.clearOwners(deviceId);
 
             logEntityActionService.logEntityAction(tenantId, deviceId, assignedDevice, assignedDevice.getCustomerId(),
                     actionType, user, newTenantId.toString(), newTenant.getName());
@@ -235,42 +200,6 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
         } catch (Exception e) {
             logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.DEVICE),
                     actionType, user, e, deviceId.toString());
-            throw e;
-        }
-    }
-
-    @Override
-    public Device assignDeviceToEdge(TenantId tenantId, DeviceId deviceId, Edge edge, User user) throws ThingsboardException {
-        ActionType actionType = ActionType.ASSIGNED_TO_EDGE;
-        EdgeId edgeId = edge.getId();
-        try {
-            Device savedDevice = checkNotNull(deviceService.assignDeviceToEdge(tenantId, deviceId, edgeId));
-            logEntityActionService.logEntityAction(tenantId, deviceId, savedDevice, savedDevice.getCustomerId(),
-                    actionType, user, deviceId.toString(), edgeId.toString(), edge.getName());
-
-            return savedDevice;
-        } catch (Exception e) {
-            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.DEVICE),
-                    actionType, user, e, deviceId.toString(), edgeId.toString());
-            throw e;
-        }
-    }
-
-    @Override
-    public Device unassignDeviceFromEdge(Device device, Edge edge, User user) throws ThingsboardException {
-        ActionType actionType = ActionType.UNASSIGNED_FROM_EDGE;
-        TenantId tenantId = device.getTenantId();
-        DeviceId deviceId = device.getId();
-        EdgeId edgeId = edge.getId();
-        try {
-            Device savedDevice = checkNotNull(deviceService.unassignDeviceFromEdge(tenantId, deviceId, edgeId));
-            logEntityActionService.logEntityAction(tenantId, deviceId, savedDevice, savedDevice.getCustomerId(),
-                    actionType, user, deviceId.toString(), edgeId.toString(), edge.getName());
-
-            return savedDevice;
-        } catch (Exception e) {
-            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.DEVICE),
-                    actionType, user, e, deviceId.toString(), edgeId.toString());
             throw e;
         }
     }

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -22,6 +23,7 @@ import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.util.mapping.JsonConverter;
 
 import java.util.Arrays;
+import java.util.Collections;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -65,6 +67,10 @@ public class OAuth2ClientRegistrationTemplateEntity extends BaseSqlEntity<OAuth2
     private String defaultDashboardName;
     @Column(name = ModelConstants.OAUTH2_ALWAYS_FULL_SCREEN_PROPERTY)
     private Boolean alwaysFullScreen;
+    @Column(name = ModelConstants.OAUTH2_PARENT_CUSTOMER_NAME_PATTERN_PROPERTY)
+    private String parentCustomerNamePattern;
+    @Column(name = ModelConstants.OAUTH2_USER_GROUPS_NAME_PATTERN_PROPERTY)
+    private String userGroupsNamePattern;
     @Column(name = ModelConstants.OAUTH2_TEMPLATE_COMMENT_PROPERTY)
     private String comment;
     @Column(name = ModelConstants.OAUTH2_TEMPLATE_LOGIN_BUTTON_ICON_PROPERTY)
@@ -112,6 +118,11 @@ public class OAuth2ClientRegistrationTemplateEntity extends BaseSqlEntity<OAuth2
                 this.customerNamePattern = basicConfig.getCustomerNamePattern();
                 this.defaultDashboardName = basicConfig.getDefaultDashboardName();
                 this.alwaysFullScreen = basicConfig.isAlwaysFullScreen();
+                this.parentCustomerNamePattern = basicConfig.getParentCustomerNamePattern();
+                if (basicConfig.getUserGroupsNamePattern() != null && !basicConfig.getUserGroupsNamePattern().isEmpty()) {
+                    this.userGroupsNamePattern = basicConfig.getUserGroupsNamePattern().stream()
+                            .reduce((result, element) -> result + "," + element).orElse(null);
+                }
             }
         }
     }
@@ -136,6 +147,8 @@ public class OAuth2ClientRegistrationTemplateEntity extends BaseSqlEntity<OAuth2
                                 .customerNamePattern(customerNamePattern)
                                 .defaultDashboardName(defaultDashboardName)
                                 .alwaysFullScreen(alwaysFullScreen)
+                                .parentCustomerNamePattern(parentCustomerNamePattern)
+                                .userGroupsNamePattern(userGroupsNamePattern != null ? Arrays.asList(userGroupsNamePattern.split(",")) : Collections.emptyList())
                                 .build()
                         )
                         .build()

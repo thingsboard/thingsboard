@@ -36,7 +36,7 @@ OpenJDK 64-Bit Server VM (build ...)
 
 ThingsBoard Edge supports **SQL** and **hybrid** database configurations.
 In this guide, we’ll use an **SQL** database.
-For more details about the hybrid setup, please refer to the official installation instructions on the <a href="https://thingsboard.io/docs/user-guide/install/edge/deb-installation/#step-2-configure-the-thingsboard-edge-database" target="_blank">ThingsBoard documentation site</a>.
+For more details about the hybrid setup, please refer to the official installation instructions on the <a href="https://thingsboard.io/docs/user-guide/install/pe/edge/deb-installation/#step-2-configure-the-thingsboard-edge-database" target="_blank">ThingsBoard documentation site</a>.
 
 To install the PostgreSQL database, run these commands:
 
@@ -74,14 +74,14 @@ echo "CREATE DATABASE tb_edge;" | psql -U postgres -d postgres -h 127.0.0.1 -W
 Download the installation package:
 
 ```bash
-wget https://github.com/thingsboard/thingsboard-edge/releases/download/v${TB_EDGE_TAG}/tb-edge-${TB_EDGE_TAG}.deb
+wget https://dist.thingsboard.io/tb-edge-${TB_EDGE_TAG}pe.deb
 {:copy-code}
 ```
 
 Go to the download repository and install ThingsBoard Edge service:
 
 ```bash
-sudo dpkg -i tb-edge-${TB_EDGE_TAG}.deb
+sudo dpkg -i tb-edge-${TB_EDGE_TAG}pe.deb
 {:copy-code}
 ```
 
@@ -125,6 +125,7 @@ export MQTT_BIND_PORT=11883
 export COAP_BIND_PORT=15683
 export LWM2M_ENABLED=false
 export SNMP_ENABLED=false
+export INTEGRATIONS_RPC_PORT=19090
 EOL'
 {:copy-code}
 ```
@@ -151,4 +152,4 @@ sudo service tb-edge start
 
 Once the Edge service has started, open the Edge web interface at http://localhost:8080, or http://localhost:18080 if you modified the HTTP bind port configuration in the previous step.
 
-Log in using your **tenant credentials** from either your local ThingsBoard Server or the **ThingsBoard Live Demo**.
+Log in using your **tenant credentials** from either your local ThingsBoard Server or the **ThingsBoard Cloud**.

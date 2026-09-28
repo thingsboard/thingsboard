@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.event;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -21,8 +22,8 @@ public abstract class Event extends BaseData<EventId> {
 
     protected static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
-    protected final TenantId tenantId;
-    protected final UUID entityId;
+    protected TenantId tenantId;
+    protected UUID entityId;
     protected final String serviceId;
 
     public Event(TenantId tenantId, UUID entityId, String serviceId, UUID id, long ts) {

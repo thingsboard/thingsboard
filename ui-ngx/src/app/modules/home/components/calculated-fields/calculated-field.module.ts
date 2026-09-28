@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
@@ -37,6 +38,9 @@ import {
   CalculatedFieldsFilterConfigComponent
 } from '@home/components/calculated-fields/table-header/calculated-fields-filter-config.component';
 import { CalculatedFieldComponent } from '@home/components/calculated-fields/calculated-field.component';
+import {
+  CalculatedFieldReprocessingPanelComponent
+} from '@home/components/calculated-fields/components/reprocessing/calculated-field-reprocessing-panel.component';
 
 @NgModule({
   declarations: [
@@ -46,6 +50,7 @@ import { CalculatedFieldComponent } from '@home/components/calculated-fields/cal
     CalculatedFieldsHeaderComponent,
     CalculatedFieldsFilterConfigComponent,
     CalculatedFieldComponent,
+    CalculatedFieldReprocessingPanelComponent,
   ],
   imports: [
     CommonModule,

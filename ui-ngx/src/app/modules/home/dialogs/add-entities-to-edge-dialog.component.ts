@@ -1,22 +1,21 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, Inject, OnInit, SkipSelf } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
-import { DeviceService } from '@core/http/device.service';
-import { EdgeService } from '@core/http/edge.service';
 import { EntityType } from '@shared/models/entity-type.models';
 import { forkJoin, Observable } from 'rxjs';
-import { AssetService } from '@core/http/asset.service';
-import { EntityViewService } from '@core/http/entity-view.service';
-import { DashboardService } from '@core/http/dashboard.service';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
 import { RuleChainService } from '@core/http/rule-chain.service';
 import { RuleChainType } from '@shared/models/rule-chain.models';
+import { SchedulerEventService } from '@core/http/scheduler-event.service';
+import { IntegrationService } from '@core/http/integration.service';
+import { IntegrationSubType } from '@shared/models/integration.models';
 
 export interface AddEntitiesToEdgeDialogData {
   edgeId: string;
@@ -31,7 +30,7 @@ export interface AddEntitiesToEdgeDialogData {
     standalone: false
 })
 export class AddEntitiesToEdgeDialogComponent extends
-  DialogComponent<AddEntitiesToEdgeDialogComponent, boolean> implements OnInit, ErrorStateMatcher {
+  DialogComponent<AddEntitiesToEdgeDialogComponent, Array<string>> implements OnInit, ErrorStateMatcher {
 
   addEntitiesToEdgeFormGroup: UntypedFormGroup;
 
@@ -39,6 +38,7 @@ export class AddEntitiesToEdgeDialogComponent extends
 
   entityType: EntityType;
   subType: string;
+  edgeId: string;
 
   assignToEdgeTitle: string;
   assignToEdgeText: string;
@@ -46,14 +46,11 @@ export class AddEntitiesToEdgeDialogComponent extends
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: AddEntitiesToEdgeDialogData,
-              private deviceService: DeviceService,
-              private edgeService: EdgeService,
-              private assetService: AssetService,
-              private entityViewService: EntityViewService,
-              private dashboardService: DashboardService,
               private ruleChainService: RuleChainService,
+              private schedulerEventService: SchedulerEventService,
+              private integrationService: IntegrationService,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
-              public dialogRef: MatDialogRef<AddEntitiesToEdgeDialogComponent, boolean>,
+              public dialogRef: MatDialogRef<AddEntitiesToEdgeDialogComponent, Array<string>>,
               public fb: UntypedFormBuilder) {
     super(store, router, dialogRef);
     this.entityType = this.data.entityType;
@@ -63,28 +60,20 @@ export class AddEntitiesToEdgeDialogComponent extends
     this.addEntitiesToEdgeFormGroup = this.fb.group({
       entityIds: [null, [Validators.required]]
     });
-    this.subType = '';
     switch (this.entityType) {
-      case EntityType.DEVICE:
-        this.assignToEdgeTitle = 'device.assign-device-to-edge-title';
-        this.assignToEdgeText = 'device.assign-device-to-edge-text';
-        break;
       case EntityType.RULE_CHAIN:
         this.assignToEdgeTitle = 'rulechain.assign-rulechain-to-edge-title';
         this.assignToEdgeText = 'rulechain.assign-rulechain-to-edge-text';
         this.subType = RuleChainType.EDGE;
         break;
-      case EntityType.ASSET:
-        this.assignToEdgeTitle = 'asset.assign-asset-to-edge-title';
-        this.assignToEdgeText = 'asset.assign-asset-to-edge-text';
+      case EntityType.SCHEDULER_EVENT:
+        this.assignToEdgeTitle = 'edge.assign-scheduler-event-to-edge-title';
+        this.assignToEdgeText = 'edge.assign-scheduler-event-to-edge-text';
         break;
-      case EntityType.ENTITY_VIEW:
-        this.assignToEdgeTitle = 'entity-view.assign-entity-view-to-edge-title';
-        this.assignToEdgeText = 'entity-view.assign-entity-view-to-edge-text';
-        break;
-      case EntityType.DASHBOARD:
-        this.assignToEdgeTitle = 'dashboard.assign-dashboard-to-edge-title';
-        this.assignToEdgeText = 'dashboard.assign-dashboard-to-edge-text';
+      case EntityType.INTEGRATION:
+        this.assignToEdgeTitle = 'edge.assign-integration-to-edge-title';
+        this.assignToEdgeText = 'edge.assign-integration-to-edge-text';
+        this.subType = IntegrationSubType.EDGE;
         break;
     }
   }
@@ -96,7 +85,7 @@ export class AddEntitiesToEdgeDialogComponent extends
   }
 
   cancel(): void {
-    this.dialogRef.close(false);
+    this.dialogRef.close(undefined);
   }
 
   assign(): void {
@@ -110,23 +99,19 @@ export class AddEntitiesToEdgeDialogComponent extends
     );
     forkJoin(tasks).subscribe(
       () => {
-        this.dialogRef.close(true);
+        this.dialogRef.close(entityIds);
       }
     );
   }
 
   private getAssignToEdgeTask(edgeId: string, entityId: string, entityType: EntityType): Observable<any> {
     switch (entityType) {
-      case EntityType.DEVICE:
-        return this.deviceService.assignDeviceToEdge(edgeId, entityId);
-      case EntityType.ASSET:
-        return this.assetService.assignAssetToEdge(edgeId, entityId);
-      case EntityType.ENTITY_VIEW:
-        return this.entityViewService.assignEntityViewToEdge(edgeId, entityId);
-      case EntityType.DASHBOARD:
-        return this.dashboardService.assignDashboardToEdge(edgeId, entityId);
       case EntityType.RULE_CHAIN:
         return this.ruleChainService.assignRuleChainToEdge(edgeId, entityId);
+      case EntityType.SCHEDULER_EVENT:
+        return this.schedulerEventService.assignSchedulerEventToEdge(edgeId, entityId);
+      case EntityType.INTEGRATION:
+        return this.integrationService.assignIntegrationToEdge(edgeId, entityId);
     }
   }
 

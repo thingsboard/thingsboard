@@ -1,15 +1,21 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<a mat-button routerLinkActive="tb-active" [routerLinkActiveOptions]="{paths: 'subset', queryParams: 'ignored', matrixParams: 'ignored', fragment: 'ignored'}" routerLink="{{section.path}}"
-   [matTooltip]="collapsed ? (section.customTranslate ? (section.name | customTranslate) : (section.name | translate)) : null"
-   matTooltipPosition="right"
-   [class.is-new]="section.isNew">
+<a mat-button routerLinkActive="tb-active" [routerLinkActiveOptions]="{paths: 'subset', queryParams: section.isCustom ? 'subset' : 'ignored', matrixParams: 'ignored', fragment: 'ignored'}"
+  [queryParams]="section.queryParams"
+  [routerLink]="section.path"
+  [matTooltip]="collapsed ? (section.customTranslate ? (section.name | customTranslate) : (section.name | translate)) : null"
+  matTooltipPosition="right"
+  [class.is-new]="section.isNew">
   @if (section.icon !== null) {
-    <tb-icon matButtonIcon>{{section.icon}}</tb-icon>
+    <tb-icon class="tb-filled-icon" matButtonIcon>{{section.icon}}</tb-icon>
+  }
+  @if (section.outlinedIcon !== null) {
+    <tb-icon class="tb-outlined-icon" matButtonIcon>{{section.outlinedIcon}}</tb-icon>
   }
   <span>{{section.customTranslate ? (section.name | customTranslate) : (section.name | translate)}}</span>
 </a>

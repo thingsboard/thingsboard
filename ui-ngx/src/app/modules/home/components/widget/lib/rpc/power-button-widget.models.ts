@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { BackgroundSettings, BackgroundType } from '@shared/models/widget-settings.models';
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import {
@@ -14,6 +15,7 @@ import { Circle, Effect, Element, G, Gradient, Path, Runner, Svg, Text, Timeline
 import '@svgdotjs/svg.filter.js';
 import tinycolor from 'tinycolor2';
 import { WidgetContext } from '@home/models/widget-component.models';
+import { plainColorFromVariable } from '@core/utils';
 import { from, Observable, of, shareReplay } from 'rxjs';
 import { isSvgIcon, splitIconName } from '@shared/models/icon.models';
 import { catchError, map, take } from 'rxjs/operators';
@@ -189,7 +191,7 @@ export const powerButtonDefaultSettings: PowerButtonWidgetSettings = {
     iconSizeUnit: 'px',
     icon: 'power_settings_new'
   },
-  mainColorOn: '#3F52DD',
+  mainColorOn: 'var(--tb-primary-500)',
   backgroundColorOn: '#FFFFFF',
   mainColorOff: '#A2A2A2',
   backgroundColorOff: '#FFFFFF',
@@ -227,12 +229,12 @@ interface ButtonsIconSettings {
 type PowerButtonShapeColors = Record<PowerButtonState, PowerButtonColorState>;
 
 const createPowerButtonShapeColors = (settings: PowerButtonWidgetSettings): PowerButtonShapeColors => {
-  const mainColorOn = tinycolor(settings.mainColorOn);
-  const backgroundColorOn = tinycolor(settings.backgroundColorOn);
-  const mainColorOff = tinycolor(settings.mainColorOff);
-  const backgroundColorOff = tinycolor(settings.backgroundColorOff);
-  const mainColorDisabled = tinycolor(settings.mainColorDisabled);
-  const backgroundColorDisabled = tinycolor(settings.backgroundColorDisabled);
+  const mainColorOn = tinycolor(plainColorFromVariable(settings.mainColorOn));
+  const backgroundColorOn = tinycolor(plainColorFromVariable(settings.backgroundColorOn));
+  const mainColorOff = tinycolor(plainColorFromVariable(settings.mainColorOff));
+  const backgroundColorOff = tinycolor(plainColorFromVariable(settings.backgroundColorOff));
+  const mainColorDisabled = tinycolor(plainColorFromVariable(settings.mainColorDisabled));
+  const backgroundColorDisabled = tinycolor(plainColorFromVariable(settings.backgroundColorDisabled));
   return {
     on: {
       mainColor: {hex: mainColorOn.toHexString(), opacity: mainColorOn.getAlpha()},

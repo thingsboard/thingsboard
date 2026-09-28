@@ -1,10 +1,11 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { BaseData, ExportableEntity } from '@shared/models/base-data';
 import { TenantId } from '@shared/models/id/tenant-id';
 import { OtaPackageId } from '@shared/models/id/ota-package-id';
 import { DeviceProfileId } from '@shared/models/id/device-profile-id';
-import { HasTenantId } from '@shared/models/entity.models';
+import { EntityGroupId } from '@shared/models/id/entity-group-id';
 
 export enum ChecksumAlgorithm {
   MD5 = 'MD5',
@@ -72,7 +73,7 @@ export interface OtaPagesIds {
   softwareId?: OtaPackageId;
 }
 
-export interface OtaPackageInfo extends Omit<BaseData<OtaPackageId>, 'label'>, HasTenantId, ExportableEntity<OtaPackageId> {
+export interface OtaPackageInfo extends Omit<BaseData<OtaPackageId>, 'label'>, ExportableEntity<OtaPackageId> {
   tenantId?: TenantId;
   type: OtaUpdateType;
   deviceProfileId?: DeviceProfileId;
@@ -93,4 +94,12 @@ export interface OtaPackageInfo extends Omit<BaseData<OtaPackageId>, 'label'>, H
 export interface OtaPackage extends OtaPackageInfo {
   file?: File;
   data: string;
+}
+
+export interface DeviceGroupOtaPackage {
+  otaPackageId: OtaPackageId;
+  otaPackageType: OtaUpdateType;
+  otaPackageUpdateTime?: number;
+  groupId: EntityGroupId;
+  id?: string;
 }

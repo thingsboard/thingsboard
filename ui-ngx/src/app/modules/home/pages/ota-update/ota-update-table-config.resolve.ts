@@ -1,10 +1,12 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import {
   CellActionDescriptorType,
   DateEntityTableColumn,
+  defaultEntityTablePermissions,
   EntityTableColumn,
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
@@ -22,6 +24,7 @@ import { PageLink } from '@shared/models/page/page-link';
 import { OtaUpdateComponent } from '@home/pages/ota-update/ota-update.component';
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import { FileSizePipe } from '@shared/pipe/file-size.pipe';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
 import { OtaUpdateTabsComponent } from '@home/pages/ota-update/ota-update-tabs.component';
 
 @Injectable()
@@ -33,6 +36,7 @@ export class OtaUpdateTableConfigResolve  {
   constructor(private translate: TranslateService,
               private datePipe: DatePipe,
               private otaPackageService: OtaPackageService,
+              private userPermissionsService: UserPermissionsService,
               private router: Router,
               private fileSize: FileSizePipe) {
     this.config.entityType = EntityType.OTA_PACKAGE;
@@ -116,6 +120,7 @@ export class OtaUpdateTableConfigResolve  {
 
   resolve(): EntityTableConfig<OtaPackage, PageLink, OtaPackageInfo> {
     this.config.tableTitle = this.translate.instant('ota-update.packages-repository');
+    defaultEntityTablePermissions(this.userPermissionsService, this.config);
     return this.config;
   }
 

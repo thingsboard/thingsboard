@@ -1,10 +1,11 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { BaseData, ExportableEntity, HasId } from '@shared/models/base-data';
 import { TenantId } from '@shared/models/id/tenant-id';
 import { TbResourceId } from '@shared/models/id/tb-resource-id';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
-import { HasTenantId } from '@shared/models/entity.models';
+import { WhiteLabeling } from '@shared/models/white-labeling.models';
 
 export enum ResourceType {
   LWM2M_MODEL = 'LWM2M_MODEL',
@@ -58,7 +59,7 @@ export const ResourceSubTypeTranslationMap = new Map<ResourceSubType, string>(
   ]
 );
 
-export interface TbResourceInfo<D> extends Omit<BaseData<TbResourceId>, 'name' | 'label'>, HasTenantId, ExportableEntity<TbResourceId> {
+export interface TbResourceInfo<D> extends Omit<BaseData<TbResourceId>, 'name' | 'label'>, ExportableEntity<TbResourceId> {
   tenantId?: TenantId;
   resourceKey?: string;
   title?: string;
@@ -108,7 +109,7 @@ export interface ImageExportData {
 export type ImageResourceType = 'tenant' | 'system';
 export type TBResourceScope = 'tenant' | 'system';
 
-export type ResourceReferences = {[entityType: string]: Array<BaseData<HasId> & HasTenantId>};
+export type ResourceReferences = Array<BaseData<HasId> | WhiteLabeling>;
 
 export interface ResourceInfoWithReferences extends ResourceInfo {
   references: ResourceReferences;
@@ -128,7 +129,18 @@ export const toResourceDeleteResult = (resource: ResourceInfo, e?: any): Resourc
   } else {
     const result: ResourceDeleteResult = {resource, success: false, error: e};
     if (e?.status === 400 && e?.error?.success === false && e?.error?.references) {
-      const references: ResourceReferences = e?.error?.references;
+      const entityReferences: {[entityType: string]: Array<BaseData<HasId>>} = e?.error?.references;
+      const whiteLabelingList: Array<WhiteLabeling> = e?.error?.whiteLabelingList;
+      const references: ResourceReferences = [];
+      if (entityReferences) {
+        for (const entityTypeStr of Object.keys(entityReferences)) {
+          const entities = entityReferences[entityTypeStr];
+          references.push.apply(references, entities);
+        }
+      }
+      if (whiteLabelingList) {
+        references.push.apply(references, whiteLabelingList);
+      }
       result.resourceIsReferencedError = true;
       result.references = references;
     }

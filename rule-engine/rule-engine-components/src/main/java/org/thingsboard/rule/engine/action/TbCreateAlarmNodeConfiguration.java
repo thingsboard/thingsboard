@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.rule.engine.action;
 
 import lombok.Data;
@@ -20,6 +21,7 @@ public class TbCreateAlarmNodeConfiguration extends TbAbstractAlarmNodeConfigura
     private String severity;
     private boolean propagate;
     private boolean propagateToOwner;
+    private boolean propagateToOwnerHierarchy;
     private boolean propagateToTenant;
     private boolean useMessageAlarmData;
     private boolean overwriteAlarmDetails = true;
@@ -37,6 +39,7 @@ public class TbCreateAlarmNodeConfiguration extends TbAbstractAlarmNodeConfigura
         configuration.setSeverity(AlarmSeverity.CRITICAL.name());
         configuration.setPropagate(false);
         configuration.setPropagateToOwner(false);
+        configuration.setPropagateToOwnerHierarchy(false);
         configuration.setPropagateToTenant(false);
         configuration.setUseMessageAlarmData(false);
         configuration.setOverwriteAlarmDetails(false);

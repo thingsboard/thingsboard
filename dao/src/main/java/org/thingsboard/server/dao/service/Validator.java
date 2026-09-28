@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.service;
 
 import org.apache.commons.lang3.StringUtils;
@@ -48,6 +49,12 @@ public final class Validator {
     public static void validateEntityId(EntityId entityId, Function<EntityId, String> errorMessageFunction) {
         if (entityId == null || entityId.getId() == null) {
             throw new IncorrectParameterException(errorMessageFunction.apply(entityId));
+        }
+    }
+
+    static void validateEntityId(EntityId entityId, List<EntityId> ids, Function<List<EntityId>, String> errorMessageFunction) {
+        if (entityId == null || entityId.getId() == null) {
+            throw new IncorrectParameterException(errorMessageFunction.apply(ids));
         }
     }
 
@@ -172,6 +179,27 @@ public final class Validator {
         } else {
             for (UUIDBased id : ids) {
                 validateId(id, errorMessage);
+            }
+        }
+    }
+
+    @Deprecated
+    public static void validateEntityIds(List<EntityId> ids, String errorMessage) {
+        if (ids == null || ids.isEmpty()) {
+            throw new IncorrectParameterException(errorMessage);
+        } else {
+            for (EntityId id : ids) {
+                validateEntityId(id, errorMessage);
+            }
+        }
+    }
+
+    public static void validateEntityIds(List<EntityId> ids, Function<List<EntityId>, String> errorMessageFunction) {
+        if (ids == null || ids.isEmpty()) {
+            throw new IncorrectParameterException(errorMessageFunction.apply(ids));
+        } else {
+            for (EntityId id : ids) {
+                validateEntityId(id, ids, errorMessageFunction);
             }
         }
     }

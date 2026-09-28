@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, Input, OnInit } from '@angular/core';
 import { forkJoin } from 'rxjs';
 import { PageComponent } from '@shared/components/page.component';
@@ -14,6 +15,8 @@ import { ItemType } from '@shared/models/iot-hub/iot-hub-item.models';
 import { IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { Operation, Resource } from '@shared/models/security.models';
 
 const WIDGET_CARD_COUNT = 3;
 
@@ -40,13 +43,15 @@ export class IotHubWidgetComponent extends PageComponent implements OnInit {
   installedDeviceCounts: Record<string, number> = {};
 
   constructor(private iotHubApiService: IotHubApiService,
-              private iotHubActions: IotHubActionsService) {
+              private iotHubActions: IotHubActionsService,
+              private userPermissionsService: UserPermissionsService) {
     super();
   }
 
   ngOnInit() {
     this.ctx.overflowVisible = true;
-    this.hasIotHubAccess = [Authority.TENANT_ADMIN].includes(this.authUser.authority);
+    this.hasIotHubAccess = [Authority.TENANT_ADMIN].includes(this.authUser.authority) &&
+      this.userPermissionsService.hasGenericPermission(Resource.ALL, Operation.ALL);
     if (this.hasIotHubAccess) {
       this.load();
     }

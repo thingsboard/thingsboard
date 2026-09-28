@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.common.util;
 
 import org.springframework.util.StopWatch;
@@ -16,9 +17,7 @@ import org.springframework.util.StopWatch;
 public class TbStopWatch extends StopWatch {
 
     public static TbStopWatch create(){
-        TbStopWatch stopWatch = new TbStopWatch();
-        stopWatch.start();
-        return stopWatch;
+        return create("");
     }
 
     public static TbStopWatch create(String taskName){
@@ -50,6 +49,11 @@ public class TbStopWatch extends StopWatch {
     public long stopAndGetLastTaskTimeNanos(){
         stop();
         return lastTaskInfo().getTimeNanos();
+    }
+
+    public void stopAndStart(String task){
+        stop();
+        start(task);
     }
 
 }

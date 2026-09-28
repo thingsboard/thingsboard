@@ -1,0 +1,21 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="ai-credits-popup-content flex flex-col gap-4">
+  <div class="flex flex-col gap-2">
+    <span class="popup-title" translate>solution-creator.ai-credits</span>
+    <p class="popup-description"
+       [innerHTML]="'solution-creator.ai-credits-description' | translate: {used: usedLabel, max: maxLabel, date: resetDate | date:'MMM d, yyyy'}">
+    </p>
+  </div>
+  <div class="flex items-center justify-end">
+    <button mat-button
+            type="button"
+            (click)="cancel()">
+      {{ 'action.close' | translate }}
+    </button>
+  </div>
+</div>

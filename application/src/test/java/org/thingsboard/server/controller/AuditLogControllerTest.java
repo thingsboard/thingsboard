@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
@@ -14,12 +15,16 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.audit.AuditLog;
+import org.thingsboard.server.common.data.group.EntityGroup;
+import org.thingsboard.server.common.data.group.EntityGroupInfo;
 import org.thingsboard.server.common.data.id.AuditLogId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -38,6 +43,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.apache.commons.lang3.time.DateFormatUtils.ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.eq;
@@ -128,6 +134,52 @@ public class AuditLogControllerTest extends AbstractControllerTest {
         Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() ->
                 Assert.assertEquals("Have X audit log before this test + New tenant profiles in the test",
                         expectedSize, getAuditLogs(100, "/api/audit/logs?").size()));
+    }
+
+    @Test
+    public void testAuditLogsByCustomerId_customerUserAccessControl() throws Exception {
+        // Create customers while logged in as tenantAdmin
+        Customer customerA = new Customer();
+        customerA.setTitle("Customer A");
+        customerA = doPost("/api/customer", customerA, Customer.class);
+
+        Customer subCustomerOfA = new Customer();
+        subCustomerOfA.setTitle("Sub-customer of A");
+        subCustomerOfA.setParentCustomerId(customerA.getId());
+        subCustomerOfA = doPost("/api/customer", subCustomerOfA, Customer.class);
+
+        Customer customerB = new Customer();
+        customerB.setTitle("Customer B");
+        customerB = doPost("/api/customer", customerB, Customer.class);
+
+        // Create a user under customerA's "Customer Users" group and switch to that session.
+        // "Customer Users" has the auto-generated "Customer User" role (Resource.ALL + READ operations),
+        // which satisfies the generic AUDIT_LOG.READ check before the entity-level ownership check.
+        User userA = new User();
+        userA.setAuthority(Authority.CUSTOMER_USER);
+        userA.setTenantId(savedTenant.getId());
+        userA.setCustomerId(customerA.getId());
+        userA.setEmail("customerA@thingsboard.org");
+        EntityGroupInfo customerUsersGroup = findGroupByOwnerIdTypeAndName(
+                customerA.getId(), EntityType.USER, EntityGroup.GROUP_CUSTOMER_USERS_NAME);
+        createUser(userA, "testPassword1", customerUsersGroup.getId());
+        login("customerA@thingsboard.org", "testPassword1");
+
+        // Own customer ID → 200 OK
+        doGet("/api/audit/logs/customer/" + customerA.getId().getId() + "?pageSize=10&page=0")
+                .andExpect(status().isOk());
+
+        // Subcustomer (child of A) → 200 OK (PE hierarchical ownership: parent sees child)
+        doGet("/api/audit/logs/customer/" + subCustomerOfA.getId().getId() + "?pageSize=10&page=0")
+                .andExpect(status().isOk());
+
+        // NULL_UUID → 404 (not a real customer entity, existence check fails)
+        doGet("/api/audit/logs/customer/" + ModelConstants.NULL_UUID + "?pageSize=10&page=0")
+                .andExpect(status().isNotFound());
+
+        // Sibling customer's ID → 403 Forbidden (no ownership over customerB)
+        doGet("/api/audit/logs/customer/" + customerB.getId().getId() + "?pageSize=10&page=0")
+                .andExpect(status().isForbidden());
     }
 
     private List<AuditLog> getAuditLogs(int pageSize, String urlTemplate) throws Exception {

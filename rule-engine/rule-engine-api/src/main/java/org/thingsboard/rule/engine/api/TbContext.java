@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.rule.engine.api;
 
 import io.netty.channel.EventLoopGroup;
@@ -63,6 +64,7 @@ import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.dao.notification.NotificationTemplateService;
 import org.thingsboard.server.dao.oauth2.OAuth2ClientService;
 import org.thingsboard.server.dao.ota.OtaPackageService;
+import org.thingsboard.server.dao.ota.OtaPackageStateService;
 import org.thingsboard.server.dao.pat.ApiKeyService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.queue.QueueStatsService;
@@ -305,6 +307,8 @@ public interface TbContext {
 
     OtaPackageService getOtaPackageService();
 
+    OtaPackageStateService getOtaPackageStateService();
+
     RuleEngineDeviceProfileCache getDeviceProfileCache();
 
     RuleEngineAssetProfileCache getAssetProfileCache();
@@ -329,7 +333,7 @@ public interface TbContext {
 
     ExecutorProvider getPubSubRuleNodeExecutorProvider();
 
-    MailService getMailService(boolean isSystem);
+    MailService getMailService();
 
     SmsService getSmsService();
 
@@ -378,6 +382,13 @@ public interface TbContext {
 
     ScriptEngine createScriptEngine(ScriptLanguage scriptLang, String script, String... argNames);
 
+    EventService getEventService();
+
+    /**
+     * This context is available only in TB PE.
+     */
+    TbPeContext getPeContext();
+
     String getServiceId();
 
     EventLoopGroup getSharedEventLoop();
@@ -415,8 +426,6 @@ public interface TbContext {
     RuleEngineApiUsageStateService getRuleEngineApiUsageStateService();
 
     EntityService getEntityService();
-
-    EventService getEventService();
 
     AuditLogService getAuditLogService();
 

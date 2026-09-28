@@ -1,0 +1,27 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@use '@angular/material' as mat;
+@use '@angular/material/core/tokens/token-utils';
+
+@mixin login-theme-overwrites($primary, $config-or-theme) {
+  @include _mat-card-overwrites($primary, $config-or-theme);
+  @include _mat-toolbar-overwrites($primary, $config-or-theme);
+}
+
+@mixin _mat-card-overwrites($primary, $config-or-theme) {
+  .mat-mdc-card {
+    @include token-utils.values((
+      card-elevated-container-color: mat.m2-get-color-from-palette($primary)
+    ));
+  }
+}
+
+@mixin _mat-toolbar-overwrites($primary, $config-or-theme) {
+  .mat-toolbar {
+    &.mat-primary {
+      background: mat.m2-get-color-from-palette($primary);
+      color: mat.m2-get-color-from-palette($primary, default-contrast);
+    }
+  }
+}
+

@@ -1,0 +1,61 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section class="tb-form-panel stroked tb-registration-fields-panel">
+  <mat-expansion-panel class="tb-settings" expanded="true">
+    <mat-expansion-panel-header>
+      {{ "mobile.self-registration.registration-form-field" | translate }}
+    </mat-expansion-panel-header>
+    <ng-template matExpansionPanelContent>
+      <div class="tb-form-table">
+        <div class="tb-form-table-header no-padding-right">
+          <div class="tb-form-table-header-cell tb-required-header" translate>mobile.self-registration.required</div>
+          <div class="tb-form-table-header-cell tb-field-type-header" translate>mobile.self-registration.field-type</div>
+          <div class="tb-form-table-header-cell tb-label-header" translate>mobile.self-registration.label</div>
+          <div class="tb-form-table-header-cell tb-actions-header"></div>
+        </div>
+        <div class="tb-form-table-body tb-drop-list"
+          cdkDropList cdkDropListOrientation="vertical"
+          [cdkDropListDisabled]="!dragEnabled || disabled"
+          (cdkDropListDropped)="fieldDrop($event)">
+          @for (registrationControl of registrationFields.controls; track registrationControl) {
+            <div cdkDrag [cdkDragDisabled]="!dragEnabled"
+              class="tb-draggable-form-table-row"
+              >
+              <tb-mobile-registration-fields-row class="flex-1"
+                [formControl]="registrationControl"
+                [allowFieldIds]="allowRegistrationFields"
+                (fieldRemoved)="removeField($index)">
+              </tb-mobile-registration-fields-row>
+              <div class="tb-form-table-row-cell-buttons">
+                <button class="lt-md:!hidden"
+                  [disabled]="disabled"
+                  [class.tb-hidden]="!dragEnabled"
+                  mat-icon-button
+                  type="button"
+                  cdkDragHandle
+                  matTooltip="{{ 'action.drag' | translate }}"
+                  matTooltipPosition="above">
+                  <mat-icon>drag_indicator</mat-icon>
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+      @if (!disabled) {
+        <div>
+          <button type="button" mat-stroked-button
+            [disabled]="maxFields === registrationFields.length"
+            color="primary"
+            (click)="addFields()">
+            {{ 'mobile.self-registration.add-field' | translate }}
+          </button>
+        </div>
+      }
+    </ng-template>
+  </mat-expansion-panel>
+</section>

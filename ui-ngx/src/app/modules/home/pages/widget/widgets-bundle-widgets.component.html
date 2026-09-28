@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <mat-card appearance="outlined" class="tb-bundle-widgets-card">
@@ -17,11 +18,10 @@
         <span class="mat-headline-5">{{ widgetsBundle.title }}: {{ 'widget.widgets' | translate }}</span>
         <span class="flex-1"></span>
         @if (!isReadOnly) {
-          <button mat-icon-button [disabled]="isLoading$ | async"
-                  matTooltip="{{ 'widget.add-new-widget' | translate }}"
-                  matTooltipPosition="above"
+          <button mat-flat-button color="primary" [disabled]="isLoading$ | async"
                   [matMenuTriggerFor]="addWidgetMenu">
             <mat-icon>add</mat-icon>
+            {{ 'widget.add-new-widget' | translate }}
           </button>
         }
         <mat-menu #addWidgetMenu="matMenu" xPosition="before">

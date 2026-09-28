@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.script.api.js;
 
 import delight.nashornsandbox.NashornSandbox;
@@ -80,7 +81,7 @@ class NashornJsInvokeServiceLifecycleTest {
     private void givenService(boolean useJsSandbox) {
         this.useJsSandbox = useJsSandbox;
         service = new NashornJsInvokeService(Optional.empty(), Optional.empty());
-        ReflectionTestUtils.setField(service, "statsFactory", mock(StatsFactory.class, Mockito.RETURNS_DEEP_STUBS));
+        ReflectionTestUtils.setField(service, "statsFactory", Optional.of(mock(StatsFactory.class, Mockito.RETURNS_DEEP_STUBS)));
         ReflectionTestUtils.setField(service, "useJsSandbox", useJsSandbox);
         ReflectionTestUtils.setField(service, "jsExecutorThreadPoolSize", 4);
         ReflectionTestUtils.setField(service, "monitorThreadPoolSize", 2);

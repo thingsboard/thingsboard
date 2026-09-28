@@ -1,0 +1,61 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<mat-form-field class="mat-block" [formGroup]="vendorFormGroup" [appearance]="appearance">
+  <mat-label class="tb-required" translate>integration.vendor</mat-label>
+  <input matInput type="text"
+    #input
+    formControlName="vendor"
+    required
+    (focusin)="onFocus()"
+    (blur)="onBlur()"
+    placeholder="{{ 'integration.select-vendor' | translate }}"
+    [matAutocomplete]="vendorsAutocomplete">
+  @if (vendorFormGroup.get('vendor').value) {
+    <button
+      type="button"
+      matSuffix mat-icon-button aria-label="Clear"
+      (click)="clear()">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  }
+  <mat-autocomplete class="tb-autocomplete tb-converter-library-autocomplete"
+    [displayWith]="displayVendorFn"
+    #vendorsAutocomplete="matAutocomplete">
+    @for (vendor of (filteredVendors$ | async); track vendor.name) {
+      <mat-option [value]="vendor" class="flex-full">
+        <div class="flex items-center gap-4">
+          <img [src]="vendor.logo" loading="lazy" class="h-6 w-10" alt="Vendor logo"/>
+          <span [innerHTML]="displayVendorFn(vendor) | highlight:searchText:true:'ig'"></span>
+        </div>
+      </mat-option>
+      } @empty {
+      @if ((filteredVendors$ | async) !== null) {
+        <mat-option [value]="''" class="tb-not-found flex-full">
+          <div class="px-4 py-2" (click)="$event.stopPropagation()">
+            {{ "integration.vendor-not-found" | translate }}
+          </div>
+        </mat-option>
+      } @else {
+        <mat-option [value]="''" class="tb-not-found flex-full">
+          <div class="px-4 py-2" (click)="$event.stopPropagation()">
+            {{ "common.loading-please-wait" | translate }}
+          </div>
+        </mat-option>
+      }
+    }
+  </mat-autocomplete>
+  @if (vendorFormGroup.get('vendor').hasError('required')) {
+    <mat-error>
+      {{ 'integration.vendor-required' | translate }}
+    </mat-error>
+  }
+  @if (vendorFormGroup.get('vendor').hasError('notValid')) {
+    <mat-error>
+      {{ 'integration.vendor-not-valid' | translate }}
+    </mat-error>
+  }
+</mat-form-field>

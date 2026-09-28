@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.edge.rpc.processor.cf;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -130,7 +131,7 @@ public class CalculatedFieldEdgeProcessor extends BaseCalculatedFieldProcessor i
 
                     return edgeId != null ?
                             saveEdgeEvent(tenantId, edgeId, type, actionType, entityId, body) :
-                            processNotificationToRelatedEdges(tenantId, calculatedFieldOwnerId, entityId, type, actionType, originatorEdgeId);
+                            pushNotificationToAllRelatedEdges(tenantId, calculatedFieldOwnerId, entityId, type, actionType, null, null, originatorEdgeId);
                 } else {
                     return processActionForAllEdges(tenantId, type, actionType, entityId, null, originatorEdgeId);
                 }

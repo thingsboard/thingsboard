@@ -1,0 +1,94 @@
+#
+# SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+# SPDX-License-Identifier: BUSL-1.1
+#
+
+name: Check license headers
+
+on:
+  push:
+    branches:
+      - master
+      - rc
+      - 'lts-[0-9]+.[0-9]+'
+      - 'license-lts-[0-9]+.[0-9]+'
+  pull_request:
+    branches:
+      - master
+      - rc
+      - 'lts-[0-9]+.[0-9]+'
+      - 'license-lts-[0-9]+.[0-9]+'
+  workflow_dispatch:
+    inputs:
+      ce-branch:
+        description: CE branch to compare against; defaults to the counterpart of the current branch
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Check license headers
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout with full history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        with:
+          distribution: corretto
+          java-version: 21
+          cache: maven
+
+      - name: Resolve CE branch
+        id: ce
+        env:
+          PE_BRANCH: ${{ github.base_ref || github.ref_name }}
+          CE_BRANCH: ${{ inputs.ce-branch }}
+        run: |
+          if [[ -z "$CE_BRANCH" ]]; then
+            case "$PE_BRANCH" in
+              master|rc) CE_BRANCH="$PE_BRANCH" ;;
+              lts-*|license-lts-*) CE_BRANCH="${PE_BRANCH#license-}" ;;
+              *) echo "::error::No CE counterpart is defined for branch $PE_BRANCH"; exit 1 ;;
+            esac
+          fi
+          echo "branch=$CE_BRANCH" >> "$GITHUB_OUTPUT"
+
+      - name: Check license headers
+        env:
+          CE_BRANCH: ${{ steps.ce.outputs.branch }}
+        run: |
+          mkdir -p target/license-provenance
+          ./check-license-headers.sh "${CE_BRANCH}" 2>&1 | tee target/license-provenance/console.log
+
+      - name: Add findings to the job summary
+        if: failure() && hashFiles('target/license-provenance/console.log') != ''
+        run: |
+          {
+            echo '```'
+            cat target/license-provenance/console.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload report
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: license-provenance-report
+          path: target/license-provenance/
+          retention-days: 14
+          if-no-files-found: ignore

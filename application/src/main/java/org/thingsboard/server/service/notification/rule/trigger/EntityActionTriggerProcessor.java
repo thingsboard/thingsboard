@@ -1,10 +1,14 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.notification.rule.trigger;
 
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.HasCustomerId;
+import org.thingsboard.server.common.data.HasOwnerId;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.notification.info.EntityActionNotificationInfo;
 import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.rule.trigger.EntityActionTrigger;
@@ -26,6 +30,19 @@ public class EntityActionTriggerProcessor implements NotificationRuleTriggerProc
 
     @Override
     public RuleOriginatedNotificationInfo constructNotificationInfo(EntityActionTrigger trigger) {
+        CustomerId customerId;
+        if (trigger.getEntity() instanceof HasOwnerId) {
+            EntityId ownerId = ((HasOwnerId) trigger.getEntity()).getOwnerId();
+            if (ownerId instanceof CustomerId) {
+                customerId = (CustomerId) ownerId;
+            } else {
+                customerId = null;
+            }
+        } else if (trigger.getEntity() instanceof HasCustomerId) {
+            customerId = ((HasCustomerId) trigger.getEntity()).getCustomerId();
+        } else {
+            customerId = trigger.getUser().getCustomerId();
+        }
         return EntityActionNotificationInfo.builder()
                 .entityId(trigger.getEntityId())
                 .entityName(trigger.getEntity().getName())
@@ -35,9 +52,7 @@ public class EntityActionTriggerProcessor implements NotificationRuleTriggerProc
                 .userEmail(trigger.getUser().getEmail())
                 .userFirstName(trigger.getUser().getFirstName())
                 .userLastName(trigger.getUser().getLastName())
-                .entityCustomerId(trigger.getEntity() instanceof HasCustomerId ?
-                        ((HasCustomerId) trigger.getEntity()).getCustomerId() :
-                        trigger.getUser().getCustomerId())
+                .customerId(customerId)
                 .build();
     }
 

@@ -1,4 +1,4 @@
-# ThingsBoard CE Frontend — Navigation & Testing Guide
+# ThingsBoard Frontend — Navigation & Architecture Guide
 
 ## 1. Quick Reference
 
@@ -26,25 +26,56 @@
 ```
 src/app/
 ├── core/
-│   ├── http/                  # HTTP services (one per entity type)
+│   ├── http/                  # HTTP services (one per entity type, 61 total)
 │   └── services/              # Menu, auth, utils
 ├── modules/
 │   ├── home/
 │   │   ├── components/        # Reusable home components (entity table, details panel, alarm, dashboard)
-│   │   │   └── entity/        # EntitiesTableComponent, EntityDetailsPageComponent, EntityComponent base
+│   │   │   ├── entity/        # EntitiesTableComponent, EntityDetailsPageComponent, EntityComponent base
+│   │   │   ├── group/         # GroupEntitiesTableComponent, entity group forms
+│   │   │   ├── converter/     # Converter forms, dialogs, library browser
+│   │   │   ├── integration/   # Integration type select, credentials
+│   │   │   ├── role/          # Role dialogs, permission lists
+│   │   │   └── scheduler/     # Scheduler event forms, config panels
 │   │   └── pages/             # Page modules (one directory per page/feature)
 │   └── login/                 # Login, reset password, 2FA
 └── shared/
     ├── components/            # Shared components (autocompletes, dialogs, time, image)
+    │   ├── group/             # Entity group autocomplete, select, list, owner, share
+    │   ├── role/              # Group permissions
+    │   └── report/            # Report template autocomplete
     └── models/                # TypeScript interfaces/enums
 ```
 
 ---
 
-## 2. Route-to-Source Mapping
+## 2. Platform Concepts
+
+### Entity Groups
+
+Most entity types are organized into **groups**: All, Groups, Shared. Entity table pages have three tabs (e.g., `/entities/devices/all`, `/entities/devices/groups`, `/entities/devices/shared`). The Groups tab lists `EntityGroup` objects; clicking one opens `GroupEntitiesTableComponent` showing entities within that group.
+
+**Entity types with group tabs:** Device, Asset, Entity View, Customer, User, Dashboard, Edge.
+
+**Key components:**
+- `GroupEntitiesTableComponent` (`@home/components/group/`) — table of entities within a specific group
+- `EntityGroupResolver` (`@home/pages/group/entity-group.shared.ts`) — resolves group info for routes
+- `EntityGroupsTableConfigResolver` — configures the groups-list table
+
+### Roles & Permissions
+
+Access control is fine-grained RBAC. Roles can be `GENERIC` (resource-level) or `GROUP` (entity-group-level). Permissions are checked via `UserPermissionsService` and template pipes (`hasGenericPermission`, `hasEntityGroupPermission`, `hasGroupEntityPermission`).
+
+### White Labeling
+
+Full UI customization: app branding, login page, email templates, custom translations, custom menus. Managed by `WhiteLabelingService`. Available to SYS_ADMIN, TENANT_ADMIN, and CUSTOMER_USER.
+
+---
+
+## 3. Route-to-Source Mapping
 
 All page source paths are relative to `src/app/modules/home/pages/`.
-Page types: `entity-table` = EntitiesTableComponent + resolver, `entity-details` = EntityDetailsPageComponent, `settings-form` = standalone form with ConfirmOnExitGuard, `dashboard-view` = DashboardViewComponent with resolver, `custom` = unique component.
+Page types: `entity-table` = EntitiesTableComponent + resolver, `entity-details` = EntityDetailsPageComponent, `settings-form` = standalone form with ConfirmOnExitGuard, `dashboard-view` = DashboardViewComponent with resolver, `custom` = unique component, `group-table` = GroupEntitiesTableComponent.
 
 ### Login (unauthenticated)
 
@@ -83,23 +114,50 @@ Source paths below are relative to `src/app/modules/` (not `home/pages/`).
 | `/alarms/alarm-rules` | `alarm/` | custom (AlarmRulesTableComponent) | — |
 | `/alarms/alarm-rules/:entityId` | `alarm/` | entity-details | `AlarmRulesTableConfigResolver` |
 
-### Dashboards (TENANT_ADMIN, CUSTOMER_USER)
+### Dashboards (TENANT_ADMIN, CUSTOMER_USER) — with Entity Groups
 
 | URL | Source | Type | Resolver |
 |-----|--------|------|----------|
-| `/dashboards` | `dashboard/` | entity-table | `DashboardsTableConfigResolver` |
-| `/dashboards/:dashboardId` | `dashboard/` | custom (DashboardPageComponent) | `DashboardResolver` |
+| `/dashboards` | `dashboard/` | custom (RouterTabsComponent) | — |
+| `/dashboards/all` | `dashboard/` | entity-table | `DashboardsTableConfigResolver` + `EntityGroupResolver` |
+| `/dashboards/all/:dashboardId` | `dashboard/` | custom (DashboardPageComponent) | `DashboardResolver` + `EntityGroupResolver` |
+| `/dashboards/groups` | `dashboard/` + `group/` | entity-table | `EntityGroupsTableConfigResolver` |
+| `/dashboards/groups/:entityGroupId` | `dashboard/` + `group/` | group-table | `EntityGroupResolver` |
+| `/dashboards/groups/:entityGroupId/:dashboardId` | `dashboard/` | custom (DashboardPageComponent) | `DashboardResolver` + `EntityGroupResolver` |
+| `/dashboards/shared` | `dashboard/` + `group/` | entity-table | `EntityGroupsTableConfigResolver` |
+| `/dashboards/shared/:entityGroupId/:dashboardId` | `dashboard/` | custom (DashboardPageComponent) | `DashboardResolver` + `EntityGroupResolver` |
+| `/dashboards/:dashboardId` | `dashboard/` | custom (DashboardPageComponent, singlePageMode) | `DashboardResolver` |
 
-### Entities (TENANT_ADMIN, CUSTOMER_USER)
+### Entities — Devices (TENANT_ADMIN, CUSTOMER_USER) — with Entity Groups
 
 | URL | Source | Type | Resolver |
 |-----|--------|------|----------|
-| `/entities/devices` | `device/` | entity-table | `DevicesTableConfigResolver` |
-| `/entities/devices/:entityId` | `device/` | entity-details | `DevicesTableConfigResolver` |
-| `/entities/assets` | `asset/` | entity-table | `AssetsTableConfigResolver` |
-| `/entities/assets/:entityId` | `asset/` | entity-details | `AssetsTableConfigResolver` |
-| `/entities/entityViews` | `entity-view/` | entity-table | `EntityViewsTableConfigResolver` |
-| `/entities/entityViews/:entityId` | `entity-view/` | entity-details | `EntityViewsTableConfigResolver` |
+| `/entities/devices` | `device/` | redirect → `/entities/devices/all` | — |
+| `/entities/devices/all` | `device/` | entity-table | `DevicesTableConfigResolver` + `EntityGroupResolver` |
+| `/entities/devices/all/:entityId` | `device/` | entity-details | `DevicesTableConfigResolver` + `EntityGroupResolver` |
+| `/entities/devices/groups` | `device/` + `group/` | entity-table | `EntityGroupsTableConfigResolver` |
+| `/entities/devices/groups/:entityGroupId` | `device/` + `group/` | group-table | `EntityGroupResolver` |
+| `/entities/devices/groups/:entityGroupId/:entityId` | `device/` | entity-details | `EntityGroupResolver` |
+| `/entities/devices/shared` | `device/` + `group/` | entity-table | `EntityGroupsTableConfigResolver` |
+| `/entities/devices/shared/:entityGroupId` | `device/` + `group/` | group-table | `EntityGroupResolver` |
+| `/entities/devices/shared/:entityGroupId/:entityId` | `device/` | entity-details | `EntityGroupResolver` |
+
+### Entities — Assets (TENANT_ADMIN, CUSTOMER_USER) — with Entity Groups
+
+Same pattern as devices:
+- `/entities/assets/all`, `/entities/assets/groups`, `/entities/assets/shared`
+- Uses `AssetsTableConfigResolver`, `EntityGroupsTableConfigResolver`, `EntityGroupResolver`
+
+### Entities — Entity Views (TENANT_ADMIN, CUSTOMER_USER) — with Entity Groups
+
+Same pattern as devices:
+- `/entities/entityViews/all`, `/entities/entityViews/groups`, `/entities/entityViews/shared`
+- Uses `EntityViewsTableConfigResolver`, `EntityGroupsTableConfigResolver`, `EntityGroupResolver`
+
+### Entities — Gateways (TENANT_ADMIN)
+
+| URL | Source | Type | Resolver |
+|-----|--------|------|----------|
 | `/entities/gateways` | `gateways/` | dashboard-view | `gatewaysDashboardResolver` |
 
 ### Profiles (TENANT_ADMIN)
@@ -111,17 +169,35 @@ Source paths below are relative to `src/app/modules/` (not `home/pages/`).
 | `/profiles/assetProfiles` | `asset-profile/` | entity-table | `AssetProfilesTableConfigResolver` |
 | `/profiles/assetProfiles/:entityId` | `asset-profile/` | entity-details | `AssetProfilesTableConfigResolver` |
 
-### Customers (TENANT_ADMIN)
+### Customers (TENANT_ADMIN, CUSTOMER_USER) — with Entity Groups + Hierarchy
 
 | URL | Source | Type | Resolver |
 |-----|--------|------|----------|
-| `/customers` | `customer/` | entity-table | `CustomersTableConfigResolver` |
-| `/customers/:entityId` | `customer/` | entity-details | `CustomersTableConfigResolver` |
-| `/customers/:customerId/users` | `customer/` + `user/` | entity-table | `UsersTableConfigResolver` |
-| `/customers/:customerId/devices` | `customer/` + `device/` | entity-table | `DevicesTableConfigResolver` |
-| `/customers/:customerId/assets` | `customer/` + `asset/` | entity-table | `AssetsTableConfigResolver` |
-| `/customers/:customerId/dashboards` | `customer/` + `dashboard/` | entity-table | `DashboardsTableConfigResolver` |
-| `/customers/:customerId/edgeInstances` | `customer/` + `edge/` | entity-table | `EdgesTableConfigResolver` |
+| `/customers` | `customer/` | custom (RouterTabsComponent) | — |
+| `/customers/all` | `customer/` | entity-table | `CustomersTableConfigResolver` + `EntityGroupResolver` |
+| `/customers/all/:entityId` | `customer/` | entity-details | `CustomersTableConfigResolver` + `EntityGroupResolver` |
+| `/customers/all/:customerId/customers` | `customer/` | nested customer routes | `CustomerTitleResolver` |
+| `/customers/all/:customerId/entities` | `customer/` + entities | nested entity routes | `CustomerTitleResolver` |
+| `/customers/all/:customerId/dashboards` | `customer/` + `dashboard/` | nested dashboard routes | `CustomerTitleResolver` |
+| `/customers/all/:customerId/users` | `customer/` + `user/` | nested user routes | `CustomerTitleResolver` |
+| `/customers/all/:customerId/edgeManagement` | `customer/` + `edge/` | nested edge routes | `CustomerTitleResolver` |
+| `/customers/groups` | `customer/` + `group/` | entity-table | `EntityGroupsTableConfigResolver` |
+| `/customers/groups/:entityGroupId` | `customer/` + `group/` | group-table | `EntityGroupResolver` |
+| `/customers/groups/:entityGroupId/:entityId` | `customer/` | entity-details | `EntityGroupResolver` |
+| `/customers/shared` | `customer/` + `group/` | entity-table | `EntityGroupsTableConfigResolver` |
+| `/customers/shared/:entityGroupId/:entityId` | `customer/` | entity-details | `EntityGroupResolver` |
+| `/customers/hierarchy` | `customer/` | custom (CustomersHierarchyComponent) | — |
+
+### Users (TENANT_ADMIN, CUSTOMER_USER) — with Entity Groups
+
+| URL | Source | Type | Resolver |
+|-----|--------|------|----------|
+| `/users` | `user/` | custom (RouterTabsComponent) | — |
+| `/users/all` | `user/` | entity-table | `UsersTableConfigResolver` + `EntityGroupResolver` |
+| `/users/all/:entityId` | `user/` | entity-details | `UsersTableConfigResolver` + `EntityGroupResolver` |
+| `/users/groups` | `user/` + `group/` | entity-table | `EntityGroupsTableConfigResolver` |
+| `/users/groups/:entityGroupId` | `user/` + `group/` | group-table | `EntityGroupResolver` |
+| `/users/groups/:entityGroupId/:entityId` | `user/` | entity-details | `EntityGroupResolver` |
 
 ### Calculated Fields (TENANT_ADMIN)
 
@@ -137,28 +213,87 @@ Source paths below are relative to `src/app/modules/` (not `home/pages/`).
 | `/ruleChains` | `rulechain/` | entity-table | `RuleChainsTableConfigResolver` |
 | `/ruleChains/:ruleChainId` | `rulechain/` | custom (RuleChainPageComponent, lazy) | `RuleChainResolver` + others |
 
-### Edge Management (TENANT_ADMIN, conditional on edgesSupportEnabled)
+### Edge Management (TENANT_ADMIN) — with Entity Groups
 
 | URL | Source | Type | Resolver |
 |-----|--------|------|----------|
-| `/edgeManagement/instances` | `edge/` | entity-table | `EdgesTableConfigResolver` |
-| `/edgeManagement/instances/:entityId` | `edge/` | entity-details | `EdgesTableConfigResolver` |
-| `/edgeManagement/instances/:edgeId/assets` | `edge/` + `asset/` | entity-table | `AssetsTableConfigResolver` |
-| `/edgeManagement/instances/:edgeId/devices` | `edge/` + `device/` | entity-table | `DevicesTableConfigResolver` |
-| `/edgeManagement/instances/:edgeId/entityViews` | `edge/` + `entity-view/` | entity-table | `EntityViewsTableConfigResolver` |
-| `/edgeManagement/instances/:edgeId/dashboards` | `edge/` + `dashboard/` | entity-table | `DashboardsTableConfigResolver` |
-| `/edgeManagement/instances/:edgeId/ruleChains` | `edge/` + `rulechain/` | entity-table | `RuleChainsTableConfigResolver` |
-| `/edgeManagement/ruleChains` | `edge/` + `rulechain/` | entity-table | `RuleChainsTableConfigResolver` |
+| `/edgeManagement/edges` | `edge/` | custom (RouterTabsComponent) | — |
+| `/edgeManagement/edges/all` | `edge/` | entity-table | `EdgesTableConfigResolver` + `EntityGroupResolver` |
+| `/edgeManagement/edges/all/:entityId` | `edge/` | entity-details | `EdgesTableConfigResolver` + `EntityGroupResolver` |
+| `/edgeManagement/edges/groups` | `edge/` + `group/` | entity-table | `EntityGroupsTableConfigResolver` |
+| `/edgeManagement/edges/groups/:entityGroupId` | `edge/` + `group/` | group-table | `EntityGroupResolver` |
+| `/edgeManagement/edges/groups/:entityGroupId/:entityId` | `edge/` | entity-details | `EntityGroupResolver` |
+| `/edgeManagement/edges/shared` | `edge/` + `group/` | entity-table | `EntityGroupsTableConfigResolver` |
+| `/edgeManagement/edges/shared/:entityGroupId/:entityId` | `edge/` | entity-details | `EntityGroupResolver` |
+| `/edgeManagement/edges/:edgeId/ruleChains` | `edge/` + `rulechain/` | entity-table | `RuleChainsTableConfigResolver` |
+| `/edgeManagement/edges/:edgeId/scheduler` | `edge/` + `scheduler/` | custom (SchedulerEventsComponent) | — |
+| `/edgeManagement/edges/:edgeId/integrations` | `edge/` + `integration/` | entity-table | `IntegrationsTableConfigResolver` |
 
-### Advanced Features (TENANT_ADMIN)
+### Edge Management — Agents (TENANT_ADMIN, CUSTOMER_USER) — with Entity Groups
+
+| URL | Source | Type | Resolver |
+|-----|--------|------|----------|
+| `/edgeManagement/agents` | `agent/` | custom (RouterTabsComponent) | — |
+| `/edgeManagement/agents/all` | `agent/` | entity-table | `AgentsTableConfigResolver` + `EntityGroupResolver` |
+| `/edgeManagement/agents/all/:entityId` | `agent/` | entity-details | `AgentsTableConfigResolver` + `EntityGroupResolver` |
+| `/edgeManagement/agents/all/:agentId` | `agent/` | custom (RouterTabsComponent) | `agentInfoBreadcrumbResolver` |
+| `/edgeManagement/agents/all/:agentId/applications` | `agent/metrics/` | custom (AgentApplicationsPageComponent) | `AgentApplicationsTableConfigResolver` |
+| `/edgeManagement/agents/all/:agentId/applications/:entityId` | `agent/metrics/` | custom (AgentApplicationDetailsPageComponent) | `AgentApplicationsTableConfigResolver` |
+| `/edgeManagement/agents/all/:agentId/applications/:applicationId/units/:unitId/logs` | `agent/log-viewer/` | custom (AgentAppUnitLogViewerPageComponent) | — |
+| `/edgeManagement/agents/all/:agentId/events` | `agent/` | custom (AgentEventsPageComponent) | — |
+| `/edgeManagement/agents/groups` | `agent/` + `group/` | entity-table | `EntityGroupsTableConfigResolver` |
+| `/edgeManagement/agents/groups/:entityGroupId` | `agent/` + `group/` | group-table | `EntityGroupResolver` |
+| `/edgeManagement/agents/groups/:entityGroupId/:entityId` | `agent/` | entity-details | `EntityGroupResolver` |
+| `/edgeManagement/agents/groups/:entityGroupId/:agentId/{applications,events}` | `agent/` | as under `all/:agentId` | `AgentsTableConfigResolver` |
+| `/edgeManagement/agents/shared` | `agent/` + `group/` | entity-table | `EntityGroupsTableConfigResolver` |
+| `/edgeManagement/agents/shared/:entityGroupId` | `agent/` + `group/` | group-table | `EntityGroupResolver` |
+| `/edgeManagement/agents/shared/:entityGroupId/:entityId` | `agent/` | entity-details | `EntityGroupResolver` |
+| `/edgeManagement/profiles` | `agent/` | custom (RouterTabsComponent) | — |
+| `/edgeManagement/profiles/agent` | `agent/` | entity-table | `AgentProfilesTableConfigResolver` |
+| `/edgeManagement/profiles/agent/:entityId` | `agent/` | entity-details | `AgentProfilesTableConfigResolver` |
+| `/edgeManagement/profiles/agent/bulk/:bulkActionId` | `agent/` | custom (AgentBulkActionEventsPageComponent) | — |
+| `/edgeManagement/profiles/application` | `agent/` | custom (AgentAppProfilesPageComponent) | `AgentAppProfilesTableConfigResolver` |
+| `/edgeManagement/profiles/application/:entityId` | `agent/` | entity-details | `AgentAppProfilesTableConfigResolver` |
+| `/edgeManagement/templates` | `edge/` | custom (RouterTabsComponent) | — |
+| `/edgeManagement/templates/ruleChains` | `edge/` + `rulechain/` | entity-table | `RuleChainsTableConfigResolver` |
+| `/edgeManagement/templates/converters` | `edge/` + `converter/` | entity-table | `ConvertersTableConfigResolver` |
+| `/edgeManagement/templates/integrations` | `edge/` + `integration/` | entity-table | `IntegrationsTableConfigResolver` |
+
+The agent routes are also mounted under `/customers/all/:customerId/edgeManagement/agents/...` for the customer hierarchy
+(see `agentsRoute()` in `agent/agent-routing.module.ts`); `agentEntityUrl()` in `agent/util/agent-route-params.ts` builds
+scope-preserving links into them.
+
+### Integrations Center (TENANT_ADMIN)
+
+| URL | Source | Type | Resolver |
+|-----|--------|------|----------|
+| `/integrationsCenter` | `integration/` | custom (RouterTabsComponent) | — |
+| `/integrationsCenter/integrations` | `integration/` | entity-table | `IntegrationsTableConfigResolver` |
+| `/integrationsCenter/integrations/:entityId` | `integration/` | entity-details | `IntegrationsTableConfigResolver` |
+| `/integrationsCenter/converters` | `converter/` | entity-table | `ConvertersTableConfigResolver` |
+| `/integrationsCenter/converters/:entityId` | `converter/` | entity-details | `ConvertersTableConfigResolver` |
+
+### Advanced Features (TENANT_ADMIN, CUSTOMER_USER)
 
 | URL | Source | Type | Resolver |
 |-----|--------|------|----------|
 | `/features/otaUpdates` | `ota-update/` | entity-table | `OtaUpdateTableConfigResolve` |
 | `/features/otaUpdates/:entityId` | `ota-update/` | entity-details | `OtaUpdateTableConfigResolve` |
 | `/features/vc` | `vc/` | custom (VersionControlComponent) | — |
+| `/features/scheduler` | `scheduler/` | custom (SchedulerEventsComponent) | — |
+| `/features/taskManager` | `task-manager/` | entity-table | `TaskManagerTableConfigResolver` |
 
-### Resources (SYS_ADMIN, TENANT_ADMIN)
+### Reporting (TENANT_ADMIN)
+
+| URL | Source | Type | Resolver |
+|-----|--------|------|----------|
+| `/reporting` | `reporting/` | custom (RouterTabsComponent) | — |
+| `/reporting/templates` | `reporting/template/` | entity-table | `ReportTemplatesTableConfigResolver` |
+| `/reporting/templates/:reportTemplateId` | `reporting/template/` | custom (ReportTemplatePageComponent) | `ReportTemplateResolver` |
+| `/reporting/scheduling` | `reporting/scheduling/` | entity-table | `ScheduledReportsTableConfigResolver` |
+| `/reporting/reports` | `reporting/report/` | entity-table | `ReportsTableConfigResolver` |
+
+### Resources (SYS_ADMIN, TENANT_ADMIN, CUSTOMER_USER)
 
 | URL | Source | Type | Resolver |
 |-----|--------|------|----------|
@@ -193,6 +328,18 @@ Source paths below are relative to `src/app/modules/` (not `home/pages/`).
 | `/mobile-center/applications/:entityId` | `mobile/applications/` | entity-details | `MobileAppTableConfigResolver` |
 | `/mobile-center/qr-code-widget` | `mobile/qr-code-widget/` | settings-form | — |
 
+### White Labeling (SYS_ADMIN, TENANT_ADMIN, CUSTOMER_USER)
+
+| URL | Source | Type |
+|-----|--------|------|
+| `/white-labeling/whiteLabel` | `admin/` | settings-form (WhiteLabelingComponent, `isLoginWl: false`) |
+| `/white-labeling/loginWhiteLabel` | `admin/` | settings-form (WhiteLabelingComponent, `isLoginWl: true`) |
+| `/white-labeling/mail-template` | `admin/` | settings-form (MailTemplatesComponent) — SYS_ADMIN, TENANT_ADMIN only |
+| `/white-labeling/customTranslation` | `custom-translation/` | custom (TranslationTableComponent) |
+| `/white-labeling/customTranslation/:localeCode` | `custom-translation/` | custom (CustomTranslationComponent) |
+| `/white-labeling/customMenu` | `custom-menu/` | custom (CustomMenuTableComponent) |
+| `/white-labeling/customMenu/:customMenuId` | `custom-menu/` | custom (CustomMenuConfigComponent) |
+
 ### Settings — SYS_ADMIN
 
 | URL | Source | Type |
@@ -201,27 +348,51 @@ Source paths below are relative to `src/app/modules/` (not `home/pages/`).
 | `/settings/outgoing-mail` | `admin/` | settings-form (MailServerComponent) |
 | `/settings/notifications` | `admin/` | settings-form (SmsProviderComponent) |
 | `/settings/queues` | `admin/` | entity-table (`QueuesTableConfigResolver`) |
+| `/settings/trendzSettings` | `trendz-settings/` | settings-form (TrendzSettingsComponent) |
 
-### Settings — TENANT_ADMIN
+### Settings — TENANT_ADMIN (and CUSTOMER_USER where noted)
 
-| URL | Source | Type |
-|-----|--------|------|
-| `/settings/home` | `admin/` | settings-form (HomeSettingsComponent) |
-| `/settings/notifications` | `admin/` | settings-form (SmsProviderComponent) |
-| `/settings/repository` | `admin/` | settings-form (RepositoryAdminSettingsComponent) |
-| `/settings/auto-commit` | `admin/` | settings-form (AutoCommitAdminSettingsComponent) |
-| `/settings/trendz` | `admin/` | settings-form (TrendzSettingsComponent) |
-| `/settings/ai-models` | `ai-model/` | entity-table (`AiModelsTableConfigResolver`) |
+| URL | Source | Type | Auth |
+|-----|--------|------|------|
+| `/settings/home` | `admin/` | settings-form (HomeSettingsComponent) | TENANT_ADMIN, CUSTOMER_USER |
+| `/settings/outgoing-mail` | `admin/` | settings-form (MailServerComponent) | SYS_ADMIN, TENANT_ADMIN |
+| `/settings/notifications` | `admin/` | settings-form (SmsProviderComponent) | SYS_ADMIN, TENANT_ADMIN |
+| `/settings/repository` | `admin/` | settings-form (RepositoryAdminSettingsComponent) | TENANT_ADMIN |
+| `/settings/auto-commit` | `admin/` | settings-form (AutoCommitAdminSettingsComponent) | TENANT_ADMIN |
+| `/settings/ai-models` | `ai-model/` | entity-table (`AiModelsTableConfigResolver`) | TENANT_ADMIN |
 
-### Security Settings (SYS_ADMIN)
+### Security Settings (SYS_ADMIN unless noted)
+
+| URL | Source | Type | Auth |
+|-----|--------|------|------|
+| `/security-settings/general` | `admin/` | settings-form (SecuritySettingsComponent) | SYS_ADMIN |
+| `/security-settings/2fa` | `admin/` | settings-form (TwoFactorAuthSettingsComponent) | SYS_ADMIN, TENANT_ADMIN |
+| `/security-settings/oauth2/domains` | `admin/` | entity-table (`DomainTableConfigResolver`) | SYS_ADMIN |
+| `/security-settings/oauth2/clients` | `admin/` | entity-table (`ClientsTableConfigResolver`) | SYS_ADMIN |
+| `/security-settings/roles` | `role/` | entity-table (`RolesTableConfigResolver`) | TENANT_ADMIN, CUSTOMER_USER |
+| `/security-settings/roles/:entityId` | `role/` | entity-details (`RolesTableConfigResolver`) | TENANT_ADMIN, CUSTOMER_USER |
+| `/security-settings/secrets` | `secret-storage/` | custom (SecretStorageTableComponent) | TENANT_ADMIN, SYS_ADMIN |
+| `/security-settings/selfRegistration` | `admin/` | settings-form (SelfRegistrationComponent) | TENANT_ADMIN |
+| `/security-settings/auditLogs` | `admin/` | custom (audit log table) | SYS_ADMIN, TENANT_ADMIN |
+
+### Trendz Analytics (TENANT_ADMIN, CUSTOMER_USER)
 
 | URL | Source | Type | Resolver |
 |-----|--------|------|----------|
-| `/security-settings/general` | `admin/` | settings-form (SecuritySettingsComponent) | — |
-| `/security-settings/2fa` | `admin/` | settings-form (TwoFactorAuthSettingsComponent) | — |
-| `/security-settings/oauth2/domains` | `admin/` | entity-table | `DomainTableConfigResolver` |
-| `/security-settings/oauth2/clients` | `admin/` | entity-table | `ClientsTableConfigResolver` |
-| `/security-settings/auditLogs` | `admin/` | custom (audit log table) | — |
+| `/features/analytics` | `trendz-analytics/` | custom (TrendzAnalyticsComponent) | `TrendzSyncInfoResolver` |
+
+### Solution Templates (TENANT_ADMIN)
+
+| URL | Source | Type | Resolver |
+|-----|--------|------|----------|
+| `/solutionTemplates` | `solution-template/` | custom (SolutionTemplatesComponent) | `SolutionTemplateInfosResolver` |
+| `/solutionTemplates/:solutionTemplateId` | `solution-template/` | custom (SolutionTemplateDetailsComponent) | — |
+
+### iFrame View (TENANT_ADMIN, CUSTOMER_USER)
+
+| URL | Source | Type |
+|-----|--------|------|
+| `/iframeView` | `iframe/` | custom (IFrameViewComponent) — used for custom menu items that embed external URLs |
 
 ### Account (ALL authorities)
 
@@ -238,7 +409,7 @@ Source paths below are relative to `src/app/modules/` (not `home/pages/`).
 
 ---
 
-## 3. Entity Table Pattern
+## 4. Entity Table Pattern
 
 Most pages follow a 3-file pattern per entity type inside `pages/<entity>/`:
 
@@ -278,8 +449,12 @@ Most pages follow a 3-file pattern per entity type inside `pages/<entity>/`:
 | `EntityViewsTableConfigResolver` | ENTITY_VIEW | `entity-view/` | `EntityViewComponent` | `EntityViewTabsComponent` |
 | `CustomersTableConfigResolver` | CUSTOMER | `customer/` | `CustomerComponent` | `CustomerTabsComponent` |
 | `UsersTableConfigResolver` | USER | `user/` | `UserComponent` | `UserTabsComponent` |
-| `DashboardsTableConfigResolver` | DASHBOARD | `dashboard/` | `DashboardFormComponent` | `DashboardTabsComponent` |
+| `DashboardsTableConfigResolver` | DASHBOARD | `dashboard/` | `DashboardFormComponent` | `GroupEntityTabsComponent` |
 | `EdgesTableConfigResolver` | EDGE | `edge/` | `EdgeComponent` | `EdgeTabsComponent` |
+| `AgentsTableConfigResolver` | AGENT | `agent/` | `AgentComponent` | `AgentTabsComponent` |
+| `AgentProfilesTableConfigResolver` | AGENT_PROFILE | `agent/` | `AgentProfileComponent` | `AgentProfileTabsComponent` |
+| `AgentAppProfilesTableConfigResolver` | AGENT_APP_PROFILE | `agent/` | `AgentAppProfileComponent` | — |
+| `AgentApplicationsTableConfigResolver` | AGENT_APPLICATION | `agent/` | `AgentApplicationComponent` | `AgentApplicationTabsComponent` |
 | `RuleChainsTableConfigResolver` | RULE_CHAIN | `rulechain/` | `RuleChainComponent` | `RuleChainTabsComponent` |
 | `OtaUpdateTableConfigResolve` | OTA_PACKAGE | `ota-update/` | `OtaUpdateComponent` | `OtaUpdateTabsComponent` |
 | `CalculatedFieldsTableConfigResolver` | CALCULATED_FIELD | `calculated-fields/` (config in `home/components/calculated-fields/`) | `CalculatedFieldComponent` | `CalculatedFieldsTabsComponent` |
@@ -290,6 +465,7 @@ Most pages follow a 3-file pattern per entity type inside `pages/<entity>/`:
 | `QueuesTableConfigResolver` | QUEUE | `admin/queue/` | `QueueComponent` | — |
 | `AiModelsTableConfigResolver` | AI_MODEL | `ai-model/` | — | — |
 | `ClientsTableConfigResolver` | OAUTH2_CLIENT | `admin/oauth2/clients/` | `ClientComponent` | — |
+| `DomainTableConfigResolver` | DOMAIN | `admin/oauth2/domains/` | `DomainComponent` | — |
 | `InboxTableConfigResolver` | NOTIFICATION | `notification/inbox/` | — (dialog) | — |
 | `SentTableConfigResolver` | NOTIFICATION_REQUEST | `notification/sent/` | — (dialog) | — |
 | `RecipientTableConfigResolver` | NOTIFICATION_TARGET | `notification/recipient/` | — (dialog) | — |
@@ -298,11 +474,19 @@ Most pages follow a 3-file pattern per entity type inside `pages/<entity>/`:
 | `MobileAppTableConfigResolver` | MOBILE_APP | `mobile/applications/` | `MobileAppComponent` | — |
 | `MobileBundleTableConfigResolver` | MOBILE_BUNDLE | `mobile/bundes/` | — | — |
 | `AlarmRulesTableConfigResolver` | CALCULATED_FIELD | `alarm/` (config in `home/components/alarm-rules/`) | — | — |
-| `DomainTableConfigResolver` | DOMAIN | `admin/oauth2/domains/` | `DomainComponent` | — |
+| **Access-control, integration and reporting resolvers below** | | | | |
+| `IntegrationsTableConfigResolver` | INTEGRATION | `integration/` | `IntegrationComponent` | `IntegrationTabsComponent` |
+| `ConvertersTableConfigResolver` | CONVERTER | `converter/` | `ConverterComponent` | `ConverterTabsComponent` |
+| `RolesTableConfigResolver` | ROLE | `role/` | `RoleComponent` | `RoleTabsComponent` |
+| `TaskManagerTableConfigResolver` | JOB | `task-manager/` | — | — |
+| `ReportTemplatesTableConfigResolver` | REPORT_TEMPLATE | `reporting/template/` | `ReportTemplateFormComponent` | `ReportTemplateTabsComponent` |
+| `ScheduledReportsTableConfigResolver` | SCHEDULER_EVENT | `reporting/scheduling/` | — (dialog) | — |
+| `ReportsTableConfigResolver` | REPORT | `reporting/report/` | — (dialog) | — |
+| `EntityGroupsTableConfigResolver` | ENTITY_GROUP | `home/components/group/` | `EntityGroupComponent` | `EntityGroupTabsComponent` |
 
 ---
 
-## 4. Shared Component Catalog
+## 5. Shared Component Catalog
 
 ### `@shared/components/entity/`
 
@@ -320,6 +504,30 @@ Most pages follow a 3-file pattern per entity type inside `pages/<entity>/`:
 | `tb-entity-subtype-list` | Chip list for multiple subtypes |
 | `tb-entity-subtype-autocomplete` | Autocomplete for entity subtype |
 | `tb-entity-gateway-select` | Dropdown for selecting a gateway device |
+
+### `@shared/components/group/`
+
+| Selector | Purpose |
+|----------|---------|
+| `tb-entity-group-autocomplete` | Autocomplete for selecting entity groups |
+| `tb-entity-group-select` | Dropdown select for entity groups with type filter |
+| `tb-entity-group-list` | Chip list for multiple entity group selection |
+| `tb-edge-entity-group-list` | Chip list for entity groups specific to edges |
+| `tb-owner-autocomplete` | Autocomplete for selecting owner entities |
+| `tb-share-entity-group` | Component for sharing entity groups with roles |
+
+### `@shared/components/role/`
+
+| Selector | Purpose |
+|----------|---------|
+| `tb-group-permissions` | Table and management UI for group permissions |
+| `tb-group-permission-dialog` | Dialog for adding/editing group permissions |
+
+### `@shared/components/report/`
+
+| Selector | Purpose |
+|----------|---------|
+| `tb-report-template-autocomplete` | Autocomplete for selecting report templates |
 
 ### `@shared/components/time/`
 
@@ -439,9 +647,45 @@ Most pages follow a 3-file pattern per entity type inside `pages/<entity>/`:
 | `tb-router-tabs` | Tab navigation via router (used for section tabs) |
 | `tb-device-credentials` | Device credentials form |
 
+### `@home/components/` group, converter, integration, role and scheduler components
+
+| Selector | Purpose |
+|----------|---------|
+| **Group:** | |
+| `tb-group-entities-table` | Entities table within a specific entity group |
+| `tb-entity-group` | Entity group detail/edit form |
+| `tb-entity-group-tabs` | Tab container for entity group details |
+| `tb-entity-group-settings` | Settings panel for entity group config |
+| `tb-entity-group-columns` | Column management for group table |
+| `tb-owner-and-groups` | Panel for managing owner and group relationships |
+| `tb-manage-owner-and-groups-dialog` | Dialog for managing entity ownership and groups |
+| `tb-add-group-entity-dialog` | Dialog for adding entities to a group |
+| **Converter:** | |
+| `tb-converter-autocomplete` | Autocomplete for selecting converters |
+| `tb-converter` | Main converter detail/edit form |
+| `tb-converter-dialog` | Dialog for creating/editing converters |
+| `tb-converter-library` | Library browser for converter templates |
+| `tb-converter-test-dialog` | Dialog for testing converter transformations |
+| **Integration:** | |
+| `tb-integration-type-select` | Dropdown for selecting integration type |
+| `tb-integration-credentials` | Component for managing integration credentials |
+| `tb-cert-upload` | Component for uploading SSL certificates |
+| **Role:** | |
+| `tb-view-role-dialog` | Dialog for viewing role details |
+| `tb-registration-permissions` | Component for managing registration permissions |
+| `tb-permission-list` | List displaying permissions |
+| `tb-operation-type-list` | List of operation types for role permissions |
+| `tb-resource-type-autocomplete` | Autocomplete for resource type selection |
+| **Scheduler:** | |
+| `tb-scheduler-events` | Table of scheduled events (list + calendar views) |
+| `tb-scheduler-event-dialog` | Dialog for creating/editing scheduled events |
+| `tb-scheduler-event-config` | Configuration panel for scheduler events |
+| `tb-scheduler-event-schedule` | Schedule configuration (repeat, timing) |
+| `tb-scheduler-event-type-autocomplete` | Autocomplete for event type selection |
+
 ---
 
-## 5. Angular Material DOM Patterns
+## 6. Angular Material DOM Patterns
 
 **No `data-testid` attributes** — selectors must use Angular Material structure, `formControlName`, `matColumnDef`, labels, roles, and classes.
 
@@ -661,7 +905,7 @@ button[mat-menu-item]
 
 ---
 
-## 6. Form Structure Guide
+## 7. Form Structure Guide
 
 All entity detail forms extend the abstract `EntityComponent<T>` directive (`@home/components/entity/entity.component.ts`).
 
@@ -697,9 +941,11 @@ additionalInfo: this.fb.group({
 
 ---
 
-## 7. HTTP Services Reference
+## 8. HTTP Services Reference
 
 All services are in `src/app/core/http/`.
+
+### Standard Services
 
 | Entity / Area | Service File | Class |
 |---------------|-------------|-------|
@@ -714,7 +960,9 @@ All services are in `src/app/core/http/`.
 | Tenant Profile | `tenant-profile.service.ts` | `TenantProfileService` |
 | Dashboard | `dashboard.service.ts` | `DashboardService` |
 | Rule Chain | `rule-chain.service.ts` | `RuleChainService` |
+| Rule Engine | `rule-engine.service.ts` | `RuleEngineService` |
 | Edge | `edge.service.ts` | `EdgeService` |
+| Agent | `agent.service.ts` | `AgentService` |
 | Alarm | `alarm.service.ts` | `AlarmService` |
 | Alarm Comment | `alarm-comment.service.ts` | `AlarmCommentService` |
 | OTA Package | `ota-package.service.ts` | `OtaPackageService` |
@@ -727,20 +975,58 @@ All services are in `src/app/core/http/`.
 | OAuth2 | `oauth2.service.ts` | `OAuth2Service` |
 | Domain | `domain.service.ts` | `DomainService` |
 | Mobile App | `mobile-app.service.ts` | `MobileAppService` |
+| Mobile Application | `mobile-application.service.ts` | `MobileApplicationService` |
 | Attribute | `attribute.service.ts` | `AttributeService` |
 | Entity Relation | `entity-relation.service.ts` | `EntityRelationService` |
 | Entity (generic) | `entity.service.ts` | `EntityService` |
 | Event | `event.service.ts` | `EventService` |
 | Audit Log | `audit-log.service.ts` | `AuditLogService` |
 | Admin Settings | `admin.service.ts` | `AdminService` |
-| Version Control | `entities-version-control.service.ts` | `EntitiesVersionControlService` |
 | 2FA | `two-factor-authentication.service.ts` | `TwoFactorAuthenticationService` |
 | User Settings | `user-settings.service.ts` | `UserSettingsService` |
 | API Key | `api-key.service.ts` | `ApiKeyService` |
 | Image | `image.service.ts` | `ImageService` |
-| Trendz Settings | `trendz-settings.service.ts` | `TrendzSettingsService` |
 | Usage Info | `usage-info.service.ts` | `UsageInfoService` |
 | Component Descriptor | `component-descriptor.service.ts` | `ComponentDescriptorService` |
 | GitHub | `git-hub.service.ts` | `GitHubService` |
 | Mobile Application | `mobile-application.service.ts` | `MobileApplicationService` |
+| Signup | `signup.service.ts` | `SignupService` |
+| Self Registration | `self-register.service.ts` | `SelfRegistrationService` |
 | UI Settings | `ui-settings.service.ts` | `UiSettingsService` |
+
+### Access Control, Grouping and White Labeling Services
+
+| Entity / Area | Service File | Class |
+|---------------|-------------|-------|
+| White Labeling | `white-labeling.service.ts` | `WhiteLabelingService` |
+| Entity Group | `entity-group.service.ts` | `EntityGroupService` |
+| User Permissions | `user-permissions.service.ts` | `UserPermissionsService` |
+| Integration | `integration.service.ts` | `IntegrationService` |
+| Converter | `converter.service.ts` | `ConverterService` |
+| Converter Library | `converter-library.service.ts` | `ConverterLibraryService` |
+| Scheduler Event | `scheduler-event.service.ts` | `SchedulerEventService` |
+| Role | `role.service.ts` | `RoleService` |
+| Report | `report.service.ts` | `ReportService` |
+| Report Template | `report-template.service.ts` | `ReportTemplateService` |
+| Dashboard Report | `dashboard-report.service.ts` | `DashboardReportService` |
+| Secret Storage | `secret-storage.service.ts` | `SecretStorageService` |
+| Custom Menu | `custom-menu.service.ts` | `CustomMenuService` |
+| Custom Translation | `custom-translation.service.ts` | `CustomTranslationService` |
+| Trendz | `trendz.service.ts` | `TrendzService` |
+| Version Control | `entities-version-control.service.ts` | `EntitiesVersionControlService` |
+| Blob Entity | `blob-entity.service.ts` | `BlobEntityService` |
+| Job | `job.service.ts` | `JobService` |
+| Solutions | `solutions.service.ts` | `SolutionsService` |
+
+---
+
+## 9. Permission Pipes
+
+Located in `@shared/pipe/permission.pipes.ts`. Use in templates to conditionally show UI based on user permissions.
+
+| Pipe | Usage | Returns |
+|------|-------|---------|
+| `hasGenericPermission` | `resource \| hasGenericPermission: operation` | `boolean` — user has resource-level access |
+| `hasEntityGroupPermission` | `entityGroup \| hasEntityGroupPermission: operation` | `boolean` — user has group-level access |
+| `hasGroupEntityPermission` | `entityGroup \| hasGroupEntityPermission: operation` | `boolean` — user can act on entities in group |
+| `hasGroupEntityOrGenericPermission` | `entityGroup \| hasGroupEntityOrGenericPermission: resource : operation` | `boolean` — either group or generic access |

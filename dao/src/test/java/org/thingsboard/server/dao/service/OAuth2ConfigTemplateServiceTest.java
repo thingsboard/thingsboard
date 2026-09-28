@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.service;
 
 import org.junit.After;
@@ -13,10 +14,11 @@ import org.thingsboard.server.common.data.oauth2.MapperType;
 import org.thingsboard.server.common.data.oauth2.OAuth2BasicMapperConfig;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistrationTemplate;
 import org.thingsboard.server.common.data.oauth2.OAuth2MapperConfig;
-import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.oauth2.OAuth2ConfigTemplateService;
+import org.thingsboard.server.exception.DataValidationException;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.UUID;
 
 @DaoSqlTest
@@ -107,6 +109,7 @@ public class OAuth2ConfigTemplateServiceTest extends AbstractServiceTest {
                         .tenantNamePattern("tenant")
                         .defaultDashboardName("Test")
                         .alwaysFullScreen(true)
+                        .userGroupsNamePattern(Collections.singletonList("Tenant Administrators"))
                         .build()
                 )
                 .build());

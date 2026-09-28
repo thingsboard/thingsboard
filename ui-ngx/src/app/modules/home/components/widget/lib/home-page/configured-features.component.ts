@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
@@ -25,8 +26,7 @@ export class ConfiguredFeaturesComponent extends PageComponent implements OnInit
   featuresInfo: FeaturesInfo;
   rowHeight = '50px';
   gutterSize = '12px';
-  bottomColspan = 2;
-  lastColspan = 2;
+  colspan = 2;
 
   private observeBreakpointSubscription: Subscription;
 
@@ -43,8 +43,7 @@ export class ConfiguredFeaturesComponent extends PageComponent implements OnInit
     const isLtMd = this.breakpointObserver.isMatched(MediaBreakpoints['lt-md']);
     this.rowHeight = isMdLg ? '22px' : '50px';
     this.gutterSize = isMdLg ? '8px' : '12px';
-    this.bottomColspan = isLtMd ? 3 : 2;
-    this.lastColspan = isLtMd ? 6 : 2;
+    this.colspan = isLtMd ? 3 : 2;
     this.observeBreakpointSubscription = this.breakpointObserver
       .observe([MediaBreakpoints['md-lg'], MediaBreakpoints['lt-md']])
       .subscribe((state: BreakpointState) => {
@@ -56,11 +55,9 @@ export class ConfiguredFeaturesComponent extends PageComponent implements OnInit
             this.gutterSize = '12px';
           }
           if (state.breakpoints[MediaBreakpoints['lt-md']]) {
-            this.bottomColspan = 3;
-            this.lastColspan = 6;
+            this.colspan = 3;
           } else {
-            this.bottomColspan = 2;
-            this.lastColspan = 2;
+            this.colspan = 2;
           }
           this.cd.markForCheck();
         }

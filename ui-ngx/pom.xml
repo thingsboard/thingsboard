@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -12,7 +13,6 @@
         <version>4.4.0-SNAPSHOT</version>
         <artifactId>thingsboard</artifactId>
     </parent>
-    <groupId>org.thingsboard</groupId>
     <artifactId>ui-ngx</artifactId>
     <packaging>jar</packaging>
 
@@ -26,6 +26,15 @@
 
     <build>
         <resources>
+            <!-- The backend reads the locale files from the classpath (see DefaultTranslationService),
+                 so they must be packaged even when the UI is not built (-Dskip.yarn=true). The Angular
+                 build copies these very same sources verbatim to the same path under generated-resources,
+                 which is declared after this entry so that the built UI output is processed last. -->
+            <resource>
+                <directory>src/assets/locale</directory>
+                <targetPath>public/assets/locale</targetPath>
+                <filtering>false</filtering>
+            </resource>
             <resource>
                 <directory>${project.build.directory}/generated-resources</directory>
             </resource>
@@ -64,6 +73,37 @@
                 </executions>
             </plugin>
             <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-deploy-plugin</artifactId>
+              <configuration>
+                <skip>true</skip>
+              </configuration>
+            </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-resources-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>copy-resources</id>
+                <phase>generate-resources</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration>
+                  <outputDirectory>${project.build.outputDirectory}/converters</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>src/assets/converters</directory>
+                      <includes>
+                        <include>**/*.raw</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-clean-plugin</artifactId>
                 <configuration>
@@ -72,14 +112,6 @@
                             <directory>${basedir}/node_modules</directory>
                         </fileset>
                     </filesets>
-                </configuration>
-            </plugin>
-            <plugin>
-                <!-- Only consumed in-reactor by application and msa/web-ui -->
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-deploy-plugin</artifactId>
-                <configuration>
-                    <skip>true</skip>
                 </configuration>
             </plugin>
         </plugins>

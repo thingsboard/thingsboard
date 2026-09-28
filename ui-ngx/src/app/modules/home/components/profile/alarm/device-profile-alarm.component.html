@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <mat-expansion-panel class="device-profile-alarm flex-1" [formGroup]="alarmFormGroup" [(expanded)]="expanded">
@@ -83,6 +84,9 @@
         }
         <mat-checkbox formControlName="propagateToOwner" style="display: block;">
           {{ 'device-profile.propagate-alarm-to-owner' | translate }}
+        </mat-checkbox>
+        <mat-checkbox formControlName="propagateToOwnerHierarchy" style="display: block;">
+          {{ 'device-profile.propagate-alarm-to-owner-hierarchy' | translate }}
         </mat-checkbox>
         <mat-checkbox formControlName="propagateToTenant" style="display: block;">
           {{ 'device-profile.propagate-alarm-to-tenant' | translate }}

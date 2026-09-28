@@ -1,0 +1,73 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<mat-form-field [formGroup]="entityGroupListFormGroup" [appearance]="appearance" class="mat-block" [class.tb-chip-list]="!labelText">
+  @if (labelText) {
+    <mat-label>{{ labelText }}</mat-label>
+  }
+  <mat-chip-grid #chipList formControlName="entityGroups">
+    @for (entityGroup of entityGroups; track entityGroup) {
+      <mat-chip-row
+        class="tb-chip-row-ellipsis"
+        [removable]="!disabled"
+        (removed)="remove(entityGroup)">
+        {{entityGroup.name}}
+        @if (!disabled) {
+          <mat-icon matChipRemove>close</mat-icon>
+        }
+      </mat-chip-row>
+    }
+    <input matInput type="text" placeholder="{{ !disabled ? ('entity-group.entity-group-list' | translate) : '' }}"
+      style="max-width: 200px;"
+      #entityGroupInput
+      (focusin)="onFocus()"
+      formControlName="entityGroup"
+      matAutocompleteOrigin
+      #origin="matAutocompleteOrigin"
+      (keydown)="entityGroupEnter($event)"
+      (keypress)="entityGroupEnter($event)"
+      [matAutocompleteConnectedTo]="origin"
+      [matAutocomplete]="entityGroupAutocomplete"
+      [matChipInputFor]="chipList">
+  </mat-chip-grid>
+  <mat-autocomplete class="tb-autocomplete"
+    #entityGroupAutocomplete="matAutocomplete"
+    class="tb-autocomplete"
+    panelWidth="fit-content"
+    [displayWith]="displayEntityGroupFn">
+    @for (entityGroup of filteredEntityGroups | async; track entityGroup) {
+      <mat-option [value]="entityGroup">
+        <span [innerHTML]="entityGroup.name | highlight:searchText"></span>
+      </mat-option>
+    }
+    @if (!(filteredEntityGroups | async)?.length) {
+      <mat-option [value]="null" class="tb-not-found">
+        <div class="tb-not-found-content" (click)="$event.stopPropagation()">
+          @if (!textIsNotEmpty(searchText)) {
+            <div>
+              <span translate>entity-group.no-entity-groups-text</span>
+            </div>
+          } @else {
+            <div>
+              {{ translate.get('entity-group.no-entity-groups-matching',
+              {entityGroup: truncate.transform(searchText, true, 12, &apos;...&apos;)}) | async }}
+            </div>
+          }
+          @if (createGroupFunction) {
+            <span>
+              <a translate (click)="createEntityGroup($event, searchText)">entity-group.create-new-entity-group</a>
+            </span>
+          }
+        </div>
+      </mat-option>
+    }
+  </mat-autocomplete>
+  @if (entityGroupListFormGroup.get('entityGroups').hasError('required')) {
+    <mat-error>
+      {{ 'entity-group.entity-group-list-empty' | translate }}
+    </mat-error>
+  }
+</mat-form-field>

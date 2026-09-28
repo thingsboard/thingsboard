@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.lwm2m.client;
 
 import lombok.Data;
@@ -442,7 +443,6 @@ public class LwM2MTestClient {
         lwM2MTemperatureSensor12 = null;
     }
 
-
     private void destroySafe(Object obj) {
         if (obj == null) return;
         try {
@@ -454,7 +454,6 @@ public class LwM2MTestClient {
             log.warn("Failed to destroy {}", obj.getClass().getSimpleName(), e);
         }
     }
-
 
     public void start(boolean isStartLw) {
         if (leshanClient != null) {

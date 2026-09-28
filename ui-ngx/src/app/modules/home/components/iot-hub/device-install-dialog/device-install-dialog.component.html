@@ -1,9 +1,11 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
+<!-- Shared step content template -->
 <ng-template #stepContent let-ws>
   <div class="tb-wizard-step-content">
     @switch (ws.type) {
@@ -21,7 +23,7 @@
                [class.tb-connectivity-cards-pair]="availableInstallMethods.length === 2">
             @for (ct of availableInstallMethods; track ct) {
               <button type="button"
-                      class="tb-connectivity-card"
+                      class="tb-connectivity-card tb-primary-fill"
                       [class.selected]="selectedInstallMethod === ct"
                       (click)="selectConnectivity(ct)">
                 <div class="tb-connectivity-card-icon">
@@ -30,9 +32,6 @@
                   }
                 </div>
                 <span class="tb-connectivity-card-name">{{ installMethodLabels.get(ct) || ct }}</span>
-                @if (peOnlyInstallMethods.has(ct)) {
-                  <span class="tb-connectivity-card-badge">{{ 'iot-hub.pe-only' | translate }}</span>
-                }
               </button>
             }
           </div>
@@ -149,6 +148,21 @@
   </div>
 </ng-template>
 
+<ng-template #finishActions>
+  <button mat-button (click)="done()">{{ 'action.close' | translate }}</button>
+  @if (canGenerateAiDashboard) {
+    <button mat-stroked-button color="primary" (click)="generateDashboardWithAi()">
+      <tb-icon matButtonIcon>mdi:creation</tb-icon>
+      <span>{{ 'solution-creator.generate-dashboard-with-ai' | translate }}</span>
+    </button>
+  }
+  @if (primaryEntityAction; as action) {
+    <button mat-flat-button color="primary" (click)="openEntity(action.url)">
+      {{ action.label }}
+    </button>
+  }
+</ng-template>
+
 <!-- Main dialog -->
 @if (loading) {
   <div class="flex h-full items-center justify-center py-12">
@@ -177,12 +191,7 @@
       </mat-tab-group>
     </div>
     <mat-dialog-actions align="end">
-      <button mat-button (click)="done()">{{ 'action.close' | translate }}</button>
-      @if (primaryEntityAction; as action) {
-        <button mat-flat-button color="primary" (click)="openEntity(action.url)">
-          {{ action.label }}
-        </button>
-      }
+      <ng-container *ngTemplateOutlet="finishActions"></ng-container>
     </mat-dialog-actions>
 
   } @else {
@@ -231,12 +240,7 @@
           }
           @case ('instruction') {
             @if (isLastWizardStep) {
-              <button mat-button (click)="done()">{{ 'action.close' | translate }}</button>
-              @if (primaryEntityAction; as action) {
-                <button mat-flat-button color="primary" (click)="openEntity(action.url)">
-                  {{ action.label }}
-                </button>
-              }
+              <ng-container *ngTemplateOutlet="finishActions"></ng-container>
             } @else {
               <ng-container *ngTemplateOutlet="closeOrCancel"></ng-container>
               <button mat-stroked-button color="primary" (click)="nextStep()">
@@ -257,12 +261,7 @@
                 {{ 'action.retry' | translate }}
               </button>
             } @else if (step.progressDone && isLastWizardStep) {
-              <button mat-button (click)="done()">{{ 'action.close' | translate }}</button>
-              @if (primaryEntityAction; as action) {
-                <button mat-flat-button color="primary" (click)="openEntity(action.url)">
-                  {{ action.label }}
-                </button>
-              }
+              <ng-container *ngTemplateOutlet="finishActions"></ng-container>
             } @else if (!step.progressError) {
               <ng-container *ngTemplateOutlet="closeOrCancel"></ng-container>
               <button mat-stroked-button color="primary" [disabled]="!step.progressDone" (click)="nextStep()">

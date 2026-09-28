@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.edge.rpc;
 
 import lombok.RequiredArgsConstructor;
@@ -37,7 +38,7 @@ public class DownlinkMessageMapper {
                 switch (edgeEvent.getAction()) {
                     case UPDATED, ADDED, DELETED, ASSIGNED_TO_EDGE, UNASSIGNED_FROM_EDGE, ALARM_ACK, ALARM_CLEAR,
                          ALARM_DELETE, CREDENTIALS_UPDATED, RELATION_ADD_OR_UPDATE, RELATION_DELETED, RPC_CALL,
-                         ASSIGNED_TO_CUSTOMER, UNASSIGNED_FROM_CUSTOMER, ADDED_COMMENT, UPDATED_COMMENT, DELETED_COMMENT -> {
+                         ADDED_TO_ENTITY_GROUP, REMOVED_FROM_ENTITY_GROUP, CHANGE_OWNER, ADDED_COMMENT, UPDATED_COMMENT, DELETED_COMMENT -> {
                         downlinkMsg = convertEntityEventToDownlink(state, edgeEvent);
                         if (downlinkMsg != null && downlinkMsg.getWidgetTypeUpdateMsgCount() > 0) {
                             log.trace("[{}][{}] widgetTypeUpdateMsg message processed, downlinkMsgId = {}",
@@ -61,12 +62,23 @@ public class DownlinkMessageMapper {
     }
 
     protected DownlinkMsg convertEntityEventToDownlink(EdgeSessionState state, EdgeEvent edgeEvent) {
-        log.trace("[{}] Executing convertEntityEventToDownlink, edgeEvent [{}], action [{}]", edgeEvent.getTenantId(), edgeEvent, edgeEvent.getAction());
-        if ((EdgeEventType.OAUTH2_CLIENT.equals(edgeEvent.getType()) || EdgeEventType.DOMAIN.equals(edgeEvent.getType())) &&
-                (EdgeVersionUtils.isEdgeVersionOlderThan(state.getEdgeVersion(), EdgeVersion.V_3_8_0))) {
+        log.trace("[{}] Executing convertEntityEventToDownlink, edgeEvent [{}], action [{}]",
+                edgeEvent.getTenantId(), edgeEvent, edgeEvent.getAction());
+
+        if (!isValidEdgeEvent(state, edgeEvent)) {
             return null;
         }
 
         return ctx.getProcessor(edgeEvent.getType()).convertEdgeEventToDownlink(edgeEvent, state.getEdgeVersion());
+    }
+
+    private boolean isValidEdgeEvent(EdgeSessionState state, EdgeEvent edgeEvent) {
+        EdgeEventType eventType = edgeEvent.getType();
+        if ((EdgeEventType.OAUTH2_CLIENT.equals(eventType) || EdgeEventType.DOMAIN.equals(eventType)
+                || EdgeEventType.CUSTOM_MENU.equals(eventType)) && EdgeVersionUtils.isEdgeVersionOlderThan(state.getEdgeVersion(), EdgeVersion.V_3_8_0)) {
+            return false;
+        }
+
+        return !EdgeEventType.CUSTOM_TRANSLATION.equals(eventType) || !EdgeVersionUtils.isEdgeVersionOlderThan(state.getEdgeVersion(), EdgeVersion.V_3_7_0);
     }
 }

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
@@ -10,6 +11,8 @@ import { TbIotHubCreatorProfileComponent } from './iot-hub-creator-profile.compo
 import { TbIotHubInstalledItemsComponent } from './iot-hub-installed-items.component';
 import { TbIotHubSearchPageComponent } from './iot-hub-search-page.component';
 import { TbIotHubItemResolverComponent } from './iot-hub-item-resolver.component';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { Operation, Resource } from '@shared/models/security.models';
 
 const routes: Routes = [
   {
@@ -27,6 +30,9 @@ const routes: Routes = [
         component: TbIotHubHomeComponent,
         data: {
           auth: [Authority.TENANT_ADMIN],
+          canActivate: (userPermissionsService: UserPermissionsService): boolean => {
+            return userPermissionsService.hasGenericPermission(Resource.ALL, Operation.ALL);
+          },
           title: 'iot-hub.iot-hub'
         }
       },
@@ -35,6 +41,9 @@ const routes: Routes = [
         component: TbIotHubItemsPageComponent,
         data: {
           auth: [Authority.TENANT_ADMIN],
+          canActivate: (userPermissionsService: UserPermissionsService): boolean => {
+            return userPermissionsService.hasGenericPermission(Resource.ALL, Operation.ALL);
+          },
           title: 'item.type-widget-plural',
           itemType: 'WIDGET',
           breadcrumb: { label: 'item.type-widget-plural', icon: 'widgets' }
@@ -45,6 +54,9 @@ const routes: Routes = [
         component: TbIotHubItemsPageComponent,
         data: {
           auth: [Authority.TENANT_ADMIN],
+          canActivate: (userPermissionsService: UserPermissionsService): boolean => {
+            return userPermissionsService.hasGenericPermission(Resource.ALL, Operation.ALL);
+          },
           title: 'item.type-dashboard-plural',
           itemType: 'DASHBOARD',
           breadcrumb: { label: 'item.type-dashboard-plural', icon: 'dashboard' }
@@ -55,6 +67,9 @@ const routes: Routes = [
         component: TbIotHubItemsPageComponent,
         data: {
           auth: [Authority.TENANT_ADMIN],
+          canActivate: (userPermissionsService: UserPermissionsService): boolean => {
+            return userPermissionsService.hasGenericPermission(Resource.ALL, Operation.ALL);
+          },
           title: 'item.type-solution-template-plural',
           itemType: 'SOLUTION_TEMPLATE',
           breadcrumb: { label: 'item.type-solution-template-plural', icon: 'integration_instructions' }
@@ -65,6 +80,9 @@ const routes: Routes = [
         component: TbIotHubItemsPageComponent,
         data: {
           auth: [Authority.TENANT_ADMIN],
+          canActivate: (userPermissionsService: UserPermissionsService): boolean => {
+            return userPermissionsService.hasGenericPermission(Resource.ALL, Operation.ALL);
+          },
           title: 'item.type-calculated-field-plural',
           itemType: 'CALCULATED_FIELD',
           breadcrumb: { label: 'item.type-calculated-field-plural', icon: 'functions' }
@@ -85,6 +103,9 @@ const routes: Routes = [
         component: TbIotHubItemsPageComponent,
         data: {
           auth: [Authority.TENANT_ADMIN],
+          canActivate: (userPermissionsService: UserPermissionsService): boolean => {
+            return userPermissionsService.hasGenericPermission(Resource.ALL, Operation.ALL);
+          },
           title: 'item.type-rule-chain-plural',
           itemType: 'RULE_CHAIN',
           breadcrumb: { label: 'item.type-rule-chain-plural', icon: 'account_tree' }
@@ -95,6 +116,9 @@ const routes: Routes = [
         component: TbIotHubItemsPageComponent,
         data: {
           auth: [Authority.TENANT_ADMIN],
+          canActivate: (userPermissionsService: UserPermissionsService): boolean => {
+            return userPermissionsService.hasGenericPermission(Resource.ALL, Operation.ALL);
+          },
           title: 'iot-hub.device-library',
           itemType: 'DEVICE',
           breadcrumb: { label: 'iot-hub.device-library', icon: 'memory' }
@@ -105,6 +129,9 @@ const routes: Routes = [
         component: TbIotHubSearchPageComponent,
         data: {
           auth: [Authority.TENANT_ADMIN],
+          canActivate: (userPermissionsService: UserPermissionsService): boolean => {
+            return userPermissionsService.hasGenericPermission(Resource.ALL, Operation.ALL);
+          },
           title: 'iot-hub.search-results',
           breadcrumb: {
             label: 'iot-hub.search-results',
@@ -117,6 +144,9 @@ const routes: Routes = [
         component: TbIotHubInstalledItemsComponent,
         data: {
           auth: [Authority.TENANT_ADMIN],
+          canActivate: (userPermissionsService: UserPermissionsService): boolean => {
+            return userPermissionsService.hasGenericPermission(Resource.ALL, Operation.ALL);
+          },
           title: 'iot-hub.installed-items',
           breadcrumb: {
             label: 'iot-hub.installed-items',
@@ -129,6 +159,9 @@ const routes: Routes = [
         component: TbIotHubCreatorProfileComponent,
         data: {
           auth: [Authority.TENANT_ADMIN],
+          canActivate: (userPermissionsService: UserPermissionsService): boolean => {
+            return userPermissionsService.hasGenericPermission(Resource.ALL, Operation.ALL);
+          },
           title: 'iot-hub.creator-profile',
           breadcrumb: {
             label: 'iot-hub.creator-profile',
@@ -149,6 +182,9 @@ const routes: Routes = [
         component: TbIotHubItemResolverComponent,
         data: {
           auth: [Authority.TENANT_ADMIN],
+          canActivate: (userPermissionsService: UserPermissionsService): boolean => {
+            return userPermissionsService.hasGenericPermission(Resource.ALL, Operation.ALL);
+          },
           title: 'iot-hub.item-detail'
         }
       },
@@ -157,6 +193,9 @@ const routes: Routes = [
         component: TbIotHubItemResolverComponent,
         data: {
           auth: [Authority.TENANT_ADMIN],
+          canActivate: (userPermissionsService: UserPermissionsService): boolean => {
+            return userPermissionsService.hasGenericPermission(Resource.ALL, Operation.ALL);
+          },
           title: 'iot-hub.item-detail'
         }
       }

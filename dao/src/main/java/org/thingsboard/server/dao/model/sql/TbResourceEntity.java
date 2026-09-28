@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -12,6 +13,7 @@ import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.ResourceSubType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
@@ -21,6 +23,7 @@ import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.EXTERNAL_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.PUBLIC_RESOURCE_KEY_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_CUSTOMER_ID_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_DATA_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_DESCRIPTOR_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_ETAG_COLUMN;
@@ -43,6 +46,9 @@ public class TbResourceEntity extends BaseSqlEntity<TbResource> {
 
     @Column(name = RESOURCE_TENANT_ID_COLUMN, columnDefinition = "uuid")
     private UUID tenantId;
+
+    @Column(name = RESOURCE_CUSTOMER_ID_COLUMN, columnDefinition = "uuid")
+    private UUID customerId;
 
     @Column(name = RESOURCE_TITLE_COLUMN)
     private String title;
@@ -95,6 +101,9 @@ public class TbResourceEntity extends BaseSqlEntity<TbResource> {
         if (resource.getTenantId() != null) {
             this.tenantId = resource.getTenantId().getId();
         }
+        if (resource.getCustomerId() != null) {
+            this.customerId = resource.getCustomerId().getId();
+        }
         this.title = resource.getTitle();
         this.resourceType = resource.getResourceType().name();
         if (resource.getResourceSubType() != null) {
@@ -117,6 +126,9 @@ public class TbResourceEntity extends BaseSqlEntity<TbResource> {
         TbResource resource = new TbResource(new TbResourceId(id));
         resource.setCreatedTime(createdTime);
         resource.setTenantId(TenantId.fromUUID(tenantId));
+        if (customerId != null) {
+            resource.setCustomerId(new CustomerId(customerId));
+        }
         resource.setTitle(title);
         resource.setResourceType(ResourceType.valueOf(resourceType));
         resource.setResourceSubType(resourceSubType != null ? ResourceSubType.valueOf(resourceSubType) : null);

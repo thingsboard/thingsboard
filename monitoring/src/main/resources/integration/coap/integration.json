@@ -1,0 +1,24 @@
+{
+  "type": "COAP",
+  "debugFailures": false,
+  "debugAll": true,
+  "enabled": true,
+  "allowCreateDevicesOrAssets": false,
+  "defaultConverterId": null,
+  "downlinkConverterId": null,
+  "routingKey": null,
+  "configuration": {
+    "metadata": {},
+    "clientConfiguration": {
+      "baseUrl": "%1$s",
+      "dtlsBaseUrl": "",
+      "securityMode": "NO_SECURE",
+      "coapEndpoint": "%1$s/i/%2$s",
+      "dtlsCoapEndpoint": ""
+    }
+  },
+  "additionalInfo": null,
+  "externalId": null,
+  "edgeTemplate": false,
+  "remote": false
+}

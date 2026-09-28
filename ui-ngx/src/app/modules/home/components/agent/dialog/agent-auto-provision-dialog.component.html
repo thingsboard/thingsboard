@@ -1,0 +1,165 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<mat-toolbar color="tb-primary" class="tb-install-wizard-toolbar">
+  <div class="tb-install-wizard-toolbar-content">
+    <h2>{{ titleKey | translate }}</h2>
+  </div>
+  <div tb-help="agentProfileAutoProvision"></div>
+  <button mat-icon-button (click)="cancel()" type="button" tabindex="-1">
+    <mat-icon>close</mat-icon>
+  </button>
+</mat-toolbar>
+
+<div mat-dialog-content class="tb-install-wizard-body">
+  <mat-stepper linear #stepper [labelPosition]="(stepperLabelPosition | async)">
+
+    <mat-step [completed]="canProceed()"
+      [label]="stepSelectKey | translate">
+
+      <div class="tb-info-box info">
+        <mat-icon>auto_awesome</mat-icon>
+        <div>
+          <p class="info-title">{{ infoTitleKey | translate }}</p>
+          <p>{{ infoBodyKey | translate }}</p>
+        </div>
+      </div>
+
+      <form [formGroup]="selectForm" autocomplete="off" class="select-form">
+        <mat-form-field class="mat-block profile-field" appearance="outline" subscriptSizing="dynamic">
+          <mat-label translate>edge.auto-provision-agent-profile-label</mat-label>
+          <input matInput
+            type="text"
+            formControlName="agentProfile"
+            [matAutocomplete]="auto"
+            (focusin)="onProfileFocus()"
+            [placeholder]="'edge.auto-provision-agent-profile-placeholder' | translate">
+          <button matSuffix mat-button color="primary" type="button"
+            class="create-profile-btn"
+            (mousedown)="$event.preventDefault()"
+            (click)="createNewProfile($event)">
+            <mat-icon>add</mat-icon>
+            <span translate>edge.auto-provision-create-profile</span>
+          </button>
+          <mat-autocomplete #auto="matAutocomplete"
+            [displayWith]="displayProfile"
+            (optionSelected)="onProfileSelected($event.option.value)">
+            @for (profile of filteredProfiles$ | async; track profile.id.id) {
+              <mat-option [value]="profile">
+                <div class="profile-option">
+                  <span class="profile-name">{{ profile.name }}</span>
+                  @if (profile.default) {
+                    <span class="profile-meta">{{ 'agent.default-profile' | translate }}</span>
+                  }
+                </div>
+              </mat-option>
+            }
+            @if ((filteredProfiles$ | async)?.length === 0) {
+              <mat-option disabled>
+                <span class="empty-hint" translate>edge.auto-provision-no-eligible-profiles</span>
+              </mat-option>
+            }
+          </mat-autocomplete>
+        </mat-form-field>
+
+        <div class="validation-row">
+          @switch (validation) {
+            @case ('validating') {
+              <div class="validation-msg muted">
+                <mat-spinner diameter="16"></mat-spinner>
+                <span translate>edge.auto-provision-validating</span>
+              </div>
+            }
+            @case ('valid') {
+              <div class="validation-msg valid">
+                <mat-icon>check_circle</mat-icon>
+                <span>{{ validKey | translate: { profile: selectedProfile?.name } }}</span>
+              </div>
+            }
+            @case ('invalid-strategy') {
+              <div class="validation-msg invalid">
+                <mat-icon>error_outline</mat-icon>
+                <span translate>edge.auto-provision-invalid-strategy</span>
+              </div>
+            }
+            @case ('invalid-no-edge-app') {
+              <div class="validation-msg invalid">
+                <mat-icon>error_outline</mat-icon>
+                <span>{{ invalidNoAppKey | translate }}</span>
+                <button mat-button color="primary" type="button" (click)="assignProfileToSelected($event)">
+                  <mat-icon>link</mat-icon>
+                  <span translate>agent.assign-profile</span>
+                </button>
+              </div>
+            }
+          }
+        </div>
+      </form>
+
+      <div class="step-footer">
+        <button mat-button type="button" (click)="cancel()">{{ 'action.cancel' | translate }}</button>
+        <button mat-raised-button color="primary" type="button"
+          [disabled]="!canProceed() || loading"
+          (click)="proceedToScript()">
+          <span>{{ 'action.next' | translate }}</span>
+          <mat-icon iconPositionEnd>chevron_right</mat-icon>
+        </button>
+      </div>
+    </mat-step>
+
+    <mat-step [label]="stepScriptKey | translate">
+
+      <div class="success-banner">
+        <mat-icon class="success-icon">check_circle</mat-icon>
+        <div>
+          <p class="banner-title">{{ successMessageKey | translate }}</p>
+        </div>
+      </div>
+
+      @if (hasCredentials()) {
+        <section class="script-section">
+          <h3>
+            <mat-icon class="section-icon">terminal</mat-icon>
+            <span translate>agent.docker-run-command</span>
+          </h3>
+          <div class="command-block">
+            <button mat-flat-button class="copy-command-btn"
+              ngxClipboard
+              [cbContent]="dockerCommand"
+              (cbOnSuccess)="onCopied()">
+              <mat-icon>content_copy</mat-icon>
+              <span translate>action.copy</span>
+            </button>
+            <pre>{{ dockerCommand }}</pre>
+          </div>
+          <div class="tb-info-box info">
+            <mat-icon>info</mat-icon>
+            <div>
+              <p>{{ infoBodyKey | translate }}</p>
+            </div>
+          </div>
+        </section>
+      } @else {
+        <div class="tb-info-box invalid">
+          <mat-icon>error_outline</mat-icon>
+          <div>
+            <p translate>edge.auto-provision-no-script</p>
+          </div>
+        </div>
+      }
+
+
+      <div class="step-footer">
+        <button mat-button type="button" (click)="cancel()">{{ 'action.close' | translate }}</button>
+        <button mat-raised-button color="primary" type="button" (click)="goToProfile()">
+          <mat-icon>open_in_new</mat-icon>
+          <span translate>agent.go-to-profile</span>
+        </button>
+      </div>
+    </mat-step>
+
+  </mat-stepper>
+</div>

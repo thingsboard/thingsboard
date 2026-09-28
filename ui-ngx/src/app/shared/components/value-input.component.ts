@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   ChangeDetectorRef,
   Component,
@@ -21,8 +22,8 @@ import {
 } from '@shared/components/dialog/json-object-edit-dialog.component';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { Subscription } from 'rxjs';
-import { TranslateService } from '@ngx-translate/core';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { TranslateService } from '@ngx-translate/core';
 
 type Layout = 'column' | 'row';
 
@@ -80,6 +81,10 @@ export class ValueInputComponent implements OnInit, OnDestroy, OnChanges, Contro
   layout: ValueInputLayout | Layout = 'row';
 
   @ViewChild('inputForm', {static: true}) inputForm: NgForm;
+
+  @Input()
+  @coerceBoolean()
+  stringNotRequired = false;
 
   modelValue: any;
 
@@ -197,8 +202,12 @@ export class ValueInputComponent implements OnInit, OnDestroy, OnChanges, Contro
 
   updateView() {
     if (this.inputForm.valid || this.valueType === ValueType.BOOLEAN ||
-        (this.valueType === ValueType.JSON && Array.isArray(this.modelValue))) {
-      this.propagateChange(this.modelValue);
+      (this.valueType === ValueType.JSON && Array.isArray(this.modelValue))) {
+      let value = this.modelValue;
+      if (this.stringNotRequired && this.valueType === ValueType.STRING && !value) {
+        value = '';
+      }
+      this.propagateChange(value);
     } else {
       this.propagateChange(null);
     }
@@ -210,6 +219,8 @@ export class ValueInputComponent implements OnInit, OnDestroy, OnChanges, Contro
     } else if (this.valueType === ValueType.JSON) {
       this.modelValue = {};
       this.inputForm.form.get('value').patchValue({});
+    } else if (this.valueType === ValueType.STRING && this.stringNotRequired) {
+      this.modelValue = '';
     } else {
       this.modelValue = null;
     }

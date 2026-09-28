@@ -1,10 +1,11 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
-import { Injectable, NgZone } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { Inject, Injectable, NgZone, DOCUMENT } from '@angular/core';
 import { JwtHelperService } from '@auth0/angular-jwt';
 import { HttpClient } from '@angular/common/http';
 
-import { Observable, of, ReplaySubject, throwError } from 'rxjs';
+import { forkJoin, Observable, of, ReplaySubject, throwError } from 'rxjs';
 import { catchError, map, mergeMap, tap } from 'rxjs/operators';
 import { setEdqsEnabled, setNullsOrderStrategy } from '@shared/models/page/page-link';
 
@@ -23,16 +24,22 @@ import {
 import { getCurrentAuthState, getCurrentAuthUser } from './auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 import { AuthPayload, AuthState, SysParams, SysParamsState } from '@core/auth/auth.models';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, TranslateStore } from '@ngx-translate/core';
 import { AuthUser } from '@shared/models/user.model';
 import { TimeService } from '@core/services/time.service';
 import { UtilsService } from '@core/services/utils.service';
+import { WhiteLabelingService } from '@core/http/white-labeling.service';
+import { CustomMenuService } from '@core/http/custom-menu.service';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { AlertDialogComponent } from '@shared/components/dialog/alert-dialog.component';
 import { OAuth2ClientLoginInfo, PlatformType } from '@shared/models/oauth2.models';
 import { isMobileApp } from '@core/utils';
 import { TwoFactorAuthProviderType, TwoFaProviderInfo } from '@shared/models/two-factor-auth.models';
 import { UserPasswordPolicy } from '@shared/models/settings.models';
+import { TranslateDefaultLoader } from '@core/translate/translate-default-loader';
+import { updateUserLang } from '@core/settings/settings.utils';
+
 
 @Injectable({
     providedIn: 'root'
@@ -43,12 +50,17 @@ export class AuthService {
     private store: Store<AppState>,
     private http: HttpClient,
     private userService: UserService,
+    private whiteLabelingService: WhiteLabelingService,
+    private customMenuService: CustomMenuService,
+    private userPermissionsService: UserPermissionsService,
     private timeService: TimeService,
     private router: Router,
     private zone: NgZone,
     private utils: UtilsService,
     private translate: TranslateService,
-    private dialog: MatDialog
+    private translateStore: TranslateStore,
+    private dialog: MatDialog,
+    @Inject(DOCUMENT) private document: Document,
   ) {
   }
 
@@ -261,7 +273,7 @@ export class AuthService {
     return false;
   }
 
-  public defaultUrl(isAuthenticated: boolean, authState?: AuthState, path?: string, params?: any): UrlTree {
+  public defaultUrl(isAuthenticated: boolean, authState?: AuthState, path?: string, params?: any, data?: any): UrlTree {
     let result: UrlTree = null;
     if (isAuthenticated) {
       if (authState.authUser.authority === Authority.PRE_VERIFICATION_TOKEN) {
@@ -284,7 +296,7 @@ export class AuthService {
             } else {
               result = this.router.parseUrl(`dashboards/${dashboardId}`);
             }
-          } else if (authState.authUser.isPublic) {
+          } else if (authState.authUser.isPublic && authState.lastPublicDashboardId) {
             result = this.router.parseUrl(`dashboard/${authState.lastPublicDashboardId}`);
           }
         }
@@ -293,6 +305,38 @@ export class AuthService {
       result = this.router.parseUrl('login');
     }
     return result;
+  }
+
+  public loadUserFromPublicId(publicId: string): Observable<AuthPayload> {
+    return this.publicLogin(publicId).pipe(
+      mergeMap((response) => this.loadUserFromAccessToken(response.token)),
+      catchError((err) => {
+        this.notifyUnauthenticated();
+        this.notifyUserLoaded(true);
+        return of(null);
+      })
+    );
+  }
+
+  public loadUserFromAccessToken(accessToken?: string): Observable<AuthPayload> {
+    try {
+      this.updateAndValidateToken(null, 'jwt_token', true);
+      this.updateAndValidateToken(accessToken, 'jwt_token', false);
+    } catch (e) {
+      this.notifyUnauthenticated();
+      this.notifyUserLoaded(true);
+      return of(null);
+    }
+    return this.procceedJwtTokenValidate().pipe(
+      tap((authPayload) => {
+        this.notifyAuthenticated(authPayload);
+        this.notifyUserLoaded(true);
+      }),
+      catchError((e) => {
+        this.notifyUnauthenticated();
+        this.notifyUserLoaded(true);
+        return of(null);
+     }));
   }
 
   private loadUser(doTokenRefresh): Observable<AuthPayload> {
@@ -391,7 +435,7 @@ export class AuthService {
           authPayload.forceFullscreen = true;
         }
         if (authPayload.authUser?.isPublic) {
-          this.loadSystemParams().subscribe(
+          this.loadSystemParams(authPayload).subscribe(
             (sysParams) => {
               authPayload = {...authPayload, ...sysParams};
               loadUserSubject.next(authPayload);
@@ -402,6 +446,7 @@ export class AuthService {
             }
           );
         } else if (authPayload.authUser?.authority === Authority.PRE_VERIFICATION_TOKEN || authPayload.authUser?.authority === Authority.MFA_CONFIGURATION_TOKEN) {
+          updateUserLang(this.translate, this.translateStore, this.document, authPayload.userDetails?.additionalInfo?.lang ?? null, authPayload.availableLocales, true);
           loadUserSubject.next(authPayload);
           loadUserSubject.complete();
         } else if (authPayload.authUser?.userId) {
@@ -412,7 +457,7 @@ export class AuthService {
               if (this.userForceFullscreen(authPayload)) {
                 authPayload.forceFullscreen = true;
               }
-              this.loadSystemParams().subscribe(
+              this.loadSystemParams(authPayload).subscribe(
                 (sysParams) => {
                   authPayload = {...authPayload, ...sysParams};
                   loadUserSubject.next(authPayload);
@@ -439,14 +484,27 @@ export class AuthService {
     return loadUserSubject;
   }
 
-  private loadSystemParams(): Observable<SysParamsState> {
-    return this.http.get<SysParams>('/api/system/params', defaultHttpOptions()).pipe(
-      map((sysParams) => {
-        this.timeService.setMaxDatapointsLimit(sysParams.maxDatapointsLimit);
-        setNullsOrderStrategy(sysParams.nullsOrderStrategy);
-        setEdqsEnabled(sysParams.edqsEnabled);
-        return sysParams;
-      }),
+  private loadSystemParams(authPayload: AuthPayload): Observable<SysParamsState> {
+    const userLang = authPayload.userDetails?.additionalInfo?.lang ?? null;
+
+    const sources = [
+      this.http.get<SysParams>('/api/system/params', defaultHttpOptions()).pipe(
+        mergeMap((sysParams: SysParams) => {
+          (this.translate.currentLoader as TranslateDefaultLoader).isAuthenticated = true;
+          this.timeService.setMaxDatapointsLimit(sysParams.maxDatapointsLimit);
+          setNullsOrderStrategy(sysParams.nullsOrderStrategy);
+          setEdqsEnabled(sysParams.edqsEnabled);
+          return updateUserLang(this.translate, this.translateStore, this.document, userLang, sysParams.availableLocales, true).pipe(
+            map(() => sysParams)
+          );
+        })
+      ),
+      this.whiteLabelingService.loadUserWhiteLabelingParams(),
+      this.customMenuService.loadCustomMenu(),
+      this.userPermissionsService.loadPermissionsInfo()
+    ];
+    return forkJoin(sources).pipe(
+      map((data) => data[0] as SysParams),
       catchError(() => of({} as SysParamsState))
     );
   }
@@ -641,5 +699,4 @@ export class AuthService {
       return false;
     }
   }
-
 }

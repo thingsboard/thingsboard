@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.msa.connectivity.lwm2m;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -15,7 +16,7 @@ import org.eclipse.leshan.core.util.Hex;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.testng.Assert;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
@@ -58,7 +59,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -254,7 +254,7 @@ public class AbstractLwm2mClientTest extends AbstractContainerTest {
         if (executor != null) {
             executor.shutdown();
         }
-        executor = Executors.newScheduledThreadPool(10, ThingsBoardThreadFactory.forName("test-scheduled-" + deviceProfileName));
+        executor = ThingsBoardExecutors.newScheduledThreadPool(10, "test-scheduled-" + deviceProfileName);
 
         DeviceProfile lwm2mDeviceProfile = getDeviceProfile(deviceProfileName);
         tenantId = lwm2mDeviceProfile.getTenantId();

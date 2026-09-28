@@ -1,0 +1,20 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host {
+  .tb-hint.client-id {
+    margin-top: -1.25em;
+    max-width: fit-content;
+
+    &.invisible {
+      visibility: hidden;
+    }
+  }
+}
+
+:host ::ng-deep {
+  section.row .mat-mdc-form-field-has-icon-suffix {
+    .mdc-floating-label:not(.mdc-floating-label--float-above) {
+      max-width: 100%;
+    }
+  }
+}

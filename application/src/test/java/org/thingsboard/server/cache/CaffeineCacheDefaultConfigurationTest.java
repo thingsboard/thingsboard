@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.cache;
 
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @EnableConfigurationProperties
 @TestPropertySource(properties = {
         "cache.specs.edgeSessions.timeToLiveInMinutes=1",
+        "cache.specs.agentSessions.timeToLiveInMinutes=1",
         "cache.specs.relatedEdges.maxSize=1"
 })
 @Slf4j

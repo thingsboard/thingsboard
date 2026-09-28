@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.entitiy.device.profile;
 
 import lombok.AllArgsConstructor;
@@ -22,7 +23,6 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 @AllArgsConstructor
 @Slf4j
 public class DefaultTbDeviceProfileService extends AbstractTbEntityService implements TbDeviceProfileService {
-
     private final DeviceProfileService deviceProfileService;
 
     @Override
@@ -43,7 +43,7 @@ public class DefaultTbDeviceProfileService extends AbstractTbEntityService imple
     }
 
     @Override
-    public void delete(DeviceProfile deviceProfile, User user) {
+    public void delete(DeviceProfile deviceProfile, User user) throws ThingsboardException {
         ActionType actionType = ActionType.DELETED;
         DeviceProfileId deviceProfileId = deviceProfile.getId();
         TenantId tenantId = deviceProfile.getTenantId();

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -21,8 +22,6 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AttributeScope;
-import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
@@ -33,8 +32,12 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.group.EntityGroup;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.job.Job;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
@@ -43,11 +46,17 @@ import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.permission.GroupPermission;
+import org.thingsboard.server.common.data.permission.GroupPermissionInfo;
+import org.thingsboard.server.common.data.permission.ShareGroupRequest;
 import org.thingsboard.server.common.data.query.AlarmCountQuery;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataPageLink;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
 import org.thingsboard.server.common.data.query.AliasEntityId;
+import org.thingsboard.server.common.data.query.AliasEntityIdImpl;
+import org.thingsboard.server.common.data.query.AliasEntityType;
 import org.thingsboard.server.common.data.query.AvailableEntityKeysV2;
 import org.thingsboard.server.common.data.query.AvailableEntityKeysV2.KeyInfo;
 import org.thingsboard.server.common.data.query.ComplexFilterPredicate;
@@ -60,6 +69,8 @@ import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.EntityDataSortOrder;
+import org.thingsboard.server.common.data.query.EntityGroupListFilter;
+import org.thingsboard.server.common.data.query.EntityGroupNameFilter;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.EntityKeyValueType;
@@ -69,13 +80,27 @@ import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.NumericFilterPredicate;
 import org.thingsboard.server.common.data.query.RelationsQueryFilter;
+import org.thingsboard.server.common.data.query.SchedulerEventFilter;
 import org.thingsboard.server.common.data.query.SingleEntityFilter;
+import org.thingsboard.server.common.data.query.StateEntityOwnerFilter;
 import org.thingsboard.server.common.data.query.StringFilterPredicate;
 import org.thingsboard.server.common.data.query.TsValue;
 import org.thingsboard.server.common.data.queue.QueueStats;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
+import org.thingsboard.server.common.data.report.ReportInfo;
+import org.thingsboard.server.common.data.report.ReportRequest;
+import org.thingsboard.server.common.data.report.ReportTemplate;
+import org.thingsboard.server.common.data.report.ReportTemplateType;
+import org.thingsboard.server.common.data.report.TbReportFormat;
+import org.thingsboard.server.common.data.report.configuration.CsvReportTemplateConfig;
+import org.thingsboard.server.common.data.report.configuration.PdfReportTemplateConfig;
+import org.thingsboard.server.common.data.role.Role;
+import org.thingsboard.server.common.data.role.RoleType;
+import org.thingsboard.server.common.data.scheduler.MonthlyRepeat;
+import org.thingsboard.server.common.data.scheduler.SchedulerEvent;
+import org.thingsboard.server.common.data.scheduler.SchedulerRepeat;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
@@ -88,6 +113,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
@@ -104,13 +130,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 })
 public class EntityQueryControllerTest extends AbstractControllerTest {
 
-    private static final String CUSTOMER_USER_EMAIL = "entityQueryCustomer@thingsboard.org";
-    private static final String TENANT_PASSWORD = "testPassword1";
-    private static final String CUSTOMER_USER_PASSWORD = "customer";
-    private static final String TENANT_EMAIL = "entityQueryTenant@thingsboard.org";
+    protected final String CUSTOMER_ADMIN_EMAIL = "testadmincustomer@thingsboard.org";
+    protected final String CUSTOMER_ADMIN_PASSWORD = "admincustomer";
+    protected final String TEST_CSV_NAME_PATTERN = "csv_report.csv";
+    protected final String TEST_PDF_NAME_PATTERN = "pdf_report.pdf";
 
     private Tenant savedTenant;
     private User tenantAdmin;
+    private User savedCustomerAdministrator;
+
+    private Role role;
+    private EntityGroup entityGroup;
+    private GroupPermission groupPermission;
 
     @Autowired
     private QueueStatsService queueStatsService;
@@ -132,17 +163,48 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         tenantAdmin = new User();
         tenantAdmin.setAuthority(Authority.TENANT_ADMIN);
         tenantAdmin.setTenantId(savedTenant.getId());
-        tenantAdmin.setEmail(TENANT_EMAIL);
+        tenantAdmin.setEmail("tenant2@thingsboard.org");
         tenantAdmin.setFirstName("Joe");
         tenantAdmin.setLastName("Downs");
 
-        tenantAdmin = createUserAndLogin(tenantAdmin, TENANT_PASSWORD);
+        tenantAdmin = createUserAndLogin(tenantAdmin, "testPassword1");
     }
 
     @After
     public void afterTest() throws Exception {
         loginSysAdmin();
         deleteTenant(savedTenant.getId());
+    }
+
+    @Before
+    public void setup() throws Exception {
+        loginTenantAdmin();
+
+        Role role = new Role();
+        role.setTenantId(tenantId);
+        role.setCustomerId(customerId);
+        role.setType(RoleType.GENERIC);
+        role.setName("Test customer administrator");
+        role.setPermissions(JacksonUtil.toJsonNode("{\"ALL\":[\"ALL\"]}"));
+
+        this.role = doPost("/api/role", role, Role.class);
+
+        EntityGroup entityGroup = new EntityGroup();
+        entityGroup.setName("Test customer administrators");
+        entityGroup.setType(EntityType.USER);
+        entityGroup.setOwnerId(customerId);
+        this.entityGroup = doPost("/api/entityGroup", entityGroup, EntityGroup.class);
+
+        GroupPermission groupPermission = new GroupPermission(
+                tenantId,
+                this.entityGroup.getId(),
+                this.role.getId(),
+                null,
+                null,
+                false
+        );
+        this.groupPermission =
+                doPost("/api/groupPermission", groupPermission, GroupPermission.class);
     }
 
     @Test
@@ -204,7 +266,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
             Thread.sleep(1);
         }
         DeviceTypeFilter filter = new DeviceTypeFilter();
-        filter.setDeviceTypes(List.of("default"));
+        filter.setDeviceType("default");
         filter.setDeviceNameFilter("");
 
         loginSysAdmin();
@@ -212,10 +274,10 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         EntityCountQuery countQuery = new EntityCountQuery(filter);
         countByQueryAndCheck(countQuery, 97);
 
-        filter.setDeviceTypes(List.of("unknown"));
+        filter.setDeviceType("unknown");
         countByQueryAndCheck(countQuery, 0);
 
-        filter.setDeviceTypes(List.of("default"));
+        filter.setDeviceType("default");
         filter.setDeviceNameFilter(devicePrefix + "1");
         countByQueryAndCheck(countQuery, 11);
 
@@ -226,7 +288,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         countQuery = new EntityCountQuery(entityListFilter);
         countByQueryAndCheck(countQuery, 97);
 
-        countByQueryAndCheck(countQuery, 97);
+        countByQueryAndCheck(query, 97);
     }
 
     @Test
@@ -380,7 +442,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
             Thread.sleep(1);
         }
 
-        loginCustomerUser();
+        loginCustomerAdministrator();
 
         for (int i = 0; i < devices.size(); i++) {
             Alarm alarm = new Alarm();
@@ -396,7 +458,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
     @Test
     public void testCustomerCountAlarmsWithEntityFilter() throws Exception {
-        loginTenantAdmin();
+        loginCustomerAdminUser();
         List<Device> devices = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
             Device device = new Device();
@@ -418,8 +480,6 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
             assets.add(doPost("/api/asset", asset, Asset.class));
             Thread.sleep(1);
         }
-
-        loginCustomerUser();
 
         for (int i = 0; i < devices.size(); i++) {
             Alarm alarm = new Alarm();
@@ -530,7 +590,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
     @Test
     public void testFindCustomerAlarmsWithEntityFilter() throws Exception {
-        loginTenantAdmin();
+        loginCustomerAdminUser();
         List<Device> devices = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
             Device device = new Device();
@@ -552,8 +612,6 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
             assets.add(doPost("/api/asset", asset, Asset.class));
             Thread.sleep(1);
         }
-
-        loginCustomerUser();
 
         for (int i = 0; i < devices.size(); i++) {
             Alarm alarm = new Alarm();
@@ -813,7 +871,6 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         Assert.assertEquals(10, data2.getTotalPages());
         Assert.assertTrue(data2.hasNext());
         Assert.assertEquals(10, data2.getData().size());
-
     }
 
     @Test
@@ -961,6 +1018,259 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testFindEntityDataByEntityGroupNameFilterQuery() throws Exception {
+        List<EntityGroup> groups = new ArrayList<>();
+        for (int i = 0; i < 97; i++) {
+            EntityGroup entityGroup = new EntityGroup();
+            entityGroup.setName("TestGroup" + i);
+            entityGroup.setType(EntityType.DEVICE);
+            groups.add(doPost("/api/entityGroup", entityGroup, EntityGroup.class));
+            Thread.sleep(1);
+        }
+
+        EntityGroupNameFilter filter = new EntityGroupNameFilter();
+        filter.setGroupType(EntityType.DEVICE);
+        filter.setEntityGroupNameFilter("TEST");
+
+        EntityDataSortOrder sortOrder = new EntityDataSortOrder(
+                new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime"), EntityDataSortOrder.Direction.ASC
+        );
+        EntityDataPageLink pageLink = new EntityDataPageLink(10, 0, null, sortOrder);
+        List<EntityKey> entityFields = Collections.singletonList(new EntityKey(EntityKeyType.ENTITY_FIELD, "name"));
+
+        EntityDataQuery query = new EntityDataQuery(filter, pageLink, entityFields, null, null);
+
+        PageData<EntityData> data = findByQueryAndCheck(query, 97);
+        Assert.assertEquals(10, data.getTotalPages());
+        Assert.assertTrue(data.hasNext());
+        Assert.assertEquals(10, data.getData().size());
+
+        List<EntityData> loadedEntities = new ArrayList<>(data.getData());
+        while (data.hasNext()) {
+            query = query.next();
+            data = findByQuery(query);
+            loadedEntities.addAll(data.getData());
+        }
+        Assert.assertEquals(97, loadedEntities.size());
+
+        List<EntityId> loadedIds = loadedEntities.stream().map(EntityData::getEntityId).collect(Collectors.toList());
+        List<EntityId> deviceIds = groups.stream().map(EntityGroup::getId).collect(Collectors.toList());
+
+        Assert.assertEquals(deviceIds, loadedIds);
+
+        List<String> loadedNames = loadedEntities.stream().map(entityData ->
+                entityData.getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue()).collect(Collectors.toList());
+        List<String> deviceNames = groups.stream().map(EntityGroup::getName).collect(Collectors.toList());
+
+        Assert.assertEquals(deviceNames, loadedNames);
+
+        sortOrder = new EntityDataSortOrder(
+                new EntityKey(EntityKeyType.ENTITY_FIELD, "name"), EntityDataSortOrder.Direction.DESC
+        );
+
+        pageLink = new EntityDataPageLink(10, 0, "testGroup1", sortOrder);
+        query = new EntityDataQuery(filter, pageLink, entityFields, null, null);
+        data = findByQuery(query);
+        Assert.assertEquals(11, data.getTotalElements());
+        Assert.assertEquals("TestGroup19",
+                data.getData().get(0).getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue());
+
+        EntityGroupNameFilter filter2 = new EntityGroupNameFilter();
+        filter2.setGroupType(EntityType.DEVICE);
+        filter2.setEntityGroupNameFilter("test");
+
+        EntityDataSortOrder sortOrder2 = new EntityDataSortOrder(
+                new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime"), EntityDataSortOrder.Direction.ASC);
+        EntityDataPageLink pageLink2 = new EntityDataPageLink(10, 0, null, sortOrder2);
+        List<EntityKey> entityFields2 = Collections.singletonList(new EntityKey(EntityKeyType.ENTITY_FIELD, "name"));
+
+        EntityDataQuery query2 = new EntityDataQuery(filter2, pageLink2, entityFields2, null, null);
+
+        PageData<EntityData> data2 =
+                findByQuery(query2);
+
+        Assert.assertEquals(97, data2.getTotalElements());
+        Assert.assertEquals(10, data2.getTotalPages());
+        Assert.assertTrue(data2.hasNext());
+        Assert.assertEquals(10, data2.getData().size());
+    }
+
+    @Test
+    public void testFindEntityDataByEntityGroupListFilterQueryByTenant() throws Exception {
+        List<EntityGroup> groups = new ArrayList<>();
+        for (int i = 0; i < 97; i++) {
+            EntityGroup entityGroup = new EntityGroup();
+            entityGroup.setName("TestGroup" + i);
+            entityGroup.setType(EntityType.DEVICE);
+            groups.add(doPost("/api/entityGroup", entityGroup, EntityGroup.class));
+            Thread.sleep(1);
+        }
+
+        EntityGroupListFilter filter = new EntityGroupListFilter();
+        filter.setGroupType(EntityType.DEVICE);
+        filter.setEntityGroupList(groups.stream().map(EntityGroup::getId).map(Objects::toString).collect(Collectors.toList()));
+
+        EntityDataSortOrder sortOrder = new EntityDataSortOrder(
+                new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime"), EntityDataSortOrder.Direction.ASC
+        );
+        EntityDataPageLink pageLink = new EntityDataPageLink(10, 0, null, sortOrder);
+        List<EntityKey> entityFields = Collections.singletonList(new EntityKey(EntityKeyType.ENTITY_FIELD, "name"));
+
+        EntityDataQuery query = new EntityDataQuery(filter, pageLink, entityFields, null, null);
+
+        PageData<EntityData> data = findByQueryAndCheck(query, 97);
+        Assert.assertEquals(10, data.getTotalPages());
+        Assert.assertTrue(data.hasNext());
+        Assert.assertEquals(10, data.getData().size());
+
+        List<EntityData> loadedEntities = new ArrayList<>(data.getData());
+        while (data.hasNext()) {
+            query = query.next();
+            data = findByQuery(query);
+            loadedEntities.addAll(data.getData());
+        }
+        Assert.assertEquals(97, loadedEntities.size());
+
+        List<EntityId> loadedIds = loadedEntities.stream().map(EntityData::getEntityId).collect(Collectors.toList());
+        List<EntityId> deviceIds = groups.stream().map(EntityGroup::getId).collect(Collectors.toList());
+
+        Assert.assertEquals(deviceIds, loadedIds);
+
+        List<String> loadedNames = loadedEntities.stream().map(entityData ->
+                entityData.getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue()).collect(Collectors.toList());
+        List<String> deviceNames = groups.stream().map(EntityGroup::getName).collect(Collectors.toList());
+
+        Assert.assertEquals(deviceNames, loadedNames);
+
+        sortOrder = new EntityDataSortOrder(
+                new EntityKey(EntityKeyType.ENTITY_FIELD, "name"), EntityDataSortOrder.Direction.DESC
+        );
+
+        pageLink = new EntityDataPageLink(10, 0, "testGroup1", sortOrder);
+        query = new EntityDataQuery(filter, pageLink, entityFields, null, null);
+        data = findByQueryAndCheck(query, 11);
+        Assert.assertEquals("TestGroup19",
+                data.getData().get(0).getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue());
+    }
+
+    @Test
+    public void testFindEntityDataByEntityGroupListFilterQueryByCustomerWithSharedGroups() throws Exception {
+        List<EntityGroup> groups = new ArrayList<>();
+        for (int i = 0; i < 97; i++) {
+            EntityGroup entityGroup = new EntityGroup();
+            entityGroup.setName("TestGroup" + i);
+            entityGroup.setType(EntityType.DEVICE);
+            groups.add(entityGroup = doPost("/api/entityGroup", entityGroup, EntityGroup.class));
+            Thread.sleep(1);
+            var shareGroupRequest = new ShareGroupRequest(customerId, true, null, false, Collections.emptyList());
+            doPost("/api/entityGroup/{entityGroupId}/share", shareGroupRequest, entityGroup.getId().toString());
+        }
+
+        loginCustomerAdministrator();
+
+        for (int i = 0; i < 97; i++) {
+            EntityGroup entityGroup = new EntityGroup();
+            entityGroup.setName("TestCustomerGroup" + i);
+            entityGroup.setType(EntityType.DEVICE);
+            groups.add(doPost("/api/entityGroup", entityGroup, EntityGroup.class));
+            Thread.sleep(1);
+        }
+
+        EntityGroupListFilter filter = new EntityGroupListFilter();
+        filter.setGroupType(EntityType.DEVICE);
+        filter.setEntityGroupList(groups.stream().map(EntityGroup::getId).map(Objects::toString).collect(Collectors.toList()));
+
+        EntityDataSortOrder sortOrder = new EntityDataSortOrder(
+                new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime"), EntityDataSortOrder.Direction.ASC
+        );
+        EntityDataPageLink pageLink = new EntityDataPageLink(10, 0, null, sortOrder);
+        List<EntityKey> entityFields = Collections.singletonList(new EntityKey(EntityKeyType.ENTITY_FIELD, "name"));
+
+        EntityDataQuery query = new EntityDataQuery(filter, pageLink, entityFields, null, null);
+
+        PageData<EntityData> data = findByQueryAndCheck(query, groups.size());
+        Assert.assertTrue(data.hasNext());
+
+        List<EntityData> loadedEntities = new ArrayList<>(data.getData());
+        while (data.hasNext()) {
+            query = query.next();
+            data = findByQuery(query);
+            loadedEntities.addAll(data.getData());
+        }
+        Assert.assertEquals(groups.size(), loadedEntities.size());
+
+        List<EntityId> loadedIds = loadedEntities.stream().map(EntityData::getEntityId).collect(Collectors.toList());
+        List<EntityId> deviceIds = groups.stream().map(EntityGroup::getId).collect(Collectors.toList());
+
+        Assert.assertEquals(deviceIds, loadedIds);
+
+        List<String> loadedNames = loadedEntities.stream().map(entityData ->
+                entityData.getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue()).collect(Collectors.toList());
+        List<String> deviceNames = groups.stream().map(EntityGroup::getName).collect(Collectors.toList());
+
+        Assert.assertEquals(deviceNames, loadedNames);
+    }
+
+    @Test
+    public void testFindEntityDataAfterEntityGroupIsUnshared() throws Exception {
+        EntityGroup entityGroup = new EntityGroup();
+        entityGroup.setName("TestGroup");
+        entityGroup.setType(EntityType.DEVICE);
+        entityGroup = doPost("/api/entityGroup", entityGroup, EntityGroup.class);
+
+        List<Device> devices = new ArrayList<>();
+        for (int i = 0; i < 15; i++) {
+            Device device = new Device();
+            String name = "Device" + i;
+            device.setName(name);
+            device.setType("default");
+            device.setLabel("testLabel" + (int) (Math.random() * 1000));
+            Device savedDevice = doPost("/api/device?accessToken=" + name, device, Device.class);
+            devices.add(savedDevice);
+            Thread.sleep(1);
+            long temperature = (long) (Math.random() * 100);
+            doPost("/api/entityGroup/" + entityGroup.getId() + "/addEntities", Collections.singletonList(savedDevice.getId().getId()))
+                    .andExpect(status().isOk());
+        }
+
+        //share group for customer
+        var shareGroupRequest = new ShareGroupRequest(customerId, true, null, false, Collections.emptyList());
+        doPost("/api/entityGroup/{entityGroupId}/share", shareGroupRequest, entityGroup.getId().toString());
+
+        loginCustomerAdministrator();
+
+        EntityDataSortOrder sortOrder = new EntityDataSortOrder(
+                new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime"), EntityDataSortOrder.Direction.ASC
+        );
+        EntityDataPageLink pageLink = new EntityDataPageLink(20, 0, null, sortOrder);
+        List<EntityKey> entityFields = Collections.singletonList(new EntityKey(EntityKeyType.ENTITY_FIELD, "name"));
+        List<EntityKey> latestValues = Collections.singletonList(new EntityKey(EntityKeyType.ATTRIBUTE, "temperature"));
+        DeviceTypeFilter filter = new DeviceTypeFilter();
+        filter.setDeviceTypes(List.of("default"));
+        filter.setDeviceNameFilter("");
+
+        EntityDataQuery query = new EntityDataQuery(filter, pageLink, entityFields, latestValues, null);
+        PageData<EntityData> data = doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<PageData<EntityData>>() {
+        });
+        List<String> loadedNames = data.getData().stream().map(entityData ->
+                entityData.getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue()).collect(Collectors.toList());
+        assertThat(loadedNames).containsExactlyInAnyOrderElementsOf(devices.stream().map(Device::getName).collect(Collectors.toList()));
+
+        //unshare group
+        loginTenantAdmin();
+        List<GroupPermissionInfo> loadedGroupPermissionsInfo = doGetTyped("/api/entityGroup/" + entityGroup.getId().getId() + "/groupPermissions",
+                new TypeReference<>() {});
+        doDelete("/api/groupPermission/" + loadedGroupPermissionsInfo.get(0).getUuidId())
+                .andExpect(status().isOk());
+
+        //check no more devices are visible
+        loginCustomerAdministrator();
+        PageData<EntityData> dataAfterGroupIsUnshared = doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<PageData<EntityData>>() {
+        });
+        assertThat(dataAfterGroupIsUnshared.getData()).isEmpty();
+    }
+
+    @Test
     public void testFindEntityDataByQueryWithDynamicValue() throws Exception {
         int numOfDevices = 2;
 
@@ -1036,6 +1346,123 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testCountSchedulerEventsByQuery() throws Exception {
+        List<SchedulerEvent> schedulerEvents = new ArrayList<>();
+        EntityId originator = new DeviceId(UUID.randomUUID());
+        for (int i = 0; i < 97; i++) {
+            schedulerEvents.add(doPost("/api/schedulerEvent", createSchedulerEvent(originator, "CUSTOM", "Name " + i), SchedulerEvent.class));
+            Thread.sleep(1);
+        }
+        SchedulerEventFilter filter = new SchedulerEventFilter();
+
+        EntityCountQuery countQuery = new EntityCountQuery(filter);
+        countByQueryAndCheck(countQuery, 97);
+
+        filter.setOriginator(AliasEntityId.fromEntityId(originator));
+        countByQueryAndCheck(countQuery, 97);
+
+        filter.setEventType("CUSTOM");
+        countByQueryAndCheck(countQuery, 97);
+
+        filter.setEventType("NOT_CUSTOM");
+        countByQueryAndCheck(countQuery, 0);
+
+        filter.setEventType("CUSTOM");
+        filter.setOriginator(AliasEntityId.fromEntityId(new DeviceId(UUID.randomUUID())));
+        countByQueryAndCheck(countQuery, 0);
+    }
+
+    @Test
+    public void testFindSchedulerEventsByQuery() throws Exception {
+        List<SchedulerEvent> schedulerEvents = new ArrayList<>();
+        EntityId originator = new DeviceId(UUID.randomUUID());
+        for (int i = 0; i < 97; i++) {
+            schedulerEvents.add(doPost("/api/schedulerEvent", createSchedulerEvent(originator, "CUSTOM", "Name " + i), SchedulerEvent.class));
+            Thread.sleep(1);
+        }
+
+        SchedulerEventFilter filter = new SchedulerEventFilter();
+
+        EntityDataSortOrder sortOrder = new EntityDataSortOrder(
+                new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime"), EntityDataSortOrder.Direction.ASC
+        );
+        EntityDataPageLink pageLink = new EntityDataPageLink(10, 0, null, sortOrder);
+        List<EntityKey> entityFields = Collections.singletonList(new EntityKey(EntityKeyType.ENTITY_FIELD, "name"));
+
+        EntityDataQuery query = new EntityDataQuery(filter, pageLink, entityFields, null, null);
+
+        PageData<EntityData> data = findByQueryAndCheck(query, 97);
+        Assert.assertEquals(10, data.getTotalPages());
+        Assert.assertTrue(data.hasNext());
+        Assert.assertEquals(10, data.getData().size());
+
+        List<EntityData> loadedEntities = new ArrayList<>(data.getData());
+        while (data.hasNext()) {
+            query = query.next();
+            data = findByQuery(query);
+            loadedEntities.addAll(data.getData());
+        }
+        Assert.assertEquals(97, loadedEntities.size());
+
+        List<EntityId> loadedIds = loadedEntities.stream().map(EntityData::getEntityId).collect(Collectors.toList());
+        List<EntityId> originalIds = schedulerEvents.stream().map(SchedulerEvent::getId).collect(Collectors.toList());
+
+        Assert.assertEquals(originalIds, loadedIds);
+
+        List<String> loadedNames = loadedEntities.stream().map(entityData ->
+                entityData.getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue()).collect(Collectors.toList());
+        List<String> originalNames = schedulerEvents.stream().map(SchedulerEvent::getName).collect(Collectors.toList());
+
+        Assert.assertEquals(originalNames, loadedNames);
+
+        sortOrder = new EntityDataSortOrder(
+                new EntityKey(EntityKeyType.ENTITY_FIELD, "name"), EntityDataSortOrder.Direction.DESC
+        );
+
+        pageLink = new EntityDataPageLink(10, 0, "Name 1", sortOrder);
+        query = new EntityDataQuery(filter, pageLink, entityFields, null, null);
+        data = findByQuery(query);
+        Assert.assertEquals(11, data.getTotalElements());
+        Assert.assertEquals("Name 19", data.getData().get(0).getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue());
+
+
+        SchedulerEventFilter filter2 = new SchedulerEventFilter();
+        filter2.setOriginator(AliasEntityId.fromEntityId(originator));
+
+        EntityDataSortOrder sortOrder2 = new EntityDataSortOrder(
+                new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime"), EntityDataSortOrder.Direction.ASC
+        );
+        EntityDataPageLink pageLink2 = new EntityDataPageLink(10, 0, null, sortOrder2);
+        List<EntityKey> entityFields2 = Collections.singletonList(new EntityKey(EntityKeyType.ENTITY_FIELD, "name"));
+
+        EntityDataQuery query2 = new EntityDataQuery(filter2, pageLink2, entityFields2, null, null);
+
+        PageData<EntityData> data2 =
+                findByQuery(query2);
+
+        Assert.assertEquals(97, data2.getTotalElements());
+        Assert.assertEquals(10, data2.getTotalPages());
+        Assert.assertTrue(data2.hasNext());
+        Assert.assertEquals(10, data2.getData().size());
+    }
+
+
+    private SchedulerEvent createSchedulerEvent(EntityId originator, String type, String name) {
+        SchedulerEvent schedulerEvent = new SchedulerEvent();
+        schedulerEvent.setTenantId(tenantId);
+        schedulerEvent.setOriginatorId(originator);
+        schedulerEvent.setName(name);
+        schedulerEvent.setType(type);
+        ObjectNode schedule = JacksonUtil.newObjectNode();
+        schedule.put("startTime", System.currentTimeMillis());
+        schedule.put("timezone", "UTC");
+        SchedulerRepeat schedulerRepeat = new MonthlyRepeat();
+        schedule.set("repeat", JacksonUtil.valueToTree(schedulerRepeat));
+        schedulerEvent.setSchedule(schedule);
+        return schedulerEvent;
+    }
+
+    @Test
     public void givenInvalidEntityDataPageLink_thenReturnError() throws Exception {
         DeviceTypeFilter filter = new DeviceTypeFilter();
         filter.setDeviceTypes(List.of("default"));
@@ -1061,8 +1488,8 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
             QueueStats queueStats = new QueueStats();
             queueStats.setQueueName("test" + StringUtils.randomAlphabetic(5));
             queueStats.setServiceId(StringUtils.randomAlphabetic(5));
-            queueStats.setTenantId(savedTenant.getTenantId());
-            queueStatsList.add(queueStatsService.save(savedTenant.getId(), queueStats));
+            queueStats.setTenantId(tenantId);
+            queueStatsList.add(queueStatsService.save(tenantId, queueStats));
             Thread.sleep(1);
         }
 
@@ -1325,46 +1752,184 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testFindCustomerDashboards() throws Exception {
-        Dashboard dashboard = new Dashboard();
-        dashboard.setTitle("My dashboard");
-        Dashboard savedDashboard = doPost("/api/dashboard", dashboard, Dashboard.class);
+    public void testCountByQueryWithUnsuitableEntityType() throws Exception {
+        EntityTypeFilter entityTypeFilter = new EntityTypeFilter();
+        EntityCountQuery entityTypeQuery = new EntityCountQuery(entityTypeFilter);
+        doPost("/api/entitiesQuery/count", entityTypeQuery).andExpect(status().isBadRequest());
 
-        Customer customer = new Customer();
-        customer.setTitle("My customer");
-        Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
+        entityTypeFilter.setEntityType(EntityType.NOTIFICATION);
+        countByQueryAndCheck(entityTypeQuery, 0);
 
-        //assign dashboard
-        doPost("/api/customer/" + savedCustomer.getId().getId().toString()
-               + "/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
+        EntityGroupNameFilter groupNameFilter = new EntityGroupNameFilter();
+        EntityCountQuery groupNameQuery = new EntityCountQuery(groupNameFilter);
+        doPost("/api/entitiesQuery/count", groupNameQuery).andExpect(status().isBadRequest());
 
-        // check entity data query by customer
-        User customerUser = new User();
-        customerUser.setAuthority(Authority.CUSTOMER_USER);
-        customerUser.setTenantId(savedTenant.getId());
-        customerUser.setCustomerId(savedCustomer.getId());
-        customerUser.setEmail(CUSTOMER_USER_EMAIL);
+        groupNameFilter.setGroupType(EntityType.ALARM);
+        countByQueryAndCheck(groupNameQuery, 0);
+    }
 
-        createUserAndLogin(customerUser, CUSTOMER_USER_PASSWORD);
+    @Test
+    public void testStateEntityOwnerFilterWithEntityTypeCurrentUser() throws Exception {
+        loginSubCustomerAdminUser();
+        Asset asset = new Asset();
+        asset.setName("Tenant Asset");
+        asset.setType("default");
+        asset = doPost("/api/asset", asset, Asset.class);
 
-        EntityTypeFilter filter = new EntityTypeFilter();
-        filter.setEntityType(EntityType.DASHBOARD);
+        loginCustomerAdminUser();
+        Device device = new Device();
+        String name = "Device" + RandomStringUtils.randomAlphabetic(5);
+        device.setName(name);
+        device.setType("default");
 
-        EntityDataSortOrder sortOrder = new EntityDataSortOrder(
-                new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime"), EntityDataSortOrder.Direction.ASC);
-        EntityDataPageLink pageLink = new EntityDataPageLink(10, 0, null, sortOrder);
-        List<EntityKey> entityFields = Collections.singletonList(new EntityKey(EntityKeyType.ENTITY_FIELD, "name"));
+        Device customerDevice = doPost("/api/device?accessToken=" + name, device, Device.class);
 
-        EntityDataQuery query = new EntityDataQuery(filter, pageLink, entityFields, null, null);
+        StateEntityOwnerFilter stateEntityOwnerFilter = new StateEntityOwnerFilter();
+        stateEntityOwnerFilter.setSingleEntity(AliasEntityId.fromEntityId(customerDevice.getId()));
 
-        findByQueryAndCheck(query, 1);
+        List<EntityKey> entityFields = List.of(
+                new EntityKey(EntityKeyType.ENTITY_FIELD, "name")
+        );
 
-        // unnassign dashboard
-        login(TENANT_EMAIL, TENANT_PASSWORD);
-        doDelete("/api/customer/" + savedCustomer.getId().getId().toString() + "/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
+        EntityDataPageLink pageLink = new EntityDataPageLink(1000, 0, null, null);
+        EntityDataQuery query = new EntityDataQuery(stateEntityOwnerFilter, pageLink, entityFields, null, null);
 
-        login(CUSTOMER_USER_EMAIL, CUSTOMER_USER_PASSWORD);
-        findByQueryAndCheck(query, 0);
+        PageData<EntityData> result = findByQueryAndCheck(query, 1);
+        String ownerName = result.getData().get(0).getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue();
+        assertThat(ownerName).isEqualTo("Customer");
+
+        StateEntityOwnerFilter assetOwnerFilter = new StateEntityOwnerFilter();
+        assetOwnerFilter.setSingleEntity(AliasEntityId.fromEntityId(asset.getId()));
+
+        query = new EntityDataQuery(assetOwnerFilter, pageLink, entityFields, null, null);
+        PageData<EntityData> assetOwnerQuery = findByQueryAndCheck(query, 1);
+        String assetOwner = assetOwnerQuery.getData().get(0).getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue();
+        assertThat(assetOwner).isEqualTo("SubCustomer");
+
+        // check filter with singleEntityId having type CURRENT_USER
+        StateEntityOwnerFilter currentUserFilter = new StateEntityOwnerFilter();
+        currentUserFilter.setSingleEntity(new AliasEntityIdImpl(AliasEntityType.CURRENT_USER, null));
+        EntityDataQuery currentUserQuery = new EntityDataQuery(currentUserFilter, pageLink, entityFields, null, null);
+
+        PageData<EntityData> result2 = findByQueryAndCheck(currentUserQuery, 1);
+        String ownerName2 = result2.getData().get(0).getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue();
+        assertThat(ownerName2).isEqualTo("Customer");
+
+        loginTenantAdmin();
+        PageData<EntityData> result3 = findByQueryAndCheck(currentUserQuery, 1);
+        String ownerName3 = result3.getData().get(0).getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue();
+        assertThat(ownerName3).isEqualTo(TEST_TENANT_NAME);
+    }
+
+    @Test
+    public void testGetReportInfos() throws Exception {
+        loginTenantAdmin();
+        ReportTemplate csvTemplate = buildReportTemplate(TbReportFormat.CSV);
+        csvTemplate = doPost("/api/reportTemplate", csvTemplate, ReportTemplate.class);
+
+        ReportTemplate pdfTemplate = buildReportTemplate(TbReportFormat.PDF);
+        pdfTemplate = doPost("/api/reportTemplate", pdfTemplate, ReportTemplate.class);
+
+        for (int i = 0; i < 5; i++) {
+            ReportRequest csvRequest = new ReportRequest();
+            csvRequest.setReportTemplateId(csvTemplate.getId());
+            doPost("/api/v2/report/request", csvRequest, Job.class);
+
+            ReportRequest pdfRequest = new ReportRequest();
+            pdfRequest.setReportTemplateId(pdfTemplate.getId());
+            doPost("/api/v2/report/request", pdfRequest, Job.class);
+        }
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() ->
+                        doGetTypedWithPageLink("/api/v2/reportInfos/all?", new TypeReference<PageData<ReportInfo>>() {
+                        }, new PageLink(30)),
+                result -> result.getData().size() == 10);
+
+        EntityTypeFilter entityTypeFilter = new EntityTypeFilter();
+        entityTypeFilter.setEntityType(EntityType.REPORT_TEMPLATE);
+        List<EntityKey> entityFields = List.of(
+                new EntityKey(EntityKeyType.ENTITY_FIELD, "displayName"),
+                new EntityKey(EntityKeyType.ENTITY_FIELD, "name"),
+                new EntityKey(EntityKeyType.ENTITY_FIELD, "format")
+        );
+        EntityDataPageLink pageLink = new EntityDataPageLink(1000, 0, null, null);
+
+        EntityDataQuery query = new EntityDataQuery(entityTypeFilter, pageLink, entityFields, null, null);
+        PageData<EntityData> reportTemplates = findByQueryAndCheck(query, 2);
+        List<String> reportTemplateNames = reportTemplates.getData().stream().map(entityData -> entityData.getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue()).toList();
+        assertThat(reportTemplateNames).containsOnly(csvTemplate.getName(), pdfTemplate.getName());
+
+        List<String> reportTemplateDisplayNames = reportTemplates.getData().stream().map(entityData -> entityData.getLatest().get(EntityKeyType.ENTITY_FIELD).get("displayName").getValue()).toList();
+        assertThat(reportTemplateDisplayNames).isEqualTo(reportTemplateNames);
+
+        entityTypeFilter.setEntityType(EntityType.REPORT);
+        PageData<EntityData> reports = findByQueryAndCheck(query, 10);
+        List<String> reportFormats = reports.getData().stream().map(entityData -> entityData.getLatest().get(EntityKeyType.ENTITY_FIELD).get("format").getValue()).toList();
+        assertThat(reportFormats).containsOnly(TbReportFormat.CSV.name(), TbReportFormat.PDF.name());
+
+        List<String> reportDisplayNames = reports.getData().stream().map(entityData -> entityData.getLatest().get(EntityKeyType.ENTITY_FIELD).get("displayName").getValue()).toList();
+        assertThat(reportDisplayNames).containsOnly(TEST_PDF_NAME_PATTERN, TEST_CSV_NAME_PATTERN);
+    }
+
+    private ReportTemplate buildReportTemplate(TbReportFormat format) {
+        ReportTemplate template = new ReportTemplate();
+        template.setName(StringUtils.randomAlphabetic(10));
+        template.setType(ReportTemplateType.REPORT);
+        template.setFormat(format);
+        switch (format) {
+            case CSV -> {
+                CsvReportTemplateConfig configuration = new CsvReportTemplateConfig();
+                configuration.setNamePattern(TEST_CSV_NAME_PATTERN);
+                configuration.setComponents(new ArrayList<>());
+                template.setConfiguration(configuration);
+            }
+            case PDF -> {
+                PdfReportTemplateConfig configuration = new PdfReportTemplateConfig();
+                configuration.setComponents(new ArrayList<>());
+                configuration.setNamePattern(TEST_PDF_NAME_PATTERN);
+                template.setConfiguration(configuration);
+            }
+        }
+        return template;
+    }
+
+    private void clearCustomerAdminPermissionGroup() throws Exception {
+        loginTenantAdmin();
+        doDelete("/api/groupPermission/" + groupPermission.getUuidId())
+                .andExpect(status().isOk());
+        doDelete("/api/entityGroup/" + entityGroup.getUuidId())
+                .andExpect(status().isOk());
+        doDelete("/api/role/" + role.getUuidId())
+                .andExpect(status().isOk());
+    }
+
+    private void loginCustomerAdministrator() throws Exception {
+        if (savedCustomerAdministrator == null) {
+            savedCustomerAdministrator = createCustomerAdministrator(
+                    tenantId,
+                    customerId,
+                    CUSTOMER_ADMIN_EMAIL,
+                    CUSTOMER_ADMIN_PASSWORD
+            );
+        }
+        login(savedCustomerAdministrator.getEmail(), CUSTOMER_ADMIN_PASSWORD);
+    }
+
+    private User createCustomerAdministrator(TenantId tenantId, CustomerId customerId, String email, String pass) throws Exception {
+        loginTenantAdmin();
+
+        User user = new User();
+        user.setEmail(email);
+        user.setTenantId(tenantId);
+        user.setCustomerId(customerId);
+        user.setFirstName("customer");
+        user.setLastName("admin");
+        user.setAuthority(Authority.CUSTOMER_USER);
+
+        user = createUser(user, pass, entityGroup.getId());
+        customerAdminUserId = user.getId();
+        resetTokens();
+
+        return user;
     }
 
     private void checkEntitiesByQuery(EntityDataQuery query, int expectedNumOfDevices, BiConsumer<Integer, EntityData> checkFunction) throws Exception {
@@ -1421,8 +1986,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
     }
 
     protected PageData<EntityData> findByQuery(EntityDataQuery query) throws Exception {
-        return doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<>() {
-        });
+        return doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<>() {});
     }
 
     protected PageData<AlarmData> findAlarmsByQuery(AlarmDataQuery query) throws Exception {
@@ -1553,6 +2117,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
             AvailableEntityKeysV2 result = findAvailableEntityKeysByQueryV2(query,
                     true, true, List.of(AttributeScope.SHARED_SCOPE, AttributeScope.CLIENT_SCOPE), true);
 
+            assertThat(result.totalEntities()).isEqualTo(2);
             assertThat(result.entityTypes()).containsExactly(EntityType.DEVICE);
 
             // timeseries: keys collected from both devices, samples contain the freshest data points
@@ -1592,6 +2157,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
             AvailableEntityKeysV2 result = findAvailableEntityKeysByQueryV2(
                     buildDeviceQuery("Test device"), true, true, null, false);
 
+            assertThat(result.totalEntities()).isEqualTo(1);
             assertThat(result.timeseries()).allSatisfy(ki -> assertThat(ki.sample()).isNull());
             assertThat(result.attributes().get(AttributeScope.SERVER_SCOPE))
                     .allSatisfy(ki -> assertThat(ki.sample()).isNull());
@@ -1610,6 +2176,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
             AvailableEntityKeysV2 result = findAvailableEntityKeysByQueryV2(
                     buildDeviceQuery("Test device"), true, false, null, false);
 
+            assertThat(result.totalEntities()).isEqualTo(1);
             assertThat(result.timeseries()).extracting(KeyInfo::key).contains("temperature");
             assertThat(result.attributes()).isNull();
         });
@@ -1627,6 +2194,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
             AvailableEntityKeysV2 result = findAvailableEntityKeysByQueryV2(
                     buildDeviceQuery("Test device"), false, true, null, false);
 
+            assertThat(result.totalEntities()).isEqualTo(1);
             assertThat(result.timeseries()).isNull();
             assertThat(result.attributes().get(AttributeScope.SERVER_SCOPE))
                     .extracting(KeyInfo::key).contains("firmware");
@@ -1640,6 +2208,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
             AvailableEntityKeysV2 result = findAvailableEntityKeysByQueryV2(
                     buildDeviceQuery("NonExistentDevice_" + UUID.randomUUID()), true, true, null, true);
 
+            assertThat(result.totalEntities()).isEqualTo(0);
             assertThat(result.entityTypes()).isEmpty();
             assertThat(result.timeseries()).isEmpty();
             assertThat(result.attributes()).isEmpty();
@@ -1664,6 +2233,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         verifyAvailableKeysByQueryV2(() -> {
             AvailableEntityKeysV2 result = findAvailableEntityKeysByQueryV2(query, false, true, null, false);
 
+            assertThat(result.totalEntities()).isEqualTo(1);
             assertThat(result.entityTypes()).containsExactly(EntityType.ASSET);
             assertThat(result.attributes()).containsOnlyKeys(AttributeScope.SERVER_SCOPE);
             assertThat(result.attributes().get(AttributeScope.SERVER_SCOPE))

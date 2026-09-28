@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.client.tools.i18n;
 
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
@@ -66,6 +67,7 @@ public class TranslationPruner {
             JsonNode usRoot = mapper.readTree(referenceFile);
             Set<String> validKeys = new HashSet<>();
             collectKeys(usRoot, "", validKeys);
+            validKeys.remove("language.locales"); // no need to change it.
             for (File sourceFile : sourceFolder.listFiles()) {
                 File destFile = new File(destFolder, sourceFile.getName());
                 JsonNode sourceRoot = mapper.readTree(sourceFile);

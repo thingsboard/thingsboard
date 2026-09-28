@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.subscription;
 
 import com.google.common.util.concurrent.Futures;
@@ -15,6 +16,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.permission.MergedUserPermissions;
 import org.thingsboard.server.common.data.query.ComplexFilterPredicate;
 import org.thingsboard.server.common.data.query.DynamicValue;
 import org.thingsboard.server.common.data.query.DynamicValueSourceType;
@@ -95,8 +97,11 @@ public abstract class TbAbstractSubCtx {
     }
 
     public EntityId getOwnerId() {
-        var customerId = getCustomerId();
-        return customerId != null && !customerId.isNullUid() ? customerId : getTenantId();
+        return sessionRef.getSecurityCtx().getOwnerId();
+    }
+
+    public MergedUserPermissions getMergedUserPermissions() {
+        return sessionRef.getSecurityCtx().getUserPermissions();
     }
 
     public void sendWsMsg(CmdUpdate update) {

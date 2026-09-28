@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.mqtt.sparkplug.attributes;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -394,7 +395,7 @@ public abstract class AbstractMqttV5ClientSparkplugAttributesTest extends Abstra
         String SHARED_ATTRIBUTES_PAYLOAD = "{\"" + metricBirthName_Int32 + "\":" + expectedValueInt + "}";
         doPostAsync("/api/plugins/telemetry/DEVICE/" + devices.get(0).getId().getId() + "/attributes/SHARED_SCOPE", SHARED_ATTRIBUTES_PAYLOAD, String.class, status().isOk());
         await(alias + SparkplugMessageType.DBIRTH.name())
-                .atMost(40, TimeUnit.SECONDS)
+                .atMost(80, TimeUnit.SECONDS)
                 .until(() -> {
                     return mqttCallback.getMessageArrivedMetrics().size() == 1;
                 });

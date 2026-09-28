@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 @import "../../../../../scss/constants";
 
 // Dialog container
@@ -170,7 +171,7 @@
   }
 }
 
-// Author — Design: person icon 16px + name 12px Medium $tb-primary-color
+// Author — Design: person icon 16px + name 12px Medium var(--tb-primary-500)
 .dlg-author {
   display: flex;
   align-items: center;
@@ -188,7 +189,7 @@
     font-weight: 500;
     line-height: 16px;
     letter-spacing: 0.25px;
-    color: $tb-primary-color;
+    color: var(--tb-primary-500);
   }
 
   &.clickable {
@@ -611,7 +612,7 @@
   }
 }
 
-// Open details / Solution instructions link — Design: 12px Medium, $tb-primary-color
+// Open details / Solution instructions link — Design: 12px Medium, var(--tb-primary-500)
 .dlg-info-link {
   display: inline-flex;
   align-items: center;
@@ -620,7 +621,7 @@
   font-weight: 500;
   line-height: 16px;
   letter-spacing: 0.25px;
-  color: $tb-primary-color;
+  color: var(--tb-primary-500);
   cursor: pointer;
   text-decoration: none;
   border: none;

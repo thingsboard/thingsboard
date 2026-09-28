@@ -1,0 +1,46 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-absolute-fill tb-form-panel no-padding no-border" [formGroup]="translationForm">
+  <div class="tb-form-panel stroked no-padding no-gap tb-flex">
+    <section class="tb-form-row no-border">
+      <div class="tb-form-panel-title">Translation map</div>
+      <span class="flex-1"></span>
+      <button mat-icon-button
+        class="tb-mat-40"
+        (click)="toggleFullscreen()"
+        matTooltipPosition="above"
+        matTooltip="{{(fullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}">
+        <mat-icon class="material-icons">{{ fullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+      </button>
+    </section>
+    <tb-json-content
+      tb-toast toastTarget="tb-custom-translation-panel"
+      formControlName="translation"
+      [hideToolbar]="true"
+      [readonly]="readonly"
+      [contentType]="ContentType.JSON"
+      [tbPlaceholder]="translationPlaceholder"
+      [fillHeight]="true">
+    </tb-json-content>
+  </div>
+  <div class="tb-flex row flex-end align-center fill-width" style="flex: none">
+    @if (!readonly) {
+      <button mat-button color="primary"
+        [disabled]="translationForm.pristine"
+        (click)="reset()">
+        {{'action.cancel' | translate}}
+      </button>
+    }
+    @if (!readonly) {
+      <button mat-button mat-raised-button color="primary"
+        [disabled]="translationForm.pristine"
+        (click)="save()">
+        {{'action.save' | translate}}
+      </button>
+    }
+  </div>
+</div>

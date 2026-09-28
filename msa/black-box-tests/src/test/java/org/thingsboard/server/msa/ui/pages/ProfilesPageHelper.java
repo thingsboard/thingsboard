@@ -1,9 +1,11 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.msa.ui.pages;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 
 public class ProfilesPageHelper extends ProfilesPageElements {
@@ -149,7 +151,12 @@ public class ProfilesPageHelper extends ProfilesPageElements {
     }
 
     public void goToProfileHelpPage() {
-        jsClick(helpBtn());
+        jsClick(profileViewHelpBtn());
+        try {
+            wait.until(ExpectedConditions.numberOfWindowsToBe(2));
+        } catch (WebDriverException e) {
+            jsClick(profileViewHelpBtn());
+        }
         goToNextTab(2);
     }
 

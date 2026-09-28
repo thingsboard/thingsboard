@@ -1,10 +1,13 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.service;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,10 +15,13 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
+import org.testcontainers.shaded.org.apache.commons.lang3.NotImplementedException;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
@@ -23,17 +29,34 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.agent.Agent;
+import org.thingsboard.server.common.data.agent.AgentAppProfile;
+import org.thingsboard.server.common.data.agent.AgentApplicationType;
+import org.thingsboard.server.common.data.agent.AgentProfile;
+import org.thingsboard.server.common.data.agent.AgentProvisionType;
+import org.thingsboard.server.common.data.agent.config.AgentAppConfigType;
+import org.thingsboard.server.common.data.agent.config.DockerComposeConfig;
+import org.thingsboard.server.common.data.agent.step.ComposeStartStep;
+import org.thingsboard.server.common.data.agent.template.AgentAppTemplate;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.event.RuleNodeDebugEvent;
+import org.thingsboard.server.common.data.group.ColumnConfiguration;
+import org.thingsboard.server.common.data.group.ColumnType;
+import org.thingsboard.server.common.data.group.EntityField;
+import org.thingsboard.server.common.data.group.EntityGroup;
+import org.thingsboard.server.common.data.group.EntityGroupConfiguration;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTaskType;
 import org.thingsboard.server.common.data.housekeeper.TenantEntitiesDeletionHousekeeperTask;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
+import org.thingsboard.server.common.data.id.RoleId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.oauth2.MapperType;
@@ -43,12 +66,25 @@ import org.thingsboard.server.common.data.oauth2.OAuth2MapperConfig;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
+import org.thingsboard.server.common.data.permission.GroupPermission;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.Resource;
+import org.thingsboard.server.common.data.role.Role;
+import org.thingsboard.server.common.data.role.RoleType;
 import org.thingsboard.server.common.msg.housekeeper.HousekeeperClient;
+import org.thingsboard.server.dao.agent.AgentAppProfileService;
+import org.thingsboard.server.dao.agent.AgentProfileService;
+import org.thingsboard.server.dao.agent.AgentService;
 import org.thingsboard.server.dao.audit.AuditLogLevelFilter;
 import org.thingsboard.server.dao.audit.AuditLogLevelMask;
 import org.thingsboard.server.dao.audit.AuditLogLevelProperties;
+import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entity.EntityDaoService;
 import org.thingsboard.server.dao.entity.EntityServiceRegistry;
+import org.thingsboard.server.dao.group.EntityGroupService;
+import org.thingsboard.server.dao.grouppermission.GroupPermissionService;
+import org.thingsboard.server.dao.role.RoleService;
+import org.thingsboard.server.dao.sql.agent.AppTemplateRegistry;
 import org.thingsboard.server.dao.tenant.TenantService;
 
 import java.io.IOException;
@@ -65,6 +101,7 @@ import java.util.UUID;
 
 import static org.junit.Assert.assertNotNull;
 
+@ActiveProfiles("test")
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = AbstractServiceTest.class, loader = AnnotationConfigContextLoader.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
@@ -73,24 +110,42 @@ import static org.junit.Assert.assertNotNull;
 public abstract class AbstractServiceTest {
 
     public static final TenantId SYSTEM_TENANT_ID = TenantId.SYS_TENANT_ID;
+    public static final String TEST_TENANT_NAME = "My tenant " + UUID.randomUUID();
 
     @Autowired
     protected TenantService tenantService;
+    @Autowired
+    protected RoleService roleService;
+    @Autowired
+    protected GroupPermissionService groupPermissionService;
 
     @Autowired
     protected EntityServiceRegistry entityServiceRegistry;
 
+    @Autowired
+    protected AppTemplateRegistry appTemplateRegistry;
+    @Autowired
+    protected AgentService agentService;
+    @Autowired
+    protected AgentProfileService agentProfileService;
+    @Autowired
+    protected AgentAppProfileService agentAppProfileService;
+
     protected Tenant tenant;
     protected TenantId tenantId;
+
+    private Map<AppTemplateRegistry.Key, RegisteredTemplates> appTemplatesBeforeTest;
 
     @Before
     public void beforeAbstractService() {
         tenant = createTenant();
         tenantId = tenant.getId();
+        appTemplatesBeforeTest = snapshotAppTemplates();
     }
 
     @After
     public void afterAbstractService() {
+        restoreAppTemplates(appTemplatesBeforeTest);
         tenantService.deleteTenants();
     }
 
@@ -100,7 +155,6 @@ public abstract class AbstractServiceTest {
             return o1.getId().getId().compareTo(o2.getId().getId());
         }
     }
-
 
     protected RuleNodeDebugEvent generateEvent(TenantId tenantId, EntityId entityId) throws IOException {
         return generateEvent(tenantId, entityId, null);
@@ -180,7 +234,7 @@ public abstract class AbstractServiceTest {
 
     public Tenant createTenant(TenantProfileId tenantProfileId) {
         Tenant tenant = new Tenant();
-        tenant.setTitle("My tenant " + UUID.randomUUID());
+        tenant.setTitle(TEST_TENANT_NAME);
         tenant.setTenantProfileId(tenantProfileId);
         Tenant savedTenant = tenantService.saveTenant(tenant);
         assertNotNull(savedTenant);
@@ -194,6 +248,8 @@ public abstract class AbstractServiceTest {
         edge.setType(type);
         edge.setSecret(StringUtils.randomAlphanumeric(20));
         edge.setRoutingKey(StringUtils.randomAlphanumeric(20));
+        edge.setEdgeLicenseKey(StringUtils.randomAlphanumeric(20));
+        edge.setCloudEndpoint("http://localhost:8080");
         return edge;
     }
 
@@ -213,6 +269,175 @@ public abstract class AbstractServiceTest {
         return firmware;
     }
 
+    protected EntityGroup createDeviceGroup(TenantId tenantId, String name) {
+        return createEntityGroup(tenantId, EntityType.DEVICE, name);
+    }
+
+    protected EntityGroupService getEntityGroupService() {
+        throw new NotImplementedException("getEntityGroupService not implemented");
+    }
+
+    protected EntityGroup createEntityGroup(TenantId tenantId, EntityType groupType, String name) {
+        EntityGroup testDevicesGroup = new EntityGroup();
+        testDevicesGroup.setType(groupType);
+        testDevicesGroup.setName(name);
+        testDevicesGroup.setOwnerId(tenantId);
+
+        EntityGroupConfiguration entityGroupConfiguration = new EntityGroupConfiguration();
+
+        entityGroupConfiguration.setColumns(Collections.singletonList(
+                new ColumnConfiguration(ColumnType.ENTITY_FIELD, EntityField.NAME.name().toLowerCase())
+        ));
+
+        ObjectNode jsonConfiguration = JacksonUtil.OBJECT_MAPPER.valueToTree(entityGroupConfiguration);
+        jsonConfiguration.putObject("settings");
+        jsonConfiguration.putObject("actions");
+        testDevicesGroup.setConfiguration(jsonConfiguration);
+        EntityGroup savedGroup = getEntityGroupService().saveEntityGroup(tenantId, tenantId, testDevicesGroup);
+        Assert.assertNotNull(savedGroup);
+        return savedGroup;
+    }
+
+    protected Role createGenericRole(TenantId tenantId, CustomerId customerId, String name, Map<Resource, List<Operation>> permissions) {
+        return createRole(tenantId, customerId, name, RoleType.GENERIC, permissions);
+    }
+
+    protected Role createGroupRole(TenantId tenantId, CustomerId customerId, String name, List<Operation> permissions) {
+        return createRole(tenantId, customerId, name, RoleType.GROUP, permissions);
+    }
+
+    private Role createRole(TenantId tenantId, CustomerId customerId, String name, RoleType roleType, Object permissions) {
+        Role role = new Role();
+        role.setTenantId(tenantId);
+        role.setCustomerId(customerId);
+        role.setName(name);
+        role.setType(roleType);
+        role.setPermissions(JacksonUtil.valueToTree(permissions));
+        return roleService.saveRole(tenantId, role);
+    }
+
+    protected GroupPermission createGroupPermission(TenantId tenantId, EntityGroupId userGroupId, RoleId genericRoleId) {
+        return createGroupPermission(tenantId, userGroupId, genericRoleId, null, null);
+    }
+
+    protected GroupPermission createGroupPermission(TenantId tenantId, EntityGroupId userGroupId, RoleId roleId, EntityGroupId entityGroupId, EntityType entityGroupType) {
+        GroupPermission groupPermission = new GroupPermission();
+        groupPermission.setTenantId(tenantId);
+        groupPermission.setUserGroupId(userGroupId);
+        groupPermission.setRoleId(roleId);
+        groupPermission.setEntityGroupId(entityGroupId);
+        groupPermission.setEntityGroupType(entityGroupType);
+        return groupPermissionService.saveGroupPermission(tenantId, groupPermission);
+    }
+
+    protected DeviceService getDeviceService() {
+        throw new NotImplementedException("getDeviceService not implemented");
+    }
+
+    protected Device createDevice(TenantId tenantId, String name, DeviceProfileId deviceProfileId) {
+        Device device = new Device();
+        device.setTenantId(tenantId);
+        device.setName(name);
+        device.setDeviceProfileId(deviceProfileId);
+        Device savedDevice = getDeviceService().saveDevice(device);
+        Assert.assertNotNull(savedDevice);
+        return savedDevice;
+    }
+
+    /**
+     * {@link AppTemplateRegistry} is a singleton shared by the whole test context, and registering a template
+     * replaces the whole per-(appType, configType) map, so without this every test would permanently redefine
+     * the templates the tests running after it see.
+     */
+    private Map<AppTemplateRegistry.Key, RegisteredTemplates> snapshotAppTemplates() {
+        Map<AppTemplateRegistry.Key, RegisteredTemplates> snapshot = new HashMap<>();
+        for (AgentApplicationType appType : AgentApplicationType.values()) {
+            for (AgentAppConfigType configType : AgentAppConfigType.values()) {
+                Map<String, AgentAppTemplate> byVersion = new HashMap<>();
+                appTemplateRegistry.list(appType, configType).forEach(t -> byVersion.put(t.getCurrentVersion(), t));
+                snapshot.put(new AppTemplateRegistry.Key(appType, configType),
+                        new RegisteredTemplates(byVersion, appTemplateRegistry.latest(appType, configType)));
+            }
+        }
+        return snapshot;
+    }
+
+    private void restoreAppTemplates(Map<AppTemplateRegistry.Key, RegisteredTemplates> snapshot) {
+        if (snapshot == null) {
+            return;
+        }
+        snapshot.forEach((key, templates) ->
+                appTemplateRegistry.replace(key.appType(), key.configType(), templates.byVersion(), templates.latest()));
+    }
+
+    /** Registers a template without dropping the versions already registered for its (appType, configType). */
+    protected AgentAppTemplate registerAppTemplate(AgentAppTemplate template) {
+        return registerAppTemplate(template.getAppType(), template);
+    }
+
+    protected AgentAppTemplate registerAppTemplate(AgentApplicationType appType, AgentAppTemplate template) {
+        AgentAppConfigType configType = template.getConfigType() != null
+                ? template.getConfigType() : AgentAppConfigType.DOCKER_COMPOSE;
+        Map<String, AgentAppTemplate> byVersion = new HashMap<>();
+        appTemplateRegistry.list(appType, configType).forEach(t -> byVersion.put(t.getCurrentVersion(), t));
+        byVersion.put(template.getCurrentVersion(), template);
+        appTemplateRegistry.replace(appType, configType, byVersion, template);
+        return template;
+    }
+
+    protected AgentAppTemplate createAppTemplate(AgentApplicationType appType, String version) {
+        return createAppTemplate(appType, version, null);
+    }
+
+    protected AgentAppTemplate createAppTemplate(AgentApplicationType appType, String version, String nextVersion) {
+        AgentAppTemplate template = new AgentAppTemplate();
+        template.setAppType(appType);
+        template.setCurrentVersion(version);
+        template.setNextVersion(nextVersion);
+        ComposeStartStep step = new ComposeStartStep();
+        step.setId(UUID.randomUUID());
+        step.setTitle("start");
+        template.setStartSteps(List.of(step));
+        template.setUpgradeSteps(List.of(step));
+        template.setRestartSteps(List.of(step));
+        return template;
+    }
+
+    protected Agent createAgent(TenantId tenantId, String name) {
+        Agent agent = new Agent();
+        agent.setTenantId(tenantId);
+        agent.setName(name);
+        agent.setRoutingKey(UUID.randomUUID().toString());
+        agent.setSecret(StringUtils.randomAlphanumeric(20));
+        return agentService.saveAgent(agent);
+    }
+
+    protected AgentProfile createAgentProfile(TenantId tenantId, String name) {
+        AgentProfile profile = new AgentProfile();
+        profile.setTenantId(tenantId);
+        profile.setName(name);
+        profile.setProvisionType(AgentProvisionType.DISABLED);
+        return agentProfileService.saveProfile(profile);
+    }
+
+    /** A saved GENERIC app profile on the type's default template version, with a minimal compose. */
+    protected AgentAppProfile createAgentAppProfile(TenantId tenantId, String name) {
+        AgentAppTemplate template = registerAppTemplate(
+                createAppTemplate(AgentApplicationType.GENERIC, AgentApplicationType.GENERIC.getDefaultVersion()));
+        AgentAppProfile profile = new AgentAppProfile();
+        profile.setTenantId(tenantId);
+        profile.setName(name);
+        profile.setAppType(AgentApplicationType.GENERIC);
+        profile.setTemplateVersion(template.getCurrentVersion());
+        DockerComposeConfig config = new DockerComposeConfig();
+        config.setCompose(JacksonUtil.newObjectNode().put("version", "3"));
+        profile.setConfig(config);
+        return agentAppProfileService.saveProfile(profile);
+    }
+
+    private record RegisteredTemplates(Map<String, AgentAppTemplate> byVersion, AgentAppTemplate latest) {
+    }
+
     protected OAuth2Client validClientInfo(TenantId tenantId, String title) {
         return validClientInfo(tenantId, title, null);
     }
@@ -220,6 +445,7 @@ public abstract class AbstractServiceTest {
     protected OAuth2Client validClientInfo(TenantId tenantId, String title, List<PlatformType> platforms) {
         OAuth2Client oAuth2Client = new OAuth2Client();
         oAuth2Client.setTenantId(tenantId);
+        oAuth2Client.setCustomerId(new CustomerId(EntityId.NULL_UUID));
         oAuth2Client.setTitle(title);
         oAuth2Client.setClientId(UUID.randomUUID().toString());
         oAuth2Client.setClientSecret(UUID.randomUUID().toString());

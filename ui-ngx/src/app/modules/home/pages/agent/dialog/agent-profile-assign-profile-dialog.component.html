@@ -1,0 +1,37 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div mat-dialog-title class="dialog-header">
+  <h2 class="flex-1" translate>agent.assign-profile</h2>
+  <div tb-help="agentProfileAssignAppProfiles"></div>
+  <button mat-icon-button (click)="cancel()" tabindex="-1">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+<div mat-dialog-content class="dialog-body">
+  <form [formGroup]="formGroup" autocomplete="off">
+    <tb-agent-app-profile-list
+      formControlName="appProfileIds"
+      labelText="{{ 'agent.application-profiles' | translate }}"
+      placeholderText="{{ 'agent.application-profiles' | translate }}"
+      appearance="outline">
+      <button matSuffix mat-button color="primary" type="button"
+              class="tb-create-new-link"
+              (mousedown)="$event.preventDefault()"
+              (click)="createAppProfile()">
+        <mat-icon>add</mat-icon>
+        <span>{{ 'agent.create-new' | translate }}</span>
+      </button>
+    </tb-agent-app-profile-list>
+  </form>
+</div>
+<div mat-dialog-actions align="end" class="dialog-footer">
+  <button mat-button (click)="cancel()">{{ 'action.cancel' | translate }}</button>
+  <button mat-raised-button color="primary"
+          (click)="confirm()">
+    {{ 'action.save' | translate }}
+  </button>
+</div>

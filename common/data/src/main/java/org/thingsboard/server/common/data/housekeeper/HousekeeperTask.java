@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.housekeeper;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -13,11 +14,15 @@ import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.List;
+import java.util.UUID;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "taskType", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY, defaultImpl = HousekeeperTask.class)
@@ -27,7 +32,9 @@ import java.io.Serializable;
         @Type(name = "DELETE_TENANT_ENTITIES", value = TenantEntitiesDeletionHousekeeperTask.class),
         @Type(name = "DELETE_ENTITIES", value = EntitiesDeletionHousekeeperTask.class),
         @Type(name = "DELETE_ALARMS", value = AlarmsDeletionHousekeeperTask.class),
-        @Type(name = "UNASSIGN_ALARMS", value = AlarmsUnassignHousekeeperTask.class)
+        @Type(name = "DELETE_ALARM_COMMENTS", value = AlarmCommentsDeletionHousekeeperTask.class),
+        @Type(name = "UNASSIGN_ALARMS", value = AlarmsUnassignHousekeeperTask.class),
+        @Type(name = "CLEANUP_ENTITIES", value = EntitiesCleanupHousekeeperTask.class)
 })
 @Data
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -68,6 +75,16 @@ public class HousekeeperTask implements Serializable {
         return new AlarmsDeletionHousekeeperTask(tenantId, entityId);
     }
 
+    public static HousekeeperTask deleteAlarmComments(TenantId tenantId, AlarmId alarmId) {
+        return new AlarmCommentsDeletionHousekeeperTask(tenantId, alarmId);
+    }
+
+    // contextEntityId is description/log context only (the deleted originator, the tenant for TTL cleanup, etc.);
+    // the deletion itself keys off the alarms list.
+    public static HousekeeperTask deleteAlarmComments(TenantId tenantId, EntityId contextEntityId, List<UUID> alarms) {
+        return new AlarmCommentsDeletionHousekeeperTask(tenantId, contextEntityId, alarms);
+    }
+
     public static HousekeeperTask deleteTenantEntities(TenantId tenantId, EntityType entityType) {
         return new TenantEntitiesDeletionHousekeeperTask(tenantId, entityType);
     }
@@ -78,6 +95,14 @@ public class HousekeeperTask implements Serializable {
 
     public static HousekeeperTask deleteJobs(TenantId tenantId, EntityId entityId) {
         return new HousekeeperTask(tenantId, entityId, HousekeeperTaskType.DELETE_JOBS);
+    }
+
+    public static HousekeeperTask deleteAiUserData(TenantId tenantId, UserId userId) {
+        return new HousekeeperTask(tenantId, userId, HousekeeperTaskType.DELETE_AI_USER_DATA);
+    }
+
+    public static HousekeeperTask deleteAiTenantData(TenantId tenantId) {
+        return new HousekeeperTask(tenantId, tenantId, HousekeeperTaskType.DELETE_AI_TENANT_DATA);
     }
 
     @JsonIgnore

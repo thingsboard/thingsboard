@@ -1,0 +1,27 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host {
+  display: block;
+  .mat-expansion-panel {
+    box-shadow: none;
+    &.custom-scheduler-event-type {
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      .mat-expansion-panel-header {
+        padding: 0 24px 0 8px;
+        &.mat-expanded {
+          height: 48px;
+        }
+      }
+    }
+  }
+}
+
+:host ::ng-deep {
+  .mat-expansion-panel {
+    &.custom-scheduler-event-type {
+      .mat-expansion-panel-body {
+        padding: 0 8px 8px;
+      }
+    }
+  }
+}

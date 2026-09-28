@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <ng-container [formGroup]="segmentedButtonWidgetConfigForm">
@@ -92,6 +93,7 @@
           <div matSuffix class="lt-md:!hidden">px</div>
         </mat-form-field>
         <tb-color-input asBoxInput
+                        useThemePalette
                         formControlName="cardBorderColor">
         </tb-color-input>
       </div>
@@ -196,6 +198,7 @@
           <div class="flex flex-row items-center justify-start gap-2">
             <div translate>widgets.button.main</div>
             <tb-color-input asBoxInput
+                            useThemePalette
                             formControlName="mainColor">
             </tb-color-input>
           </div>
@@ -203,6 +206,7 @@
           <div class="flex flex-row items-center justify-start gap-2">
             <div translate>widgets.button.background</div>
             <tb-color-input asBoxInput
+                            useThemePalette
                             formControlName="backgroundColor">
             </tb-color-input>
           </div>
@@ -239,6 +243,7 @@
           <div class="flex flex-row items-center justify-start gap-2">
             <div translate>widgets.button.main</div>
             <tb-color-input asBoxInput
+                            useThemePalette
                             formControlName="mainColor">
             </tb-color-input>
           </div>
@@ -246,6 +251,7 @@
           <div class="flex flex-row items-center justify-start gap-2">
             <div translate>widgets.button.background</div>
             <tb-color-input asBoxInput
+                            useThemePalette
                             formControlName="backgroundColor">
             </tb-color-input>
           </div>

@@ -1,0 +1,44 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<form [formGroup]="createFormGroup" (ngSubmit)="create()">
+  <mat-toolbar color="tb-primary" class="tb-bottom-border">
+    <h2 translate>gateway.add-gateway</h2>
+    <span class="flex-1"></span>
+    <div tb-help="agentGatewayInstall"></div>
+    <button mat-icon-button (click)="cancel()" type="button" tabindex="-1">
+      <mat-icon>close</mat-icon>
+    </button>
+  </mat-toolbar>
+  <div mat-dialog-content class="flex flex-col">
+    <mat-form-field class="mat-block" appearance="outline">
+      <mat-label translate>gateway.gateway-name</mat-label>
+      <input matInput formControlName="name" required>
+      @if (createFormGroup.get('name').hasError('required') || createFormGroup.get('name').hasError('pattern')) {
+        <mat-error>
+          {{ 'gateway.gateway-name-required' | translate }}
+        </mat-error>
+      }
+    </mat-form-field>
+    <tb-entity-subtype-autocomplete
+      formControlName="type"
+      required
+      appearance="outline"
+      [entityType]="entityType.DEVICE">
+    </tb-entity-subtype-autocomplete>
+  </div>
+  <div mat-dialog-actions class="flex flex-row justify-end items-center">
+    <button mat-button color="primary" type="button"
+      [disabled]="submitting"
+      (click)="cancel()">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button color="primary" type="submit"
+      [disabled]="submitting || createFormGroup.invalid">
+      {{ 'action.create' | translate }}
+    </button>
+  </div>
+</form>

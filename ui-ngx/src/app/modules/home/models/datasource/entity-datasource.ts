@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { PageLink } from '@shared/models/page/page-link';
 import { BehaviorSubject, Observable, of, ReplaySubject, Subscription } from 'rxjs';

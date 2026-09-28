@@ -1,6 +1,7 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
-import { BaseData, ExportableEntity } from '@shared/models/base-data';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { BaseData, ExportableEntity, GroupEntityInfo } from '@shared/models/base-data';
 import { DeviceId } from './id/device-id';
 import { TenantId } from '@shared/models/id/tenant-id';
 import { CustomerId } from '@shared/models/id/customer-id';
@@ -8,13 +9,14 @@ import { DeviceCredentialsId } from '@shared/models/id/device-credentials-id';
 import { EntitySearchQuery } from '@shared/models/relation.models';
 import { DeviceProfileId } from '@shared/models/id/device-profile-id';
 import { RuleChainId } from '@shared/models/id/rule-chain-id';
-import { EntityInfoData, HasTenantId, HasVersion, SaveEntityParams } from '@shared/models/entity.models';
+import { EntityInfoData, HasTenantId, HasVersion, SaveEntityWithGroupParams } from '@shared/models/entity.models';
 import { FilterPredicateValue, KeyFilter } from '@shared/models/query/query.models';
 import { TimeUnit } from '@shared/models/time/time.models';
 import _moment from 'moment';
 import { AbstractControl, ValidationErrors } from '@angular/forms';
 import { OtaPackageId } from '@shared/models/id/ota-package-id';
 import { DashboardId } from '@shared/models/id/dashboard-id';
+import { EntityId } from '@shared/models/id/entity-id';
 import { DataType } from '@shared/models/constants';
 import {
   getDefaultProfileClientLwM2mSettingsConfig,
@@ -22,8 +24,14 @@ import {
   PowerMode
 } from '@home/components/profile/device/lwm2m/lwm2m-profile-config.models';
 import { PageLink } from '@shared/models/page/page-link';
-import { isDefinedAndNotNull, isNotEmptyStr } from '@core/utils';
-import { EdgeId } from '@shared/models/id/edge-id';
+import { isDefinedAndNotNull } from '@core/utils';
+import type { Store } from '@ngrx/store';
+import type { AppState } from '@core/core.state';
+import type { TranslateService } from '@ngx-translate/core';
+import type { UserPermissionsService } from '@core/http/user-permissions.service';
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
+import { Operation, Resource } from '@shared/models/security.models';
+import { AiAssistantPanelConfig, AiAssistantViewType } from '@shared/models/ai-chat.models';
 
 export enum DeviceProfileType {
   DEFAULT = 'DEFAULT',
@@ -531,6 +539,7 @@ export interface DeviceProfileAlarm {
   clearRule?: AlarmRule;
   propagate?: boolean;
   propagateToOwner?: boolean;
+  propagateToOwnerHierarchy?: boolean;
   propagateToTenant?: boolean;
   propagateRelationTypes?: Array<string>;
 }
@@ -589,7 +598,7 @@ export interface DeviceProfile extends BaseData<DeviceProfileId>, HasTenantId, H
   defaultEdgeRuleChainId?: RuleChainId;
 }
 
-export interface DeviceProfileInfo extends EntityInfoData, HasTenantId {
+export interface DeviceProfileInfo extends EntityInfoData {
   tenantId?: TenantId;
   type: DeviceProfileType;
   transportType: DeviceTransportType;
@@ -700,9 +709,9 @@ export interface DeviceData {
 export interface Device extends BaseData<DeviceId>, HasTenantId, HasVersion, ExportableEntity<DeviceId> {
   tenantId?: TenantId;
   customerId?: CustomerId;
-  name: string;
+  name?: string;
   type?: string;
-  label: string;
+  label?: string;
   firmwareId?: OtaPackageId;
   softwareId?: OtaPackageId;
   deviceProfileId?: DeviceProfileId;
@@ -710,22 +719,18 @@ export interface Device extends BaseData<DeviceId>, HasTenantId, HasVersion, Exp
   additionalInfo?: any;
 }
 
-export interface DeviceInfo extends Device {
-  customerTitle: string;
-  customerIsPublic: boolean;
-  deviceProfileName: string;
+export interface DeviceInfo extends Device, GroupEntityInfo<DeviceId> {
   active: boolean;
 }
 
 export interface DeviceInfoFilter {
   customerId?: CustomerId;
-  edgeId?: EdgeId;
-  type?: string;
+  includeCustomers?: boolean;
   deviceProfileId?: DeviceProfileId;
   active?: boolean;
 }
 
-export interface SaveDeviceParams extends SaveEntityParams {
+export interface SaveDeviceParams extends SaveEntityWithGroupParams {
   accessToken?: string;
 }
 
@@ -743,15 +748,14 @@ export class DeviceInfoQuery  {
     let query;
     if (this.deviceInfoFilter.customerId) {
       query = `/customer/${this.deviceInfoFilter.customerId.id}/deviceInfos`;
-    } else if (this.deviceInfoFilter.edgeId) {
-      query = `/edge/${this.deviceInfoFilter.edgeId.id}/devices`;
     } else {
-      query = '/tenant/deviceInfos';
+      query = '/deviceInfos/all';
     }
     query += this.pageLink.toQuery();
-    if (isNotEmptyStr(this.deviceInfoFilter.type)) {
-      query += `&type=${this.deviceInfoFilter.type}`;
-    } else if (this.deviceInfoFilter.deviceProfileId) {
+    if (isDefinedAndNotNull(this.deviceInfoFilter.includeCustomers)) {
+      query += `&includeCustomers=${this.deviceInfoFilter.includeCustomers}`;
+    }
+    if (this.deviceInfoFilter.deviceProfileId) {
       query += `&deviceProfileId=${this.deviceInfoFilter.deviceProfileId.id}`;
     }
     if (isDefinedAndNotNull(this.deviceInfoFilter.active)) {
@@ -887,8 +891,38 @@ export const getAlarmScheduleRangeText = (startsOn: Date | number, endsOn: Date 
   if (start < end) {
     return `<span><span class="nowrap">${start.format('hh:mm A')}</span> – <span class="nowrap">${end.format('hh:mm A')}</span></span>`;
   } else if (start.valueOf() === 0 && end.valueOf() === 0 || start.isSame(_moment([1970, 0])) && end.isSame(_moment([1970, 0]))) {
-    return '<span><span class="nowrap">12:00 AM</span> – <span class="nowrap">12:00 PM</span></span>';
+    return '<span><span class="nowrap">12:00 AM</span> – <span class="nowrap">12:00 AM</span></span>';
   }
   return `<span><span class="nowrap">12:00 AM</span> – <span class="nowrap">${end.format('hh:mm A')}</span>` +
-    ` and <span class="nowrap">${start.format('hh:mm A')}</span> – <span class="nowrap">12:00 PM</span></span>`;
+    ` and <span class="nowrap">${start.format('hh:mm A')}</span> – <span class="nowrap">12:00 AM</span></span>`;
 };
+
+// The device permission is generic on some pages and group scoped on others, so callers pass it in.
+export function deviceAiAssistantConfig(store: Store<AppState>,
+                                        userPermissionsService: UserPermissionsService,
+                                        translate: TranslateService,
+                                        hasDevicePermission: boolean,
+                                        entityView?: AiAssistantViewType,
+                                        listView: AiAssistantViewType = AiAssistantViewType.DEVICE_LIST,
+                                        listEntityId?: EntityId): AiAssistantPanelConfig | null {
+  const hasPermission = getCurrentAuthState(store).aiEnabled &&
+    userPermissionsService.hasGenericPermission(Resource.AI, Operation.ALL) &&
+    hasDevicePermission;
+  if (!hasPermission) {
+    return null;
+  }
+  return {
+    view: {
+      listView,
+      listEntityId,
+      entityView
+    },
+    initialPromptPlaceholder: translate.instant('device.ai-assistant-initial-prompt-placeholder'),
+    promptExamples: [
+      {
+        label: translate.instant('device.ai-assistant-example-connect-label'),
+        message: translate.instant('device.ai-assistant-example-connect-message')
+      }
+    ]
+  };
+}

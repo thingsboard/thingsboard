@@ -1,0 +1,43 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.thingsboard</groupId>
+        <version>4.4.0-SNAPSHOT</version>
+        <artifactId>common</artifactId>
+    </parent>
+    <groupId>org.thingsboard.common</groupId>
+    <artifactId>integration</artifactId>
+    <packaging>pom</packaging>
+
+    <name>Thingsboard Integration Commons</name>
+    <url>https://thingsboard.io</url>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <main.dir>${basedir}/../..</main.dir>
+    </properties>
+    <modules>
+        <module>integration-api</module>
+        <module>remote-integration-api</module>
+        <module>cluster-integration-api</module>
+        <module>http-integrations</module>
+        <module>mqtt-integrations</module>
+        <module>azure-integrations</module>
+        <module>aws-integrations</module>
+        <module>gcloud-integrations</module>
+        <module>opcua-integrations</module>
+        <module>kafka-integrations</module>
+        <module>rabbitmq-integrations</module>
+        <module>apache-pulsar</module>
+        <module>coap-integrations</module>
+        <module>tuya-integrations</module>
+    </modules>
+
+</project>

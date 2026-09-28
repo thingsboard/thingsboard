@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import io.swagger.v3.oas.annotations.Parameter;
@@ -15,11 +16,15 @@ import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.audit.AuditLog;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.Resource;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
@@ -36,8 +41,8 @@ import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PA
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH;
-import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_OR_TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.USER_ID_PARAM_DESCRIPTION;
 
 @RestController
@@ -45,21 +50,23 @@ import static org.thingsboard.server.controller.ControllerConstants.USER_ID_PARA
 @RequestMapping("/api")
 public class AuditLogController extends BaseController {
 
+    private static final String RBAC_AUDIT_LOG_CHECK = " Security check is performed to verify that the user has 'READ' permission for the audit logs.";
+
     private static final String AUDIT_LOG_QUERY_START_TIME_DESCRIPTION = "The start timestamp in milliseconds of the search time range over the AuditLog class field: 'createdTime'.";
     private static final String AUDIT_LOG_QUERY_END_TIME_DESCRIPTION = "The end timestamp in milliseconds of the search time range over the AuditLog class field: 'createdTime'.";
     private static final String AUDIT_LOG_QUERY_ACTION_TYPES_DESCRIPTION = "A String value representing comma-separated list of action types. " +
-            "This parameter is optional, but it can be used to filter results to fetch only audit logs of specific action types. " +
-            "For example, 'LOGIN', 'LOGOUT'. See the 'Model' tab of the Response Class for more details.";
+                                                                           "This parameter is optional, but it can be used to filter results to fetch only audit logs of specific action types. " +
+                                                                           "For example, 'LOGIN', 'LOGOUT'. See the 'Model' tab of the Response Class for more details.";
     private static final String AUDIT_LOG_SORT_PROPERTY_DESCRIPTION = "Property of audit log to sort by. " +
-            "See the 'Model' tab of the Response Class for more details. " +
-            "Note: entityType sort property is not defined in the AuditLog class, however, it can be used to sort audit logs by types of entities that were logged.";
+                                                                      "See the 'Model' tab of the Response Class for more details. " +
+                                                                      "Note: entityType sort property is not defined in the AuditLog class, however, it can be used to sort audit logs by types of entities that were logged.";
 
 
     @ApiOperation(value = "Get audit logs by customer id (getAuditLogsByCustomerId)",
             notes = "Returns a page of audit logs related to the targeted customer entities (devices, assets, etc.), " +
                     "and users actions (login, logout, etc.) that belong to this customer. " +
-                    PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+                    PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH + RBAC_AUDIT_LOG_CHECK)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/audit/logs/customer/{customerId}")
     public PageData<AuditLog> getAuditLogsByCustomerId(
             @Parameter(description = CUSTOMER_ID_PARAM_DESCRIPTION)
@@ -81,6 +88,11 @@ public class AuditLogController extends BaseController {
             @Parameter(description = AUDIT_LOG_QUERY_ACTION_TYPES_DESCRIPTION)
             @RequestParam(name = "actionTypes", required = false) String actionTypesStr) throws ThingsboardException {
         checkParameter("CustomerId", strCustomerId);
+        accessControlService.checkPermission(getCurrentUser(), Resource.AUDIT_LOG, Operation.READ);
+        CustomerId customerId = new CustomerId(toUUID(strCustomerId));
+        if (!customerId.isNullUid() || Authority.CUSTOMER_USER.equals(getCurrentUser().getAuthority())) {
+            checkCustomerId(customerId, Operation.READ);
+        }
         TenantId tenantId = getCurrentUser().getTenantId();
         TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, getStartTime(startTime), getEndTime(endTime));
         List<ActionType> actionTypes = parseActionTypesStr(actionTypesStr);
@@ -90,8 +102,8 @@ public class AuditLogController extends BaseController {
     @ApiOperation(value = "Get audit logs by user id (getAuditLogsByUserId)",
             notes = "Returns a page of audit logs related to the actions of targeted user. " +
                     "For example, RPC call to a particular device, or alarm acknowledgment for a specific device, etc. " +
-                    PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+                    PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH + RBAC_AUDIT_LOG_CHECK)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/audit/logs/user/{userId}")
     public PageData<AuditLog> getAuditLogsByUserId(
             @Parameter(description = USER_ID_PARAM_DESCRIPTION)
@@ -113,6 +125,9 @@ public class AuditLogController extends BaseController {
             @Parameter(description = AUDIT_LOG_QUERY_ACTION_TYPES_DESCRIPTION)
             @RequestParam(name = "actionTypes", required = false) String actionTypesStr) throws ThingsboardException {
         checkParameter("UserId", strUserId);
+        accessControlService.checkPermission(getCurrentUser(), Resource.AUDIT_LOG, Operation.READ);
+        UserId userId = new UserId(toUUID(strUserId));
+        checkUserId(userId, Operation.READ);
         TenantId tenantId = getCurrentUser().getTenantId();
         TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, getStartTime(startTime), getEndTime(endTime));
         List<ActionType> actionTypes = parseActionTypesStr(actionTypesStr);
@@ -123,8 +138,8 @@ public class AuditLogController extends BaseController {
             notes = "Returns a page of audit logs related to the actions on the targeted entity. " +
                     "Basically, this API call is used to get the full lifecycle of some specific entity. " +
                     "For example to see when a device was created, updated, assigned to some customer, or even deleted from the system. " +
-                    PAGE_DATA_PARAMETERS + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+                    PAGE_DATA_PARAMETERS + SYSTEM_OR_TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH + RBAC_AUDIT_LOG_CHECK)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/audit/logs/entity/{entityType}/{entityId}")
     public PageData<AuditLog> getAuditLogsByEntityId(
             @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "DEVICE"))
@@ -149,6 +164,9 @@ public class AuditLogController extends BaseController {
             @RequestParam(name = "actionTypes", required = false) String actionTypesStr) throws ThingsboardException {
         checkParameter("EntityId", strEntityId);
         checkParameter("EntityType", strEntityType);
+        accessControlService.checkPermission(getCurrentUser(), Resource.AUDIT_LOG, Operation.READ);
+        EntityId entityId = EntityIdFactory.getByTypeAndId(strEntityType, strEntityId);
+        checkEntityId(entityId, Operation.READ);
         TenantId tenantId = getCurrentUser().getTenantId();
         TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, getStartTime(startTime), getEndTime(endTime));
         List<ActionType> actionTypes = parseActionTypesStr(actionTypesStr);
@@ -157,8 +175,8 @@ public class AuditLogController extends BaseController {
 
     @ApiOperation(value = "Get all audit logs (getAuditLogs)",
             notes = "Returns a page of audit logs related to all entities in the scope of the current user's Tenant. " +
-                    PAGE_DATA_PARAMETERS + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+                    PAGE_DATA_PARAMETERS + SYSTEM_OR_TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH + RBAC_AUDIT_LOG_CHECK)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/audit/logs")
     public PageData<AuditLog> getAuditLogs(
             @Parameter(description = PAGE_SIZE_DESCRIPTION)
@@ -177,10 +195,16 @@ public class AuditLogController extends BaseController {
             @RequestParam(required = false) Long endTime,
             @Parameter(description = AUDIT_LOG_QUERY_ACTION_TYPES_DESCRIPTION)
             @RequestParam(name = "actionTypes", required = false) String actionTypesStr) throws ThingsboardException {
+        accessControlService.checkPermission(getCurrentUser(), Resource.AUDIT_LOG, Operation.READ);
         TenantId tenantId = getCurrentUser().getTenantId();
-        List<ActionType> actionTypes = parseActionTypesStr(actionTypesStr);
         TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, getStartTime(startTime), getEndTime(endTime));
-        return checkNotNull(auditLogService.findAuditLogsByTenantId(tenantId, actionTypes, pageLink));
+        List<ActionType> actionTypes = parseActionTypesStr(actionTypesStr);
+        Authority authority = getCurrentUser().getAuthority();
+        if (Authority.TENANT_ADMIN.equals(authority) || Authority.SYS_ADMIN.equals(authority)) {
+            return checkNotNull(auditLogService.findAuditLogsByTenantId(tenantId, actionTypes, pageLink));
+        } else {
+            return checkNotNull(auditLogService.findAuditLogsByTenantIdAndCustomerId(tenantId, getCurrentUser().getCustomerId(), actionTypes, pageLink));
+        }
     }
 
     private List<ActionType> parseActionTypesStr(String actionTypesStr) {
@@ -205,4 +229,5 @@ public class AuditLogController extends BaseController {
         }
         return endTime;
     }
+
 }

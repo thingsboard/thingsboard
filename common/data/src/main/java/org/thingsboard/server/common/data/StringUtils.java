@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data;
 
 import com.google.common.base.Splitter;
@@ -106,6 +107,10 @@ public class StringUtils {
         return input.substring(0, startIndexInclusive) + obfuscatedPart + input.substring(endIndexExclusive);
     }
 
+    public static String emptyIfNull(String src) {
+        return src != null ? src : "";
+    }
+
     public static Iterable<String> split(String value, int maxPartSize) {
         return Splitter.fixedLength(maxPartSize).split(value);
     }
@@ -184,6 +189,10 @@ public class StringUtils {
         return org.apache.commons.lang3.StringUtils.substringAfterLast(str, sep);
     }
 
+    public static String removeEnd(String str, String suffix) {
+        return Strings.CS.removeEnd(str, suffix);
+    }
+
     public static boolean containedByAny(String searchString, String... strings) {
         if (searchString == null) return false;
         for (String string : strings) {
@@ -246,6 +255,10 @@ public class StringUtils {
         }
         int truncatedSymbols = string.length() - maxLength;
         return string.substring(0, maxLength) + truncationMarkerFunc.apply(truncatedSymbols);
+    }
+
+    public static String toLowerCase(String string) {
+        return isNotEmpty(string) ? string.toLowerCase() : string;
     }
 
     public static List<String> splitByCommaWithoutQuotes(String value) {

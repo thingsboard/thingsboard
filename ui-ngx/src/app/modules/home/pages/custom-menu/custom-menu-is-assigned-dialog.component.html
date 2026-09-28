@@ -1,0 +1,19 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<h2 mat-dialog-title>{{ 'custom-menu.delete-custom-menu' | translate }}</h2>
+<div mat-dialog-content class="tb-custom-menu-is-assigned-content">
+  <div [innerHTML]="message | safe: 'html'"></div>
+  <mat-chip-listbox>
+    @for (entity of data.assigneeList; track entity) {
+      <mat-chip>{{ entity.name }}</mat-chip>
+    }
+  </mat-chip-listbox>
+</div>
+<div mat-dialog-actions class="flex items-center justify-end">
+  <button mat-button color="primary" (click)="cancel()">{{'action.cancel' | translate}}</button>
+  <button mat-raised-button color="accent" (click)="delete()">{{ 'action.delete-anyway' | translate}}</button>
+</div>

@@ -1,10 +1,11 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<div class="tb-form-panel tb-time-series-states-panel">
+<div class="tb-form-panel tb-time-series-states-panel" [class.stroked]="stroked">
   <div class="tb-form-panel-title">{{ 'widgets.time-series-chart.state.states' | translate }}</div>
   <div class="tb-form-table">
     <div class="tb-form-table-header">

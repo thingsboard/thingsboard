@@ -1,0 +1,119 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-form-panel no-border h-full" [formGroup]="reportConfigForm">
+  @if (!isPlainFormat) {
+    <div class="tb-report-component-config-header">
+      <tb-toggle-select [(ngModel)]="settingsTab" [ngModelOptions]="{standalone: true}" appearance="fill">
+        <tb-toggle-option value="data">{{ 'report-template.data' | translate }}</tb-toggle-option>
+        <tb-toggle-option value="layout">{{ 'report-template.layout' | translate }}</tb-toggle-option>
+      </tb-toggle-select>
+    </div>
+  }
+  <div class="tb-form-panel no-border no-padding overflow-y-auto" [class.!hidden]="settingsTab !== 'data'">
+    <div class="tb-form-row space-between">
+      <div>{{ 'report-template.timewindow' | translate }}</div>
+      <tb-timewindow asButton="true"
+                     aggregation
+                     strokedButton
+                     noMargin
+                     isEdit="true"
+                     timezone="true"
+                     historyOnly
+                     formControlName="timewindow"></tb-timewindow>
+    </div>
+    <tb-datasources
+      [configMode]="basicMode"
+      stroked
+      displayDatasourceFilterForBasicMode
+      hideDataKeys
+      formControlName="dataSources"
+      [dataSourcesOptions]="{
+                    widgetType: widgetType.timeseries,
+                    maxDatasources: 1,
+                    datasourcesOptional: false,
+                    allowFunctions: false
+      }"
+      [callbacks]="callbacks"
+      [aliasController]="context.aliasController">
+    </tb-datasources>
+    <div class="tb-form-panel stroked tb-slide-toggle">
+      <mat-expansion-panel class="tb-settings" [expanded]="reportConfigForm.get('showTableHeading').value" disabled>
+        <mat-expansion-panel-header class="flex flex-row flex-wrap">
+          <mat-panel-title>
+            <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="showTableHeading" (click)="$event.stopPropagation()">
+              {{ 'report-template.component.table.table-heading' | translate }}
+            </mat-slide-toggle>
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+        <ng-template matExpansionPanelContent>
+          <tb-report-heading [variableNames]="['entityName', 'entityLabel', 'rowCount']"
+                             [withLayout]="!isPlainFormat"
+                             formControlName="tableHeading"></tb-report-heading>
+        </ng-template>
+      </mat-expansion-panel>
+    </div>
+    <tb-data-keys-panel
+      [dataKeysPanelOptions]="{
+        widgetType: widgetType.timeseries,
+        callbacks: callbacks,
+        settingsFormFunction: !isPlainFormat ? dataKeySettingsFormFunction : null,
+        settingsFormTrimDefaults: true,
+        latestSettingsFormFunction: !isPlainFormat ? dataKeySettingsFormFunction : null,
+        latestSettingsFormTrimDefaults: true,
+        hasAdditionalLatestDataKeys: true
+      }"
+      reportMode
+      stroked
+      panelTitle="{{ 'widgets.table.columns' | translate }}"
+      addKeyTitle="{{ 'widgets.table.add-column' | translate }}"
+      keySettingsTitle="{{ 'widgets.table.column-settings' | translate }}"
+      removeKeyTitle="{{ 'widgets.table.remove-column' | translate }}"
+      noKeysText="{{ 'widgets.table.no-columns' | translate }}"
+      requiredKeysText="{{ 'widgets.table.timeseries-column-error' | translate }}"
+      hideDataKeyColor
+      hideUnits
+      hideDecimals
+      [datasourceType]="datasource?.type"
+      [deviceId]="datasource?.deviceId"
+      [entityAliasId]="datasource?.entityAliasId"
+      [aliasController]="context.aliasController"
+      formControlName="columns">
+      <tb-table-sort-order formControlName="tableSortOrder" [columns]="columnLabels" [columnNameChange]="columnNameChanged"></tb-table-sort-order>
+      <div class="tb-form-row">
+        <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showTimestamp">
+          {{ 'report-template.component.timeseries-table.display-timestamp' | translate }}
+        </mat-slide-toggle>
+        <div class="flex flex-1 flex-row gap-2">
+          <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="timestampLabel" placeholder="{{ 'widget-config.set' | translate }}">
+          </mat-form-field>
+          <tb-date-format-select class="flex-1"
+                                 includeMilliseconds
+                                 asStringFormat
+                                 excludeLastUpdateAgo
+                                 formControlName="timestampPattern"></tb-date-format-select>
+          @if (!isPlainFormat) {
+            <button type="button"
+                    class="tb-mat-40"
+                    style="--mat-icon-button-icon-color: rgba(0, 0, 0, 0.38);"
+                    [disabled]="!reportConfigForm.get('showTimestamp').value"
+                    mat-icon-button
+                    (click)="editTimestampColumnSettings()"
+                    matTooltip="{{ 'widgets.table.column-settings' | translate }}"
+                    matTooltipPosition="above">
+              <mat-icon>settings</mat-icon>
+            </button>
+          }
+        </div>
+      </div>
+    </tb-data-keys-panel>
+  </div>
+  @if (!isPlainFormat) {
+    <tb-report-component-layout-settings class="overflow-y-auto" [class.!hidden]="settingsTab !== 'layout'" formControlName="layout">
+    </tb-report-component-layout-settings>
+  }
+</div>

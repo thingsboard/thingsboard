@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable, Type } from '@angular/core';
 import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
 import { Observable, of, ReplaySubject } from 'rxjs';
@@ -30,6 +31,9 @@ import {
   IBasicWidgetConfigComponent
 } from '@home/components/widget/config/widget-config.component.models';
 import { ResourcesService } from '@core/services/resources.service';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { Operation, Resource } from '@shared/models/security.models';
+import { sortEntitiesByIds } from '@shared/models/base-data';
 
 @Injectable({
   providedIn: 'root'
@@ -42,13 +46,14 @@ export class WidgetService {
 
   private widgetsInfoInMemoryCache = new Map<string, WidgetInfo>();
 
-  private loadWidgetsBundleCacheSubject: ReplaySubject<void>;
+  private widgetsBundleCacheSubject: ReplaySubject<any> = null;
 
   private basicWidgetSettingsComponentsMap: { [key: string]: Type<IBasicWidgetConfigComponent> } = {};
   private widgetSettingsComponentsMap: { [key: string]: Type<IWidgetSettingsComponent> } = {};
 
   constructor(
     private http: HttpClient,
+    private userPermissionsService: UserPermissionsService,
     private router: Router,
     private resourcesService: ResourcesService,
   ) {
@@ -95,8 +100,15 @@ export class WidgetService {
   }
 
   public exportWidgetsBundle(widgetsBundleId: string,
-                          config?: RequestConfig): Observable<WidgetsBundle> {
+                             config?: RequestConfig): Observable<WidgetsBundle> {
     return this.http.get<WidgetsBundle>(`/api/widgetsBundle/${widgetsBundleId}?inlineImages=true`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getWidgetsBundlesByIds(widgetsBundleIds: Array<string>, config?: RequestConfig): Observable<Array<WidgetsBundle>> {
+    return this.http.get<Array<WidgetsBundle>>(`/api/widgetsBundles?widgetsBundleIds=${widgetsBundleIds.join(',')}`,
+      defaultHttpOptionsFromConfig(config)).pipe(
+      map((roles) => sortEntitiesByIds(roles, widgetsBundleIds))
+    );
   }
 
   public saveWidgetsBundle(widgetsBundle: WidgetsBundle,
@@ -277,6 +289,10 @@ export class WidgetService {
       );
   }
 
+  public clearWidgetInfoInMemoryCache() {
+    this.widgetsInfoInMemoryCache.clear();
+  }
+
   public getWidgetInfoFromCache(fullFqn: string): WidgetInfo | undefined {
     return this.widgetsInfoInMemoryCache.get(fullFqn);
   }
@@ -317,43 +333,52 @@ export class WidgetService {
     this.widgetsInfoInMemoryCache.delete(fullFqn);
   }
 
-  public getWidgetsBundlesByIds(widgetsBundleIds: Array<string>, config?: RequestConfig): Observable<Array<WidgetsBundle>> {
-    return this.http.get<Array<WidgetsBundle>>(`/api/widgetsBundles?widgetsBundleIds=${widgetsBundleIds.join(',')}`,
-      defaultHttpOptionsFromConfig(config));
-  }
-
   private loadWidgetsBundleCache(config?: RequestConfig): Observable<any> {
     if (!this.allWidgetsBundles) {
-      if (!this.loadWidgetsBundleCacheSubject) {
-        this.loadWidgetsBundleCacheSubject = new ReplaySubject<void>();
-        this.http.get<Array<WidgetsBundle>>('/api/widgetsBundles',
-          defaultHttpOptionsFromConfig(config)).subscribe(
-          (allWidgetsBundles) => {
-            this.allWidgetsBundles = allWidgetsBundles;
-            this.systemWidgetsBundles = new Array<WidgetsBundle>();
-            this.tenantWidgetsBundles = new Array<WidgetsBundle>();
-            this.allWidgetsBundles = this.allWidgetsBundles.sort((wb1, wb2) => {
-              let res = wb1.title.localeCompare(wb2.title);
-              if (res === 0) {
-                res = wb2.createdTime - wb1.createdTime;
-              }
-              return res;
+      if (this.widgetsBundleCacheSubject) {
+        return this.widgetsBundleCacheSubject.asObservable();
+      } else {
+        const loadWidgetsBundleCacheSubject = new ReplaySubject<void>();
+        this.widgetsBundleCacheSubject = loadWidgetsBundleCacheSubject;
+        if (this.userPermissionsService.hasGenericPermission(Resource.WIDGETS_BUNDLE, Operation.READ)) {
+          this.http.get<Array<WidgetsBundle>>('/api/widgetsBundles',
+            defaultHttpOptionsFromConfig(config)).subscribe(
+            (allWidgetsBundles) => {
+              this.allWidgetsBundles = allWidgetsBundles;
+              this.systemWidgetsBundles = new Array<WidgetsBundle>();
+              this.tenantWidgetsBundles = new Array<WidgetsBundle>();
+              this.allWidgetsBundles = this.allWidgetsBundles.sort((wb1, wb2) => {
+                let res = wb1.title.localeCompare(wb2.title);
+                if (res === 0) {
+                  res = wb2.createdTime - wb1.createdTime;
+                }
+                return res;
+              });
+              this.allWidgetsBundles.forEach((widgetsBundle) => {
+                if (widgetsBundle.tenantId.id === NULL_UUID) {
+                  this.systemWidgetsBundles.push(widgetsBundle);
+                } else {
+                  this.tenantWidgetsBundles.push(widgetsBundle);
+                }
+              });
+              loadWidgetsBundleCacheSubject.next();
+              loadWidgetsBundleCacheSubject.complete();
+              this.widgetsBundleCacheSubject = null;
+            },
+            () => {
+              loadWidgetsBundleCacheSubject.error(null);
+              this.widgetsBundleCacheSubject = null;
             });
-            this.allWidgetsBundles.forEach((widgetsBundle) => {
-              if (widgetsBundle.tenantId.id === NULL_UUID) {
-                this.systemWidgetsBundles.push(widgetsBundle);
-              } else {
-                this.tenantWidgetsBundles.push(widgetsBundle);
-              }
-            });
-            this.loadWidgetsBundleCacheSubject.next();
-            this.loadWidgetsBundleCacheSubject.complete();
-          },
-          () => {
-            this.loadWidgetsBundleCacheSubject.error(null);
-          });
+        } else {
+          this.allWidgetsBundles = [];
+          this.systemWidgetsBundles = [];
+          this.tenantWidgetsBundles = [];
+          loadWidgetsBundleCacheSubject.next();
+          loadWidgetsBundleCacheSubject.complete();
+          this.widgetsBundleCacheSubject = null;
+        }
+        return loadWidgetsBundleCacheSubject.asObservable();
       }
-      return this.loadWidgetsBundleCacheSubject.asObservable();
     } else {
       return of(null);
     }
@@ -363,6 +388,6 @@ export class WidgetService {
     this.allWidgetsBundles = undefined;
     this.systemWidgetsBundles = undefined;
     this.tenantWidgetsBundles = undefined;
-    this.loadWidgetsBundleCacheSubject = undefined;
+    this.widgetsBundleCacheSubject = undefined;
   }
 }

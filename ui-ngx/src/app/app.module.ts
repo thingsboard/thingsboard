@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgModule } from '@angular/core';
@@ -12,8 +13,12 @@ import { HomeModule } from '@home/home.module';
 import { AppComponent } from './app.component';
 import { DashboardRoutingModule } from '@modules/dashboard/dashboard-routing.module';
 import { RouterModule, Routes } from '@angular/router';
+import { SignupModule } from '@modules/signup/signup.module';
+import { EmptyPageModule } from '@modules/empty-page/empty-page.module';
 
 import { DefaultUrlSerializer, UrlSerializer, UrlTree } from '@angular/router';
+import { ActionModule } from '@modules/action/action.module';
+import { SetupModule } from '@modules/setup/setup.module';
 
 export default class TbUrlSerializer implements UrlSerializer {
   private _defaultUrlSerializer: DefaultUrlSerializer = new DefaultUrlSerializer();
@@ -53,9 +58,13 @@ export class PageNotFoundRoutingModule { }
     BrowserAnimationsModule,
     AppRoutingModule,
     CoreModule,
+    SetupModule,
     LoginModule,
+    SignupModule,
     HomeModule,
     DashboardRoutingModule,
+    EmptyPageModule,
+    ActionModule,
     PageNotFoundRoutingModule
   ],
   providers: [

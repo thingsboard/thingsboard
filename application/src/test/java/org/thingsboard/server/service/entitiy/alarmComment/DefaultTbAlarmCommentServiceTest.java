@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.entitiy.alarmComment;
 
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +29,7 @@ import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entity.EntityService;
+import org.thingsboard.server.dao.group.EntityGroupService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.service.entitiy.TbLogEntityActionService;
 import org.thingsboard.server.service.entitiy.alarm.DefaultTbAlarmCommentService;
@@ -66,6 +68,8 @@ public class DefaultTbAlarmCommentServiceTest {
     protected CustomerService customerService;
     @MockitoBean
     protected TbClusterService tbClusterService;
+    @MockitoBean
+    protected EntityGroupService entityGroupService;
     @MockitoBean
     private AccessControlService accessControlService;
     @MockitoBean

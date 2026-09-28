@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   DateEntityTableColumn,
   EntityTableColumn,
@@ -30,27 +31,28 @@ import { Observable } from 'rxjs';
 import { PageData } from '@shared/models/page/page-data';
 import { EntityId } from '@shared/models/id/entity-id';
 import { UserId } from '@shared/models/id/user-id';
-import { CustomerId } from '@shared/models/id/customer-id';
 import {
   AuditLogDetailsDialogComponent,
   AuditLogDetailsDialogData
 } from '@home/components/audit-log/audit-log-details-dialog.component';
 import { deepClone } from '@app/core/utils';
 import { AuditLogHeaderComponent } from '@home/components/audit-log/audit-log-header.component';
+import { UtilsService } from '@core/services/utils.service';
 
 export class AuditLogTableConfig extends EntityTableConfig<AuditLog, TimePageLink> {
 
   constructor(private auditLogService: AuditLogService,
               private translate: TranslateService,
+              private utils: UtilsService,
               private datePipe: DatePipe,
               private dialog: MatDialog,
               private auditLogMode: AuditLogMode = AuditLogMode.TENANT,
               public entityId: EntityId = null,
               public userId: UserId = null,
-              public customerId: CustomerId = null,
+              public customerId: string = null,
               updateOnInit = true,
               pageMode = false) {
-    super();
+    super({customerId});
     this.loadDataOnInit = updateOnInit;
     this.tableTitle = '';
     this.useTimePageLink = true;
@@ -84,7 +86,9 @@ export class AuditLogTableConfig extends EntityTableConfig<AuditLog, TimePageLin
       this.columns.push(
         new EntityTableColumn<AuditLog>('entityType', 'audit-log.entity-type', '20%',
           (entity) => this.getEntityTypeTranslation(entity.entityId.entityType)),
-        new EntityTableColumn<AuditLog>('entityName', 'audit-log.entity-name', '20%'),
+        new EntityTableColumn<AuditLog>('entityName', 'audit-log.entity-name', '20%',
+          (entity => this.utils.customTranslation(entity.entityName, entity.entityName))
+        ),
       );
     }
 
@@ -142,7 +146,7 @@ export class AuditLogTableConfig extends EntityTableConfig<AuditLog, TimePageLin
       case AuditLogMode.USER:
         return this.auditLogService.getAuditLogsByUserId(this.userId.id, pageLink, auditLogFilter);
       case AuditLogMode.CUSTOMER:
-        return this.auditLogService.getAuditLogsByCustomerId(this.customerId.id, pageLink, auditLogFilter);
+        return this.auditLogService.getAuditLogsByCustomerId(this.customerId, pageLink, auditLogFilter);
     }
   }
 

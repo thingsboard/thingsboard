@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.component;
 
 import jakarta.persistence.EntityManager;
@@ -64,7 +65,8 @@ public abstract class AbstractComponentDescriptorInsertRepository implements Com
                 .setParameter("scope", entity.getScope().name())
                 .setParameter("type", entity.getType().name())
                 .setParameter("clustering_mode", entity.getClusteringMode().name())
-                .setParameter("has_queue_name", entity.isHasQueueName());
+                .setParameter("has_queue_name", entity.isHasQueueName())
+                .setParameter("has_secrets", entity.isHasSecrets());
     }
 
     private ComponentDescriptorEntity processSaveOrUpdate(ComponentDescriptorEntity entity, String query) {

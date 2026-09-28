@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 @if (dataKeyConfigMode === dataKeyConfigModes.general) {
@@ -66,6 +67,7 @@
           <div class="tb-form-row space-between">
             <div>{{ 'datakey.color' | translate }}</div>
             <tb-color-input asBoxInput
+                            [useThemePalette]="!reportMode"
                             formControlName="color">
             </tb-color-input>
           </div>
@@ -106,11 +108,23 @@
                   {{ 'datakey.aggregation-type-hint-common' | translate }}
                 </section>
               }
+              @if (reportMode && dataKeyFormGroup.get('aggregationType').value && dataKeyFormGroup.get('aggregationType').value !== aggregationTypes.NONE) {
+                <div class="tb-form-row space-between">
+                  <div>{{ 'timewindow.timewindow' | translate }}</div>
+                  <tb-timewindow asButton="true"
+                                 strokedButton
+                                 noMargin
+                                 isEdit="true"
+                                 timezone="true"
+                                 historyOnly
+                                 formControlName="timewindow"></tb-timewindow>
+                </div>
+              }
             </div>
           </div>
         }
       </div>
-      @if (dataKeyFormGroup.get('aggregationType').value && dataKeyFormGroup.get('aggregationType').value !== aggregationTypes.NONE) {
+      @if (!reportMode && dataKeyFormGroup.get('aggregationType').value && dataKeyFormGroup.get('aggregationType').value !== aggregationTypes.NONE) {
         <div
           class="tb-form-panel">
           <div class="tb-form-panel-title" translate>datakey.delta-calculation</div>
@@ -177,9 +191,8 @@
           </div>
         </div>
       }
-      @if ((modelValue.type === dataKeyTypes.timeseries || modelValue.type === dataKeyTypes.attribute || modelValue.type === dataKeyTypes.count) && showPostProcessing) {
-        <div class="tb-form-panel tb-slide-toggle"
-             >
+      @if (reportMode || ((modelValue.type === dataKeyTypes.timeseries || modelValue.type === dataKeyTypes.attribute || modelValue.type === dataKeyTypes.count) && showPostProcessing)) {
+        <div class="tb-form-panel tb-slide-toggle">
           <mat-expansion-panel class="tb-settings" [expanded]="dataKeyFormGroup.get('usePostProcessing').value" [disabled]="!dataKeyFormGroup.get('usePostProcessing').value">
             <mat-expansion-panel-header class="flex flex-row flex-wrap">
               <mat-panel-title>
@@ -190,24 +203,36 @@
             </mat-expansion-panel-header>
             <ng-template matExpansionPanelContent>
               @if (dataKeyFormGroup.get('usePostProcessing').value) {
-                <tb-js-func #postFuncBodyEdit
-                            [functionArgs]="['time', 'value', 'prevValue', 'timePrev', 'prevOrigValue']"
-                            [globalVariables]="functionScopeVariables"
-                            [validationArgs]="[[1, 1, 1, 1, 1],[1, '1', '1', 1, '1']]"
-                            withModules
-                            resultType="any"
-                            helpId="widget/config/datakey_postprocess_fn"
-                            formControlName="postFuncBody">
-                </tb-js-func>
-              }
-              @if (dataKeyFormGroup.get('usePostProcessing').value) {
-                <label class="tb-title" style="margin-left: 15px;">
-                  time - {{ 'datakey.time-description' | translate }}<br/>
-                  value - {{ 'datakey.value-description' | translate }}<br/>
-                  prevValue - {{ 'datakey.prev-value-description' | translate }}<br/>
-                  timePrev - {{ 'datakey.time-prev-description' | translate }}<br/>
-                  prevOrigValue - {{ 'datakey.prev-orig-value-description' | translate }}
-                </label>
+                @if (reportMode) {
+                  <tb-js-func [functionArgs]="['time', 'value']"
+                              [scriptLanguage]="ScriptLanguage.TBEL"
+                              [disableUndefinedCheck]="true"
+                              noValidate="true"
+                              helpId="report/datakey_postprocess_fn"
+                              formControlName="postFuncBody">
+                  </tb-js-func>
+                  <label class="tb-title" style="margin-left: 15px;">
+                    time - {{ 'datakey.time-description' | translate }}<br/>
+                    value - {{ 'datakey.value-description' | translate }}<br/>
+                  </label>
+                } @else {
+                  <tb-js-func #postFuncBodyEdit
+                              [functionArgs]="['time', 'value', 'prevValue', 'timePrev', 'prevOrigValue']"
+                              [globalVariables]="functionScopeVariables"
+                              [validationArgs]="[[1, 1, 1, 1, 1],[1, '1', '1', 1, '1']]"
+                              withModules
+                              resultType="any"
+                              helpId="widget/config/datakey_postprocess_fn"
+                              formControlName="postFuncBody">
+                  </tb-js-func>
+                  <label class="tb-title" style="margin-left: 15px;">
+                    time - {{ 'datakey.time-description' | translate }}<br/>
+                    value - {{ 'datakey.value-description' | translate }}<br/>
+                    prevValue - {{ 'datakey.prev-value-description' | translate }}<br/>
+                    timePrev - {{ 'datakey.time-prev-description' | translate }}<br/>
+                    prevOrigValue - {{ 'datakey.prev-orig-value-description' | translate }}
+                  </label>
+                }
               }
             </ng-template>
           </mat-expansion-panel>
@@ -223,6 +248,7 @@
       [callbacks]="callbacks"
       [widget]="widget"
       [widgetConfig]="widgetConfig"
+      [reportMode]="reportMode"
       formControlName="settings">
     </tb-widget-settings>
   </div>

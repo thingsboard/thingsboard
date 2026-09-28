@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 @import "../../../../../../../scss/constants";
 
 :host {
@@ -34,7 +35,7 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background: #305680;
+      background: var(--tb-primary-500);
       -webkit-mask-image: url(/assets/home/no_data_bg.svg);
       -webkit-mask-repeat: no-repeat;
       mask-image: url(/assets/home/no_data_bg.svg);

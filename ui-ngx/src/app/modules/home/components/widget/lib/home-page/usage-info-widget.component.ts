@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
@@ -11,6 +12,8 @@ import { WidgetContext } from '@home/models/widget-component.models';
 import { UsageInfo } from '@shared/models/usage.models';
 import { UsageInfoService } from '@core/http/usage-info.service';
 import { ShortNumberPipe } from '@shared/pipe/short-number.pipe';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { Operation, Resource } from '@shared/models/security.models';
 
 @Component({
     selector: 'tb-usage-info-widget',
@@ -26,6 +29,8 @@ export class UsageInfoWidgetComponent extends PageComponent implements OnInit, O
   usageInfo: UsageInfo;
   authUser = getCurrentAuthUser(this.store);
 
+  authority = Authority;
+
   toggleValue: 'entities' | 'apiCalls' = 'entities';
 
   entityItemCritical: {[key: string]: boolean} = {};
@@ -35,15 +40,17 @@ export class UsageInfoWidgetComponent extends PageComponent implements OnInit, O
 
   constructor(protected store: Store<AppState>,
               private cd: ChangeDetectorRef,
+              private userPermissionsService: UserPermissionsService,
               private shortNumberPipe: ShortNumberPipe,
               private usageInfoService: UsageInfoService) {
     super(store);
   }
 
   ngOnInit() {
-    this.hasUsageInfoAccess = this.authUser.authority === Authority.TENANT_ADMIN;
+    this.hasUsageInfoAccess = this.authUser.authority === Authority.TENANT_ADMIN &&
+      this.userPermissionsService.hasGenericPermission(Resource.ALL, Operation.READ);
     if (this.hasUsageInfoAccess) {
-      this.usageInfoService.getUsageInfo().subscribe(
+        this.usageInfoService.getUsageInfo().subscribe(
         (usageInfo) => {
           this.usageInfo = usageInfo;
           this.entityItemCritical.devices = this.isItemCritical(this.usageInfo?.devices, this.usageInfo?.maxDevices);

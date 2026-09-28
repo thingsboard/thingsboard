@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <fieldset [formGroup]="entityTypesVersionCreateFormGroup" class="fields-group flex flex-col">
@@ -36,6 +37,7 @@
                 formControlName="entityType"
                 appearance="outline"
                 required
+                [overrideEntityTypeTranslations]="overrideEntityTypeTranslationsMap"
                 [filterAllowedEntityTypes]="false"
                 [allowedEntityTypes]="allowedEntityTypes(entityTypeFormGroup)">
               </tb-entity-type-select>
@@ -54,6 +56,9 @@
                   </mat-select>
                 </mat-form-field>
                 <div class="flex flex-1 flex-col">
+                  <mat-checkbox [class.hidden]="entityTypeFormGroup.get('entityType').value !== entityTypes.USER" formControlName="savePermissions">
+                    {{ 'version-control.export-roles' | translate }}
+                  </mat-checkbox>
                   <mat-checkbox [class.hidden]="entityTypeFormGroup.get('entityType').value !== entityTypes.DEVICE" formControlName="saveCredentials">
                     {{ 'version-control.export-credentials' | translate }}
                   </mat-checkbox>
@@ -69,20 +74,34 @@
                 </div>
               </div>
             </div>
-            <div class="flex flex-row xs:flex-col gt-xs:min-h-19 gt-xs:items-center gt-xs:justify-start gt-xs:gap-4"
+            <div class="flex justify-start gap-4"
+                 [class.flex-col]="isGroupEntityType(entityTypeFormGroup.get('entityType').value)"
+                 [class.flex-row]="!isGroupEntityType(entityTypeFormGroup.get('entityType').value)"
+                 [class.items-stretch]="isGroupEntityType(entityTypeFormGroup.get('entityType').value)"
+                 [class.items-center]="!isGroupEntityType(entityTypeFormGroup.get('entityType').value)"
+                 [class.min-h-19]="!isGroupEntityType(entityTypeFormGroup.get('entityType').value)"
                  formGroupName="config">
               <mat-slide-toggle formControlName="allEntities">
                 {{ 'version-control.all-entities' | translate }}
               </mat-slide-toggle>
               @if (!entityTypeFormGroup.get('config').get('allEntities').value) {
-                <tb-entity-list
-                  class="flex-1"
-                  appearance="outline"
-                  subscriptSizing="dynamic"
-                  [entityType]="entityTypeFormGroup.get('entityType').value"
-                  required
-                  formControlName="entityIds">
-                </tb-entity-list>
+                @if (!isGroupEntityType(entityTypeFormGroup.get('entityType').value)) {
+                  <tb-entity-list
+                    class="flex-1"
+                    appearance="outline"
+                    subscriptSizing="dynamic"
+                    [entityType]="entityTypeFormGroup.get('entityType').value"
+                    [fetchEntitiesFunction]="entityTypeFormGroup.get('entityType').value === entityTypes.TB_RESOURCE ? fetchTenantResourcesFunction : null"
+                    required
+                    formControlName="entityIds">
+                  </tb-entity-list>
+                } @else {
+                  <tb-owner-entity-group-list
+                    [entityType]="entityTypeFormGroup.get('entityType').value"
+                    required
+                    formControlName="entityIds">
+                  </tb-owner-entity-group-list>
+                }
               }
             </div>
           </div>

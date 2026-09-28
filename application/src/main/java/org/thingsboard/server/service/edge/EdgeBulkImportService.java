@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.edge;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -9,6 +10,8 @@ import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.group.EntityGroup;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.sync.ie.importing.csv.BulkImportColumnType;
@@ -47,6 +50,12 @@ public class EdgeBulkImportService extends AbstractBulkImportService<Edge> {
                 case DESCRIPTION:
                     additionalInfo.set("description", new TextNode(value));
                     break;
+                case EDGE_LICENSE_KEY:
+                    entity.setEdgeLicenseKey(value);
+                    break;
+                case CLOUD_ENDPOINT:
+                    entity.setCloudEndpoint(value);
+                    break;
                 case ROUTING_KEY:
                     entity.setRoutingKey(value);
                     break;
@@ -60,9 +69,9 @@ public class EdgeBulkImportService extends AbstractBulkImportService<Edge> {
 
     @SneakyThrows
     @Override
-    protected Edge saveEntity(SecurityUser user, Edge entity, Map<BulkImportColumnType, String> fields) {
+    protected Edge saveEntity(SecurityUser user, Edge entity, EntityGroup entityGroup, Map<BulkImportColumnType, String> fields) {
         RuleChain edgeTemplateRootRuleChain = ruleChainService.getEdgeTemplateRootRuleChain(user.getTenantId());
-        return tbEdgeService.save(entity, edgeTemplateRootRuleChain, user);
+        return tbEdgeService.save(entity, edgeTemplateRootRuleChain, entityGroup, user);
     }
 
     @Override
@@ -72,9 +81,9 @@ public class EdgeBulkImportService extends AbstractBulkImportService<Edge> {
     }
 
     @Override
-    protected void setOwners(Edge entity, SecurityUser user) {
-        entity.setTenantId(user.getTenantId());
-        entity.setCustomerId(user.getCustomerId());
+    protected void setOwners(Edge entity, TenantId tenantId, CustomerId customerId) {
+        entity.setTenantId(tenantId);
+        entity.setCustomerId(customerId);
     }
 
     @Override

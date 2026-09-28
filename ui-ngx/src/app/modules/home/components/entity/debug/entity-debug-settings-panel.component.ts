@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   booleanAttribute,
   ChangeDetectionStrategy,
@@ -133,6 +134,10 @@ export class EntityDebugSettingsPanelComponent extends PageComponent implements 
         return getCurrentAuthState(this.store).ruleChainDebugPerTenantLimitsConfiguration;
       case EntityType.CALCULATED_FIELD:
         return getCurrentAuthState(this.store).calculatedFieldDebugPerTenantLimitsConfiguration;
+      case EntityType.INTEGRATION:
+        return getCurrentAuthState(this.store).integrationDebugPerTenantLimitsConfiguration;
+      case EntityType.CONVERTER:
+        return getCurrentAuthState(this.store).converterDebugPerTenantLimitsConfiguration;
     }
   }
 }

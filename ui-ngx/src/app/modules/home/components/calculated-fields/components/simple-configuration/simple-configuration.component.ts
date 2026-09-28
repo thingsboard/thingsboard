@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { booleanAttribute, Component, forwardRef, Input, OnChanges, SimpleChanges } from '@angular/core';
 import {
   ControlValueAccessor,
@@ -69,6 +70,9 @@ export class SimpleConfigurationComponent implements ControlValueAccessor, Valid
   testScript: () => Observable<string>;
 
   @Input({transform: booleanAttribute}) isEditValue = true;
+
+  @Input({ transform: booleanAttribute })
+  readonly: boolean;
 
   simpleConfiguration = this.fb.group({
     arguments: this.fb.control({}),

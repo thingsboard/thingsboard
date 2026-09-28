@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <ng-container [formGroup]="labelCardWidgetConfigForm">
@@ -23,6 +24,7 @@
         </tb-font-settings>
         <tb-color-input asBoxInput
                         colorClearButton
+                        useThemePalette
                         formControlName="labelColor">
         </tb-color-input>
       </div>
@@ -43,6 +45,7 @@
         </tb-material-icon-select>
         <tb-color-input asBoxInput
                         colorClearButton
+                        useThemePalette
                         formControlName="iconColor">
         </tb-color-input>
       </div>
