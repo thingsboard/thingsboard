@@ -1,12 +1,13 @@
 // SPDX-FileCopyrightText: Copyright The Thingsboard Authors
 // SPDX-License-Identifier: Apache-2.0
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { ItemType } from '@shared/models/iot-hub/iot-hub-item.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
+import { TbIotHubBrowseComponent } from '@home/components/iot-hub/iot-hub-browse.component';
 import { IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
 import { PageLink } from '@shared/models/page/page-link';
@@ -83,6 +84,8 @@ export class TbIotHubItemsPageComponent implements OnInit {
   config: ItemTypePageConfig;
   installedItemsCount = 0;
 
+  @ViewChild(TbIotHubBrowseComponent) private browse: TbIotHubBrowseComponent;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -109,7 +112,7 @@ export class TbIotHubItemsPageComponent implements OnInit {
     window.open(this.iotHubApiService.baseUrl + '/signup', '_blank');
   }
 
-  private loadInstalledCount(): void {
+  loadInstalledCount(): void {
     this.iotHubApiService.getInstalledItemsCount(this.config.type, { ignoreLoading: true }).subscribe(count => {
       this.installedItemsCount = count;
     });
@@ -147,7 +150,13 @@ export class TbIotHubItemsPageComponent implements OnInit {
         'default',
         true,
         openItem.preview
-      ).subscribe();
+      ).subscribe(result => {
+        // The deep-linked dialog is opened by this page rather than by the grid, so its outcome
+        // has to be fed back in by hand — the grid then refreshes and announces the new count.
+        if (result === 'installed' || result === 'updated' || result === 'deleted') {
+          this.browse?.reloadInstalledItems();
+        }
+      });
     });
   }
 
