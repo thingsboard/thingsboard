@@ -336,10 +336,12 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         Edge edge = edgeGrpcSession.getEdge();
         TenantId tenantId = edge.getTenantId();
         log.info("[{}][{}] edge [{}] connected successfully.", tenantId, edgeGrpcSession.getSessionId(), edgeId);
-        if (sessions.containsKey(edgeId)) {
-            destroySession(sessions.get(edgeId));
+        EdgeGrpcSession previousSession = sessions.put(edgeId, edgeGrpcSession);
+        if (previousSession != null && previousSession != edgeGrpcSession) {
+            // Make the new session current before closing the old one so its
+            // disconnect callback cannot publish a false offline transition.
+            destroySession(previousSession);
         }
-        sessions.put(edgeId, edgeGrpcSession);
         final Lock newEventLock = sessionNewEventsLocks.computeIfAbsent(edgeId, id -> new ReentrantLock());
         newEventLock.lock();
         try {
@@ -498,8 +500,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         EdgeId edgeId = edge.getId();
         log.info("[{}][{}] edge disconnected!", edgeId, sessionId);
         EdgeGrpcSession toRemove = sessions.get(edgeId);
-        if (toRemove.getSessionId().equals(sessionId)) {
-            toRemove = sessions.remove(edgeId);
+        if (toRemove != null && toRemove.getSessionId().equals(sessionId) && sessions.remove(edgeId, toRemove)) {
             final Lock newEventLock = sessionNewEventsLocks.computeIfAbsent(edgeId, id -> new ReentrantLock());
             newEventLock.lock();
             try {
@@ -514,10 +515,10 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             save(tenantId, edgeId, LAST_DISCONNECT_TIME, lastDisconnectTs);
             pushRuleEngineMessage(toRemove.getEdge().getTenantId(), edge, lastDisconnectTs, TbMsgType.DISCONNECT_EVENT);
             cancelScheduleEdgeEventsCheck(edgeId);
+            edgeIdServiceIdCache.evict(edgeId);
         } else {
             log.debug("[{}] edge session [{}] is not available anymore, nothing to remove. most probably this session is already outdated!", edgeId, sessionId);
         }
-        edgeIdServiceIdCache.evict(edgeId);
     }
 
     private void destroySession(EdgeGrpcSession session) {
