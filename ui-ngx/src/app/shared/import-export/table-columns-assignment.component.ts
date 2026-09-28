@@ -73,7 +73,8 @@ export class TableColumnsAssignmentComponent implements OnInit, ControlValueAcce
           { value: ImportEntityColumnType.sharedAttribute },
           { value: ImportEntityColumnType.serverAttribute },
           { value: ImportEntityColumnType.timeseries },
-          { value: ImportEntityColumnType.isGateway }
+          { value: ImportEntityColumnType.isGateway },
+          { value: ImportEntityColumnType.overwriteActivityTime }
         );
         this.columnDeviceCredentials.push(
           { value: ImportEntityColumnType.accessToken },
@@ -150,6 +151,13 @@ export class TableColumnsAssignmentComponent implements OnInit, ControlValueAcce
       const isGatewayColumnType = this.columnTypes.find((columnType) => columnType.value === ImportEntityColumnType.isGateway);
       if (isGatewayColumnType) {
         isGatewayColumnType.disabled = isSelectGateway;
+      }
+
+      const isSelectOverwriteActivityTime = this.columns.findIndex((column) => column.type === ImportEntityColumnType.overwriteActivityTime) > -1;
+
+      const overwriteActivityTimeColumnType = this.columnTypes.find((columnType) => columnType.value === ImportEntityColumnType.overwriteActivityTime);
+      if (overwriteActivityTimeColumnType) {
+        overwriteActivityTimeColumnType.disabled = isSelectOverwriteActivityTime;
       }
 
       this.columnDeviceCredentials.forEach((columnCredential) => {

@@ -3300,7 +3300,6 @@
         "community-string": "SNMP bendruomenės eilutė"
       },
       "isgateway": "Yra šliuzas",
-      "activity-time-from-gateway-device": "Aktyvumo laikas iš šliuzo įrenginio",
       "description": "Aprašymas",
       "routing-key": "Šliuzo raktas",
       "secret": "Šliuzo slaptas raktas"

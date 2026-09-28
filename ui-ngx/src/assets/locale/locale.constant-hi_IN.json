@@ -3807,7 +3807,6 @@
         "community-string": "SNMP कम्युनिटी स्ट्रिंग"
       },
       "isgateway": "Gateway है",
-      "activity-time-from-gateway-device": "Gateway डिवाइस से एक्टिविटी समय",
       "description": "वर्णन",
       "routing-key": "Edge की",
       "secret": "Edge सीक्रेट"

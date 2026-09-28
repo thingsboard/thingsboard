@@ -3237,7 +3237,6 @@
                 "community-string": "SNMP community string"
             },
             "isgateway": "Czy Gateway",
-            "activity-time-from-gateway-device": "Czas aktywności z Gateway",
             "description": "Opis",
             "edge-license-key": "Klucz licencyjny",
             "cloud-endpoint": "Punkt końcowy w chmurze",

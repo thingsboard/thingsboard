@@ -3807,7 +3807,6 @@
         "community-string": "SNMP fellesskapsstreng"
       },
       "isgateway": "Er gateway",
-      "activity-time-from-gateway-device": "Aktivitetstid fra gateway-enhet",
       "description": "Beskrivelse",
       "routing-key": "Edge-nøkkel",
       "secret": "Edge-hemmelighet"

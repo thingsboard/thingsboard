@@ -3807,7 +3807,6 @@
         "community-string": "SNMP community string"
       },
       "isgateway": "Is Gateway",
-      "activity-time-from-gateway-device": "Activiteitstijd van gatewayapparaat",
       "description": "Beschrijving",
       "routing-key": "Edge sleutel",
       "secret": "Edge geheim"

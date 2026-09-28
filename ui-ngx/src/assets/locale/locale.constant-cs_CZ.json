@@ -2081,7 +2081,6 @@
             "entity-field": "Pole entity",
             "access-token": "Přístupový token",
             "isgateway": "Je bránou",
-            "activity-time-from-gateway-device": "Čas aktivity ze zařízení brány",
             "description": "Popis",
             "routing-key": "Klíč edge",
             "secret": "Edge secret"

@@ -3817,7 +3817,6 @@
                 "community-string": "SNMP 커뮤니티 문자열"
             },
             "isgateway": "게이트웨이 여부",
-            "activity-time-from-gateway-device": "게이트웨이 장치의 활동 시간",
             "description": "설정",
             "routing-key": "엣지 키",
             "secret": "엣지 시크릿"

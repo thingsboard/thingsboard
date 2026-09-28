@@ -2783,7 +2783,6 @@
                 "lwm2m-server-public-key-id": "ID o clau pública del servidor LwM2M"
             },
             "isgateway": "Es Gateway",
-            "activity-time-from-gateway-device": "Data d'activitat des del dispositiu gateway",
             "description": "Descripció",
             "edge-license-key": "Clau de llicència",
             "cloud-endpoint": "Punt final del núvol",

@@ -3807,7 +3807,6 @@
         "community-string": "SNMP 团体字符串"
       },
       "isgateway": "是否为 Gateway",
-      "activity-time-from-gateway-device": "来自 Gateway 设备的活动时间",
       "description": "描述",
       "routing-key": "Edge 密钥",
       "secret": "Edge 密钥"

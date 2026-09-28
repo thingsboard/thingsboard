@@ -3807,7 +3807,6 @@
         "community-string": "SNMP-Community-String"
       },
       "isgateway": "Ist Gateway",
-      "activity-time-from-gateway-device": "Aktivitätszeit vom Gateway-Gerät",
       "description": "Beschreibung",
       "routing-key": "Edge-Schlüssel",
       "secret": "Edge-Geheimnis"

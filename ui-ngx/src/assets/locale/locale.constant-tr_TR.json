@@ -3807,7 +3807,6 @@
         "community-string": "SNMP topluluk dizesi"
       },
       "isgateway": "Ağ Geçidi mi",
-      "activity-time-from-gateway-device": "Ağ geçidi cihazından etkinlik zamanı",
       "description": "Açıklama",
       "routing-key": "Edge anahtarı",
       "secret": "Edge gizli anahtarı"
