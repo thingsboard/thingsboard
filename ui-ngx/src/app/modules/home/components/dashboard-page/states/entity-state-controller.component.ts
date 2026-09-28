@@ -1,6 +1,7 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
-import { Component, NgZone, OnDestroy, OnInit } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { Component, Inject, NgZone, OnDestroy, OnInit } from '@angular/core';
 import { StateObject, StateParams } from '@core/api/widget-api.models';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, Observable, of } from 'rxjs';
@@ -14,9 +15,12 @@ import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { EntityService } from '@core/http/entity.service';
 import { EntityType } from '@shared/models/entity-type.models';
 import { map, tap } from 'rxjs/operators';
+import { WINDOW } from '@core/services/window.service';
+import { EntityGroupInfo } from '@shared/models/entity-group.models';
 import { MobileService } from '@core/services/mobile.service';
 import { BreadcrumbService } from '@core/services/breadcrumb.service';
 
+// @dynamic
 @Component({
     selector: 'tb-entity-state-controller',
     templateUrl: './entity-state-controller.component.html',
@@ -30,15 +34,16 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
   selectedStateIndex = -1;
 
   constructor(protected router: Router,
+              @Inject(WINDOW) protected window: Window,
               protected route: ActivatedRoute,
               protected ngZone: NgZone,
               protected statesControllerService: StatesControllerService,
-              private utils: UtilsService,
+              protected utils: UtilsService,
               private entityService: EntityService,
               private mobileService: MobileService,
               private dashboardUtils: DashboardUtilsService,
               private breadcrumbService: BreadcrumbService) {
-    super(router, route, ngZone, statesControllerService);
+    super(router, route, utils, window, ngZone, statesControllerService);
   }
 
   ngOnInit(): void {
@@ -318,6 +323,9 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
             tap((entity) => {
               params.entityName = entity.name;
               params.entityLabel = entity.label;
+              if (params.entityId.entityType === EntityType.ENTITY_GROUP) {
+                params.entityGroupType = (entity as EntityGroupInfo).type;
+              }
             }),
           map(() => null)
         );
@@ -328,6 +336,9 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
   }
 
   private isEntityResolved(params: StateParams): boolean {
+    if (params.entityId && params.entityId.entityType === EntityType.ENTITY_GROUP && !params.entityGroupType) {
+      return false;
+    }
     return !(!params.entityName || !params.entityName.length);
   }
 

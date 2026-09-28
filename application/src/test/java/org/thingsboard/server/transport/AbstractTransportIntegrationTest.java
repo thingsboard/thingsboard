@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport;
 
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +17,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 public abstract class AbstractTransportIntegrationTest extends AbstractControllerTest {
 
     public static final int DEFAULT_WAIT_TIMEOUT_SECONDS = 30;
+
+    protected static final String CLIENT_ATTRIBUTE_KEYS = "clientStr,clientBool,clientDbl,clientLong,clientJson";
+    protected static final String SHARED_ATTRIBUTE_KEYS = "sharedStr,sharedBool,sharedDbl,sharedLong,sharedJson";
 
     protected static final AtomicInteger atomicInteger = new AtomicInteger(2);
 

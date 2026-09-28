@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.script.api.js;
 
 import com.google.common.hash.Hashing;
@@ -97,11 +98,21 @@ public abstract class AbstractJsInvokeService extends AbstractScriptInvokeServic
 
     protected abstract void doRelease(UUID scriptId, JsScriptInfo scriptInfo) throws Exception;
 
+    protected abstract boolean isLocal();
+
     private String generateJsScript(ScriptType scriptType, String functionName, String scriptBody, String... argNames) {
-        if (scriptType == ScriptType.RULE_NODE_SCRIPT) {
-            return RuleNodeScriptFactory.generateRuleNodeScript(functionName, scriptBody, argNames);
+        switch (scriptType) {
+            case RULE_NODE_SCRIPT:
+                return RuleNodeScriptFactory.generateRuleNodeScript(functionName, scriptBody, argNames);
+            case ATTRIBUTES_SCRIPT:
+                return AttributesScriptFactory.generateAttributesScript(functionName, scriptBody);
+            case UPLINK_CONVERTER_SCRIPT:
+                return UplinkConverterScriptFactory.generateUplinkConverterScript(functionName, scriptBody, isLocal());
+            case DOWNLINK_CONVERTER_SCRIPT:
+                return DownlinkConverterScriptFactory.generateDownlinkConverterScript(functionName, scriptBody, isLocal());
+            default:
+                throw new RuntimeException("No script factory implemented for scriptType: " + scriptType);
         }
-        throw new RuntimeException("No script factory implemented for scriptType: " + scriptType);
     }
 
     protected String constructFunctionName(UUID scriptId, String scriptHash) {

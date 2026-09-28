@@ -1,11 +1,12 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div [formGroup]="fieldFormGroup" class="calculated-field-dialog-container flex flex-col">
-  <mat-toolbar class="tb-dialog-header">
+  <mat-toolbar color="tb-primary" class="tb-bottom-border">
     <h2>{{ 'entity.type-calculated-field' | translate}}</h2>
     <span class="flex-1"></span>
     <div tb-help="calculatedField"></div>
@@ -49,7 +50,7 @@
                             entityTypeLabel="{{ 'entity.entity-type' | translate }}"
                             [filterAllowedEntityTypes]="false"
                             [allowedEntityTypes]="calculatedFieldsEntityTypeList"
-                            [defaultEntityType]="EntityType.DEVICE_PROFILE"
+                            [defaultEntityType]="defaultEntityType"
                             (entityChanged)="changeEntity($event)">
           </tb-entity-select>
         }
@@ -83,6 +84,7 @@
                                        [entityName]="entityName"
                                        [ownerId]="ownerId"
                                        [tenantId]="data.tenantId"
+                                       [readonly]="data.readonly"
           ></tb-geofencing-configuration>
         }
         @case (CalculatedFieldType.PROPAGATION) {
@@ -93,6 +95,7 @@
                                         [tenantId]="data.tenantId"
                                         [ownerId]="ownerId"
                                         [testScript]="onTestScript.bind(this)"
+                                        [readonly]="data.readonly"
           ></tb-propagation-configuration>
         }
         @case (CalculatedFieldType.RELATED_ENTITIES_AGGREGATION) {
@@ -102,6 +105,7 @@
                                                      [entityName]="entityName"
                                                      [tenantId]="data.tenantId"
                                                      [testScript]="onTestScript.bind(this)"
+                                                     [readonly]="data.readonly"
           ></tb-related-entities-aggregation-component>
         }
         @case (CalculatedFieldType.ENTITY_AGGREGATION) {
@@ -110,6 +114,7 @@
                                            [entityId]="entityId"
                                            [entityName]="entityName"
                                            [tenantId]="data.tenantId"
+                                           [readonly]="data.readonly"
           ></tb-entity-aggregation-component>
         }
         @default {
@@ -121,6 +126,7 @@
                                    [tenantId]="data.tenantId"
                                    [isScript]="fieldFormGroup.get('type').value === CalculatedFieldType.SCRIPT"
                                    [testScript]="onTestScript.bind(this)"
+                                   [readonly]="data.readonly"
           ></tb-simple-configuration>
         }
       }
@@ -134,10 +140,12 @@
             (click)="cancel()">
       {{ 'action.cancel' | translate }}
     </button>
-    <button mat-raised-button color="primary"
-            (click)="add()"
-            [disabled]="isLoading || fieldFormGroup.invalid || !fieldFormGroup.dirty">
-      {{ data.buttonTitle | translate }}
-    </button>
+    @if (!data.readonly) {
+      <button mat-raised-button color="primary"
+              (click)="add()"
+              [disabled]="isLoading || fieldFormGroup.invalid || !fieldFormGroup.dirty">
+        {{ data.buttonTitle | translate }}
+      </button>
+    }
   </div>
 </div>

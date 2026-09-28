@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div class="tb-mobile-page-item-row-component-container">
@@ -14,7 +15,7 @@
                             matTooltipPosition="above"
                             formControlName="visible"></mat-slide-toggle>
           <tb-material-icon-select asBoxInput
-                                   color="#305680"
+                                   color="var(--tb-primary-500)"
                                    formControlName="icon">
           </tb-material-icon-select>
           <div tbTruncateWithTooltip> {{ itemName }} </div>

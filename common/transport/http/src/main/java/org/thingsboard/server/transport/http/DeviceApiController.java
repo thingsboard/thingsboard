@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.http;
 
 import com.google.gson.JsonObject;
@@ -42,12 +43,13 @@ import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.auth.SessionInfoCreator;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
-import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetOtaPackageRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetOtaPackageResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ResponseStatus;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionCloseNotificationProto;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.SubscribeToAttributeUpdatesMsg;
@@ -128,22 +130,22 @@ public class DeviceApiController implements TbTransportService {
     public DeferredResult<ResponseEntity> getDeviceAttributes(
             @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "YOUR_DEVICE_ACCESS_TOKEN"))
             @PathVariable("deviceToken") String deviceToken,
-            @Parameter(description = "Comma separated key names for attribute with client scope", required = true , schema = @Schema(defaultValue = "state"))
+            @Parameter(description = "Comma separated key names for attribute with client scope. Leave empty and set allClientKeys=true to fetch all client-scope attributes", required = false)
             @RequestParam(value = "clientKeys", required = false, defaultValue = "") String clientKeys,
-            @Parameter(description = "Comma separated key names for attribute with shared scope", required = true , schema = @Schema(defaultValue = "configuration"))
-            @RequestParam(value = "sharedKeys", required = false, defaultValue = "") String sharedKeys) {
+            @Parameter(description = "Comma separated key names for attribute with shared scope. Leave empty and set allSharedKeys=true to fetch all shared-scope attributes", required = false)
+            @RequestParam(value = "sharedKeys", required = false, defaultValue = "") String sharedKeys,
+            @Parameter(description = "Set to true to return ALL client-scope attributes (ignores clientKeys)")
+            @RequestParam(value = "allClientKeys", required = false, defaultValue = "false") boolean allClientKeys,
+            @Parameter(description = "Set to true to return ALL shared-scope attributes (ignores sharedKeys)")
+            @RequestParam(value = "allSharedKeys", required = false, defaultValue = "false") boolean allSharedKeys) {
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<>();
         transportContext.getTransportService().process(DeviceTransportType.DEFAULT, ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
                 new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
                     GetAttributeRequestMsg.Builder request = GetAttributeRequestMsg.newBuilder().setRequestId(0);
                     List<String> clientKeySet = !StringUtils.isEmpty(clientKeys) ? Arrays.asList(clientKeys.split(",")) : null;
                     List<String> sharedKeySet = !StringUtils.isEmpty(sharedKeys) ? Arrays.asList(sharedKeys.split(",")) : null;
-                    if (clientKeySet != null) {
-                        request.addAllClientAttributeNames(clientKeySet);
-                    }
-                    if (sharedKeySet != null) {
-                        request.addAllSharedAttributeNames(sharedKeySet);
-                    }
+                    JsonConverter.applyClientScope(request, allClientKeys, clientKeySet);
+                    JsonConverter.applySharedScope(request, allSharedKeys, sharedKeySet);
                     TransportService transportService = transportContext.getTransportService();
                     transportService.registerSyncSession(sessionInfo,
                             new HttpSessionListener(responseWriter, transportContext.getTransportService(), sessionInfo),
@@ -162,7 +164,7 @@ public class DeviceApiController implements TbTransportService {
                     + REQUIRE_ACCESS_TOKEN)
     @RequestMapping(value = "/{deviceToken}/attributes", method = RequestMethod.POST)
     public DeferredResult<ResponseEntity> postDeviceAttributes(
-            @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true , schema = @Schema(defaultValue = "YOUR_DEVICE_ACCESS_TOKEN"))
+            @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "YOUR_DEVICE_ACCESS_TOKEN"))
             @PathVariable("deviceToken") String deviceToken,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "JSON with attribute key-value pairs. See API call description for example.")
             @RequestBody String json) {
@@ -183,7 +185,7 @@ public class DeviceApiController implements TbTransportService {
                     + REQUIRE_ACCESS_TOKEN)
     @RequestMapping(value = "/{deviceToken}/telemetry", method = RequestMethod.POST)
     public DeferredResult<ResponseEntity> postTelemetry(
-            @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true , schema = @Schema(defaultValue = "YOUR_DEVICE_ACCESS_TOKEN"))
+            @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "YOUR_DEVICE_ACCESS_TOKEN"))
             @PathVariable("deviceToken") String deviceToken,
             @RequestBody String json, HttpServletRequest request) {
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<ResponseEntity>();
@@ -208,7 +210,7 @@ public class DeviceApiController implements TbTransportService {
                     + REQUIRE_ACCESS_TOKEN)
     @RequestMapping(value = "/{deviceToken}/claim", method = RequestMethod.POST)
     public DeferredResult<ResponseEntity> saveClaimingInfo(
-            @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true , schema = @Schema(defaultValue = "YOUR_DEVICE_ACCESS_TOKEN"))
+            @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "YOUR_DEVICE_ACCESS_TOKEN"))
             @PathVariable("deviceToken") String deviceToken,
             @RequestBody(required = false) String json) {
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<>();
@@ -229,7 +231,7 @@ public class DeviceApiController implements TbTransportService {
                     REQUIRE_ACCESS_TOKEN)
     @RequestMapping(value = "/{deviceToken}/rpc", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public DeferredResult<ResponseEntity> subscribeToCommands(
-            @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true , schema = @Schema(defaultValue = "YOUR_DEVICE_ACCESS_TOKEN"))
+            @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "YOUR_DEVICE_ACCESS_TOKEN"))
             @PathVariable("deviceToken") String deviceToken,
             @Parameter(description = "Optional timeout of the long poll. Typically less then 60 seconds, since limited on the server side.")
             @RequestParam(value = "timeout", required = false, defaultValue = "0") long timeout) {
@@ -257,9 +259,9 @@ public class DeviceApiController implements TbTransportService {
     })
     @RequestMapping(value = "/{deviceToken}/rpc/{requestId}", method = RequestMethod.POST)
     public DeferredResult<ResponseEntity> replyToCommand(
-            @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true , schema = @Schema(defaultValue = "YOUR_DEVICE_ACCESS_TOKEN"))
+            @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "YOUR_DEVICE_ACCESS_TOKEN"))
             @PathVariable("deviceToken") String deviceToken,
-            @Parameter(description = "RPC request id from the incoming RPC request", required = true , schema = @Schema(defaultValue = "123"))
+            @Parameter(description = "RPC request id from the incoming RPC request", required = true, schema = @Schema(defaultValue = "123"))
             @PathVariable("requestId") Integer requestId,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Reply to the RPC request, JSON. For example: {\"status\":\"success\"}", required = true)
             @RequestBody String json, HttpServletRequest httpServletRequest) {
@@ -289,7 +291,7 @@ public class DeviceApiController implements TbTransportService {
     })
     @RequestMapping(value = "/{deviceToken}/rpc", method = RequestMethod.POST)
     public DeferredResult<ResponseEntity> postRpcRequest(
-            @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true , schema = @Schema(defaultValue = "YOUR_DEVICE_ACCESS_TOKEN"))
+            @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "YOUR_DEVICE_ACCESS_TOKEN"))
             @PathVariable("deviceToken") String deviceToken,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "The RPC request JSON", required = true)
             @RequestBody String json, HttpServletRequest httpServletRequest) {
@@ -316,7 +318,7 @@ public class DeviceApiController implements TbTransportService {
                     REQUIRE_ACCESS_TOKEN)
     @RequestMapping(value = "/{deviceToken}/attributes/updates", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public DeferredResult<ResponseEntity> subscribeToAttributes(
-            @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true , schema = @Schema(defaultValue = "YOUR_DEVICE_ACCESS_TOKEN"))
+            @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "YOUR_DEVICE_ACCESS_TOKEN"))
             @PathVariable("deviceToken") String deviceToken,
             @Parameter(description = "Optional timeout of the long poll. Typically less then 60 seconds, since limited on the server side.")
             @RequestParam(value = "timeout", required = false, defaultValue = "0") long timeout) {
@@ -347,7 +349,7 @@ public class DeviceApiController implements TbTransportService {
                     REQUIRE_ACCESS_TOKEN)
     @RequestMapping(value = "/{deviceToken}/firmware", method = RequestMethod.GET)
     public DeferredResult<ResponseEntity> getFirmware(
-            @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true , schema = @Schema(defaultValue = "YOUR_DEVICE_ACCESS_TOKEN"))
+            @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "YOUR_DEVICE_ACCESS_TOKEN"))
             @PathVariable("deviceToken") String deviceToken,
             @Parameter(description = "Title of the firmware, corresponds to the value of 'fw_title' attribute.", required = true)
             @RequestParam(value = "title") String title,
@@ -373,7 +375,7 @@ public class DeviceApiController implements TbTransportService {
                     REQUIRE_ACCESS_TOKEN)
     @RequestMapping(value = "/{deviceToken}/software", method = RequestMethod.GET)
     public DeferredResult<ResponseEntity> getSoftware(
-            @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true , schema = @Schema(defaultValue = "YOUR_DEVICE_ACCESS_TOKEN"))
+            @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "YOUR_DEVICE_ACCESS_TOKEN"))
             @PathVariable("deviceToken") String deviceToken,
             @Parameter(description = "Title of the software, corresponds to the value of 'sw_title' attribute.", required = true)
             @RequestParam(value = "title") String title,
@@ -419,7 +421,7 @@ public class DeviceApiController implements TbTransportService {
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<>();
         transportContext.getTransportService().process(DeviceTransportType.DEFAULT, ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
                 new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
-                    TransportProtos.GetOtaPackageRequestMsg requestMsg = TransportProtos.GetOtaPackageRequestMsg.newBuilder()
+                    GetOtaPackageRequestMsg requestMsg = GetOtaPackageRequestMsg.newBuilder()
                             .setTenantIdMSB(sessionInfo.getTenantIdMSB())
                             .setTenantIdLSB(sessionInfo.getTenantIdLSB())
                             .setDeviceIdMSB(sessionInfo.getDeviceIdMSB())
@@ -490,8 +492,8 @@ public class DeviceApiController implements TbTransportService {
         private final int chunk;
 
         @Override
-        public void onSuccess(TransportProtos.GetOtaPackageResponseMsg otaPackageResponseMsg) {
-            if (!TransportProtos.ResponseStatus.SUCCESS.equals(otaPackageResponseMsg.getResponseStatus())) {
+        public void onSuccess(GetOtaPackageResponseMsg otaPackageResponseMsg) {
+            if (!ResponseStatus.SUCCESS.equals(otaPackageResponseMsg.getResponseStatus())) {
                 responseWriter.setResult(new ResponseEntity<>(HttpStatus.NOT_FOUND));
             } else if (title.equals(otaPackageResponseMsg.getTitle()) && version.equals(otaPackageResponseMsg.getVersion())) {
                 String otaPackageId = new UUID(otaPackageResponseMsg.getOtaPackageIdMSB(), otaPackageResponseMsg.getOtaPackageIdLSB()).toString();
@@ -597,7 +599,7 @@ public class DeviceApiController implements TbTransportService {
         @Override
         public void onDeviceDeleted(DeviceId deviceId) {
             UUID sessionId = new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB());
-            log.trace("[{}] Received device deleted notification for device with id: {}",sessionId, deviceId);
+            log.trace("[{}] Received device deleted notification for device with id: {}", sessionId, deviceId);
             responseWriter.setResult(new ResponseEntity<>("Device was deleted!", HttpStatus.FORBIDDEN));
         }
 

@@ -1,6 +1,8 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
-import { ChangeDetectorRef, Component, forwardRef, Input, OnDestroy } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { ChangeDetectorRef, Component, forwardRef, Input } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -22,7 +24,7 @@ import {
   Lwm2mObjectAddInstancesDialogComponent
 } from '@home/components/profile/device/lwm2m/lwm2m-object-add-instances-dialog.component';
 import _ from 'lodash';
-import { Subscription } from 'rxjs';
+import { GtSmBreakpointAwareDirective } from '@shared/components/gt-sm-breakpoint-aware.directive';
 
 @Component({
     selector: 'tb-profile-lwm2m-observe-attr-telemetry',
@@ -43,7 +45,7 @@ import { Subscription } from 'rxjs';
     standalone: false
 })
 
-export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor, OnDestroy, Validator {
+export class Lwm2mObserveAttrTelemetryComponent extends GtSmBreakpointAwareDirective implements ControlValueAccessor, Validator {
 
   modelsFormGroup: UntypedFormGroup;
 
@@ -64,23 +66,19 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
   @Input()
   disabled: boolean;
 
-  private valueChange$: Subscription = null;
   private propagateChange = (v: any) => { };
 
   constructor(private fb: UntypedFormBuilder,
               private dialog: MatDialog,
               private cd: ChangeDetectorRef) {
+    super();
     this.modelsFormGroup = this.fb.group({
       models: this.fb.array([])
     });
 
-    this.valueChange$ = this.modelsFormGroup.valueChanges.subscribe(value => this.updateModel(value.models));
-  }
-
-  ngOnDestroy() {
-    if (this.valueChange$) {
-      this.valueChange$.unsubscribe();
-    }
+    this.modelsFormGroup.valueChanges.pipe(
+      takeUntilDestroyed()
+    ).subscribe(value => this.updateModel(value.models));
   }
 
   registerOnChange(fn: any): void {
@@ -178,6 +176,10 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
       $event.stopPropagation();
       $event.preventDefault();
     }
+    this.openAddInstancesDialog(control);
+  }
+
+  public openAddInstancesDialog(control: AbstractControl): void {
     const object: ObjectLwM2M = control.value;
     const instancesId: Set<number> = this.instancesToSetId(object.instances);
     this.dialog.open<Lwm2mObjectAddInstancesDialogComponent, Lwm2mObjectAddInstancesData>(Lwm2mObjectAddInstancesDialogComponent, {

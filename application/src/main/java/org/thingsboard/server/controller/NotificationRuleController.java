@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import io.swagger.v3.oas.annotations.Parameter;
@@ -24,14 +25,15 @@ import org.thingsboard.server.common.data.notification.rule.NotificationRuleInfo
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.permission.Operation;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.notification.NotificationRuleService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.service.security.permission.Operation;
 
 import java.util.UUID;
 
+import static org.thingsboard.server.common.data.permission.Resource.NOTIFICATION;
 import static org.thingsboard.server.controller.ControllerConstants.MARKDOWN_CODE_BLOCK_END;
 import static org.thingsboard.server.controller.ControllerConstants.MARKDOWN_CODE_BLOCK_START;
 import static org.thingsboard.server.controller.ControllerConstants.NEW_LINE;
@@ -41,7 +43,6 @@ import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DE
 import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH;
-import static org.thingsboard.server.service.security.permission.Resource.NOTIFICATION;
 
 @RestController
 @TbCoreComponent
@@ -143,7 +144,7 @@ public class NotificationRuleController extends BaseController {
                                                                @Parameter(description = SORT_ORDER_DESCRIPTION)
                                                                @RequestParam(required = false) String sortOrder,
                                                                @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
-        // PE: generic permission
+        accessControlService.checkPermission(user, NOTIFICATION, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         return notificationRuleService.findNotificationRulesInfosByTenantId(user.getTenantId(), pageLink);
     }

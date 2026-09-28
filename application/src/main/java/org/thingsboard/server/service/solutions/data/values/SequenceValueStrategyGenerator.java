@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.solutions.data.values;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -16,14 +17,14 @@ public class SequenceValueStrategyGenerator extends TelemetryGenerator {
     public SequenceValueStrategyGenerator(TelemetryProfile telemetryProfile) {
         super(telemetryProfile);
         this.strategy = (SequenceValueStrategyDefinition) telemetryProfile.getValueStrategy();
-        max = strategy.getTelemetry().fields().next().getValue().size() - 1;
+        max = strategy.getTelemetry().properties().iterator().next().getValue().size() - 1;
         index = strategy.isRandom() ? new Random().nextInt(max + 1) : 0;
 
     }
 
     @Override
     public void addValue(long ts, ObjectNode values) {
-        strategy.getTelemetry().fields().forEachRemaining(entry -> {
+        strategy.getTelemetry().properties().forEach(entry -> {
             String key = entry.getKey();
             values.set(key, entry.getValue().get(index));
         });

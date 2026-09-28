@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <section class="tb-form-panel no-gap no-border" [class.no-padding]="isAdd" [formGroup]="entityForm">
@@ -60,20 +61,15 @@
         </mat-error>
       }
     </mat-form-field>
-    <mat-form-field class="flex" appearance="outline">
-      <mat-label translate>admin.oauth2.client-secret</mat-label>
-      <input matInput formControlName="clientSecret">
-      @if (entityForm.get('clientSecret').hasError('required')) {
-        <mat-error>
-          {{ 'admin.oauth2.client-secret-required' | translate }}
-        </mat-error>
-      }
-      @if (entityForm.get('clientSecret').hasError('maxlength')) {
-        <mat-error>
-          {{ 'admin.oauth2.client-secret-max-length' | translate }}
-        </mat-error>
-      }
-    </mat-form-field>
+    <tb-secret-key-input formControlName="clientSecret"
+                         required
+                         appearance="outline"
+                         class="mat-block flex-1"
+                         [maxLength]="2048"
+                         label="{{ 'admin.oauth2.client-secret' | translate }}"
+                         maxLengthErrorText="{{ 'admin.oauth2.client-secret-max-length' | translate }}"
+                         requiredText="{{ 'admin.oauth2.client-secret-required' | translate }}">
+    </tb-secret-key-input>
   </div>
   <mat-expansion-panel class="configuration-panel mat-elevation-z0" [expanded]="advancedExpanded">
     <mat-expansion-panel-header>
@@ -321,6 +317,17 @@
                       {{ 'admin.oauth2.always-fullscreen' | translate}}
                     </mat-slide-toggle>
                   </div>
+                  <div class="tb-form-row tb-standard-fields no-border no-padding">
+                    <mat-form-field class="flex" appearance="outline">
+                      <mat-label translate>admin.oauth2.parent-customer-name-pattern</mat-label>
+                      <input matInput formControlName="parentCustomerNamePattern">
+                    </mat-form-field>
+                  </div>
+                  <tb-string-items-list
+                    appearance="outline"
+                    formControlName="userGroupsNamePattern"
+                    label="{{ 'admin.oauth2.user-groups-name-pattern' | translate }}">
+                  </tb-string-items-list>
                 </section>
               }
               @if (entityForm.get('mapperConfig.type').value === mapperType.CUSTOM && entityForm.get('mapperConfig.custom')) {
@@ -356,15 +363,13 @@
                         </mat-error>
                       }
                     </mat-form-field>
-                    <mat-form-field class="flex" appearance="outline">
-                      <mat-label translate>common.password</mat-label>
-                      <input matInput formControlName="password" autocomplete="new-password">
-                      @if (entityForm.get('mapperConfig.custom.password').hasError('maxlength')) {
-                        <mat-error>
-                          {{ 'admin.oauth2.password-max-length' | translate }}
-                        </mat-error>
-                      }
-                    </mat-form-field>
+                    <tb-secret-key-input formControlName="password"
+                                         class="mat-block flex-1"
+                                         appearance="outline"
+                                         [maxLength]="255"
+                                         label="{{ 'common.password' | translate }}"
+                                         maxLengthErrorText="{{ 'admin.oauth2.password-max-length' | translate }}">
+                    </tb-secret-key-input>
                   </div>
                   <mat-slide-toggle class="tb-flex mat-slide" style="margin-bottom: 16px"
                                     formControlName="sendToken">

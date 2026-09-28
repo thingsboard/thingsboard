@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.entitiy.tenant;
 
 import lombok.RequiredArgsConstructor;
@@ -7,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.dao.group.EntityGroupService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.dao.tenant.TenantService;
@@ -30,6 +32,7 @@ public class DefaultTbTenantService extends AbstractTbEntityService implements T
     private final TbQueueService tbQueueService;
     private final TenantProfileService tenantProfileService;
     private final EntitiesVersionControlService versionControlService;
+    private final EntityGroupService entityGroupService;
 
     @Override
     public Tenant save(Tenant tenant) throws Exception {
@@ -39,9 +42,11 @@ public class DefaultTbTenantService extends AbstractTbEntityService implements T
         Tenant savedTenant = tenantService.saveTenant(tenant, tenantId -> {
             installScripts.createDefaultRuleChains(tenantId);
             installScripts.createDefaultEdgeRuleChains(tenantId);
+            entityGroupService.createDefaultTenantEntityGroups(tenantId);
             if (!isTestProfile()) {
                 installScripts.createDefaultTenantDashboards(tenantId, null);
             }
+            installScripts.createSystemNotificationTemplates(tenantId);
         });
         tenantProfileCache.evict(savedTenant.getId());
 

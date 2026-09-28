@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, DestroyRef, Inject, OnInit, SkipSelf, ViewChild } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
@@ -22,11 +23,14 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 import { EntityType } from '@shared/models/entity-type.models';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { Operation, Resource } from '@shared/models/security.models';
 
 export interface RelationDialogData {
   isAdd: boolean;
   direction: EntitySearchDirection;
   relation: EntityRelation;
+  readonly: boolean;
 }
 
 @Component({
@@ -45,6 +49,7 @@ export class RelationDialogComponent extends DialogComponent<RelationDialogCompo
   isAdd: boolean;
   direction: EntitySearchDirection;
   entitySearchDirection = EntitySearchDirection;
+  readonly: boolean;
 
   additionalInfo: FormControl;
 
@@ -61,14 +66,18 @@ export class RelationDialogComponent extends DialogComponent<RelationDialogCompo
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<RelationDialogComponent, boolean>,
               public fb: FormBuilder,
-              private destroyRef: DestroyRef) {
+              private destroyRef: DestroyRef,
+              private userPermissionService: UserPermissionsService) {
     super(store, router, dialogRef);
     this.isAdd = data.isAdd;
     this.direction = data.direction;
+    this.readonly = data.readonly;
   }
 
   ngOnInit(): void {
-    if (this.authUser.authority === Authority.TENANT_ADMIN) {
+    const hasRuleChainPermission = this.userPermissionService
+      .hasGenericPermission(Resource.RULE_CHAIN, this.readonly ? Operation.READ : Operation.WRITE);
+    if (this.authUser.authority === Authority.TENANT_ADMIN && hasRuleChainPermission) {
       this.additionEntityTypes = {[EntityType.RULE_CHAIN]: null};
     }
 
@@ -82,6 +91,9 @@ export class RelationDialogComponent extends DialogComponent<RelationDialogCompo
     if (!this.isAdd) {
       this.relationFormGroup.get('type').disable();
       this.relationFormGroup.get('targetEntityIds').disable();
+    }
+    if (this.readonly) {
+      this.additionalInfo.disable();
     }
     this.additionalInfo.valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)

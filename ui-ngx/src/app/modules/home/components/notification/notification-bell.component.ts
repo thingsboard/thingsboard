@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -19,6 +20,7 @@ import { NotificationSubscriber } from '@shared/models/telemetry/telemetry.model
 import { select, Store } from '@ngrx/store';
 import { selectIsAuthenticated } from '@core/auth/auth.selectors';
 import { AppState } from '@core/core.state';
+import { WhiteLabelingService } from '@core/http/white-labeling.service';
 
 @Component({
     selector: 'tb-notification-bell',
@@ -48,7 +50,8 @@ export class NotificationBellComponent implements OnDestroy {
     private popoverService: TbPopoverService,
     private renderer: Renderer2,
     private viewContainerRef: ViewContainerRef,
-    private store: Store<AppState>,) {
+    private store: Store<AppState>,
+    public wl: WhiteLabelingService) {
     this.store.pipe(select(selectIsAuthenticated)).subscribe((value) => {
       if (value) {
         this.initSubscription();

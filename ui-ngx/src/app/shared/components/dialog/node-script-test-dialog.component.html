@@ -1,12 +1,13 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <form class="tb-node-script-test-dialog"
       [formGroup]="nodeScriptTestFormGroup" (ngSubmit)="save()">
-  <mat-toolbar class="tb-dialog-header flex flex-row">
+  <mat-toolbar color="tb-primary" class="tb-bottom-border flex flex-row">
     <h2>{{ 'rulenode.test-script-function' | translate }} ({{ (scriptLang === scriptLanguage.JS ? 'rulenode.script-lang-java-script' : 'rulenode.script-lang-tbel') | translate }})</h2>
     <span class="flex-1"></span>
     <button mat-icon-button
@@ -50,7 +51,7 @@
               <label translate>rulenode.metadata</label>
             </div>
             <tb-key-val-map
-              subscriptSizing="fixed"
+              subscriptSizing="dynamic"
               appearance="outline"
               formControlName="metadata"
               [isValueRequired]="false"
@@ -62,7 +63,7 @@
       <div #bottomPanel class="tb-split tb-split-vertical">
         <div #bottomLeftPanel class="tb-split tb-content">
           <div class="tb-resize-container">
-            <div class="tb-editor-area-title-panel tb-js-function" [class.tb-js-function-help]="data.helpId">
+            <div class="tb-editor-area-title-panel tb-js-function" [class.tb-js-function-help]="data.helpId && wl.isEnableHelpLinks()">
               <label>{{ functionTitle }}</label>
             </div>
             <tb-js-func

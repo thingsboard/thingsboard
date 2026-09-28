@@ -1,18 +1,23 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.security.system;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.core.AuthenticationException;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.model.UserPasswordPolicy;
 import org.thingsboard.server.common.data.security.model.mfa.PlatformTwoFaSettings;
 import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.security.model.token.AccessJwtToken;
 
 public interface SystemSecurityService {
 
@@ -24,10 +29,16 @@ public interface SystemSecurityService {
 
     void validatePassword(String password, UserCredentials userCredentials) throws DataValidationException;
 
+    String getBaseUrl(Authority authority, TenantId tenantId, CustomerId customerId, HttpServletRequest httpServletRequest);
+
     String getBaseUrl(TenantId tenantId, CustomerId customerId, HttpServletRequest httpServletRequest);
 
     void logLoginAction(User user, Object authenticationDetails, ActionType actionType, Exception e);
 
     void logLoginAction(User user, Object authenticationDetails, ActionType actionType, String provider, Exception e);
+
+    AccessJwtToken createUserAccessToken(TenantId tenantId, UserId userId) throws ThingsboardException;
+
+    AccessJwtToken createUserAccessTokenFromPublicId(TenantId tenantId, String publicId) throws ThingsboardException;
 
 }

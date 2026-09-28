@@ -1,0 +1,120 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host {
+  .tb-solution-settings {
+    .tb-solution-settings-table-toolbar {
+      height: 48px;
+      padding: 0 12px;
+      display: flex;
+      align-items: center;
+      font-size: 16px;
+      line-height: 24px;
+      font-weight: 500;
+    }
+
+    .tb-solution-settings-container {
+      &::ng-deep {
+        .mat-mdc-table {
+          .mat-mdc-header-row {
+            height: 48px;
+
+            th {
+              font-size: 14px;
+            }
+          }
+          .mat-mdc-row {
+            height: 48px;
+          }
+        }
+
+        .tb-primary-fill:before {
+          opacity: 0.1;
+        }
+      }
+    }
+
+    .graph-container {
+      .node {
+        padding: 8px 12px;
+        border-radius: 8px;
+        border: 1px solid;
+        background: #fff;
+        min-width: 180px;
+        text-align: left;
+        min-height: 54px;
+        &.customer {
+          border-color: #2B90D9;
+          border-left-width: 4px;
+        }
+
+        &.asset {
+          border-color: #8C46C8;
+          border-left-width: 4px;
+        }
+
+        &.device {
+          border-color: #EC8B29;
+          border-left-width: 4px;
+        }
+
+        &.user {
+          border-color: #40985C;
+          border-left-width: 4px;
+        }
+        .title {
+          font-weight: 500;
+          font-size: 14px;
+          line-height: 18px;
+        }
+
+        .subtitle {
+          font-size: 12px;
+          line-height: 16px;
+          color: rgba(0, 0, 0, 0.76);
+        }
+
+        .node-info-btn {
+          display: flex;
+          align-items: flex-start;
+          cursor: pointer;
+          color: #B1B1B1;
+
+          &:hover {
+            color: rgba(0, 0, 0, 0.54);
+          }
+        }
+      }
+      .edge-label-text {
+        font-size: 12px;
+        line-height: 16px;
+        color: rgba(0, 0, 0, 0.76);
+        text-align: center;
+        background: #fff;
+        border: 1px solid rgba(0,0,0,0.08);
+        padding: 2px 6px;
+        border-radius: 4px;
+        white-space: nowrap;
+        max-width: fit-content;
+        margin: 0 auto;
+      }
+
+      .cluster {
+        border: 2px dashed rgba(0,0,0,0.15);
+        border-radius: 14px;
+        background: rgba(0,0,0,0.02);
+        padding: 8px;
+
+        .cluster-title {
+          font-size: 14px;
+          fill: rgba(0, 0, 0, 0.54);
+        }
+      }
+    }
+  }
+
+  ::ng-deep {
+    .tb-chip, .tb-overflow-chip {
+      padding: 4px 8px;
+    }
+  }
+}

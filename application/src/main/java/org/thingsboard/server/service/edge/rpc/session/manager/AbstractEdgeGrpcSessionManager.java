@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.edge.rpc.session.manager;
 
 import io.grpc.stub.StreamObserver;
@@ -100,7 +101,7 @@ public abstract class AbstractEdgeGrpcSessionManager extends EdgeGrpcSessionDele
             return;
         }
         EdgeUpdateMsg edgeConfig = EdgeUpdateMsg.newBuilder()
-                .setConfiguration(EdgeMsgConstructorUtils.constructEdgeConfiguration(edge)).build();
+                .setConfiguration(EdgeMsgConstructorUtils.constructEdgeConfiguration(edge, ctx.getSubscriptionService().getLicenseVersion())).build();
 
         ResponseMsg edgeConfigMsg = ResponseMsg.newBuilder()
                 .setEdgeUpdateMsg(edgeConfig)

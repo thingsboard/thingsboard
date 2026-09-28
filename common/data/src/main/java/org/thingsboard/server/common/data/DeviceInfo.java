@@ -1,12 +1,15 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import org.thingsboard.server.common.data.id.DeviceId;
+
+import java.util.List;
 
 @Schema
 @Data
@@ -14,14 +17,14 @@ import org.thingsboard.server.common.data.id.DeviceId;
 @ToString(callSuper = true)
 public class DeviceInfo extends Device {
 
-    private static final long serialVersionUID = -3004579925090663691L;
+    @Valid
+    @Schema(description = "Owner name", accessMode = Schema.AccessMode.READ_ONLY)
+    private String ownerName;
 
-    @Schema(description = "Title of the Customer that owns the device.", accessMode = Schema.AccessMode.READ_ONLY)
-    private String customerTitle;
-    @Schema(description = "Indicates special 'Public' Customer that is auto-generated to use the devices on public dashboards.", accessMode = Schema.AccessMode.READ_ONLY)
-    private boolean customerIsPublic;
-    @Schema(description = "Name of the corresponding Device Profile.", accessMode = Schema.AccessMode.READ_ONLY)
-    private String deviceProfileName;
+    @Valid
+    @Schema(description = "Groups", accessMode = Schema.AccessMode.READ_ONLY)
+    private List<EntityInfo> groups;
+
     @Schema(description = "Device active flag.", accessMode = Schema.AccessMode.READ_ONLY)
     private boolean active;
 
@@ -29,15 +32,11 @@ public class DeviceInfo extends Device {
         super();
     }
 
-    public DeviceInfo(DeviceId deviceId) {
-        super(deviceId);
-    }
-
-    public DeviceInfo(Device device, String customerTitle, boolean customerIsPublic, String deviceProfileName, boolean active) {
+    public DeviceInfo(Device device, String ownerName, List<EntityInfo> groups, boolean active) {
         super(device);
-        this.customerTitle = customerTitle;
-        this.customerIsPublic = customerIsPublic;
-        this.deviceProfileName = deviceProfileName;
+        this.ownerName = ownerName;
+        this.groups = groups;
         this.active = active;
     }
+
 }

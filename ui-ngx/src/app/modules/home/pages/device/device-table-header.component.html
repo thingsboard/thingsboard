@@ -1,9 +1,18 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<tb-device-info-filter [ngModel]="entitiesTableConfig.componentsData.deviceInfoFilter"
-                       (ngModelChange)="deviceInfoFilterChanged($event)">
-</tb-device-info-filter>
+<div class="flex flex-row items-center justify-start">
+  <tb-device-info-filter [ngModel]="entitiesTableConfig.componentsData.deviceInfoFilter"
+                         (ngModelChange)="deviceInfoFilterChanged($event)">
+  </tb-device-info-filter>
+  <mat-slide-toggle
+    style="margin-left: 32px;"
+    [ngModel]="entitiesTableConfig.componentsData.includeCustomers"
+    (ngModelChange)="includeCustomersChanged($event)">
+    {{ includeCustomersLabel | translate }}
+  </mat-slide-toggle>
+</div>

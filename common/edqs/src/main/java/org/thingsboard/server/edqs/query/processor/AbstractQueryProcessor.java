@@ -1,7 +1,10 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.edqs.query.processor;
 
+import org.thingsboard.server.common.data.id.EntityGroupId;
+import org.thingsboard.server.common.data.permission.MergedGroupTypePermissionInfo;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.edqs.DataPoint;
 import org.thingsboard.server.common.data.permission.QueryContext;
@@ -13,7 +16,10 @@ import org.thingsboard.server.edqs.query.EdqsQuery;
 import org.thingsboard.server.edqs.query.SortableEntityData;
 import org.thingsboard.server.edqs.repo.TenantRepo;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -36,10 +42,66 @@ public abstract class AbstractQueryProcessor<T extends EntityFilter> implements 
         this.filter = filter;
     }
 
-    protected SortableEntityData toSortData(EntityData<?> ed) {
+    protected CombinedPermissions getCombinedPermissions(UUID id, boolean genericRead, boolean genericAttrs, boolean genericTs, List<GroupPermissions> groupPermissions) {
+        return getCombinedPermissionsInternal(id, genericRead, genericRead && genericAttrs, genericRead && genericTs, groupPermissions);
+    }
+
+    protected CombinedPermissions getCombinedPermissions(UUID id, List<GroupPermissions> groupPermissions) {
+        return getCombinedPermissionsInternal(id, false, false, false, groupPermissions);
+    }
+
+    protected CombinedPermissions getCombinedPermissionsInternal(UUID id, boolean read, boolean readAttrs, boolean readTs, List<GroupPermissions> groupPermissions) {
+        for (GroupPermissions eg : groupPermissions) {
+            if (read && readAttrs && readTs) {
+                break;
+            }
+            boolean hasMorePermissions = !read || (!readAttrs && eg.readAttrs) || (!readTs && eg.readTs);
+            if (hasMorePermissions && repository.contains(eg.groupId, id)) {
+                read = true;
+                readAttrs = readAttrs || eg.readAttrs;
+                readTs = readTs || eg.readTs;
+            }
+        }
+        return new CombinedPermissions(read, readAttrs, readTs);
+    }
+
+    protected SortableEntityData toSortDataGroupsOnly(EntityData<?> ed, List<GroupPermissions> groupPermissions) {
+        SortableEntityData sortData;
+        CombinedPermissions permissions = getCombinedPermissions(ed.getId(), groupPermissions);
+        if (permissions.isRead()) {
+            sortData = toSortData(ed, permissions);
+        } else {
+            sortData = null;
+        }
+        return sortData;
+    }
+
+    protected SortableEntityData toSortData(EntityData<?> ed, boolean readAttrs, boolean readTs) {
         SortableEntityData sortData = new SortableEntityData(ed);
         sortData.setSortValue(getSortValue(ed, sortKey, ctx));
+        sortData.setReadAttrs(readAttrs);
+        sortData.setReadTs(readTs);
         return sortData;
+    }
+
+    protected SortableEntityData toSortData(EntityData<?> ed, Permissions permissions) {
+        return toSortData(ed, permissions.isReadAttrs(), permissions.isReadTs());
+    }
+
+    protected static List<GroupPermissions> toGroupPermissions(MergedGroupTypePermissionInfo readPermissions,
+                                                               MergedGroupTypePermissionInfo readAttrPermissions,
+                                                               MergedGroupTypePermissionInfo readTsPermissions) {
+        List<GroupPermissions> permissions = new ArrayList<>();
+        for (EntityGroupId egId : readPermissions.getEntityGroupIds()) {
+            permissions.add(new GroupPermissions(egId.getId(),
+                    readAttrPermissions.getEntityGroupIds() != null && readAttrPermissions.getEntityGroupIds().contains(egId),
+                    readTsPermissions.getEntityGroupIds() != null && readTsPermissions.getEntityGroupIds().contains(egId)));
+        }
+        return permissions;
+    }
+
+    protected static boolean checkCustomerHierarchy(Set<UUID> customers, EntityData<?> ed) {
+        return ed.getPermissionCustomerId() != null && customers.contains(ed.getPermissionCustomerId());
     }
 
     protected void process(Collection<EntityData<?>> entities, Consumer<EntityData<?>> processor) {
@@ -48,12 +110,6 @@ public abstract class AbstractQueryProcessor<T extends EntityFilter> implements 
                 processor.accept(ed);
             }
         }
-    }
-
-    protected static boolean checkCustomerId(UUID customerId, EntityData<?> ed) {
-        return customerId.equals(ed.getCustomerId())
-                || (ed.getEntityType() == EntityType.DASHBOARD && ed.getFields().getAssignedCustomerIds().contains(customerId))
-                || (ed.getEntityType() == EntityType.CUSTOMER && customerId.equals(ed.getId()));
     }
 
     protected boolean matches(EntityData<?> ed) {

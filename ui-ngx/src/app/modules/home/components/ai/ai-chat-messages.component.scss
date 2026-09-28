@@ -1,0 +1,116 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  overflow: auto;
+  width: 100%;
+  margin-top: 8px;
+  flex: 1 1 auto;
+
+  .image-main-color {
+    color: var(--tb-primary-500);
+  }
+
+  .user {
+    display: flex;
+    justify-content: end;
+
+    .msg {
+      max-width: 80%;
+      padding: 10px 18px;
+      border-radius: 12px 12px 0 12px;
+      position: relative;
+      overflow: hidden;
+      white-space: pre-line;
+      word-break: break-word;
+      line-height: 24px;
+      color: rgba(0, 0, 0, 0.76);
+
+      &:before {
+        display: block;
+        height: auto;
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: var(--tb-primary-500);
+        opacity: 0.1;
+        pointer-events: none;
+      }
+    }
+  }
+
+  .generating {
+    transition: all 0.3s ease-in-out;
+
+    .glow-container {
+      color: transparent;
+      overflow: hidden;
+      position: relative;
+      background: linear-gradient(90deg, #3D3D3D -40.76%, #808080 -23.64%, #3D3D3D -6.52%);
+      background-clip: text;
+      animation: fadeInScale 0.3s ease-in-out forwards;
+      opacity: 0;
+      transform: scale(0.95);
+
+      &.ng-leave {
+        animation: fadeOutScale 0.3s ease-in-out forwards;
+      }
+
+      &:before {
+        content: "";
+        display: block;
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 16px;
+        height: 100%;
+        flex-shrink: 0;
+        opacity: 0.5;
+        background: #FFF;
+        filter: blur(2px);
+        transform: skewX(-25deg);
+        animation: glow-move 3s ease-in-out infinite;
+        pointer-events: none;
+      }
+    }
+
+    @keyframes glow-move {
+      0% {
+        left: -100%;
+      }
+      66% {
+        left: -24px;
+      }
+      100% {
+        left: 100%;
+      }
+    }
+
+  }
+
+  &::ng-deep {
+    .tb-markdown-view {
+      h2 {
+        font-size: 28px;
+      }
+
+      h3 {
+        font-size: 24px;
+      }
+
+      h4 {
+        font-size: 20px;
+      }
+
+      h5, h6 {
+        font-size: 18px;
+      }
+
+      a {
+        word-break: break-word;
+      }
+    }
+  }
+}

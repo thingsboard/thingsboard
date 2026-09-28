@@ -1,10 +1,11 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<div class="tb-form-panel tb-time-series-thresholds-panel">
+<div class="tb-form-panel tb-time-series-thresholds-panel" [class.stroked]="stroked">
   <div class="tb-form-panel-title">{{ 'widgets.time-series-chart.threshold.thresholds' | translate }}</div>
   <div class="tb-form-table">
     <div class="tb-form-table-header">
@@ -27,9 +28,10 @@
                                                 [hideYAxis]="hideYAxis"
                                                 [yAxisIds]="yAxisIds"
                                                 [supportsUnitConversion]="supportsUnitConversion"
-                                                (thresholdRemoved)="removeThreshold($index)">
-            </tb-time-series-chart-threshold-row>
-            @if (!$last) {
+                                                [reportMode]="reportMode"
+                                    (thresholdRemoved)="removeThreshold($index)">
+        </tb-time-series-chart-threshold-row>
+        @if (!$last) {
               <mat-divider></mat-divider>
             }
           </div>

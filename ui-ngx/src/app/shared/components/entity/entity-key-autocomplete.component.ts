@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   Component,
   effect,
@@ -29,6 +30,7 @@ import { EntitiesKeysByQuery } from '@shared/models/entity.models';
 import { EntityFilter } from '@shared/models/query/query.models';
 import { isEqual } from '@core/utils';
 import { TranslateService } from '@ngx-translate/core';
+import { coerceBoolean } from "@shared/decorators/coercion";
 
 @Component({
     selector: 'tb-entity-key-autocomplete',
@@ -54,6 +56,10 @@ export class EntityKeyAutocompleteComponent implements ControlValueAccessor, Val
   @Input() placeholder = this.translate.instant('action.set');
   @Input() requiredText = this.translate.instant('common.hint.key-required');
   @Input() enableAutocomplete = true;
+
+  @Input()
+  @coerceBoolean()
+  hideNoKeyOption = false;
 
   entityFilter = input.required<EntityFilter>();
   dataKeyType = input.required<DataKeyType>();

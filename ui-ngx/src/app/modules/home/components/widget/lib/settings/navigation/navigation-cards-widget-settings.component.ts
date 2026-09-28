@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, ElementRef, ViewChild } from '@angular/core';
 import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
@@ -23,7 +24,7 @@ export class NavigationCardsWidgetSettingsComponent extends WidgetSettingsCompon
   @ViewChild('filterItemAutocomplete') filterItemAutocomplete: MatAutocomplete;
   @ViewChild('filterItemInput') filterItemInput: ElementRef<HTMLInputElement>;
 
-  filterItems: Array<string> = ['/devices', '/assets', '/profiles/deviceProfiles'];
+  filterItems: Array<string> = ['/deviceGroups', '/assetGroups', '/profiles/deviceProfiles'];
 
   separatorKeysCodes = [ENTER, COMMA, SEMICOLON];
 

@@ -1,0 +1,36 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div [formGroup]="insetsFormGroup" class="tb-report-insets flex flex-1 flex-col gap-2">
+  <div class="flex flex-1 flex-row items-center justify-center gap-2">
+    <tb-icon matTooltip="{{ 'report-template.left' | translate }}"
+             matTooltipPosition="above">mdi:format-horizontal-align-left</tb-icon>
+    <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+      <input matInput formControlName="left" type="number" min="0" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+      <div matSuffix>pt</div>
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+      <input matInput formControlName="top" type="number" min="0" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+      <div matSuffix>pt</div>
+    </mat-form-field>
+    <tb-icon matTooltip="{{ 'report-template.top' | translate }}"
+             matTooltipPosition="above">mdi:format-vertical-align-top</tb-icon>
+  </div>
+  <div class="flex flex-1 flex-row items-center justify-center gap-2">
+    <tb-icon matTooltip="{{ 'report-template.right' | translate }}"
+             matTooltipPosition="above">mdi:format-horizontal-align-right</tb-icon>
+    <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+      <input matInput formControlName="right" type="number" min="0" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+      <div matSuffix>pt</div>
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+      <input matInput formControlName="bottom" type="number" min="0" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+      <div matSuffix>pt</div>
+    </mat-form-field>
+    <tb-icon matTooltip="{{ 'report-template.bottom' | translate }}"
+             matTooltipPosition="above">mdi:format-vertical-align-bottom</tb-icon>
+  </div>
+</div>

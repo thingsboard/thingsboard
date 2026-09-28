@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.subscription;
 
 import lombok.Getter;
@@ -106,11 +107,11 @@ public class TbEntityDataSubCtx extends TbAbstractDataSubCtx<EntityDataQuery> {
             });
             //Setting new values
             latestCtxValues.putAll(latestUpdate);
-        }
-        if (!latestUpdate.isEmpty()) {
-            Map<EntityKeyType, Map<String, TsValue>> latestMap = Collections.singletonMap(keyType, latestUpdate);
-            entityData = new EntityData(entityId, latestMap, null);
-            sendWsMsg(new EntityDataUpdate(cmdId, null, Collections.singletonList(entityData), maxEntitiesPerDataSubscription));
+            if (!latestUpdate.isEmpty()) {
+                Map<EntityKeyType, Map<String, TsValue>> latestMap = Collections.singletonMap(keyType, latestUpdate);
+                entityData = new EntityData(entityId, entityData.isReadAttrs(), entityData.isReadTs(), latestMap, null);
+                sendWsMsg(new EntityDataUpdate(cmdId, null, Collections.singletonList(entityData), maxEntitiesPerDataSubscription));
+            }
         }
     }
 
@@ -149,7 +150,7 @@ public class TbEntityDataSubCtx extends TbAbstractDataSubCtx<EntityDataQuery> {
         if (!tsUpdate.isEmpty()) {
             Map<String, TsValue[]> tsMap = new HashMap<>();
             tsUpdate.forEach((key, values) -> tsMap.put(key, values.toArray(new TsValue[0])));
-            EntityData entityData = new EntityData(entityId, null, tsMap);
+            EntityData entityData = new EntityData(entityId, false, false, null, tsMap);
             sendWsMsg(new EntityDataUpdate(cmdId, null, Collections.singletonList(entityData), maxEntitiesPerDataSubscription));
         }
     }
@@ -219,6 +220,9 @@ public class TbEntityDataSubCtx extends TbAbstractDataSubCtx<EntityDataQuery> {
 
     @Override
     protected EntityDataQuery buildEntityDataQuery() {
+        if (query.getPageLink().getPageSize() > maxEntitiesPerDataSubscription) {
+            query.getPageLink().setPageSize(maxEntitiesPerDataSubscription);
+        }
         return query;
     }
 

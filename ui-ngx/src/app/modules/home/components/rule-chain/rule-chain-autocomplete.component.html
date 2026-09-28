@@ -1,10 +1,12 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<mat-form-field [formGroup]="selectRuleChainFormGroup" class="mat-block" [appearance]="appearance">
+<mat-form-field [formGroup]="selectRuleChainFormGroup" class="mat-block" [appearance]="appearance"
+                [subscriptSizing]="subscriptSizing">
   <mat-label>{{ labelText | translate }}</mat-label>
   <input matInput type="text"
          #ruleChainInput
@@ -59,7 +61,9 @@
       {{ 'rulechain.rulechain-required' | translate }}
     </mat-error>
   }
-  <mat-hint>
-    <ng-content select="[tb-hint]"></ng-content>
-  </mat-hint>
+  @if (showHint) {
+    <mat-hint>
+      <ng-content select="[tb-hint]"></ng-content>
+    </mat-hint>
+  }
 </mat-form-field>

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.ws.telemetry.cmd.v2;
 
 public enum CmdUpdateType {
@@ -9,5 +10,6 @@ public enum CmdUpdateType {
     ALARM_STATUS,
     COUNT_DATA,
     NOTIFICATIONS,
-    NOTIFICATIONS_COUNT
+    NOTIFICATIONS_COUNT,
+    LOGS
 }

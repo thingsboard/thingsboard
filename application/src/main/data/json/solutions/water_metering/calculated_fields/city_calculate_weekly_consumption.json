@@ -1,0 +1,56 @@
+{
+  "reprocessingOrder": 3,
+  "type": "RELATED_ENTITIES_AGGREGATION",
+  "name": "Calculate city weekly consumption",
+  "entityId": {
+    "entityType": "ASSET_PROFILE",
+    "id": "72f0ad58-5a8d-4c98-817e-6c9062c57bbf"
+  },
+  "debugSettings": {
+    "failuresEnabled": true,
+    "allEnabled": false,
+    "allEnabledUntil": 0
+  },
+  "configurationVersion": 0,
+  "configuration": {
+    "type": "RELATED_ENTITIES_AGGREGATION",
+    "relation": {
+      "direction": "FROM",
+      "relationType": "Contains"
+    },
+    "arguments": {
+      "weeklyConsumption": {
+        "refEntityKey": {
+          "key": "weeklyConsumption",
+          "type": "TS_LATEST"
+        },
+        "defaultValue": "0"
+      }
+    },
+    "deduplicationIntervalInSec": 10,
+    "metrics": {
+      "weeklyConsumption": {
+        "function": "SUM",
+        "input": {
+          "type": "key",
+          "key": "weeklyConsumption"
+        }
+      }
+    },
+    "output": {
+      "type": "TIME_SERIES",
+      "strategy": {
+        "type": "IMMEDIATE",
+        "ttl": 0,
+        "saveTimeSeries": false,
+        "saveLatest": false,
+        "sendWsUpdate": false,
+        "processCfs": true
+      },
+      "decimalsByDefault": 2
+    },
+    "useLatestTs": true,
+    "scheduledUpdateInterval": 10,
+    "scheduledUpdateEnabled": true
+  }
+}

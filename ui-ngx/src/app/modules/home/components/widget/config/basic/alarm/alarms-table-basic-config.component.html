@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <ng-container [formGroup]="alarmsTableWidgetConfigForm">
@@ -104,6 +105,7 @@
         <mat-chip-option value="search">{{ 'action.search' | translate }}</mat-chip-option>
         <mat-chip-option value="filter">{{ 'alarm.alarm-filter' | translate }}</mat-chip-option>
         <mat-chip-option value="columnsToDisplay">{{ 'widgets.table.columns-to-display' | translate }}</mat-chip-option>
+        <mat-chip-option value="dataExport">{{ 'widget-config.data-export' | translate }}</mat-chip-option>
         <mat-chip-option value="fullscreen">{{ 'fullscreen.fullscreen' | translate }}</mat-chip-option>
       </mat-chip-listbox>
     </div>

@@ -1,6 +1,10 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import vm, { Script } from 'vm';
+import atob from 'atob';
+import btoa from 'btoa';
+import {TextDecoder} from "util";
 import { _logger } from '../config/logger';
 
 export type TbScript = Script | Function;
@@ -58,6 +62,9 @@ export class JsExecutor {
                     ctxArgs[i] = String(args[i]);
                 }
                 sandbox.args = ctxArgs;
+                sandbox.btoa = btoa;
+                sandbox.atob = atob;
+                sandbox.TextDecoder = TextDecoder;
                 const result = script.runInContext(sandbox, {timeout: timeout});
                 resolve(result);
             } catch (err) {
@@ -76,7 +83,7 @@ export class JsExecutor {
         return new Promise((resolve, reject) => {
             try {
                 code = "return ("+code+")(...args)";
-                const parsingContext = vm.createContext({});
+                const parsingContext = vm.createContext({btoa: btoa, atob: atob, TextDecoder: TextDecoder});
                 const func = vm.compileFunction(code, ['args'], {parsingContext: parsingContext});
                 resolve(func);
             } catch (err) {

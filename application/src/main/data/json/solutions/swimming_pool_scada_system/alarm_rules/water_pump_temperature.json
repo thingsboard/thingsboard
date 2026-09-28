@@ -1,0 +1,183 @@
+{
+  "entityId": {
+    "entityType": "DEVICE_PROFILE",
+    "id": "0691eded-45dd-4c68-9df5-9867e4c8898b"
+  },
+  "type": "ALARM",
+  "name": "Temperature",
+  "debugSettings": {
+    "failuresEnabled": true,
+    "allEnabled": false,
+    "allEnabledUntil": 0
+  },
+  "configurationVersion": 0,
+  "configuration": {
+    "type": "ALARM",
+    "arguments": {
+      "running": {
+        "refEntityKey": {
+          "key": "running",
+          "type": "TS_LATEST"
+        }
+      },
+      "temperature": {
+        "refEntityKey": {
+          "key": "temperature",
+          "type": "TS_LATEST"
+        }
+      }
+    },
+    "createRules": {
+      "WARNING": {
+        "condition": {
+          "type": "SIMPLE",
+          "expression": {
+            "type": "SIMPLE",
+            "filters": [
+              {
+                "argument": "running",
+                "valueType": "NUMERIC",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "NUMERIC",
+                    "operation": "EQUAL",
+                    "value": {
+                      "staticValue": 1.0,
+                      "dynamicValueArgument": null
+                    }
+                  }
+                ]
+              },
+              {
+                "argument": "temperature",
+                "valueType": "NUMERIC",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "NUMERIC",
+                    "operation": "GREATER_OR_EQUAL",
+                    "value": {
+                      "staticValue": 0.0,
+                      "dynamicValueArgument": null
+                    }
+                  },
+                  {
+                    "type": "COMPLEX",
+                    "operation": "AND",
+                    "predicates": [
+                      {
+                        "type": "NUMERIC",
+                        "operation": "LESS",
+                        "value": {
+                          "staticValue": 20.0,
+                          "dynamicValueArgument": null
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "operation": "AND"
+          },
+          "schedule": null
+        },
+        "alarmDetails": null,
+        "dashboardId": null
+      },
+      "CRITICAL": {
+        "condition": {
+          "type": "SIMPLE",
+          "expression": {
+            "type": "SIMPLE",
+            "filters": [
+              {
+                "argument": "running",
+                "valueType": "NUMERIC",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "NUMERIC",
+                    "operation": "EQUAL",
+                    "value": {
+                      "staticValue": 1.0,
+                      "dynamicValueArgument": null
+                    }
+                  }
+                ]
+              },
+              {
+                "argument": "temperature",
+                "valueType": "NUMERIC",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "NUMERIC",
+                    "operation": "GREATER_OR_EQUAL",
+                    "value": {
+                      "staticValue": 80.0,
+                      "dynamicValueArgument": null
+                    }
+                  }
+                ]
+              }
+            ],
+            "operation": "AND"
+          },
+          "schedule": null
+        },
+        "alarmDetails": null,
+        "dashboardId": null
+      }
+    },
+    "clearRule": {
+      "condition": {
+        "type": "SIMPLE",
+        "expression": {
+          "type": "SIMPLE",
+          "filters": [
+            {
+              "argument": "temperature",
+              "valueType": "NUMERIC",
+              "operation": "AND",
+              "predicates": [
+                {
+                  "type": "NUMERIC",
+                  "operation": "GREATER_OR_EQUAL",
+                  "value": {
+                    "staticValue": 20.0,
+                    "dynamicValueArgument": null
+                  }
+                },
+                {
+                  "type": "COMPLEX",
+                  "operation": "AND",
+                  "predicates": [
+                    {
+                      "type": "NUMERIC",
+                      "operation": "LESS",
+                      "value": {
+                        "staticValue": 80.0,
+                        "dynamicValueArgument": null
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "operation": "AND"
+        },
+        "schedule": null
+      },
+      "alarmDetails": null,
+      "dashboardId": null
+    },
+    "propagate": false,
+    "propagateToOwner": false,
+    "propagateToTenant": false,
+    "propagateRelationTypes": null,
+    "output": null
+  }
+}

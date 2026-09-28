@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.apiusage;
 
 import lombok.Builder;
@@ -141,6 +142,10 @@ public abstract class BaseApiUsageState {
                 return apiUsageState.getSmsExecState();
             case ALARM:
                 return apiUsageState.getAlarmExecState();
+            case REPORT:
+                return apiUsageState.getReportExecState();
+            case AI:
+                return apiUsageState.getAiState();
             default:
                 return ApiUsageStateValue.ENABLED;
         }
@@ -172,6 +177,12 @@ public abstract class BaseApiUsageState {
                 break;
             case ALARM:
                 apiUsageState.setAlarmExecState(value);
+                break;
+            case REPORT:
+                apiUsageState.setReportExecState(value);
+                break;
+            case AI:
+                apiUsageState.setAiState(value);
                 break;
         }
         return !currentValue.equals(value);

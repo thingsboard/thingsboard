@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   ChangeDetectorRef,
   Component,
@@ -35,6 +36,7 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 import {
   MarkerIconShapesComponent
 } from '@home/components/widget/lib/settings/common/map/marker-icon-shapes.component';
+import { plainColorFromVariable } from '@core/utils';
 import { MapSettingsContext } from '@home/components/widget/lib/settings/common/map/map-settings.component.models';
 import { DatasourceType } from '@shared/models/widget.models';
 
@@ -200,7 +202,7 @@ export class MarkerShapeSettingsComponent implements ControlValueAccessor, OnIni
   }
 
   private updatePreview() {
-    const color = this.modelValue.color.color;
+    const color = plainColorFromVariable(this.modelValue.color.color);
     if (this.markerType === MarkerType.shape) {
       const shape = (this.modelValue as MarkerShapeSettings).shape;
       this.shapePreview$ = createColorMarkerShapeURI(this.iconRegistry, this.domSanitizer, shape, tinycolor(color)).pipe(

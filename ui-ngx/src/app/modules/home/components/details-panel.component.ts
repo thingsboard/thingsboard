@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -24,6 +25,7 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 })
 export class DetailsPanelComponent extends PageComponent implements OnDestroy {
 
+  @Input() color: string | undefined = 'tb-primary';
   @Input() headerHeightPx = 100;
   @Input() headerTitle = '';
   @Input() headerSubtitle = '';

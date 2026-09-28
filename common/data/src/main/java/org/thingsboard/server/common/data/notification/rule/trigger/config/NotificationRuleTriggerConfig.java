@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.notification.rule.trigger.config;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -30,7 +31,8 @@ import java.io.Serializable;
                 @DiscriminatorMapping(value = "EDGE_CONNECTION", schema = EdgeConnectionNotificationRuleTriggerConfig.class),
                 @DiscriminatorMapping(value = "EDGE_COMMUNICATION_FAILURE", schema = EdgeCommunicationFailureNotificationRuleTriggerConfig.class),
                 @DiscriminatorMapping(value = "TASK_PROCESSING_FAILURE", schema = TaskProcessingFailureNotificationRuleTriggerConfig.class),
-                @DiscriminatorMapping(value = "RESOURCES_SHORTAGE", schema = ResourcesShortageNotificationRuleTriggerConfig.class)
+                @DiscriminatorMapping(value = "RESOURCES_SHORTAGE", schema = ResourcesShortageNotificationRuleTriggerConfig.class),
+                @DiscriminatorMapping(value = "INTEGRATION_LIFECYCLE_EVENT", schema = IntegrationLifecycleEventNotificationRuleTriggerConfig.class)
         }
 )
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -45,6 +47,7 @@ import java.io.Serializable;
         @Type(value = NewPlatformVersionNotificationRuleTriggerConfig.class, name = "NEW_PLATFORM_VERSION"),
         @Type(value = EntitiesLimitNotificationRuleTriggerConfig.class, name = "ENTITIES_LIMIT"),
         @Type(value = ApiUsageLimitNotificationRuleTriggerConfig.class, name = "API_USAGE_LIMIT"),
+        @Type(value = IntegrationLifecycleEventNotificationRuleTriggerConfig.class, name = "INTEGRATION_LIFECYCLE_EVENT"),
         @Type(value = RateLimitsNotificationRuleTriggerConfig.class, name = "RATE_LIMITS"),
         @Type(value = EdgeConnectionNotificationRuleTriggerConfig.class, name = "EDGE_CONNECTION"),
         @Type(value = EdgeCommunicationFailureNotificationRuleTriggerConfig.class, name = "EDGE_COMMUNICATION_FAILURE"),

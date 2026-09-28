@@ -1,0 +1,56 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div style="max-width: 700px;" class="tb-dialog-content">
+  <div class="title-container">
+    <div class="title"> {{ 'subscription.add-license-item-title' | translate: {
+      action: (data.add ? 'subscription.action-add' : 'subscription.action-enable') | translate,
+      item: data.itemName,
+      package: (data.isPerpetual ? 'subscription.package-perpetual' : 'subscription.package-subscription') | translate
+    } }} </div>
+    @if (!data.disabledClose) {
+      <button mat-icon-button
+              (click)="cancel()"
+              type="button">
+        <tb-icon>close</tb-icon>
+      </button>
+    }
+  </div>
+  <div mat-dialog-content class="tb-dialog-content">
+    <ol class="add-license-item">
+      <li>{{ 'subscription.add-license-item-step-first' | translate }}</li>
+      <li>{{ 'subscription.add-license-item-step-second' | translate:{
+        package: (data.isPerpetual ? 'subscription.package-perpetual' : 'subscription.package-subscription') | translate } }}</li>
+      <li>{{ 'subscription.add-license-item-step-third' | translate: {
+        item: data.itemName,
+        package: (data.isPerpetual ? 'subscription.package-perpetual' : 'subscription.package-subscription') | translate
+      } }}</li>
+      <li>{{ 'subscription.add-license-item-step-fourth' | translate: {
+        package: (data.isPerpetual ? 'subscription.package-perpetual' : 'subscription.package-subscription') | translate
+      } }}</li>
+    </ol>
+  </div>
+  <div mat-dialog-actions class="flex items-center justify-between xs:flex-col xs:items-stretch xs:gap-4">
+    <button [disabled]="isLoading$ | async" mat-stroked-button color="primary" (click)="refresh()">
+      <tb-icon matButtonIcon>refresh</tb-icon>
+      {{ 'subscription.refresh-license-info' | translate }}
+    </button>
+    <div class="flex flex-row xs:justify-end">
+      @if (!data.disabledClose) {
+        <button mat-button
+                type="button"
+                [disabled]="(isLoading$ | async)"
+                (click)="cancel()">
+          {{ 'action.cancel' | translate }}
+        </button>
+      }
+      <button mat-raised-button
+              color="primary"
+              [disabled]="(isLoading$ | async)"
+              (click)="goToLicensePortal()">{{ 'subscription.go-to-license-portal' | translate }}</button>
+    </div>
+  </div>
+</div>

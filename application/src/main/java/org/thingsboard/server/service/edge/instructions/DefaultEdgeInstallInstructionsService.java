@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.edge.instructions;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -52,7 +53,8 @@ public class DefaultEdgeInstallInstructionsService extends BaseEdgeInstallUpgrad
             dockerInstallInstructions = dockerInstallInstructions.replace("${EXTRA_HOSTS}", "");
             dockerInstallInstructions = dockerInstallInstructions.replace("${BASE_URL}", baseUrl);
         }
-        dockerInstallInstructions = dockerInstallInstructions.replace("${TB_EDGE_VERSION}", platformEdgeVersion + "EDGE");
+        String edgeVersion = platformEdgeVersion.replace("-SNAPSHOT", "").replace("PE", "");
+        dockerInstallInstructions = dockerInstallInstructions.replace("${TB_EDGE_VERSION}", edgeVersion + "EDGEPE");
         dockerInstallInstructions = replacePlaceholders(dockerInstallInstructions, edge);
         return new EdgeInstructions(dockerInstallInstructions);
     }
@@ -61,8 +63,8 @@ public class DefaultEdgeInstallInstructionsService extends BaseEdgeInstallUpgrad
         String ubuntuInstallInstructions = readFile(resolveFile(os, "instructions.md"));
         ubuntuInstallInstructions = replacePlaceholders(ubuntuInstallInstructions, edge);
         ubuntuInstallInstructions = ubuntuInstallInstructions.replace("${BASE_URL}", request.getServerName());
-        ubuntuInstallInstructions = ubuntuInstallInstructions.replace("${TB_EDGE_VERSION}", platformEdgeVersion);
-        ubuntuInstallInstructions = ubuntuInstallInstructions.replace("${TB_EDGE_TAG}", getTagVersion(platformEdgeVersion));
+        String edgeVersion = platformEdgeVersion.replace("-SNAPSHOT", "").replace("PE", "pe");
+        ubuntuInstallInstructions = ubuntuInstallInstructions.replace("${TB_EDGE_TAG}", getTagVersion(edgeVersion).replace("pe", ""));
         return new EdgeInstructions(ubuntuInstallInstructions);
     }
 

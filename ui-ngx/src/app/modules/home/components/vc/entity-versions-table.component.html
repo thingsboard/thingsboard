@@ -1,10 +1,11 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<div class="mat-padding tb-entity-table tb-absolute-fill" [class.tb-popover-mode]="popoverComponent">
+<div class="mat-padding tb-entity-table tb-absolute-fill xs:!w-screen sm:!w-fit" [class.tb-popover-mode]="popoverComponent">
   <div class="tb-entity-table-content flex flex-1 flex-col" [class.tb-outlined-border]="!popoverComponent">
     <mat-toolbar class="mat-mdc-table-toolbar" [class.!hidden]="textSearchMode">
       <div class="mat-toolbar-tools">
@@ -23,7 +24,7 @@
         <span class="flex-1"></span>
         <div class="flex flex-row items-center justify-center xs:flex-col xs:items-end xs:justify-center"
              [class.xs:flex-col-reverse]="!singleEntityMode">
-          @if (singleEntityMode) {
+          @if (singleEntityMode && !readonly) {
             <button mat-stroked-button color="primary"
                     #createVersionButton
                     [disabled]="(isLoading$ | async) || (isReadOnly | async)"
@@ -46,7 +47,7 @@
               <mat-icon>search</mat-icon>
             </button>
           </div>
-          @if (!singleEntityMode) {
+          @if (!singleEntityMode && !readonly) {
             <button mat-flat-button color="primary"
                     class="gt-xs:ml-3"
                     #complexCreateVersionButton
@@ -135,7 +136,7 @@
                   <mat-icon>difference</mat-icon>
                 </button>
               }
-              @if (singleEntityMode) {
+              @if (singleEntityMode && !readonly) {
                 <button mat-icon-button [disabled]="isLoading$ | async"
                         matTooltip="{{ 'version-control.restore-version' | translate }}"
                         matTooltipPosition="above"
@@ -144,7 +145,7 @@
                   <mat-icon>restore</mat-icon>
                 </button>
               }
-              @if (!singleEntityMode) {
+              @if (!singleEntityMode && !readonly) {
                 <button mat-icon-button [disabled]="isLoading$ | async"
                         matTooltip="{{ 'version-control.restore-version' | translate }}"
                         matTooltipPosition="above"

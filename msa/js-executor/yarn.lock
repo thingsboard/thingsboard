@@ -259,12 +259,24 @@
   resolved "https://registry.yarnpkg.com/@tsconfig/node16/-/node16-1.0.4.tgz#0b92dcc0cc1c81f6f306a381f28e31b1a56536e9"
   integrity sha512-vxhUy4J8lyeyinH7Azl1pdd43GJhZH/tP2weN8TntQblOY+A0XbT8DJk1/oCPuOOyg/Ja757rG0CgHcWC8OfMA==
 
+"@types/atob@^2.1.2":
+  version "2.1.4"
+  resolved "https://registry.yarnpkg.com/@types/atob/-/atob-2.1.4.tgz#50bb756a99bbdba6995f2d10a134d21a881323b3"
+  integrity sha512-FisOhG87cCFqzCgq6FUtSYsTMOHCB/p28zJbSN1QBo4ZGJfg9PEhMjdIV++NDeOnloUUe0Gz6jwBV+L1Ac00Mw==
+
 "@types/body-parser@*":
   version "1.19.6"
   resolved "https://registry.yarnpkg.com/@types/body-parser/-/body-parser-1.19.6.tgz#1859bebb8fd7dac9918a45d54c1971ab8b5af474"
   integrity sha512-HLFeCYgz89uk22N5Qg3dvGvsv46B8GLvKKo1zKG4NybA8U2DiEO3w9lqGg29t/tfLRJpJ6iQxnVw4OnB7MoM9g==
   dependencies:
     "@types/connect" "*"
+    "@types/node" "*"
+
+"@types/btoa@^1.2.3":
+  version "1.2.5"
+  resolved "https://registry.yarnpkg.com/@types/btoa/-/btoa-1.2.5.tgz#9b2690b224e2bd2a629d0fc5812d19ccd5e781bc"
+  integrity sha512-BItINdjZRlcGdI2efwK4bwxY5vEAT0SnIVfMOZVT18wp4900F1Lurqk/9PNdF9hMP1zgFmWbjVEtAsQKVcbqxA==
+  dependencies:
     "@types/node" "*"
 
 "@types/config@^3.3.5":
@@ -462,6 +474,11 @@ async@^3.2.3:
   resolved "https://registry.yarnpkg.com/async/-/async-3.2.6.tgz#1b0728e14929d51b85b449b7f06e27c1145e38ce"
   integrity sha512-htCUDlxyyCLMgaM3xXg0C0LW2xqfuQ6p05pCEIsXuyQ+a1koYKTuBMzRNwmybfLgvJDMd0r1LTn4+E0Ti6C2AA==
 
+atob@^2.1.2:
+  version "2.1.2"
+  resolved "https://registry.yarnpkg.com/atob/-/atob-2.1.2.tgz#6d9517eb9e030d2436666651e86bd9f6f13533c9"
+  integrity sha512-Wm6ukoaOGJi/73p/cl2GvLjTI5JM1k/O14isD73YML8StrH/7/lRFgmg8nICZgD3bZZvjwCGxtMOD3wWNAu8cg==
+
 balanced-match@^1.0.0:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/balanced-match/-/balanced-match-1.0.2.tgz#e83e3a7e3f300b34cb9d87f615fa0cbf357690ee"
@@ -520,6 +537,11 @@ braces@~3.0.2:
   integrity sha512-yQbXgO/OSZVD2IsiLlro+7Hf6Q18EJrKSEsdoMzKePKXct3gvD8oLcOQdIzGupr5Fj+EDe8gO/lxc1BzfMpxvA==
   dependencies:
     fill-range "^7.1.1"
+
+btoa@^1.2.1:
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/btoa/-/btoa-1.2.1.tgz#01a9909f8b2c93f6bf680ba26131eb30f7fa3d73"
+  integrity sha512-SB4/MIGlsiVkMcHmT+pSmIPoNDoHg+7cMzmt3Uxt628MTz2487DKSqK/fuhFBrkuqrYv5UCEnACpF4dTFNKc/g==
 
 buffer@^5.5.0:
   version "5.7.1"

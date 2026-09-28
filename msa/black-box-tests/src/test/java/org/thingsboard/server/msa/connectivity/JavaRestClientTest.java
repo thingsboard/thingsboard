@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.msa.connectivity;
 
 import com.google.gson.JsonObject;
@@ -12,7 +13,9 @@ import org.apache.hc.client5.http.ssl.DefaultClientTlsStrategy;
 import org.apache.hc.client5.http.ssl.HostnameVerificationPolicy;
 import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
 import org.apache.hc.core5.ssl.SSLContexts;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -20,9 +23,12 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rest.client.RestClient;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceInfo;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileInfo;
+import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntityType;
@@ -32,17 +38,27 @@ import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
+import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.asset.AssetInfo;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.asset.AssetProfileInfo;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
+import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfileProvisionConfiguration;
 import org.thingsboard.server.common.data.domain.Domain;
 import org.thingsboard.server.common.data.domain.DomainInfo;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.NotificationTemplateId;
+import org.thingsboard.server.common.data.id.ReportId;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.job.Job;
+import org.thingsboard.server.common.data.job.JobType;
+import org.thingsboard.server.common.data.kv.Aggregation;
+import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
+import org.thingsboard.server.common.data.kv.ReadTsKvQueryResult;
+import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.mobile.app.MobileApp;
 import org.thingsboard.server.common.data.mobile.app.MobileAppStatus;
 import org.thingsboard.server.common.data.mobile.bundle.MobileAppBundle;
@@ -81,22 +97,30 @@ import org.thingsboard.server.common.data.query.EntityDataSortOrder;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.EntityTypeFilter;
+import org.thingsboard.server.common.data.report.Report;
+import org.thingsboard.server.common.data.report.ReportInfo;
+import org.thingsboard.server.common.data.report.ReportRequest;
+import org.thingsboard.server.common.data.report.ReportTemplate;
+import org.thingsboard.server.common.data.report.ReportTemplateInfo;
+import org.thingsboard.server.common.data.report.ReportTemplateType;
+import org.thingsboard.server.common.data.report.TbReportFormat;
+import org.thingsboard.server.common.data.report.configuration.CsvReportTemplateConfig;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.msa.AbstractContainerTest;
 import org.thingsboard.server.msa.TestProperties;
 
 import javax.net.ssl.SSLContext;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.thingsboard.server.common.data.notification.NotificationDeliveryMethod.EMAIL;
-import static org.thingsboard.server.common.data.notification.NotificationDeliveryMethod.MICROSOFT_TEAMS;
 import static org.thingsboard.server.common.data.notification.NotificationDeliveryMethod.WEB;
 import static org.thingsboard.server.msa.prototypes.DevicePrototypes.defaultDevicePrototype;
 import static org.thingsboard.server.msa.ui.utils.EntityPrototypes.defaultTenantAdmin;
@@ -137,7 +161,7 @@ public class JavaRestClientTest extends AbstractContainerTest {
 
     @BeforeMethod
     public void setUp() throws Exception {
-        restClient.login("sysadmin@thingsboard.org", "sysadmin");
+        restClient.login(SYS_ADMIN_EMAIL, SYS_ADMIN_PASSWORD);
 
         // create tenant 1 and tenant admin 1
         tenant1 = new Tenant();
@@ -163,7 +187,7 @@ public class JavaRestClientTest extends AbstractContainerTest {
 
     @AfterMethod
     public void tearDown() {
-        restClient.login("sysadmin@thingsboard.org", "sysadmin");
+        restClient.login(SYS_ADMIN_EMAIL, SYS_ADMIN_PASSWORD);
         if (tenant1 != null) {
             restClient.deleteTenant(tenant1.getId());
         }
@@ -229,6 +253,26 @@ public class JavaRestClientTest extends AbstractContainerTest {
         restClient.saveEntityTelemetry(device.getId(), "ts", JacksonUtil.toJsonNode("{\"temperature\": 27, \"humidity\": 59}"));
         restClient.saveEntityTelemetry(device.getId(), "ts", JacksonUtil.toJsonNode("{\"temperature\": 33, \"humidity\": 62}"));
 
+        List<BaseReadTsKvQuery> queries = new ArrayList<>();
+        BaseReadTsKvQuery tempQuery = new BaseReadTsKvQuery("temperature", System.currentTimeMillis() - 5000, System.currentTimeMillis(), 5000, 3, Aggregation.AVG);
+        BaseReadTsKvQuery humQuery = new BaseReadTsKvQuery("humidity", System.currentTimeMillis() - 5000, System.currentTimeMillis(), 5000, 3, Aggregation.MAX);
+        queries.add(tempQuery);
+        queries.add(humQuery);
+        List<ReadTsKvQueryResult> results = restClient.getTimeseriesByQueries(device.getId(), queries);
+        assertThat(results).isNotNull().hasSize(2);
+
+        ReadTsKvQueryResult tempQueryResult = results.get(0);
+        assertThat(tempQueryResult.getData()).hasSize(1);
+        TsKvEntry tempTsKv = tempQueryResult.getData().get(0);
+        assertThat(tempTsKv.getKey()).isEqualTo("temperature");
+        assertThat(tempTsKv.getValue()).isEqualTo((25 + 27 + 33) / 3d);
+
+        ReadTsKvQueryResult humQueryResult = results.get(1);
+        assertThat(humQueryResult.getData()).hasSize(1);
+        TsKvEntry humTsKv = humQueryResult.getData().get(0);
+        assertThat(humTsKv.getKey()).isEqualTo("humidity");
+        assertThat(humTsKv.getValue()).isEqualTo(62L);
+
         EntityTypeFilter filter = new EntityTypeFilter();
         filter.setEntityType(EntityType.DEVICE);
         var pageLink = new EntityDataPageLink(20, 0, null, new EntityDataSortOrder(new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime"), EntityDataSortOrder.Direction.DESC), false);
@@ -276,19 +320,6 @@ public class JavaRestClientTest extends AbstractContainerTest {
 
         restClient.markAllNotificationsAsRead(WEB);
 
-        Integer unreadCountAfterAllRead = restClient.getUnreadNotificationsCount(WEB);
-        assertThat(unreadCountAfterAllRead).isEqualTo(0);
-
-        restClient.deleteNotification(notifications.getData().get(0).getId());
-        notifications = restClient.getNotifications(false, WEB, new PageLink(30));
-        assertThat(notifications.getTotalElements()).isEqualTo(1);
-
-        restClient.deleteNotificationRequest(notificationRequest.getId());
-        PageData<NotificationRequestInfo> requestsAfterUpdate = restClient.getNotificationRequests(new PageLink(30));
-        assertThat(requestsAfterUpdate.getTotalElements()).isEqualTo(initialRequests.getTotalElements() - 1);
-
-        List<NotificationDeliveryMethod> availableDeliveryMethods = restClient.getAvailableDeliveryMethods();
-        assertThat(availableDeliveryMethods).contains(WEB, EMAIL, MICROSOFT_TEAMS);
     }
 
     @Test
@@ -326,7 +357,7 @@ public class JavaRestClientTest extends AbstractContainerTest {
 
     @Test
     public void testSaveDomain() {
-        restClient.login("sysadmin@thingsboard.org", "sysadmin");
+        restClient.login(SYS_ADMIN_EMAIL, SYS_ADMIN_PASSWORD);
 
         Domain domain = new Domain();
         String prefix = RandomStringUtils.insecure().randomAlphabetic(5).toLowerCase();
@@ -340,7 +371,7 @@ public class JavaRestClientTest extends AbstractContainerTest {
 
     @Test
     public void testSaveMobileApp() {
-        restClient.login("sysadmin@thingsboard.org", "sysadmin");
+        restClient.login(SYS_ADMIN_EMAIL, SYS_ADMIN_PASSWORD);
 
         MobileApp mobileApp = new MobileApp();
         String prefix = RandomStringUtils.insecure().randomAlphabetic(5).toLowerCase();
@@ -476,6 +507,226 @@ public class JavaRestClientTest extends AbstractContainerTest {
     }
 
     @Test
+    public void testGetAllAssetInfos() {
+        var swimmingPoolProfile = new AssetProfile();
+        swimmingPoolProfile.setTenantId(tenant1.getId());
+        swimmingPoolProfile.setName("Swimming Pools");
+        swimmingPoolProfile = restClient.saveAssetProfile(swimmingPoolProfile);
+
+        var customer = new Customer();
+        customer.setTenantId(tenant1.getId());
+        customer.setTitle("Customer");
+        customer = restClient.saveCustomer(customer);
+
+        var subCustomer = new Customer();
+        subCustomer.setTenantId(tenant1.getId());
+        subCustomer.setTitle("Sub customer");
+        subCustomer = restClient.saveCustomer(subCustomer);
+
+        var swimmingPool1 = new Asset();
+        swimmingPool1.setTenantId(tenant1.getId());
+        swimmingPool1.setName("Swimming Pool 1");
+        swimmingPool1.setAssetProfileId(swimmingPoolProfile.getId());
+        swimmingPool1 = restClient.saveAsset(swimmingPool1);
+
+        var swimmingPool2 = new Asset();
+        swimmingPool2.setTenantId(tenant1.getId());
+        swimmingPool2.setName("Swimming Pool 2");
+        swimmingPool2.setAssetProfileId(swimmingPoolProfile.getId());
+        swimmingPool2 = restClient.saveAsset(swimmingPool2);
+
+        var warehouse1 = new Asset();
+        warehouse1.setTenantId(tenant1.getId());
+        warehouse1.setCustomerId(customer.getId());
+        warehouse1.setName("Warehouse 1");
+        warehouse1 = restClient.saveAsset(warehouse1);
+
+        var warehouse2 = new Asset();
+        warehouse2.setTenantId(tenant1.getId());
+        warehouse2.setCustomerId(subCustomer.getId());
+        warehouse2.setName("Warehouse 2");
+        warehouse2 = restClient.saveAsset(warehouse2);
+
+        // test basic "get all" retrieval without any filters
+        PageData<AssetInfo> allAssets = restClient.getAllAssetInfos(true, null, new PageLink(Integer.MAX_VALUE));
+        assertThat(allAssets).isNotNull();
+        assertThat(allAssets.getData()).isNotNull()
+                .extracting(AssetInfo::getId)
+                .containsExactlyInAnyOrder(swimmingPool1.getId(), swimmingPool2.getId(), warehouse1.getId(), warehouse2.getId());
+        assertThat(allAssets.getTotalPages()).isEqualTo(1);
+        assertThat(allAssets.getTotalElements()).isEqualTo(4);
+        assertThat(allAssets.hasNext()).isFalse();
+
+        // test exclude customer entities
+        PageData<AssetInfo> tenantAssets = restClient.getAllAssetInfos(false, null, new PageLink(Integer.MAX_VALUE));
+        assertThat(tenantAssets).isNotNull();
+        assertThat(tenantAssets.getData()).isNotNull()
+                .extracting(AssetInfo::getId)
+                .containsExactlyInAnyOrder(swimmingPool1.getId(), swimmingPool2.getId());
+        assertThat(tenantAssets.getTotalPages()).isEqualTo(1);
+        assertThat(tenantAssets.getTotalElements()).isEqualTo(2);
+        assertThat(tenantAssets.hasNext()).isFalse();
+
+        // test 'includeCustomers' = null is same as false
+        assertThat(tenantAssets).isEqualTo(restClient.getAllAssetInfos(null, null, new PageLink(Integer.MAX_VALUE)));
+
+        // test filtering by profile ID
+        PageData<AssetInfo> swimmingPools = restClient.getAllAssetInfos(true, swimmingPoolProfile.getId(), new PageLink(Integer.MAX_VALUE));
+        assertThat(swimmingPools).isNotNull();
+        assertThat(swimmingPools.getData()).isNotNull()
+                .extracting(AssetInfo::getId)
+                .containsExactlyInAnyOrder(swimmingPool1.getId(), swimmingPool2.getId());
+        assertThat(tenantAssets.getTotalPages()).isEqualTo(1);
+        assertThat(tenantAssets.getTotalElements()).isEqualTo(2);
+        assertThat(tenantAssets.hasNext()).isFalse();
+
+        // test URL encoding
+        var specialCharsAsset = new Asset();
+        specialCharsAsset.setTenantId(tenant1.getId());
+        specialCharsAsset.setName("/ special & asset + name ? test /");
+        specialCharsAsset = restClient.saveAsset(specialCharsAsset);
+
+        PageData<AssetInfo> searchResult = restClient.getAllAssetInfos(true, null, new PageLink(Integer.MAX_VALUE, 0, "/ special & asset + name ? test /"));
+        assertThat(searchResult).isNotNull();
+        assertThat(searchResult.getData()).isNotNull()
+                .extracting(AssetInfo::getId)
+                .containsExactlyInAnyOrder(specialCharsAsset.getId());
+        assertThat(searchResult.getTotalPages()).isEqualTo(1);
+        assertThat(searchResult.getTotalElements()).isEqualTo(1);
+        assertThat(searchResult.hasNext()).isFalse();
+
+        // test searching by partial name match
+        PageData<AssetInfo> partialNameMatch = restClient.getAllAssetInfos(true, null, new PageLink(Integer.MAX_VALUE, 0, "swimming"));
+        assertThat(partialNameMatch).isNotNull();
+        assertThat(partialNameMatch.getData()).isNotNull()
+                .extracting(AssetInfo::getId)
+                .containsExactlyInAnyOrder(swimmingPool1.getId(), swimmingPool2.getId());
+        assertThat(partialNameMatch.getTotalPages()).isEqualTo(1);
+        assertThat(partialNameMatch.getTotalElements()).isEqualTo(2);
+        assertThat(partialNameMatch.hasNext()).isFalse();
+    }
+
+    @Test
+    public void testGetAllDeviceInfos() {
+        var deviceProfileData = new DeviceProfileData();
+        deviceProfileData.setConfiguration(new DefaultDeviceProfileConfiguration());
+        deviceProfileData.setTransportConfiguration(new DefaultDeviceProfileTransportConfiguration());
+        deviceProfileData.setProvisionConfiguration(new DisabledDeviceProfileProvisionConfiguration(null));
+
+        var thermostatProfile = new DeviceProfile();
+        thermostatProfile.setTenantId(tenant1.getId());
+        thermostatProfile.setName("Thermostats");
+        thermostatProfile.setType(DeviceProfileType.DEFAULT);
+        thermostatProfile.setTransportType(DeviceTransportType.DEFAULT);
+        thermostatProfile.setProvisionType(DeviceProfileProvisionType.DISABLED);
+        thermostatProfile.setProfileData(deviceProfileData);
+        thermostatProfile = restClient.saveDeviceProfile(thermostatProfile);
+
+        var customer = new Customer();
+        customer.setTenantId(tenant1.getId());
+        customer.setTitle("Customer");
+        customer = restClient.saveCustomer(customer);
+
+        var subCustomer = new Customer();
+        subCustomer.setTenantId(tenant1.getId());
+        subCustomer.setTitle("Sub customer");
+        subCustomer = restClient.saveCustomer(subCustomer);
+
+        var thermostat1 = new Device();
+        thermostat1.setTenantId(tenant1.getId());
+        thermostat1.setName("Thermostat 1");
+        thermostat1.setDeviceProfileId(thermostatProfile.getId());
+        thermostat1 = restClient.saveDevice(thermostat1);
+
+        var thermostat2 = new Device();
+        thermostat2.setTenantId(tenant1.getId());
+        thermostat2.setName("Thermostat 2");
+        thermostat2.setDeviceProfileId(thermostatProfile.getId());
+        thermostat2 = restClient.saveDevice(thermostat2);
+
+        var sensor1 = new Device();
+        sensor1.setTenantId(tenant1.getId());
+        sensor1.setCustomerId(customer.getId());
+        sensor1.setName("Sensor 1");
+        sensor1 = restClient.saveDevice(sensor1);
+
+        var sensor2 = new Device();
+        sensor2.setTenantId(tenant1.getId());
+        sensor2.setCustomerId(subCustomer.getId());
+        sensor2.setName("Sensor 2");
+        sensor2 = restClient.saveDevice(sensor2);
+
+        // test basic "get all" retrieval without any filters
+        PageData<DeviceInfo> allDevices = restClient.getAllDeviceInfos(true, null, null, new PageLink(Integer.MAX_VALUE));
+        assertThat(allDevices).isNotNull();
+        assertThat(allDevices.getData()).isNotNull()
+                .extracting(DeviceInfo::getId)
+                .containsExactlyInAnyOrder(thermostat1.getId(), thermostat2.getId(), sensor1.getId(), sensor2.getId());
+        assertThat(allDevices.getTotalPages()).isEqualTo(1);
+        assertThat(allDevices.getTotalElements()).isEqualTo(4);
+        assertThat(allDevices.hasNext()).isFalse();
+
+        // test exclude customer entities
+        PageData<DeviceInfo> tenantDevices = restClient.getAllDeviceInfos(false, null, null, new PageLink(Integer.MAX_VALUE));
+        assertThat(tenantDevices).isNotNull();
+        assertThat(tenantDevices.getData()).isNotNull()
+                .extracting(DeviceInfo::getId)
+                .containsExactlyInAnyOrder(thermostat1.getId(), thermostat2.getId());
+        assertThat(tenantDevices.getTotalPages()).isEqualTo(1);
+        assertThat(tenantDevices.getTotalElements()).isEqualTo(2);
+        assertThat(tenantDevices.hasNext()).isFalse();
+
+        // test 'includeCustomers' = null is same as false
+        assertThat(tenantDevices).isEqualTo(restClient.getAllDeviceInfos(null, null, null, new PageLink(Integer.MAX_VALUE)));
+
+        // test filtering by profile ID
+        PageData<DeviceInfo> thermostats = restClient.getAllDeviceInfos(true, thermostatProfile.getId(), null, new PageLink(Integer.MAX_VALUE));
+        assertThat(thermostats).isNotNull();
+        assertThat(thermostats.getData()).isNotNull()
+                .extracting(DeviceInfo::getId)
+                .containsExactlyInAnyOrder(thermostat1.getId(), thermostat2.getId());
+        assertThat(thermostats.getTotalPages()).isEqualTo(1);
+        assertThat(thermostats.getTotalElements()).isEqualTo(2);
+        assertThat(thermostats.hasNext()).isFalse();
+
+        // test filtering by active status
+        PageData<DeviceInfo> inactiveDevices = restClient.getAllDeviceInfos(true, null, false, new PageLink(Integer.MAX_VALUE));
+        assertThat(inactiveDevices).isNotNull();
+        assertThat(inactiveDevices.getData()).isNotNull()
+                .extracting(DeviceInfo::getId)
+                .containsExactlyInAnyOrder(thermostat1.getId(), thermostat2.getId(), sensor1.getId(), sensor2.getId());
+
+        PageData<DeviceInfo> activeDevices = restClient.getAllDeviceInfos(true, null, true, new PageLink(Integer.MAX_VALUE));
+        assertThat(activeDevices).isNotNull();
+        assertThat(activeDevices.getData()).isNotNull().isEmpty();
+
+        // test URL encoding
+        var specialCharsDevice = new Device();
+        specialCharsDevice.setTenantId(tenant1.getId());
+        specialCharsDevice.setName("/ special & device + name ? test /");
+        specialCharsDevice = restClient.saveDevice(specialCharsDevice);
+
+        PageData<DeviceInfo> searchResult = restClient.getAllDeviceInfos(true, null, null, new PageLink(Integer.MAX_VALUE, 0, "/ special & device + name ? test /"));
+        assertThat(searchResult).isNotNull();
+        assertThat(searchResult.getData()).isNotNull()
+                .extracting(DeviceInfo::getId)
+                .containsExactlyInAnyOrder(specialCharsDevice.getId());
+        assertThat(searchResult.getTotalPages()).isEqualTo(1);
+        assertThat(searchResult.getTotalElements()).isEqualTo(1);
+        assertThat(searchResult.hasNext()).isFalse();
+
+        // test searching by partial name match
+        PageData<DeviceInfo> partialNameMatch = restClient.getAllDeviceInfos(true, null, null, new PageLink(Integer.MAX_VALUE, 0, "thermostat"));
+        assertThat(partialNameMatch).isNotNull();
+        assertThat(partialNameMatch.getData()).isNotNull()
+                .extracting(DeviceInfo::getId)
+                .containsExactlyInAnyOrder(thermostat1.getId(), thermostat2.getId());
+        assertThat(partialNameMatch.getTotalPages()).isEqualTo(1);
+        assertThat(partialNameMatch.getTotalElements()).isEqualTo(2);
+        assertThat(partialNameMatch.hasNext()).isFalse();
+    }
+
+    @Test
     public void testGetDeviceProfileInfosByIds() {
         var profileData = new DeviceProfileData();
         profileData.setConfiguration(new DefaultDeviceProfileConfiguration());
@@ -561,6 +812,136 @@ public class JavaRestClientTest extends AbstractContainerTest {
         List<AssetProfileInfo> profiles = restClient.getAssetProfilesByIds(Set.of(assetProfile1.getUuidId(), assetProfile3.getUuidId()));
         assertThat(profiles).hasSize(1);
         assertThat(profiles.get(0).getId()).isEqualTo(assetProfile3.getId());
+    }
+
+    @Test
+    public void testReportTemplateNewMethods() {
+        ReportTemplate template1 = createTestReportTemplate();
+        ReportTemplate template2 = createTestReportTemplate();
+
+        // getReportTemplateInfoById
+        ReportTemplateInfo info = restClient.getReportTemplateInfoById(template1.getId());
+        assertThat(info).isNotNull();
+        assertThat(info.getId()).isEqualTo(template1.getId());
+        assertThat(info.getName()).isEqualTo(template1.getName());
+
+        // getAllReportTemplateInfos — both templates must appear
+        PageData<ReportTemplateInfo> allInfos = restClient.getAllReportTemplateInfos(null, null, null, new PageLink(100));
+        assertThat(allInfos.getData()).extracting(ReportTemplateInfo::getId)
+                .contains(template1.getId(), template2.getId());
+
+        // getAllReportTemplateInfos with format filter
+        PageData<ReportTemplateInfo> csvInfos = restClient.getAllReportTemplateInfos(
+                null, new String[]{"CSV"}, null, new PageLink(100));
+        assertThat(csvInfos.getData()).extracting(ReportTemplateInfo::getId)
+                .contains(template1.getId(), template2.getId());
+
+        // getReportTemplatesByIds — only template1 requested, template2 must not be returned
+        List<ReportTemplateInfo> byIds = restClient.getReportTemplatesByIds(List.of(template1.getId()));
+        assertThat(byIds).extracting(ReportTemplateInfo::getId).containsExactly(template1.getId());
+
+        restClient.deleteReportTemplate(template1.getId());
+        restClient.deleteReportTemplate(template2.getId());
+    }
+
+    @Test
+    public void testReportOperations() {
+        ReportTemplate template = createTestReportTemplate();
+
+        byte[] csvData = "col1,col2\nval1,val2\n".getBytes();
+        Report report = new Report();
+        report.setTenantId(tenant1.getId());
+        report.setTemplateId(template.getId());
+        report.setFormat(TbReportFormat.CSV);
+        report.setName("test.csv");
+        report.setUserId(tenantAdmin1.getId());
+        report = restClient.createReport(report, csvData);
+        assertThat(report.getId()).isNotNull();
+
+        ReportId reportId = report.getId();
+
+        // getReportById
+        Optional<Report> fetched = restClient.getReportById(reportId);
+        assertThat(fetched).isPresent();
+        assertThat(fetched.get().getName()).isEqualTo("test.csv");
+
+        // downloadReport
+        byte[] downloaded = restClient.downloadReport(reportId);
+        assertThat(downloaded).isEqualTo(csvData);
+
+        // getReports
+        PageData<Report> reports = restClient.getReports(null, new PageLink(100));
+        assertThat(reports.getData()).extracting(Report::getId).contains(reportId);
+
+        // getReportInfosByIds
+        List<ReportInfo> infos = restClient.getReportInfosByIds(List.of(reportId));
+        assertThat(infos).extracting(Report::getId).containsExactly(reportId);
+
+        // getReportInfos filtered by reportTemplateId
+        PageData<ReportInfo> reportInfos = restClient.getReportInfos(
+                template.getId().getId(), null, null, new PageLink(100));
+        assertThat(reportInfos.getData()).extracting(Report::getId).contains(reportId);
+
+        // deleteReport — verify it's gone
+        restClient.deleteReport(reportId);
+        assertThat(restClient.getReportById(reportId)).isEmpty();
+
+        restClient.deleteReportTemplate(template.getId());
+    }
+
+    @Test
+    public void testJobOperations() {
+        ReportTemplate template = createTestReportTemplate();
+
+        ReportRequest reportRequest = new ReportRequest();
+        reportRequest.setReportTemplateId(template.getId());
+        Job job = restClient.requestReport(reportRequest);
+        assertThat(job).isNotNull();
+        assertThat(job.getId()).isNotNull();
+        assertThat(job.getType()).isEqualTo(JobType.REPORT);
+
+        // getJobById
+        Optional<Job> fetched = restClient.getJobById(job.getId());
+        assertThat(fetched).isPresent();
+        assertThat(fetched.get().getId()).isEqualTo(job.getId());
+
+        // getJobs with type filter
+        PageData<Job> reportJobs = restClient.getJobs(List.of(JobType.REPORT), null, null, null, null, null, new PageLink(100));
+        assertThat(reportJobs.getData()).extracting(Job::getId).contains(job.getId());
+
+        // getJobs with no filter
+        PageData<Job> allJobs = restClient.getJobs(null, null, null, null, null, null, new PageLink(100));
+        assertThat(allJobs.getData()).extracting(Job::getId).contains(job.getId());
+
+        // cancelJob — attempt to move the job to a terminal state so it can be deleted;
+        // if the job has already completed or failed by this point, skip cancellation
+        try {
+            restClient.cancelJob(job.getId());
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode() != HttpStatus.BAD_REQUEST) {
+                throw e;
+            }
+            // job already reached terminal state (completed/failed) — proceed to delete
+        }
+
+        // deleteJob — job must be in a terminal state at this point
+        restClient.deleteJob(job.getId());
+        assertThat(restClient.getJobById(job.getId())).isEmpty();
+
+        restClient.deleteReportTemplate(template.getId());
+    }
+
+    private ReportTemplate createTestReportTemplate() {
+        CsvReportTemplateConfig config = new CsvReportTemplateConfig();
+        config.setNamePattern("test-report");
+        config.setComponents(List.of());
+
+        ReportTemplate template = new ReportTemplate();
+        template.setName("Test Report Template " + RandomStringUtils.insecure().randomAlphabetic(5));
+        template.setType(ReportTemplateType.REPORT);
+        template.setFormat(TbReportFormat.CSV);
+        template.setConfiguration(config);
+        return restClient.saveReportTemplate(template);
     }
 
 }

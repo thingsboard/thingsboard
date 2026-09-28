@@ -1,0 +1,188 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+@if (!embedded) {
+  <mat-toolbar color="tb-primary" class="tb-install-wizard-toolbar">
+    @if (showBack) {
+      <button mat-icon-button (click)="back.emit()" type="button" tabindex="-1">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+    }
+    <div class="tb-install-wizard-toolbar-content">
+      <h2>{{ 'agent.app-update-wizard-title' | translate }}@if (existingApplication) {
+        :
+      }</h2>
+      @if (existingApplication) {
+        <span class="flex-1">
+          {{ 'agent.app-update-on-app' | translate: { name: existingApplication?.name } }}
+        </span>
+      }
+    </div>
+    <div tb-help="agentAppUpdate"></div>
+    <button mat-icon-button (click)="cancel()" type="button" tabindex="-1">
+      <mat-icon>close</mat-icon>
+    </button>
+  </mat-toolbar>
+}
+
+<div mat-dialog-content class="tb-install-wizard-body" [class.tb-install-wizard-embedded]="embedded">
+
+  <mat-stepper linear #stepper
+    [orientation]="(stepperOrientation | async)"
+    [labelPosition]="(stepperLabelPosition | async)">
+
+    <mat-step [label]="'agent.app-install-step3' | translate">
+
+      <mat-form-field class="mat-block" appearance="outline">
+        <mat-label translate>agent.app-install-name</mat-label>
+        <input matInput [(ngModel)]="appName" required>
+      </mat-form-field>
+
+      @if (canHaveRelatedEntity && isProfileManagedUpdate) {
+        <tb-agent-related-entity-autocomplete
+          [appType]="selectedType || existingApplication?.appType"
+          [disabled]="!!lockedRelatedEntity"
+          [required]="relatedEntityRequired"
+          [ngModel]="relatedEntityId"
+          (ngModelChange)="relatedEntityId = $event; onRelatedEntityChange()">
+        </tb-agent-related-entity-autocomplete>
+      }
+
+      <tb-agent-app-step-inputs [bindings]="bindings"></tb-agent-app-step-inputs>
+
+      @if (!isProfileManagedUpdate) {
+        @if (composeTypeKeys.length > 1) {
+          <mat-form-field class="mat-block" appearance="outline">
+            <mat-label translate>agent.app-compose-template-select</mat-label>
+            <mat-select [value]="composeType" (selectionChange)="onComposeTypeChange($event.value)">
+              @for (key of composeTypeKeys; track key) {
+                <mat-option [value]="key">
+                  {{ composeTypeLabel(key) }}
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        }
+        <div class="diff-header-row">
+          <div class="diff-header added">{{ 'agent.app-update-diff-proposed' | translate }}</div>
+          <div class="diff-header removed">{{ 'agent.app-update-diff-current' | translate }}</div>
+          <button type="button" class="diff-sync-toggle"
+            [class.active]="diffSyncScroll"
+            [matTooltip]="'agent.app-diff-sync-scroll' | translate"
+            (click)="diffSyncScroll = !diffSyncScroll">
+            <mat-icon>{{ diffSyncScroll ? 'link' : 'link_off' }}</mat-icon>
+          </button>
+        </div>
+        <tb-agent-compose-diff [left]="proposedYaml" [right]="currentYaml" [readOnly]="readOnlyCompare" [syncScroll]="diffSyncScroll" (rightChange)="composeYaml = $event"></tb-agent-compose-diff>
+        <p class="diff-hint" translate>agent.app-update-diff-hint</p>
+      }
+
+      @if (isProfileManagedUpdate) {
+        <div class="config-section">
+          <mat-checkbox [(ngModel)]="skipProfileRefetch" [disabled]="profileTemplateDrifted">
+            <span translate>agent.app-update-skip-profile-refetch</span>
+          </mat-checkbox>
+          @if (!profileTemplateDrifted) {
+            <p class="hint" translate>agent.app-update-skip-profile-refetch-hint</p>
+          }
+          @if (profileTemplateDrifted) {
+            <p class="hint">
+              {{ 'agent.app-update-skip-profile-refetch-drift-hint' | translate: { version: profileForCompare?.templateVersion } }}
+            </p>
+          }
+        </div>
+        @if (relatedEntityId) {
+          <div class="tb-app-compose-hint">
+            <mat-icon class="tb-app-compose-hint-icon">info_outline</mat-icon>
+            <span translate>agent.app-compose-creds-overridden-hint</span>
+          </div>
+        }
+        <div class="tb-compare-actions">
+          <button mat-stroked-button color="primary" type="button"
+            (click)="openEditProfile()" [disabled]="!profileForCompare">
+            <mat-icon>edit</mat-icon>
+            <span>{{ 'agent.app-update-edit-profile' | translate }}</span>
+          </button>
+        </div>
+        <div class="diff-header-row">
+          <div class="diff-header compare">{{ 'agent.app-update-current-config' | translate }}</div>
+          <div class="diff-header compare">{{ 'agent.app-update-future-config' | translate }}</div>
+          <div class="diff-readonly-chip" [matTooltip]="'agent.app-update-compare-hint' | translate">
+            <mat-icon>lock</mat-icon>
+            <span translate>agent.app-diff-read-only</span>
+          </div>
+          <button type="button" class="diff-sync-toggle"
+            [class.active]="diffSyncScroll"
+            [matTooltip]="'agent.app-diff-sync-scroll' | translate"
+            (click)="diffSyncScroll = !diffSyncScroll">
+            <mat-icon>{{ diffSyncScroll ? 'link' : 'link_off' }}</mat-icon>
+          </button>
+        </div>
+        <tb-agent-compose-diff [left]="currentYaml" [right]="futureYaml" [readOnly]="readOnlyCompare" [syncScroll]="diffSyncScroll"></tb-agent-compose-diff>
+        <p class="diff-hint" translate>agent.app-update-compare-hint</p>
+      }
+
+      <div class="step-footer">
+        <button mat-raised-button color="primary" matStepperNext [disabled]="!canSubmit()">
+          {{ 'action.next' | translate }}
+          <mat-icon iconPositionEnd>chevron_right</mat-icon>
+        </button>
+      </div>
+    </mat-step>
+
+    <mat-step [label]="'agent.app-install-step4' | translate">
+
+      <div class="summary-card">
+        <div class="summary-row">
+          <span class="label" translate>agent.app-name</span>
+          <span class="value">{{ appName }}</span>
+        </div>
+        <div class="summary-row">
+          <span class="label" translate>agent.app-type</span>
+          <span class="value"><span class="tb-type-badge"
+            [class.edge]="selectedType === 'EDGE'"
+            [class.gateway]="selectedType === 'GATEWAY'"
+          [class.generic]="selectedType === 'GENERIC'">{{ selectedType }}</span></span>
+        </div>
+        @if (template) {
+          <div class="summary-row">
+            <span class="label" translate>agent.app-template</span>
+            <span class="value">{{ template.appType }} {{ template.currentVersion }}</span>
+          </div>
+        }
+        @if (profileForCompare) {
+          <div class="summary-row">
+            <span class="label" translate>agent.app-install-select-profile</span>
+            <span class="value">{{ profileForCompare.name }}</span>
+          </div>
+        }
+        @if (agent) {
+          <div class="summary-row">
+            <span class="label" translate>agent.agents</span>
+            <span class="value">{{ agent.name }}</span>
+          </div>
+        }
+      </div>
+
+      <div class="info-box">
+        <mat-icon>info</mat-icon>
+        <span translate>agent.app-install-confirm-info</span>
+      </div>
+
+      <div class="step-footer">
+        <button mat-button matStepperPrevious [disabled]="submitting">
+          <mat-icon>chevron_left</mat-icon>
+          {{ 'action.back' | translate }}
+        </button>
+        <button mat-raised-button color="primary" (click)="submit()" [disabled]="!canSubmit()">
+          <mat-icon>save</mat-icon>
+          <span>{{ 'agent.app-update-cta' | translate }}</span>
+        </button>
+      </div>
+    </mat-step>
+
+  </mat-stepper>
+</div>

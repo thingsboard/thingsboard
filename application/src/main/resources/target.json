@@ -1,0 +1,12 @@
+{
+  "name": "Test",
+  "configuration": {
+    "type": "PLATFORM_USERS",
+    "usersFilter": {
+      "type": "USER_ROLE",
+      "rolesIds": [
+        "47d96910-3e5b-11ed-93f9-996bd9a9d291"
+      ]
+    }
+  }
+}

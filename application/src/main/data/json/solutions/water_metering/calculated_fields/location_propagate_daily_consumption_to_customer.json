@@ -1,0 +1,44 @@
+{
+  "reprocessingOrder": 3,
+  "type": "PROPAGATION",
+  "name": "Propagate location daily consumption to customer",
+  "entityId": {
+    "entityType": "ASSET_PROFILE",
+    "id": "83595270-c452-42d8-ab35-494d7de7cfcd"
+  },
+  "debugSettings": {
+    "failuresEnabled": true,
+    "allEnabled": false,
+    "allEnabledUntil": 0
+  },
+  "configurationVersion": 0,
+  "configuration": {
+    "type": "PROPAGATION",
+    "arguments": {
+      "dailyConsumption": {
+        "refEntityKey": {
+          "key": "dailyConsumption",
+          "type": "TS_LATEST"
+        },
+        "defaultValue": ""
+      }
+    },
+    "expression": null,
+    "output": {
+      "type": "TIME_SERIES",
+      "strategy": {
+        "type": "IMMEDIATE",
+        "ttl": 0,
+        "saveTimeSeries": true,
+        "saveLatest": true,
+        "sendWsUpdate": true,
+        "processCfs": true
+      }
+    },
+    "relation": {
+      "direction": "TO",
+      "relationType": "Owns"
+    },
+    "applyExpressionToResolvedArguments": false
+  }
+}

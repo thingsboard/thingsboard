@@ -1,0 +1,60 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="originatorFormGroup" class="tb-originator-select flex flex-col gap-4" [class.optional]="!required">
+  <tb-toggle-select appearance="fill" [options]="headerOptions" formControlName="originator">
+  </tb-toggle-select>
+  @if (isSingleAllowedEntityType) {
+    <tb-entity-autocomplete
+      appearance="outline"
+      useFullEntityId
+      [class.!hidden]="!isSingleEntityMode"
+      [entityType]="singleAllowedEntityType"
+      [required]="required && isSingleEntityMode"
+      formControlName="entityOriginatorId">
+    </tb-entity-autocomplete>
+  } @else {
+    <tb-entity-select
+      appearance="outline"
+      [class.!hidden]="!isSingleEntityMode"
+      [allowedEntityTypes]="allowedEntityTypes"
+      [required]="required && isSingleEntityMode"
+      formControlName="entityOriginatorId">
+    </tb-entity-select>
+  }
+  @if (!isSingleEntityMode) {
+    <section class="flex flex-row gap-2">
+      @if(originator === 'ownerGroup') {
+        <tb-owner-autocomplete
+          class="flex-1"
+          appearance="outline"
+          formControlName="groupOwnerId"
+          [excludeOwnerIds]="[currentUser.tenantId]"
+          [required]="required"
+          placeholderText="group-permission.user-group-owner"
+          notFoundText="group-permission.no-owners-matching"
+          requiredText="group-permission.target-user-group-owner-required">
+        </tb-owner-autocomplete>
+      }
+      @if (originatorFormGroup.get('groupOwnerId').value || originator === 'groupTenant') {
+        <tb-entity-group-select
+          class="flex-1"
+          appearance="outline"
+          [ownerId]="originatorFormGroup.get('groupOwnerId').value"
+          [originator]="originator"
+          [allowedGroupTypes]="allowedEntityTypes"
+          (currentGroupInfo)="entityGroupLoaded($event)"
+          (currentGroupType)="currentGroupType.emit($event)"
+          formControlName="groupOriginatorId"
+          [required]="required && !isSingleEntityMode"
+          placeholderText="entity-group.select-entity-group"
+          notFoundText="entity-group.no-entity-groups-matching"
+          requiredText="entity-group.target-entity-group-required">
+        </tb-entity-group-select>
+      }
+    </section>
+  }
+</section>

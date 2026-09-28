@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { BaseData } from '@shared/models/base-data';
 import { EntityType } from '@shared/models/entity-type.models';
 import { getEntityDetailsPageURL } from '@core/utils';
@@ -42,6 +43,7 @@ export interface DeviceInstalledItemDescriptor {
 export interface SolutionTemplateInstalledItemDescriptor {
   type: 'SOLUTION_TEMPLATE';
   createdEntityIds: { entityType: string; id: string }[];
+  dashboardGroupId: { id: string };
   dashboardId: { id: string };
   publicId: { id: string };
   mainDashboardPublic: boolean;
@@ -108,7 +110,6 @@ export interface ItemPublishedVersionInfo {
 }
 
 export interface IotHubInstalledItem extends BaseData<{id: string}> {
-  tenantId: { id: string };
   itemId: string;
   itemVersionId: string;
   itemName: string;
@@ -123,6 +124,7 @@ export const getInstalledItemUrl = (descriptor?: IotHubInstalledItemDescriptor):
   }
   let entityId: string | null = null;
   let entityType: EntityType | null = null;
+  let entityGroupId: string | null = null;
   switch (descriptor.type) {
     case 'DEVICE':
       if (descriptor.dashboardId) {
@@ -156,14 +158,17 @@ export const getInstalledItemUrl = (descriptor?: IotHubInstalledItemDescriptor):
     case 'SOLUTION_TEMPLATE':
       entityId = descriptor.dashboardId?.id;
       entityType = EntityType.DASHBOARD;
+      entityGroupId = descriptor.dashboardGroupId?.id;
       break;
   }
   if (entityType && entityId) {
     let url: string | null;
     if (descriptor.type === 'ALARM_RULE') {
       url = `/alarms/alarm-rules/${entityId}`;
+    } else if (descriptor.type === 'SOLUTION_TEMPLATE' && entityGroupId) {
+       url = `/dashboards/groups/${entityGroupId}/${entityId}`;
     } else {
-      url = getEntityDetailsPageURL(entityId, entityType);
+       url = getEntityDetailsPageURL(entityId, entityType);
     }
     return url;
   }

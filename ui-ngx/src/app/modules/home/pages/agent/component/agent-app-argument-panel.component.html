@@ -1,0 +1,144 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-agent-app-argument-panel" [formGroup]="argumentFormGroup">
+  <div class="tb-agent-app-argument-panel-title">{{ 'agent.argument-settings' | translate }}</div>
+  <div class="tb-agent-app-argument-panel-content tb-form-panel no-border no-padding">
+
+    <div class="tb-form-row">
+      <div class="fixed-title-width tb-required">{{ 'agent.argument-name' | translate }}</div>
+      <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="name" autocomplete="off" placeholder="{{ 'action.set' | translate }}">
+        <mat-icon matSuffix class="tb-agent-app-argument-info"
+          [matTooltip]="('agent.argument-referenced-as' | translate) + ' ' + nameReference"
+        matTooltipPosition="above">info_outline</mat-icon>
+        @if (argumentFormGroup.get('name').hasError('required')) {
+          <mat-error>
+            {{ 'agent.argument-name-required' | translate }}
+          </mat-error>
+        }
+        @if (argumentFormGroup.get('name').hasError('pattern')) {
+          <mat-error>
+            {{ 'agent.argument-name-pattern' | translate }}
+          </mat-error>
+        }
+        @if (argumentFormGroup.get('name').hasError('duplicateName')) {
+          <mat-error>
+            {{ 'agent.argument-name-duplicate' | translate }}
+          </mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <div class="tb-form-row">
+      <div class="fixed-title-width">{{ 'agent.argument-source' | translate }}</div>
+      <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="sourceType">
+          @for (source of argumentSources; track source) {
+            <mat-option [value]="source">
+              {{ argumentSourceTranslationMap.get(source) | translate }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    @if (isEntitySource) {
+      <div class="tb-form-row">
+        <div class="fixed-title-width tb-required">
+          {{ argumentSourceEntityTypeMap.get(sourceType).title | translate }}
+        </div>
+        <tb-entity-autocomplete class="flex-1"
+          formControlName="sourceEntityId"
+          useFullEntityId
+          inlineField
+          [entityType]="sourceEntityType"
+          [required]="true"
+          [placeholder]="'action.set' | translate">
+        </tb-entity-autocomplete>
+      </div>
+    }
+
+    <div class="tb-form-row">
+      <div class="fixed-title-width tb-required">{{ 'agent.argument-value-type' | translate }}</div>
+      <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="valueType">
+          @for (type of argumentValueTypes; track type) {
+            <mat-option [value]="type">
+              {{ argumentValueTypeTranslationMap.get(type) | translate }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    @if (isAttribute) {
+      <div class="tb-form-row">
+        <div class="fixed-title-width tb-required">{{ 'agent.argument-scope' | translate }}</div>
+        <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+          <mat-select formControlName="scope">
+            @for (scope of attributeScopes; track scope) {
+              <mat-option [value]="scope">
+                {{ attributeScopeTranslationMap.get(scope) | translate }}
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+    }
+
+    <div class="tb-form-row">
+      <div class="fixed-title-width tb-required">
+        {{ (isAttribute ? 'agent.argument-attribute-key' : 'agent.argument-telemetry-key') | translate }}
+      </div>
+      <tb-entity-key-autocomplete class="flex-1"
+        formControlName="key"
+        [entityFilter]="keyEntityFilter"
+        [dataKeyType]="keyDataType"
+        [keyScopeType]="isAttribute ? argumentFormGroup.get('scope').value : null"
+        [enableAutocomplete]="keyAutocompleteEnabled"
+        [requiredText]="'agent.argument-key-required' | translate">
+      </tb-entity-key-autocomplete>
+    </div>
+
+    <div class="tb-form-row">
+      <div class="fixed-title-width tb-required">{{ 'agent.argument-format' | translate }}</div>
+      <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="format">
+          @for (format of argumentFormats; track format) {
+            <mat-option [value]="format">
+              {{ argumentFormatTranslationMap.get(format) | translate }}
+            </mat-option>
+          }
+        </mat-select>
+        <mat-icon matSuffix class="tb-agent-app-argument-info"
+          [matTooltip]="formatHint"
+        matTooltipPosition="above">info_outline</mat-icon>
+      </mat-form-field>
+    </div>
+
+    <div class="tb-form-row">
+      <div class="fixed-title-width">{{ 'agent.argument-default-value' | translate }}</div>
+      <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="defaultValue" autocomplete="off" placeholder="{{ 'action.set' | translate }}">
+      </mat-form-field>
+    </div>
+
+  </div>
+
+  <div class="tb-agent-app-argument-panel-buttons">
+    <button mat-button color="primary" type="button" (click)="cancel()">
+      {{ 'action.cancel' | translate }}
+    </button>
+    @if (!readonly) {
+      <button mat-raised-button color="primary" type="button"
+        [disabled]="argumentFormGroup.invalid"
+        (click)="apply()">
+        {{ buttonTitle | translate }}
+      </button>
+    }
+  </div>
+</div>

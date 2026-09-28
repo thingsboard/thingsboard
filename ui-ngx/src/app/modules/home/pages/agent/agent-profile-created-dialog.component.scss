@@ -1,0 +1,147 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@use '../../components/agent/agent-shared' as *;
+
+:host {
+  display: block;
+  width: min(760px, 95vw);
+  min-width: 0;
+  max-width: 95vw;
+}
+
+.tb-agent-profile-created-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0;
+
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 20px;
+    font-weight: 400;
+    margin: 0;
+
+    .success-icon {
+      color: #4caf50;
+      font-size: 24px;
+      width: 24px;
+      height: 24px;
+    }
+  }
+}
+
+.tb-agent-profile-created-body {
+  padding: 16px 24px 24px;
+  max-height: 72vh;
+  overflow-y: auto;
+}
+
+.instructions-section {
+  h3 {
+    font-size: 14px;
+    font-weight: 500;
+    margin: 8px 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .section-icon {
+      color: var(--tb-primary-500);
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+  }
+}
+
+.instructions-section {
+  margin-top: 16px;
+}
+
+.command-block {
+  @include agent-command-block;
+  margin: 0 0 16px;
+
+  .copy-command-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.85);
+    min-width: 0;
+    padding: 0 10px;
+    line-height: 28px;
+    height: 28px;
+    font-size: 12px;
+
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      margin-right: 4px;
+    }
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+    }
+  }
+}
+
+.tb-info-box {
+  @include agent-info-box;
+  margin-top: 12px;
+
+  p {
+    margin: 0 0 8px;
+    font-size: inherit;
+    line-height: inherit;
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  ol {
+    margin: 0;
+    padding-left: 20px;
+    font-size: inherit;
+    line-height: 1.7;
+  }
+
+  li {
+    font-size: inherit;
+    line-height: inherit;
+  }
+
+  &.info {
+    background: $agent-info-surface;
+    color: $agent-color-info;
+  }
+
+  &.muted {
+    background: #f5f5f5;
+    color: rgba(0, 0, 0, 0.6);
+
+    mat-icon {
+      color: $agent-text-hint;
+    }
+
+    .muted-title {
+      font-weight: 500;
+      color: $agent-text-primary;
+    }
+  }
+}
+
+.tb-agent-profile-created-footer {
+  padding: 8px 16px;
+
+  button[mat-raised-button] mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    margin-right: 4px;
+  }
+}

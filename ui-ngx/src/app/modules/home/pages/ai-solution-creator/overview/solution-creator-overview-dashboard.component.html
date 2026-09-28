@@ -1,0 +1,52 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-solution-settings">
+  <mat-toolbar class="tb-solution-settings-toolbar">
+    <div class="flex-1" tbTruncateWithTooltip>{{ 'solution-creator.dashboards-overview' | translate: {name: solutionName} }}</div>
+    <tb-toggle-select appearance="fill" selectMediaBreakpoint="xs" [formControl]="solutionMode">
+      <tb-toggle-option value="basic">{{ 'solution-creator.basic-mode' | translate }}</tb-toggle-option>
+      <tb-toggle-option value="advanced">{{ 'solution-creator.advanced-mode' | translate }}</tb-toggle-option>
+    </tb-toggle-select>
+  </mat-toolbar>
+  <div class="tb-solution-settings-container size-full">
+    @if (solutionMode.value === 'basic') {
+      <div class="tb-solution-settings-container-setting size-full">
+        <div class="tb-solution-menu-container w-60">
+          <mat-selection-list class="tb-solution-menu flex flex-col items-stretch justify-start"
+                              [multiple]="false"
+                              [formControl]="dashboard"
+                              hideSingleSelectionIndicator color="primary">
+            @for (dashboard of dashboards; track dashboard.name) {
+              <mat-list-option [value]="dashboard.name">
+                <span matListItemTitle>{{ dashboard.name }}</span>
+                <span matListItemLine>{{ dashboard.assignedTo }}</span>
+              </mat-list-option>
+            }
+          </mat-selection-list>
+        </div>
+        <div class="flex-1 overflow-auto">
+          <tb-markdown usePlainMarkdown [data]=description></tb-markdown>
+        </div>
+      </div>
+    }
+    @else {
+      <tb-json-object-edit
+        class="h-full"
+        [fillHeight]="true"
+        [formControl]="dashboardDescriptor"
+      ></tb-json-object-edit>
+      <div class="flex justify-end">
+        <button mat-stroked-button
+                (click)="updatedDashboardsDescriptor($event)"
+                color="primary"
+                [disabled]="dashboardDescriptor.pristine">
+          {{ 'action.apply' | translate }}
+        </button>
+      </div>
+    }
+  </div>
+</div>

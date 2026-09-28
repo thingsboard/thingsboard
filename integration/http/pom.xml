@@ -1,0 +1,89 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.thingsboard</groupId>
+        <version>4.4.0-SNAPSHOT</version>
+        <artifactId>integration</artifactId>
+    </parent>
+    <groupId>org.thingsboard.integration</groupId>
+    <artifactId>http</artifactId>
+    <packaging>jar</packaging>
+
+    <name>Thingsboard HTTP Integration Service</name>
+    <url>https://thingsboard.io</url>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <main.dir>${basedir}/../..</main.dir>
+
+        <pkg.type>java</pkg.type>
+        <pkg.process-resources.phase>process-resources</pkg.process-resources.phase>
+        <pkg.package.phase>package</pkg.package.phase>
+        <pkg.name>tb-http-integration</pkg.name>
+        <pkg.copyInstallScripts>false</pkg.copyInstallScripts>
+        <pkg.win.dist>${project.build.directory}/windows</pkg.win.dist>
+        <pkg.implementationTitle>ThingsBoard HTTP Integration Service</pkg.implementationTitle>
+        <pkg.mainClass>org.thingsboard.integration.ThingsboardHttpIntegrationApplication</pkg.mainClass>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.thingsboard.common.integration</groupId>
+            <artifactId>http-integrations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common.integration</groupId>
+            <artifactId>remote-integration-api</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>${pkg.name}-${project.version}</finalName>
+        <resources>
+            <resource>
+                <directory>${project.basedir}/src/main/resources</directory>
+            </resource>
+        </resources>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.thingsboard</groupId>
+                <artifactId>gradle-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

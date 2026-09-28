@@ -1,0 +1,339 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+package org.thingsboard.server.service.ai.solution;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.thingsboard.ai.common.client.TbAiClient;
+import org.thingsboard.ai.common.data.solution.SolutionStep;
+import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.service.ai.TbAiService;
+import org.thingsboard.server.service.security.model.SecurityUser;
+
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.same;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
+
+@ExtendWith(MockitoExtension.class)
+class DefaultAiSolutionServiceTest {
+
+    @Mock
+    TbAiService tbAiService;
+    @Mock
+    TbAiClient tbAiClient;
+    @Mock
+    TbAiClient.TokenProvider tokenProvider;
+    @Mock
+    TbAiClient.TbAiResponse tbAiResponse;
+    @Mock
+    SecurityUser user;
+
+    DefaultAiSolutionService service;
+
+    @BeforeEach
+    void setUp() {
+        service = new DefaultAiSolutionService(tbAiService);
+    }
+
+    @Test
+    void shouldProcessWithoutCreditCheckAndDelegateToClient_whenStartNewCalled() {
+        // GIVEN
+        JsonNode expectedResponse = solutionResponse(UUID.randomUUID(), "Energy Monitoring", false, false);
+        given(tbAiService.process(any(), same(user), eq(false))).willReturn(expectedResponse);
+        given(tbAiClient.startNewSolution(same(tokenProvider))).willReturn(tbAiResponse);
+
+        // WHEN
+        JsonNode result = service.startNew(user);
+
+        // THEN
+        assertThat(result).isSameAs(expectedResponse);
+
+        assertThat(captureProcessCallWithoutCreditCheck().apply(tbAiClient, tokenProvider)).isSameAs(tbAiResponse);
+        then(tbAiClient).should().startNewSolution(same(tokenProvider));
+        then(tbAiClient).shouldHaveNoMoreInteractions();
+        then(tbAiService).shouldHaveNoMoreInteractions();
+    }
+
+    @Test
+    void shouldProcessWithoutCreditCheckAndDelegateToClient_whenGetSolutionCalled() {
+        // GIVEN
+        UUID solutionId = UUID.randomUUID();
+        JsonNode expectedResponse = solutionResponse(solutionId, "Energy Monitoring", false, false);
+        given(tbAiService.process(any(), same(user), eq(false))).willReturn(expectedResponse);
+        given(tbAiClient.getSolution(eq(solutionId), same(tokenProvider))).willReturn(tbAiResponse);
+
+        // WHEN
+        JsonNode result = service.getSolution(solutionId, user);
+
+        // THEN
+        assertThat(result).isSameAs(expectedResponse);
+
+        assertThat(captureProcessCallWithoutCreditCheck().apply(tbAiClient, tokenProvider)).isSameAs(tbAiResponse);
+        then(tbAiClient).should().getSolution(eq(solutionId), same(tokenProvider));
+        then(tbAiClient).shouldHaveNoMoreInteractions();
+        then(tbAiService).shouldHaveNoMoreInteractions();
+    }
+
+    @Test
+    void shouldProcessWithoutCreditCheckAndDelegateToClient_whenGetSolutionsCalled() {
+        // GIVEN
+        JsonNode expectedResponse = solutionInfosResponse(UUID.randomUUID(), "Energy Monitoring");
+        given(tbAiService.process(any(), same(user), eq(false))).willReturn(expectedResponse);
+        given(tbAiClient.getSolutions(same(tokenProvider))).willReturn(tbAiResponse);
+
+        // WHEN
+        JsonNode result = service.getSolutions(user);
+
+        // THEN
+        assertThat(result).isSameAs(expectedResponse);
+
+        assertThat(captureProcessCallWithoutCreditCheck().apply(tbAiClient, tokenProvider)).isSameAs(tbAiResponse);
+        then(tbAiClient).should().getSolutions(same(tokenProvider));
+        then(tbAiClient).shouldHaveNoMoreInteractions();
+        then(tbAiService).shouldHaveNoMoreInteractions();
+    }
+
+    @ParameterizedTest
+    @EnumSource(SolutionStep.class)
+    void shouldProcessWithCreditCheckAndDelegateToClient_whenChatCalled(SolutionStep step) {
+        // GIVEN
+        UUID solutionId = UUID.randomUUID();
+        String message = "Add humidity monitoring to the solution.";
+        JsonNode expectedResponse = solutionResponse(solutionId, "Energy Monitoring", false, false);
+        given(tbAiService.process(any(), same(user))).willReturn(expectedResponse);
+        given(tbAiClient.sendSolutionMessage(eq(solutionId), eq(step), eq(message), same(tokenProvider)))
+                .willReturn(tbAiResponse);
+
+        // WHEN
+        JsonNode result = service.chat(solutionId, step, message, user);
+
+        // THEN
+        assertThat(result).isSameAs(expectedResponse);
+
+        assertThat(captureProcessCallWithCreditCheck().apply(tbAiClient, tokenProvider)).isSameAs(tbAiResponse);
+        then(tbAiClient).should().sendSolutionMessage(eq(solutionId), eq(step), eq(message), same(tokenProvider));
+        then(tbAiClient).shouldHaveNoMoreInteractions();
+        then(tbAiService).shouldHaveNoMoreInteractions();
+    }
+
+    @Test
+    void shouldProcessWithCreditCheckAndDelegateToClient_whenCreateSolutionCalled() {
+        // GIVEN
+        UUID solutionId = UUID.randomUUID();
+        JsonNode expectedResponse = solutionResponse(solutionId, "Energy Monitoring", true, false);
+        given(tbAiService.process(any(), same(user))).willReturn(expectedResponse);
+        given(tbAiClient.createSolution(eq(solutionId), same(tokenProvider))).willReturn(tbAiResponse);
+
+        // WHEN
+        JsonNode result = service.createSolution(solutionId, user);
+
+        // THEN
+        assertThat(result).isSameAs(expectedResponse);
+
+        assertThat(captureProcessCallWithCreditCheck().apply(tbAiClient, tokenProvider)).isSameAs(tbAiResponse);
+        then(tbAiClient).should().createSolution(eq(solutionId), same(tokenProvider));
+        then(tbAiClient).shouldHaveNoMoreInteractions();
+        then(tbAiService).shouldHaveNoMoreInteractions();
+    }
+
+    @Test
+    void shouldProcessWithCreditCheckAndDelegateToClient_whenUpdateDataCalled() {
+        // GIVEN
+        UUID solutionId = UUID.randomUUID();
+        String dataKey = "solutionTitle";
+        JsonNode value = TextNode.valueOf("Energy Monitoring");
+        JsonNode expectedResponse = solutionResponse(solutionId, "Energy Monitoring", false, false);
+        given(tbAiService.process(any(), same(user))).willReturn(expectedResponse);
+        given(tbAiClient.updateData(eq(solutionId), eq(dataKey), same(value), same(tokenProvider))).willReturn(tbAiResponse);
+
+        // WHEN
+        JsonNode result = service.updateData(solutionId, dataKey, value, user);
+
+        // THEN
+        assertThat(result).isSameAs(expectedResponse);
+
+        assertThat(captureProcessCallWithCreditCheck().apply(tbAiClient, tokenProvider)).isSameAs(tbAiResponse);
+        then(tbAiClient).should().updateData(eq(solutionId), eq(dataKey), same(value), same(tokenProvider));
+        then(tbAiClient).shouldHaveNoMoreInteractions();
+        then(tbAiService).shouldHaveNoMoreInteractions();
+    }
+
+    @ParameterizedTest
+    @EnumSource(SolutionStep.class)
+    void shouldProcessWithoutCreditCheckAndDelegateToClient_whenClearStepCalled(SolutionStep step) {
+        // GIVEN
+        UUID solutionId = UUID.randomUUID();
+        given(tbAiService.process(any(), same(user), eq(false))).willReturn(null);
+        given(tbAiClient.clearStep(eq(solutionId), eq(step), same(tokenProvider)))
+                .willReturn(tbAiResponse);
+
+        // WHEN
+        service.clearStep(solutionId, step, user);
+
+        // THEN
+        assertThat(captureProcessCallWithoutCreditCheck().apply(tbAiClient, tokenProvider)).isSameAs(tbAiResponse);
+        then(tbAiClient).should().clearStep(eq(solutionId), eq(step), same(tokenProvider));
+        then(tbAiClient).shouldHaveNoMoreInteractions();
+        then(tbAiService).shouldHaveNoMoreInteractions();
+    }
+
+    @Test
+    void shouldProcessWithoutCreditCheckAndDelegateToClient_whenInstallSolutionCalled() {
+        // GIVEN
+        UUID solutionId = UUID.randomUUID();
+        String tbAccessToken = "tb-access-token";
+        JsonNode expectedResponse = solutionInstallResultResponse(UUID.randomUUID());
+        given(tbAiService.process(any(), same(user), eq(false))).willReturn(expectedResponse);
+        given(tbAiClient.installSolution(eq(solutionId), eq(tbAccessToken), same(tokenProvider))).willReturn(tbAiResponse);
+
+        // WHEN
+        JsonNode result = service.installSolution(solutionId, tbAccessToken, user);
+
+        // THEN
+        assertThat(result).isSameAs(expectedResponse);
+
+        assertThat(captureProcessCallWithoutCreditCheck().apply(tbAiClient, tokenProvider)).isSameAs(tbAiResponse);
+        then(tbAiClient).should().installSolution(eq(solutionId), eq(tbAccessToken), same(tokenProvider));
+        then(tbAiClient).shouldHaveNoMoreInteractions();
+        then(tbAiService).shouldHaveNoMoreInteractions();
+    }
+
+    @Test
+    void shouldProcessWithoutCreditCheckAndDelegateToClient_whenUninstallSolutionCalled() {
+        // GIVEN
+        UUID solutionId = UUID.randomUUID();
+        String tbAccessToken = "tb-access-token";
+        JsonNode expectedResponse = solutionResponse(solutionId, "Energy Monitoring", true, false);
+        given(tbAiService.process(any(), same(user), eq(false))).willReturn(expectedResponse);
+        given(tbAiClient.uninstallSolution(eq(solutionId), eq(tbAccessToken), same(tokenProvider))).willReturn(tbAiResponse);
+
+        // WHEN
+        JsonNode result = service.uninstallSolution(solutionId, tbAccessToken, user);
+
+        // THEN
+        assertThat(result).isSameAs(expectedResponse);
+
+        assertThat(captureProcessCallWithoutCreditCheck().apply(tbAiClient, tokenProvider)).isSameAs(tbAiResponse);
+        then(tbAiClient).should().uninstallSolution(eq(solutionId), eq(tbAccessToken), same(tokenProvider));
+        then(tbAiClient).shouldHaveNoMoreInteractions();
+        then(tbAiService).shouldHaveNoMoreInteractions();
+    }
+
+    @Test
+    void shouldProcessWithoutCreditCheckAndDelegateToClient_whenDeleteSolutionCalled() {
+        // GIVEN
+        UUID solutionId = UUID.randomUUID();
+        given(tbAiService.process(any(), same(user), eq(false))).willReturn(null);
+        given(tbAiClient.deleteSolution(eq(solutionId), same(tokenProvider))).willReturn(tbAiResponse);
+
+        // WHEN
+        service.deleteSolution(solutionId, user);
+
+        // THEN
+        assertThat(captureProcessCallWithoutCreditCheck().apply(tbAiClient, tokenProvider)).isSameAs(tbAiResponse);
+        then(tbAiClient).should().deleteSolution(eq(solutionId), same(tokenProvider));
+        then(tbAiClient).shouldHaveNoMoreInteractions();
+        then(tbAiService).shouldHaveNoMoreInteractions();
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private TbAiService.TbAiCall<TbAiClient.TbAiResponse> captureProcessCallWithoutCreditCheck() {
+        ArgumentCaptor<TbAiService.TbAiCall> callCaptor = ArgumentCaptor.forClass(TbAiService.TbAiCall.class);
+        then(tbAiService).should().process(callCaptor.capture(), same(user), eq(false));
+        return callCaptor.getValue();
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private TbAiService.TbAiCall<TbAiClient.TbAiResponse> captureProcessCallWithCreditCheck() {
+        ArgumentCaptor<TbAiService.TbAiCall> callCaptor = ArgumentCaptor.forClass(TbAiService.TbAiCall.class);
+        then(tbAiService).should().process(callCaptor.capture(), same(user));
+        return callCaptor.getValue();
+    }
+
+    private static ObjectNode solutionResponse(UUID solutionId, String solutionTitle, boolean built, boolean installed) {
+        ObjectNode response = JacksonUtil.newObjectNode()
+                .put("id", solutionId.toString())
+                .put("createdTime", 1716460800000L)
+                .put("tenantId", UUID.randomUUID().toString());
+        response.set("states", solutionStatesResponse());
+        response.set("data", solutionDataResponse(solutionTitle));
+        response.set("metadata", solutionMetadataResponse(built, installed));
+        return response;
+    }
+
+    private static ObjectNode solutionStatesResponse() {
+        ObjectNode state = JacksonUtil.newObjectNode()
+                .put("chatId", UUID.randomUUID().toString())
+                .put("status", "IN_PROGRESS")
+                .put("built", false)
+                .put("skipInterviewAllowed", true);
+        state.set("messages", JacksonUtil.newArrayNode()
+                .add(chatMessage("AI", "Let's configure this solution.")));
+        state.set("pendingChanges", JacksonUtil.newArrayNode()
+                .add("Create humidity alarm rule"));
+
+        ObjectNode states = JacksonUtil.newObjectNode();
+        states.set("INITIAL_CONFIGURATION", state);
+        return states;
+    }
+
+    private static ObjectNode solutionDataResponse(String solutionTitle) {
+        return JacksonUtil.newObjectNode()
+                .put("solutionTitle", solutionTitle)
+                .put("solutionCounter", 7)
+                .put("summary", "Monitor energy usage and humidity for the building.")
+                .put("demoRequirements", "Use simulated telemetry.")
+                .put("dashboardRequirements", "Show temperature, humidity and energy consumption.");
+    }
+
+    private static ObjectNode solutionMetadataResponse(boolean built, boolean installed) {
+        ObjectNode metadata = JacksonUtil.newObjectNode()
+                .put("built", built)
+                .put("installed", installed);
+        metadata.set("failures", JacksonUtil.newObjectNode());
+        return metadata;
+    }
+
+    private static ArrayNode solutionInfosResponse(UUID solutionId, String solutionTitle) {
+        return JacksonUtil.newArrayNode()
+                .add(JacksonUtil.newObjectNode()
+                        .put("id", solutionId.toString())
+                        .put("createdTime", 1716460800000L)
+                        .put("solutionTitle", solutionTitle)
+                        .put("built", true)
+                        .put("installed", false));
+    }
+
+    private static ObjectNode solutionInstallResultResponse(UUID dashboardId) {
+        ObjectNode mainDashboardId = JacksonUtil.newObjectNode()
+                .put("entityType", "DASHBOARD")
+                .put("id", dashboardId.toString());
+        ObjectNode response = JacksonUtil.newObjectNode();
+        response.set("createdEntities", JacksonUtil.newArrayNode());
+        response.set("mainDashboardId", mainDashboardId);
+        response.set("entityResults", JacksonUtil.newObjectNode());
+        return response;
+    }
+
+    private static ObjectNode chatMessage(String from, String content) {
+        return JacksonUtil.newObjectNode()
+                .put("from", from)
+                .put("content", content);
+    }
+
+}

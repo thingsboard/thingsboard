@@ -1,0 +1,30 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="flex flex-col" [formGroup]="ownerAndGroupsFormGroup">
+  <tb-owner-autocomplete
+    class="flex-1"
+    required
+    [useOwnerInfoValue]="true"
+    [defaultOwnerId]="defaultOwnerId"
+    placeholderText="entity-group.owner"
+    notFoundText="entity-group.no-owners-matching"
+    requiredText="entity-group.owner-required"
+    [appearance]="appearance"
+    formControlName="owner">
+  </tb-owner-autocomplete>
+  <tb-entity-group-list
+    class="flex-1"
+    labelText="{{ 'entity.groups' | translate }}"
+    [excludeGroupAll]="true"
+    [useGroupInfoValue]="true"
+    [groupType]="entityType"
+    [ownerId]="ownerId()"
+    [createGroupFunction]="createGroupFunction"
+    [appearance]="appearance"
+    formControlName="groups">
+  </tb-entity-group-list>
+</div>

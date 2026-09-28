@@ -1,0 +1,94 @@
+{
+  "entityId": {
+    "entityType": "DEVICE_PROFILE",
+    "id": "93855be4-461e-4a35-b925-50a70d30c738"
+  },
+  "type": "ALARM",
+  "name": "Outside mine site perimeter",
+  "debugSettings": {
+    "failuresEnabled": true,
+    "allEnabled": false,
+    "allEnabledUntil": 0
+  },
+  "configurationVersion": 0,
+  "configuration": {
+    "type": "ALARM",
+    "arguments": {
+      "mineSiteAreaStatus": {
+        "refEntityKey": {
+          "key": "mineSiteAreaStatus",
+          "type": "TS_LATEST"
+        },
+        "defaultValue": "INSIDE"
+      }
+    },
+    "createRules": {
+      "CRITICAL": {
+        "condition": {
+          "type": "SIMPLE",
+          "expression": {
+            "type": "SIMPLE",
+            "filters": [
+              {
+                "argument": "mineSiteAreaStatus",
+                "valueType": "STRING",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "STRING",
+                    "operation": "EQUAL",
+                    "value": {
+                      "staticValue": "OUTSIDE",
+                      "dynamicValueArgument": null
+                    },
+                    "ignoreCase": false
+                  }
+                ]
+              }
+            ],
+            "operation": "AND"
+          },
+          "schedule": null
+        },
+        "alarmDetails": "Haul track outside the mine site perimeter",
+        "dashboardId": null
+      }
+    },
+    "clearRule": {
+      "condition": {
+        "type": "SIMPLE",
+        "expression": {
+          "type": "SIMPLE",
+          "filters": [
+            {
+              "argument": "mineSiteAreaStatus",
+              "valueType": "STRING",
+              "operation": "AND",
+              "predicates": [
+                {
+                  "type": "STRING",
+                  "operation": "EQUAL",
+                  "value": {
+                    "staticValue": "INSIDE",
+                    "dynamicValueArgument": null
+                  },
+                  "ignoreCase": false
+                }
+              ]
+            }
+          ],
+          "operation": "AND"
+        },
+        "schedule": null
+      },
+      "alarmDetails": "Haul track back inside into the mine site perimeter",
+      "dashboardId": null
+    },
+    "propagate": false,
+    "propagateToOwner": false,
+    "propagateToOwnerHierarchy": false,
+    "propagateToTenant": false,
+    "propagateRelationTypes": null,
+    "output": null
+  }
+}

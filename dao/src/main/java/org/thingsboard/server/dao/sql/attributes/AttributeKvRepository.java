@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.attributes;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -51,7 +52,7 @@ public interface AttributeKvRepository extends JpaRepository<AttributeKvEntity, 
     List<Integer> findAllKeysByEntityIds(@Param("entityIds") List<UUID> entityIds);
 
     @Query(value = "SELECT DISTINCT attribute_key FROM attribute_kv WHERE " +
-            "entity_id in :entityIds AND attribute_type = :attributeType ORDER BY attribute_key", nativeQuery = true)
+            "entity_id in :entityIds AND attribute_type = :attributeType  ORDER BY attribute_key", nativeQuery = true)
     List<Integer> findAllKeysByEntityIdsAndAttributeType(@Param("entityIds") List<UUID> entityIds,
                                                          @Param("attributeType") int attributeType);
 

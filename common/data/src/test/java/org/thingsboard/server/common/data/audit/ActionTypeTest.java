@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.audit;
 
 import org.junit.jupiter.api.Test;
@@ -15,12 +16,18 @@ import static org.thingsboard.server.common.data.audit.ActionType.ALARM_CLEAR;
 import static org.thingsboard.server.common.data.audit.ActionType.ALARM_DELETE;
 import static org.thingsboard.server.common.data.audit.ActionType.ALARM_UNASSIGNED;
 import static org.thingsboard.server.common.data.audit.ActionType.ATTRIBUTES_READ;
+import static org.thingsboard.server.common.data.audit.ActionType.COMMUNITY_GRANT_ENROLLMENT;
+import static org.thingsboard.server.common.data.audit.ActionType.COMMUNITY_GRANT_OFFLINE_CHECKER_RUN;
+import static org.thingsboard.server.common.data.audit.ActionType.COMMUNITY_GRANT_REQUEST_ACCESS;
 import static org.thingsboard.server.common.data.audit.ActionType.CREDENTIALS_READ;
 import static org.thingsboard.server.common.data.audit.ActionType.CREDENTIALS_UPDATED;
 import static org.thingsboard.server.common.data.audit.ActionType.DELETED_COMMENT;
 import static org.thingsboard.server.common.data.audit.ActionType.LOCKOUT;
 import static org.thingsboard.server.common.data.audit.ActionType.LOGIN;
 import static org.thingsboard.server.common.data.audit.ActionType.LOGOUT;
+import static org.thingsboard.server.common.data.audit.ActionType.MADE_PRIVATE;
+import static org.thingsboard.server.common.data.audit.ActionType.MADE_PUBLIC;
+import static org.thingsboard.server.common.data.audit.ActionType.NON_PRODUCTION_CONFIRMED;
 import static org.thingsboard.server.common.data.audit.ActionType.REST_API_RULE_ENGINE_CALL;
 import static org.thingsboard.server.common.data.audit.ActionType.RPC_CALL;
 import static org.thingsboard.server.common.data.audit.ActionType.SMS_SENT;
@@ -40,7 +47,13 @@ class ActionTypeTest {
             LOCKOUT,
             DELETED_COMMENT,
             SMS_SENT,
-            REST_API_RULE_ENGINE_CALL
+            REST_API_RULE_ENGINE_CALL,
+            MADE_PUBLIC,
+            MADE_PRIVATE,
+            NON_PRODUCTION_CONFIRMED,
+            COMMUNITY_GRANT_OFFLINE_CHECKER_RUN,
+            COMMUNITY_GRANT_REQUEST_ACCESS,
+            COMMUNITY_GRANT_ENROLLMENT
     );
 
     private final Set<ActionType> alarmActionTypes = EnumSet.of(

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.model.sql;
 
 import jakarta.persistence.Column;
@@ -40,6 +41,9 @@ public final class EntityAlarmEntity implements ToData<EntityAlarm> {
     @Column(name = ENTITY_ID_COLUMN, columnDefinition = "uuid")
     private UUID entityId;
 
+    @Column(name = "originator_id", columnDefinition = "uuid")
+    private UUID originatorId;
+
     @Id
     @Column(name = "alarm_id", columnDefinition = "uuid")
     private UUID alarmId;
@@ -61,6 +65,7 @@ public final class EntityAlarmEntity implements ToData<EntityAlarm> {
         tenantId = entityAlarm.getTenantId().getId();
         entityId = entityAlarm.getEntityId().getId();
         entityType = entityAlarm.getEntityId().getEntityType().name();
+        originatorId = entityAlarm.getOriginatorId();
         alarmId = entityAlarm.getAlarmId().getId();
         alarmType = entityAlarm.getAlarmType();
         createdTime = entityAlarm.getCreatedTime();
@@ -74,6 +79,7 @@ public final class EntityAlarmEntity implements ToData<EntityAlarm> {
         EntityAlarm result = new EntityAlarm();
         result.setTenantId(TenantId.fromUUID(tenantId));
         result.setEntityId(EntityIdFactory.getByTypeAndUuid(entityType, entityId));
+        result.setOriginatorId(originatorId);
         result.setAlarmId(new AlarmId(alarmId));
         result.setAlarmType(alarmType);
         result.setCreatedTime(createdTime);

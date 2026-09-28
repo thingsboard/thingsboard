@@ -1,0 +1,103 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+@if (panelMode) {
+  <ng-container *ngTemplateOutlet="reportTemplateFilterPanel"></ng-container>
+} @else {
+  @if (buttonMode) {
+    <button color="primary"
+      matTooltip="{{ 'report-template.template-filter' | translate }}"
+      matTooltipPosition="above"
+      mat-stroked-button
+      (click)="toggleReportTemplateFilterPanel($event)">
+      <mat-icon>filter_list</mat-icon>{{ 'report-template.template-filter' | translate }}
+    </button>
+  } @else {
+    <div class="tb-form-panel tb-report-template-filter-component no-padding no-border" [formGroup]="reportTemplateFilterForm">
+      <div class="tb-form-row space-between">
+        <div class="fixed-title-width" translate>report-template.type</div>
+        <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
+          <mat-select formControlName="type" placeholder="{{ 'report.filter-not-set' | translate }}">
+            <mat-option [value]="null">{{ 'report.filter-not-set' | translate }}</mat-option>
+            @for (type of reportTemplateTypes; track type) {
+              <mat-option [value]="type">
+                {{reportTemplateTypeTranslationMap.get(type) | translate}}
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="tb-form-row space-between">
+        <div class="fixed-title-width" translate>report-template.format</div>
+        <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
+          <mat-select formControlName="format" placeholder="{{ 'report.filter-not-set' | translate }}">
+            <mat-option [value]="null">{{ 'report.filter-not-set' | translate }}</mat-option>
+            @for (format of reportFormats; track format) {
+              <mat-option [value]="format">
+                {{ format }}
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </div>
+  }
+}
+<ng-template #reportTemplateFilterPanel>
+  <form class="mat-content mat-padding flex flex-col" (ngSubmit)="update()">
+    <ng-container *ngTemplateOutlet="reportTemplateFilterContent"></ng-container>
+    <div class="tb-panel-actions flex flex-row items-center justify-end">
+      <button type="button"
+        mat-button
+        color="primary"
+        (click)="reset()">
+        {{ 'action.reset' | translate }}
+      </button>
+      <span class="flex-1"></span>
+      <button type="button"
+        mat-button
+        (click)="cancel()">
+        {{ 'action.cancel' | translate }}
+      </button>
+      <button type="submit"
+        mat-raised-button
+        color="primary"
+        [disabled]="reportTemplateFilterForm.invalid || !reportTemplateFilterForm.dirty">
+        {{ 'action.update' | translate }}
+      </button>
+    </div>
+  </form>
+</ng-template>
+<ng-template #reportTemplateFilterContent>
+  <div class="tb-form-panel tb-report-template-filter-component no-padding no-border" [formGroup]="reportTemplateFilterForm">
+    <div class="tb-form-row space-between">
+      <div class="fixed-title-width" translate>report-template.type</div>
+      <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="type" placeholder="{{ 'report.filter-not-set' | translate }}">
+          <mat-option [value]="null">{{ 'report.filter-not-set' | translate }}</mat-option>
+          @for (type of reportTemplateTypes; track type) {
+            <mat-option [value]="type">
+              {{reportTemplateTypeTranslationMap.get(type) | translate}}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <div class="tb-form-row space-between">
+      <div class="fixed-title-width" translate>report-template.format</div>
+      <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="format" placeholder="{{ 'report.filter-not-set' | translate }}">
+          <mat-option [value]="null">{{ 'report.filter-not-set' | translate }}</mat-option>
+          @for (format of reportFormats; track format) {
+            <mat-option [value]="format">
+              {{ format }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </div>
+</ng-template>

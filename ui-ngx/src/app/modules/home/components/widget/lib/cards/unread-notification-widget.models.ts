@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { BackgroundSettings, BackgroundType, Font } from '@shared/models/widget-settings.models';
 
 export interface UnreadNotificationWidgetSettings {
@@ -28,7 +29,7 @@ export const unreadNotificationDefaultSettings: UnreadNotificationWidgetSettings
     lineHeight: ''
   },
   counterValueColor: '#fff',
-  counterColor: '#305680',
+  counterColor: '#00695c',
   enableViewAll: true,
   enableFilter: true,
   enableMarkAsRead: true,

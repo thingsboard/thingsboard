@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <ng-container [formGroup]="axisSettingsFormGroup">
@@ -24,12 +25,15 @@
             </mat-form-field>
             <tb-font-settings formControlName="labelFont"
                               clearButton
+                              [allowedFontWeights]="reportMode ? ['normal', 'bold', '500'] : []"
+                              [allowedFontStyles]="reportMode ? ['normal', 'italic'] : []"
                               disabledLineHeight
                               forceSizeUnit="px"
                               [previewText]="axisSettingsFormGroup.get('label').value">
             </tb-font-settings>
             <tb-color-input asBoxInput
                             colorClearButton
+                            [useThemePalette]="!reportMode"
                             formControlName="labelColor">
             </tb-color-input>
           </div>
@@ -50,7 +54,7 @@
           <div class="tb-form-row space-between">
             <div translate>widget-config.units-short</div>
             <tb-unit-input
-              supportsUnitConversion
+              [supportsUnitConversion]="!reportMode"
               formControlName="units">
             </tb-unit-input>
           </div>
@@ -88,12 +92,15 @@
               }
               <tb-font-settings formControlName="tickLabelFont"
                                 clearButton
+                                [allowedFontWeights]="reportMode ? ['normal', 'bold', '500'] : []"
+                                [allowedFontStyles]="reportMode ? ['normal', 'italic'] : []"
                                 disabledLineHeight
                                 forceSizeUnit="px"
                                 previewText="100">
               </tb-font-settings>
               <tb-color-input asBoxInput
                               colorClearButton
+                              [useThemePalette]="!reportMode"
                               formControlName="tickLabelColor">
               </tb-color-input>
             </div>
@@ -116,6 +123,7 @@
           </mat-slide-toggle>
           <tb-color-input asBoxInput
                           colorClearButton
+                          [useThemePalette]="!reportMode"
                           formControlName="ticksColor">
           </tb-color-input>
         </div>
@@ -125,6 +133,7 @@
           </mat-slide-toggle>
           <tb-color-input asBoxInput
                           colorClearButton
+                          [useThemePalette]="!reportMode"
                           formControlName="lineColor">
           </tb-color-input>
         </div>
@@ -137,6 +146,7 @@
           </mat-slide-toggle>
           <tb-color-input asBoxInput
                           colorClearButton
+                          [useThemePalette]="!reportMode"
                           formControlName="splitLinesColor">
           </tb-color-input>
         </div>

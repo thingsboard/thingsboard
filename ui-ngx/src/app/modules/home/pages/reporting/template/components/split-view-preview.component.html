@@ -1,0 +1,38 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<table class="tb-split-view-preview" #splitContainer>
+  <tr>
+    <td [style.width]="leftWidth">
+      <tb-report-drop-block
+        #leftView
+        [paddingRight]="centerWidth / 2"
+        [context]="context"
+        [format]="format"
+        [scale]="scale"
+        [verticalAlignment]="leftVerticalAlignment"
+        [component]="reportComponent.leftView"
+        (componentEdit)="childComponentEdit(true)"
+        (componentRemoved)="childComponentRemoved($event,true)"
+        (componentAdded)="childComponentAdded($event, true)">
+      </tb-report-drop-block>
+    </td>
+    <td [style.width]="rightWidth">
+      <tb-report-drop-block
+        #rightView
+        [paddingLeft]="centerWidth / 2"
+        [context]="context"
+        [format]="format"
+        [scale]="scale"
+        [verticalAlignment]="rightVerticalAlignment"
+        [component]="reportComponent.rightView"
+        (componentEdit)="childComponentEdit(false)"
+        (componentRemoved)="childComponentRemoved($event, false)"
+        (componentAdded)="childComponentAdded($event, false)">
+      </tb-report-drop-block>
+    </td>
+  </tr>
+</table>

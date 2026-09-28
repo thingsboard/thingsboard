@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.msa.ui.tests.deviceProfileSmoke;
 
 import io.qameta.allure.Description;
@@ -173,7 +174,7 @@ public class CreateDeviceProfileTest extends AbstractDriverBaseTest {
     @Test(priority = 30, groups = "smoke")
     @Description("Go to device profile documentation page")
     public void documentation() {
-        String urlPath = "docs/user-guide/device-profiles/";
+        String urlPath = "docs/pe/user-guide/device-profiles/";
 
         sideBarMenuView.openDeviceProfiles();
         profilesPage.profileNames().get(0).click();

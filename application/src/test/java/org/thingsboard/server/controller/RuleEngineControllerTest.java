@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -200,8 +201,8 @@ public class RuleEngineControllerTest extends AbstractControllerTest {
         loginTenantAdmin();
         Device device = createDevice("Test", "123");
         DeviceId deviceId = device.getId();
-        assignDeviceToCustomer(deviceId, customerId);
-        loginCustomerUser();
+        doPost("/api/owner/CUSTOMER/" + customerId.getId() + "/DEVICE/" + deviceId.getId());
+        loginCustomerAdminUser();
 
         TbMsg responseMsg = TbMsg.newMsg()
                 .type(TbMsgType.REST_API_REQUEST)
@@ -224,7 +225,7 @@ public class RuleEngineControllerTest extends AbstractControllerTest {
         assertThat(requestMsgCaptorValue.getOriginator()).isEqualTo(deviceId);
         assertThat(requestMsgCaptorValue.getCustomerId()).isEqualTo(customerId);
         checkMetadataProperties(requestMsgCaptorValue.getMetaData());
-        testLogEntityAction(null, deviceId, tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL,
+        testLogEntityAction(null, deviceId, tenantId, customerId, customerAdminUserId, CUSTOMER_ADMIN_EMAIL,
                 ActionType.REST_API_RULE_ENGINE_CALL, 1, REQUEST_BODY, RESPONSE_BODY);
     }
 
@@ -236,7 +237,7 @@ public class RuleEngineControllerTest extends AbstractControllerTest {
 
         doPostAsync("/api/rule-engine/DEVICE/" + device.getId().getId(), (Object) REQUEST_BODY, -1L)
                 .andExpect(status().isForbidden())
-                .andExpect(content().string("You don't have permission to perform this operation!"));
+                .andExpect(content().string("You don't have permission to perform 'WRITE' operation with DEVICE 'test'!"));
 
         verifyNoInteractions(ruleEngineCallService);
     }

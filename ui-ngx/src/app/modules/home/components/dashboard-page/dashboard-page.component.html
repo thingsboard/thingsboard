@@ -1,9 +1,11 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
+
 <ng-template #dashboardBreadcrumbsTpl>
   <tb-states-component class="lt-md:flex-1"
                        [statesControllerId]="dashboardConfiguration.settings.stateControllerId"
@@ -18,9 +20,9 @@
 </ng-template>
 
 <div class="tb-dashboard-page mat-content flex-1" [class.mobile-app]="isMobileApp && !isEdit" tb-toast
-     tb-fullscreen [fullscreenElement]="elRef.nativeElement" [fullscreen]="widgetEditMode || iframeMode || forceFullscreen || isFullscreen">
+     tb-fullscreen [fullscreenElement]="elRef.nativeElement" [fullscreen]="widgetEditMode || iframeMode || forceFullscreen || isFullscreen || reportView">
   <tb-hotkeys-cheatsheet #cheatSheetComponent></tb-hotkeys-cheatsheet>
-  <section class="tb-dashboard-toolbar"
+  <section class="tb-dashboard-toolbar" [class.!hidden]="reportView"
            [class.tb-dashboard-toolbar-opened]="toolbarOpened"
            [class.tb-dashboard-toolbar-closed]="!toolbarOpened">
     <tb-dashboard-toolbar [class.!hidden]="widgetEditMode || hideToolbar" [forceFullscreen]="forceFullscreen"
@@ -128,18 +130,49 @@
             [class.!hidden]="readonly || isEdit"
             class="tb-toolbar-divider -mr-1.5 ml-2 lt-md:!hidden lt-lg:mr-[-3px]" vertical></mat-divider>
           <button [class.!hidden]="!currentDashboardId || isMobileApp || !displayExport() || isEdit" mat-icon-button
+                  [matMenuTriggerFor]="exportMenu"
                   matTooltip="{{'dashboard.export' | translate}}"
-                  matTooltipPosition="below"
-                  (click)="exportDashboard($event)">
+                  matTooltipPosition="below">
             <mat-icon>file_download</mat-icon>
           </button>
-          @if (!readonly && !isEdit) {
+          <mat-menu #exportMenu="matMenu" xPosition="before">
+            @if (authState.reportingEnabled) {
+              <button mat-menu-item (click)="generateDashboardReport($event, 'pdf')">
+                <mat-icon svgIcon="file-pdf"></mat-icon>
+                <span translate>dashboard.export-pdf</span>
+              </button>
+              <button mat-menu-item (click)="generateDashboardReport($event, 'png')">
+                <mat-icon svgIcon="mdi:file-image"></mat-icon>
+                <span translate>dashboard.export-png</span>
+              </button>
+              <button mat-menu-item (click)="generateDashboardReport($event, 'jpeg')">
+                <mat-icon svgIcon="mdi:file-image"></mat-icon>
+                <span translate>dashboard.export-jpg</span>
+              </button>
+            }
+            <button mat-menu-item (click)="exportDashboard($event)">
+              <mat-icon svgIcon="mdi:file-code"></mat-icon>
+              <span translate>dashboard.export-json-config</span>
+            </button>
+          </mat-menu>
+          @if (!readonly && !isEdit && !aiAssistantPanelOpen) {
             <button class="gt-md:!hidden" mat-icon-button (click)="toggleDashboardEditMode()"
                     matTooltip="{{'dashboard.edit-mode' | translate}}"
                     matTooltipPosition="below">
               <mat-icon>edit</mat-icon></button>
             <button class="lt-lg:!hidden" mat-stroked-button (click)="toggleDashboardEditMode()">
               <mat-icon>edit</mat-icon>{{'dashboard.edit-mode' | translate}}</button>
+          }
+          @if (showConfigureWithAi) {
+            <button class="gt-md:!hidden" mat-icon-button (click)="toggleAiAssistant($event)"
+                    matTooltip="{{ 'ai-assistant.configure-with-ai' | translate }}"
+                    matTooltipPosition="below">
+              <tb-icon>mdi:creation</tb-icon>
+            </button>
+            <button class="lt-lg:!hidden" mat-stroked-button (click)="toggleAiAssistant($event)">
+              <tb-icon matButtonIcon>mdi:creation</tb-icon>
+              {{ 'ai-assistant.configure-with-ai' | translate }}
+            </button>
           }
           @if (isEdit) {
             <button class="gt-md:!hidden" mat-icon-button (click)="saveDashboard()" [disabled]="isLoading$ | async"
@@ -157,7 +190,7 @@
               <mat-icon>close</mat-icon>{{ 'action.cancel' | translate }}</button>
             <mat-divider class="tb-toolbar-divider" vertical></mat-divider>
           }
-          @if (currentDashboardId && isEdit && isTenantAdmin()) {
+          @if (currentDashboardId && isEdit && ([resource.VERSION_CONTROL, resource.DASHBOARD] | hasGenericPermission: operation.WRITE)) {
             <button class="lt-lg:!hidden gt-lg:!hidden" mat-icon-button
                     #versionControlIconButton
                     matTooltip="{{'version-control.version-control' | translate}}"
@@ -287,18 +320,19 @@
                                     tooltipPosition="below"
                                     [aliasController]="dashboardCtx.aliasController">
           </tb-aliases-entity-select>
-          @if (!isEdit && !widgetEditMode && !embedded && displayDashboardsSelect()) {
+          @if (!isEdit && !widgetEditMode && !stateSelectView && !embedded && displayDashboardsSelect()) {
             <tb-dashboard-select class="ml-2" [(ngModel)]="currentDashboardId"
                                  (ngModelChange)="currentDashboardIdChanged(currentDashboardId)"
-                                 [customerId]="currentCustomerId"
-                                 [dashboardsScope]="currentDashboardScope">
+                                 [groupId]="entityGroupId"
+                                 [customerId]="customerId"
+                                 [operation]="readonly ? operation.READ : operation.WRITE">
             </tb-dashboard-select>
           }
-          @if (!isEdit && !widgetEditMode) {
+          <!--@if (!isEdit && !widgetEditMode) {
             <div class="-mr-1.5 md-lg:!hidden lt-md:!hidden" [class.!hidden]="githubBadge.hideGithubBadge">
               <tb-github-badge #githubBadge ></tb-github-badge>
             </div>
-          }
+          } -->
         </div>
       </div>
     </tb-dashboard-toolbar>
@@ -381,10 +415,20 @@
             }
           </mat-drawer-content>
         </mat-drawer-container>
+        @if (hideToolbar && hideMainToolbar && !widgetEditMode) {
+          <section data-html2canvas-ignore class="tb-header-buttons tb-side-menu-toggle">
+            <button color="tb-primary"
+                    mat-mini-fab
+                    class="tb-btn-header tb-btn-menu-toggle"
+                    (click)="toggleSidenav()">
+              <mat-icon>menu</mat-icon>
+            </button>
+          </section>
+        }
         @if (!readonly && (hideToolbar || widgetEditMode)) {
-          <section data-html2canvas-ignore class="tb-header-buttons tb-enter-edit-mode flex flex-row flex-wrap items-end justify-start">
+          <section data-html2canvas-ignore class="tb-header-buttons tb-enter-edit-mode flex flex-row flex-wrap items-end justify-start" *ngIf="!readonly && (hideToolbar || widgetEditMode)">
             <button [class.!hidden]="isEdit"
-                    color="#fff"
+                    color="tb-primary"
                     mat-mini-fab
                     class="tb-btn-header tb-btn-edit"
                     (click)="toggleDashboardEditMode()"
@@ -393,7 +437,7 @@
               <mat-icon>edit</mat-icon>
             </button>
             <button [class.!hidden]="!isEdit"
-                    color="#fff"
+                    color="tb-primary"
                     mat-mini-fab
                     class="tb-btn-header tb-btn-edit"
                     (click)="saveDashboard()"
@@ -403,7 +447,7 @@
               <mat-icon>done</mat-icon>
             </button>
             <button [class.!hidden]="!isEdit"
-                    color="#fff"
+                    color="tb-primary"
                     mat-mini-fab
                     class="tb-btn-header tb-btn-edit"
                     (click)="toggleDashboardEditMode()"
@@ -414,9 +458,9 @@
             </button>
           </section>
         }
-        @if (!embedded) {
-          <section data-html2canvas-ignore class="tb-powered-by-footer" [style.color]="dashboard.configuration.settings.titleColor">
-            <span>Powered by <a href="https://thingsboard.io" target="_blank">ThingsBoard v.{{ thingsboardVersion }}</a></span>
+        @if (displayPoweredBy$ | async) {
+          <section class="tb-powered-by-footer" [style.color]="dashboard.configuration.settings.titleColor">
+            <span>Powered by <a href="https://thingsboard.io" target="_blank">Thingsboard v.{{ thingsboardVersion }}</a></span>
           </section>
         }
       </mat-drawer-content>

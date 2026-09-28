@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.rule.engine.mqtt;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -45,6 +46,7 @@ import java.util.concurrent.TimeoutException;
         nodeDetails = "Will publish message payload to the MQTT broker with QoS <b>AT_LEAST_ONCE</b>.",
         configDirective = "tbExternalNodeMqttConfig",
         icon = "call_split",
+        hasSecrets = true,
         docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/external/mqtt/"
 )
 public class TbMqttNode extends TbAbstractExternalNode {

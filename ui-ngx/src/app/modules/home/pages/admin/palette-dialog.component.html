@@ -1,0 +1,57 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<form #paletteForm="ngForm" (ngSubmit)="savePalette()" style="width: 600px;">
+  <mat-toolbar color="tb-primary" class="tb-bottom-border flex flex-row">
+    <h2 translate>white-labeling.edit-palette</h2>
+    <span class="flex-1"></span>
+    <button mat-icon-button
+      (click)="cancel()"
+      type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  @if (isLoading$ | async) {
+    <mat-progress-bar color="warn" mode="indeterminate">
+    </mat-progress-bar>
+  } @else {
+    <div style="height: 4px;"></div>
+  }
+  <div mat-dialog-content class="flex flex-col gt-xs:max-h-80vh">
+    @for (hue of hues; track hue) {
+      <div class="flex flex-row"
+        style="height: 48px; cursor: pointer; font-weight: 500; outline: none;"
+        (click)="editColor(hue)">
+        <div class="flex flex-1 flex-row" [style]="hueStyle(hue)" style="padding: 10px;">
+          <div class="flex flex-row items-center justify-start" style="width: 100px;">
+            <span>{{hue}}</span>
+          </div>
+          <div class="flex flex-1 flex-col items-center justify-center">
+            <span>{{hueName(hue)}}</span>
+          </div>
+          <div class="flex flex-row items-center justify-end" style="width: 100px;">
+            <span>{{colors[hue]}}</span>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+  <div mat-dialog-actions class="flex flex-row">
+    <span class="flex-1"></span>
+    <button mat-button color="primary"
+      type="button"
+      [disabled]="(isLoading$ | async)"
+      (click)="cancel()" cdkFocusInitial>
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-button mat-raised-button color="primary"
+      type="submit"
+            [disabled]="(isLoading$ | async) || paletteForm.invalid
+            || !paletteForm.dirty">
+      {{ 'white-labeling.save-palette' | translate }}
+    </button>
+  </div>
+</form>

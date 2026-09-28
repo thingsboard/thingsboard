@@ -1,9 +1,9 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.entity;
 
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
@@ -12,49 +12,41 @@ import org.springframework.util.ConcurrentReferenceHashMap;
 import org.thingsboard.common.util.DebugModeUtil;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.HasDebugSettings;
-import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.NameConflictStrategy;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.debug.DebugSettings;
-import org.thingsboard.server.common.data.id.EdgeId;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
-import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.Dao;
+import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.edge.EdgeService;
-import org.thingsboard.server.dao.entityview.EntityViewService;
-import org.thingsboard.server.exception.DataValidationException;
+import org.thingsboard.server.dao.group.EntityGroupService;
 import org.thingsboard.server.dao.housekeeper.CleanUpService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
+import org.thingsboard.server.exception.DataValidationException;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentMap;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Supplier;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.UniquifyStrategy.RANDOM;
 
 @Slf4j
 public abstract class AbstractEntityService {
-
-    public static final String INCORRECT_EDGE_ID = "Incorrect edgeId ";
-    public static final String INCORRECT_PAGE_LINK = "Incorrect page link ";
 
     private final ConcurrentMap<TenantId, ReentrantLock> entityCreationLocks = new ConcurrentReferenceHashMap<>(16);
 
@@ -71,7 +63,7 @@ public abstract class AbstractEntityService {
 
     @Lazy
     @Autowired
-    protected EntityViewService entityViewService;
+    protected EntityGroupService entityGroupService;
 
     @Lazy
     @Autowired
@@ -119,16 +111,6 @@ public abstract class AbstractEntityService {
         relationService.deleteRelation(tenantId, relation);
     }
 
-    protected static Optional<ConstraintViolationException> extractConstraintViolationException(Exception t) {
-        if (t instanceof ConstraintViolationException) {
-            return Optional.of((ConstraintViolationException) t);
-        } else if (t.getCause() instanceof ConstraintViolationException) {
-            return Optional.of((ConstraintViolationException) (t.getCause()));
-        } else {
-            return Optional.empty();
-        }
-    }
-
     public static final void checkConstraintViolation(Exception t, String constraintName, String constraintMessage) {
         checkConstraintViolation(t, Collections.singletonMap(constraintName, constraintMessage));
     }
@@ -138,30 +120,16 @@ public abstract class AbstractEntityService {
     }
 
     public static final void checkConstraintViolation(Exception t, Map<String, String> constraints) {
-        var exOpt = extractConstraintViolationException(t);
+        var exOpt = DaoUtil.extractConstraintViolationException(t);
         if (exOpt.isPresent()) {
             var ex = exOpt.get();
             if (StringUtils.isNotEmpty(ex.getConstraintName())) {
                 var constraintName = ex.getConstraintName();
                 for (var constraintMessage : constraints.entrySet()) {
-                    if (constraintName.equals(constraintMessage.getKey())) {
+                    if (DaoUtil.constraintNameMatches(constraintName, constraintMessage.getKey())) {
                         throw new DataValidationException(constraintMessage.getValue());
                     }
                 }
-            }
-        }
-    }
-
-    protected void checkAssignedEntityViewsToEdge(TenantId tenantId, EntityId entityId, EdgeId edgeId) {
-        List<EntityView> entityViews = entityViewService.findEntityViewsByTenantIdAndEntityId(tenantId, entityId);
-        if (entityViews != null && !entityViews.isEmpty()) {
-            EntityView entityView = entityViews.get(0);
-            boolean relationExists = relationService.checkRelation(
-                    tenantId, edgeId, entityView.getId(),
-                    EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE
-            );
-            if (relationExists) {
-                throw new DataValidationException("Can't unassign device/asset from edge that is related to entity view and entity view is assigned to edge!");
             }
         }
     }

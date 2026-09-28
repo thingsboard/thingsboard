@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.queue;
 
 import org.springframework.context.ApplicationEventPublisher;
@@ -57,6 +58,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractPartitionBasedCo
     private final QueueService queueService;
     private final TbRuleEngineDeviceRpcService tbDeviceRpcService;
     private final TbMsgPackProcessingContextFactory packProcessingContextFactory;
+    private final SystemUpdateMsgHandler systemUpdateMsgHandler;
 
     private final ConcurrentMap<QueueKey, TbRuleEngineQueueConsumerManager> consumers = new ConcurrentHashMap<>();
 
@@ -72,12 +74,14 @@ public class DefaultTbRuleEngineConsumerService extends AbstractPartitionBasedCo
                                               PartitionService partitionService,
                                               ApplicationEventPublisher eventPublisher,
                                               JwtSettingsService jwtSettingsService,
-                                              TbMsgPackProcessingContextFactory packProcessingContextFactory) {
+                                              TbMsgPackProcessingContextFactory packProcessingContextFactory,
+                                              SystemUpdateMsgHandler systemUpdateMsgHandler) {
         super(actorContext, tenantProfileCache, deviceProfileCache, assetProfileCache, tbResourceDataCache, apiUsageStateService, partitionService, eventPublisher, jwtSettingsService);
         this.ctx = ctx;
         this.tbDeviceRpcService = tbDeviceRpcService;
         this.queueService = queueService;
         this.packProcessingContextFactory = packProcessingContextFactory;
+        this.systemUpdateMsgHandler = systemUpdateMsgHandler;
     }
 
     @Override
@@ -180,6 +184,9 @@ public class DefaultTbRuleEngineConsumerService extends AbstractPartitionBasedCo
         } else if (nfMsg.getQueueDeleteMsgsCount() > 0) {
             deleteQueues(nfMsg.getQueueDeleteMsgsList());
             callback.onSuccess();
+        } else if (nfMsg.hasSystemUpdateMsg()) {
+            // Must stay ahead of the trailing else, which would ack the signal and drop it; pinned by SystemUpdateMsgHandlingTest.
+            systemUpdateMsgHandler.handle(nfMsg.getSystemUpdateMsg(), callback);
         } else {
             log.trace("Received notification with missing handler");
             callback.onSuccess();

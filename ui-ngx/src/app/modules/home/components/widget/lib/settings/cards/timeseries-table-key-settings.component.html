@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <ng-container [formGroup]="timeseriesTableKeySettingsForm">
@@ -32,6 +33,22 @@
           </mat-option>
           <mat-option [value]="'disabled'">
             {{ 'widgets.table.column-selection-to-display-disabled' | translate }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'widgets.table.column-export-option' | translate }}</div>
+      <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="columnExportOption">
+          <mat-option [value]="'always'">
+            {{ 'widgets.table.column-export-option-always' | translate }}
+          </mat-option>
+          <mat-option [value]="'onlyVisible'">
+            {{ 'widgets.table.column-export-option-only-visible' | translate }}
+          </mat-option>
+          <mat-option [value]="'never'">
+            {{ 'widgets.table.column-export-option-never' | translate }}
           </mat-option>
         </mat-select>
       </mat-form-field>
@@ -79,6 +96,9 @@
         </mat-panel-description>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
+        <mat-slide-toggle class="mat-slide" formControlName="useCellContentFunctionOnExport">
+          {{ 'widgets.table.use-cell-content-function-on-export' | translate }}
+        </mat-slide-toggle>
         <tb-js-func required
                     formControlName="cellContentFunction"
                     withModules

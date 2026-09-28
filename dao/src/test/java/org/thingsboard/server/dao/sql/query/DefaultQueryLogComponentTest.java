@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.query;
 
 import org.junit.Before;
@@ -16,7 +17,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.permission.QueryContext;
 import org.thingsboard.server.common.data.permission.QueryContext;
 
 import java.util.List;
@@ -45,7 +45,7 @@ public class DefaultQueryLogComponentTest {
     @Before
     public void setUp() {
         tenantId = TenantId.fromUUID(UUID.fromString("97275c1c-9cf2-4d25-a68d-933031158f84"));
-        ctx = new SqlQueryContext(new QueryContext(tenantId, null, EntityType.ALARM));
+        ctx = new SqlQueryContext(new QueryContext(tenantId, null, EntityType.ALARM, null, null), false);
     }
 
     @Test

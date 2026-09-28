@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <ng-container [formGroup]="lineSettingsFormGroup">
@@ -123,9 +124,11 @@
       </mat-form-field>
     </div>
   }
-  <tb-chart-fill-settings
-    formControlName="fillAreaSettings">
-  </tb-chart-fill-settings>
+  @if (!hideFillSettings) {
+    <tb-chart-fill-settings
+      formControlName="fillAreaSettings">
+    </tb-chart-fill-settings>
+  }
 </ng-container>
 <ng-template #pointSettings [formGroup]="lineSettingsFormGroup">
   <div class="tb-form-row space-between column-lt-md">
@@ -146,6 +149,8 @@
       </mat-form-field>
       <tb-font-settings formControlName="pointLabelFont"
                         clearButton
+                        [allowedFontWeights]="reportMode ? ['normal', 'bold', '500'] : []"
+                        [allowedFontStyles]="reportMode ? ['normal', 'italic'] : []"
                         disabledLineHeight
                         forceSizeUnit="px"
                         [previewText]="pointLabelPreviewFn">

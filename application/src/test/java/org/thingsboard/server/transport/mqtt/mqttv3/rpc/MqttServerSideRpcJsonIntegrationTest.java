@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.mqtt.mqttv3.rpc;
 
 import lombok.extern.slf4j.Slf4j;
@@ -66,6 +67,11 @@ public class MqttServerSideRpcJsonIntegrationTest extends AbstractMqttServerSide
     @Test
     public void testGatewayServerMqttTwoWayRpc() throws Exception {
         processJsonTwoWayRpcTestGateway("Gateway Device TwoWay RPC Json");
+    }
+
+    @Test
+    public void testGatewayServerMqttPersistentRpcDeliveredOnPuback() throws Exception {
+        validateGatewayPersistentRpcDelivered("Gateway Device Persistent RPC Json");
     }
 
     protected void processJsonOneWayRpcTestGateway(String deviceName) throws Exception {

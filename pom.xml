@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -12,15 +13,15 @@
     <version>4.4.0</version>
     <packaging>pom</packaging>
 
-    <name>Thingsboard</name>
+    <name>ThingsBoard</name>
     <url>https://thingsboard.io</url>
     <inceptionYear>2016</inceptionYear>
 
     <licenses>
         <license>
-            <name>Apache License 2.0</name>
-            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
+            <name>Business Source License 1.1</name>
+            <url>https://github.com/thingsboard/thingsboard-pe/blob/master/LICENSE</url>
+            <distribution>manual</distribution>
         </license>
     </licenses>
 
@@ -29,7 +30,7 @@
         <maven.compiler.target>25</maven.compiler.target>
         <main.dir>${basedir}</main.dir>
         <!-- Set to true to skip only the UI builds: the Angular application in ui-ngx and the
-             `yarn run pkg` launcher of msa/web-ui. It deliberately does NOT
+             `yarn run pkg` launchers of msa/web-ui and msa/web-report. It deliberately does NOT
              cover msa/js-executor, whose yarn install and sandbox tests keep running.
              frontend-maven-plugin reads skip.yarn itself, so that property cannot be narrowed to a
              subset of the modules; this one can, and it defaults to skip.yarn so that
@@ -61,6 +62,8 @@
         <pkg.implementationTitle>${project.name}</pkg.implementationTitle>
         <pkg.unixLogFolder>/var/log/${pkg.name}</pkg.unixLogFolder>
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
+        <pkg.controlScriptsFolder>control</pkg.controlScriptsFolder>
+        <thingsboard.ai.version>2.1.6</thingsboard.ai.version>
         <thingsboard.client.version>4.4.0</thingsboard.client.version>
         <spring-boot.version>3.5.15</spring-boot.version>
         <!-- Pins spring-boot-test to 3.5.13: the ImportsContextCustomizer change in 3.5.14 causes "Duplicate spy
@@ -70,15 +73,19 @@
              entries below once TB migrates its tests off the deprecated @SpyBean/@MockBean to @MockitoSpyBean/@MockitoBean. -->
         <spring-boot-test.version>3.5.13</spring-boot-test.version>
         <commons-lang3.version>3.18.0</commons-lang3.version> <!-- to fix CVE-2025-48924. TODO: remove when fixed in spring-boot-dependencies -->
-        <netty.version>4.1.137.Final</netty.version> <!-- to fix CVE-2026-44891, CVE-2026-55831, CVE-2026-55833, CVE-2026-55851, CVE-2026-56745, CVE-2026-56817, CVE-2026-56819, CVE-2026-56820, CVE-2026-56821, CVE-2026-56822, CVE-2026-59901, CVE-2026-59902, CVE-2026-59903, CVE-2026-59920, CVE-2026-62243, CVE-2026-73507, CVE-2026-75595 (supersedes earlier netty CVE pins; also retains the 4.1.134 MQTT decoder regression fix). TODO: remove when fixed in spring-boot-dependencies -->
+        <netty.version>4.1.138.Final</netty.version> <!-- to fix CVE-2026-44891, CVE-2026-55831, CVE-2026-55833, CVE-2026-55851, CVE-2026-56745, CVE-2026-56817, CVE-2026-56819, CVE-2026-56820, CVE-2026-56821, CVE-2026-56822, CVE-2026-59901, CVE-2026-59902, CVE-2026-59903, CVE-2026-59920, CVE-2026-62243, CVE-2026-73507, CVE-2026-75595, CVE-2026-93488, CVE-2026-93491, CVE-2026-93560, CVE-2026-100655, CVE-2026-100656, CVE-2026-100657 (supersedes earlier netty CVE pins; also retains the 4.1.134 MQTT decoder regression fix). TODO: remove when fixed in spring-boot-dependencies -->
+        <opentelemetry.version>1.62.0</opentelemetry.version> <!-- to fix CVE-2026-45292 (transitive opentelemetry-api). Pinned via the opentelemetry-bom import below. TODO: remove when a TB dependency pulls opentelemetry >= 1.62.0 transitively -->
         <tomcat.version>10.1.59</tomcat.version> <!-- to fix CVE-2026-53434, CVE-2026-55955, CVE-2026-65182, CVE-2026-65905 and CVE-2026-68525 (10.1.58 was never released; 10.1.59 is the release carrying the fixes). Pinned via the tomcat-embed overrides below: spring-boot-dependencies is imported as a BOM, so this property alone would not win. TODO: remove when fixed in spring-boot-dependencies -->
         <httpcore5.version>5.4.3</httpcore5.version> <!-- to fix CVE-2026-54399 and CVE-2026-54428 (no fix exists on the 5.3.x line; the httpclient5 5.6.4 pin below requires httpcore5 5.4.3). Pinned via the httpcore5 overrides below: spring-boot-dependencies is imported as a BOM, so this property alone would not win. TODO: remove when fixed in spring-boot-dependencies -->
         <logback.version>1.5.38</logback.version> <!-- to fix CVE-2026-13006 (1.5.36 as reported by the scanner is still vulnerable; 1.5.37 removed Janino conditional processing entirely, 1.5.38 adds a HardenedObjectInputStream fix). Pinned via the logback overrides below: spring-boot-dependencies is imported as a BOM, so this property alone would not win. TODO: remove when fixed in spring-boot-dependencies -->
-        <jackson-bom.version>2.21.6</jackson-bom.version> <!-- to fix CVE-2026-59889 and CVE-2026-68497. Pinned via the jackson-bom import below: spring-boot-dependencies re-imports jackson-bom with its own placeholder, so this property alone would not win. TODO: remove when fixed in spring-boot-dependencies -->
+        <jackson-bom.version>2.21.7</jackson-bom.version> <!-- to fix CVE-2026-59889, CVE-2026-68497, CVE-2026-89425 and CVE-2026-91777. Pinned via the jackson-bom import below: spring-boot-dependencies re-imports jackson-bom with its own placeholder, so this property alone would not win. TODO: remove when fixed in spring-boot-dependencies -->
         <postgresql.version>42.7.12</postgresql.version> <!-- to fix CVE-2026-54291. Pinned via the postgresql override below: spring-boot-dependencies is imported as a BOM, so this property alone would not win. TODO: remove when fixed in spring-boot-dependencies -->
+        <lz4-java.version>1.11.1</lz4-java.version> <!-- to fix CVE-2026-59949. Transitive dependency of amazon-kinesis-producer 0.15.12; not managed by any BOM, so the override below is the sole source of the version. TODO: remove once amazon-kinesis-producer pulls lz4-java >= 1.11.1 -->
         <amqp-client.version>5.34.0</amqp-client.version> <!-- to fix CVE-2026-63337, CVE-2026-69219, CVE-2026-69220 and CVE-2026-75516. Pinned via the amqp-client override below: spring-boot-dependencies is imported as a BOM, so this property alone would not win. TODO: remove when fixed in spring-boot-dependencies -->
         <httpclient5.version>5.6.4</httpclient5.version> <!-- to fix CVE-2026-71290. Pinned via the httpclient5 overrides below: spring-boot-dependencies is imported as a BOM, so this property alone would not win. TODO: remove when fixed in spring-boot-dependencies -->
         <zstd-jni.version>1.5.7-14</zstd-jni.version> <!-- to fix CVE-2026-87795, CVE-2026-87823, CVE-2026-87824, CVE-2026-87825, CVE-2026-87877, CVE-2026-90560 and CVE-2026-90852. Transitive dependency of kafka-clients 3.9.2; not managed by any BOM, so the override below is the sole source of the version. TODO: remove once kafka-clients pulls zstd-jni >= 1.5.7-14 -->
+        <freemarker.version>2.3.35</freemarker.version> <!-- to fix CVE-2026-84939. Pinned via the freemarker override below: spring-boot-dependencies is imported as a BOM, so this property alone would not win. TODO: remove when fixed in spring-boot-dependencies -->
+        <javax-annotation.version>1.3.2</javax-annotation.version> <!-- fixme Remove when generate proto will use jakarta -->
         <javax.xml.bind-api.version>2.4.0-b180830.0359</javax.xml.bind-api.version>
         <jjwt.version>0.12.5</jjwt.version>
         <rat.version>0.10</rat.version> <!-- unused -->
@@ -89,8 +96,10 @@
         <commons-io.version>2.16.1</commons-io.version>
         <commons-logging.version>1.3.1</commons-logging.version>
         <commons-csv.version>1.10.0</commons-csv.version>
+        <commons-compress.version>1.26.1</commons-compress.version>
         <nimbus-jose-jwt.version>10.0.2</nimbus-jose-jwt.version> <!-- to fix CVE-2023-52428, CVE-2025-53864. TODO: remove when fixed in spring-security-oauth2-client and mockserver-netty   -->
         <apache-httpclient.version>4.5.14</apache-httpclient.version>
+        <apache-pulsar.version>4.0.1</apache-pulsar.version>
         <joda-time.version>2.12.7</joda-time.version>
         <auth0-jwt.version>4.4.0</auth0-jwt.version>
         <json-schema-validator.version>1.5.6</json-schema-validator.version>
@@ -99,7 +108,7 @@
         <leshan.version>2.0.0-M15</leshan.version>
         <mail.version>2.0.1</mail.version>
         <curator.version>5.6.0</curator.version>
-        <zookeeper.version>3.9.5</zookeeper.version> <!-- to fix CVE-2026-24308 and CVE-2026-24281. TODO: remove override when fixed in curator-client -->
+        <zookeeper.version>3.9.6</zookeeper.version> <!-- to fix CVE-2026-24281, CVE-2026-24308, CVE-2026-59969 and CVE-2026-84439. TODO: remove override when fixed in curator-client -->
         <protobuf.version>3.25.5</protobuf.version> <!-- Protobuf v4 is not yet supported by the pubsub -->
         <grpc.version>1.76.0</grpc.version>
         <tbel.version>1.2.10</tbel.version>
@@ -118,6 +127,8 @@
         <jts.version>1.19.0</jts.version>
         <bouncycastle.version>1.85</bouncycastle.version> <!-- to fix CVE-2026-8763, CVE-2026-12185, CVE-2026-12802, CVE-2026-12803, CVE-2026-12816, CVE-2026-12860, CVE-2026-13506, CVE-2026-14682, CVE-2026-58059, CVE-2026-58060, CVE-2026-58061, CVE-2026-58062, CVE-2026-59639, CVE-2026-59642, CVE-2026-59645, CVE-2026-59650, CVE-2026-59651 (supersedes the earlier 1.84 pin for CVE-2026-5588, CVE-2026-5598, CVE-2025-14813). Not managed by the Spring Boot BOM — this pin is the sole source of the bouncycastle version. -->
         <winsw.version>2.0.1</winsw.version>
+        <azure-iot-service-client.version>1.13.0</azure-iot-service-client.version>
+        <proton-j.version>0.35.0</proton-j.version> <!-- to fix CVE-2026-66257, CVE-2026-66273, CVE-2026-66274, CVE-2026-66275, CVE-2026-66276 and CVE-2026-66277. Not managed by the Spring Boot BOM — this pin is the sole source of the proton-j version. TODO: remove only once a TB dependency pulls proton-j >= 0.35.0 transitively -->
         <sonar.exclusions>org/thingsboard/server/gen/**/*,
             org/thingsboard/server/extensions/core/plugin/telemetry/gen/**/*
         </sonar.exclusions>
@@ -129,7 +140,12 @@
         <kafka.version>3.9.2</kafka.version> <!-- to fix CVE-2026-35554 -->
         <bucket4j.version>8.10.1</bucket4j.version>
         <antlr.version>3.5.3</antlr.version>
+        <amazon-kinesis-producer>0.15.12</amazon-kinesis-producer>
+        <org.json.version>20250517</org.json.version> <!-- Transitive dependency by amazon-kinesis-producer 0.15.10, 0.15.12 to address CVE-2023-5072 -->
+        <amazon-kinesis-client>3.0.1</amazon-kinesis-client>
+        <apache-avro.version>1.11.4</apache-avro.version> <!--vulnerability fix, related to the kinesis client-->
         <aws.sdk.version>1.12.701</aws.sdk.version>
+        <aws.sdk2.version>2.31.62</aws.sdk2.version>
         <pubsub.client.version>1.128.1</pubsub.client.version>
 
         <google-auth-library.version>1.34.0</google-auth-library.version>
@@ -138,6 +154,7 @@
         <google-api-gax.version>2.65.0</google-api-gax.version>
         <google-proto-common.version>2.37.1</google-proto-common.version>
         <google-proto-iam-v1.version>1.51.0</google-proto-iam-v1.version>
+        <google-recaptcha-enterprise.version>3.38.0</google-recaptcha-enterprise.version>
 
         <passay.version>1.6.4</passay.version>
         <ua-parser.version>1.6.1</ua-parser.version>
@@ -172,6 +189,8 @@
         <webdrivermanager.version>6.1.0</webdrivermanager.version>
         <allure-testng.version>2.27.0</allure-testng.version>
         <allure-maven.version>2.12.0</allure-maven.version>
+        <dotenv-java.version>3.0.0</dotenv-java.version>
+        <aws-iot-device-sdk.version>1.3.11</aws-iot-device-sdk.version>
 
         <opensmpp.version>3.0.2</opensmpp.version>
         <jgit.version>6.10.1.202505221210-r</jgit.version>
@@ -180,12 +199,19 @@
 
         <slack-api.version>1.48.0</slack-api.version>
         <oshi.version>6.6.0</oshi.version>
+        <azure-sdk-bom.version>1.2.33</azure-sdk-bom.version>
         <google-oauth-client.version>1.35.0</google-oauth-client.version>
         <weisj-jsvg.version>1.6.1</weisj-jsvg.version>
         <drewnoakes-metadata-extractor.version>2.19.0</drewnoakes-metadata-extractor.version>
         <firebase-admin.version>9.2.0</firebase-admin.version>
         <snappy.version>1.1.10.5</snappy.version>
         <rocksdbjni.version>9.10.0</rocksdbjni.version>
+        <thymeleaf.version>3.1.5.RELEASE</thymeleaf.version> <!-- to fix CVE-2026-40477, CVE-2026-40478, CVE-2026-41901. TODO: remove when fixed in spring-boot-dependencies -->
+        <flying-saucer.version>9.13.0</flying-saucer.version>
+        <jfreechart.version>1.5.6</jfreechart.version>
+        <jtidy.version>1.0.5</jtidy.version>
+        <pdfbox.version>3.0.5</pdfbox.version>
+        <ibm.icu4j.version>75.1</ibm.icu4j.version>
     </properties>
 
     <modules>
@@ -193,14 +219,18 @@
         <module>common</module>
         <module>rule-engine</module>
         <module>dao</module>
+        <module>packaging</module>
         <module>edqs</module>
         <module>transport</module>
+        <module>integration</module>
         <module>ui-ngx</module>
         <module>tools</module>
         <module>application</module>
         <module>msa</module>
         <module>rest-client</module>
         <module>monitoring</module>
+        <module>migrator</module>
+        <module>report</module>
     </modules>
 
     <profiles>
@@ -399,6 +429,10 @@
                                                 </excludes>
                                                 <filtering>true</filtering>
                                             </resource>
+                                            <resource>
+                                                <directory>config</directory>
+                                                <filtering>true</filtering>
+                                            </resource>
                                         </resources>
                                         <filters>
                                             <filter>${main.dir}/packaging/${pkg.type}/filters/windows.properties
@@ -417,6 +451,16 @@
                                         <resources>
                                             <resource>
                                                 <directory>${main.dir}/packaging/${pkg.type}/scripts/control</directory>
+                                                <includes>
+                                                    <include>template.service</include>
+                                                </includes>
+                                                <filtering>true</filtering>
+                                            </resource>
+                                            <resource>
+                                                <directory>${main.dir}/packaging/${pkg.type}/scripts/${pkg.controlScriptsFolder}</directory>
+                                                <excludes>
+                                                    <exclude>template.service</exclude>
+                                                </excludes>
                                                 <filtering>true</filtering>
                                             </resource>
                                         </resources>
@@ -565,7 +609,7 @@
                                      Passing only -Dpkg.skip.deb=true still builds the boot jar here
                                      because Gradle's buildDeb task depends on it as its primary input.
                                      Use -Dpkg.skip.bootjar=true to skip the boot jar entirely
-                                     (which also breaks buildDeb — see pkg.skip.* table in TEST_FAST.md). -->
+                                     (which also breaks buildDeb — see pkg.skip.* table in CONTRIBUTING.md). -->
                                 <skip>${pkg.skip.bootjar}</skip>
                                 <mainClass>${pkg.mainClass}</mainClass>
                                 <classifier>boot</classifier>
@@ -893,7 +937,11 @@
                     <configuration>
                         <licenseSets>
                             <licenseSet>
-                                <header>${main.dir}/license-header.txt</header>
+                                <header>${main.dir}/license-header-busl.txt</header>
+                                <validHeaders>
+                                    <validHeader>${main.dir}/license-header.txt</validHeader>
+                                    <validHeader>${main.dir}/license-header-ce-modified.txt</validHeader>
+                                </validHeaders>
                                 <excludes>
                                     <exclude>**/.env</exclude>
                                     <exclude>**/*.env</exclude>
@@ -904,6 +952,7 @@
                                     <exclude>**/nightwatch</exclude>
                                     <exclude>**/README</exclude>
                                     <exclude>**/LICENSE</exclude>
+                                    <exclude>**/EULA*.txt</exclude>
                                     <exclude>**/banner.txt</exclude>
                                     <exclude>node_modules/**</exclude>
                                     <exclude>**/*.properties</exclude>
@@ -914,12 +963,16 @@
                                     <exclude>packaging/*/scripts/control/**</exclude>
                                     <exclude>packaging/*/scripts/windows/**</exclude>
                                     <exclude>packaging/*/scripts/init/**</exclude>
+                                    <exclude>packaging/java/scripts/EULA.txt</exclude>
+                                    <exclude>packaging/java/scripts/EULA_DEB.txt</exclude>
                                     <exclude>**/*.log</exclude>
                                     <exclude>**/*.current</exclude>
                                     <exclude>.instance_id</exclude>
                                     <exclude>src/main/scripts/control/**</exclude>
                                     <exclude>src/main/scripts/windows/**</exclude>
-                                    <exclude>src/main/resources/public/static/rulenode/**</exclude>
+                                    <exclude>**/*.tpl.txt</exclude>
+                                    <exclude>**/src/index.html</exclude>
+                                    <exclude>**/public/static/rulenode/**</exclude>
                                     <exclude>**/*.proto.js</exclude>
                                     <exclude>docker/haproxy/**</exclude>
                                     <exclude>docker/tb-node/**</exclude>
@@ -929,6 +982,9 @@
                                     <exclude>**/.yarnrc</exclude>
                                     <exclude>**/.angular/**</exclude>
                                     <exclude>**/*.raw</exclude>
+                                    <exclude>**/*.webp</exclude>
+                                    <exclude>.run/**</exclude>
+                                    <exclude>docker/**</exclude>
                                     <exclude>**/*.patch</exclude>
                                     <exclude>**/apache/cassandra/io/**</exclude>
                                     <exclude>.run/**</exclude>
@@ -937,6 +993,7 @@
                                     <exclude>**/test/resources/lwm2m/**</exclude>
                                     <exclude>**/resources/lwm2m/models/**</exclude>
                                     <exclude>src/main/data/resources/**</exclude>
+                                    <exclude>src/main/resources/html/**</exclude>
                                     <exclude>.claude/**</exclude>
                                     <exclude>**/lombok.config</exclude>
                                     <exclude>**/eslint.config.mjs</exclude>
@@ -944,6 +1001,7 @@
                                     <exclude>**/valkey-certs/**</exclude>
                                     <exclude>**/data/certs/**</exclude>
                                     <exclude>**/*.otf</exclude>
+                                    <exclude>src/main/resources/public/static/rulenode/**</exclude>
                                     <exclude>**/*.txt</exclude>
                                 </excludes>
                             </licenseSet>
@@ -1125,6 +1183,48 @@
                 <version>${zstd-jni.version}</version>
             </dependency>
             <!-- End of zstd-jni version override -->
+            <!-- Temporary freemarker version override -->
+            <dependency>
+                <groupId>org.freemarker</groupId>
+                <artifactId>freemarker</artifactId>
+                <version>${freemarker.version}</version>
+            </dependency>
+            <!-- End of freemarker version override -->
+            <dependency>
+                <groupId>org.apache.pulsar</groupId>
+                <artifactId>pulsar-bom</artifactId>
+                <version>${apache-pulsar.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!-- Temporary opentelemetry-bom version override -->
+            <dependency>
+                <groupId>io.opentelemetry</groupId>
+                <artifactId>opentelemetry-bom</artifactId>
+                <version>${opentelemetry.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!-- End of opentelemetry-bom version override -->
+            <!-- Temporary lz4-java version override -->
+            <dependency>
+                <groupId>at.yawk.lz4</groupId>
+                <artifactId>lz4-java</artifactId>
+                <version>${lz4-java.version}</version>
+            </dependency>
+            <!-- End of lz4-java version override -->
+            <!-- Temporary wire-runtime version override -->
+            <dependency>
+                <groupId>com.squareup.wire</groupId>
+                <artifactId>wire-runtime</artifactId>
+                <version>${wire-schema.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.squareup.wire</groupId>
+                <artifactId>wire-schema</artifactId>
+                <version>${wire-schema.version}</version>
+            </dependency>
+            <!-- End of wire-runtime version override -->
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
@@ -1143,12 +1243,43 @@
                 <version>${bytebuddy.version}</version>
             </dependency>
             <dependency>
+                <groupId>net.bytebuddy</groupId>
+                <artifactId>byte-buddy</artifactId>
+                <version>${bytebuddy.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.bytebuddy</groupId>
+                <artifactId>byte-buddy-agent</artifactId>
+                <version>${bytebuddy.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.thingsboard.langchain4j</groupId>
                 <artifactId>langchain4j-bom</artifactId>
                 <version>${langchain4j.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <dependency>
+                <groupId>software.amazon.awssdk</groupId>
+                <artifactId>bom</artifactId>
+                <version>${aws.sdk2.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.azure</groupId>
+                <artifactId>azure-sdk-bom</artifactId>
+                <version>${azure-sdk-bom.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.fasterxml.jackson.dataformat</groupId>
+                        <artifactId>jackson-dataformat-xml</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
             <dependency>
                 <groupId>org.thingsboard</groupId>
                 <artifactId>netty-mqtt</artifactId>
@@ -1200,8 +1331,88 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
+                <groupId>org.thingsboard.common</groupId>
+                <artifactId>agent-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.thingsboard.rule-engine</groupId>
                 <artifactId>rule-engine-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.common.integration</groupId>
+                <artifactId>integration-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.common.integration</groupId>
+                <artifactId>cluster-integration-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.common.integration</groupId>
+                <artifactId>http-integrations</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.common.integration</groupId>
+                <artifactId>kafka-integrations</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.common.integration</groupId>
+                <artifactId>rabbitmq-integrations</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.common.integration</groupId>
+                <artifactId>apache-pulsar</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.common.integration</groupId>
+                <artifactId>mqtt-integrations</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.common.integration</groupId>
+                <artifactId>gcloud-integrations</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.common.integration</groupId>
+                <artifactId>azure-integrations</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.qpid</groupId>
+                <artifactId>proton-j</artifactId>
+                <version>${proton-j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.common.integration</groupId>
+                <artifactId>aws-integrations</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.common.integration</groupId>
+                <artifactId>opcua-integrations</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.common.integration</groupId>
+                <artifactId>coap-integrations</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.common.integration</groupId>
+                <artifactId>tuya-integrations</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.common.integration</groupId>
+                <artifactId>remote-integration-api</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -1226,12 +1437,12 @@
             </dependency>
             <dependency>
                 <groupId>org.thingsboard.common.transport</groupId>
-                <artifactId>mqtt</artifactId>
+                <artifactId>http</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.thingsboard.common.transport</groupId>
-                <artifactId>http</artifactId>
+                <artifactId>mqtt</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -1280,6 +1491,11 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
+                <groupId>org.thingsboard.common</groupId>
+                <artifactId>report</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.thingsboard.common.script</groupId>
                 <artifactId>script-api</artifactId>
                 <version>${project.version}</version>
@@ -1288,6 +1504,21 @@
                 <groupId>org.thingsboard.common.script</groupId>
                 <artifactId>remote-js-client</artifactId>
                 <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.ai</groupId>
+                <artifactId>common</artifactId>
+                <version>${thingsboard.ai.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.springframework</groupId>
+                        <artifactId>spring-web</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>io.jsonwebtoken</groupId>
+                        <artifactId>jjwt</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.thingsboard</groupId>
@@ -1303,7 +1534,7 @@
             </dependency>
             <dependency>
                 <groupId>org.thingsboard.client</groupId>
-                <artifactId>thingsboard-ce-client</artifactId>
+                <artifactId>thingsboard-pe-client</artifactId>
                 <version>${thingsboard.client.version}</version>
                 <scope>test</scope>
             </dependency>
@@ -1311,56 +1542,63 @@
                 <groupId>org.thingsboard.msa</groupId>
                 <artifactId>js-executor</artifactId>
                 <version>${project.version}</version>
-                <type>docker-info</type>
+                <type>pom</type>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.thingsboard.msa</groupId>
                 <artifactId>web-ui</artifactId>
                 <version>${project.version}</version>
-                <type>docker-info</type>
+                <type>pom</type>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.msa</groupId>
+                <artifactId>web-report</artifactId>
+                <version>${project.version}</version>
+                <type>pom</type>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.thingsboard.msa</groupId>
                 <artifactId>tb-node</artifactId>
                 <version>${project.version}</version>
-                <type>docker-info</type>
+                <type>pom</type>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.thingsboard.msa.transport</groupId>
                 <artifactId>coap</artifactId>
                 <version>${project.version}</version>
-                <type>docker-info</type>
+                <type>pom</type>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.thingsboard.msa.transport</groupId>
                 <artifactId>http</artifactId>
                 <version>${project.version}</version>
-                <type>docker-info</type>
+                <type>pom</type>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.thingsboard.msa.transport</groupId>
                 <artifactId>mqtt</artifactId>
                 <version>${project.version}</version>
-                <type>docker-info</type>
+                <type>pom</type>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.thingsboard.msa.transport</groupId>
                 <artifactId>lwm2m</artifactId>
                 <version>${project.version}</version>
-                <type>docker-info</type>
+                <type>pom</type>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.thingsboard.msa.transport</groupId>
                 <artifactId>snmp</artifactId>
                 <version>${project.version}</version>
-                <type>docker-info</type>
+                <type>pom</type>
                 <scope>test</scope>
             </dependency>
             <dependency>
@@ -1369,6 +1607,11 @@
                 <version>${project.version}</version>
                 <type>test-jar</type>
                 <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>javax.annotation</groupId>
+                <artifactId>javax.annotation-api</artifactId>
+                <version>${javax-annotation.version}</version>
             </dependency>
             <dependency>
                 <groupId>javax.xml.bind</groupId>
@@ -1484,6 +1727,11 @@
                 <version>${commons-io.version}</version>
             </dependency>
             <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-compress</artifactId>
+                <version>${commons-compress.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>commons-logging</groupId>
                 <artifactId>commons-logging</artifactId>
                 <version>${commons-logging.version}</version>
@@ -1550,6 +1798,17 @@
                 <groupId>org.eclipse.californium</groupId>
                 <artifactId>californium-core</artifactId>
                 <version>${californium.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.milo</groupId>
+                <artifactId>sdk-client</artifactId>
+                <version>${milo.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.milo</groupId>
+                <artifactId>sdk-server</artifactId>
+                <version>${milo.version}</version>
+                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.californium</groupId>
@@ -1751,17 +2010,22 @@
                 <version>${bouncycastle.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.bouncycastle</groupId>
-                <artifactId>bcprov-ext-jdk18on</artifactId>
-                <version>${bouncycastle.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>com.sun.winsw</groupId>
                 <artifactId>winsw</artifactId>
                 <version>${winsw.version}</version>
                 <classifier>bin</classifier>
                 <type>exe</type>
                 <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>nl.jk5.netty-mqtt</groupId>
+                <artifactId>netty-mqtt</artifactId>
+                <version>${netty-mqtt-client.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.microsoft.azure.sdk.iot</groupId>
+                <artifactId>iot-service-client</artifactId>
+                <version>${azure-iot-service-client.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.javadelight</groupId>
@@ -1826,6 +2090,11 @@
                 <version>${google-auth-library.version}</version>
             </dependency>
             <dependency>
+                <groupId>com.google.cloud</groupId>
+                <artifactId>google-cloud-recaptchaenterprise</artifactId>
+                <version>${google-recaptcha-enterprise.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>com.google.http-client</groupId>
                 <artifactId>google-http-client</artifactId>
                 <version>${google-http-client.version}</version>
@@ -1874,6 +2143,32 @@
                 <groupId>com.github.ua-parser</groupId>
                 <artifactId>uap-java</artifactId>
                 <version>${ua-parser.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.amazonaws</groupId>
+                <artifactId>amazon-kinesis-producer</artifactId>
+                <version>${amazon-kinesis-producer}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>commons-logging</groupId>
+                        <artifactId>commons-logging</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.json</groupId>
+                <artifactId>json</artifactId>
+                <version>${org.json.version}</version>  <!-- Transitive dependency by amazon-kinesis-producer 0.15.10, 0.15.12 to address CVE-2023-5072 -->
+            </dependency>
+            <dependency>
+                <groupId>software.amazon.kinesis</groupId>
+                <artifactId>amazon-kinesis-client</artifactId>
+                <version>${amazon-kinesis-client}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.avro</groupId>
+                <artifactId>avro</artifactId>
+                <version>${apache-avro.version}</version>
             </dependency>
             <dependency>
                 <groupId>commons-beanutils</groupId>
@@ -1993,6 +2288,17 @@
                 <scope>test</scope>
             </dependency>
             <dependency>
+                <groupId>org.opensmpp</groupId>
+                <artifactId>opensmpp-core</artifactId>
+                <version>${opensmpp.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.cdimascio</groupId>
+                <artifactId>dotenv-java</artifactId>
+                <version>${dotenv-java.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
                 <groupId>org.mock-server</groupId>
                 <artifactId>mockserver-netty</artifactId>
                 <version>${mock-server.version}</version>
@@ -2020,11 +2326,6 @@
                 <artifactId>easy-random-core</artifactId>
                 <version>${jeasy.version}</version>
                 <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.opensmpp</groupId>
-                <artifactId>opensmpp-core</artifactId>
-                <version>${opensmpp.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.jboss.aerogear</groupId>
@@ -2068,6 +2369,18 @@
                 <version>${oshi.version}</version>
             </dependency>
             <dependency>
+                <groupId>com.amazonaws</groupId>
+                <artifactId>aws-iot-device-sdk-java</artifactId>
+                <version>${aws-iot-device-sdk.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.amazonaws</groupId>
+                <artifactId>aws-iot-device-sdk-java-samples</artifactId>
+                <version>${aws-iot-device-sdk.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
                 <groupId>org.openjdk.nashorn</groupId>
                 <artifactId>nashorn-core</artifactId>
                 <version>${nashorn-core.version}</version>
@@ -2098,6 +2411,26 @@
                 <version>${rocksdbjni.version}</version>
             </dependency>
             <dependency>
+                <groupId>org.thymeleaf</groupId>
+                <artifactId>thymeleaf</artifactId>
+                <version>${thymeleaf.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.xhtmlrenderer</groupId>
+                <artifactId>flying-saucer-pdf</artifactId>
+                <version>${flying-saucer.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jfree</groupId>
+                <artifactId>jfreechart</artifactId>
+                <version>${jfreechart.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.jtidy</groupId>
+                <artifactId>jtidy</artifactId>
+                <version>${jtidy.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>com.google.errorprone</groupId>
                 <artifactId>error_prone_annotations</artifactId>
                 <version>${error_prone_annotations.version}</version>
@@ -2121,6 +2454,17 @@
                 <groupId>io.perfmark</groupId>
                 <artifactId>perfmark-api</artifactId>
                 <version>${perfmark-api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.pdfbox</groupId>
+                <artifactId>pdfbox</artifactId>
+                <version>${pdfbox.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.ibm.icu</groupId>
+                <artifactId>icu4j</artifactId>
+                <version>${ibm.icu4j.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -2162,6 +2506,14 @@
             <id>typesafe</id>
             <name>Typesafe Repository</name>
             <url>https://repo.typesafe.com/typesafe/releases/</url>
+        </repository>
+        <repository>
+            <id>jenkins</id>
+            <name>Jenkins Repository</name>
+            <url>https://repo.jenkins-ci.org/releases</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
         </repository>
     </repositories>
 

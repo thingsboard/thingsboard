@@ -1,0 +1,39 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="duplicateToGroupByNameConfigForm" class="tb-form-panel stroked">
+  <div class="tb-form-row no-border no-padding"
+    tb-hint-tooltip-icon="{{ 'rule-node-config.search-entity-group-for-tenant-only-hint' | translate }}">
+    <mat-slide-toggle class="mat-slide" formControlName="searchEntityGroupForTenantOnly">
+      {{ 'rule-node-config.search-entity-group-for-tenant-only' | translate }}
+    </mat-slide-toggle>
+  </div>
+  <div class="tb-form-row no-border no-padding"
+    tb-hint-tooltip-icon="{{ 'rule-node-config.consider-message-originator-as-a-group-owner-hint' | translate }}">
+    <mat-slide-toggle class="mat-slide" formControlName="considerMessageOriginatorAsAGroupOwner">
+      {{ 'rule-node-config.consider-message-originator-as-a-group-owner' | translate }}
+    </mat-slide-toggle>
+  </div>
+  <div class="same-width-component-row">
+    <tb-entity-type-select
+      required
+      showLabel
+      appearance="outline"
+      [allowedEntityTypes]="entityGroupTypesList"
+      formControlName="groupType">
+    </tb-entity-type-select>
+    <mat-form-field subscriptSizing="dynamic" appearance="outline">
+      <mat-label translate>entity-group.entity-group-name</mat-label>
+      <input matInput formControlName="groupName" required>
+      @if (duplicateToGroupByNameConfigForm.get('groupName').hasError('required')) {
+        <mat-error>
+          {{ 'entity-group.name-required' | translate }}
+        </mat-error>
+      }
+      <mat-hint translate>rule-node-config.general-pattern-hint</mat-hint>
+    </mat-form-field>
+  </div>
+</section>

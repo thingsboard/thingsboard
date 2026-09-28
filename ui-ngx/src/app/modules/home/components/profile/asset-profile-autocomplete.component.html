@@ -1,20 +1,21 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <mat-form-field [formGroup]="selectAssetProfileFormGroup" class="mat-block" [subscriptSizing]="subscriptSizing" [appearance]="appearance">
   <mat-label>{{ 'asset-profile.asset-profile' | translate }}</mat-label>
   <input matInput type="text"
-         #assetProfileInput
-         formControlName="assetProfile"
-         (focusin)="onFocus()"
-         [required]="required"
-         (keydown)="assetProfileEnter($event)"
-         (keypress)="assetProfileEnter($event)"
-         [matAutocomplete]="assetProfileAutocomplete"
-         [class.!hidden]="showDetailsPageLink && useAssetProfileLink && disabled && selectAssetProfileFormGroup.get('assetProfile').value">
+    #assetProfileInput
+    formControlName="assetProfile"
+    (focusin)="onFocus()"
+    [required]="required"
+    (keydown)="assetProfileEnter($event)"
+    (keypress)="assetProfileEnter($event)"
+    [matAutocomplete]="assetProfileAutocomplete"
+    [class.!hidden]="showDetailsPageLink && useAssetProfileLink && disabled && selectAssetProfileFormGroup.get('assetProfile').value">
   @if (showDetailsPageLink && useAssetProfileLink && selectAssetProfileFormGroup.get('assetProfile').value && disabled) {
     <a
       aria-label="Open asset profile" [routerLink]=assetProfileURL>
@@ -29,7 +30,8 @@
       <mat-icon class="material-icons">close</mat-icon>
     </button>
   }
-  @if (selectAssetProfileFormGroup.get('assetProfile').value?.id && !disabled && editProfileEnabled) {
+  @if (selectAssetProfileFormGroup.get('assetProfile').value?.id && !disabled && editProfileEnabled &&
+    (resource.ASSET_PROFILE | hasGenericPermission: operation.WRITE)) {
     <button
       type="button"
       matSuffix mat-icon-button aria-label="Edit"
@@ -39,10 +41,11 @@
       <mat-icon class="material-icons">edit</mat-icon>
     </button>
   }
-  @if (!selectAssetProfileFormGroup.get('assetProfile').value && !disabled && addNewProfile) {
+  @if (!selectAssetProfileFormGroup.get('assetProfile').value && !disabled && addNewProfile &&
+    (resource.ASSET_PROFILE | hasGenericPermission: operation.CREATE)) {
     <button mat-button color="primary" matSuffix
-            (click)="createAssetProfile($event, '')"
-            >
+      (click)="createAssetProfile($event, '')"
+      >
       <span style="white-space: nowrap">{{ 'notification.create-new' | translate }}</span>
     </button>
   }
@@ -68,9 +71,11 @@
               {{ translate.get('asset-profile.no-asset-profiles-matching',
               {entity: truncate.transform(searchText, true, 6, &apos;...&apos;)}) | async }}
             </span>
-            <span>
-              <a translate (click)="createAssetProfile($event, searchText)">asset-profile.create-new-asset-profile</a>
-            </span>
+            @if (resource.ASSET_PROFILE | hasGenericPermission: operation.CREATE) {
+              <span>
+                <a translate (click)="createAssetProfile($event, searchText)">asset-profile.create-new-asset-profile</a>
+              </span>
+            }
           }
         </div>
       </mat-option>

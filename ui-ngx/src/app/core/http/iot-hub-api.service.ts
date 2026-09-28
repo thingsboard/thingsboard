@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Store } from '@ngrx/store';
@@ -72,8 +73,8 @@ export class IotHubApiService {
     if (query.options.tbVersion == null) {
       query.options.tbVersion = tbVersionToInt(env.tbVersion);
     }
-    if (query.options.peOnly == null) {
-      query.options.peOnly = false;
+    if (query.options.ceOnly == null) {
+      query.options.ceOnly = false;
     }
     return this.http.get<PageData<MpItemVersionView>>(
       `${this.baseUrl}/api/versions/published${query.toQuery()}`,
@@ -83,14 +84,14 @@ export class IotHubApiService {
 
   public getFilterInfo(itemType: ItemType, config?: IotHubRequestConfig): Observable<ItemTypeFilterInfo> {
     const url = `${this.baseUrl}/api/item-listing/filterInfo/${itemType}`
-      + `?peOnly=false&tbVersion=${tbVersionToInt(env.tbVersion)}`;
+      + `?ceOnly=false&tbVersion=${tbVersionToInt(env.tbVersion)}`;
     return this.http.get<ItemTypeFilterInfo>(url, { params: this.buildParams(config) });
   }
 
   public getWidgetCategories(textSearch?: string, scadaFirst?: boolean,
                              config?: IotHubRequestConfig): Observable<WidgetCategory[]> {
     const queryParams: string[] = [
-      `peOnly=false`,
+      `ceOnly=false`,
       `tbVersion=${tbVersionToInt(env.tbVersion)}`
     ];
     if (textSearch?.trim()) {
@@ -131,7 +132,7 @@ export class IotHubApiService {
    */
   public getListingItemVersion(slug: string, config?: IotHubRequestConfig): Observable<MpItemVersionView> {
     const queryParams = [
-      'ce=true',
+      'ce=false',
       `tbVersion=${tbVersionToInt(env.tbVersion)}`
     ];
     return this.http.get<MpItemVersionView>(

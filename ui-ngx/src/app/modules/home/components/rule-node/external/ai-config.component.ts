@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { RuleNodeConfiguration, RuleNodeConfigurationComponent } from '@shared/models/rule-node.models';
@@ -9,8 +10,9 @@ import { AIModelDialogComponent, AIModelDialogData } from '@home/components/ai-m
 import { AiModel, aiRuleNodeResponseFormats, ResponseFormat } from '@shared/models/ai-model.models';
 import { deepTrim } from '@core/utils';
 import { TranslateService } from '@ngx-translate/core';
+import { Operation, Resource } from '@shared/models/security.models';
 import { jsonRequired } from '@shared/components/json-object-edit.component';
-import { Resource, ResourceType } from "@shared/models/resource.models";
+import { Resource as ResourceModel, ResourceType } from "@shared/models/resource.models";
 import { ResourcesDialogComponent, ResourcesDialogData } from "@home/components/resources/resources-dialog.component";
 
 @Component({
@@ -31,6 +33,9 @@ export class AiConfigComponent extends RuleNodeConfigurationComponent {
 
   EntityType = EntityType;
   ResourceType = ResourceType;
+
+  readonly operation = Operation;
+  readonly resource = Resource;
 
   constructor(private fb: UntypedFormBuilder,
               private translate: TranslateService,
@@ -112,7 +117,7 @@ export class AiConfigComponent extends RuleNodeConfigurationComponent {
   };
 
   createAiResources(name: string, formControl: string) {
-    this.dialog.open<ResourcesDialogComponent, ResourcesDialogData, Resource>(ResourcesDialogComponent, {
+    this.dialog.open<ResourcesDialogComponent, ResourcesDialogData, ResourceModel>(ResourcesDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {

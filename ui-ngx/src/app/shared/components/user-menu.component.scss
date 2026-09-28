@@ -1,13 +1,11 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 @import "constants";
 
 .tb-primary-toolbar, .tb-dashboard-action-panel {
   tb-user-menu {
     width: auto;
-    button.mat-mdc-button:not(.mat-mdc-icon-button).tb-user-menu {
-      padding: 12px 16px;
-    }
     @media #{$mat-lt-lg} {
       button.mat-mdc-button:not(.mat-mdc-icon-button).tb-user-menu {
         display: none;
@@ -23,16 +21,25 @@ tb-user-menu {
   width: 100%;
   .tb-user-menu-icon {
     display: none;
+    &.mat-mdc-icon-button.mat-mdc-button-base {
+      padding: 6px;
+    }
+  }
+  button.mat-mdc-button.tb-user-menu {
+    &:hover {
+      background-color: rgba(0, 0, 0, .04);
+    }
   }
   button.mat-mdc-button:not(.mat-mdc-icon-button).tb-user-menu {
     width: 100%;
     height: 100%;
-    padding: 16px;
+    padding: 12px 16px;
     display: flex;
     flex-direction: row;
     justify-content: start;
     gap: 8px;
     line-height: 1.5;
+    transition: padding $sidenav-anim-timing;
 
     .tb-user-info {
       display: flex;
@@ -43,9 +50,9 @@ tb-user-menu {
       transition: opacity $sidenav-anim-timing;
     }
 
-    span {
-      text-transform: none;
+    .mdc-button__label {
       text-align: start;
+      overflow: hidden;
     }
 
     span.tb-user-display-name {
@@ -56,56 +63,90 @@ tb-user-menu {
     }
 
     span.tb-user-authority {
-      color: rgba(0, 0, 0, 0.54);
+      color: color-mix(in srgb, currentColor 80%, transparent);
       font-size: 12px;
       line-height: 16px;
       font-weight: 400;
       letter-spacing: 0.25px;
     }
-
-    .mat-icon.tb-mini-avatar {
-      width: 32px;
-      height: 32px;
-      font-size: 32px;
-      margin: 0;
-      transition: all $sidenav-anim-timing;
-    }
-    &.tb-collapsed {
-      min-width: 0;
-      .mat-icon.tb-mini-avatar {
-        width: 20px;
-        height: 20px;
-        font-size: 20px;
-      }
-      .tb-user-info {
-        opacity: 0;
-      }
-    }
+  }
+  .tb-avatar {
+    width: 36px;
+    min-width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--tb-primary-500);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
   }
 }
 
 .tb-popover.tb-menu.tb-user-menu-collapsed {
-  padding: 0 0 17px 0;
+  padding: 0 0 20px 0;
 }
 
 .tb-user-menu-items {
   min-width: 250px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  .tb-user-email {
+  .tb-user-menu-header {
+    padding: 10px 16px 12px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  }
+  .tb-user-name {
+    margin-bottom: 3px;
     font-size: 14px;
+    font-weight: 600;
+    color: rgba(0, 0, 0, 0.87);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .tb-user-email {
+    font-size: 13px;
     line-height: 16px;
-    font-weight: 500;
-    padding: 2px 16px;
-    color: rgba(0,0,0,0.57);
+    color: rgba(0,0,0,0.6);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .mat-mdc-button {
     &:hover {
-      background-color: rgba(0, 0, 0, .07);
+      background-color: rgba(0, 0, 0, .04);
+    }
+    &:last-child {
+      border-top: 1px solid rgba(0, 0, 0, 0.12);
+      --mat-button-text-touch-target-size: 39px;
     }
   }
-  .tb-logout {
-    border-top: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.tb-primary-panels {
+  tb-user-menu {
+    button.mat-mdc-button.tb-user-menu {
+      &:hover {
+        background-color: color-mix(in srgb, var(--tb-primary-contrast-500) 8%, transparent);
+      }
+    }
+    .tb-avatar {
+      background: #fff;
+      color: var(--tb-primary-500);
+    }
+  }
+}
+
+.tb-site-sidenav.tb-collapsed {
+  tb-user-menu {
+    button.mat-mdc-button:not(.mat-mdc-icon-button).tb-user-menu {
+      min-width: 0;
+      padding-left: 7px;
+      .tb-user-info {
+        opacity: 0;
+      }
+    }
   }
 }

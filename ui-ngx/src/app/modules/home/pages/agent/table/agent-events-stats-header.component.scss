@@ -1,0 +1,73 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@use '../../../components/agent/agent-shared' as *;
+
+:host {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.tb-bulk-stats-inline {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 6px 8px;
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.tb-bulk-stats-main {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  font-size: 15px;
+  color: $agent-text-primary;
+
+  strong { font-weight: 500; }
+  .slash { color: rgba(0, 0, 0, 0.45); }
+  .pct {
+    font-size: 12.5px;
+    color: $agent-text-secondary;
+    margin-left: 4px;
+  }
+}
+
+.tb-bulk-stats-bar {
+  display: flex;
+  height: 6px;
+  width: 160px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: $agent-divider-light;
+
+  .bar-done    { background: $agent-color-success; transition: width .25s; }
+  .bar-error   { background: $agent-color-error; transition: width .25s; }
+  .bar-running { background: $agent-color-info; transition: width .25s; }
+}
+
+.tb-bulk-stats-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12.5px;
+
+  .legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    display: inline-block;
+  }
+  .dot-done    { background: $agent-color-success; }
+  .dot-error   { background: $agent-color-error; }
+  .dot-running { background: $agent-color-info; }
+  .dot-pending { background: rgba(0, 0, 0, 0.4); }
+}

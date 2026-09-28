@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/public-api';
@@ -19,6 +20,7 @@ import { RelationsQueryConfigOldComponent } from './relations-query-config-old.c
 import { SelectAttributesComponent } from './select-attributes.component';
 import { AlarmStatusSelectComponent } from './alarm-status-select.component';
 import { ExampleHintComponent } from './example-hint.component';
+import { TargetEntityComponent } from '@home/components/rule-node/common/target-entity.component';
 import { KvListConfigComponent } from '@home/components/rule-node/common/kv-list-config.component';
 
 @NgModule({
@@ -38,7 +40,8 @@ import { KvListConfigComponent } from '@home/components/rule-node/common/kv-list
     SelectAttributesComponent,
     AlarmStatusSelectComponent,
     ExampleHintComponent,
-    KvListConfigComponent
+    KvListConfigComponent,
+    TargetEntityComponent,
   ],
   imports: [
     CommonModule,
@@ -61,7 +64,8 @@ import { KvListConfigComponent } from '@home/components/rule-node/common/kv-list
     SelectAttributesComponent,
     AlarmStatusSelectComponent,
     ExampleHintComponent,
-    KvListConfigComponent
+    KvListConfigComponent,
+    TargetEntityComponent,
   ]
 })
 

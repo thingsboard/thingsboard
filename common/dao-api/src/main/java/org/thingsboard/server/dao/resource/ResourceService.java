@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.resource;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -12,6 +13,7 @@ import org.thingsboard.server.common.data.TbResourceDataInfo;
 import org.thingsboard.server.common.data.TbResourceDeleteResult;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.TbResourceInfoFilter;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -42,7 +44,7 @@ public interface ResourceService extends EntityDaoService {
 
     TbResource toResource(TenantId tenantId, ResourceExportData exportData);
 
-    void importResources(TenantId tenantId, List<ResourceExportData> resources);
+    void importResources(TenantId tenantId, CustomerId customerId, List<ResourceExportData> resources);
 
     TbResourceInfo findResourceInfoById(TenantId tenantId, TbResourceId resourceId);
 

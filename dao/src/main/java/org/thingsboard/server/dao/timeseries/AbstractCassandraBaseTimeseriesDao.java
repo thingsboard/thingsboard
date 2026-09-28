@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.timeseries;
 
 import com.datastax.oss.driver.api.core.cql.Row;
@@ -67,7 +68,7 @@ public abstract class AbstractCassandraBaseTimeseriesDao extends CassandraAbstra
         return entries;
     }
 
-    private TsKvEntry convertResultToTsKvEntry(Row row) {
+    protected TsKvEntry convertResultToTsKvEntry(Row row) {
         String key = row.getString(ModelConstants.KEY_COLUMN);
         long ts = row.getLong(ModelConstants.TS_COLUMN);
         return new BasicTsKvEntry(ts, toKvEntry(row, key));

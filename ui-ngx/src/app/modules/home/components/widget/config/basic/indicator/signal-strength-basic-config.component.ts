@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, Injector } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
@@ -278,6 +279,9 @@ export class SignalStrengthBasicConfigComponent extends BasicWidgetConfigCompone
 
   private getCardButtons(config: WidgetConfig): string[] {
     const buttons: string[] = [];
+    if (isUndefined(config.enableDataExport) || config.enableDataExport) {
+      buttons.push('dataExport');
+    }
     if (isUndefined(config.enableFullscreen) || config.enableFullscreen) {
       buttons.push('fullscreen');
     }
@@ -285,6 +289,7 @@ export class SignalStrengthBasicConfigComponent extends BasicWidgetConfigCompone
   }
 
   private setCardButtons(buttons: string[], config: WidgetConfig) {
+    config.enableDataExport = buttons.includes('dataExport');
     config.enableFullscreen = buttons.includes('fullscreen');
   }
 

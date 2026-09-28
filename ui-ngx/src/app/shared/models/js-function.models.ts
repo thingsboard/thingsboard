@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { forkJoin, from, map, mergeMap, Observable, of, ReplaySubject, switchMap } from 'rxjs';
 import { removeTbResourcePrefix, ResourceInfo } from '@shared/models/resource.models';

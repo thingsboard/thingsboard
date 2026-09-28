@@ -1,0 +1,56 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@import '../../../../../scss/constants';
+
+:host {
+  display: flex;
+  flex: 1 1 ;
+  .tb-signup-content {
+    background-color: #eee;
+    --mat-card-elevated-container-elevation: none;
+    .tb-signup-form {
+      @media #{$mat-gt-sm} {
+        width: 480px !important;
+      }
+      span.tb-signup-message {
+        font-size: 20px;
+        line-height: 24px;
+        letter-spacing: .1px;
+        text-align: center;
+        margin-bottom: 16px;
+      }
+      .tb-accept {
+        --mat-checkbox-state-layer-size: 24px;
+        margin-bottom: 20px;
+        .label {
+          font-size: 16px;
+          letter-spacing: 0.15px;
+          line-height: 24px;
+        }
+        .text {
+          opacity: 0.8;
+        }
+        .read {
+          color: #51C4FF;
+          text-decoration: underline;
+          outline: none;
+        }
+      }
+
+      .has-account-section {
+        font-size: 14px;
+        .message {
+          opacity: .8;
+        }
+        a {
+          color: var(--mat-app-text-color, var(--mat-app-on-background, inherit));
+          margin-left: 8px;
+          font-weight: 500;
+          &:hover {
+            border-bottom-color: var(--mat-app-text-color, var(--mat-app-on-background, inherit));
+          }
+        }
+      }
+    }
+  }
+}

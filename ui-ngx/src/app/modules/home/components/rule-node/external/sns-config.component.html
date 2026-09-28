@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <section [formGroup]="snsConfigForm" class="flex flex-col">
@@ -24,16 +25,14 @@
       </mat-error>
     }
   </mat-form-field>
-  <mat-form-field class="mat-block" appearance="outline">
-    <mat-label translate>rule-node-config.aws-secret-access-key</mat-label>
-    <input required matInput formControlName="secretAccessKey">
-    @if (snsConfigForm.get('secretAccessKey').hasError('required')) {
-      <mat-error>
-        {{ 'rule-node-config.aws-secret-access-key-required' | translate }}
-      </mat-error>
-    }
-  </mat-form-field>
-  <mat-form-field class="mat-block" appearance="outline">
+  <tb-secret-key-input formControlName="secretAccessKey"
+                       required
+                       appearance="outline"
+                       class="mat-block flex-1"
+                       label="{{ 'rule-node-config.aws-secret-access-key' | translate }}"
+                       requiredText="{{ 'rule-node-config.aws-secret-access-key-required' | translate }}">
+  </tb-secret-key-input>
+  <mat-form-field class="mat-block">
     <mat-label translate>rule-node-config.aws-region</mat-label>
     <input required matInput formControlName="region">
     @if (snsConfigForm.get('region').hasError('required')) {

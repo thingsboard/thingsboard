@@ -143,6 +143,11 @@ ThingsBoard is a scalable, user-friendly, and device-agnostic IoT platform that 
 
 To get support, please visit our [GitHub issues page](https://github.com/thingsboard/thingsboard/issues)
 
-## 📄 Licenses
+ThingsBoard Professional Edition is licensed under the Business Source License 1.1. Its terms, including the Additional Use Grant, the Change Date and the Change License (Apache License, Version 2.0), are in [LICENSE](./LICENSE).
 
-This project is released under [Apache 2.0 License](./LICENSE)
+The code base is built on ThingsBoard Community Edition, so the repository contains files under two sets of terms. The `SPDX-License-Identifier` tag in each file header states which apply:
+
+- `BUSL-1.1` refers to [LICENSE](./LICENSE).
+- `Apache-2.0` refers to [LICENSES/Apache-2.0.txt](./LICENSES/Apache-2.0.txt), the license of ThingsBoard Community Edition.
+
+A file identified as `Apache-2.0 AND BUSL-1.1` contains Community Edition code modified by ThingsBoard, Inc.

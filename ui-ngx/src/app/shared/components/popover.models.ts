@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { animate, AnimationTriggerMetadata, style, transition, trigger } from '@angular/animations';
 import { ConnectedOverlayPositionChange } from '@angular/cdk/overlay';

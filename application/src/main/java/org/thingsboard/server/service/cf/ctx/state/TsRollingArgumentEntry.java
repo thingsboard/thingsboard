@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.cf.ctx.state;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -16,6 +17,7 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 
 import static org.thingsboard.server.service.cf.ctx.state.BaseCalculatedFieldState.DEFAULT_LAST_UPDATE_TS;
@@ -125,7 +127,10 @@ public class TsRollingArgumentEntry implements ArgumentEntry, HasLatestTs {
         if (tsRecords.size() > limit) {
             tsRecords.pollFirstEntry();
         }
-        tsRecords.entrySet().removeIf(tsRecord -> tsRecord.getKey() < System.currentTimeMillis() - timeWindow);
+        long timeWindowEndTs = Optional.ofNullable(tsRecords.lastEntry())
+                .map(Map.Entry::getKey)
+                .orElse(System.currentTimeMillis());
+        tsRecords.entrySet().removeIf(tsRecord -> tsRecord.getKey() < timeWindowEndTs - timeWindow);
     }
 
     public static Double getValueForTsRecord(KvEntry value) {

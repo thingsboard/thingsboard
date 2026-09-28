@@ -1,0 +1,71 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@import "constants";
+
+:host {
+  position: relative;
+  height: 100%;
+  width: auto;
+  margin: 8px;
+
+  @media #{$mat-gt-sm} {
+    width: 700px;
+    margin: 8px auto;
+  }
+
+  .tb-entity-table {
+    .tb-entity-table-content {
+      .tb-entity-table-title {
+        font-weight: 500;
+        font-size: 24px;
+        padding-right: 8px;
+      }
+    }
+
+    .mat-mdc-header-row .mat-mdc-header-cell:first-child,
+    .mat-mdc-row .mat-mdc-cell:first-child {
+      padding: 0 16px;
+    }
+
+    .mat-mdc-header-row .mat-mdc-header-cell:nth-child(n+2):nth-last-child(n+2),
+    .mat-mdc-row .mat-mdc-cell:nth-child(n+2):nth-last-child(n+2) {
+      padding: 0 16px 0 0;
+    }
+  }
+
+  .fi {
+    font-size: 20px;
+    border-radius: 4px;
+    border: 1px solid rgba(0, 0, 0, 0.16);
+    line-height: 0.95em;
+  }
+
+  .progress-bar-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    --mat-progress-bar-track-height: 12px;
+
+    .mat-mdc-progress-bar {
+      border-radius: 6px;
+      filter: opacity(0.4);
+
+      &::ng-deep {
+        .mdc-linear-progress__buffer-bar {
+          filter: opacity(70%);
+        }
+        .mdc-linear-progress__bar-inner {
+          border-radius: 6px;
+        }
+      }
+    }
+
+    .value {
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 20px;
+      letter-spacing: 0.25px;
+      min-width: 40px;
+    }
+  }
+}

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -31,10 +32,10 @@ import static org.thingsboard.server.dao.model.ModelConstants.EXTERNAL_ID_PROPER
 @MappedSuperclass
 public abstract class AbstractAssetEntity<T extends Asset> extends BaseVersionedEntity<T> {
 
-    @Column(name = ASSET_TENANT_ID_PROPERTY)
+    @Column(name = ASSET_TENANT_ID_PROPERTY, columnDefinition = "uuid")
     private UUID tenantId;
 
-    @Column(name = ASSET_CUSTOMER_ID_PROPERTY)
+    @Column(name = ASSET_CUSTOMER_ID_PROPERTY, columnDefinition = "uuid")
     private UUID customerId;
 
     @Column(name = ASSET_NAME_PROPERTY)

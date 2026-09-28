@@ -1,0 +1,41 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-entity-info-panel">
+  <div class="tb-entity-info-title" translate>solution-creator.calculated-field-info</div>
+  <div class="tb-entity-info-panel-content">
+    <div class="property column">
+      <span>{{ 'solution-creator.name' | translate }}</span>
+      <span>{{ metric.calculatedFieldName }}</span>
+    </div>
+    <mat-divider></mat-divider>
+    <div class="property">
+      <span>{{ 'solution-creator.entity-profile' | translate }}</span>
+      <span>{{ metric.profileName }}</span>
+    </div>
+    <mat-divider></mat-divider>
+    <div class="property">
+      <span>{{ 'solution-creator.field-type' | translate }}</span>
+      <span>{{ getMetricTypeName(metric.metricType) }}</span>
+    </div>
+    <mat-divider></mat-divider>
+    @if (metric.calculation) {
+      <div class="property column">
+        <span>{{ 'solution-creator.description' | translate }}</span>
+        <span class="description-text">{{ metric.calculation }}</span>
+      </div>
+      <mat-divider></mat-divider>
+    }
+  </div>
+  <div class="flex h-10 items-end justify-end gap-4">
+    <button mat-button
+            color="primary"
+            type="button"
+            (click)="cancel()">
+      {{ 'action.close' | translate }}
+    </button>
+  </div>
+</div>

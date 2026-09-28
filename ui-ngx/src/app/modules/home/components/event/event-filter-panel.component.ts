@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, Inject, InjectionToken } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { OverlayRef } from '@angular/cdk/overlay';
@@ -35,6 +36,7 @@ export class EventFilterPanelComponent {
 
   private msgDirectionTypes = ['IN', 'OUT'];
   private statusTypes = ['Success', 'Failure'];
+  private msgTypes = ['Uplink', 'Downlink'];
   private entityTypes = Object.keys(EntityType);
 
   showColumns: FilterEntityColumn[] = [];
@@ -58,7 +60,7 @@ export class EventFilterPanelComponent {
   }
 
   isSelector(key: string): string {
-    return ['msgDirectionType', 'status', 'entityName'].includes(key) ? key : '';
+    return ['msgDirectionType', 'status', 'type', 'entityName'].includes(key) ? key : '';
   }
 
   isNumberFields(key: string): string {
@@ -71,6 +73,8 @@ export class EventFilterPanelComponent {
         return this.msgDirectionTypes;
       case 'status':
         return this.statusTypes;
+      case 'type':
+        return this.msgTypes;
       case 'entityName':
         return this.entityTypes;
     }

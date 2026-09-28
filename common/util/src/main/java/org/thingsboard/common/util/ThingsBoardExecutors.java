@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.common.util;
 
 import java.util.concurrent.ExecutorService;
@@ -28,7 +29,7 @@ public class ThingsBoardExecutors {
      * executed.
      *
      * @param parallelism the targeted parallelism level
-     * @param namePrefix used to define thread name
+     * @param namePrefix  used to define thread name
      * @return the newly created thread pool
      * @throws IllegalArgumentException if {@code parallelism <= 0}
      * @since 1.8

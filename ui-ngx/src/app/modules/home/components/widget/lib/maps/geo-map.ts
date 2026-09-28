@@ -1,10 +1,12 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   DEFAULT_ZOOM_LEVEL,
   defaultGeoMapSettings,
   GeoMapSettings,
-  latLngPointToBounds, MapControlsPosition,
+  latLngPointToBounds,
+  MapControlsPosition,
   MapZoomAction,
   TbCircleData,
   TbPolygonCoordinate,
@@ -95,6 +97,11 @@ export class TbGeoMap extends TbMap<GeoMapSettings> {
             });
           });
           defaultLayer.layer.addTo(this.map);
+          if (this.ctx.reportService.reportView) {
+            defaultLayer.layer.once('load', () => {
+              this.ctx.reportService.onMapLoaded(this.mapUuid);
+            });
+          }
           this.map.attributionControl.setPrefix(defaultLayer.attributionPrefix);
           if (layers.length > 1) {
             const sidebar = this.getSidebar();

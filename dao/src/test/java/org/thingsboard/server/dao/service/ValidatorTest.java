@@ -1,9 +1,11 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.service;
 
 import org.junit.jupiter.api.Test;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.id.UserId;
@@ -114,4 +116,34 @@ class ValidatorTest {
                 .hasMessageContaining("null");
 
     }
+
+    @Test
+    void validateEntityIdsTest() {
+        List<EntityId> list = List.of(goodDeviceId);
+        Validator.validateEntityIds(list, ids -> "Incorrect Id " + ids);
+
+        assertThatThrownBy(() -> Validator.validateEntityIds(null, id -> "Incorrect Ids " + id))
+                .as("Ids are null")
+                .isInstanceOf(IncorrectParameterException.class)
+                .hasMessageContaining("Incorrect Ids null");
+
+        assertThatThrownBy(() -> Validator.validateEntityIds(Collections.emptyList(), ids -> "Incorrect Ids " + ids))
+                .as("List is empty")
+                .isInstanceOf(IncorrectParameterException.class)
+                .hasMessageContaining("Incorrect Ids []");
+
+        List<EntityId> badList = new ArrayList<>(2);
+        badList.add(goodDeviceId);
+        badList.add(null);
+
+        // Incorrect Ids [18594c15-9f05-4cda-b58e-70172467c3e5, null]
+        assertThatThrownBy(() -> Validator.validateEntityIds(badList, ids -> "Incorrect Ids " + ids))
+                .as("List contains null")
+                .isInstanceOf(IncorrectParameterException.class)
+                .hasMessageContaining("Incorrect Ids ")
+                .hasMessageContaining(goodDeviceId.getId().toString())
+                .hasMessageContaining("null");
+
+    }
+
 }

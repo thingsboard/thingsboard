@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
@@ -17,8 +18,6 @@ import { TbIotHubSearchComponent } from './iot-hub-search.component';
 import { TbIotHubInstalledItemsTableComponent } from './iot-hub-installed-items-table.component';
 import { TbIotHubInstalledItemsDialogComponent } from './iot-hub-installed-items-dialog.component';
 import { TbIotHubSelectCfEntityDialogComponent } from './iot-hub-select-cf-entity-dialog.component';
-import { TbPeConnectivityMethodPromptComponent } from './pe-connectivity-method-prompt.component';
-import { TbIotHubPeRequiredDialogComponent } from './iot-hub-pe-required-dialog.component';
 import { TbIotHubUpgradeRequiredDialogComponent } from './iot-hub-upgrade-required-dialog.component';
 import { TbIotHubMarkdownComponent } from './iot-hub-markdown.component';
 import { SolutionInstallDialogComponent } from './solution-install-dialog.component';
@@ -40,11 +39,9 @@ import { IotHubItemLinkModule } from './iot-hub-item-link-card/iot-hub-item-link
     TbIotHubInstalledItemsTableComponent,
     TbIotHubInstalledItemsDialogComponent,
     TbIotHubSelectCfEntityDialogComponent,
-    TbPeConnectivityMethodPromptComponent,
     TbIotHubMarkdownComponent,
     SolutionInstallDialogComponent,
     InstallFormRendererComponent,
-    TbIotHubPeRequiredDialogComponent,
     TbIotHubUpgradeRequiredDialogComponent
   ],
   imports: [
@@ -69,10 +66,8 @@ import { IotHubItemLinkModule } from './iot-hub-item-link-card/iot-hub-item-link
     TbIotHubInstalledItemsTableComponent,
     TbIotHubInstalledItemsDialogComponent,
     TbIotHubSelectCfEntityDialogComponent,
-    TbPeConnectivityMethodPromptComponent,
     TbIotHubMarkdownComponent,
     SolutionInstallDialogComponent,
-    TbIotHubPeRequiredDialogComponent,
     TbIotHubUpgradeRequiredDialogComponent
   ]
 })

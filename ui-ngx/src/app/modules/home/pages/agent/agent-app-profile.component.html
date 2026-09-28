@@ -1,0 +1,83 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-details-buttons xs:flex xs:flex-col">
+  <button mat-stroked-button color="accent"
+    [disabled]="(isLoading$ | async) || !canUpgrade()"
+    (click)="onUpgrade($event)"
+    [class.!hidden]="isEdit">
+    <mat-icon>arrow_upward</mat-icon>
+    <span translate>agent.app-upgrade</span>
+  </button>
+  <button mat-stroked-button color="primary"
+    [disabled]="(isLoading$ | async)"
+    (click)="onEntityAction($event, 'delete')"
+    [class.!hidden]="isEdit">
+    {{'agent.delete-app-profile' | translate }}
+  </button>
+  <div class="flex flex-row flex-wrap xs:flex-col">
+    <button mat-stroked-button
+      ngxClipboard
+      (cbOnSuccess)="onProfileIdCopied()"
+      [cbContent]="entity?.id?.id"
+      [disabled]="(isLoading$ | async)"
+      [class.!hidden]="isEdit">
+      <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
+      <span translate>agent.copy-profile-id</span>
+    </button>
+  </div>
+</div>
+<div class="mat-padding flex flex-col">
+  <form [formGroup]="entityForm">
+    <fieldset [disabled]="(isLoading$ | async) || !isEdit">
+      <mat-form-field class="mat-block" appearance="outline">
+        <mat-label translate>agent.profile-name</mat-label>
+        <input matInput formControlName="name" required>
+        @if (entityForm.get('name').hasError('required')) {
+          <mat-error>
+            {{ 'agent.profile-name-required' | translate }}
+          </mat-error>
+        }
+      </mat-form-field>
+      <mat-form-field class="mat-block" appearance="outline">
+        <mat-label translate>agent.app-type</mat-label>
+        <mat-select formControlName="appType" required>
+          @for (type of agentApplicationTypes; track type) {
+            <mat-option [value]="type">
+              {{ agentApplicationTypeTranslationMap.get(type) | translate }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </fieldset>
+    @if (templateVersion) {
+      <mat-form-field class="mat-block" appearance="outline">
+        <mat-label translate>agent.template</mat-label>
+        <input matInput [value]="templateVersion" disabled>
+        @if (canUpgrade()) {
+          <mat-hint class="tb-app-upgrade-hint">
+            <mat-icon>info</mat-icon>
+            {{ 'agent.app-upgrade-available' | translate:{ version: nextVersion } }}
+          </mat-hint>
+        }
+      </mat-form-field>
+    }
+    <fieldset [disabled]="(isLoading$ | async) || !isEdit">
+      <mat-form-field class="mat-block" appearance="outline">
+        <mat-label translate>agent.description</mat-label>
+        <textarea matInput formControlName="description" rows="2"></textarea>
+      </mat-form-field>
+    </fieldset>
+  </form>
+  <div [formGroup]="entityForm">
+    <tb-agent-app-arguments class="tb-app-arguments-section"
+      formControlName="arguments"
+      [disabled]="!isEdit">
+    </tb-agent-app-arguments>
+  </div>
+  <label class="tb-mat-label" translate>agent.app-compose</label>
+  <div class="tb-app-compose-editor tb-app-compose-editor-ace" #composeAceEditor></div>
+</div>

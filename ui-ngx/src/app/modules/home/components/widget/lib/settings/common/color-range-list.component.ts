@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, forwardRef, Input, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import {
   AbstractControl,
@@ -75,6 +76,10 @@ export class ColorRangeListComponent implements OnInit, ControlValueAccessor, On
   @Input()
   @coerceBoolean()
   simpleRange = false;
+
+  @Input()
+  @coerceBoolean()
+  useThemePalette = false;
 
   @Input()
   @coerceBoolean()

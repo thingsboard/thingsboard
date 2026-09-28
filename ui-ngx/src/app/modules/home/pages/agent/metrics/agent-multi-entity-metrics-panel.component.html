@@ -1,0 +1,34 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div #panelRoot class="tb-multi-entity-metrics-panel">
+  @if (title || closeable) {
+    <header class="tb-multi-entity-metrics-panel-header">
+      @if (title) {
+        <span class="tb-multi-entity-metrics-panel-title">{{ title }}</span>
+      }
+      <span class="tb-multi-entity-metrics-panel-window">last 10 minutes</span>
+      <span class="tb-multi-entity-metrics-panel-spacer"></span>
+      @if (closeable) {
+        <button mat-icon-button type="button" (click)="onCloseClick()" aria-label="Close charts">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </header>
+  }
+  <section class="tb-multi-entity-metrics-panel-section">
+    <div class="tb-multi-entity-metrics-panel-label">CPU</div>
+    <div #cpuChart class="tb-multi-entity-metrics-panel-chart"></div>
+  </section>
+  <section class="tb-multi-entity-metrics-panel-section">
+    <div class="tb-multi-entity-metrics-panel-label">Memory Usage</div>
+    <div #memChart class="tb-multi-entity-metrics-panel-chart"></div>
+  </section>
+  <section class="tb-multi-entity-metrics-panel-section">
+    <div class="tb-multi-entity-metrics-panel-label">Storage</div>
+    <div #storageChart class="tb-multi-entity-metrics-panel-chart"></div>
+  </section>
+</div>

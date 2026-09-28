@@ -1,0 +1,73 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+.tb-report-components {
+  position: relative;
+  &.cdk-drop-list-dragging {
+    .tb-no-reports-components {
+      display: none;
+    }
+  }
+  .tb-no-reports-components {
+    z-index: 0;
+    position: absolute;
+    inset: 0;
+    border: 2px dashed rgba(0,0,0,0.57);
+    border-radius: 10px;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 500;
+    color: rgba(0,0,0,0.57);
+    background: rgba(215, 215, 215, 0.75);
+    transform-origin: left top;
+    overflow: hidden;
+  }
+  .cdk-drag-placeholder {
+    &:before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: #eee;
+    }
+    tb-report-component {
+      position: relative;
+      opacity: 0.3 !important;
+    }
+    .tb-report-component {
+      width: 100% !important;
+    }
+  }
+  .tb-draggable {
+    cursor: pointer;
+  }
+  .tb-draggable, .tb-report-component-placeholder {
+    position: relative;
+    z-index: 1;
+  }
+  .tb-report-component-draggable {
+    .tb-report-component-drag-handle {
+      position: absolute;
+      left: 8px;
+      top: 8px;
+      opacity: 0;
+      cursor: move;
+      transition: opacity 0.2s linear;
+    }
+    &:hover {
+      .tb-report-component-drag-handle {
+        opacity: 1;
+      }
+    }
+  }
+}
+
+.cdk-drag-preview.tb-report-component-draggable {
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  .tb-report-component-host {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+  }
+}

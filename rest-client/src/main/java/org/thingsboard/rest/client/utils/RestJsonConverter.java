@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.rest.client.utils;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -12,6 +13,7 @@ import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.kv.ReadTsKvQueryResult;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 
@@ -23,6 +25,7 @@ import java.util.stream.Collectors;
 
 public class RestJsonConverter {
     private static final String KEY = "key";
+    private static final String KV = "kv";
     private static final String VALUE = "value";
     private static final String LAST_UPDATE_TS = "lastUpdateTs";
     private static final String TS = "ts";
@@ -31,7 +34,7 @@ public class RestJsonConverter {
 
     public static List<AttributeKvEntry> toAttributes(List<JsonNode> attributes) {
         if (!CollectionUtils.isEmpty(attributes)) {
-            return attributes.stream().map(attr -> {
+            return attributes.stream().filter(attr-> !attr.get(VALUE).isNull()).map(attr -> {
                         KvEntry entry = parseValue(attr.get(KEY).asText(), attr.get(VALUE));
                         return new BaseAttributeKvEntry(entry, attr.get(LAST_UPDATE_TS).asLong());
                     }
@@ -41,11 +44,35 @@ public class RestJsonConverter {
         }
     }
 
+    public static List<ReadTsKvQueryResult> toReadTsKvQueryResult(JsonNode body) {
+            List<ReadTsKvQueryResult> result = new ArrayList<>();
+            body.forEach(item -> {
+                int queryId = item.get("queryId").asInt();
+                long lastEntryTs = item.get("lastEntryTs").asLong();
+                List<TsKvEntry> data = toTimeseries(item.get("data"));
+                result.add(new ReadTsKvQueryResult(queryId, data, lastEntryTs));
+            });
+            return result;
+    }
+
+    private static List<TsKvEntry> toTimeseries(JsonNode data) {
+        if (data != null && data.isArray()) {
+            List<TsKvEntry> result = new ArrayList<>();
+            data.forEach(tsKvEntry -> {
+                JsonNode kv = tsKvEntry.get(KV);
+                KvEntry kvEntry = parseValue(kv.get(KEY).asText(), kv.get(VALUE));
+                result.add(new BasicTsKvEntry(tsKvEntry.get(TS).asLong(), kvEntry));
+            });
+            return result;
+        }
+        return Collections.emptyList();
+    }
+
     public static List<TsKvEntry> toTimeseries(Map<String, List<JsonNode>> timeseries) {
         if (!CollectionUtils.isEmpty(timeseries)) {
             List<TsKvEntry> result = new ArrayList<>();
             timeseries.forEach((key, values) ->
-                    result.addAll(values.stream().map(ts -> {
+                    result.addAll(values.stream().filter(ts-> !ts.get(VALUE).isNull()).map(ts -> {
                                 KvEntry entry = parseValue(key, ts.get(VALUE));
                                 return new BasicTsKvEntry(ts.get(TS).asLong(), entry);
                             }

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, ElementRef, Inject, OnDestroy, OnInit, Renderer2, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
@@ -74,15 +75,10 @@ export class EventContentDialogComponent extends DialogComponent<EventContentDia
       mode = contentTypesMap.get(this.contentType).code;
       if (this.contentType === ContentType.JSON && content) {
         content$ = beautifyJs(content, {indent_size: 2});
-      } else if (this.contentType === ContentType.BINARY && content) {
+      } else if (this.contentType === ContentType.TEXT && content) {
         try {
           const decodedData = base64toString(content);
-          if (this.isJson(decodedData)) {
-            mode = 'json';
-            content$ = beautifyJs(decodedData, {indent_size: 2});
-          } else {
-            content$ = of(decodedData);
-          }
+          content$ = of(decodedData);
         } catch (e) {/**/}
       }
     }

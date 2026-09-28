@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 @if (addMode || editMode) {
@@ -33,7 +34,7 @@
           @for (link of filteredLinks | async; track link) {
             <mat-option [value]="link">
               <tb-icon>{{ link.icon }}</tb-icon>
-              <span [innerHTML]="link.name | highlight:searchText"></span>
+              <span [innerHTML]="link.name | highlight:searchText:true"></span>
             </mat-option>
           }
           @if (!(filteredLinks | async)?.length) {

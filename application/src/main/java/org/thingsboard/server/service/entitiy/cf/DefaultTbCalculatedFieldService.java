@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.entitiy.cf;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -33,6 +34,7 @@ import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldTbelScriptEngine;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
+import org.thingsboard.server.service.entitiy.cf.CalculatedFieldReprocessingValidator.CfReprocessingValidationResult;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.ArrayList;
@@ -51,6 +53,7 @@ public class DefaultTbCalculatedFieldService extends AbstractTbEntityService imp
     private static final int TIMEOUT = 20;
 
     private final CalculatedFieldService calculatedFieldService;
+    private final CalculatedFieldReprocessingValidator cfReprocessingValidator;
 
     @Autowired(required = false)
     private TbelInvokeService tbelInvokeService;
@@ -98,6 +101,17 @@ public class DefaultTbCalculatedFieldService extends AbstractTbEntityService imp
             logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.CALCULATED_FIELD), actionType, user, e, calculatedFieldId.toString());
             throw e;
         }
+    }
+
+    @Override
+    public void delete(CalculatedFieldId calculatedFieldId, User user) {
+        CalculatedField calculatedField = calculatedFieldService.findById(user.getTenantId(), calculatedFieldId);
+        delete(calculatedField, user);
+    }
+
+    @Override
+    public CfReprocessingValidationResult validateForReprocessing(CalculatedField calculatedField) {
+        return cfReprocessingValidator.validate(calculatedField);
     }
 
     @Override

@@ -1,6 +1,7 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
-import { Component, Input, OnInit, TemplateRef, ViewChild, ViewEncapsulation } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { Component, Input, OnInit, Optional, TemplateRef, ViewChild, ViewEncapsulation } from '@angular/core';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { WidgetComponent } from '@home/components/widget/widget.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -14,6 +15,8 @@ import {
   pieChartWidgetPieChartSettings,
   PieChartWidgetSettings
 } from '@home/components/widget/lib/chart/pie-chart-widget.models';
+import { coerceBoolean } from '@shared/decorators/coercion';
+import { ChartWidgetComponent } from '@home/components/widget/lib/chart/chart.models';
 
 @Component({
     selector: 'tb-pie-chart-widget',
@@ -22,7 +25,7 @@ import {
     encapsulation: ViewEncapsulation.None,
     standalone: false
 })
-export class PieChartWidgetComponent implements OnInit {
+export class PieChartWidgetComponent implements OnInit, ChartWidgetComponent {
 
   @ViewChild('latestChart')
   latestChart: LatestChartComponent;
@@ -31,13 +34,17 @@ export class PieChartWidgetComponent implements OnInit {
   ctx: WidgetContext;
 
   @Input()
+  @coerceBoolean()
+  reportMode = false;
+
+  @Input()
   widgetTitlePanel: TemplateRef<any>;
 
   settings: PieChartWidgetSettings;
 
   callbacks: LatestChartComponentCallbacks;
 
-  constructor(private widgetComponent: WidgetComponent,
+  constructor(@Optional() private widgetComponent: WidgetComponent,
               private translate: TranslateService) {
   }
 

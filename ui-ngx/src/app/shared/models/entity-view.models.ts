@@ -1,6 +1,7 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
-import { BaseData, ExportableEntity } from '@shared/models/base-data';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { BaseData, ExportableEntity, GroupEntityInfo } from '@shared/models/base-data';
 import { TenantId } from '@shared/models/id/tenant-id';
 import { CustomerId } from '@shared/models/id/customer-id';
 import { EntityViewId } from '@shared/models/id/entity-view-id';
@@ -31,10 +32,7 @@ export interface EntityView extends BaseData<EntityViewId>, HasTenantId, HasVers
   additionalInfo?: any;
 }
 
-export interface EntityViewInfo extends EntityView {
-  customerTitle: string;
-  customerIsPublic: boolean;
-}
+export type EntityViewInfo = EntityView & GroupEntityInfo<EntityViewId>;
 
 export interface EntityViewSearchQuery extends EntitySearchQuery {
   entityViewTypes: Array<string>;

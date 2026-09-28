@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   ChangeDetectorRef,
   Component,
@@ -326,9 +327,14 @@ export class JsonContentComponent implements OnInit, ControlValueAccessor, Valid
   }
 
   minifyJSON() {
-    const res = JSON.stringify(this.contentBody);
-    this.jsonEditor.setValue(res ? res : '', -1);
-    this.updateView();
+    let res = null;
+    try {
+      res = JSON.stringify(JSON.parse(this.contentBody));
+    } catch (e) {}
+    if (res) {
+      this.jsonEditor.setValue(res, -1);
+      this.updateView();
+    }
   }
 
   onFullscreen() {

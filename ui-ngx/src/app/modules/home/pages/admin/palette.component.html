@@ -1,0 +1,56 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="flex flex-1 flex-row items-center gap-2">
+  <mat-form-field subscriptSizing="dynamic" appearance="outline">
+    <mat-label>{{label}}</mat-label>
+    <mat-select matInput
+                class="tb-palette-select"
+                panelClass="tb-palette-select"
+                [disabled]="disabled"
+                [style]="paletteStyle(palette)"
+                [(ngModel)]="palette.type"
+                (ngModelChange)="paletteTypeChanged()">
+      <mat-select-trigger>
+        <ng-container *ngTemplateOutlet="paletteOption; context: {palette: palette, selected: false}"></ng-container>
+      </mat-select-trigger>
+      @for (paletteOpt of palettes; track paletteOpt) {
+        <mat-option #selectOpt
+          [style]="paletteStyle(paletteOpt)"
+          [value]="paletteOpt.type">
+          <ng-container *ngTemplateOutlet="paletteOption; context: {palette: paletteOpt, selected: selectOpt.selected}"></ng-container>
+        </mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+  @if (!disabled) {
+    <button type="button"
+            mat-icon-button
+            matTooltip="{{ 'white-labeling.customize-palette' | translate }}"
+            matTooltipPosition="above"
+            [disabled]="!palette.type"
+            (click)="editPalette()">
+      <tb-icon class="tb-mat-20">mdi:pencil-outline</tb-icon>
+    </button>
+  }
+</div>
+<ng-template #paletteOption let-palette="palette" let-selected="selected">
+  <div class="flex flex-row items-center justify-between">
+    <div class="tb-palette-option">
+      <div class="tb-palette-preview">
+        <div class="tb-palette-preview-text">
+          Aa
+        </div>
+      </div>
+      <div class="tb-palette-name-text">
+        {{paletteName(palette)}}
+      </div>
+    </div>
+    @if (selected) {
+      <tb-icon class="tb-mat-18" color="primary">check</tb-icon>
+    }
+  </div>
+</ng-template>

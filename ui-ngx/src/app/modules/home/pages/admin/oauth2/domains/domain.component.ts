@@ -1,6 +1,7 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
-import { ChangeDetectorRef, Component, Inject } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { ChangeDetectorRef, Component, Inject, Optional } from '@angular/core';
 import { EntityComponent } from '@home/components/entity/entity.component';
 import { DomainInfo } from '@shared/models/oauth2.models';
 import { AppState } from '@core/core.state';
@@ -30,8 +31,8 @@ export class DomainComponent extends EntityComponent<DomainInfo> {
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
               private oauth2Service: OAuth2Service,
-              @Inject('entity') protected entityValue: DomainInfo,
-              @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<DomainInfo>,
+              @Optional() @Inject('entity') protected entityValue: DomainInfo,
+              @Optional() @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<DomainInfo>,
               protected cd: ChangeDetectorRef,
               public fb: UntypedFormBuilder,
               @Inject(WINDOW) private window: Window,

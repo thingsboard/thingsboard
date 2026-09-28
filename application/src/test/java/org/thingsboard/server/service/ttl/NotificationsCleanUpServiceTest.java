@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.ttl;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -10,6 +11,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.notification.NotificationRequestDao;
 import org.thingsboard.server.dao.sqlts.insert.sql.SqlPartitioningRepository;
@@ -56,6 +58,7 @@ public class NotificationsCleanUpServiceTest {
     @Test
     public void testBatchLoopCallsDaoMultipleTimes() {
         TopicPartitionInfo myPartition = TopicPartitionInfo.builder().topic("tb_core").myPartition(true).build();
+        when(partitionService.isSystemTenantPartitionMine(ServiceType.TB_CORE)).thenReturn(true);
         when(partitionService.resolve(any(), any(), any())).thenReturn(myPartition);
         when(partitioningRepository.dropPartitionsBefore(anyString(), anyLong(), anyLong()))
                 .thenReturn(System.currentTimeMillis());
@@ -86,8 +89,7 @@ public class NotificationsCleanUpServiceTest {
     public void testSkipsTenantNotOnMyPartition() {
         TopicPartitionInfo myPartition = TopicPartitionInfo.builder().topic("tb_core").myPartition(true).build();
         TopicPartitionInfo notMyPartition = TopicPartitionInfo.builder().topic("tb_core").myPartition(false).build();
-        when(partitionService.resolve(any(), eq(TenantId.SYS_TENANT_ID), eq(TenantId.SYS_TENANT_ID)))
-                .thenReturn(myPartition);
+        when(partitionService.isSystemTenantPartitionMine(ServiceType.TB_CORE)).thenReturn(true);
         when(partitioningRepository.dropPartitionsBefore(anyString(), anyLong(), anyLong()))
                 .thenReturn(System.currentTimeMillis());
 
@@ -113,8 +115,7 @@ public class NotificationsCleanUpServiceTest {
 
     @Test
     public void testNoPartitionsDropped_stillCleansUpRequests() {
-        TopicPartitionInfo myPartition = TopicPartitionInfo.builder().topic("tb_core").myPartition(true).build();
-        when(partitionService.resolve(any(), any(), any())).thenReturn(myPartition);
+        when(partitionService.isSystemTenantPartitionMine(ServiceType.TB_CORE)).thenReturn(true);
         when(partitioningRepository.dropPartitionsBefore(anyString(), anyLong(), anyLong()))
                 .thenReturn(0L);
 

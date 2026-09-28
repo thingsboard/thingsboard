@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { AfterViewInit, Component, DestroyRef, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Observable, Subject, Subscription, throwError } from 'rxjs';
@@ -101,18 +102,18 @@ export class EntitySubTypeSelectComponent implements ControlValueAccessor, OnIni
           this.subTypesOptionsSubject.next('');
         });
         break;
-      case EntityType.EDGE:
-        this.entitySubtypeTitle = 'edge.edge-type';
-        this.entitySubtypeRequiredText = 'edge.edge-type-required';
-        this.broadcastSubscription = this.broadcast.on('edgeSaved',() => {
-          this.subTypes = null;
-          this.subTypesOptionsSubject.next('');
-        });
-        break;
       case EntityType.ENTITY_VIEW:
         this.entitySubtypeTitle = 'entity-view.entity-view-type';
         this.entitySubtypeRequiredText = 'entity-view.entity-view-type-required';
         this.broadcastSubscription = this.broadcast.on('entityViewSaved', () => {
+          this.subTypes = null;
+          this.subTypesOptionsSubject.next('');
+        });
+        break;
+      case EntityType.EDGE:
+        this.entitySubtypeTitle = 'edge.edge-type';
+        this.entitySubtypeRequiredText = 'edge.edge-type-required';
+        this.broadcastSubscription = this.broadcast.on('edgeSaved', () => {
           this.subTypes = null;
           this.subTypesOptionsSubject.next('');
         });

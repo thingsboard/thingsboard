@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { ChangeDetectorRef, Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
@@ -17,6 +18,7 @@ import { baseUrl, isUndefined } from '@core/utils';
 import { MatStepper } from '@angular/material/stepper';
 import { first } from 'rxjs/operators';
 import { Authority } from '@shared/models/authority.enum';
+import { WhiteLabelingService } from '@core/http/white-labeling.service';
 
 @Component({
     selector: 'tb-getting-started-widget',
@@ -40,12 +42,14 @@ export class GettingStartedWidgetComponent extends PageComponent implements OnIn
     maxSelectedIndex: 0
   };
   allCompleted = false;
+  docsLink = this.wl.getDocsUrl();
 
   baseUrl = baseUrl();
 
   constructor(protected store: Store<AppState>,
               private cd: ChangeDetectorRef,
               private userSettingsService: UserSettingsService,
+              private wl: WhiteLabelingService,
               private dialog: MatDialog) {
     super(store);
   }

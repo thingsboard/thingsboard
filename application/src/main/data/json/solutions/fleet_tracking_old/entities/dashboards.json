@@ -1,0 +1,8 @@
+[
+  {
+    "name": "Fleet tracking",
+    "file": "fleet_tracking.json",
+    "group": "Fleet tracking",
+    "main": true
+  }
+]

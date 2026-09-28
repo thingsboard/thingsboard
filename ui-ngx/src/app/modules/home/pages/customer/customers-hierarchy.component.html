@@ -1,0 +1,74 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="mat-content tb-customers-hierarchy flex flex-1 flex-col">
+  <section class="tb-customers-hierarchy-container flex flex-1 flex-col">
+    <div class="tb-customers-hierarchy-layout flex flex-1 flex-row">
+      <section class="tb-header-buttons tb-customers-hierarchy-buttons tb-nav-tree-open flex flex-row" [class.!hidden]="isNavTreeOpen">
+        <button mat-mini-fab color="primary"
+          class="tb-btn-header tb-btn-open-nav-tree"
+          (click)="isNavTreeOpen = true"
+          matTooltip="{{ 'customers-hierarchy.open-nav-tree' | translate }}"
+          matTooltipPosition="above">
+          <mat-icon>menu</mat-icon>
+        </button>
+      </section>
+      <mat-drawer-container style="width: 100%; height: 100%;">
+        <mat-drawer class="tb-customers-nav-tree mat-elevation-z4 flex flex-col"
+          disableClose="true"
+          mode="side"
+          [opened]="isNavTreeOpen"
+          position="start">
+          <section class="tb-header-buttons tb-customers-hierarchy-buttons
+                          tb-customers-nav-tree-toolbar flex flex-row items-end justify-start">
+            <button mat-mini-fab color="primary"
+              class="tb-btn-header"
+              [class.tb-hide]="selectedNodeId === -1"
+              (click)="selectRootNode()"
+              matTooltip="{{ 'customers-hierarchy.return-to-top-level' | translate }}"
+              matTooltipPosition="above">
+              <mat-icon>arrow_upwards</mat-icon>
+            </button>
+            <button mat-mini-fab color="primary"
+              class="tb-btn-header"
+              (click)="isNavTreeOpen = false"
+              matTooltip="{{ 'action.close' | translate }}"
+              matTooltipPosition="above">
+              <mat-icon>chevron_left</mat-icon>
+            </button>
+          </section>
+          <div class="tb-customers-nav-tree-panel flex-1">
+            <tb-nav-tree
+              [loadNodes]="loadNodes"
+              [onNodeSelected]="onNodeSelected"
+              [editCallbacks]="nodeEditCallbacks">
+            </tb-nav-tree>
+          </div>
+        </mat-drawer>
+        <mat-drawer-content>
+          <div class="tb-absolute-fill mat-content tb-customers-hierarchy-content flex flex-col">
+            @if (viewMode === 'groups') {
+              <tb-entities-table
+                [entitiesTableConfig]="entityGroupsTableConfig">
+              </tb-entities-table>
+            }
+            @if (viewMode === 'group') {
+              <tb-group-entities-table
+                [groupParams]="entityGroupParams"
+                [entityGroup]="entityGroupStateInfo"
+              ></tb-group-entities-table>
+            }
+            @if (viewMode === 'scheduler') {
+              <tb-scheduler-events
+                [edgeId]="edgeId">
+              </tb-scheduler-events>
+            }
+          </div>
+        </mat-drawer-content>
+      </mat-drawer-container>
+    </div>
+  </section>
+</div>

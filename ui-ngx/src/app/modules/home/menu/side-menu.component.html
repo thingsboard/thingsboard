@@ -1,10 +1,11 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<ul class="tb-side-menu flex flex-col items-stretch justify-start" [class.tb-collapsed]="collapsed">
+<ul class="tb-side-menu flex flex-col items-stretch justify-start">
   @for (section of menuSections$ | async; track section.id) {
     <li>
       @switch (section.type) {
@@ -13,9 +14,6 @@
         }
         @case ('toggle') {
           <tb-menu-toggle [section]="section" [collapsed]="collapsed"></tb-menu-toggle>
-        }
-        @case ('divider') {
-          <mat-divider></mat-divider>
         }
       }
     </li>

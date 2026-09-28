@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   createLabelFromDatasource,
   hashCode,
@@ -290,7 +291,6 @@ export function createLoadingDiv(loadingText: string): JQuery<HTMLElement> {
           font-size: 16px;
           font-family: Roboto;
           font-weight: 400;
-          text-transform:  uppercase;
         ">
         <span>${loadingText}</span>
     </div>

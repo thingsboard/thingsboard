@@ -1,6 +1,7 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
-import { isNumber } from '@core/utils';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { isNumber, plainColorFromVariable } from '@core/utils';
 import { TbColorScheme } from '@shared/models/color.models';
 import { LinearGradientObject } from 'zrender/lib/graphic/LinearGradient';
 import tinycolor from 'tinycolor2';
@@ -316,6 +317,7 @@ export const createChartTextStyle = (font: Font, color: string, darkMode: boolea
 };
 
 export const prepareChartThemeColor = (color: string, darkMode: boolean, colorKey?: string): string => {
+  color = plainColorFromVariable(color);
   if (darkMode) {
     let colorInstance = tinycolor(color);
     if (colorInstance.isDark()) {
@@ -332,7 +334,7 @@ export const prepareChartThemeColor = (color: string, darkMode: boolean, colorKe
 };
 
 export const toAnimationOption = (ctx: WidgetContext, settings: ChartAnimationSettings): AnimationOptionMixin => ({
-  animation: settings.animation,
+  animation: ctx.reportService?.reportView ? false : settings.animation,
   animationThreshold: settings.animationThreshold,
   animationDuration: settings.animationDuration,
   animationEasing: settings.animationEasing,
@@ -341,3 +343,10 @@ export const toAnimationOption = (ctx: WidgetContext, settings: ChartAnimationSe
   animationEasingUpdate: settings.animationEasingUpdate,
   animationDelayUpdate: settings.animationDelayUpdate
 });
+
+export interface ChartWidgetComponent {
+  reportMode: boolean;
+  ctx: WidgetContext;
+  onDataUpdated(): void;
+  onLatestDataUpdated?(): void;
+}

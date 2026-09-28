@@ -1,0 +1,43 @@
+{
+  "deduplicationId": "3ac7e3c4-4401-4b8d-9386-a5c902f9202d",
+  "time": "2022-07-18T09:34:15.775023242+00:00",
+  "deviceInfo": {
+    "tenantId": "52f14cd4-c6f1-4fbd-8f87-4025e1d49242",
+    "tenantName": "ChirpStack",
+    "applicationId": "17c82e96-be03-4f38-aef3-f83d48582d97",
+    "applicationName": "Test application",
+    "deviceProfileId": "14855bf7-d10d-4aee-b618-ebfcb64dc7ad",
+    "deviceProfileName": "default",
+    "deviceName": "Chirpstack",
+    "devEui": "BE7A123456789",
+    "tags": {
+      "key": "value"
+    }
+  },
+  "devAddr": "00189440",
+  "dr": 1,
+  "fPort": 80,
+  "data": "MkEzRg==",
+  "rxInfo": [
+    {
+      "uplinkId": 2,
+      "rssi": -36,
+      "snr": 10.5
+    },
+    {
+      "uplinkId": 1,
+      "rssi": -22,
+      "snr": 10.5
+    }
+  ],
+  "txInfo": {
+    "frequency": 867100000,
+    "modulation": {
+      "lora": {
+        "bandwidth": 125000,
+        "spreadingFactor": 11,
+        "codeRate": "CR_4_5"
+      }
+    }
+  }
+}

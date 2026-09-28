@@ -1,0 +1,72 @@
+{
+  "reprocessingOrder": 2,
+  "entityId": {
+    "entityType": "ASSET_PROFILE",
+    "id": "41d774a9-a4e5-4ea3-9824-530c25dbb422"
+  },
+  "type": "RELATED_ENTITIES_AGGREGATION",
+  "name": "Machines counters",
+  "debugSettings": {
+    "failuresEnabled": true,
+    "allEnabled": false,
+    "allEnabledUntil": 0
+  },
+  "configurationVersion": 0,
+  "configuration": {
+    "type": "RELATED_ENTITIES_AGGREGATION",
+    "relation": {
+      "direction": "FROM",
+      "relationType": "MineSiteToMachine"
+    },
+    "arguments": {
+      "geoStatus": {
+        "refEntityKey": {
+          "key": "geoStatus",
+          "type": "TS_LATEST"
+        },
+        "defaultValue": "undefined"
+      }
+    },
+    "deduplicationIntervalInSec": 10,
+    "metrics": {
+      "insideLoadingZone": {
+        "function": "COUNT",
+        "filter": "return geoStatus === \"insideLoadingZone\";",
+        "input": {
+          "type": "key",
+          "key": "geoStatus"
+        }
+      },
+      "insideUnloadingZone": {
+        "function": "COUNT",
+        "filter": "return geoStatus === \"insideUnloadingZone\";",
+        "input": {
+          "type": "key",
+          "key": "geoStatus"
+        }
+      },
+      "insideRestrictedZone": {
+        "function": "COUNT",
+        "filter": "return geoStatus === \"insideRestrictedZone\";",
+        "input": {
+          "type": "key",
+          "key": "geoStatus"
+        }
+      }
+    },
+    "output": {
+      "type": "TIME_SERIES",
+      "strategy": {
+        "type": "IMMEDIATE",
+        "ttl": 0,
+        "saveTimeSeries": true,
+        "saveLatest": true,
+        "sendWsUpdate": true,
+        "processCfs": true
+      }
+    },
+    "useLatestTs": false,
+    "scheduledUpdateInterval": 10,
+    "scheduledUpdateEnabled": true
+  }
+}

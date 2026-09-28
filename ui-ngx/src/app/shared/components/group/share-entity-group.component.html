@@ -1,0 +1,56 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section class="flex flex-col" [formGroup]="shareEntityGroupFormGroup">
+  <tb-owner-autocomplete
+    formControlName="ownerId"
+    required
+    appearance="outline"
+    placeholderText="customer.customer"
+    notFoundText="customer.no-customers-matching"
+    requiredText="customer.customer-required">
+  </tb-owner-autocomplete>
+  <mat-checkbox formControlName="allUserGroup">{{ 'entity-group.all-users' | translate }}</mat-checkbox>
+  @if (!shareEntityGroupFormGroup.get('allUserGroup').value) {
+    <tb-entity-group-select
+      [ownerId]="shareEntityGroupFormGroup.get('ownerId').value"
+      formControlName="userGroupId"
+      [allowedGroupTypes]="[entityType.USER]"
+      required
+      appearance="outline"
+      placeholderText="entity-group.select-user-group"
+      notFoundText="entity-group.no-user-groups-matching"
+      requiredText="entity-group.target-user-group-required">
+    </tb-entity-group-select>
+  }
+  <small translate>entity-group.permissions</small>
+  <mat-radio-group color="primary" formControlName="permissionType" class="flex flex-row xs:flex-col gt-xs:gap-4">
+    <mat-radio-button [value]="0" color="primary">
+      <span translate>permission.operation.display-type.READ</span>
+    </mat-radio-button>
+    @if (isWriteAllowed) {
+      <mat-radio-button [value]="1" color="primary">
+        <span translate>permission.operation.display-type.WRITE</span>
+      </mat-radio-button>
+    }
+    <mat-radio-button [value]="2" color="primary">
+      <span translate>permission.other</span>
+    </mat-radio-button>
+  </mat-radio-group>
+  @if (shareEntityGroupFormGroup.get('permissionType').value === 2) {
+    <tb-entity-list
+      [entityType]="entityType.ROLE"
+      [entitySubType]="roleType.GROUP"
+      appearance="outline"
+      placeholderText="{{ 'role.roles' | translate }}"
+      noEntitiesText="role.no-roles-matching"
+      requiredText="{{ 'role.roles-required' | translate }}"
+      required
+      formControlName="roleIds">
+    </tb-entity-list>
+  }
+</section>
+

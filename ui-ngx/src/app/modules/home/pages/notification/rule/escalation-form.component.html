@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <form [formGroup]="escalationFormGroup" class="flex flex-col">
@@ -28,7 +29,7 @@
       appearance="outline"
       subscriptSizing="dynamic"
       [entityType]="entityType.NOTIFICATION_TARGET"
-      subType="{{ notificationType.ALARM }}"
+      entitySubType="{{ notificationType.ALARM }}"
       [placeholderText]="escalationFormGroup.get('targets').value ? '' : ('notification.add-recipient' | translate)">
       <button #createTargetButton
               mat-button [class.!hidden]="disabled" matSuffix

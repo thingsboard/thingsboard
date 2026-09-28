@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   MESSAGE_FORMAT_CONFIG,
   MessageFormatConfig,
@@ -58,8 +59,11 @@ export class TranslateDefaultCompiler extends TranslateMessageFormatCompiler {
       console.error(e);
       return false;
     }
+    // Route both plural and select expressions through the MessageFormat compiler; otherwise a select
+    // like { type, select, ... } is returned verbatim and its {name} arguments never get interpolated.
     const res = tokens.filter(
-      (value) => typeof value !== 'string' && value.type === 'plural'
+      (value) => typeof value !== 'string'
+        && (value.type === 'plural' || value.type === 'select' || value.type === 'selectordinal')
     );
     return res.length > 0;
   }

@@ -1,7 +1,9 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.apiusage;
 
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -46,15 +48,19 @@ import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
-import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.UsageStatsServiceMsg;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.UsageStatsKVProto;
+import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.service.apiusage.BaseApiUsageState.StatsCalculationResult;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.mail.MailExecutorService;
 import org.thingsboard.server.service.partition.AbstractPartitionBasedService;
+import org.thingsboard.server.service.security.permission.OwnersCacheService;
 import org.thingsboard.server.service.telemetry.InternalTelemetryService;
 
 import java.util.ArrayList;
@@ -86,7 +92,10 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
     private final ApiUsageStateService apiUsageStateService;
     private final TbTenantProfileCache tenantProfileCache;
     private final MailService mailService;
+    private final OwnersCacheService ownersCacheService;
+    private final TbQueueProducerProvider producerProvider;
     private final NotificationRuleProcessor notificationRuleProcessor;
+    private TbQueueProducer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> msgProducer;
     private final DbCallbackExecutorService dbExecutor;
     private final MailExecutorService mailExecutor;
 
@@ -110,6 +119,9 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
     @Value("${usage.stats.gauge_report_interval:180000}")
     private long gaugeReportInterval;
 
+    @Value("${usage.stats.report.pack_size:1024}")
+    private int packSize;
+
     private final Lock updateLock = new ReentrantLock();
 
     @PostConstruct
@@ -117,6 +129,7 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
         super.init();
         if (enabled) {
             log.info("Starting api usage service.");
+            msgProducer = producerProvider.getTbUsageStatsMsgProducer();
             scheduledExecutor.scheduleAtFixedRate(this::checkStartOfNextCycle, nextCycleCheckInterval, nextCycleCheckInterval, TimeUnit.MILLISECONDS);
             log.info("Started api usage service.");
         }
@@ -136,7 +149,7 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
     public void process(TbProtoQueueMsg<ToUsageStatsServiceMsg> msgPack, TbCallback callback) {
         ToUsageStatsServiceMsg serviceMsg = msgPack.getValue();
         String serviceId = serviceMsg.getServiceId();
-
+        Map<TopicPartitionInfo, List<UsageStatsServiceMsg>> toPropagateStats = new HashMap<>();
         List<TransportProtos.UsageStatsServiceMsg> msgs;
 
         //For backward compatibility, remove after release
@@ -161,11 +174,22 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
             EntityId ownerId;
             if (msg.getCustomerIdMSB() != 0 && msg.getCustomerIdLSB() != 0) {
                 ownerId = new CustomerId(new UUID(msg.getCustomerIdMSB(), msg.getCustomerIdLSB()));
+                propagateStatsToCustomerOwner(msg, tenantId, (CustomerId) ownerId, toPropagateStats);
             } else {
                 ownerId = tenantId;
             }
 
             processEntityUsageStats(tenantId, ownerId, msg.getValuesList(), serviceId);
+        });
+
+        toPropagateStats.forEach((tpi, statsList) -> {
+            toMsgPack(statsList, serviceId).forEach(pack -> {
+                try {
+                    msgProducer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), pack), null);
+                } catch (Exception e) {
+                    log.warn("Failed to report propagated usage stats pack to TPI {}", tpi, e);
+                }
+            });
         });
         callback.onSuccess();
     }
@@ -231,6 +255,31 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
         if (!result.isEmpty()) {
             persistAndNotify(usageState, result);
         }
+    }
+
+    private void propagateStatsToCustomerOwner(UsageStatsServiceMsg statsMsg, TenantId tenantId, CustomerId customerId, Map<TopicPartitionInfo, List<UsageStatsServiceMsg>> toPropagateStats) {
+        EntityId owner = ownersCacheService.getOwner(tenantId, customerId);
+        if (owner == null || owner.isNullUid() || owner.getEntityType() != EntityType.CUSTOMER) return;
+
+        UsageStatsServiceMsg newStatsMsg = UsageStatsServiceMsg.newBuilder()
+                .mergeFrom(statsMsg)
+                .setCustomerIdMSB(owner.getId().getMostSignificantBits())
+                .setCustomerIdLSB(owner.getId().getLeastSignificantBits())
+                .build();
+
+        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, owner).withTopic(msgProducer.getDefaultTopic());
+        toPropagateStats.computeIfAbsent(tpi, key -> new ArrayList<>()).add(newStatsMsg);
+    }
+
+    private List<ToUsageStatsServiceMsg> toMsgPack(List<UsageStatsServiceMsg> list, String serviceId) {
+        return Lists.partition(list, packSize)
+                .stream()
+                .map(partition ->
+                        ToUsageStatsServiceMsg.newBuilder()
+                                .addAllMsgs(partition)
+                                .setServiceId(serviceId)
+                                .build())
+                .toList();
     }
 
     @Override
@@ -387,7 +436,7 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
                 if (StringUtils.isNotEmpty(email)) {
                     mailExecutor.submit(() -> {
                         try {
-                            mailService.sendApiFeatureStateEmail(apiFeature, stateValue, email, recordState);
+                            mailService.sendApiFeatureStateEmail(state.getTenantId(), apiFeature, stateValue, email, recordState);
                         } catch (ThingsboardException e) {
                             log.warn("[{}] Can't send update of the API state to tenant with provided email [{}]", state.getTenantId(), email, e);
                         }

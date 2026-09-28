@@ -1,11 +1,13 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
+
 <ng-template #widgetTitleTpl>
-  <div class="flex flex-row items-center justify-start gap-2">
+  <div [class.tb-dark]="wl.isPrimaryColorPanels$() | async" class="flex flex-row items-center justify-start gap-2">
     @if ((breadcrumbs$ | async).length > 1) {
       <span class='tb-breadcrumb-divider'> > </span>
     }
@@ -30,7 +32,7 @@
 <div class="flex flex-1 flex-col">
   <div class="flex flex-1 flex-col" tb-fullscreen [fullscreen]="fullscreen" [tb-hotkeys]="hotKeys" [cheatSheet]="cheatSheetComponent">
     <tb-hotkeys-cheatsheet #cheatSheetComponent></tb-hotkeys-cheatsheet>
-    <mat-toolbar class="tb-edit-toolbar gap-4 lt-xl:gap-2">
+    <mat-toolbar color="tb-primary" class="tb-edit-toolbar tb-bottom-border gap-4 lt-xl:gap-2">
       <button mat-icon-button
               [class.!hidden]="fullscreen"
               class="-ml-2 -mr-2 gt-sm:!hidden" (click)="toggleSidenav()">
@@ -39,7 +41,7 @@
       <div class="flex flex-1 flex-row items-center overflow-hidden">
         <tb-breadcrumb class="mat-toolbar-tools" [componentBreadcrumbsTpl]="widgetTitleTpl"></tb-breadcrumb>
       </div>
-      <tb-github-badge class="lt-lg:!hidden"></tb-github-badge>
+      <!--tb-github-badge class="lt-lg:!hidden"></tb-github-badge-->
       <button mat-button class="lt-lg:!hidden" [disabled]="!iframeWidgetEditModeInited"
               (click)="applyWidgetScript()"
               matTooltip="{{ 'widget.run' | translate }} (CTRL + Return)"

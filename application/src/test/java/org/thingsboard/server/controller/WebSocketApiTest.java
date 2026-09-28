@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -8,6 +9,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.junit.After;
 import org.junit.Assert;
@@ -15,12 +17,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.TestPropertySource;
-import org.apache.commons.lang3.RandomStringUtils;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
+import org.thingsboard.server.cache.logexternal.LogChunkBuffer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
@@ -33,6 +36,7 @@ import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.logexternal.LogChunk;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.AlarmCountQuery;
 import org.thingsboard.server.common.data.query.AliasEntityId;
@@ -50,12 +54,17 @@ import org.thingsboard.server.common.data.query.NumericFilterPredicate;
 import org.thingsboard.server.common.data.query.SingleEntityFilter;
 import org.thingsboard.server.common.data.query.TsValue;
 import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.dao.nosql.ResultSetSizeLimitExceededException;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
+import org.thingsboard.server.service.log.LogStreamDispatcher;
+import org.thingsboard.server.service.subscription.DefaultTbLocalSubscriptionService;
 import org.thingsboard.server.service.subscription.SubscriptionErrorCode;
 import org.thingsboard.server.service.subscription.TbAttributeSubscriptionScope;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
+import org.thingsboard.server.service.ws.log.cmd.LogsSubscriptionCmd;
+import org.thingsboard.server.service.ws.log.cmd.LogsUnsubscribeCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmCountCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmCountUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmStatusCmd;
@@ -63,16 +72,20 @@ import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmStatusUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityCountCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityCountUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataUpdate;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.LogsUpdate;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Slf4j
@@ -85,6 +98,15 @@ public class WebSocketApiTest extends AbstractControllerTest {
 
     @Autowired
     private TelemetrySubscriptionService tsService;
+
+    @Autowired
+    private LogChunkBuffer logChunkBuffer;
+
+    @Autowired
+    private LogStreamDispatcher logStreamDispatcher;
+
+    @Autowired
+    private DefaultTbLocalSubscriptionService localSubscriptionService;
 
     @MockitoSpyBean
     private TimeseriesService timeseriesService;
@@ -107,6 +129,7 @@ public class WebSocketApiTest extends AbstractControllerTest {
     @After
     public void tearDown() throws Exception {
         loginTenantAdmin();
+        logChunkBuffer.deleteUnit(device.getTenantId(), device.getId());
         doDelete("/api/device/" + device.getId().getId())
                 .andExpect(status().isOk());
     }
@@ -1020,6 +1043,86 @@ public class WebSocketApiTest extends AbstractControllerTest {
         EntityDataUpdate errorUpdate = getWsClient().subscribeTsUpdate(keys, now, TimeUnit.HOURS.toMillis(1), dtf);
         assertThat(errorUpdate.getErrorCode()).isEqualTo(SubscriptionErrorCode.INTERNAL_ERROR.getCode());
         assertThat(errorUpdate.getErrorMsg()).isEqualTo(exception.getMessage());
+    }
+
+    @Test
+    public void testLogsSubscribe_replaysTailThenReceivesLiveUpdate() throws Exception {
+        long tailSeq = logChunkBuffer.append(device.getTenantId(), device.getId(), logChunk("line-1", "line-2"));
+
+        TbTestWebSocketClient wsClient = getWsClient();
+        wsClient.send(logsSubscribeCmd(1, device.getId(), 0));
+
+        // on subscribe the retained tail is replayed first
+        LogsUpdate tail = parseLogsUpdate(wsClient.waitForReply(true));
+        assertThat(tail.getCmdId()).isEqualTo(1);
+        assertThat(tail.getLatestSeq()).isEqualTo(tailSeq);
+        assertThat(tail.getLines()).containsExactly("line-1", "line-2");
+
+        // the tail reply is sent before addSubscription completes, so await actual registration
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> hasLocalSubscription(device.getId()));
+
+        // a watermark for a newly appended chunk is then delivered live to the subscriber
+        wsClient.registerWaitForUpdate();
+        long liveSeq = logChunkBuffer.append(device.getTenantId(), device.getId(), logChunk("line-3"));
+        logStreamDispatcher.onWatermark(device.getTenantId(), device.getId(), liveSeq, TbCallback.EMPTY);
+
+        LogsUpdate live = parseLogsUpdate(wsClient.waitForUpdate(true));
+        assertThat(live.getLatestSeq()).isEqualTo(liveSeq);
+        assertThat(live.getLines()).containsExactly("line-3");
+    }
+
+    @Test
+    public void testLogsUnsubscribe_stopsLiveUpdates() throws Exception {
+        logChunkBuffer.append(device.getTenantId(), device.getId(), logChunk("tail"));
+
+        TbTestWebSocketClient wsClient = getWsClient();
+        wsClient.send(logsSubscribeCmd(1, device.getId(), 0));
+        wsClient.waitForReply(true); // drain the tail replay
+
+        // the tail reply is sent before addSubscription completes, so await actual registration
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> hasLocalSubscription(device.getId()));
+
+        wsClient.send(new LogsUnsubscribeCmd(1));
+        // await deterministic removal instead of sleeping for the async unsubscribe to land
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> !hasLocalSubscription(device.getId()));
+
+        wsClient.registerWaitForUpdate();
+        long liveSeq = logChunkBuffer.append(device.getTenantId(), device.getId(), logChunk("after-unsubscribe"));
+        logStreamDispatcher.onWatermark(device.getTenantId(), device.getId(), liveSeq, TbCallback.EMPTY);
+
+        assertThat(wsClient.waitForUpdate(TimeUnit.SECONDS.toMillis(2)))
+                .as("no live update should be delivered after unsubscribe")
+                .isNull();
+    }
+
+    @Test
+    public void testLogsSubscribe_accessDenied() throws Exception {
+        // customer user has no READ_TELEMETRY permission on the tenant's device
+        loginCustomerUser();
+
+        TbTestWebSocketClient wsClient = getWsClient();
+        wsClient.send(logsSubscribeCmd(1, device.getId(), 0));
+
+        JsonNode error = JacksonUtil.toJsonNode(wsClient.waitForReply(true));
+        assertThat(error.get("errorCode").asInt()).isEqualTo(SubscriptionErrorCode.ACCESS_DENIED.getCode());
+    }
+
+    private LogsSubscriptionCmd logsSubscribeCmd(int cmdId, EntityId entityId, long lastSeenSeq) {
+        return new LogsSubscriptionCmd(cmdId, entityId.getEntityType().name(), entityId.getId().toString(), lastSeenSeq);
+    }
+
+    private LogChunk logChunk(String... lines) {
+        return new LogChunk(device.getId().getId().toString(), List.of(lines), 0, 0L);
+    }
+
+    private LogsUpdate parseLogsUpdate(String msg) {
+        return JacksonUtil.fromString(msg, LogsUpdate.class);
+    }
+
+    @SuppressWarnings("unchecked")
+    private boolean hasLocalSubscription(EntityId entityId) {
+        var byEntityId = (Map<UUID, ?>) ReflectionTestUtils.getField(localSubscriptionService, "subscriptionsByEntityId");
+        return byEntityId.containsKey(entityId.getId());
     }
 
     private void sendTelemetry(Device device, List<TsKvEntry> tsData) throws InterruptedException {

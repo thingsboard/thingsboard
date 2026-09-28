@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 @import "../../../../../scss/constants";
 
 // Outer page — 16px padding around the white container
@@ -48,7 +49,7 @@
   box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.08), 0 4px 8px 0 rgba(0, 0, 0, 0.08);
 
   &.mat-primary {
-    --mat-button-outlined-outline-color: #{$tb-primary-color};
+    --mat-button-outlined-outline-color: var(--tb-primary-500);
   }
 }
 
@@ -405,7 +406,7 @@
     font-weight: 500;
     line-height: 20px;
     letter-spacing: 0.25px;
-    color: $tb-primary-color;
+    color: var(--tb-primary-500);
     cursor: pointer;
     background: white;
     white-space: nowrap;

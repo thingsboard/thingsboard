@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.config;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -37,10 +38,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springdoc.core.customizers.OperationCustomizer;
 import org.springdoc.core.discoverer.SpringDocParameterNameDiscoverer;
-import org.springdoc.core.utils.SpringDocUtils;
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springdoc.core.properties.SpringDocConfigProperties;
 import org.springdoc.core.properties.SwaggerUiConfigProperties;
+import org.springdoc.core.utils.SpringDocUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
@@ -112,6 +113,8 @@ public class SwaggerConfiguration {
 
     @Value("${swagger.api_path:/api/**}")
     private String apiPath;
+    @Value("${swagger.exclude_api_path:/api/v1/integrations/**}")
+    private String excludeApiPath;
     @Value("${swagger.security_path_regex}")
     private String securityPathRegex;
     @Value("${swagger.non_security_path_regex}")
@@ -282,6 +285,7 @@ public class SwaggerConfiguration {
         return GroupedOpenApi.builder()
                 .group(groupName)
                 .pathsToMatch(apiPath)
+                .pathsToExclude(excludeApiPath)
                 .addOperationCustomizer(operationCustomizer())
                 .addOpenApiCustomizer(customOpenApiCustomizer())
                 .build();

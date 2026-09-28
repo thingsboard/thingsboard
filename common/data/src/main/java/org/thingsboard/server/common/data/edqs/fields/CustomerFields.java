@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.edqs.fields;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -28,9 +29,9 @@ public class CustomerFields extends AbstractEntityFields {
     private String phone;
     private String email;
 
-    public CustomerFields(UUID id, long createdTime, UUID tenantId, String name, Long version, JsonNode additionalInfo,
+    public CustomerFields(UUID id, long createdTime, UUID tenantId, UUID parentCustomerId, String name, Long version, JsonNode additionalInfo,
                           String country, String state, String city, String address, String address2, String zip, String phone, String email) {
-        super(id, createdTime, tenantId, name, version);
+        super(id, createdTime, tenantId, parentCustomerId, name, version);
         this.additionalInfo = getText(additionalInfo);
         this.country = country;
         this.state = state;

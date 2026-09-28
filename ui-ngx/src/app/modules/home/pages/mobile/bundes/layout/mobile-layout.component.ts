@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { booleanAttribute, Component, ElementRef, forwardRef, Input, ViewChild } from '@angular/core';
 import {
   AbstractControl,
@@ -15,6 +16,7 @@ import {
   CustomMobilePage,
   getDefaultMobileMenuItem,
   isDefaultMobilePagesConfig,
+  mergeMissingDefaultMobilePages,
   MobileLayoutConfig,
   mobileMenuDividers,
   MobilePage,
@@ -200,7 +202,7 @@ export class MobileLayoutComponent implements ControlValueAccessor, Validator {
     if (!layout?.pages?.length) {
       return getDefaultMobileMenuItem();
     }
-    return layout.pages;
+    return mergeMissingDefaultMobilePages(layout.pages);
   }
 
   private prepareMobilePagesFormArray(items: MobilePage[]): FormArray<FormControl<MobilePage>> {

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
@@ -96,10 +97,6 @@ import {
 import {
   TimeSeriesChartBasicConfigComponent
 } from '@home/components/widget/config/basic/chart/time-series-chart-basic-config.component';
-import { ComparisonKeyRowComponent } from '@home/components/widget/config/basic/chart/comparison-key-row.component';
-import {
-  ComparisonKeysTableComponent
-} from '@home/components/widget/config/basic/chart/comparison-keys-table.component';
 import {
   StatusWidgetBasicConfigComponent
 } from '@home/components/widget/config/basic/indicator/status-widget-basic-config.component';
@@ -177,8 +174,6 @@ import {
     ToggleButtonBasicConfigComponent,
     ValueStepperBasicConfigComponent,
     TimeSeriesChartBasicConfigComponent,
-    ComparisonKeyRowComponent,
-    ComparisonKeysTableComponent,
     StatusWidgetBasicConfigComponent,
     PieChartBasicConfigComponent,
     BarChartBasicConfigComponent,

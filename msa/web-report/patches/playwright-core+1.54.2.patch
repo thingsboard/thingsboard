@@ -1,0 +1,13 @@
+diff --git a/node_modules/playwright-core/lib/server/registry/index.js b/node_modules/playwright-core/lib/server/registry/index.js
+index 4525491..16abf8c 100644
+--- a/node_modules/playwright-core/lib/server/registry/index.js
++++ b/node_modules/playwright-core/lib/server/registry/index.js
+@@ -1044,7 +1044,7 @@ Run "${buildPlaywrightCLICommand(sdkLanguage, "install " + name)}"` : "";
+   }
+   _downloadURLs(descriptor) {
+     const paths = DOWNLOAD_PATHS[descriptor.name];
+-    const downloadPathTemplate = paths[import_hostPlatform.hostPlatform] || paths["<unknown>"];
++    const downloadPathTemplate = paths[descriptor.platform] || paths[import_hostPlatform.hostPlatform] || paths['<unknown>'];
+     if (!downloadPathTemplate)
+       return [];
+     const downloadPath = util.format(downloadPathTemplate, descriptor.revision);

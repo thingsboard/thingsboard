@@ -1,0 +1,73 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@import "../../../../../scss/constants";
+
+.tb-entity-group-columns {
+
+  .tb-outlined-border {
+    box-shadow: 0 0 0 0 rgb(0 0 0 / 20%), 0 0 0 0 rgb(0 0 0 / 14%), 0 0 0 0 rgb(0 0 0 / 12%);
+    border: solid 1px #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .tb-header {
+    font-size: 12px;
+    font-weight: 700;
+    color: rgba(0, 0, 0, .57);
+    @media #{$mat-gt-xl} {
+      .tb-column-type {
+        min-width: 180px;
+        max-width: 180px;
+      }
+      .tb-column-value {
+        min-width: 200px;
+        max-width: 200px;
+      }
+      .tb-column-sort-order {
+        min-width: 150px;
+        max-width: 150px;
+      }
+    }
+  }
+
+  .tb-columns {
+    font-size: 13px;
+
+    &.tb-readonly {
+      span {
+        color: rgba(0, 0, 0, .38);
+      }
+    }
+
+    .handle {
+      cursor: move;
+    }
+
+    .mat-mdc-list {
+      min-height: 42px;
+      padding-left: 0;
+    }
+  }
+}
+
+.mat-mdc-list-item {
+  &.tb-entity-group-column {
+    background: #fff;
+    &.mdc-list-item.mdc-list-item--with-one-line {
+      height: auto;
+    }
+    &.tb-draggable {
+      &.cdk-drag-placeholder {
+        opacity: 0;
+      }
+      &.cdk-drag-preview {
+        box-sizing: border-box;
+        border-radius: 4px;
+        box-shadow: 0 5px 5px -3px rgba(0, 0, 0, 0.2),
+        0 8px 10px 1px rgba(0, 0, 0, 0.14),
+        0 3px 14px 2px rgba(0, 0, 0, 0.12);
+      }
+    }
+  }
+}

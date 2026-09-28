@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div #tbWidgetElement tb-fullscreen [fullscreen]="widget.isFullscreen"
@@ -101,7 +102,32 @@
       }
       <button mat-icon-button
               type="button"
-              [class.!hidden]="isEdit || !widget.enableFullscreen"
+              [matMenuTriggerFor]="widgetDataExportMenu"
+            [class.!hidden]="isEdit || !widget.enableDataExport"
+            matTooltip="{{ 'widget.export-data' | translate }}"
+            matTooltipPosition="above">
+      <mat-icon svgIcon="mdi:file-export"></mat-icon>
+    </button>
+    <mat-menu #widgetDataExportMenu="matMenu" xPosition="before" yPosition="below" class="export-menu">
+      <button mat-menu-item
+              (click)="widget.exportWidgetData($event, widgetExportType.csv)">
+        <mat-icon svgIcon="mdi:file-delimited"></mat-icon>
+        <span translate>{{ widgetExportTypeTranslations.get(widgetExportType.csv) }}</span>
+      </button>
+      <button mat-menu-item
+              (click)="widget.exportWidgetData($event, widgetExportType.xls)">
+        <mat-icon svgIcon="mdi:file-excel"></mat-icon>
+        <span translate>{{ widgetExportTypeTranslations.get(widgetExportType.xls) }}</span>
+      </button>
+      <button mat-menu-item
+              (click)="widget.exportWidgetData($event, widgetExportType.xlsx)">
+        <mat-icon svgIcon="mdi:file-excel"></mat-icon>
+        <span translate>{{ widgetExportTypeTranslations.get(widgetExportType.xlsx) }}</span>
+      </button>
+    </mat-menu>
+    <button mat-icon-button
+            type="button"
+            [class.!hidden]="isEdit || !widget.enableFullscreen"
               (click)="$event.stopPropagation(); widget.isFullscreen = !widget.isFullscreen; updateEditWidgetActionsTooltipState()"
               matTooltip="{{(widget.isFullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
               matTooltipPosition="above">

@@ -1,0 +1,53 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<!-- Step inputs. One block per classified step the template exposes for the
+active mode's action. Placed above compose comparison so user input is
+collected first. -->
+@for (binding of bindings; track binding.step.id) {
+  @switch (binding.kind) {
+    @case ('backupVolume') {
+      <div class="config-section">
+        <div class="config-section-header">
+          {{ binding.step.title }}
+          <span class="step-type-label">{{ binding.step.type }}</span>
+        </div>
+        <p class="hint" translate>agent.app-upgrade-backup-volumes-hint</p>
+        @if (binding.backupVolumes?.length) {
+          <div class="volume-list">
+            @for (v of binding.backupVolumes; track v.key) {
+              <label class="volume-row">
+                <mat-checkbox [checked]="v.selected" (change)="toggleBackupVolume(v)">
+                  <span class="volume-name">{{ v.key }}</span>
+                </mat-checkbox>
+              </label>
+            }
+          </div>
+        }
+        @if (!binding.backupVolumes?.length) {
+          <div class="volume-empty" translate>
+            agent.app-upgrade-no-volumes
+          </div>
+        }
+        <p class="hint">{{ 'agent.app-step-applied-stage-hint' | translate: { stage: binding.step.title || binding.step.type } }}</p>
+      </div>
+    }
+    @case ('pullImages') {
+      <div class="config-section">
+        <div class="config-section-header">
+          {{ binding.step.title || ('agent.app-install-pull-images' | translate) }}
+          <span class="step-type-label">{{ binding.step.type }}</span>
+        </div>
+        <p class="hint" translate>agent.app-install-pull-images</p>
+        <tb-toggle-select class="pull-policy-toggle" [(ngModel)]="binding.pullImages" appearance="fill" disablePagination>
+          <tb-toggle-option [value]="false">{{ 'agent.app-image-pull-policy-if-not-present' | translate }}</tb-toggle-option>
+          <tb-toggle-option [value]="true">{{ 'agent.app-image-pull-policy-always' | translate }}</tb-toggle-option>
+        </tb-toggle-select>
+        <p class="hint">{{ 'agent.app-step-applied-stage-hint' | translate: { stage: binding.step.title || binding.step.type } }}</p>
+      </div>
+    }
+  }
+}

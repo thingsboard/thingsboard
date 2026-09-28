@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 @import "../../../../../scss/constants";
 
 $toolbar-height: 56px !default;
@@ -84,7 +85,7 @@ tb-dashboard-toolbar {
 
     &.mat-is-open {
       .mat-fab-toolbar-wrapper {
-        border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+        border-bottom: var(--tb-primary-bottom-border);
       }
     }
 

@@ -1,0 +1,20 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host {
+  .mat-mdc-dialog-content {
+    display: flex;
+    width: 780px;
+    flex-direction: column;
+    gap: 16px;
+    .tb-public-link-text {
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 20px;
+      color: rgba(0,0,0,0.54);
+      letter-spacing: 0.2px;
+    }
+    .tb-form-panel-title {
+      color: rgba(0, 0, 0, 0.87);
+    }
+  }
+}

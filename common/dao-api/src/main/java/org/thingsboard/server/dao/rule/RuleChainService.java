@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.rule;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -48,6 +49,10 @@ public interface RuleChainService extends EntityDaoService {
     RuleNode findRuleNodeById(TenantId tenantId, RuleNodeId ruleNodeId);
 
     ListenableFuture<RuleChain> findRuleChainByIdAsync(TenantId tenantId, RuleChainId ruleChainId);
+
+    ListenableFuture<List<RuleChain>> findRuleChainsByIdsAsync(TenantId tenantId, List<RuleChainId> ruleChainIds);
+
+    List<RuleChain> findRuleChainsByIds(TenantId tenantId, List<RuleChainId> ruleChainIds);
 
     ListenableFuture<RuleNode> findRuleNodeByIdAsync(TenantId tenantId, RuleNodeId ruleNodeId);
 
@@ -103,7 +108,5 @@ public interface RuleChainService extends EntityDaoService {
     RuleNode saveRuleNode(TenantId tenantId, RuleNode ruleNode);
 
     void deleteRuleNodes(TenantId tenantId, RuleChainId ruleChainId);
-
-    List<RuleChain> findRuleChainsByIds(TenantId tenantId, List<RuleChainId> ruleChainIds);
 
 }

@@ -1,0 +1,147 @@
+#
+# SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+# SPDX-License-Identifier: BUSL-1.1
+#
+
+server:
+  # Server bind address
+  address: "${HTTP_BIND_ADDRESS:0.0.0.0}"
+  # Server bind port
+  port: "${HTTP_BIND_PORT:8082}"
+
+integration:
+  routingKey: "${INTEGRATION_ROUTING_KEY:PUT_YOUR_ROUTING_KEY_HERE}"
+  secret: "${INTEGRATION_SECRET:PUT_YOUR_SECRET_HERE}"
+  # Allows connection to the localhost resources. For example, local MQTT broker, etc.
+  allow_local_network_hosts: "${INTEGRATION_ALLOW_LOCAL_NETWORK_HOSTS:true}"
+  statistics:
+    # Enable/disable integration statistics
+    enabled: "${INTEGRATION_STATISTICS_ENABLED:true}"
+    # Send statistics interval. Default value is once per hour
+    persist_frequency: "${INTEGRATION_STATISTICS_PERSIST_FREQUENCY:3600000}"
+
+# fix "Cannot get Jedis connection" exception, because we don't use redis in this integration,
+#  but spring-boot-autoconfigure autoconfigure this classes
+spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+
+storage:
+  # Location of the folder to store data files
+  data_folder_path: "${INTEGRATION_STORAGE_DATA_FOLDER_PATH:./}"
+  # Max amount of data files to maintain
+  max_file_count: "${INTEGRATION_STORAGE_MAX_FILE_COUNT:100}"
+  # Max records per data file
+  max_records_per_file: "${INTEGRATION_STORAGE_MAX_RECORDS_PER_FILE:30}"
+  # Max records between persistence of data file
+  max_records_between_fsync: "${INTEGRATION_STORAGE_MAX_RECORDS_BETWEEN_FSYNC:100}"
+  # Size of the upload chunk
+  max_read_records_count: "${INTEGRATION_STORAGE_MAX_READ_RECORDS_COUNT:50}"
+  # Sleep interval while no new records
+  no_read_records_sleep: "${INTEGRATION_STORAGE_NO_READ_RECORDS_SLEEP:1000}"
+
+executors:
+  # Size of the thread pool to handle incoming messages and tasks
+  thread_pool_size: "${EXECUTORS_SIZE:1}"
+  # Timeout to reconnect to ThingsBoard
+  reconnect_timeout: "${EXECUTORS_RECONNECT_TIMEOUT:3000}" # in milliseconds
+
+rpc:
+  # Host of the ThingsBoard server
+  host: "${RPC_HOST:thingsboard.cloud}"
+  # Port of the ThingsBoard server
+  port: "${RPC_PORT:9090}"
+  # No reply timeout
+  timeout: "${RPC_TIMEOUT:5}" # Timeout in seconds for channel termination
+  # ID of the RPC client
+  client_id: "${RPC_CLIENT_ID:remote}"
+  ssl:
+    # SSL enabled/disabled
+    enabled: "${RPC_SSL_ENABLED:false}"
+    # SSL certificate
+    cert: "${RPC_SSL_CERT:}"
+
+tbel:
+  enabled: "${TBEL_ENABLED:true}"
+  max_total_args_size: "${TBEL_MAX_TOTAL_ARGS_SIZE:300000}"
+  max_result_size: "${TBEL_MAX_RESULT_SIZE:300000}"
+  max_script_body_size: "${TBEL_MAX_SCRIPT_BODY_SIZE:100000}"
+  # Maximum allowed TBEL script execution memory
+  max_memory_limit_mb: "${TBEL_MAX_MEMORY_LIMIT_MB: 16}"
+  # Maximum allowed TBEL script execution errors before it will be blacklisted
+  max_errors: "${TBEL_MAX_ERRORS:3}"
+  # TBEL Eval max request timeout in milliseconds. 0 - no timeout
+  max_requests_timeout: "${TBEL_MAX_REQUEST_TIMEOUT:500}"
+  # Maximum time in seconds for black listed function to stay in the list.
+  max_black_list_duration_sec: "${TBEL_MAX_BLACKLIST_DURATION_SEC:60}"
+  # Specify thread pool size for javascript executor service
+  thread_pool_size: "${TBEL_THREAD_POOL_SIZE:50}"
+  stats:
+    enabled: "${TB_TBEL_STATS_ENABLED:false}"
+    print_interval_ms: "${TB_TBEL_STATS_PRINT_INTERVAL_MS:10000}"
+
+js:
+  evaluator: "${JS_EVALUATOR:local}"
+  # Built-in JVM JavaScript environment properties
+  local:
+    # Use Sandboxed (secured) JVM JavaScript environment
+    use_js_sandbox: "${USE_LOCAL_JS_SANDBOX:true}"
+    # Specify thread pool size for JavaScript sandbox resource monitor
+    monitor_thread_pool_size: "${LOCAL_JS_SANDBOX_MONITOR_THREAD_POOL_SIZE:4}"
+    # Maximum CPU time in milliseconds allowed for script execution
+    max_cpu_time: "${LOCAL_JS_SANDBOX_MAX_CPU_TIME:5000}"
+    # Maximum allowed JavaScript execution errors before JavaScript will be blacklisted
+    max_errors: "${LOCAL_JS_SANDBOX_MAX_ERRORS:3}"
+
+coap:
+  bind_address: "${COAP_BIND_ADDRESS:0.0.0.0}"
+  bind_port: "${COAP_BIND_PORT:5683}"
+  timeout: "${COAP_TIMEOUT:10000}"
+  dtls:
+    # Enable/disable DTLS 1.2 support
+    enabled: "${COAP_DTLS_ENABLED:false}"
+    # RFC7925_RETRANSMISSION_TIMEOUT_IN_MILLISECONDS = 9000
+    retransmission_timeout: "${COAP_DTLS_RETRANSMISSION_TIMEOUT_IN_MILLISECONDS:9000}"
+    # CoAP DTLS bind address
+    bind_address: "${COAP_DTLS_BIND_ADDRESS:0.0.0.0}"
+    # CoAP DTLS bind port
+    bind_port: "${COAP_DTLS_BIND_PORT:5684}"
+    # CoAP DTLS connection ID length. RFC 9146, Connection Identifier for DTLS 1.2
+    connection_id_length: "${COAP_DTLS_CONNECTION_ID_LENGTH:}"
+    # Specify the MTU (Maximum Transmission Unit).
+    # Should be used if LAN MTU is not used, e.g. if IP tunnels are used or if the client uses a smaller value than the LAN MTU.
+    # Default = 1024
+    # Minimum value = 64
+    # If set to 0 - LAN MTU is used.
+    max_transmission_unit: "${COAP_DTLS_MAX_TRANSMISSION_UNIT:1024}"
+    # DTLS maximum fragment length (RFC 6066, Section 4).
+    # Default = 1024
+    # Possible values: 512, 1024, 2048, 4096.
+    # If set to 0, the default maximum fragment size of 2^14 bytes (16,384 bytes) is used.
+    # Without this extension, TLS specifies a fixed maximum plaintext fragment length of 2^14 bytes.
+    # It may be desirable for constrained clients to negotiate a smaller maximum fragment length due to memory limitations or bandwidth limitations.
+    # In order to negotiate smaller maximum fragment lengths,
+    # clients MAY include an extension of type "max_fragment_length" in the (extended) client hello.
+    # The "extension_data" field of this extension SHALL contain:
+    # enum {
+    #   2^9(1) == 512,
+    #   2^10(2) == 1024,
+    #   2^11(3) == 2048,
+    #   2^12(4) == 4096,
+    #   (255)
+    # } MaxFragmentLength;
+    # TLS already requires clients and servers to support fragmentation of handshake messages.
+    max_fragment_length: "${COAP_DTLS_MAX_FRAGMENT_LENGTH:1024}"
+    # Path to the key store that holds the certificate
+    key_store: "${COAP_DTLS_KEY_STORE:coapserver.jks}"
+    # Password used to access the key store
+    key_store_password: "${COAP_DTLS_KEY_STORE_PASSWORD:server_ks_password}"
+    # Password used to access the key
+    key_password: "${COAP_DTLS_KEY_PASSWORD:server_key_password}"
+    # Key alias
+    key_alias: "${COAP_DTLS_KEY_ALIAS:serveralias}"
+
+service:
+  type: "${TB_SERVICE_TYPE:tb-integration}"

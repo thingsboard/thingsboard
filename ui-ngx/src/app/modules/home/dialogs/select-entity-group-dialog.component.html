@@ -1,0 +1,81 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<form [formGroup]="selectEntityGroupFormGroup" (ngSubmit)="selectEntityGroup()" style="width: 800px;">
+  <mat-toolbar color="tb-primary" class="tb-bottom-border">
+    <h2>{{ selectEntityGroupTitle | translate }}</h2>
+    <span class="flex-1"></span>
+    <button mat-icon-button
+      (click)="cancel()"
+      type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  @if (isLoading$ | async) {
+    <mat-progress-bar color="warn" mode="indeterminate">
+    </mat-progress-bar>
+  } @else {
+    <div style="height: 4px;"></div>
+  }
+  <div mat-dialog-content>
+    <fieldset [disabled]="isLoading$ | async">
+      <mat-radio-group formControlName="addToGroupType" color="primary">
+        <mat-radio-button [value]="0" color="primary">
+          <section class="flex flex-col">
+            <span translate style="padding-bottom: 10px;">entity-group.select-existing</span>
+            <tb-entity-group-autocomplete
+              formControlName="targetEntityGroupId"
+              required
+              [ownerId]="ownerId"
+              [groupType]="targetGroupType"
+              [excludeGroupIds]="excludeGroupIds"
+              [excludeGroupAll]="true"
+              placeholderText="{{placeholderText}}"
+              notFoundText="{{notFoundText}}"
+              requiredText="{{requiredText}}"
+              appearance="outline">
+            </tb-entity-group-autocomplete>
+          </section>
+        </mat-radio-button>
+        @if (createEnabled) {
+          <mat-radio-button [value]="1" color="primary">
+            <section class="flex flex-col">
+              <span translate>entity-group.create-new</span>
+              <mat-form-field class="mat-block" appearance="outline">
+                <mat-label translate>entity-group.new-entity-group-name</mat-label>
+                <input required matInput formControlName="newEntityGroupName">
+                @if (selectEntityGroupFormGroup.get('newEntityGroupName').hasError('required')) {
+                  <mat-error>
+                    {{ 'entity-group.name-required' | translate }}
+                  </mat-error>
+                }
+                @if (selectEntityGroupFormGroup.get('newEntityGroupName').hasError('maxlength')) {
+                  <mat-error>
+                    {{ 'entity-group.name-max-length' | translate }}
+                  </mat-error>
+                }
+              </mat-form-field>
+            </section>
+          </mat-radio-button>
+        }
+      </mat-radio-group>
+    </fieldset>
+  </div>
+  <div mat-dialog-actions class="flex flex-row items-center justify-end">
+    <button mat-button color="primary"
+      type="button"
+      [disabled]="(isLoading$ | async)"
+      (click)="cancel()" cdkFocusInitial>
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+      type="submit"
+            [disabled]="(isLoading$ | async) || selectEntityGroupFormGroup.invalid
+            || !selectEntityGroupFormGroup.dirty">
+      {{ confirmSelectTitle | translate }}
+    </button>
+  </div>
+</form>

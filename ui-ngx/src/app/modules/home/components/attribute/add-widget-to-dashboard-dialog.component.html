@@ -1,11 +1,12 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <form [formGroup]="addWidgetFormGroup" (ngSubmit)="add()" style="min-width: 400px;">
-  <mat-toolbar class="tb-dialog-header">
+  <mat-toolbar color="tb-primary" class="tb-bottom-border">
     <h2 translate>attribute.add-widget-to-dashboard</h2>
     <span class="flex-1"></span>
     <button mat-icon-button
@@ -25,6 +26,7 @@
           <section class="flex flex-col gap-1" style="width: 300px;">
             <span translate>dashboard.select-existing</span>
             <tb-dashboard-autocomplete formControlName="dashboardId"
+                                       [operation]="operation.WRITE"
                                        appearance="outline"
                                        [required]="addWidgetFormGroup.get('addToDashboardType').value === 0"
                                        [selectFirstDashboard]="false">

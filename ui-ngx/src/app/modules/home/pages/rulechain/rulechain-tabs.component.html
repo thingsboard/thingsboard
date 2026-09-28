@@ -1,31 +1,34 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-@if (entity) {
+@if (entity && (resource.RULE_CHAIN | hasGenericPermission: operation.READ_ATTRIBUTES)) {
   <mat-tab
     label="{{ 'attribute.attributes' | translate }}" #attributesTab="matTab">
     <tb-attribute-table [defaultAttributeScope]="attributeScopes.SERVER_SCOPE"
-                        [active]="attributesTab.isActive"
-                        [entityId]="entity.id"
-                        [entityName]="entity.name">
+      [active]="attributesTab.isActive"
+      [entityId]="entity.id"
+      [entityName]="entity.name"
+      [readonly]="!(resource.RULE_CHAIN | hasGenericPermission: operation.WRITE_ATTRIBUTES)">
     </tb-attribute-table>
   </mat-tab>
 }
-@if (entity) {
+@if (entity && (resource.RULE_CHAIN | hasGenericPermission: operation.READ_TELEMETRY)) {
   <mat-tab
     label="{{ 'attribute.latest-telemetry' | translate }}" #telemetryTab="matTab">
     <tb-attribute-table [defaultAttributeScope]="latestTelemetryTypes.LATEST_TELEMETRY"
-                        disableAttributeScopeSelection
-                        [active]="telemetryTab.isActive"
-                        [entityId]="entity.id"
-                        [entityName]="entity.name">
+      disableAttributeScopeSelection
+      [active]="telemetryTab.isActive"
+      [entityId]="entity.id"
+      [entityName]="entity.name"
+      [readonly]="!(resource.RULE_CHAIN | hasGenericPermission: operation.WRITE_TELEMETRY)">
     </tb-attribute-table>
   </mat-tab>
 }
-@if (entity) {
+@if (entity && (resource.ALARM | hasGenericPermission: operation.READ)) {
   <mat-tab
     label="{{ 'alarm.alarms' | translate }}" #alarmsTab="matTab">
     <tb-alarm-table [active]="alarmsTab.isActive" [entityId]="entity.id"></tb-alarm-table>
@@ -35,29 +38,36 @@
   <mat-tab
     label="{{ 'rulechain.events' | translate }}" #eventsTab="matTab">
     <tb-event-table [debugEventTypes]="[debugEventTypes.DEBUG_RULE_CHAIN]"
-                    [defaultEventType]="debugEventTypes.DEBUG_RULE_CHAIN"
-                    [active]="eventsTab.isActive"
-                    [tenantId]="entity.tenantId.id"
+      [defaultEventType]="debugEventTypes.DEBUG_RULE_CHAIN"
+      [active]="eventsTab.isActive"
+      [tenantId]="entity.tenantId.id"
     [entityId]="entity.id"></tb-event-table>
   </mat-tab>
 }
 @if (entity) {
   <mat-tab
     label="{{ 'relation.relations' | translate }}" #relationsTab="matTab">
-    <tb-relation-table [active]="relationsTab.isActive" [entityId]="entity.id"></tb-relation-table>
+    <tb-relation-table [active]="relationsTab.isActive"
+      [entityId]="entity.id"
+      [readonly]="!(resource.RULE_CHAIN | hasGenericPermission: operation.WRITE)">
+    </tb-relation-table>
   </mat-tab>
 }
-@if (entity && authUser.authority === authorities.TENANT_ADMIN) {
+@if (entity && (resource.AUDIT_LOG | hasGenericPermission: operation.READ)) {
   <mat-tab
     label="{{ 'audit-log.audit-logs' | translate }}" #auditLogsTab="matTab">
-    <tb-audit-log-table detailsMode="true" [active]="auditLogsTab.isActive" [auditLogMode]="auditLogModes.ENTITY" [entityId]="entity.id"></tb-audit-log-table>
+    <tb-audit-log-table detailsMode="true"
+      [active]="auditLogsTab.isActive"
+      [auditLogMode]="auditLogModes.ENTITY"
+      [entityId]="entity.id"
+    ></tb-audit-log-table>
   </mat-tab>
 }
-@if (entity && authUser.authority === authorities.TENANT_ADMIN) {
+@if (entity && ([resource.VERSION_CONTROL, resource.RULE_CHAIN] | hasGenericPermission: operation.READ)) {
   <mat-tab
     label="{{ 'version-control.version-control' | translate }}" #versionControlTab="matTab">
     <tb-version-control detailsMode="true" singleEntityMode="true"
-                        (versionRestored)="entitiesTableConfig.updateData()"
+      (versionRestored)="entitiesTableConfig.updateData()"
     [active]="versionControlTab.isActive" [entityId]="entity.id" [entityName]="entity.name" [externalEntityId]="entity.externalId || entity.id"></tb-version-control>
   </mat-tab>
 }

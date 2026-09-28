@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.service;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
@@ -12,9 +13,9 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.common.data.widget.WidgetsBundleFilter;
-import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
+import org.thingsboard.server.exception.DataValidationException;
 
 import java.io.IOException;
 import java.util.ArrayList;

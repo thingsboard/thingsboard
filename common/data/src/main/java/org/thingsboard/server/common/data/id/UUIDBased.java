@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.id;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -26,6 +27,7 @@ public abstract class UUIDBased implements HasUUID, Serializable {
         this.id = id;
     }
 
+    @Override
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "string", example = "784f394c-42b6-435a-983c-b7beff2784f9")
     public UUID getId() {
         return id;

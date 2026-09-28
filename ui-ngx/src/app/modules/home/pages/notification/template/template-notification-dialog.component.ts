@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { NotificationTemplate, NotificationType } from '@shared/models/notification.models';
 import { Component, Inject, OnDestroy, ViewChild } from '@angular/core';
 import { Store } from '@ngrx/store';
@@ -17,7 +18,6 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
 import { TranslateService } from '@ngx-translate/core';
 import { TemplateConfiguration } from '@home/pages/notification/template/template-configuration';
-import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { AuthUser } from '@shared/models/user.model';
 import { Authority } from '@shared/models/authority.enum';
 
@@ -27,6 +27,7 @@ export interface TemplateNotificationDialogData {
   isAdd?: boolean;
   isCopy?: boolean;
   name?: string;
+  readonly?: boolean;
 }
 
 @Component({
@@ -52,7 +53,6 @@ export class TemplateNotificationDialogComponent
   notificationTemplateConfigurationForm: FormGroup;
 
   private readonly templateNotification: NotificationTemplate;
-  private authUser: AuthUser = getCurrentAuthUser(this.store);
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -83,6 +83,12 @@ export class TemplateNotificationDialogComponent
     this.templateNotification = deepClone(this.data.template);
 
     if (this.templateNotification) {
+      if (this.isSysAdmin()) {
+        this.notificationTypes.push(
+          NotificationType.USER_REGISTERED,
+          NotificationType.USER_ACTIVATED
+        );
+      }
       if (this.data.isCopy) {
         this.templateNotification.name += ` (${this.translate.instant('action.copy')})`;
       } else {
@@ -94,6 +100,14 @@ export class TemplateNotificationDialogComponent
         deliveryMethodsTemplates: this.templateNotification.configuration.deliveryMethodsTemplates
       }, {emitEvent: false});
       this.deliveryConfiguration = this.templateNotificationForm.get('configuration.deliveryMethodsTemplates').value;
+    }
+
+    if(data?.readonly) {
+      this.dialogTitle = 'notification.view-notification-template';
+      this.templateNotificationForm.disable({emitEvent: false});
+    } else {
+      this.updateValidators();
+      this.updateAttachReportValidators();
     }
   }
 
@@ -133,7 +147,7 @@ export class TemplateNotificationDialogComponent
     return 'action.next';
   }
 
-  private get maxStepperIndex(): number {
+  get maxStepperIndex(): number {
     return this.notificationTemplateStepper?._steps?.length - 1;
   }
 
@@ -161,14 +175,13 @@ export class TemplateNotificationDialogComponent
     });
   }
 
-  private isSysAdmin(): boolean {
-    return this.authUser.authority === Authority.SYS_ADMIN;
-  }
-
   private allowNotificationType(): NotificationType[] {
     const sysAdminAllowNotificationTypes = new Set([
       NotificationType.ENTITIES_LIMIT,
       NotificationType.ENTITIES_LIMIT_INCREASE_REQUEST,
+      NotificationType.ADDON_ACCESS_REQUEST,
+      NotificationType.ADDON_ACCESS_ERROR,
+      NotificationType.PLAN_UPGRADE_REQUEST,
       NotificationType.API_USAGE_LIMIT,
       NotificationType.NEW_PLATFORM_VERSION,
       NotificationType.RATE_LIMITS,

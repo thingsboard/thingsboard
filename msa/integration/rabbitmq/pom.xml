@@ -1,0 +1,204 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.thingsboard.msa</groupId>
+        <version>4.4.0-SNAPSHOT</version>
+        <artifactId>integration</artifactId>
+    </parent>
+
+    <groupId>org.thingsboard.msa.integration</groupId>
+    <artifactId>rabbitmq</artifactId>
+    <packaging>pom</packaging>
+
+    <name>ThingsBoard RabbitMQ Integration Microservice</name>
+    <url>https://thingsboard.io</url>
+    <description>ThingsBoard RabbitMQ Integration Microservice</description>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <main.dir>${maven.multiModuleProjectDirectory}</main.dir>
+        <pkg.name>tb-rabbitmq-integration</pkg.name>
+        <docker.name>${tb.docker.id}-rabbitmq-integration</docker.name>
+        <pkg.logFolder>/var/log/${pkg.name}</pkg.logFolder>
+        <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
+        <docker.push-integration-arm-amd-image.phase>pre-integration-test</docker.push-integration-arm-amd-image.phase>
+    </properties>
+
+    <dependencies>
+        <!-- Plain JAR dependency — preserves reactor build ordering without triggering DEB artifact type resolution. -->
+        <dependency>
+            <groupId>org.thingsboard.integration</groupId>
+            <artifactId>rabbitmq</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>enforce-deb-exists</id>
+                        <phase>pre-integration-test</phase>
+                        <goals><goal>enforce</goal></goals>
+                        <configuration>
+                            <skip>${pkg.skip.deb}</skip>
+                            <rules>
+                                <requireFilesExist>
+                                    <files>
+                                        <file>${project.build.directory}/${pkg.name}.deb</file>
+                                    </files>
+                                    <message>DEB artifact not found in ${project.build.directory}/${pkg.name}.deb — build the upstream module first or pass -Dpkg.skip.deb=true.</message>
+                                </requireFilesExist>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-docker-config</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>docker</directory>
+                                    <filtering>true</filtering>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-rabbitmq-integration-deb</id>
+                        <phase>${pkg.deb.phase}</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}</outputDirectory>
+                            <overwrite>true</overwrite>
+                            <resources>
+                                <resource>
+                                    <directory>${main.dir}/integration/rabbitmq/target</directory>
+                                    <includes>
+                                        <include>${pkg.name}.deb</include>
+                                    </includes>
+                                    <filtering>false</filtering>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>build-docker-image</id>
+                        <phase>pre-integration-test</phase>
+                        <goals><goal>exec</goal></goals>
+                        <configuration>
+                            <skip>${dockerfile.skip}</skip>
+                            <executable>docker</executable>
+                            <workingDirectory>${project.build.directory}</workingDirectory>
+                            <arguments>
+                                <argument>build</argument>
+                                <argument>-t</argument>
+                                <argument>${docker.repo}/${docker.name}:latest</argument>
+                                <argument>.</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>tag-docker-image</id>
+                        <phase>pre-integration-test</phase>
+                        <goals><goal>exec</goal></goals>
+                        <configuration>
+                            <skip>${dockerfile.skip}</skip>
+                            <executable>docker</executable>
+                            <arguments>
+                                <argument>tag</argument>
+                                <argument>${docker.repo}/${docker.name}:latest</argument>
+                                <argument>${docker.repo}/${docker.name}:${project.version}</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+    <profiles>
+        <profile>
+            <id>push-integration-docker-image</id>
+            <activation>
+                <property>
+                    <name>push-integration-docker-image</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>push-latest-docker-image</id>
+                                <phase>pre-integration-test</phase>
+                                <goals><goal>exec</goal></goals>
+                                <configuration>
+                                    <executable>docker</executable>
+                                    <arguments>
+                                        <argument>push</argument>
+                                        <argument>${docker.repo}/${docker.name}:latest</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>push-version-docker-image</id>
+                                <phase>pre-integration-test</phase>
+                                <goals><goal>exec</goal></goals>
+                                <configuration>
+                                    <executable>docker</executable>
+                                    <arguments>
+                                        <argument>push</argument>
+                                        <argument>${docker.repo}/${docker.name}:${project.version}</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+    <repositories>
+        <repository>
+            <id>jenkins</id>
+            <name>Jenkins Repository</name>
+            <url>https://repo.jenkins-ci.org/releases</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
+</project>

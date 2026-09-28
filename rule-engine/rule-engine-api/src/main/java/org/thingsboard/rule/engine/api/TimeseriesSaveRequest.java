@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.rule.engine.api;
 
 import com.google.common.util.concurrent.FutureCallback;
@@ -32,6 +33,7 @@ public class TimeseriesSaveRequest implements CalculatedFieldSystemAwareRequest 
     private final List<TsKvEntry> entries;
     private final long ttl;
     private final Strategy strategy;
+    private final boolean overwriteValue;
     private final List<CalculatedFieldId> previousCalculatedFieldIds;
     private final UUID tbMsgId;
     private final TbMsgType tbMsgType;
@@ -44,6 +46,7 @@ public class TimeseriesSaveRequest implements CalculatedFieldSystemAwareRequest 
         public static final Strategy LATEST_AND_WS = new Strategy(false, true, true, false);
         public static final Strategy SKIP_ALL = new Strategy(false, false, false, false);
         public static final Strategy CF_ONLY = new Strategy(false, false, false, true);
+        public static final Strategy TIME_SERIES_ONLY = new Strategy(true, false, false, false);
 
     }
 
@@ -59,6 +62,7 @@ public class TimeseriesSaveRequest implements CalculatedFieldSystemAwareRequest 
         private List<TsKvEntry> entries;
         private long ttl;
         private Strategy strategy;
+        private boolean overwriteValue;
         private List<CalculatedFieldId> previousCalculatedFieldIds;
         private UUID tbMsgId;
         private TbMsgType tbMsgType;
@@ -104,6 +108,11 @@ public class TimeseriesSaveRequest implements CalculatedFieldSystemAwareRequest 
             return this;
         }
 
+        public Builder overwriteValue(boolean overwriteValue) {
+            this.overwriteValue = overwriteValue;
+            return this;
+        }
+
         public Builder previousCalculatedFieldIds(List<CalculatedFieldId> previousCalculatedFieldIds) {
             this.previousCalculatedFieldIds = previousCalculatedFieldIds;
             return this;
@@ -140,7 +149,7 @@ public class TimeseriesSaveRequest implements CalculatedFieldSystemAwareRequest 
 
         public TimeseriesSaveRequest build() {
             return new TimeseriesSaveRequest(
-                    tenantId, customerId, entityId, entries, ttl, requireNonNullElse(strategy, Strategy.PROCESS_ALL),
+                    tenantId, customerId, entityId, entries, ttl, requireNonNullElse(strategy, Strategy.PROCESS_ALL), overwriteValue,
                     previousCalculatedFieldIds, tbMsgId, tbMsgType, requireNonNullElse(callback, NoOpFutureCallback.instance())
             );
         }

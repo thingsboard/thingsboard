@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.device;
 
 import com.fasterxml.jackson.databind.node.BooleanNode;
@@ -29,6 +30,8 @@ import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfilePr
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.lwm2m.OtherConfiguration;
 import org.thingsboard.server.common.data.device.profile.lwm2m.TelemetryMappingConfiguration;
+import org.thingsboard.server.common.data.group.EntityGroup;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
@@ -96,7 +99,7 @@ public class DeviceBulkImportService extends AbstractBulkImportService<Device> {
 
     @Override
     @SneakyThrows
-    protected Device saveEntity(SecurityUser user, Device device, Map<BulkImportColumnType, String> fields) {
+    protected Device saveEntity(SecurityUser user, Device device, EntityGroup entityGroup, Map<BulkImportColumnType, String> fields) {
         DeviceCredentials deviceCredentials;
         try {
             deviceCredentials = createDeviceCredentials(device.getTenantId(), device.getId(), fields);
@@ -115,7 +118,7 @@ public class DeviceBulkImportService extends AbstractBulkImportService<Device> {
         }
         device.setDeviceProfileId(deviceProfile.getId());
 
-        return tbDeviceService.saveDeviceWithCredentials(device, deviceCredentials, user);
+        return tbDeviceService.saveDeviceWithCredentials(device, deviceCredentials, entityGroup, user);
     }
 
     @Override
@@ -125,9 +128,9 @@ public class DeviceBulkImportService extends AbstractBulkImportService<Device> {
     }
 
     @Override
-    protected void setOwners(Device entity, SecurityUser user) {
-        entity.setTenantId(user.getTenantId());
-        entity.setCustomerId(user.getCustomerId());
+    protected void setOwners(Device entity, TenantId tenantId, CustomerId customerId) {
+        entity.setTenantId(tenantId);
+        entity.setCustomerId(customerId);
     }
 
     private void setUpDeviceConfiguration(Device device, Map<BulkImportColumnType, String> fields) {

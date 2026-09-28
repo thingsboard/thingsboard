@@ -1,0 +1,203 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<mat-toolbar color="tb-primary" class="tb-install-wizard-toolbar">
+  <div class="tb-install-wizard-toolbar-content">
+    <h2>{{ titleKey | translate }}</h2>
+  </div>
+  <div tb-help="agentAppProfiles"></div>
+  <button mat-icon-button (click)="cancel()" type="button" tabindex="-1">
+    <mat-icon>close</mat-icon>
+  </button>
+</mat-toolbar>
+
+<div mat-dialog-content class="tb-install-wizard-body">
+
+  <mat-stepper linear #stepper
+    [orientation]="(stepperOrientation | async)"
+    [labelPosition]="(stepperLabelPosition | async)">
+
+    @if (!editMode) {
+      <mat-step [label]="'agent.app-install-step1' | translate" [completed]="canProceedFromType()">
+        <div class="step-content">
+          <div class="type-select">
+            <p class="hint" translate>agent.app-install-pick-type</p>
+            <div class="type-cards">
+              @for (card of typeCards; track card.type) {
+                <button type="button" class="type-card"
+                  [class.selected]="selectedType === card.type"
+                  [class.locked-out]="lockedAppType && lockedAppType !== card.type"
+                  [disabled]="lockedAppType && lockedAppType !== card.type"
+                  [attr.aria-pressed]="selectedType === card.type"
+                  (click)="selectType(card.type)">
+                  <mat-icon>{{ card.icon }}</mat-icon>
+                  <h4>{{ card.labelKey | translate }}</h4>
+                  <p>{{ card.descKey | translate }}</p>
+                </button>
+              }
+            </div>
+            @if (selectedType && selectedType !== 'GENERIC' && availableTemplates.length) {
+              <mat-form-field class="mat-block" appearance="outline">
+                <mat-label translate>agent.template</mat-label>
+                <mat-select [value]="selectedTemplateVersion" (selectionChange)="onTemplateSelected($event.value)">
+                  @for (tpl of availableTemplates; track tpl.currentVersion) {
+                    <mat-option [value]="tpl.currentVersion">
+                      {{ tpl.currentVersion }}
+                    </mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            }
+            @if (loadingTemplate || loadingTemplates) {
+              <div class="loading-state">
+                <mat-spinner diameter="20"></mat-spinner>
+                <span translate>agent.app-install-loading-template</span>
+              </div>
+            }
+            @if (loadError) {
+              <div class="error-state">
+                <mat-icon>error_outline</mat-icon>
+                <span>{{ loadError }}</span>
+              </div>
+            }
+          </div>
+          <div class="step-footer">
+            <button mat-button (click)="cancel()">{{ 'action.cancel' | translate }}</button>
+            <button mat-raised-button color="primary" matStepperNext [disabled]="!canProceedFromType()">
+              {{ 'action.next' | translate }}
+              <mat-icon iconPositionEnd>chevron_right</mat-icon>
+            </button>
+          </div>
+        </div>
+      </mat-step>
+    }
+
+    <!-- Step 2: Name + YAML editor -->
+    <mat-step [stepControl]="profileForm" [label]="'agent.app-install-step3' | translate" [completed]="canSubmit()">
+      <div class="step-content">
+
+        <form [formGroup]="profileForm">
+          <mat-form-field class="mat-block" appearance="outline">
+            <mat-label translate>agent.app-profile-name</mat-label>
+            <input matInput formControlName="name" [placeholder]="profileNamePlaceholder">
+            @if (profileForm.get('name').hasError('required')) {
+              <mat-error>{{ 'agent.profile-name-required' | translate }}</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field class="mat-block" appearance="outline">
+            <mat-label translate>agent.app-profile-description</mat-label>
+            <input matInput formControlName="description">
+          </mat-form-field>
+        </form>
+
+        @if (composeTypeKeys.length > 1) {
+          <mat-form-field class="mat-block" appearance="outline">
+            <mat-label translate>agent.app-compose-template-select</mat-label>
+            <mat-select [value]="composeType" (selectionChange)="onComposeTypeChange($event.value)">
+              @for (key of composeTypeKeys; track key) {
+                <mat-option [value]="key">
+                  {{ composeTypeLabel(key) }}
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        }
+
+        @if (selectedType === 'EDGE' || selectedType === 'GATEWAY') {
+          <div class="tb-app-compose-hint">
+            <mat-icon class="tb-app-compose-hint-icon">info_outline</mat-icon>
+            <span translate>agent.app-profile-compose-creds-hint</span>
+          </div>
+        }
+
+        <div class="diff-header-row">
+          <div class="diff-header added" translate>agent.app-install-diff-template</div>
+          <div class="diff-header removed" translate>agent.app-install-diff-editable</div>
+          <button type="button" class="diff-sync-toggle"
+            [class.active]="diffSyncScroll"
+            [matTooltip]="'agent.app-diff-sync-scroll' | translate"
+            (click)="diffSyncScroll = !diffSyncScroll">
+            <mat-icon>{{ diffSyncScroll ? 'link' : 'link_off' }}</mat-icon>
+          </button>
+        </div>
+        <tb-agent-compose-diff [left]="proposedYaml" [right]="currentYaml"
+        [syncScroll]="diffSyncScroll" (rightChange)="composeYaml = $event"></tb-agent-compose-diff>
+        <p class="diff-hint" translate>agent.app-install-diff-hint</p>
+
+        <div class="step-footer">
+          @if (!editMode) {
+            <button mat-button matStepperPrevious [disabled]="submitting">
+              <mat-icon>chevron_left</mat-icon>
+              {{ 'action.back' | translate }}
+            </button>
+          }
+          <button mat-button (click)="cancel()" [disabled]="submitting">
+            {{ 'action.cancel' | translate }}
+          </button>
+          <button mat-raised-button color="primary" matStepperNext [disabled]="!canSubmit()">
+            {{ 'action.next' | translate }}
+            <mat-icon iconPositionEnd>chevron_right</mat-icon>
+          </button>
+        </div>
+      </div>
+    </mat-step>
+
+    <!-- Step 3: Summary + Confirm -->
+    <mat-step [label]="'agent.app-profile-step-save' | translate">
+      <div class="step-content">
+
+        <div class="summary-section">
+          <div class="summary-card">
+            <div class="summary-row">
+              <span class="label" translate>agent.app-profile-name</span>
+              <span class="value">{{ profileName }}</span>
+            </div>
+            <div class="summary-row">
+              <span class="label" translate>agent.app-type</span>
+              <span class="value"><span class="tb-type-badge"
+                [class.edge]="selectedType === 'EDGE'"
+                [class.gateway]="selectedType === 'GATEWAY'"
+              [class.generic]="selectedType === 'GENERIC'">{{ selectedType }}</span></span>
+            </div>
+            @if (template) {
+              <div class="summary-row">
+                <span class="label" translate>agent.app-template</span>
+                <span class="value">{{ template.currentVersion }}</span>
+              </div>
+            }
+            @if (profileDescription) {
+              <div class="summary-row">
+                <span class="label" translate>agent.app-profile-description</span>
+                <span class="value">{{ profileDescription }}</span>
+              </div>
+            }
+          </div>
+
+          <div class="info-box">
+            <mat-icon>info</mat-icon>
+            <span translate>agent.app-profile-wizard-confirm-info</span>
+          </div>
+        </div>
+
+        <div class="step-footer">
+          <button mat-button matStepperPrevious [disabled]="submitting">
+            <mat-icon>chevron_left</mat-icon>
+            {{ 'action.back' | translate }}
+          </button>
+          <button mat-button (click)="cancel()" [disabled]="submitting">
+            {{ 'action.cancel' | translate }}
+          </button>
+          <button mat-raised-button color="primary" (click)="submit()" [disabled]="!canSubmit()">
+            <mat-icon>save</mat-icon>
+            <span>{{ 'action.save' | translate }}</span>
+          </button>
+        </div>
+      </div>
+    </mat-step>
+
+  </mat-stepper>
+</div>

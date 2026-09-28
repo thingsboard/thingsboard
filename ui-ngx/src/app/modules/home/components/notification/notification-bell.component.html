@@ -1,9 +1,12 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <button mat-icon-button #showNotificationButton (click)="showNotification($event, showNotificationButton)">
-  <tb-icon aria-hidden="false" [matBadge]="(count$ | async)" [matBadgeHidden]="!(count$ | async)" matBadgeColor="warn" matBadgeSize="small">notifications_none</tb-icon>
+  <tb-icon aria-hidden="false" [matBadge]="(count$ | async)" [matBadgeHidden]="!(count$ | async)" matBadgeColor="warn" matBadgeSize="small">
+    {{ (wl.isPrimaryColorPanels$() | async) ? 'notifications' : 'notifications_none' }}
+  </tb-icon>
 </button>

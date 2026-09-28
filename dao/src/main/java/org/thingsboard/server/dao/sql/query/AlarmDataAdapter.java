@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.query;
 
 import lombok.extern.slf4j.Slf4j;
@@ -79,6 +80,7 @@ public class AlarmDataAdapter {
         }
         alarm.setPropagate((boolean) row.get(ModelConstants.ALARM_PROPAGATE_PROPERTY));
         alarm.setPropagateToOwner((boolean) row.get(ModelConstants.ALARM_PROPAGATE_TO_OWNER_PROPERTY));
+        alarm.setPropagateToOwnerHierarchy((boolean) row.get(ModelConstants.ALARM_PROPAGATE_TO_OWNER_HIERARCHY_PROPERTY));
         alarm.setPropagateToTenant((boolean) row.get(ModelConstants.ALARM_PROPAGATE_TO_TENANT_PROPERTY));
         alarm.setType(row.get(ModelConstants.ALARM_TYPE_PROPERTY).toString());
         alarm.setSeverity(AlarmSeverity.valueOf(row.get(ModelConstants.ALARM_SEVERITY_PROPERTY).toString()));

@@ -1,0 +1,184 @@
+{
+  "entityId": {
+    "entityType": "DEVICE_PROFILE",
+    "id": "827d55ab-da1b-4c50-a721-32ec778182ef"
+  },
+  "type": "ALARM",
+  "name": "Noise",
+  "debugSettings": {
+    "failuresEnabled": true,
+    "allEnabled": false,
+    "allEnabledUntil": 0
+  },
+  "configurationVersion": 0,
+  "configuration": {
+    "type": "ALARM",
+    "arguments": {
+      "noiseLevelMajorThreshold": {
+        "refDynamicSourceConfiguration": {
+          "type": "CURRENT_OWNER"
+        },
+        "refEntityKey": {
+          "key": "noiseLevelMajorThreshold",
+          "type": "ATTRIBUTE",
+          "scope": "SERVER_SCOPE"
+        },
+        "defaultValue": "80.0"
+      },
+      "noise": {
+        "refEntityKey": {
+          "key": "noise",
+          "type": "TS_LATEST"
+        }
+      },
+      "noiseLevelAlarmEnabled": {
+        "refDynamicSourceConfiguration": {
+          "type": "CURRENT_OWNER"
+        },
+        "refEntityKey": {
+          "key": "noiseLevelAlarmEnabled",
+          "type": "ATTRIBUTE",
+          "scope": "SERVER_SCOPE"
+        },
+        "defaultValue": "false"
+      },
+      "noiseLevelCriticalThreshold": {
+        "refDynamicSourceConfiguration": {
+          "type": "CURRENT_OWNER"
+        },
+        "refEntityKey": {
+          "key": "noiseLevelCriticalThreshold",
+          "type": "ATTRIBUTE",
+          "scope": "SERVER_SCOPE"
+        },
+        "defaultValue": "100.0"
+      }
+    },
+    "createRules": {
+      "CRITICAL": {
+        "condition": {
+          "type": "SIMPLE",
+          "expression": {
+            "type": "SIMPLE",
+            "filters": [
+              {
+                "argument": "noiseLevelAlarmEnabled",
+                "valueType": "BOOLEAN",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "BOOLEAN",
+                    "operation": "EQUAL",
+                    "value": {
+                      "staticValue": true,
+                      "dynamicValueArgument": null
+                    }
+                  }
+                ]
+              },
+              {
+                "argument": "noise",
+                "valueType": "NUMERIC",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "NUMERIC",
+                    "operation": "GREATER_OR_EQUAL",
+                    "value": {
+                      "staticValue": null,
+                      "dynamicValueArgument": "noiseLevelCriticalThreshold"
+                    }
+                  }
+                ]
+              }
+            ],
+            "operation": "AND"
+          },
+          "schedule": null
+        },
+        "alarmDetails": null,
+        "dashboardId": null
+      },
+      "MAJOR": {
+        "condition": {
+          "type": "SIMPLE",
+          "expression": {
+            "type": "SIMPLE",
+            "filters": [
+              {
+                "argument": "noiseLevelAlarmEnabled",
+                "valueType": "BOOLEAN",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "BOOLEAN",
+                    "operation": "EQUAL",
+                    "value": {
+                      "staticValue": true,
+                      "dynamicValueArgument": null
+                    }
+                  }
+                ]
+              },
+              {
+                "argument": "noise",
+                "valueType": "NUMERIC",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "NUMERIC",
+                    "operation": "GREATER",
+                    "value": {
+                      "staticValue": null,
+                      "dynamicValueArgument": "noiseLevelMajorThreshold"
+                    }
+                  }
+                ]
+              }
+            ],
+            "operation": "AND"
+          },
+          "schedule": null
+        },
+        "alarmDetails": null,
+        "dashboardId": null
+      }
+    },
+    "clearRule": {
+      "condition": {
+        "type": "SIMPLE",
+        "expression": {
+          "type": "SIMPLE",
+          "filters": [
+            {
+              "argument": "noise",
+              "valueType": "NUMERIC",
+              "operation": "AND",
+              "predicates": [
+                {
+                  "type": "NUMERIC",
+                  "operation": "LESS",
+                  "value": {
+                    "staticValue": null,
+                    "dynamicValueArgument": "noiseLevelMajorThreshold"
+                  }
+                }
+              ]
+            }
+          ],
+          "operation": "AND"
+        },
+        "schedule": null
+      },
+      "alarmDetails": null,
+      "dashboardId": null
+    },
+    "propagate": true,
+    "propagateToOwner": true,
+    "propagateToTenant": true,
+    "propagateRelationTypes": [
+      "Use"
+    ],
+    "output": null
+  }
+}

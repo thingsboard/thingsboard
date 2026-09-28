@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.rule.engine.telemetry;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -140,6 +141,8 @@ public class TbMsgTimeseriesNode implements TbNode {
         if (ttl == 0L) {
             ttl = tenantProfileDefaultStorageTtl;
         }
+        String overwriteValueStr = msg.getMetaData().getValue("overwriteValue");
+        boolean overwriteValue = Boolean.parseBoolean(overwriteValueStr);
         ctx.getTelemetryService().saveTimeseries(TimeseriesSaveRequest.builder()
                 .tenantId(ctx.getTenantId())
                 .customerId(msg.getCustomerId())
@@ -147,6 +150,7 @@ public class TbMsgTimeseriesNode implements TbNode {
                 .entries(tsKvEntryList)
                 .ttl(ttl)
                 .strategy(strategy)
+                .overwriteValue(overwriteValue)
                 .previousCalculatedFieldIds(msg.getPreviousCalculatedFieldIds())
                 .tbMsgId(msg.getId())
                 .tbMsgType(msg.getInternalType())

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { AfterViewInit, ChangeDetectorRef, Component, Input, OnInit, output, ViewChild } from '@angular/core';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import {
@@ -18,6 +19,7 @@ import {
   ArgumentEntityTypeTranslations,
   CalculatedFieldGeofencing,
   CalculatedFieldGeofencingValue,
+  CalculatedFieldType,
   FORBIDDEN_NAMES,
   forbiddenNamesValidator,
   GeofencingDirectionLevelTranslations,
@@ -57,6 +59,7 @@ export class CalculatedFieldGeofencingZoneGroupsPanelComponent implements OnInit
   @Input() tenantId: string;
   @Input() entityName: string;
   @Input() ownerId: EntityId;
+  @Input() calculatedFieldType: CalculatedFieldType;
   @Input() usedNames: string[];
   @Input() readonly = false;
 

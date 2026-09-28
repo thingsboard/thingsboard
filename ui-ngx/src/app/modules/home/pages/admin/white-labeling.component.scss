@@ -1,0 +1,136 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@import "constants";
+
+:host {
+  .tb-wl-title {
+    font-size: 18px;
+    font-weight: 500;
+    line-height: normal;
+  }
+  .tb-wl-subtitle {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: normal;
+  }
+  .tb-wl-desc {
+    font-size: 13px;
+    color: #666;
+    line-height: normal;
+  }
+  .tb-wl-field-suffix {
+    color: rgba(0, 0, 0, 0.54);
+    padding-right: 10px;
+  }
+  .tb-wl-help-links-container {
+    padding: 12px 16px 22px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    border-radius: 6px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+  }
+  .tb-wl-color {
+    ::ng-deep .mat-mdc-form-field {
+      width: auto;
+      flex: 1;
+      @media #{$mat-gt-sm} {
+        width: 320px;
+      }
+    }
+  }
+  .tb-wl-login-preview-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px 12px;
+    border-radius: 4px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    background: #fafafa;
+    ::ng-deep svg {
+      max-height: 164px;
+      .tb-fill-login-bg {
+        fill: var(--tb-login-bg-preview);
+      }
+      .tb-fill-fg {
+        fill: var(--tb-login-fg-preview);
+      }
+      .tb-fill-primary {
+        fill: var(--tb-primary-login-preview);
+      }
+      .tb-fill-accent {
+        fill: var(--tb-accent-login-preview);
+      }
+    }
+  }
+  .mat-mdc-form-field.tb-wl-logo-height {
+    ::ng-deep .mat-mdc-form-field-infix {
+      width: 72px;
+    }
+  }
+  .mat-mdc-radio-group.tb-wl-shell-select {
+    .mat-mdc-radio-button {
+      --mat-radio-state-layer-size: 48px;
+      --mat-radio-label-text-line-height: 48px;
+      --mat-radio-label-text-size: 16px;
+      --mat-radio-label-text-color: rgba(0, 0, 0, 0.76);
+      border-radius: 4px;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      background: #FDFDFD;
+      &.mat-mdc-radio-checked {
+        border-color: var(--tb-primary-500);
+        box-shadow: inset 0 0 0 1px var(--tb-primary-500);
+      }
+      ::ng-deep .mat-internal-form-field {
+        display: flex;
+        flex-direction: row;
+        align-items: start;
+        gap: 8px;
+        .mdc-radio {
+          padding-left: 18px;
+          height: auto;
+          align-self: stretch;
+          .mdc-radio__background {
+            display: block;
+          }
+          .mat-radio-ripple {
+            left: 4px;
+            height: 48px;
+          }
+          .mdc-radio__native-control {
+            height: 100%;
+          }
+        }
+        .mdc-label {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          padding-bottom: 12px;
+          padding-left: 0;
+          .tb-wl-shell-preview-container {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            margin-left: -60px;
+            svg {
+              width: 100%;
+              max-height: 157px;
+              .tb-fill-primary {
+                fill: var(--tb-primary-shell-preview);
+              }
+              .tb-fill-accent {
+                fill: var(--tb-accent-shell-preview);
+              }
+              .tb-stroke-accent {
+                stroke: var(--tb-accent-shell-preview);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

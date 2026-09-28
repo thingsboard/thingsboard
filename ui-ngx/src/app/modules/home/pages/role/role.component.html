@@ -1,0 +1,88 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-details-buttons xs:flex xs:flex-col">
+  <button mat-stroked-button color="primary"
+    [disabled]="(isLoading$ | async)"
+    (click)="onEntityAction($event, 'open')"
+    [class.!hidden]="isEdit || isDetailsPage">
+    {{'common.open-details-page' | translate }}
+  </button>
+  <button mat-stroked-button color="primary"
+    [disabled]="(isLoading$ | async)"
+    (click)="onEntityAction($event, 'delete')"
+    [class.!hidden]="hideDelete() || isEdit">
+    {{'role.delete' | translate }}
+  </button>
+  <div class="flex flex-row xs:flex-col">
+    <button mat-stroked-button
+      ngxClipboard
+      (cbOnSuccess)="onRoleIdCopied($event)"
+      [cbContent]="entity?.id?.id"
+      [class.!hidden]="isEdit">
+      <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
+      <span translate>role.copyId</span>
+    </button>
+  </div>
+</div>
+<div class="mat-padding flex flex-col">
+  <form [formGroup]="entityForm">
+    <fieldset [disabled]="(isLoading$ | async)" class="min-w-0">
+      <mat-form-field class="mat-block" appearance="outline">
+        <mat-label translate>role.name</mat-label>
+        <input matInput formControlName="name" required>
+        @if (entityForm.get('name').hasError('required')) {
+          <mat-error>
+            {{ 'role.name-required' | translate }}
+          </mat-error>
+        }
+        @if (entityForm.get('name').hasError('maxlength')) {
+          <mat-error>
+            {{ 'role.name-max-length' | translate }}
+          </mat-error>
+        }
+      </mat-form-field>
+      <mat-form-field class="mat-block" appearance="outline">
+        <mat-label translate>role.role-type</mat-label>
+        <mat-select formControlName="type" required>
+          @for (type of roleTypes; track type) {
+            <mat-option [value]="type">
+              {{roleTypeTranslations.get(type) | translate}}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <div formGroupName="additionalInfo" class="flex flex-col">
+        <mat-form-field class="mat-block" appearance="outline">
+          <mat-label translate>role.description</mat-label>
+          <textarea matInput formControlName="description" cdkTextareaAutosize cdkAutosizeMinRows="1" rows="1"></textarea>
+        </mat-form-field>
+      </div>
+      <mat-expansion-panel [expanded]="true">
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            <div class="tb-panel-title" translate>role.permissions</div>
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+        <section [class.!hidden]="entityForm.get('type').value !== roleType.GENERIC">
+          <tb-permission-list
+            formControlName="genericPermissions"
+            required>
+          </tb-permission-list>
+        </section>
+        <section [class.!hidden]="entityForm.get('type').value !== roleType.GROUP" class="flex flex-col">
+          <label class="tb-title tb-required" translate>permission.operation.operations</label>
+          <tb-operation-type-list
+            formControlName="groupPermissions"
+            appearance="outline"
+            required
+            groupRoleOperations>
+          </tb-operation-type-list>
+        </section>
+      </mat-expansion-panel>
+    </fieldset>
+  </form>
+</div>

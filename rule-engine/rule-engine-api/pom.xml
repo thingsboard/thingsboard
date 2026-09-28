@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
@@ -17,7 +18,6 @@
     <groupId>org.thingsboard.rule-engine</groupId>
     <artifactId>rule-engine-api</artifactId>
     <packaging>jar</packaging>
-
     <name>Thingsboard Rule Engine API</name>
     <url>https://thingsboard.io</url>
 
@@ -30,6 +30,11 @@
         <dependency>
             <groupId>org.thingsboard.common</groupId>
             <artifactId>message</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common</groupId>
+            <artifactId>report</artifactId>
             <scope>provided</scope>
         </dependency>
         <dependency>

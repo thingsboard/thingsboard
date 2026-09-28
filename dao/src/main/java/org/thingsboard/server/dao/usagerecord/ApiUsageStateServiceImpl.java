@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.usagerecord;
 
 import com.google.common.util.concurrent.FluentFuture;
@@ -98,7 +99,7 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
             TenantProfile tenantProfile = tenantProfileDao.findById(tenantId, tenant.getTenantProfileId().getId());
             configuration = (DefaultTenantProfileConfiguration) tenantProfile.getProfileData().getConfiguration();
 
-            if (configuration.getSmsEnabled() != null && !configuration.getSmsEnabled()) {
+            if (!configuration.getProfileFeatureEnabled(ApiUsageRecordKey.SMS_EXEC_COUNT)) {
                 smsApiUsageState = ApiUsageStateValue.DISABLED;
             }
         }
@@ -114,6 +115,8 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
         apiUsageState.setSmsExecState(smsApiUsageState);
         apiUsageState.setEmailExecState(ApiUsageStateValue.ENABLED);
         apiUsageState.setAlarmExecState(ApiUsageStateValue.ENABLED);
+        apiUsageState.setReportExecState(ApiUsageStateValue.ENABLED);
+        apiUsageState.setAiState(ApiUsageStateValue.ENABLED);
         apiUsageStateValidator.validate(apiUsageState, ApiUsageState::getTenantId);
 
         ApiUsageState saved = apiUsageStateDao.save(apiUsageState.getTenantId(), apiUsageState);
@@ -143,6 +146,10 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
                 new StringDataEntry(ApiFeature.SMS.getApiStateKey(), smsApiUsageState.name())));
         apiUsageStates.add(new BasicTsKvEntry(saved.getCreatedTime(),
                 new StringDataEntry(ApiFeature.ALARM.getApiStateKey(), ApiUsageStateValue.ENABLED.name())));
+        apiUsageStates.add(new BasicTsKvEntry(saved.getCreatedTime(),
+                new StringDataEntry(ApiFeature.REPORT.getApiStateKey(), ApiUsageStateValue.ENABLED.name())));
+        apiUsageStates.add(new BasicTsKvEntry(saved.getCreatedTime(),
+                new StringDataEntry(ApiFeature.AI.getApiStateKey(), ApiUsageStateValue.ENABLED.name())));
         tsService.save(tenantId, saved.getId(), apiUsageStates, 0L);
 
         if (configuration != null) {

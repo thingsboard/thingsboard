@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -23,7 +24,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <main.dir>${basedir}/../..</main.dir>
-        <docker.name>tb-js-executor</docker.name>
+        <docker.name>${tb.docker.id}-js-executor</docker.name>
         <pkg.name>tb-js-executor</pkg.name>
         <pkg.type>js</pkg.type>
         <pkg.process-resources.phase>process-resources</pkg.process-resources.phase>
@@ -55,7 +56,8 @@
             the same agent. Concurrent yarn 1.x processes share ~/.cache/yarn
             and have intermittently produced `tsc: not found` failures during
             yarn pkg (incomplete typescript extraction in node_modules).
-            The chain is: ui-ngx -> msa/web-ui -> msa/js-executor.
+            The chain is: ui-ngx -> msa/web-ui -> msa/js-executor -> msa/web-report
+            (web-report is PE-only; the upstream CE chain ends at msa/js-executor).
             type=pom + provided + wildcard exclusions keep nothing on the classpath.
         -->
         <dependency>

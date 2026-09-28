@@ -1,0 +1,100 @@
+{
+  "entityId": {
+    "entityType": "DEVICE_PROFILE",
+    "id": "475738e7-143c-47b1-8e41-c3514563eadc"
+  },
+  "type": "ALARM",
+  "name": "Low Moisture Level",
+  "debugSettings": {
+    "failuresEnabled": true,
+    "allEnabled": false,
+    "allEnabledUntil": 0
+  },
+  "configurationVersion": 0,
+  "configuration": {
+    "type": "ALARM",
+    "arguments": {
+      "moisture": {
+        "refEntityKey": {
+          "key": "moisture",
+          "type": "TS_LATEST"
+        }
+      },
+      "minMoistureThreshold": {
+        "refEntityKey": {
+          "key": "minMoistureThreshold",
+          "type": "ATTRIBUTE",
+          "scope": "SERVER_SCOPE"
+        },
+        "defaultValue": "0.0"
+      }
+    },
+    "createRules": {
+      "CRITICAL": {
+        "condition": {
+          "type": "SIMPLE",
+          "expression": {
+            "type": "SIMPLE",
+            "filters": [
+              {
+                "argument": "moisture",
+                "valueType": "NUMERIC",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "NUMERIC",
+                    "operation": "LESS_OR_EQUAL",
+                    "value": {
+                      "staticValue": null,
+                      "dynamicValueArgument": "minMoistureThreshold"
+                    }
+                  }
+                ]
+              }
+            ],
+            "operation": "AND"
+          },
+          "schedule": null
+        },
+        "alarmDetails": null,
+        "dashboardId": null
+      }
+    },
+    "clearRule": {
+      "condition": {
+        "type": "SIMPLE",
+        "expression": {
+          "type": "SIMPLE",
+          "filters": [
+            {
+              "argument": "moisture",
+              "valueType": "NUMERIC",
+              "operation": "AND",
+              "predicates": [
+                {
+                  "type": "NUMERIC",
+                  "operation": "GREATER",
+                  "value": {
+                    "staticValue": null,
+                    "dynamicValueArgument": "minMoistureThreshold"
+                  }
+                }
+              ]
+            }
+          ],
+          "operation": "AND"
+        },
+        "schedule": null
+      },
+      "alarmDetails": null,
+      "dashboardId": null
+    },
+    "propagate": true,
+    "propagateToOwner": false,
+    "propagateToTenant": false,
+    "propagateRelationTypes": [
+      "FieldToMoistureSensor"
+    ],
+    "output": null
+  }
+}

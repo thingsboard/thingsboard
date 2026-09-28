@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   ChangeDetectorRef,
   Component,
@@ -62,6 +63,10 @@ export class TimeSeriesChartYAxisRowComponent implements ControlValueAccessor, O
   @coerceBoolean()
   supportsUnitConversion = false;
 
+  @Input()
+  @coerceBoolean()
+  reportMode = false;
+
   @Output()
   axisRemoved = new EventEmitter();
 
@@ -122,8 +127,8 @@ export class TimeSeriesChartYAxisRowComponent implements ControlValueAccessor, O
 
   writeValue(value: TimeSeriesChartYAxisSettings): void {
     this.modelValue = value;
-    const min = normalizeAxisLimit(value.min);
-    const max = normalizeAxisLimit(value.max);
+    const min = this.reportMode ? value.min : normalizeAxisLimit(value.min);
+    const max = this.reportMode ? value.max : normalizeAxisLimit(value.max);
 
     this.axisFormGroup.patchValue({
       label: value.label,
@@ -158,6 +163,7 @@ export class TimeSeriesChartYAxisRowComponent implements ControlValueAccessor, O
           panelTitle: this.translate.instant('widgets.time-series-chart.axis.y-axis-settings'),
           axisSettings: deepClone(this.modelValue),
           advanced: this.advanced,
+          reportMode: this.reportMode,
           aliasController: this.timeSeriesChartYAxesPanel.aliasController,
           dataKeyCallbacks: this.timeSeriesChartYAxesPanel.dataKeyCallbacks,
           datasource: this.timeSeriesChartYAxesPanel.datasource

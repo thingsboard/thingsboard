@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ILayoutController } from '@home/components/dashboard-page/layout/layout.models';
 import { DashboardContext, DashboardPageLayoutContext } from '@home/components/dashboard-page/dashboard-page.models';
@@ -263,8 +264,16 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
     this.dashboard.selectWidget(widgetId, delay);
   }
 
+  get aiConfigurableForDashboard(): boolean {
+    return this.layoutCtx.dashboardCtrl.aiConfigurableForDashboard;
+  }
+
   addWidget($event: Event) {
     this.layoutCtx.dashboardCtrl.addWidget($event, this.layoutCtx);
+  }
+
+  configureWithAi($event: Event) {
+    this.layoutCtx.dashboardCtrl.configureWithAi($event);
   }
 
   onEditWidget($event: Event, widget: Widget): void {

@@ -1,0 +1,448 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-setup-container" [class]="stateClass">
+  <div class="tb-setup-visual">
+    <img src="/assets/setup/setup-visual.svg" alt>
+  </div>
+  @switch (activationState) {
+
+    @case (ActivationState.INITIAL) {
+      <div class="tb-setup-content">
+        <img class="tb-applogo" src="/assets/tb-logo-app.svg" alt="" width="136" height="136">
+        <p class="tb-welcome">{{ 'setup.initial.welcome' | translate:{version: env.tbVersion} }}</p>
+        <h1 class="tb-setup-header">{{ 'setup.initial.title' | translate }}</h1>
+        <p class="tb-setup-desc">{{ 'setup.initial.desc' | translate }}</p>
+        <div class="tb-setup-section">
+          @if (sendError) {
+            <div class="tb-error-messages mb-4" role="alert">
+              <div class="tb-error-message">
+                @if (sendNetworkError) {
+                  {{ 'setup.errors.no-connection' | translate }}
+                } @else {
+                  {{ sendErrorMessage }}
+                }
+              </div>
+            </div>
+          }
+          <div class="tb-setup-btn-row">
+            <button mat-flat-button
+                    color="primary"
+                    class="h-12"
+                    [class.tb-load]="activating"
+                    [disabled]="activating"
+                    (click)="gotoLicensePortal()">
+              <span class="tb-spin"></span>
+              <span>{{ 'setup.initial.open-license-portal' | translate }}</span>
+              <mat-icon class="tb-chevron tb-chevron-right" iconPositionEnd>north_east</mat-icon>
+            </button>
+            <button mat-stroked-button class="h-12" (click)="gotoHaveKey()">
+              <span>{{ 'setup.initial.already-have-license' | translate }}</span>
+              <mat-icon class="tb-chevron tb-chevron-right" iconPositionEnd>chevron_right</mat-icon>
+            </button>
+          </div>
+          <p class="tb-setup-hint">{{ 'setup.initial.free-no-credit-card' | translate }}</p>
+        </div>
+        <p class="tb-setup-foot">{{ 'setup.initial.source-available' | translate }}
+          <a href="https://thingsboard.io/legal" target="_blank" rel="noopener">BUSL 1.1
+            <svg width="10" height="10" viewBox="0 0 11 11" fill="none" aria-hidden="true">
+              <path d="M1 10L10 1M4.2 1H10v5.8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"></path>
+            </svg>
+          </a>
+        </p>
+      </div>
+    }
+    @case (ActivationState.WAITING) {
+      <div class="tb-setup-content">
+        <p class="tb-welcome tb-live"><span class="tb-dot"></span>{{ 'setup.waiting.live-eyebrow' | translate }}</p>
+        <h1 class="tb-setup-header tb-setup-header--sm">{{ 'setup.waiting.title' | translate }}</h1>
+        <p class="tb-setup-desc">{{ 'setup.waiting.desc' | translate }}</p>
+        <div class="tb-setup-section">
+          <div class="tb-setup-handoff">
+            <p class="tb-setup-card-head">
+              {{ 'setup.waiting.nothing-opened' | translate }}
+            </p>
+            <p class="tb-setup-card-note">
+              {{ 'setup.waiting.paste-link-or-scan-qr-code' | translate }}
+            </p>
+            <ng-container *ngTemplateOutlet="activationLinkAndQrCode"></ng-container>
+          </div>
+        </div>
+        <p class="tb-setup-exit">
+          {{ 'setup.waiting.have-key' | translate }} <button mat-stroked-button (click)="gotoHaveKey()">{{ 'setup.waiting.activate-key' | translate }}</button>
+        </p>
+      </div>
+    }
+
+    @case (ActivationState.OFFLINE) {
+      <div class="tb-setup-content">
+        <p class="tb-welcome tb-icon tb-warn"><mat-icon class="tb-mat-18">cloud_off</mat-icon>{{'setup.offline.eyebrow' | translate}}</p>
+        <h1 class="tb-setup-header tb-setup-header--sm">{{ 'setup.offline.title' | translate }}</h1>
+        <p class="tb-setup-desc">{{ 'setup.offline.desc' | translate }}</p>
+        <div class="tb-setup-section">
+          <div class="tb-setup-handoff">
+            <p class="tb-setup-card-head">
+              <span class="tb-number">1</span>
+              {{ 'setup.offline.get-your-license' | translate }}
+            </p>
+            <p class="tb-setup-card-note">
+              {{ 'setup.offline.open-link' | translate }}
+            </p>
+            <ng-container *ngTemplateOutlet="activationLinkAndQrCode"></ng-container>
+          </div>
+          <div class="tb-setup-card">
+            <p class="tb-setup-card-head">
+              <span class="tb-number">2</span>
+              {{ 'setup.offline.paste-key' | translate }}
+            </p>
+            <ng-container *ngTemplateOutlet="licenseKeyForm"></ng-container>
+          </div>
+          <p class="tb-setup-hint">{{ 'setup.offline.no-connected-device' | translate }}
+            <a href="https://thingsboard.io/contact-us/" target="_blank" rel="noopener">{{ 'setup.have-key.contact-support' | translate }}
+              <svg width="10" height="10" viewBox="0 0 11 11" fill="none" aria-hidden="true">
+                <path d="M1 10L10 1M4.2 1H10v5.8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"></path>
+              </svg>
+            </a>
+          </p>
+        </div>
+      </div>
+    }
+
+    @case (ActivationState.HAVE_KEY) {
+      <div class="tb-setup-content">
+        <button mat-stroked-button class="mb-7" (click)="goBack()">
+          <span>{{ 'action.back' | translate }}</span>
+          <mat-icon class="tb-chevron tb-chevron-left">chevron_left</mat-icon>
+        </button>
+        <h1 class="tb-setup-header tb-setup-header--sm">{{ 'setup.have-key.title' | translate }}</h1>
+        <div class="tb-setup-card mt-8">
+          <p class="tb-setup-card-head">
+            {{ 'setup.have-key.enter-license-key' | translate }}
+          </p>
+          <p class="tb-setup-card-note"
+             [innerHTML]="('setup.have-key.enter-license-key-note' | translate: { hostName: `<span class='tb-host'>${licensePortalHostName}</span>`}) | safe:'html'">
+          </p>
+          <ng-container *ngTemplateOutlet="licenseKeyForm"></ng-container>
+        </div>
+        <p class="tb-setup-hint">{{ 'setup.have-key.no-account' | translate }}
+          <a href="https://thingsboard.io/contact-us/" target="_blank" rel="noopener">{{ 'setup.have-key.contact-support' | translate }}
+            <svg width="10" height="10" viewBox="0 0 11 11" fill="none" aria-hidden="true">
+              <path d="M1 10L10 1M4.2 1H10v5.8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"></path>
+            </svg>
+          </a>
+        </p>
+      </div>
+    }
+
+    @case (ActivationState.SETUP_ACCOUNT) {
+      <div class="tb-setup-content">
+        <div class="tb-setup-mark tb-setup-mark-ok" aria-hidden="true">
+          <mat-icon>check</mat-icon>
+        </div>
+        <h1 class="tb-setup-header tb-setup-header--sm">{{ 'setup.account.title' | translate }}</h1>
+        <p class="tb-setup-desc">{{ 'setup.account.desc' | translate }}</p>
+        <div class="tb-setup-card tb-setup-card-ac">
+          <p class="tb-setup-card-head">
+            {{ 'setup.account.create-sys-admin-account' | translate }}
+          </p>
+          <p class="tb-setup-card-note">
+            {{ 'setup.account.create-sys-admin-account-hint' | translate }}
+          </p>
+          <form class="tb-setup-account-form" [formGroup]="setupAccountForm" (ngSubmit)="setupAccount()">
+            <div class="tb-setup-form-stack">
+              <mat-form-field appearance="outline" floatLabel="always" hideRequiredMarker>
+                <mat-label>{{ 'setup.account.email-label' | translate }}</mat-label>
+                <input matInput
+                       type="email"
+                       autocomplete="email"
+                       autofocus
+                       formControlName="email"/>
+                @if (setupAccountForm.get('email').hasError('required')) {
+                  <mat-error>
+                    {{ 'setup.account.email-required' | translate }}
+                  </mat-error>
+                }
+                @if (setupAccountForm.get('email').hasError('email')) {
+                  <mat-error>
+                    {{ 'setup.account.email-invalid' | translate }}
+                  </mat-error>
+                }
+              </mat-form-field>
+              <mat-form-field appearance="outline" floatLabel="always" hideRequiredMarker>
+                <mat-label>{{ 'setup.account.password-label' | translate }}</mat-label>
+                <input matInput
+                       type="password"
+                       autocomplete="new-password"
+                       formControlName="password"/>
+                <tb-toggle-password matSuffix></tb-toggle-password>
+                @if (setupAccountForm.get('password').hasError('required')) {
+                  <mat-error>
+                    {{ 'setup.account.password-required' | translate }}
+                  </mat-error>
+                }
+                @if (setupAccountForm.get('password').hasError('minlength')) {
+                  <mat-error>
+                    {{ 'setup.account.password-min-length' | translate }}
+                  </mat-error>
+                }
+              </mat-form-field>
+              <mat-form-field appearance="outline" floatLabel="always" hideRequiredMarker>
+                <mat-label>{{ 'setup.account.confirm-label' | translate }}</mat-label>
+                <input matInput
+                       type="password"
+                       autocomplete="new-password"
+                       formControlName="confirmPassword"/>
+                <tb-toggle-password matSuffix></tb-toggle-password>
+                @if (setupAccountForm.get('confirmPassword').hasError('required')) {
+                  <mat-error>
+                    {{ 'setup.account.confirm-required' | translate }}
+                  </mat-error>
+                }
+                @if (setupAccountForm.get('confirmPassword').hasError('passwordsNotMatch')) {
+                  <mat-error>
+                    {{ 'setup.account.confirm-mismatch' | translate }}
+                  </mat-error>
+                }
+              </mat-form-field>
+              <mat-checkbox class="tb-setup-option" color="primary" formControlName="loadDemo">
+                <span class="tb-setup-option-label">
+                  <b>{{ 'setup.account.demo-tenant-title' | translate }}</b>
+                  <small>{{ 'setup.account.demo-tenant-desc' | translate }}</small>
+                </span>
+              </mat-checkbox>
+            </div>
+            @if (sendError) {
+              <mat-error role="alert">
+                @if (sendNetworkError) {
+                  {{ 'setup.errors.no-connection' | translate }}
+                } @else {
+                  {{ sendErrorMessage }}
+                }
+              </mat-error>
+            }
+            <button mat-flat-button
+                    type="submit"
+                    class="mt-7 h-12 px-6"
+                    [class.tb-load]="submittingAccount"
+                    color="primary"
+                    [disabled]="submittingAccount">
+              <span class="tb-spin"></span>
+              <span>{{ (submittingAccount ? 'setup.account.creating' : 'setup.account.create') | translate }}</span>
+            </button>
+          </form>
+        </div>
+      </div>
+    }
+
+    @case (ActivationState.DEMO_TENANT_OFFER) {
+      <div class="tb-setup-content">
+        <div class="tb-setup-scope">
+          <div class="tb-setup-mark tb-setup-mark-plain" aria-hidden="true">
+            <mat-icon>how_to_reg</mat-icon>
+          </div>
+          <p [innerHTML]="'setup.demo-tenant.signed-in-as' | translate: { email: sysAdminEmail }"></p>
+        </div>
+        <h1 class="tb-setup-header tb-setup-header--sm">{{ 'setup.demo-tenant.title' | translate }}</h1>
+        <p class="tb-setup-desc">{{ 'setup.demo-tenant.desc' | translate }}</p>
+        <ul class="tb-setup-list">
+          <li>
+            <mat-icon>dashboard</mat-icon>
+            <span [innerHTML]="'setup.demo-tenant.dashboards' | translate"></span>
+          </li>
+          <li>
+            <mat-icon>memory</mat-icon>
+            <span [innerHTML]="'setup.demo-tenant.devices' | translate"></span>
+          </li>
+          <li>
+            <mat-icon>account_tree</mat-icon>
+            <span [innerHTML]="'setup.demo-tenant.rule-chains' | translate"></span>
+          </li>
+        </ul>
+        <div class="tb-setup-creds">
+          <div class="tb-setup-creds-head">
+            <p class="tb-setup-creds-title">{{ 'setup.demo-tenant.signing-in-later' | translate }}</p>
+            <button mat-button color="primary" style="--mat-button-text-with-icon-horizontal-padding: 24px;"
+                    ngxClipboard
+                    cbContent="{{ demoTenantCredsContent }}"
+                    (click)="copyDemoTenantCreds()">
+              <mat-icon>{{ copyingDemoTenantCreds ? 'check' : 'content_copy' }}</mat-icon>
+              <span>{{ (copyingDemoTenantCreds ? 'action.copied' : 'action.copy') | translate }}</span>
+            </button>
+          </div>
+          <p class="tb-setup-creds-lede">{{ 'setup.demo-tenant.demo-tenant-hint' | translate }}</p>
+          <dl class="tb-setup-creds-value">
+            <dt>{{ 'setup.account.email-label' | translate }}</dt>
+            <dd><code>{{ demoTenantEmail }}</code></dd>
+            <dt>{{ 'setup.account.password-label' | translate }}</dt>
+            <dd><code>{{ demoTenantPassword }}</code></dd>
+          </dl>
+        </div>
+        @if (sendError) {
+          <div class="tb-error-messages mt-1" role="alert">
+            <div class="tb-error-message">
+              @if (sendNetworkError) {
+                {{ 'setup.errors.no-connection' | translate }}
+              } @else {
+                {{ sendErrorMessage }}
+              }
+            </div>
+          </div>
+        }
+        <div class="tb-setup-btn-row tb-setup-answers">
+          <button mat-flat-button
+                  color="primary"
+                  class="h-12 px-7"
+                  [class.tb-load]="submittingAccount"
+                  [disabled]="submittingAccount"
+                  (click)="exploreDemoTenant()">
+            <span class="tb-spin"></span>
+            <span>{{ 'setup.demo-tenant.explore' | translate }}</span>
+          </button>
+          <button mat-button
+                  color="primary"
+                  (click)="skipDemoTenant()">
+            <span>{{ 'setup.demo-tenant.not-now' | translate }}</span>
+          </button>
+        </div>
+        <p class="tb-setup-hint">{{ 'setup.demo-tenant.not-now-hint' | translate }}</p>
+      </div>
+    }
+
+    @case (ActivationState.NON_PRODUCTION_CONFIRM) {
+      <div class="tb-setup-content">
+        <p class="tb-welcome">{{ 'setup.non-production.eyebrow' | translate }}</p>
+        <h1 class="tb-setup-header tb-setup-header--sm">{{ 'setup.non-production.title' | translate }}</h1>
+        <p class="tb-setup-desc">{{ 'setup.non-production.desc' | translate }}</p>
+        @if (sendError) {
+          <div class="tb-error-messages mt-1" role="alert">
+            <div class="tb-error-message">
+              @if (sendNetworkError) {
+                {{ 'setup.errors.no-connection' | translate }}
+              } @else {
+                {{ sendErrorMessage }}
+              }
+            </div>
+          </div>
+        }
+        @if (isSysAdminViewer$ | async) {
+          <button mat-flat-button
+                  color="primary"
+                  class="mt-7 h-12 px-6"
+                  [class.tb-load]="confirmingNonProduction"
+                  [disabled]="confirmingNonProduction"
+                  (click)="confirmNonProduction()">
+            <span class="tb-spin"></span>
+            <span>{{ (confirmingNonProduction ? 'setup.non-production.confirming' : 'setup.non-production.confirm') | translate }}</span>
+          </button>
+        } @else {
+          <p class="tb-setup-hint">{{ 'setup.non-production.sysadmin-required' | translate }}</p>
+          <button mat-flat-button
+                  color="primary"
+                  class="mt-3 h-12 px-6"
+                  (click)="goToSysAdminLogin()">
+            <span>{{ 'setup.non-production.login-as-sysadmin' | translate }}</span>
+          </button>
+        }
+      </div>
+    }
+  }
+</div>
+
+<ng-template #activationLinkAndQrCode>
+  <mat-tab-group class="tb-setup-handoff-tabs" [mat-stretch-tabs]="false">
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <tb-icon class="tabs-icon">mdi:link-variant</tb-icon>
+        {{ 'setup.waiting.text-link' | translate }}
+      </ng-template>
+      <ng-template matTabContent>
+        <div class="tb-setup-handoff-panel">
+          <div class="tb-setup-value">
+            <code>{{ licensePortalActivationLink }}</code>
+          </div>
+          <div class="tb-setup-link-acts">
+            <button mat-button color="primary" style="--mat-button-text-with-icon-horizontal-padding: 16px;"
+                    ngxClipboard
+                    cbContent="{{ licensePortalActivationLink }}"
+                    (click)="copyActivationLink()">
+              <mat-icon>{{ copyingActivationLink ? 'check' : 'content_copy' }}</mat-icon>
+              <span>{{ (copyingActivationLink ? 'action.copied' : 'action.copy') | translate }}</span>
+            </button>
+            <button mat-flat-button color="primary"
+                    (click)="openActivationLink()">
+              <span>{{ 'action.open' | translate }}</span>
+              <mat-icon iconPositionEnd class="!-mr-2">north_east</mat-icon>
+            </button>
+          </div>
+        </div>
+      </ng-template>
+    </mat-tab>
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <tb-icon class="tabs-icon">qr_code</tb-icon>
+        {{ 'setup.waiting.qr-code' | translate }}
+      </ng-template>
+      <ng-template matTabContent>
+        <div class="tb-setup-handoff-panel">
+          <div class="tb-setup-qr">
+            <div class="tb-qr-code" [innerHTML]="licensePortalActivationLinkQrCodeSVG | safe: 'html'"></div>
+            <p class="tb-setup-hint">
+              {{ 'setup.waiting.qr-code-hint' | translate }}
+            </p>
+          </div>
+        </div>
+      </ng-template>
+    </mat-tab>
+  </mat-tab-group>
+</ng-template>
+
+<ng-template #licenseKeyForm let-activateBtnBlue="activateBtnBlue">
+  <div class="tb-setup-form-row">
+    <mat-form-field class="tb-setup-key-input flex-1" appearance="outline" subscriptSizing="dynamic" floatLabel="always">
+      <input matInput
+             type="text"
+             placeholder="XXXXXXXXXXXXXXXXXXXXXXXX"
+             [disabled]="activatingKey"
+             [(ngModel)]="keyInput"
+             #keyControlInput="ngModel"
+             [errorStateMatcher]="keyErrorStateMatcher"
+             (ngModelChange)="onKeyChange()"
+             (keydown.enter)="activateKey(keyControlInput.control)"/>
+      <mat-icon matPrefix>key</mat-icon>
+      <button mat-icon-button
+              matSuffix
+              matTooltip="{{'action.paste' | translate}}"
+              matTooltipPosition="above"
+              (click)="pasteKey()">
+        <mat-icon>content_paste</mat-icon>
+      </button>
+      @if (keyError) {
+        <mat-error>
+          {{ 'setup.key-form.invalid' | translate }}
+        </mat-error>
+      }
+      @if (sendError) {
+        <mat-error>
+          @if (sendNetworkError) {
+            {{ 'setup.errors.no-connection' | translate }}
+          } @else {
+            {{ sendErrorMessage }}
+          }
+        </mat-error>
+      }
+    </mat-form-field>
+    <button mat-flat-button
+            class="h-14 px-6"
+            [class.tb-load]="activatingKey"
+            [class.tb-setup-btn-blue]="activateBtnBlue"
+            color="primary"
+            [disabled]="activatingKey || (keyInput || '').trim().length < 8"
+            (click)="activateKey(keyControlInput.control)">
+      <span class="tb-spin"></span>
+      <span>{{ (activatingKey ? 'setup.key-form.activating' : 'setup.key-form.activate') | translate }}</span>
+    </button>
+  </div>
+</ng-template>

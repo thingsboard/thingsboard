@@ -1,7 +1,9 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { Color } from '@iplab/ngx-color-picker';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
     selector: `tb-hex-input`,
@@ -14,6 +16,10 @@ export class HexInputComponent {
 
   @Input()
   public color: Color;
+
+  @Input()
+  @coerceBoolean()
+  alpha = true;
 
   @Output()
   public colorChange = new EventEmitter<Color>(false);

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { IStateController, StateObject } from '@core/api/widget-api.models';
 import { DashboardState } from '@shared/models/dashboard.models';

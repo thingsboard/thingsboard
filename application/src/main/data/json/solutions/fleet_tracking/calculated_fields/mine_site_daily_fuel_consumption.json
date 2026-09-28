@@ -1,0 +1,56 @@
+{
+  "reprocessingOrder": 3,
+  "entityId": {
+    "entityType": "ASSET_PROFILE",
+    "id": "41d774a9-a4e5-4ea3-9824-530c25dbb422"
+  },
+  "type": "RELATED_ENTITIES_AGGREGATION",
+  "name": "Mine site daily fuel consumption",
+  "debugSettings": {
+    "failuresEnabled": true,
+    "allEnabled": false,
+    "allEnabledUntil": 0
+  },
+  "configurationVersion": 0,
+  "configuration": {
+    "type": "RELATED_ENTITIES_AGGREGATION",
+    "relation": {
+      "direction": "FROM",
+      "relationType": "MineSiteToMachine"
+    },
+    "arguments": {
+      "dailyFuelConsumption": {
+        "refEntityKey": {
+          "key": "dailyFuelConsumption",
+          "type": "TS_LATEST"
+        },
+        "defaultValue": "0"
+      }
+    },
+    "deduplicationIntervalInSec": 10,
+    "metrics": {
+      "totalDailyFuelConsumption": {
+        "function": "SUM",
+        "input": {
+          "type": "key",
+          "key": "dailyFuelConsumption"
+        }
+      }
+    },
+    "output": {
+      "type": "TIME_SERIES",
+      "decimalsByDefault": 2,
+      "strategy": {
+        "type": "IMMEDIATE",
+        "ttl": 0,
+        "saveTimeSeries": true,
+        "saveLatest": true,
+        "sendWsUpdate": true,
+        "processCfs": true
+      }
+    },
+    "useLatestTs": true,
+    "scheduledUpdateInterval": 10,
+    "scheduledUpdateEnabled": true
+  }
+}

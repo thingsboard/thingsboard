@@ -1,0 +1,48 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@use '../../components/agent/agent-shared' as *;
+
+::ng-deep .settings-card.tb-agent-app-profile-fullscreen.tb-agent-app-profile-fullscreen {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+}
+
+:host ::ng-deep {
+  .tb-app-upgrade-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: $agent-color-warning;
+    font-weight: 500;
+    mat-icon {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+    }
+  }
+  .tb-mat-label {
+    display: block;
+    margin-bottom: 8px;
+  }
+  .tb-app-compose-editor {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid $agent-divider;
+    border-radius: 4px;
+    background: $agent-surface-muted;
+  }
+  .tb-app-compose-editor-ace {
+    height: 480px;
+    overflow: hidden;
+    ::ng-deep .ace_editor {
+      font-family: $agent-mono-font !important;
+      background: transparent;
+    }
+    ::ng-deep .ace_gutter {
+      background: #f5f5f5;
+      color: rgba(0, 0, 0, 0.42);
+    }
+  }
+}

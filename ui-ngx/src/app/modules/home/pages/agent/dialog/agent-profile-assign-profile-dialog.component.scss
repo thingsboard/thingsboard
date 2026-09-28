@@ -1,0 +1,60 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@use '../../../components/agent/agent-shared' as *;
+
+:host {
+  display: block;
+  width: min(920px, 95vw);
+  min-width: 0;
+  max-width: 95vw;
+}
+
+.tb-create-new-link {
+  white-space: nowrap;
+  min-width: 0;
+  padding: 0 8px;
+  height: 32px;
+  line-height: 32px;
+  font-size: 12.5px;
+  font-weight: 500;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    margin-right: 2px;
+  }
+}
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0;
+  padding: 16px 16px 9px 24px;
+
+  h2 {
+    font-size: 20px;
+    font-weight: 400;
+    margin: 0;
+  }
+}
+
+.dialog-body {
+  padding: 16px 24px;
+
+}
+
+.full-width {
+  width: 100%;
+}
+
+.tb-empty {
+  padding: 24px 8px;
+  text-align: center;
+  color: $agent-text-secondary;
+}
+
+.dialog-footer {
+  padding: 8px 16px;
+}

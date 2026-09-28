@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.edqs.fields;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -7,8 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.thingsboard.server.common.data.id.EntityId;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.UUID;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -24,10 +23,6 @@ public interface EntityFields {
 
     default UUID getCustomerId() {
         return null;
-    }
-
-    default List<UUID> getAssignedCustomerIds() {
-        return Collections.emptyList();
     }
 
     default long getCreatedTime() {
@@ -118,6 +113,10 @@ public interface EntityFields {
         return "";
     }
 
+    default String getFormat() {
+        return "";
+    }
+
     default boolean isDefault() {
         return false;
     }
@@ -156,6 +155,7 @@ public interface EntityFields {
             case "originatorType" -> getOriginatorId().getEntityType().toString();
             case "queueName" -> getQueueName();
             case "serviceId" -> getServiceId();
+            case "format" -> getFormat();
             default -> {
                 log.warn("Unknown field '{}'", key);
                 yield null;

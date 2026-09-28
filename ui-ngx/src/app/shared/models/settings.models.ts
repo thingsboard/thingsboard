@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { ValidatorFn } from '@angular/forms';
 import { isNotEmptyStr, isNumber } from '@core/utils';
 import { VersionCreateConfig } from '@shared/models/vc.models';
@@ -18,6 +19,7 @@ export enum SmtpProtocol {
 }
 
 export interface MailServerSettings {
+  useSystemMailSettings: boolean;
   showChangePassword?: boolean;
   mailFrom: string;
   smtpProtocol: SmtpProtocol;
@@ -82,6 +84,42 @@ export interface DeviceConnectivityInfo {
 }
 
 export type DeviceConnectivitySettings = Record<DeviceConnectivityProtocol, DeviceConnectivityInfo>;
+
+export enum MailTemplate {
+  test = 'test',
+  activation = 'activation',
+  accountActivated = 'accountActivated',
+  accountLockout = 'accountLockout',
+  resetPassword = 'resetPassword',
+  passwordWasReset = 'passwordWasReset',
+  apiUsageStateEnabled = 'apiUsageStateEnabled',
+  apiUsageStateWarning = 'apiUsageStateWarning',
+  apiUsageStateDisabled = 'apiUsageStateDisabled',
+  twoFaVerification = 'twoFaVerification'
+}
+
+export const mailTemplateTranslations = new Map<MailTemplate, string>(
+  [
+    [MailTemplate.test, 'admin.mail-template.test'],
+    [MailTemplate.activation, 'admin.mail-template.activation'],
+    [MailTemplate.accountActivated, 'admin.mail-template.account-activated'],
+    [MailTemplate.accountLockout, 'admin.mail-template.account-lockout'],
+    [MailTemplate.resetPassword, 'admin.mail-template.reset-password'],
+    [MailTemplate.passwordWasReset, 'admin.mail-template.password-was-reset'],
+    [MailTemplate.apiUsageStateEnabled, 'admin.mail-template.api-usage-state-enabled'],
+    [MailTemplate.apiUsageStateWarning, 'admin.mail-template.api-usage-state-warning'],
+    [MailTemplate.apiUsageStateDisabled, 'admin.mail-template.api-usage-state-disabled'],
+    [MailTemplate.twoFaVerification, 'admin.mail-template.two-fa-verification']
+  ]
+);
+
+export interface MailTemplatesSettings {
+  useSystemMailSettings?: any;
+  [mailTemplate: string]: {
+    subject: string;
+    body: string;
+  };
+}
 
 export interface UserPasswordPolicy {
   minimumLength: number;
@@ -361,6 +399,7 @@ export type SmsProviderConfigurations =
   Partial<SmppSmsProviderConfiguration> & AwsSnsSmsProviderConfiguration & TwilioSmsProviderConfiguration;
 
 export interface SmsProviderConfiguration extends SmsProviderConfigurations {
+  useSystemSmsSettings?: boolean;
   type: SmsProviderType;
 }
 
@@ -484,9 +523,27 @@ export interface AutoVersionCreateConfig extends VersionCreateConfig {
 export type AutoCommitSettings = {[entityType: string]: AutoVersionCreateConfig};
 
 export interface FeaturesInfo {
+  whiteLabelingEnabled: boolean;
   emailEnabled: boolean;
   smsEnabled: boolean;
   notificationEnabled: boolean;
   oauthEnabled: boolean;
   twoFaEnabled: boolean;
+}
+
+export interface LicenseInfo {
+  maxDevices: number;
+  maxAssets: number;
+  maxEdges: number;
+  whiteLabelingEnabled: boolean;
+  development: boolean;
+  plan: string;
+}
+
+export interface LicenseUsageInfo extends LicenseInfo {
+  devicesCount: number;
+  assetsCount: number;
+  edgesCount: number;
+  dashboardsCount: number;
+  integrationsCount: number;
 }

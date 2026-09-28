@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <fieldset class="fields-group flex flex-col" [formGroup]="entityTypesVersionLoadFormGroup">
@@ -37,6 +38,7 @@
                 formControlName="entityType"
                 required
                 appearance="outline"
+                [overrideEntityTypeTranslations]="overrideEntityTypeTranslationsMap"
                 [filterAllowedEntityTypes]="false"
                 [allowedEntityTypes]="allowedEntityTypes(entityTypeFormGroup)">
               </tb-entity-type-select>
@@ -50,8 +52,14 @@
                   <mat-checkbox formControlName="findExistingEntityByName">
                     {{ 'version-control.find-existing-entity-by-name' | translate }}
                   </mat-checkbox>
+                  <mat-checkbox [class.hidden]="entityTypeFormGroup.get('entityType').value !== entityTypes.INTEGRATION" formControlName="autoGenerateIntegrationKey">
+                    {{ 'version-control.auto-generate-integration-key' | translate }}
+                  </mat-checkbox>
                 </div>
                 <div class="flex flex-1 flex-col">
+                  <mat-checkbox [class.hidden]="entityTypeFormGroup.get('entityType').value !== entityTypes.USER" formControlName="loadPermissions">
+                    {{ 'version-control.load-roles' | translate }}
+                  </mat-checkbox>
                   <mat-checkbox [class.hidden]="entityTypeFormGroup.get('entityType').value !== entityTypes.DEVICE" formControlName="loadCredentials">
                     {{ 'version-control.load-credentials' | translate }}
                   </mat-checkbox>

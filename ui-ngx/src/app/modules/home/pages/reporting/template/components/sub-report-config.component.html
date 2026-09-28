@@ -1,0 +1,43 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-form-panel no-border" [formGroup]="reportConfigForm">
+  <tb-datasources
+    [configMode]="basicMode"
+    stroked
+    displayDatasourceFilterForBasicMode
+    hideDataKeys
+    formControlName="dataSources"
+    [dataSourcesOptions]="{
+                  widgetType: widgetType.latest,
+                  maxDatasources: 1,
+                  datasourcesOptional: true,
+                  allowFunctions: false
+    }"
+    [callbacks]="callbacks"
+    [aliasController]="context.aliasController">
+  </tb-datasources>
+  <div class="tb-form-panel stroked">
+    <div class="tb-form-panel-title" translate>report-template.type-sub-report</div>
+    <div class="tb-form-row no-border no-padding">
+      <tb-report-template-autocomplete
+        class="flex-1"
+        newTabDetailsButton
+        inlineField
+        [type]="ReportTemplateType.SUB_REPORT"
+        [format]="context.format"
+        formControlName="templateId">
+      </tb-report-template-autocomplete>
+    </div>
+  </div>
+  @if (!isPlainFormat) {
+    <div class="tb-form-row">
+      <mat-slide-toggle class="mat-slide" formControlName="avoidPageBreakInside">
+        {{ 'report-template.component.sub-report.avoid-page-break-inside' | translate }}
+      </mat-slide-toggle>
+    </div>
+  }
+</div>

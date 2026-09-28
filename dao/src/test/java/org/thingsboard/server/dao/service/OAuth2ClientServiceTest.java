@@ -1,11 +1,14 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.service;
 
 import org.junit.After;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
@@ -85,10 +88,10 @@ public class OAuth2ClientServiceTest extends AbstractServiceTest {
             OAuth2Client savedOauth2Client = oAuth2ClientService.saveOAuth2Client(SYSTEM_TENANT_ID, oAuth2Client);
             oAuth2Clients.add(savedOauth2Client);
         }
-        List<OAuth2Client> retrieved = oAuth2ClientService.findOAuth2ClientsByTenantId(TenantId.SYS_TENANT_ID);
+        List<OAuth2Client> retrieved = oAuth2ClientService.findOAuth2ClientsByTenantIdAndCustomerId(TenantId.SYS_TENANT_ID, new CustomerId(EntityId.NULL_UUID));
         assertThat(retrieved).containsOnlyOnceElementsOf(oAuth2Clients);
 
-        PageData<OAuth2ClientInfo> retrievedInfos = oAuth2ClientService.findOAuth2ClientInfosByTenantId(TenantId.SYS_TENANT_ID, new PageLink(10));
+        PageData<OAuth2ClientInfo> retrievedInfos = oAuth2ClientService.findOAuth2ClientInfosByTenantIdAndCustomerId(TenantId.SYS_TENANT_ID, new CustomerId(EntityId.NULL_UUID), new PageLink(10));
         List<OAuth2ClientInfo> oAuth2ClientInfos = oAuth2Clients.stream().map(OAuth2ClientInfo::new).collect(Collectors.toList());
         assertThat(retrievedInfos.getData()).containsOnlyOnceElementsOf(oAuth2ClientInfos);
     }

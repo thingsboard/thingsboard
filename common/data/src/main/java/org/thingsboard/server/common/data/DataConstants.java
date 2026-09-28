@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data;
 
 public class DataConstants {
@@ -62,6 +63,9 @@ public class DataConstants {
     public static final String ENTITY_UNASSIGNED = "ENTITY_UNASSIGNED";
     public static final String ATTRIBUTES_UPDATED = "ATTRIBUTES_UPDATED";
     public static final String ATTRIBUTES_DELETED = "ATTRIBUTES_DELETED";
+    public static final String ADDED_TO_ENTITY_GROUP = "ADDED_TO_ENTITY_GROUP";
+    public static final String REMOVED_FROM_ENTITY_GROUP = "REMOVED_FROM_ENTITY_GROUP";
+    public static final String REST_API_REQUEST = "REST_API_REQUEST";
     public static final String TIMESERIES_UPDATED = "TIMESERIES_UPDATED";
     public static final String TIMESERIES_DELETED = "TIMESERIES_DELETED";
     public static final String ALARM_ACK = "ALARM_ACK";
@@ -75,6 +79,7 @@ public class DataConstants {
     public static final String ENTITY_ASSIGNED_TO_TENANT = "ENTITY_ASSIGNED_TO_TENANT";
     public static final String PROVISION_SUCCESS = "PROVISION_SUCCESS";
     public static final String PROVISION_FAILURE = "PROVISION_FAILURE";
+    public static final String OWNER_CHANGED = "OWNER_CHANGED";
     public static final String ENTITY_ASSIGNED_TO_EDGE = "ENTITY_ASSIGNED_TO_EDGE";
     public static final String ENTITY_UNASSIGNED_FROM_EDGE = "ENTITY_UNASSIGNED_FROM_EDGE";
 
@@ -83,6 +88,22 @@ public class DataConstants {
     public static final String RELATIONS_DELETED = "RELATIONS_DELETED";
 
     public static final String RPC_CALL_FROM_SERVER_TO_DEVICE = "RPC_CALL_FROM_SERVER_TO_DEVICE";
+
+    public static final String GENERATE_REPORT = "generateReport";
+    public static final String GENERATE_DASHBOARD_REPORT = "generateDashboardReport";
+
+    /**
+     * Embedded into exported files and generated reports produced while the platform runs in development
+     * mode, so the output stays identifiable as non-production after it has left the product.
+     */
+    public static final String NON_PRODUCTION_NOTICE = "Development Mode — non-production use only";
+
+    /**
+     * Shown to a system administrator whose deployment's non-production confirmation has lapsed, and returned
+     * by the management API while it is locked for that reason. It asks for a declaration, not a countdown, so
+     * it must never say that a non-production period is expiring.
+     */
+    public static final String NON_PRODUCTION_CONFIRMATION_PROMPT = "Confirm this deployment is still non-production.";
 
     public static final String RPC_QUEUED = "RPC_QUEUED";
     public static final String RPC_SENT = "RPC_SENT";
@@ -111,10 +132,15 @@ public class DataConstants {
     public static final String CLIENT_ID = "clientId";
     public static final String USERNAME = "username";
     public static final String PASSWORD = "password";
+
     public static final String EDGE_MSG_SOURCE = "edge";
     public static final String MSG_SOURCE_KEY = "source";
     public static final String EDGE_VERSION_ATTR_KEY = "edgeVersion";
     public static final String EDGE_SYNC_IN_PROGRESS_ATTR_KEY = "syncInProgress";
+
+    public static final String UPDATE_FIRMWARE = "updateFirmware";
+    public static final String UPDATE_SOFTWARE = "updateSoftware";
+    public static final String RULE_NODE_STATE_PREFIX = "RuleNodeState_";
 
     public static final String LAST_CONNECTED_GATEWAY = "lastConnectedGateway";
 

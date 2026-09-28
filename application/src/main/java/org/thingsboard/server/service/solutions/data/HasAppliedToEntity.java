@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.solutions.data;
 
 import org.thingsboard.server.common.data.id.EntityId;
@@ -21,8 +22,8 @@ public interface HasAppliedToEntity {
         return switch (id.getEntityType()) {
             case DEVICE_PROFILE -> "/profiles/deviceProfiles/" + idStr;
             case ASSET_PROFILE -> "/profiles/assetProfiles/" + idStr;
-            case DEVICE -> "/entities/devices/" + idStr;
-            case ASSET -> "/entities/assets/" + idStr;
+            case DEVICE -> "/entities/devices/all/" + idStr;
+            case ASSET -> "/entities/assets/all/" + idStr;
             default -> null;
         };
     }

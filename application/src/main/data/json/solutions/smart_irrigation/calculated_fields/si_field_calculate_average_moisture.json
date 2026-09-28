@@ -1,0 +1,59 @@
+{
+  "reprocessingOrder": 1,
+  "type": "RELATED_ENTITIES_AGGREGATION",
+  "name": "Calculate average moisture",
+  "entityId": {
+    "entityType": "ASSET_PROFILE",
+    "id": "0d58a217-f0d9-4ab6-b8be-d7d41fb36437"
+  },
+  "debugSettings": {
+    "failuresEnabled": true,
+    "allEnabled": false,
+    "allEnabledUntil": 0
+  },
+  "configurationVersion": 0,
+  "configuration": {
+    "type": "RELATED_ENTITIES_AGGREGATION",
+    "relation": {
+      "direction": "FROM",
+      "relationType": "FieldToMoistureSensor"
+    },
+    "arguments": {
+      "active": {
+        "refEntityKey": {
+          "key": "active",
+          "type": "ATTRIBUTE",
+          "scope": "SERVER_SCOPE"
+        },
+        "defaultValue": "false"
+      },
+      "moisture": {
+        "refEntityKey": {
+          "key": "moisture",
+          "type": "TS_LATEST"
+        },
+        "defaultValue": "0"
+      }
+    },
+    "deduplicationIntervalInSec": 10,
+    "metrics": {
+      "latestAvgMoisture": {
+        "function": "AVG",
+        "filter": "return active == true;",
+        "input": {
+          "type": "key",
+          "key": "moisture"
+        }
+      }
+    },
+    "output": {
+      "type": "TIME_SERIES",
+      "strategy": {
+        "type": "RULE_CHAIN"
+      }
+    },
+    "useLatestTs": true,
+    "scheduledUpdateInterval": 10,
+    "scheduledUpdateEnabled": true
+  }
+}

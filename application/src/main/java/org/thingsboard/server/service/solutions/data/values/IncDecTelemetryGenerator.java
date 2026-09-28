@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.solutions.data.values;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -18,7 +19,6 @@ public abstract class IncDecTelemetryGenerator<T extends IncDecValueStrategyDefi
     protected double value;
     protected double endValue;
 
-    @SuppressWarnings("unchecked")
     public IncDecTelemetryGenerator(TelemetryProfile telemetryProfile) {
         super(telemetryProfile);
         this.strategy = (T) telemetryProfile.getValueStrategy();

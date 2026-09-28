@@ -1,17 +1,21 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.cf.configuration.aggregation.single.interval;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.thingsboard.server.common.data.util.TbPair;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.LongFunction;
 import java.util.stream.Stream;
@@ -148,6 +152,145 @@ public class AggIntervalTest {
                 Arguments.of(
                         (LongFunction<AggInterval>) offset -> new CustomInterval(TZ, offset, TimeUnit.HOURS.toSeconds(4)),
                         (Function<ZonedDateTime, ZonedDateTime>) currentInterval -> currentInterval.plusHours(4)
+                )
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("intervalBetween")
+    void testGetIntervalsBetween(LongFunction<AggInterval> intervalCreator, Long startTs, Long endTs, Consumer<List<TbPair<Long, Long>>> expectedIntervals) {
+        AggInterval interval = intervalCreator.apply(0L);
+
+        List<TbPair<Long, Long>> intervalsBetween = interval.getIntervalsBetween(startTs, endTs);
+
+        expectedIntervals.accept(intervalsBetween);
+    }
+
+    private static Stream<Arguments> intervalBetween() {
+        return Stream.of(
+                Arguments.of(
+                        (LongFunction<AggInterval>) offset -> new HourInterval(TZ, offset),
+                        ZonedDateTime.of(2025, 11, 11, 0, 24, 0, 0, ZoneId.of(TZ)).toInstant().toEpochMilli(),
+                        ZonedDateTime.of(2025, 11, 11, 3, 25, 0, 0, ZoneId.of(TZ)).toInstant().toEpochMilli(),
+                        (Consumer<List<TbPair<Long, Long>>>) intervals -> {
+                            assertThat(intervals).hasSize(3);
+                            assertThat(intervals.get(0)).isEqualTo(new TbPair<>(
+                                            ZonedDateTime.of(2025, 11, 11, 0, 0, 0, 0, ZoneId.of(TZ)).toInstant().toEpochMilli(),
+                                            ZonedDateTime.of(2025, 11, 11, 1, 0, 0, 0, ZoneId.of(TZ)).toInstant().toEpochMilli()
+                                    )
+                            );
+                            assertThat(intervals.get(1)).isEqualTo(new TbPair<>(
+                                            ZonedDateTime.of(2025, 11, 11, 1, 0, 0, 0, ZoneId.of(TZ)).toInstant().toEpochMilli(),
+                                            ZonedDateTime.of(2025, 11, 11, 2, 0, 0, 0, ZoneId.of(TZ)).toInstant().toEpochMilli()
+                                    )
+                            );
+                            assertThat(intervals.get(2)).isEqualTo(new TbPair<>(
+                                            ZonedDateTime.of(2025, 11, 11, 2, 0, 0, 0, ZoneId.of(TZ)).toInstant().toEpochMilli(),
+                                            ZonedDateTime.of(2025, 11, 11, 3, 0, 0, 0, ZoneId.of(TZ)).toInstant().toEpochMilli()
+                                    )
+                            );
+                        }
+                ),
+                Arguments.of(
+                        (LongFunction<AggInterval>) offset -> new DayInterval(TZ, offset),
+                        ZonedDateTime.of(2025, 11, 10, 0, 24, 0, 0, ZoneId.of(TZ)).toInstant().toEpochMilli(),
+                        ZonedDateTime.of(2025, 11, 12, 4, 25, 0, 0, ZoneId.of(TZ)).toInstant().toEpochMilli(),
+                        (Consumer<List<TbPair<Long, Long>>>) intervals -> {
+                            assertThat(intervals).hasSize(2);
+                            assertThat(intervals.get(0)).isEqualTo(new TbPair<>(
+                                            ZonedDateTime.of(2025, 11, 10, 0, 0, 0, 0, ZoneId.of(TZ)).toInstant().toEpochMilli(),
+                                            ZonedDateTime.of(2025, 11, 11, 0, 0, 0, 0, ZoneId.of(TZ)).toInstant().toEpochMilli()
+                                    )
+                            );
+                            assertThat(intervals.get(1)).isEqualTo(new TbPair<>(
+                                            ZonedDateTime.of(2025, 11, 11, 0, 0, 0, 0, ZoneId.of(TZ)).toInstant().toEpochMilli(),
+                                            ZonedDateTime.of(2025, 11, 12, 0, 0, 0, 0, ZoneId.of(TZ)).toInstant().toEpochMilli()
+                                    )
+                            );
+                        }
+                ),
+                Arguments.of(
+                        (LongFunction<AggInterval>) offset -> new WeekInterval(TZ, offset),
+                        ZonedDateTime.of(2025, 11, 4, 0, 24, 0, 0, ZoneId.of(TZ)).toInstant().toEpochMilli(),
+                        ZonedDateTime.of(2025, 11, 12, 4, 25, 0, 0, ZoneId.of(TZ)).toInstant().toEpochMilli(),
+                        (Consumer<List<TbPair<Long, Long>>>) intervals -> {
+                            assertThat(intervals).hasSize(1);
+                            assertThat(intervals.get(0)).isEqualTo(new TbPair<>(
+                                            ZonedDateTime.of(2025, 11, 3, 0, 0, 0, 0, ZoneId.of(TZ)).toInstant().toEpochMilli(),
+                                            ZonedDateTime.of(2025, 11, 10, 0, 0, 0, 0, ZoneId.of(TZ)).toInstant().toEpochMilli()
+                                    )
+                            );
+                        }
+                ),
+                Arguments.of(
+                        (LongFunction<AggInterval>) offset -> new WeekSunSatInterval(TZ, offset),
+                        ZonedDateTime.of(2025, 11, 4, 0, 24, 0, 0, ZoneId.of(TZ)).toInstant().toEpochMilli(),
+                        ZonedDateTime.of(2025, 11, 12, 4, 25, 0, 0, ZoneId.of(TZ)).toInstant().toEpochMilli(),
+                        (Consumer<List<TbPair<Long, Long>>>) intervals -> {
+                            assertThat(intervals).hasSize(1);
+                            assertThat(intervals.get(0)).isEqualTo(new TbPair<>(
+                                            ZonedDateTime.of(2025, 11, 2, 0, 0, 0, 0, ZoneId.of(TZ)).toInstant().toEpochMilli(),
+                                            ZonedDateTime.of(2025, 11, 9, 0, 0, 0, 0, ZoneId.of(TZ)).toInstant().toEpochMilli()
+                                    )
+                            );
+                        }
+                ),
+                Arguments.of(
+                        (LongFunction<AggInterval>) offset -> new MonthInterval(TZ, offset),
+                        ZonedDateTime.of(2025, 9, 4, 0, 24, 0, 0, ZoneId.of(TZ)).toInstant().toEpochMilli(),
+                        ZonedDateTime.of(2025, 11, 12, 4, 25, 0, 0, ZoneId.of(TZ)).toInstant().toEpochMilli(),
+                        (Consumer<List<TbPair<Long, Long>>>) intervals -> {
+                            assertThat(intervals).hasSize(2);
+                            assertThat(intervals.get(0)).isEqualTo(new TbPair<>(
+                                            ZonedDateTime.of(2025, 9, 1, 0, 0, 0, 0, ZoneId.of(TZ)).toInstant().toEpochMilli(),
+                                            ZonedDateTime.of(2025, 10, 1, 0, 0, 0, 0, ZoneId.of(TZ)).toInstant().toEpochMilli()
+                                    )
+                            );
+                            assertThat(intervals.get(1)).isEqualTo(new TbPair<>(
+                                            ZonedDateTime.of(2025, 10, 1, 0, 0, 0, 0, ZoneId.of(TZ)).toInstant().toEpochMilli(),
+                                            ZonedDateTime.of(2025, 11, 1, 0, 0, 0, 0, ZoneId.of(TZ)).toInstant().toEpochMilli()
+                                    )
+                            );
+                        }
+                ),
+                Arguments.of(
+                        (LongFunction<AggInterval>) offset -> new QuarterInterval(TZ, offset),
+                        ZonedDateTime.of(2025, 8, 4, 0, 24, 0, 0, ZoneId.of(TZ)).toInstant().toEpochMilli(),
+                        ZonedDateTime.of(2025, 11, 12, 4, 25, 0, 0, ZoneId.of(TZ)).toInstant().toEpochMilli(),
+                        (Consumer<List<TbPair<Long, Long>>>) intervals -> {
+                            assertThat(intervals).hasSize(1);
+                            assertThat(intervals.get(0)).isEqualTo(new TbPair<>(
+                                            ZonedDateTime.of(2025, 7, 1, 0, 0, 0, 0, ZoneId.of(TZ)).toInstant().toEpochMilli(),
+                                            ZonedDateTime.of(2025, 10, 1, 0, 0, 0, 0, ZoneId.of(TZ)).toInstant().toEpochMilli()
+                                    )
+                            );
+                        }
+                ),
+                Arguments.of(
+                        (LongFunction<AggInterval>) offset -> new YearInterval(TZ, offset),
+                        ZonedDateTime.of(2024, 8, 4, 0, 24, 0, 0, ZoneId.of(TZ)).toInstant().toEpochMilli(),
+                        ZonedDateTime.of(2025, 11, 12, 4, 25, 0, 0, ZoneId.of(TZ)).toInstant().toEpochMilli(),
+                        (Consumer<List<TbPair<Long, Long>>>) intervals -> {
+                            assertThat(intervals).hasSize(1);
+                            assertThat(intervals.get(0)).isEqualTo(new TbPair<>(
+                                            ZonedDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneId.of(TZ)).toInstant().toEpochMilli(),
+                                            ZonedDateTime.of(2025, 1, 1, 0, 0, 0, 0, ZoneId.of(TZ)).toInstant().toEpochMilli()
+                                    )
+                            );
+                        }
+                ),
+                Arguments.of(
+                        (LongFunction<AggInterval>) offset -> new CustomInterval(TZ, offset, TimeUnit.HOURS.toSeconds(4)),
+                        ZonedDateTime.of(2025, 11, 10, 22, 24, 0, 0, ZoneId.of(TZ)).toInstant().toEpochMilli(),
+                        ZonedDateTime.of(2025, 11, 11, 3, 25, 0, 0, ZoneId.of(TZ)).toInstant().toEpochMilli(),
+                        (Consumer<List<TbPair<Long, Long>>>) intervals -> {
+                            assertThat(intervals).hasSize(1);
+                            assertThat(intervals.get(0)).isEqualTo(new TbPair<>(
+                                            ZonedDateTime.of(2025, 11, 10, 20, 0, 0, 0, ZoneId.of(TZ)).toInstant().toEpochMilli(),
+                                            ZonedDateTime.of(2025, 11, 11, 0, 0, 0, 0, ZoneId.of(TZ)).toInstant().toEpochMilli()
+                                    )
+                            );
+                        }
                 )
         );
     }

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   Component,
   DestroyRef,
@@ -25,6 +26,7 @@ import {
   checkLatestDataKeys,
   defaultTimeSeriesChartYAxisSettings,
   getNextTimeSeriesYAxisId,
+  normalizeAxisLimit,
   TimeSeriesChartYAxes,
   TimeSeriesChartYAxisId,
   TimeSeriesChartYAxisSettings,
@@ -80,6 +82,14 @@ export class TimeSeriesChartYAxesPanelComponent implements ControlValueAccessor,
   @Input()
   @coerceBoolean()
   supportsUnitConversion = false;
+
+  @Input()
+  @coerceBoolean()
+  stroked = false;
+
+  @Input()
+  @coerceBoolean()
+  reportMode = false;
 
   @Output()
   axisRemoved = new EventEmitter<TimeSeriesChartYAxisId>();

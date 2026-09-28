@@ -1,0 +1,73 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-entity-group-columns mat-padding">
+  <div class="tb-outlined-border">
+    <div class="tb-header flex flex-1 flex-row items-center justify-start" style="padding-left: 16px; padding-right: 16px;">
+      @if (!disabled) {
+        <span style="min-width: 48px;">&nbsp;</span>
+      }
+      <span style="padding-left: 10px; min-width: 30px;">&nbsp;</span>
+      <div class="flex flex-1 flex-row items-center justify-start" style="padding: 0 0 0 10px; margin: 5px;">
+        <span translate style="padding-left: 5px;" class="tb-column-type lt-xl:flex-1">entity-group.column-type.column-type</span>
+        <span translate style="padding-left: 10px;" class="tb-column-value lt-xl:flex-1">entity-group.column-value</span>
+        <span translate style="padding-left: 10px;" class="flex-1 lt-xl:!hidden">entity-group.column-title</span>
+        <span translate style="padding-left: 10px;" class="tb-column-sort-order lt-lg:!hidden lt-xl:flex-1">entity-group.default-sort-order</span>
+        <span translate style="padding-left: 10px; min-width: 48px; max-width: 48px;" class="xs:!hidden">entity-group.hide-in-mobile-view</span>
+        <span style="padding-left: 5px; min-width: 96px;">&nbsp;</span>
+      </div>
+    </div>
+    <mat-divider></mat-divider>
+    <div class="tb-columns" [class.tb-readonly]="disabled"
+      style="max-height: 500px; overflow: auto; padding-bottom: 15px;" [formGroup]="columnsFormGroup">
+      <mat-list class="tb-drop-list" cdkDropList cdkDropListOrientation="vertical"
+        (cdkDropListDropped)="onDrop($event)"
+        [cdkDropListDisabled]="disabled" formArrayName="columns">
+        @for (columnControl of columnsFormArray.controls; track columnControl) {
+          <mat-list-item
+            cdkDrag class="tb-entity-group-column tb-draggable"
+            [cdkDragDisabled]="disabled">
+            <div class="flex flex-1 flex-row items-center justify-start">
+              @if (!disabled) {
+                <button mat-icon-button color="primary"
+                  cdkDragHandle
+                  class="tb-drag-handle handle"
+                  style="min-width: 48px;"
+                  matTooltip="{{ 'action.drag' | translate }}"
+                  matTooltipPosition="above">
+                  <mat-icon>drag_handle</mat-icon>
+                </button>
+              }
+              <div class="flex flex-1 flex-row items-center justify-start">
+                <span style="padding-left: 10px; min-width: 30px;">{{$index + 1}}.</span>
+                <tb-entity-group-column
+                  class="flex-1"
+                  [entityType]="entityType"
+                  [formControl]="columnControl"
+                  (defaultSortOrderChanged)="defaultSortOrderChanged($index, $event)"
+                  (removeColumn)="removeColumn($index)"
+                  (updateColumn)="updateColumn($index, $event)">
+                </tb-entity-group-column>
+              </div>
+            </div>
+          </mat-list-item>
+        }
+      </mat-list>
+    </div>
+  </div>
+  @if (!disabled) {
+    <div class="flex flex-1 flex-row items-center justify-start"
+      style="padding-top: 16px;">
+      <button mat-raised-button color="primary"
+        (click)="addColumn()"
+        matTooltip="{{ 'entity-group.add-column' | translate }}"
+        matTooltipPosition="above">
+        <mat-icon>add</mat-icon>
+        <span translate>action.add</span>
+      </button>
+    </div>
+  }
+</div>

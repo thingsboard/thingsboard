@@ -1,0 +1,108 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+.tb-report-component-host {
+  &::after {
+    position: absolute;
+    inset: 0;
+    background: transparent;
+  }
+  &.tb-hover {
+    &::after {
+      content: '';
+      border: solid 2px #bdc3c7;
+      pointer-events: none;
+    }
+  }
+  &.tb-selected {
+    &::after {
+      content: '';
+      border-radius: 4px;
+      border: solid 1px #0094FF;
+      box-shadow: 0 0 20px 0 rgba(3, 155, 229, 0.30);
+      pointer-events: none;
+    }
+  }
+  &.tb-report-component-container {
+    &.tb-child-selected {
+      > .tb-report-component {
+        overflow: visible;
+      }
+    }
+  }
+}
+
+.cdk-drag-preview {
+  .tb-report-component-host {
+    &::after {
+      content: unset;
+    }
+  }
+}
+
+.cdk-drag-placeholder {
+  .tb-report-component-host {
+    &::after {
+      content: '';
+      border: dotted 3px #999;
+    }
+  }
+}
+
+.tb-report-component {
+  display: flex;
+  width: 100%;
+  min-height: 0;
+  position: absolute;
+  overflow: hidden;
+  transform-origin: left top;
+}
+
+.tooltipster-sidetip.tb-report-component-edit-tooltip {
+  position: absolute !important;
+  .tooltipster-box {
+    user-select: none;
+    background: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.38);
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+    .tooltipster-content {
+      padding: 4px 8px;
+      font-size: 12px;
+      line-height: 12px;
+      font-weight: 500;
+      color: rgba(0, 0, 0, 0.76);
+      .tb-report-component-action-container {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        .tb-report-component-actions-panel {
+          display: flex;
+          flex-direction: row;
+          place-content: center space-between;
+          align-items: center;
+          gap: 8px;
+        }
+      }
+    }
+  }
+  .tooltipster-arrow {
+    .tooltipster-arrow-uncropped {
+      .tooltipster-arrow-background {
+        border-width: 12px;
+      }
+    }
+  }
+  &.tooltipster-top {
+    .tooltipster-arrow {
+      bottom: -1px;
+      .tooltipster-arrow-uncropped {
+        .tooltipster-arrow-border {
+          border-top-color: rgba(0, 0, 0, 0.38);
+        }
+        .tooltipster-arrow-background {
+          border-top-color: #fff;
+          left: -2px;
+        }
+      }
+    }
+  }
+}

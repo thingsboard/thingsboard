@@ -1,10 +1,12 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<div [formGroup]="datasourcesFormGroup" class="tb-form-panel tb-datasources" [class.no-padding-bottom]="!showAddDatasource">
+<div [formGroup]="datasourcesFormGroup" class="tb-form-panel tb-datasources" [class.stroked]="stroked"
+     [class.no-padding-bottom]="!showAddDatasource">
   <div class="flex flex-col">
     <div class="flex flex-row items-center justify-between">
       <div class="tb-form-panel-title">{{ (singleDatasource ? (isAlarmSource ? 'widget-config.alarm-source' : 'widget-config.datasource') : 'widget-config.datasources') | translate }}</div>
@@ -15,6 +17,7 @@
       }
       @if (basicMode && !hideDatasourcesMode) {
         <tb-toggle-select [ngModel]="datasourcesMode" (ngModelChange)="datasourcesModeChange($event)"
+                          [disabled]="disabled"
                           [ngModelOptions]="{ standalone: true }">
           <tb-toggle-option [value]="datasourceType.device">{{ 'device.device' | translate }}</tb-toggle-option>
           <tb-toggle-option [value]="datasourceType.entity">{{ 'entity.entity-alias' | translate }}</tb-toggle-option>

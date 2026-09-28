@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.update;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -15,13 +16,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
-import org.thingsboard.server.common.data.EdgeUpgradeMessage;
+import org.thingsboard.server.common.data.EdgeUpgradeMessageV2;
+import org.thingsboard.server.common.data.agent.AgentUpgradeMessage;
 import org.thingsboard.server.common.data.UpdateMessage;
 import org.thingsboard.server.common.data.notification.rule.trigger.NewPlatformVersionTrigger;
 import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.instructions.EdgeInstallInstructionsService;
+import org.thingsboard.server.service.agent.upgrade.AgentUpgradeVersionService;
 import org.thingsboard.server.service.edge.instructions.EdgeUpgradeInstructionsService;
 
 import java.io.IOException;
@@ -60,6 +63,9 @@ public class DefaultUpdateService implements UpdateService {
     @Autowired(required = false)
     private EdgeUpgradeInstructionsService edgeUpgradeInstructionsService;
 
+    @Autowired(required = false)
+    private AgentUpgradeVersionService agentUpgradeVersionService;
+
     private final ScheduledExecutorService scheduler = ThingsBoardExecutors.newSingleThreadScheduledExecutor("tb-update-service");
 
     private ScheduledFuture<?> checkUpdatesFuture = null;
@@ -75,8 +81,8 @@ public class DefaultUpdateService implements UpdateService {
     public void init() {
         version = buildProperties != null ? buildProperties.getVersion() : "unknown";
         updateMessage = new UpdateMessage(false, version, "", "",
-                "https://thingsboard.io/docs/reference/releases",
-                "https://thingsboard.io/docs/reference/releases");
+                "https://thingsboard.io/docs/pe/reference/releases",
+                "https://thingsboard.io/docs/pe/reference/releases");
         if (updatesEnabled) {
             try {
                 platform = System.getProperty("platform", "unknown");
@@ -136,20 +142,48 @@ public class DefaultUpdateService implements UpdateService {
                         .updateInfo(updateMessage)
                         .build());
             }
+        } catch (Exception e) {
+            log.trace(e.getMessage());
+        }
+        updateEdgeVersions();
+        updateAgentVersions();
+    };
+
+    private void updateEdgeVersions() {
+        if (edgeInstallInstructionsService == null || edgeUpgradeInstructionsService == null) {
+            return;
+        }
+        try {
+            var headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
             ObjectNode edgeRequest = JacksonUtil.newObjectNode().put(VERSION_PARAM, version);
-            String edgePlatformVersion = restClient.postForObject(UPDATE_SERVER_BASE_URL + "/api/v1/edge/installMapping", new HttpEntity<>(edgeRequest.toString(), headers), String.class);
+            String edgePlatformVersion = restClient.postForObject(UPDATE_SERVER_BASE_URL + "/api/v2/edge/installMapping", new HttpEntity<>(edgeRequest.toString(), headers), String.class);
             if (edgePlatformVersion != null) {
                 edgeInstallInstructionsService.setPlatformEdgeVersion(edgePlatformVersion);
                 edgeUpgradeInstructionsService.setPlatformEdgeVersion(edgePlatformVersion);
             }
-            EdgeUpgradeMessage edgeUpgradeMessage = restClient.postForObject(UPDATE_SERVER_BASE_URL + "/api/v1/edge/upgradeMapping", new HttpEntity<>(edgeRequest.toString(), headers), EdgeUpgradeMessage.class);
+            EdgeUpgradeMessageV2 edgeUpgradeMessage = restClient.getForObject(UPDATE_SERVER_BASE_URL + "/api/v2/edge/upgradeMapping", EdgeUpgradeMessageV2.class);
             if (edgeUpgradeMessage != null) {
-                edgeUpgradeInstructionsService.updateInstructionMap(edgeUpgradeMessage.getEdgeVersions());
+                edgeUpgradeInstructionsService.updateVersionGraph(edgeUpgradeMessage.getEdgeVersions());
             }
         } catch (Exception e) {
-            log.trace(e.getMessage());
+            log.warn("Failed to fetch edge install/upgrade mapping from the update server", e);
         }
-    };
+    }
+
+    private void updateAgentVersions() {
+        if (agentUpgradeVersionService == null) {
+            return;
+        }
+        try {
+            AgentUpgradeMessage agentUpgradeMessage = restClient.getForObject(UPDATE_SERVER_BASE_URL + "/api/v1/agent/upgradeMapping", AgentUpgradeMessage.class);
+            if (agentUpgradeMessage != null) {
+                agentUpgradeVersionService.updateVersionGraph(agentUpgradeMessage.getAgentVersions());
+            }
+        } catch (Exception e) {
+            log.warn("Failed to fetch agent upgrade mapping from the update server", e);
+        }
+    }
 
     @Override
     public UpdateMessage checkUpdates() {

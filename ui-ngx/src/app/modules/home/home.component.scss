@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 @import "constants";
 
 :host {
@@ -15,7 +16,7 @@
         transition: width $sidenav-anim-timing;
         .tb-logo-title {
           opacity: 1;
-          transition: opacity $sidenav-anim-timing;
+          transition: all $sidenav-anim-timing;
         }
       }
       mat-sidenav-content.tb-site-content:not(.tb-force-fullscreen) {
@@ -25,8 +26,18 @@
       &.tb-collapsed {
         mat-sidenav.tb-site-sidenav {
           width: 50px;
-          .tb-logo-title {
-            opacity: 0;
+          .tb-nav-header {
+            .tb-nav-header-toolbar {
+              .tb-logo-title {
+                opacity: 0;
+                height: 30px !important;
+              }
+            }
+          }
+          .tb-side-menu-toolbar {
+            .tb-version {
+              opacity: 0;
+            }
           }
         }
         mat-sidenav-content.tb-site-content {
@@ -44,6 +55,9 @@
       z-index: 2;
       flex-shrink: 0;
       white-space: nowrap;
+      &.tb-scrolled {
+        box-shadow: 0 6px 12px -8px rgba(0, 0, 0, .15);
+      }
       .tb-nav-header-toolbar {
         position: relative;
         min-height: 56px;
@@ -52,32 +66,49 @@
         z-index: 2;
         flex-shrink: 0;
         white-space: nowrap;
-        border-right: 1px solid rgba(0, 0, 0, 0.12);
         .tb-logo-title {
           width: auto;
           max-width: 100%;
           height: 30px;
           max-height: 100%;
-          margin: auto 0;
+          margin: auto 40px auto 0;
+          ::ng-deep img {
+            object-fit: contain;
+            object-position: top left;
+            max-width: 190px;
+          }
         }
         .tb-sidenav-toggle {
           margin: 0;
           position: absolute;
-          right: 9px;
-          top: 12px;
+          right: 5px;
+          top: 8px;
           .tb-collapsed-logo-container {
             position: relative;
-            width: 20px;
-            height: 20px;
-            margin-left: 6px;
-            .mat-icon, img {
-              width: 20px;
-              height: 20px;
+            width: 24px;
+            height: 24px;
+            margin-left: 8px;
+            .mat-icon, img, span {
+              width: 24px;
+              height: 24px;
               position: absolute;
               inset: 0;
               transition: opacity $sidenav-anim-timing;
             }
-            .tb-open-icon {
+            img {
+              object-fit: contain;
+              object-position: center center;
+            }
+            span {
+              display: block;
+              line-height: 24px;
+              ::ng-deep svg {
+                fill: currentColor;
+                width: 24px;
+                height: 24px;
+              }
+            }
+            .tb-open-icon:not(.tb-no-collapsed-icon) {
               opacity: 0;
             }
             .tb-collapsed-logo {
@@ -98,13 +129,25 @@
       }
     }
     .tb-side-menu-toolbar {
+      --mat-toolbar-container-text-color: var(--tb-menu-text-color);
       overflow: hidden;
       height: inherit;
       padding: 0;
-      border-right: 1px solid rgba(0, 0, 0, 0.12);
-      --mat-toolbar-container-text-color: rgba(0, 0, 0, .76);
-      tb-user-menu {
-        border-top: 1px solid rgba(0, 0, 0, 0.12);
+      align-items: initial;
+      .tb-sidebar-bottom {
+        border-top: 1px solid transparent;
+        &.tb-scrolled {
+          border-top-color: var(--tb-menu-border-color);
+          box-shadow: 0 -6px 12px -8px rgba(0, 0, 0, .15);
+        }
+      }
+      .tb-version {
+        font-size: 12px;
+        font-weight: normal;
+        padding: 8px 16px;
+        opacity: 1;
+        transition: opacity $sidenav-anim-timing;
+        border-bottom: 1px solid var(--tb-menu-border-color);
       }
     }
   }
@@ -112,7 +155,6 @@
     z-index: 2;
     height: 56px;
     min-height: 56px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
     .mat-toolbar-tools {
       height: 56px;
       padding: 0;
@@ -122,8 +164,26 @@
       font-weight: 400 !important;
     }
   }
+  .tb-main-content-wrapper {
+    position: relative;
+    overflow: hidden;
+    flex: 1;
+    display: flex;
+  }
+
   .tb-main-content {
     overflow: auto;
     position: relative;
+    // Panel space is reserved at once: animating margin-right relayouts the whole page every frame.
+
+    &.openAiAssistant {
+      margin-right: 480px;
+    }
+
+    @media #{$mat-lt-lg} {
+      &.openAiAssistant {
+        margin-right: 0;
+      }
+    }
   }
 }

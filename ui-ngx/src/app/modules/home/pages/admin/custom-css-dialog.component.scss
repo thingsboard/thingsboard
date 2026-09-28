@@ -1,0 +1,65 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@import '../../../../../scss/constants';
+
+:host {
+  position: relative;
+
+  .tb-custom-css-dialog {
+    display: flex;
+    flex-direction: column;
+
+    @media #{$mat-lt-sm} {
+      height: 100%;
+    }
+  }
+
+  .mat-mdc-dialog-content {
+    @media #{$mat-gt-xs} {
+      max-height: 80vh;
+    }
+  }
+}
+
+.tb-css-content {
+  background: #fff;
+}
+
+.tb-css-content-toolbar {
+  height: 40px;
+
+  & > *:not(:last-child) {
+    margin-right: 4px;
+  }
+
+  button.mat-mdc-button-base, button.mat-mdc-button-base.tb-mat-32 {
+    align-items: center;
+    vertical-align: middle;
+    min-width: 32px;
+    min-height: 15px;
+    padding: 4px;
+    margin: 0;
+    font-size: .8rem;
+    line-height: 15px;
+    background: rgba(220, 220, 220, .35);
+    &:not(.tb-help-popup-button) {
+      color: #7b7b7b;
+    }
+  }
+  button.mat-mdc-button-base:not(.mat-mdc-icon-button) {
+    height: 23px;
+  }
+}
+
+.tb-css-content-panel {
+  height: 100%;
+  margin-left: 15px;
+  border: 1px solid #c0c0c0;
+
+  #tb-css-input {
+    width: 100%;
+    min-width: 200px;
+    height: 100%;
+    min-height: min(60vh, 480px);
+  }
+}

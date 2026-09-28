@@ -1,12 +1,9 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
-import { ChangeDetectorRef, Component, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { ChangeDetectorRef, Component, DestroyRef, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
-import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
-import {
-  PeConnectivityMethodPromptData,
-  TbPeConnectivityMethodPromptComponent
-} from '@home/components/iot-hub/pe-connectivity-method-prompt.component';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { DialogComponent } from '@shared/components/dialog.component';
@@ -24,7 +21,12 @@ import { RuleChainService } from '@core/http/rule-chain.service';
 import { AttributeService } from '@core/http/attribute.service';
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { EntityId } from '@shared/models/id/entity-id';
+import { CustomerId } from '@shared/models/id/customer-id';
 import { generateSecret } from '@core/utils';
+import { ConverterService } from '@core/http/converter.service';
+import { IntegrationService } from '@core/http/integration.service';
+import { Converter, ConverterType } from '@shared/models/converter.models';
+import { AiDashboardGenerationService } from '@home/components/ai/ai-dashboard-generation.service';
 import {
   DeviceInstallStep,
   DevicePackageInfo,
@@ -36,7 +38,6 @@ import {
   installMethodIcons as INSTALL_METHOD_ICONS,
   installMethodLabels as INSTALL_METHOD_LABELS,
   InstallStepType,
-  peOnlyInstallMethods,
   stepTypeAliasMap
 } from '@shared/models/iot-hub/device-package.models';
 import { mergeMap } from 'rxjs/operators';
@@ -46,6 +47,8 @@ export interface DeviceInstallDialogData {
   reviewMode?: boolean;
   selectedInstallMethod?: string;
   installState?: Record<string, any>;
+  entityGroupId?: string;
+  customerId?: string;
 }
 
 export type WizardStepType = 'connectivity' | 'placeholder' | 'instruction' | 'form' | 'progress';
@@ -89,12 +92,12 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   selectedInstallMethod: string | null = null;
   installMethodLabels = INSTALL_METHOD_LABELS;
   installMethodIcons = INSTALL_METHOD_ICONS;
-  peOnlyInstallMethods = peOnlyInstallMethods;
 
   // Wizard
   wizardSteps: WizardStep[] = [];
   wizardStarted = false;
   reviewMode = false;
+  allowAiDashboardGenerate = false;
   /**
    * Set once the server has an installed item for this device. From that moment every way out of
    * the wizard — including the header X and the Cancel button on a still-pending later step —
@@ -106,6 +109,10 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   formValues: Record<string, any> = {};
   entityOutputs = new Map<string, EntityStepOutput>();
   transportVars: Record<string, string> = {};
+  // Routing key pre-allocated for the in-flight INTEGRATION step so ${routingKey}
+  // placeholders (e.g. inside clientConfiguration.httpEndpoint emitted by the
+  // export pipeline) substitute to the value we'll save.
+  private pendingRoutingKey: string | undefined;
   // form-field key → declared type. Used by resolveTemplateJson() to emit BOOLEAN/INTEGER
   // placeholders as raw JSON values instead of quoted strings.
   private fieldTypes = new Map<string, FormFieldType>();
@@ -118,6 +125,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     protected router: Router,
     protected dialogRef: MatDialogRef<TbDeviceInstallDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: DeviceInstallDialogData,
+    private destroyRef: DestroyRef,
     private cdr: ChangeDetectorRef,
     private deviceProfileService: DeviceProfileService,
     private deviceService: DeviceService,
@@ -125,13 +133,16 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     private ruleChainService: RuleChainService,
     private attributeService: AttributeService,
     private iotHubApiService: IotHubApiService,
-    private translate: TranslateService,
-    private dialog: MatDialog
+    private converterService: ConverterService,
+    private integrationService: IntegrationService,
+    private aiDashboardGenerationService: AiDashboardGenerationService,
+    private translate: TranslateService
   ) {
     super(store, router, dialogRef);
   }
 
   async ngOnInit(): Promise<void> {
+    this.allowAiDashboardGenerate = this.aiDashboardGenerationService.isAllowedDashboardGenerate({ requireTelemetry: true });
     try {
       const zipData = await firstValueFrom(this.iotHubApiService.getVersionFileData(this.data.item.id, { ignoreLoading: true }).pipe(
         mergeMap((blob: Blob) => blob.arrayBuffer())
@@ -179,16 +190,13 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       this.selectedInstallMethod = this.data.selectedInstallMethod;
       this.restoreInstallState(this.data.installState);
       this.startWizard();
-    } else if (this.availableInstallMethods.length === 1
-        && !peOnlyInstallMethods.has(this.availableInstallMethods[0])) {
-      // Single non-PE method: skip the selector and start the wizard.
+    } else if (this.availableInstallMethods.length === 1) {
+      // Single method: skip the selector and start the wizard.
       this.selectedInstallMethod = this.availableInstallMethods[0];
       this.startWizard();
     } else {
-      // Multiple methods (or only PE-only ones): render the connection
-      // method step as the wizard's first step. PE-only cards open the
-      // pe-connectivity-method-prompt dialog and never set
-      // selectedInstallMethod.
+      // Multiple methods: render the connection method step as the
+      // wizard's first step.
       this.startWizard();
     }
     this.loading = false;
@@ -205,12 +213,6 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   // --- Connectivity ---
 
   selectConnectivity(ct: string): void {
-    // PE-only methods open the upgrade prompt dialog instead of being
-    // selectable — they never become the active install method.
-    if (peOnlyInstallMethods.has(ct)) {
-      this.openPeConnectivityPrompt(ct);
-      return;
-    }
     if (this.selectedInstallMethod === ct) {
       // Re-clicking the already-selected card is a no-op; users who
       // want to proceed without changing selection use the Next button.
@@ -222,17 +224,6 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     if (this.currentWizardStep?.type === 'connectivity') {
       this.confirmConnectivity();
     }
-  }
-
-  private openPeConnectivityPrompt(ct: string): void {
-    this.dialog.open<TbPeConnectivityMethodPromptComponent, PeConnectivityMethodPromptData>(
-      TbPeConnectivityMethodPromptComponent,
-      {
-        data: { connectorName: this.installMethodLabels.get(ct) || ct },
-        autoFocus: false,
-        panelClass: ['tb-dialog']
-      }
-    );
   }
 
   onTabChanged(index: number): void {
@@ -358,6 +349,24 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     void this.router.navigateByUrl(url);
   }
 
+  get canGenerateAiDashboard(): boolean {
+    return this.allowAiDashboardGenerate
+      && !this.entityOutputs.get('dashboard')?.url
+      && !!this.entityOutputs.get('device')?.id;
+  }
+
+  generateDashboardWithAi(): void {
+    const deviceId = this.entityOutputs.get('device')?.id;
+    if (!deviceId) {
+      return;
+    }
+    this.aiDashboardGenerationService.generateWithTelemetryCheck({
+      deviceId,
+      destroyRef: this.destroyRef,
+      noTelemetry: { hideSendTelemetry: true }
+    });
+  }
+
   done(): void {
     this.dialogRef.close('installed');
   }
@@ -460,7 +469,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   }
 
   // Bound function reference passed to <tb-install-form-renderer>'s [resolveImagePath] input.
-  // Defined as a property so the template binding stays stable across change detection.
+  // Arrow form preserves `this` when invoked from the renderer's template.
   readonly resolveImagePathFn: (path: string) => string = (path: string) => this.resolveImagePath(path);
 
   // --- Variable Resolution ---
@@ -482,6 +491,15 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     if (key in this.transportVars) {
       return this.transportVars[key];
     }
+    // Smart platform URL: prefer https (skipping default 443), fall back to http
+    // (skipping default 80). Emitted by the export pipeline for baseUrl /
+    // httpEndpoint fields so the original installer's host doesn't leak.
+    if (key === 'baseUrl') {
+      return this.platformBaseUrl();
+    }
+    if (key === 'routingKey' && this.pendingRoutingKey) {
+      return this.pendingRoutingKey;
+    }
     const dotIdx = key.indexOf('.');
     if (dotIdx > 0) {
       const alias = key.substring(0, dotIdx);
@@ -490,6 +508,20 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       if (output && prop in output) {
         return String((output as any)[prop]);
       }
+    }
+    return undefined;
+  }
+
+  private platformBaseUrl(): string | undefined {
+    const httpsHost = this.transportVars['https.host'];
+    if (httpsHost) {
+      const port = this.transportVars['https.port'];
+      return port && port !== '443' ? `https://${httpsHost}:${port}` : `https://${httpsHost}`;
+    }
+    const httpHost = this.transportVars['http.host'];
+    if (httpHost) {
+      const port = this.transportVars['http.port'];
+      return port && port !== '80' ? `http://${httpHost}:${port}` : `http://${httpHost}`;
     }
     return undefined;
   }
@@ -656,7 +688,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
           completed: this.reviewMode
         });
       } else {
-        // Skip unsupported steps (CONVERTER, INTEGRATION)
+        // Unknown step type — skip
         i++;
       }
     }
@@ -835,6 +867,10 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     if (!raw) {
       throw new Error(`Template file not found: ${step.template}`);
     }
+    if (step.type === InstallStepType.INTEGRATION) {
+      this.pendingRoutingKey = this.generateUuid();
+    }
+    try {
     const template = this.resolveTemplateJson(raw);
 
     switch (step.type) {
@@ -847,12 +883,20 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         return { id: result.id.id, name: result.name, url: `/profiles/deviceProfiles/${result.id.id}` };
       }
       case InstallStepType.DEVICE: {
-        const result = await firstValueFrom(this.deviceService.saveDevice(template, {ignoreErrors: false}));
+        if (this.data.customerId) {
+          template.customerId = new CustomerId(this.data.customerId);
+        }
+        const entityGroupIds = this.data.entityGroupId ? [this.data.entityGroupId] : null;
+        const result = await firstValueFrom(this.deviceService.saveDevice(template, entityGroupIds, {ignoreErrors: false}));
         const creds = await this.resolveCredentials(step, result.id.id);
-        return { id: result.id.id, name: result.name, url: `/entities/devices/${result.id.id}`, token: creds.credentialsId };
+        return { id: result.id.id, name: result.name, url: `/entities/devices/all/${result.id.id}`, token: creds.credentialsId };
       }
       case InstallStepType.GATEWAY: {
-        const result = await firstValueFrom(this.deviceService.saveDevice(template, {ignoreErrors: false}));
+        if (this.data.customerId) {
+          template.customerId = new CustomerId(this.data.customerId);
+        }
+        const entityGroupIds = this.data.entityGroupId ? [this.data.entityGroupId] : null;
+        const result = await firstValueFrom(this.deviceService.saveDevice(template, entityGroupIds, {ignoreErrors: false}));
         const creds = await this.resolveCredentials(step, result.id.id);
         const output = {
           id: result.id.id,
@@ -912,8 +956,11 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         return { id: gatewayOutput.id, name: connectorName };
       }
       case InstallStepType.DASHBOARD: {
-        const result = await firstValueFrom(this.dashboardService.saveDashboard(template, {ignoreErrors: false}));
-        return { id: result.id.id, name: result.title, url: `/dashboards/${result.id.id}` };
+        if (this.data.customerId) {
+          template.customerId = new CustomerId(this.data.customerId);
+        }
+        const result = await firstValueFrom(this.dashboardService.saveDashboard(template, null, {ignoreErrors: false}));
+        return { id: result.id.id, name: result.title, url: `/dashboards/all/${result.id.id}` };
       }
       case InstallStepType.RULE_CHAIN: {
         const ruleChain = template.ruleChain || template;
@@ -924,9 +971,55 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         }
         return this.saveRuleChainWithMetadata(ruleChain, metadata);
       }
+      case InstallStepType.UPLINK_CONVERTER: {
+        const converter: Converter = { ...template, type: ConverterType.UPLINK } as Converter;
+        const result = await firstValueFrom(this.converterService.saveConverter(converter, {ignoreErrors: true}));
+        return { id: result.id.id, name: result.name, url: `/converters/${result.id.id}` };
+      }
+      case InstallStepType.DOWNLINK_CONVERTER: {
+        const converter: Converter = { ...template, type: ConverterType.DOWNLINK } as Converter;
+        const result = await firstValueFrom(this.converterService.saveConverter(converter, {ignoreErrors: true}));
+        return { id: result.id.id, name: result.name, url: `/converters/${result.id.id}` };
+      }
+      case InstallStepType.INTEGRATION: {
+        // ${formKey} / ${alias.prop} / ${tb.baseUrl} / ${routingKey} substituted by
+        // resolveVariables() above. The secret picker may have inserted
+        // ${secret:NAME;type:TYPE} references — PE resolves those at runtime via
+        // SecretConfigurationService.
+        const body: any = template;
+
+        this.attachConverterReferences(body);
+
+        if (!body.routingKey) body.routingKey = this.pendingRoutingKey;
+        if (!body.configuration) body.configuration = {};
+        if (body.configuration.metadata == null) body.configuration.metadata = {};
+
+        const result = await firstValueFrom(
+          this.integrationService.saveIntegration(body, { ignoreErrors: true })
+        );
+        return this.buildIntegrationOutput(result);
+      }
       default:
         throw new Error(`Unsupported entity step type: ${step.type}`);
     }
+    } finally {
+      this.pendingRoutingKey = undefined;
+    }
+  }
+
+  private buildIntegrationOutput(result: any): EntityStepOutput {
+    // httpEndpoint / baseUrl live at configuration.* for HTTP/KPN/Sigfox/ThingPark
+    // and at configuration.clientConfiguration.* for ChirpStack/Particle/Coap/etc.
+    const cfg: any = result.configuration ?? {};
+    const clientCfg: any = cfg.clientConfiguration ?? {};
+    return {
+      id: result.id.id,
+      name: result.name,
+      url: `/integrations/${result.id.id}`,
+      routingKey: result.routingKey,
+      httpEndpoint: clientCfg.httpEndpoint ?? cfg.httpEndpoint,
+      baseUrl: clientCfg.baseUrl ?? cfg.baseUrl
+    };
   }
 
   private async saveRuleChainWithMetadata(ruleChain: any, metadata: any): Promise<EntityStepOutput> {
@@ -971,11 +1064,39 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     return match ? { id: match.id.id, name: match.name, url: `/ruleChains/${match.id.id}` } : null;
   }
 
+  /** Converters are unique by (tenant, name, type). Match both. */
+  private async findConverterByNameAndType(name: string, type: ConverterType): Promise<EntityStepOutput | null> {
+    const page = await firstValueFrom(this.converterService.getConverters(new PageLink(100, 0, name), {ignoreErrors: true}));
+    const match = page.data.find(c => c.name === name && c.type === type);
+    return match ? { id: match.id.id, name: match.name, url: `/converters/${match.id.id}` } : null;
+  }
+
+  /** Wire converter references from earlier UPLINK_CONVERTER / DOWNLINK_CONVERTER steps onto the
+   *  Integration body. Mutates `body` in place. Does not override values the template already
+   *  baked (creators may reference pre-existing converters by id directly in the template). */
+  private attachConverterReferences(body: any): void {
+    const uplink = this.entityOutputs.get('uplinkConverter');
+    if (uplink && body.defaultConverterId == null) {
+      body.defaultConverterId = { id: uplink.id, entityType: 'CONVERTER' };
+    }
+    const downlink = this.entityOutputs.get('downlinkConverter');
+    if (downlink && body.downlinkConverterId == null) {
+      body.downlinkConverterId = { id: downlink.id, entityType: 'CONVERTER' };
+    }
+  }
+
+  /** Integrations are unique by name within tenant. */
+  private async findIntegrationByName(name: string): Promise<EntityStepOutput | null> {
+    const page = await firstValueFrom(this.integrationService.getIntegrations(new PageLink(100, 0, name), {ignoreErrors: true}));
+    const match = page.data.find(i => i.name === name);
+    return match ? { id: match.id.id, name: match.name, url: `/integrations/${match.id.id}`, routingKey: match.routingKey } : null;
+  }
+
   private async findDeviceByName(name: string): Promise<EntityStepOutput | null> {
     try {
       const device = await firstValueFrom(this.deviceService.findByName(name, {ignoreErrors: true}));
       if (device) {
-        return { id: device.id.id, name: device.name, url: `/entities/devices/${device.id.id}` };
+        return { id: device.id.id, name: device.name, url: `/entities/devices/all/${device.id.id}` };
       }
     } catch (_e) {
       // 404 = not found
@@ -992,6 +1113,12 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   private async overwriteEntity(step: DeviceInstallStep, existing: EntityStepOutput): Promise<EntityStepOutput> {
     const raw = this.zipFiles.get(step.template);
     if (!raw) throw new Error(`Template file not found: ${step.template}`);
+    // Overwriting an existing integration reuses its routingKey, so resolve
+    // ${routingKey} placeholders against that value rather than allocating a new one.
+    if (step.type === InstallStepType.INTEGRATION) {
+      this.pendingRoutingKey = existing.routingKey ?? this.generateUuid();
+    }
+    try {
     const template = this.resolveTemplateJson(raw);
 
     switch (step.type) {
@@ -1002,13 +1129,21 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       }
       case InstallStepType.DEVICE: {
         template.id = { id: existing.id, entityType: 'DEVICE' };
-        const result = await firstValueFrom(this.deviceService.saveDevice(template, {ignoreErrors: false}));
+        if (this.data.customerId) {
+          template.customerId = new CustomerId(this.data.customerId);
+        }
+        const entityGroupIds = this.data.entityGroupId ? [this.data.entityGroupId] : null;
+        const result = await firstValueFrom(this.deviceService.saveDevice(template, entityGroupIds, {ignoreErrors: false}));
         const creds = await this.resolveCredentials(step, result.id.id);
-        return { id: result.id.id, name: result.name, url: `/entities/devices/${result.id.id}`, token: creds.credentialsId };
+        return { id: result.id.id, name: result.name, url: `/entities/devices/all/${result.id.id}`, token: creds.credentialsId };
       }
       case InstallStepType.GATEWAY: {
         template.id = { id: existing.id, entityType: 'DEVICE' };
-        const result = await firstValueFrom(this.deviceService.saveDevice(template, {ignoreErrors: false}));
+        if (this.data.customerId) {
+          template.customerId = new CustomerId(this.data.customerId);
+        }
+        const entityGroupIds = this.data.entityGroupId ? [this.data.entityGroupId] : null;
+        const result = await firstValueFrom(this.deviceService.saveDevice(template, entityGroupIds, {ignoreErrors: false}));
         const creds = await this.resolveCredentials(step, result.id.id);
         const output: EntityStepOutput = {
           id: result.id.id,
@@ -1026,8 +1161,11 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       }
       case InstallStepType.DASHBOARD: {
         template.id = { id: existing.id, entityType: 'DASHBOARD' };
-        const result = await firstValueFrom(this.dashboardService.saveDashboard(template, {ignoreErrors: false}));
-        return { id: result.id.id, name: result.title, url: `/dashboards/${result.id.id}` };
+        if (this.data.customerId) {
+          template.customerId = new CustomerId(this.data.customerId);
+        }
+        const result = await firstValueFrom(this.dashboardService.saveDashboard(template, null, {ignoreErrors: false}));
+        return { id: result.id.id, name: result.title, url: `/dashboards/all/${result.id.id}` };
       }
       case InstallStepType.RULE_CHAIN: {
         const ruleChain = template.ruleChain || template;
@@ -1035,8 +1173,36 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         ruleChain.id = { id: existing.id, entityType: 'RULE_CHAIN' };
         return this.saveRuleChainWithMetadata(ruleChain, metadata);
       }
+      case InstallStepType.UPLINK_CONVERTER: {
+        const converter: Converter = { ...template, type: ConverterType.UPLINK, id: { id: existing.id, entityType: 'CONVERTER' } } as Converter;
+        const result = await firstValueFrom(this.converterService.saveConverter(converter, {ignoreErrors: true}));
+        return { id: result.id.id, name: result.name, url: `/converters/${result.id.id}` };
+      }
+      case InstallStepType.DOWNLINK_CONVERTER: {
+        const converter: Converter = { ...template, type: ConverterType.DOWNLINK, id: { id: existing.id, entityType: 'CONVERTER' } } as Converter;
+        const result = await firstValueFrom(this.converterService.saveConverter(converter, {ignoreErrors: true}));
+        return { id: result.id.id, name: result.name, url: `/converters/${result.id.id}` };
+      }
+      case InstallStepType.INTEGRATION: {
+        const body: any = template;
+
+        this.attachConverterReferences(body);
+
+        body.id = { id: existing.id, entityType: 'INTEGRATION' };
+        body.routingKey = this.pendingRoutingKey;
+        if (!body.configuration) body.configuration = {};
+        if (body.configuration.metadata == null) body.configuration.metadata = {};
+
+        const result = await firstValueFrom(
+          this.integrationService.saveIntegration(body, { ignoreErrors: true })
+        );
+        return this.buildIntegrationOutput(result);
+      }
       default:
         throw new Error(`Unsupported overwrite for step type: ${step.type}`);
+    }
+    } finally {
+      this.pendingRoutingKey = undefined;
     }
   }
 
@@ -1057,6 +1223,12 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         return this.findDeviceByName(template.name);
       case InstallStepType.DASHBOARD:
         return this.findDashboardByTitle(template.title);
+      case InstallStepType.UPLINK_CONVERTER:
+        return this.findConverterByNameAndType(template.name, ConverterType.UPLINK);
+      case InstallStepType.DOWNLINK_CONVERTER:
+        return this.findConverterByNameAndType(template.name, ConverterType.DOWNLINK);
+      case InstallStepType.INTEGRATION:
+        return this.findIntegrationByName(template.name);
       default:
         return null;
     }
@@ -1148,8 +1320,21 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       case InstallStepType.GATEWAY_CONNECTOR: return 'DEVICE';
       case InstallStepType.DASHBOARD: return 'DASHBOARD';
       case InstallStepType.RULE_CHAIN: return 'RULE_CHAIN';
+      case InstallStepType.UPLINK_CONVERTER: return 'CONVERTER';
+      case InstallStepType.DOWNLINK_CONVERTER: return 'CONVERTER';
+      case InstallStepType.INTEGRATION: return 'INTEGRATION';
       default: return null;
     }
+  }
+
+  private generateUuid(): string {
+    const c: any = typeof crypto !== 'undefined' ? crypto : null;
+    if (c?.randomUUID) return c.randomUUID() as string;
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, ch => {
+      const r = (Math.random() * 16) | 0;
+      const v = ch === 'x' ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
   }
 
   private delay(ms: number): Promise<void> {

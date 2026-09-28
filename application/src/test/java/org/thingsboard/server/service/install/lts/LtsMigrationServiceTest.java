@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.install.lts;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -61,6 +62,15 @@ class LtsMigrationServiceTest {
         };
     }
 
+    /** Records apply() and applyAfterCommit() calls (distinctly tagged) into a single shared ordered list. */
+    private LtsMigration migrationWithAfterCommit(String version, List<String> sequence) {
+        return new LtsMigration() {
+            @Override public String getVersion() { return version; }
+            @Override public void apply() { sequence.add("apply(" + version + ")"); }
+            @Override public void applyAfterCommit() { sequence.add("applyAfterCommit(" + version + ")"); }
+        };
+    }
+
     private LtsMigrationService service(List<LtsMigration> migrations) {
         return new LtsMigrationService(jdbcTemplate, installScripts, schemaSettingsService, txManager, migrations);
     }
@@ -76,30 +86,29 @@ class LtsMigrationServiceTest {
                 migration("4.2.2.2", applied),
                 migration("4.2.2.3", applied)));
 
-        service.applyMigrations("4.2.2.2", "4.2.2.3");
+        List<String> appliedVersions = service.applyMigrations("4.2.2.2", "4.2.2.3", false, () -> {});
 
         // only 4.2.2.3 is in (4.2.2.2, 4.2.2.3]
         assertEquals(List.of("4.2.2.3"), applied);
+        assertEquals(List.of("4.2.2.3"), appliedVersions);
         verify(jdbcTemplate).execute("SELECT 1;");
         verify(jdbcTemplate, never()).execute("SELECT 2;");
-        verify(schemaSettingsService).updateSchemaVersion("4.2.2.3");
     }
 
     @Test
-    void appliesAllInRangeAndRecordsEachVersion() throws Exception {
+    void appliesAllInRangeAndReturnsEachVersion() throws Exception {
         List<String> applied = new ArrayList<>();
         writeSql("4.2.2.3", "SELECT 1;");
         writeSql("4.2.2.4", "SELECT 2;");
         LtsMigrationService service = service(List.of(
                 migration("4.2.2.3", applied), migration("4.2.2.4", applied)));
 
-        service.applyMigrations("4.2.2.2", "4.2.2.4");
+        List<String> appliedVersions = service.applyMigrations("4.2.2.2", "4.2.2.4", false, () -> {});
 
         assertEquals(List.of("4.2.2.3", "4.2.2.4"), applied);
+        assertEquals(List.of("4.2.2.3", "4.2.2.4"), appliedVersions);
         verify(jdbcTemplate).execute("SELECT 1;");
         verify(jdbcTemplate).execute("SELECT 2;");
-        verify(schemaSettingsService).updateSchemaVersion("4.2.2.3");
-        verify(schemaSettingsService).updateSchemaVersion("4.2.2.4");
     }
 
     @Test
@@ -114,14 +123,14 @@ class LtsMigrationServiceTest {
                 migration("4.3.1.3", applied),
                 migration("4.4.0.0", applied)));
 
-        service.runDataMigrations("4.3.0.0", "4.4.0.0");
+        service.runDataMigrations("4.3.0.0", "4.4.0.0", false);
 
         // 4.2.2.3 sits below the supported-source floor (4.3.0.0), so it is out of range and never selected.
         assertEquals(List.of("4.3.1.2", "4.3.1.3", "4.4.0.0"), applied);
     }
 
     @Test
-    void applyMigrationsRunsAndRecordsEachInRangeVersionOnCrossFamilyUpgrade() {
+    void applyMigrationsRunsAndReturnsEachInRangeVersionOnCrossFamilyUpgrade() {
         List<String> applied = new ArrayList<>();
         LtsMigrationService service = service(List.of(
                 migration("4.2.2.3", applied),
@@ -129,14 +138,11 @@ class LtsMigrationServiceTest {
                 migration("4.3.1.3", applied),
                 migration("4.4.0.0", applied)));
 
-        service.applyMigrations("4.3.0.0", "4.4.0.0");
+        List<String> appliedVersions = service.applyMigrations("4.3.0.0", "4.4.0.0", false, () -> {});
 
+        // The below-floor 4.2.2.3 duplicate must not apply or be returned for recording.
         assertEquals(List.of("4.3.1.2", "4.3.1.3", "4.4.0.0"), applied);
-        // The below-floor 4.2.2.3 duplicate must not apply or record.
-        verify(schemaSettingsService, never()).updateSchemaVersion("4.2.2.3");
-        verify(schemaSettingsService).updateSchemaVersion("4.3.1.2");
-        verify(schemaSettingsService).updateSchemaVersion("4.3.1.3");
-        verify(schemaSettingsService).updateSchemaVersion("4.4.0.0");
+        assertEquals(List.of("4.3.1.2", "4.3.1.3", "4.4.0.0"), appliedVersions);
     }
 
     @Test
@@ -152,7 +158,7 @@ class LtsMigrationServiceTest {
                 migration("4.3.1.3", applied),
                 migration("4.4.0.0", applied)));
 
-        service.runSchemaMigrations("4.3.0.0", "4.4.0.0");
+        service.runSchemaMigrations("4.3.0.0", "4.4.0.0", false);
 
         // The below-floor 4.2.2.3 SQL must not run; every in-range bean's SQL must.
         verify(jdbcTemplate, never()).execute("SELECT 1;");
@@ -204,11 +210,108 @@ class LtsMigrationServiceTest {
         writeSql("4.2.2.3", "SELECT 1;");
         LtsMigrationService service = service(List.of(migration("4.2.2.3", applied)));
 
-        service.applyMigrations("4.2.2.3", "4.2.2.3");
+        List<String> appliedVersions = service.applyMigrations("4.2.2.3", "4.2.2.3", false, () -> {});
 
         assertEquals(List.of(), applied);
+        assertEquals(List.of(), appliedVersions);
         verify(jdbcTemplate, never()).execute(anyString());
-        verify(schemaSettingsService, never()).updateSchemaVersion(anyString());
+    }
+
+    @Test
+    void forcedRunAtCurrentVersionReRunsThatVersionSchemaOnly() throws Exception {
+        List<String> applied = new ArrayList<>();
+        writeSql("4.3.1.3", "SELECT 1;");
+        writeSql("4.4.0.0", "SELECT 2;");
+        writeSql("4.4.0.1", "SELECT 3;");
+        LtsMigrationService service = service(List.of(
+                migration("4.3.1.3", applied), migration("4.4.0.0", applied), migration("4.4.0.1", applied)));
+
+        // SKIP_SCHEMA_VERSION_CHECK on a database already at the package version: the point of the flag is that this
+        // re-runs the stored version's own migration instead of selecting an empty (4.4.0.0, 4.4.0.0] range.
+        service.runSchemaMigrations("4.4.0.0", "4.4.0.0", true);
+
+        verify(jdbcTemplate).execute("SELECT 2;");
+        verify(jdbcTemplate, never()).execute("SELECT 1;");
+        verify(jdbcTemplate, never()).execute("SELECT 3;");
+    }
+
+    @Test
+    void forcedRunAtCurrentVersionReRunsThatVersionDataOnly() {
+        List<String> applied = new ArrayList<>();
+        LtsMigrationService service = service(List.of(
+                migration("4.3.1.3", applied), migration("4.4.0.0", applied), migration("4.4.0.1", applied)));
+
+        service.runDataMigrations("4.4.0.0", "4.4.0.0", true);
+
+        assertEquals(List.of("4.4.0.0"), applied);
+    }
+
+    @Test
+    void forcedRunOverARealRangeAlsoIncludesTheSourceVersion() {
+        List<String> unforced = new ArrayList<>();
+        service(List.of(
+                migration("4.2.2.3", unforced), migration("4.3.1.2", unforced),
+                migration("4.3.1.3", unforced), migration("4.4.0.0", unforced),
+                migration("4.4.0.1", unforced)))
+                .runDataMigrations("4.3.1.2", "4.4.0.0", false);
+
+        List<String> forced = new ArrayList<>();
+        service(List.of(
+                migration("4.2.2.3", forced), migration("4.3.1.2", forced),
+                migration("4.3.1.3", forced), migration("4.4.0.0", forced),
+                migration("4.4.0.1", forced)))
+                .runDataMigrations("4.3.1.2", "4.4.0.0", true);
+
+        // Forcing adds exactly the source version's own migration -- nothing below `from`, nothing above `to`.
+        assertEquals(List.of("4.3.1.3", "4.4.0.0"), unforced);
+        assertEquals(List.of("4.3.1.2", "4.3.1.3", "4.4.0.0"), forced);
+    }
+
+    @Test
+    void forcedApplyMigrationsAtCurrentVersionReRunsAndReturnsThatVersion() {
+        List<String> applied = new ArrayList<>();
+        LtsMigrationService service = service(List.of(
+                migration("4.3.1.3", applied), migration("4.4.0.0", applied), migration("4.4.0.1", applied)));
+
+        // The no-downtime twin of the above: SKIP_PATCH_VERSION_CHECK got the patch past its version check with the
+        // database already at the package version, so the run must still apply that version's migration.
+        List<String> appliedVersions = service.applyMigrations("4.4.0.0", "4.4.0.0", true, () -> {});
+
+        assertEquals(List.of("4.4.0.0"), applied);
+        assertEquals(List.of("4.4.0.0"), appliedVersions);
+    }
+
+    @Test
+    void applyMigrationsIncludesTheSourceVersionOnlyWhenForced() {
+        List<String> unforced = new ArrayList<>();
+        service(List.of(
+                migration("4.3.1.2", unforced), migration("4.3.1.3", unforced), migration("4.4.0.0", unforced)))
+                .applyMigrations("4.3.1.2", "4.3.1.3", false, () -> {});
+
+        List<String> forced = new ArrayList<>();
+        service(List.of(
+                migration("4.3.1.2", forced), migration("4.3.1.3", forced), migration("4.4.0.0", forced)))
+                .applyMigrations("4.3.1.2", "4.3.1.3", true, () -> {});
+
+        // Unforced, isVersionChanged() has already guaranteed from != to and 4.3.1.2 is known applied: re-selecting it
+        // would repeat its backfill on every ordinary patch.
+        assertEquals(List.of("4.3.1.3"), unforced);
+        assertEquals(List.of("4.3.1.2", "4.3.1.3"), forced);
+    }
+
+    @Test
+    void isInClosedRangePredicate() {
+        LtsVersion from = LtsVersion.parse("4.3.1.1");
+        LtsVersion to = LtsVersion.parse("4.3.1.3");
+        // both boundaries inclusive, unlike isInRange
+        assertTrue(from.isInClosedRange(from, to));
+        assertTrue(to.isInClosedRange(from, to));
+        assertTrue(LtsVersion.parse("4.3.1.2").isInClosedRange(from, to));
+        assertFalse(LtsVersion.parse("4.3.1.0").isInClosedRange(from, to));
+        assertFalse(LtsVersion.parse("4.3.1.4").isInClosedRange(from, to));
+        // a single-version range holds exactly that version
+        assertTrue(to.isInClosedRange(to, to));
+        assertFalse(from.isInClosedRange(to, to));
     }
 
     @Test
@@ -217,7 +320,7 @@ class LtsMigrationServiceTest {
         writeSql("4.2.2.3", "SELECT 1;");
         LtsMigrationService service = service(List.of(migration("4.2.2.3", applied)));
 
-        service.runSchemaMigrations("4.2.2.2", "4.2.2.3");
+        service.runSchemaMigrations("4.2.2.2", "4.2.2.3", false);
 
         verify(jdbcTemplate).execute("SELECT 1;");
         assertEquals(List.of(), applied);
@@ -230,7 +333,7 @@ class LtsMigrationServiceTest {
         writeSql("4.2.2.3", "SELECT 1;");
         LtsMigrationService service = service(List.of(migration("4.2.2.3", applied)));
 
-        service.runDataMigrations("4.2.2.2", "4.2.2.3");
+        service.runDataMigrations("4.2.2.2", "4.2.2.3", false);
 
         assertEquals(List.of("4.2.2.3"), applied);
         verify(jdbcTemplate, never()).execute(anyString());
@@ -238,15 +341,152 @@ class LtsMigrationServiceTest {
     }
 
     @Test
-    void migrationWithoutSqlFileStillAppliesAndRecords() {
+    void runDataMigrationsAppliesAndAppliesAfterCommitButNeverRunsSqlOrRecords() throws Exception {
+        List<String> sequence = new ArrayList<>();
+        writeSql("4.2.2.3", "SELECT 1;");
+        LtsMigrationService service = service(List.of(migrationWithAfterCommit("4.2.2.3", sequence)));
+
+        service.runDataMigrations("4.2.2.2", "4.2.2.3", false);
+
+        assertEquals(List.of("apply(4.2.2.3)", "applyAfterCommit(4.2.2.3)"), sequence);
+        verify(jdbcTemplate, never()).execute(anyString());
+        verify(schemaSettingsService, never()).updateSchemaVersion(anyString());
+    }
+
+    @Test
+    void migrationWithoutSqlFileStillAppliesAndReturnsVersion() {
         List<String> applied = new ArrayList<>();
         LtsMigrationService service = service(List.of(migration("4.2.2.3", applied)));
 
-        service.applyMigrations("4.2.2.2", "4.2.2.3");
+        List<String> appliedVersions = service.applyMigrations("4.2.2.2", "4.2.2.3", false, () -> {});
 
         assertEquals(List.of("4.2.2.3"), applied);
+        assertEquals(List.of("4.2.2.3"), appliedVersions);
         verify(jdbcTemplate, never()).execute(anyString());
-        verify(schemaSettingsService).updateSchemaVersion("4.2.2.3");
+    }
+
+    @Test
+    void applyMigrationsNeverCallsUpdateSchemaVersionItself() {
+        List<String> applied = new ArrayList<>();
+        LtsMigrationService service = service(List.of(migration("4.2.2.3", applied)));
+
+        service.applyMigrations("4.2.2.2", "4.2.2.3", false, () -> {});
+
+        // applyMigrations only returns applied versions; recordVersions (below) is what stamps them.
+        verify(schemaSettingsService, never()).updateSchemaVersion(anyString());
+    }
+
+    @Test
+    void recordVersionsStampsEachVersionInOrder() {
+        List<String> events = new ArrayList<>();
+        Mockito.doAnswer(invocation -> events.add("record:" + invocation.getArgument(0)))
+                .when(schemaSettingsService).updateSchemaVersion(anyString());
+        LtsMigrationService service = service(List.of());
+
+        service.recordVersions(List.of("4.3.1.2", "4.3.1.3"));
+
+        assertEquals(List.of("record:4.3.1.2", "record:4.3.1.3"), events);
+    }
+
+    // Records apply() and applyAfterCommit() into a shared, ordered event log so their sequence can be asserted.
+    private LtsMigration recordingMigration(String version, List<String> events) {
+        return new LtsMigration() {
+            @Override public String getVersion() { return version; }
+            @Override public void apply() { events.add("apply:" + version); }
+            @Override public void applyAfterCommit() { events.add("afterCommit:" + version); }
+        };
+    }
+
+    @Test
+    void applyMigrationsRunsApplyThenAfterCommitAndReturnsTheAppliedVersion() {
+        List<String> events = new ArrayList<>();
+        LtsMigrationService service = service(List.of(recordingMigration("4.3.1.3", events)));
+
+        List<String> appliedVersions = service.applyMigrations("4.3.1.2", "4.3.1.3", false, () -> {});
+
+        // applyAfterCommit() runs after apply(); the returned version is recordVersions' input, not stamped here.
+        assertEquals(List.of("apply:4.3.1.3", "afterCommit:4.3.1.3"), events);
+        assertEquals(List.of("4.3.1.3"), appliedVersions);
+    }
+
+    @Test
+    void applyMigrationsPropagatesAnAfterCommitFailureAndStampsNoVersion() {
+        LtsMigrationService service = service(List.of(new LtsMigration() {
+            @Override public String getVersion() { return "4.3.1.3"; }
+            @Override public void applyAfterCommit() { throw new IllegalStateException("backfill failed"); }
+        }));
+
+        assertThrows(IllegalStateException.class, () -> service.applyMigrations("4.3.1.2", "4.3.1.3", false, () -> {}));
+
+        // The crash-resume invariant: an unstamped version re-runs its whole migration on the next startup.
+        verify(schemaSettingsService, never()).updateSchemaVersion(anyString());
+    }
+
+    @Test
+    void applyMigrationsWithReplayRunsSchemaPhaseThenReplayThenBackfillPhaseAndReturnsAppliedVersions() throws Exception {
+        List<String> events = new ArrayList<>();
+        writeSql("4.3.1.2", "SELECT 1;");
+        writeSql("4.3.1.3", "SELECT 2;");
+        LtsMigrationService service = service(List.of(
+                recordingMigration("4.3.1.2", events), recordingMigration("4.3.1.3", events)));
+        Runnable afterSchemaPhase = () -> events.add("replay");
+
+        List<String> appliedVersions = service.applyMigrations("4.3.1.1", "4.3.1.3", false, afterSchemaPhase);
+
+        // Both migrations' schema/apply run first, THEN the afterSchemaPhase replay, THEN both backfills; recording
+        // each version is recordVersions' job, so no stamp appears in this event sequence.
+        assertEquals(List.of(
+                "apply:4.3.1.2", "apply:4.3.1.3",
+                "replay",
+                "afterCommit:4.3.1.2", "afterCommit:4.3.1.3"), events);
+        assertEquals(List.of("4.3.1.2", "4.3.1.3"), appliedVersions);
+        verify(jdbcTemplate).execute("SELECT 1;");
+        verify(jdbcTemplate).execute("SELECT 2;");
+    }
+
+    @Test
+    void applyMigrationsWithReplayNeverRunsBackfillOrReturnsWhenReplayThrows() {
+        List<String> events = new ArrayList<>();
+        LtsMigrationService service = service(List.of(
+                recordingMigration("4.3.1.2", events), recordingMigration("4.3.1.3", events)));
+        Runnable afterSchemaPhase = () -> { throw new IllegalStateException("replay failed"); };
+
+        // The replay runs between the phases and fails, so no backfill runs and nothing is returned to record:
+        // every selected migration is re-run on the next startup.
+        assertThrows(IllegalStateException.class,
+                () -> service.applyMigrations("4.3.1.1", "4.3.1.3", false, afterSchemaPhase));
+        assertEquals(List.of("apply:4.3.1.2", "apply:4.3.1.3"), events);
+    }
+
+    @Test
+    void applyMigrationsReturnsNothingWhenALaterBackfillFailsEvenIfAnEarlierOneSucceeded() {
+        List<String> events = new ArrayList<>();
+        LtsMigration first = recordingMigration("4.3.1.2", events);
+        LtsMigration second = new LtsMigration() {
+            @Override public String getVersion() { return "4.3.1.3"; }
+            @Override public void applyAfterCommit() { throw new IllegalStateException("backfill failed"); }
+        };
+        LtsMigrationService service = service(List.of(first, second));
+
+        // applyMigrations only returns its applied-versions list on a normal return; the second backfill throws
+        // before that return, so the caller never learns the first one succeeded either, and recordVersions is
+        // reached for neither version this run. Both re-run their (idempotent, resumable) backfill on the next
+        // boot -- coarser than the old per-migration recording, but still crash-safe.
+        assertThrows(IllegalStateException.class,
+                () -> service.applyMigrations("4.3.1.1", "4.3.1.3", false, () -> {}));
+        assertEquals(List.of("apply:4.3.1.2", "afterCommit:4.3.1.2"), events);
+        verify(schemaSettingsService, never()).updateSchemaVersion(anyString());
+    }
+
+    @Test
+    void runDataMigrationsRunsApplyThenAfterCommit() {
+        List<String> events = new ArrayList<>();
+        LtsMigrationService service = service(List.of(recordingMigration("4.3.1.3", events)));
+
+        service.runDataMigrations("4.3.1.2", "4.3.1.3", false);
+
+        assertEquals(List.of("apply:4.3.1.3", "afterCommit:4.3.1.3"), events);
+        verify(schemaSettingsService, never()).updateSchemaVersion(anyString());
     }
 
     @Test
@@ -261,4 +501,22 @@ class LtsMigrationServiceTest {
         List<String> applied = new ArrayList<>();
         assertThrows(IllegalArgumentException.class, () -> service(List.of(migration("nope", applied))));
     }
+
+    @Test
+    void applyMigrationsRunsAllApplyThenAfterSchemaPhaseThenAllApplyAfterCommit() {
+        List<String> sequence = new ArrayList<>();
+        LtsMigrationService service = service(List.of(
+                migrationWithAfterCommit("4.2.2.3", sequence),
+                migrationWithAfterCommit("4.2.2.4", sequence)));
+        Runnable afterSchemaPhase = () -> sequence.add("afterSchemaPhase");
+
+        List<String> appliedVersions = service.applyMigrations("4.2.2.2", "4.2.2.4", false, afterSchemaPhase);
+
+        assertEquals(List.of(
+                "apply(4.2.2.3)", "apply(4.2.2.4)",
+                "afterSchemaPhase",
+                "applyAfterCommit(4.2.2.3)", "applyAfterCommit(4.2.2.4)"), sequence);
+        assertEquals(List.of("4.2.2.3", "4.2.2.4"), appliedVersions);
+    }
+
 }

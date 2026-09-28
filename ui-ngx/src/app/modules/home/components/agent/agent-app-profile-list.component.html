@@ -1,0 +1,64 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<mat-form-field [formGroup]="listFormGroup" class="mat-block" [appearance]="appearance">
+  @if (labelText) {
+    <mat-label>{{ labelText }}</mat-label>
+  }
+  <mat-chip-grid #chipList formControlName="entities">
+    @for (profile of selected; track profile.id.id) {
+      <mat-chip-row
+        class="tb-chip-row-ellipsis"
+        [removable]="!disabled"
+        (removed)="remove(profile)">
+        {{ profile.name }}
+        @if (!disabled) {
+          <mat-icon matChipRemove>close</mat-icon>
+        }
+      </mat-chip-row>
+    }
+    <input matInput type="text" [placeholder]="!disabled ? placeholderText : ''"
+      #profileInput
+      formControlName="entity"
+      [matAutocomplete]="profileAutocomplete"
+      [matChipInputFor]="chipList">
+  </mat-chip-grid>
+  @if (materializing) {
+    <mat-spinner matSuffix diameter="20"></mat-spinner>
+  }
+  <mat-autocomplete #profileAutocomplete="matAutocomplete"
+    class="tb-autocomplete"
+    [displayWith]="displayFn">
+    @if (filteredEntries | async; as entries) {
+      @for (p of entries; track trackKey(p)) {
+        <mat-option [value]="p" class="tb-profile-option"
+          [matTooltip]="isVirtual(p) ? ('agent.app-install-virtual-profile-hint' | translate) : ''"
+          matTooltipPosition="right">
+          <span>{{ p.name }}</span>
+          @if (isVirtual(p)) {
+            <span class="tb-virtual-profile-badge">{{ 'agent.app-install-virtual-profile-badge' | translate }}</span>
+          }
+          @if (!isVirtual(p) && p.templateVersion) {
+            <span class="tb-profile-template-version">{{ templateLabel(p) }}</span>
+          }
+        </mat-option>
+      }
+      @if (!entries.length) {
+        <mat-option [value]="null" disabled class="tb-not-found">
+          <div class="tb-not-found-content">
+            <span translate>agent.app-install-no-profiles</span>
+          </div>
+        </mat-option>
+      }
+    }
+  </mat-autocomplete>
+  @if (errorText) {
+    <mat-hint class="tb-materialize-error">{{ errorText }}</mat-hint>
+  }
+  <div matSuffix>
+    <ng-content select="[matSuffix]"></ng-content>
+  </div>
+</mat-form-field>

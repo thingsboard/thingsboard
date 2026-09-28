@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
  import { Component, DestroyRef, Inject } from '@angular/core';
  import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
  import { Store } from '@ngrx/store';
@@ -83,6 +84,11 @@ export class AlarmRuleFilterDialogComponent extends DialogComponent<AlarmRuleFil
     ).subscribe(predicates => {
       this.predicatesValid = isPredicateArgumentsValid(predicates, this.arguments);
     });
+
+
+    if (this.data.readonly) {
+      this.filterFormGroup.disable({emitEvent: false});
+    }
 
     this.filterFormGroup.get('valueType').valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)

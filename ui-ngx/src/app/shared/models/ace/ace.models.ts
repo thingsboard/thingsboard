@@ -1,6 +1,8 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Ace } from 'ace-builds';
+import type { LanguageProvider } from 'ace-linters';
 import { Observable } from 'rxjs/internal/Observable';
 import { forkJoin, from, of } from 'rxjs';
 import { map, mergeMap, tap } from 'rxjs/operators';
@@ -10,6 +12,7 @@ import { Renderer2 } from '@angular/core';
 let aceDependenciesLoaded = false;
 let aceModule: any;
 let aceDiffModule: any;
+let cssLanguageProvider: LanguageProvider;
 
 function loadAceDependencies(): Observable<any> {
   if (aceDependenciesLoaded) {
@@ -29,6 +32,7 @@ function loadAceDependencies(): Observable<any> {
     aceObservables.push(from(import('ace-builds/src-noconflict/mode-svg')));
     aceObservables.push(from(import('ace-builds/src-noconflict/mode-c_cpp')));
     aceObservables.push(from(import('ace-builds/src-noconflict/mode-protobuf')));
+    aceObservables.push(from(import('ace-builds/src-noconflict/mode-yaml')));
     aceObservables.push(from(import('ace-builds/src-noconflict/snippets/java')));
     aceObservables.push(from(import('ace-builds/src-noconflict/snippets/css')));
     aceObservables.push(from(import('ace-builds/src-noconflict/snippets/json')));
@@ -80,6 +84,28 @@ export function getAceDiff(): Observable<any> {
       }),
       tap((module) => {
         aceDiffModule = module;
+      })
+    );
+  }
+}
+
+export function getCssLanguageProvider(): Observable<LanguageProvider> {
+  if (cssLanguageProvider) {
+    return of(cssLanguageProvider);
+  } else {
+    return from(import('ace-linters')).pipe(
+      map((module) => {
+        if (!cssLanguageProvider) {
+          const worker = new Worker(new URL('../../../core/worker/css-linter.worker', import.meta.url), { type: 'module' });
+          cssLanguageProvider = module.LanguageProvider.create(worker, {
+            functionality: {
+              completion: {
+                overwriteCompleters: false
+              }
+            }
+          });
+        }
+        return cssLanguageProvider;
       })
     );
   }

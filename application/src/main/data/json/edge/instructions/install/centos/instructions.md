@@ -44,9 +44,11 @@ OpenJDK 64-Bit Server VM (build ...)
 
 ThingsBoard Edge supports **SQL** and **hybrid** database configurations.
 In this guide, we'll use an **SQL** database.
-For more details about the hybrid setup, please refer to the official installation instructions on the <a href="https://thingsboard.io/docs/user-guide/install/edge/rhel/#step-2-configure-thingsboard-database" target="_blank">ThingsBoard documentation site</a>.
+For more details about the hybrid setup, please refer to the official installation instructions on the <a href="https://thingsboard.io/docs/user-guide/install/pe/edge/rhel/#step-2-configure-thingsboard-database" target="_blank">ThingsBoard documentation site</a>.
 
 To install the PostgreSQL database, run these commands:
+
+Update your system:
 
 ```bash
 # Update your system
@@ -93,9 +95,8 @@ sudo -u postgres psql -c "\password"
 
 Then, enter and confirm the password.
 
-Since ThingsBoard Edge uses the PostgreSQL database for local storage, configuring MD5 authentication ensures that only authenticated users or
-applications can access the database, thus protecting your data. After configuring the password,
-edit the pg_hba.conf file to use MD5 hashing for authentication instead of the default method (ident) for local IPv4 connections.
+Since ThingsBoard Edge uses the PostgreSQL database for local storage, configuring MD5 authentication ensures that only authenticated users or applications can access the database, thus protecting your data.
+After configuring the password, edit the pg_hba.conf file to use MD5 hashing for authentication instead of the default method (ident) for local IPv4 connections.
 
 To replace ident with md5, run the following command:
 
@@ -104,8 +105,7 @@ sudo sed -i 's/^host\s\+all\s\+all\s\+127\.0\.0\.1\/32\s\+ident/host    all     
 {:copy-code}
 ```
 
-Then run the command that will restart the PostgreSQL service to apply configuration changes, connect to the database as a postgres user,
-and create the ThingsBoard Edge database (tb_edge). To connect to the PostgreSQL database, enter the PostgreSQL password.
+Then run the command that will restart the PostgreSQL service to apply configuration changes, connect to the database as a postgres user, and create the ThingsBoard Edge database (tb_edge). To connect to the PostgreSQL database, enter the PostgreSQL password.
 
 ```bash
 sudo systemctl restart postgresql-16.service && psql -U postgres -d postgres -h 127.0.0.1 -W -c "CREATE DATABASE tb_edge;"
@@ -116,14 +116,14 @@ sudo systemctl restart postgresql-16.service && psql -U postgres -d postgres -h 
 Download installation package:
 
 ```bash
-wget https://github.com/thingsboard/thingsboard-edge/releases/download/v${TB_EDGE_TAG}/tb-edge-${TB_EDGE_TAG}.rpm
+wget https://dist.thingsboard.io/tb-edge-${TB_EDGE_TAG}pe.rpm
 {:copy-code}
 ```
 
 Go to the download repository and install ThingsBoard Edge service:
 
 ```bash
-sudo rpm -Uvh tb-edge-${TB_EDGE_TAG}.rpm
+sudo rpm -Uvh tb-edge-${TB_EDGE_TAG}pe.rpm
 {:copy-code}
 ```
 
@@ -167,6 +167,7 @@ export MQTT_BIND_PORT=11883
 export COAP_BIND_PORT=15683
 export LWM2M_ENABLED=false
 export SNMP_ENABLED=false
+export INTEGRATIONS_RPC_PORT=19090
 EOL'
 {:copy-code}
 ```
@@ -193,4 +194,4 @@ sudo service tb-edge start
 
 Once the Edge service has started, open the Edge web interface at http://localhost:8080, or http://localhost:18080 if you modified the HTTP bind port configuration in the previous step.
 
-Log in using your **tenant credentials** from either your local ThingsBoard Server or the **ThingsBoard Live Demo**.
+Log in using your **tenant credentials** from either your local ThingsBoard Server or the **ThingsBoard Cloud**.

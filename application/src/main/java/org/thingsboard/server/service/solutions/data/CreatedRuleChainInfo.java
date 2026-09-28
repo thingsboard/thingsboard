@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.solutions.data;
 
 import lombok.Data;
@@ -22,6 +23,6 @@ public class CreatedRuleChainInfo extends CreatedEntityInfo {
 
     @Override
     public String getEntityPageLink(UUID id) {
-        return ruleChainType == RuleChainType.EDGE ? "/edgeManagement/ruleChains/" + id : "/ruleChains/" + id;
+        return ruleChainType == RuleChainType.EDGE ? "/edgeManagement/templates/ruleChains/" + id : "/ruleChains/" + id;
     }
 }

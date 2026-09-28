@@ -1,21 +1,20 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, Inject, OnInit, Renderer2, ViewContainerRef } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
-import {
-  ResourceReferences,
-  ResourceInfoWithReferences,
-  ResourceInfo
-} from '@shared/models/resource.models';
+import { ResourceInfo, ResourceInfoWithReferences, ResourceReferences } from '@shared/models/resource.models';
 import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { ImageReferencesComponent } from '@shared/components/image/image-references.component';
 import { TranslateService } from '@ngx-translate/core';
 import { Datasource } from "@shared/models/widget.models";
+import { SecretStorage, SecretWithReferences } from '@shared/models/secret-storage.models';
+import { isDefined } from '@core/utils';
 
 interface ResourcesInUseDialogDataConfiguration {
   title: string;
@@ -28,8 +27,9 @@ interface ResourcesInUseDialogDataConfiguration {
 
 export interface ResourcesInUseDialogData {
   multiple: boolean;
-  resources: ResourceInfoWithReferences[];
+  resources: ResourceInfoWithReferences[] | SecretWithReferences[];
   configuration: ResourcesInUseDialogDataConfiguration;
+  allowForceDelete?: boolean;
 }
 
 @Component({
@@ -39,9 +39,12 @@ export interface ResourcesInUseDialogData {
     standalone: false
 })
 export class ResourcesInUseDialogComponent extends
-  DialogComponent<ResourcesInUseDialogComponent, ResourceInfo[]> implements OnInit {
+  DialogComponent<ResourcesInUseDialogComponent, ResourceInfo[] | SecretStorage[]> implements OnInit {
 
+  allowForceDelete: boolean = true;
   displayPreview: boolean;
+  displayTitle: boolean;
+  displayName: boolean;
   configuration: ResourcesInUseDialogDataConfiguration;
   references: ResourceReferences;
 
@@ -50,7 +53,7 @@ export class ResourcesInUseDialogComponent extends
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: ResourcesInUseDialogData,
-              public dialogRef: MatDialogRef<ResourcesInUseDialogComponent, ResourceInfo[]>,
+              public dialogRef: MatDialogRef<ResourcesInUseDialogComponent, ResourceInfo[] | SecretStorage[]>,
               public translate: TranslateService,
               private renderer: Renderer2,
               private viewContainerRef: ViewContainerRef,
@@ -61,6 +64,11 @@ export class ResourcesInUseDialogComponent extends
   ngOnInit(): void {
     this.configuration = this.data.configuration;
     this.displayPreview = this.data.configuration.columns.includes('preview');
+    this.displayTitle = this.data.configuration.columns.includes('title');
+    this.displayName = this.data.configuration.columns.includes('name');
+    if (isDefined(this.data?.allowForceDelete)) {
+      this.allowForceDelete = this.data.allowForceDelete;
+    }
     if (this.data.multiple) {
       this.dataSource = this.data.configuration.datasource;
     } else {

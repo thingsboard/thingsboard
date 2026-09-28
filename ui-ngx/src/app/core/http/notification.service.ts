@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { defaultHttpOptionsFromConfig, RequestConfig } from '@core/http/http-utils';
@@ -24,6 +25,7 @@ import {
 import { User } from '@shared/models/user.model';
 import { isNotEmptyStr } from '@core/utils';
 import { EntityType } from '@shared/models/entity-type.models';
+import { AddonType } from '@shared/models/subscription.models';
 
 @Injectable({
   providedIn: 'root'
@@ -45,19 +47,27 @@ export class NotificationService {
   }
 
   public markNotificationAsRead(id: string, config?: RequestConfig): Observable<void> {
-    return this.http.put<void>(`/api/notification/${id}/read`, defaultHttpOptionsFromConfig(config));
+    return this.http.put<void>(`/api/notification/${id}/read`, null, defaultHttpOptionsFromConfig(config));
   }
 
   public markAllNotificationsAsRead(config?: RequestConfig): Observable<void> {
-    return this.http.put<void>('/api/notifications/read', defaultHttpOptionsFromConfig(config));
+    return this.http.put<void>('/api/notifications/read', null, defaultHttpOptionsFromConfig(config));
   }
 
   public createNotificationRequest(notification: NotificationRequest, config?: RequestConfig): Observable<NotificationRequest> {
     return this.http.post<NotificationRequest>('/api/notification/request', notification, defaultHttpOptionsFromConfig(config));
   }
 
-  public sendEntitiesLimitIncreaseRequest(entityType: EntityType, config?: RequestConfig): Observable<void> {
-    return this.http.post<void>(`/api/notification/entitiesLimitIncreaseRequest/${entityType}`, defaultHttpOptionsFromConfig(config));
+  public sendEntitiesLimitIncreaseRequest(entityType: EntityType, subscriptionViolation = false, config?: RequestConfig): Observable<void> {
+    return this.http.post<void>(`/api/notification/entitiesLimitIncreaseRequest/${entityType}?subscriptionViolation=${subscriptionViolation}`, null, defaultHttpOptionsFromConfig(config));
+  }
+
+  public sendAddonAccessRequest(addonType: AddonType, config?: RequestConfig): Observable<void> {
+    return this.http.post<void>(`/api/notification/sendAddonAccessRequest/${addonType}`, null, defaultHttpOptionsFromConfig(config));
+  }
+
+  public sendPlanUpgradeRequest(planName: string, config?: RequestConfig): Observable<void> {
+    return this.http.post<void>(`/api/notification/sendPlanUpgradeRequest/${planName}`,  null, defaultHttpOptionsFromConfig(config));
   }
 
   public getNotificationRequestById(id: string, config?: RequestConfig): Observable<NotificationRequest> {
@@ -173,5 +183,9 @@ export class NotificationService {
 
   public saveNotificationUserSettings(settings: NotificationUserSettings, config?: RequestConfig): Observable<NotificationUserSettings> {
     return this.http.post<NotificationUserSettings>('/api/notification/settings/user', settings, defaultHttpOptionsFromConfig(config));
+  }
+
+  public sendAddonAccessError(addonType: AddonType, config?: RequestConfig): Observable<void> {
+    return this.http.post<void>(`/api/notification/sendAddonAccessError/${addonType}`, null, defaultHttpOptionsFromConfig(config));
   }
 }

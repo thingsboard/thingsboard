@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.alarm;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -10,6 +11,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.ToString;
 import org.thingsboard.server.common.data.id.AlarmId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.validation.NoXss;
@@ -27,6 +29,14 @@ public class AlarmUpdateRequest implements AlarmModificationRequest {
             "Referencing non-existing alarm Id will cause error. " +
             "Omit this field to create new alarm.")
     private AlarmId alarmId;
+    // Load-bearing: JpaAlarmDao.updateAlarm routes the single-shard write by this originator. Always populated by
+    // fromAlarm (the only factory). Marked @NotNull alongside tenantId/alarmId so it is treated as required, not as
+    // one of the optional builder fields.
+    @NotNull
+    @Schema(description = "JSON object with the alarm originator Id. The originator is an immutable routing key: " +
+            "it must match the persisted alarm's originator, otherwise the update fails as if the alarm did not exist.",
+            accessMode = Schema.AccessMode.READ_ONLY)
+    private EntityId originator;
     @NotNull
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Alarm severity", example = "CRITICAL")
     private AlarmSeverity severity;
@@ -54,6 +64,7 @@ public class AlarmUpdateRequest implements AlarmModificationRequest {
         return AlarmUpdateRequest.builder()
                 .tenantId(a.getTenantId())
                 .alarmId(a.getId())
+                .originator(a.getOriginator())
                 .severity((a.getSeverity()))
                 .startTs(a.getStartTs())
                 .endTs(a.getEndTs())
@@ -61,6 +72,7 @@ public class AlarmUpdateRequest implements AlarmModificationRequest {
                 .propagation(AlarmPropagationInfo.builder()
                         .propagate(a.isPropagate())
                         .propagateToOwner(a.isPropagateToOwner())
+                        .propagateToOwnerHierarchy(a.isPropagateToOwnerHierarchy())
                         .propagateToTenant(a.isPropagateToTenant())
                         .propagateRelationTypes(a.getPropagateRelationTypes()).build())
                 .userId(userId)

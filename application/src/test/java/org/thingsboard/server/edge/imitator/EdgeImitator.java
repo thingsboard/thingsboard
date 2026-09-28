@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.edge.imitator;
 
 import com.google.common.util.concurrent.FutureCallback;
@@ -23,18 +24,24 @@ import org.thingsboard.server.gen.edge.v1.AlarmUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AssetProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AssetUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.CalculatedFieldUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.ConverterUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.CustomerUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DashboardUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceCredentialsRequestMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceCredentialsUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.DeviceGroupOtaPackageUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceRpcCallMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.DownlinkResponseMsg;
 import org.thingsboard.server.gen.edge.v1.EdgeConfiguration;
+import org.thingsboard.server.gen.edge.v1.EncryptionKeyUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.EntityDataProto;
+import org.thingsboard.server.gen.edge.v1.EntityGroupUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.EntityViewUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.GroupPermissionProto;
+import org.thingsboard.server.gen.edge.v1.IntegrationUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.NotificationRuleUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.NotificationTargetUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.NotificationTemplateUpdateMsg;
@@ -43,9 +50,13 @@ import org.thingsboard.server.gen.edge.v1.OAuth2DomainUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.OtaPackageUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.QueueUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RelationUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.ReportTemplateUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.ResourceUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.RoleProto;
 import org.thingsboard.server.gen.edge.v1.RuleChainMetadataUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RuleChainUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.SchedulerEventUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.SecretUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.TenantProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.TenantUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UplinkMsg;
@@ -108,10 +119,16 @@ public class EdgeImitator {
     @Getter
     private UplinkResponseMsg latestResponseMsg;
 
+    private CountDownLatch closeLatch;
+
+    @Getter
+    private volatile Exception closeException;
+
     public EdgeImitator(String host, int port, String routingKey, String routingSecret) throws NoSuchFieldException, IllegalAccessException {
         edgeRpcClient = new EdgeGrpcClient();
         messagesLatch = new CountDownLatch(0);
         responsesLatch = new CountDownLatch(0);
+        closeLatch = new CountDownLatch(0);
         downlinkMsgs = new ConcurrentLinkedDeque<>();
         ignoredTypes = new ArrayList<>();
         this.routingKey = routingKey;
@@ -139,6 +156,24 @@ public class EdgeImitator {
                 this::onClose);
 
         edgeRpcClient.sendSyncRequestMsg(true);
+    }
+
+    public void expectClose() {
+        lock.lock();
+        try {
+            closeException = null;
+            closeLatch = new CountDownLatch(1);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public boolean waitForClose() {
+        try {
+            return closeLatch.await(AbstractWebTest.TIMEOUT, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void disconnect() throws InterruptedException {
@@ -182,6 +217,8 @@ public class EdgeImitator {
 
     private void onClose(Exception e) {
         log.info("onClose: {}", e.getMessage());
+        closeException = e;
+        closeLatch.countDown();
     }
 
     private ListenableFuture<List<Void>> processDownlinkMsg(DownlinkMsg downlinkMsg) {
@@ -303,6 +340,50 @@ public class EdgeImitator {
                 result.add(saveDownlinkMsg(deviceCredentialsRequestMsg));
             }
         }
+        if (downlinkMsg.getEntityGroupUpdateMsgCount() > 0) {
+            for (EntityGroupUpdateMsg entityGroupUpdateMsg : downlinkMsg.getEntityGroupUpdateMsgList()) {
+                result.add(saveDownlinkMsg(entityGroupUpdateMsg));
+            }
+        }
+        if (downlinkMsg.hasCustomMenuProto()) {
+            result.add(saveDownlinkMsg(downlinkMsg.getCustomMenuProto()));
+        }
+        if (downlinkMsg.hasWhiteLabelingProto()) {
+            result.add(saveDownlinkMsg(downlinkMsg.getWhiteLabelingProto()));
+        }
+        if (downlinkMsg.hasCustomTranslationUpdateMsg()) {
+            result.add(saveDownlinkMsg(downlinkMsg.getCustomTranslationUpdateMsg()));
+        }
+        if (downlinkMsg.getSchedulerEventUpdateMsgCount() > 0) {
+            for (SchedulerEventUpdateMsg schedulerEventUpdateMsg : downlinkMsg.getSchedulerEventUpdateMsgList()) {
+                result.add(saveDownlinkMsg(schedulerEventUpdateMsg));
+            }
+        }
+        if (downlinkMsg.getReportTemplateUpdateMsgCount() > 0 ) {
+            for (ReportTemplateUpdateMsg reportTemplateUpdateMsg : downlinkMsg.getReportTemplateUpdateMsgList()) {
+                result.add(saveDownlinkMsg(reportTemplateUpdateMsg));
+            }
+        }
+        if (downlinkMsg.getRoleMsgCount() > 0) {
+            for (RoleProto roleProto : downlinkMsg.getRoleMsgList()) {
+                result.add(saveDownlinkMsg(roleProto));
+            }
+        }
+        if (downlinkMsg.getGroupPermissionMsgCount() > 0) {
+            for (GroupPermissionProto groupPermissionProto : downlinkMsg.getGroupPermissionMsgList()) {
+                result.add(saveDownlinkMsg(groupPermissionProto));
+            }
+        }
+        if (downlinkMsg.getConverterMsgCount() > 0) {
+            for (ConverterUpdateMsg converterUpdateMsg : downlinkMsg.getConverterMsgList()) {
+                result.add(saveDownlinkMsg(converterUpdateMsg));
+            }
+        }
+        if (downlinkMsg.getIntegrationMsgCount() > 0) {
+            for (IntegrationUpdateMsg integrationUpdateMsg : downlinkMsg.getIntegrationMsgList()) {
+                result.add(saveDownlinkMsg(integrationUpdateMsg));
+            }
+        }
         if (downlinkMsg.getOtaPackageUpdateMsgCount() > 0) {
             for (OtaPackageUpdateMsg otaPackageUpdateMsg : downlinkMsg.getOtaPackageUpdateMsgList()) {
                 result.add(saveDownlinkMsg(otaPackageUpdateMsg));
@@ -326,6 +407,11 @@ public class EdgeImitator {
         if (downlinkMsg.getResourceUpdateMsgCount() > 0) {
             for (ResourceUpdateMsg resourceUpdateMsg : downlinkMsg.getResourceUpdateMsgList()) {
                 result.add(saveDownlinkMsg(resourceUpdateMsg));
+            }
+        }
+        if (downlinkMsg.getDeviceGroupOtaPackageUpdateMsgCount() > 0) {
+            for (DeviceGroupOtaPackageUpdateMsg deviceGroupOtaMsg : downlinkMsg.getDeviceGroupOtaPackageUpdateMsgList()) {
+                result.add(saveDownlinkMsg(deviceGroupOtaMsg));
             }
         }
         if (downlinkMsg.getOAuth2ClientUpdateMsgCount() > 0) {
@@ -356,6 +442,16 @@ public class EdgeImitator {
         if (downlinkMsg.getCalculatedFieldUpdateMsgCount() > 0) {
             for (CalculatedFieldUpdateMsg calculatedFieldUpdateMsg : downlinkMsg.getCalculatedFieldUpdateMsgList()) {
                 result.add(saveDownlinkMsg(calculatedFieldUpdateMsg));
+            }
+        }
+        if (downlinkMsg.getEncryptionKeyUpdateMsgCount() > 0) {
+            for (EncryptionKeyUpdateMsg encryptionKeyUpdateMsg : downlinkMsg.getEncryptionKeyUpdateMsgList()) {
+                result.add(saveDownlinkMsg(encryptionKeyUpdateMsg));
+            }
+        }
+        if (downlinkMsg.getSecretUpdateMsgCount() > 0) {
+            for (SecretUpdateMsg secretUpdateMsg : downlinkMsg.getSecretUpdateMsgList()) {
+                result.add(saveDownlinkMsg(secretUpdateMsg));
             }
         }
         if (downlinkMsg.getAiModelUpdateMsgCount() > 0) {

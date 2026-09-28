@@ -1,0 +1,83 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<mat-toolbar (click)="$event?.stopPropagation();" color="tb-primary" class="tb-goto-menu-bar tb-right-border" [class.tb-dark]="wl.isPrimaryColorPanels$() | async">
+  @if (collapsed) {
+    <button mat-button
+            class="tb-goto-menu-search-button"
+            (click)="searchBtnClick()"
+            matTooltip="{{ 'home.go-to' | translate }}"
+            matTooltipPosition="above">
+      <tb-icon matButtonIcon>search</tb-icon>
+    </button>
+  } @else {
+    <mat-form-field class="tb-appearance-transparent tb-goto-menu-field" subscriptSizing="dynamic">
+      <input matInput type="text"
+             placeholder="{{ 'home.go-to' | translate }}"
+             #searchLinkInput
+             [(ngModel)]="searchText"
+             [matAutocomplete]="searchLinkAutocomplete"
+             (input)="onSearchInput()"
+             (focus)="onSearchInput()">
+      <button
+        type="button"
+        matPrefix mat-icon-button aria-label="Search">
+        <tb-icon>search</tb-icon>
+      </button>
+      @if (searchText) {
+        <button
+          type="button"
+          matSuffix mat-icon-button aria-label="Clear"
+          (click)="clear()">
+          <tb-icon>close</tb-icon>
+        </button>
+      }
+    </mat-form-field>
+    <mat-autocomplete
+      class="tb-goto-menu-links"
+      #searchLinkAutocomplete="matAutocomplete"
+      [autoActiveFirstOption]="true"
+      [displayWith]="searchDisplayFn">
+      @if (searchText?.trim().length && gotoMenuResult) {
+        @if (gotoMenuResult.hasMatches) {
+          @if (gotoMenuResult.nameMatches.length) {
+            @for (link of gotoMenuResult.nameMatches; track link) {
+              <mat-option class="tb-goto-menu-link" [value]="null" (onSelectionChange)="gotoLink(link)">
+                <ng-container *ngTemplateOutlet="linkOption; context:{link: link}"></ng-container>
+              </mat-option>
+            }
+          }
+          @if (gotoMenuResult.nameMatches.length && gotoMenuResult.crumbMatches.length) {
+            <mat-divider></mat-divider>
+          }
+          @if (gotoMenuResult.crumbMatches.length) {
+            @for (link of gotoMenuResult.crumbMatches; track link) {
+              <mat-option class="tb-goto-menu-link" [value]="null" (onSelectionChange)="gotoLink(link)">
+                <ng-container *ngTemplateOutlet="linkOption; context:{link: link}"></ng-container>
+              </mat-option>
+            }
+          }
+          @if (gotoMenuResult.crumbMore) {
+            <div class="tb-search-more">{{ 'home.crumbs-more' | translate: {more: gotoMenuResult.crumbMore} }}</div>
+          }
+        } @else {
+          <mat-option class="tb-search-empty" [disabled]="true">
+            {{ 'home.no-matches' | translate }}
+          </mat-option>
+        }
+      }
+    </mat-autocomplete>
+  }
+</mat-toolbar>
+<ng-template #linkOption let-link="link">
+  <tb-icon>{{ link.icon }}</tb-icon>
+  <span class="tb-search-result-text">
+    <span class="tb-search-result-title" [innerHTML]="link.name | highlight:searchText:true"></span>
+    @if (link.breadcrumb) {
+      <span class="tb-search-result-context" [innerHTML]="link.breadcrumb | highlight:searchText:true"></span>
+    }
+  </span>
+</ng-template>

@@ -1,11 +1,12 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <form (ngSubmit)="save()" style="width: 850px;max-height: 100vh;display: grid;grid-template-rows: min-content 4px minmax(auto, 1fr) min-content;">
-  <mat-toolbar class="tb-dialog-header">
+  <mat-toolbar color="tb-primary" class="tb-bottom-border">
     <h2>{{ 'mobile.add-application' | translate }}</h2>
     <span class="flex-1"></span>
     <div tb-help="mobileApplication"></div>

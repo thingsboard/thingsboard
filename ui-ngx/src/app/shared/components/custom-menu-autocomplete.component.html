@@ -1,0 +1,77 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<mat-form-field [formGroup]="selectCustomMenuFormGroup"
+                [class]="{'tb-inline-field': inlineField, 'flex': inlineField,
+                          'tb-suffix-absolute': (inlineField && !selectCustomMenuFormGroup.get('customMenu').value)}"
+  class="mat-block"
+  [floatLabel]="floatLabel"
+  [appearance]="inlineField ? 'outline' : appearance"
+  [subscriptSizing]="inlineField ? 'dynamic' : subscriptSizing">
+  @if (!inlineField && label) {
+    <mat-label>{{ label }}</mat-label>
+  }
+  <input matInput type="text"
+    #customMenuInput
+    placeholder="{{ placeholder }}"
+    formControlName="customMenu"
+    (focusin)="onFocus()"
+    [required]="required"
+    [matAutocomplete]="customMenuAutocomplete">
+  @if (selectCustomMenuFormGroup.get('customMenu').value && !disabled) {
+    <button
+      type="button"
+      matSuffix mat-icon-button aria-label="Clear"
+      (click)="clear()">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  }
+  @if (inlineField && requiredText && selectCustomMenuFormGroup.get('customMenu').hasError('required')
+    && selectCustomMenuFormGroup.get('customMenu').touched) {
+    <mat-icon matSuffix
+      matTooltipPosition="above"
+      matTooltipClass="tb-error-tooltip"
+      [matTooltip]="requiredText | translate"
+      class="tb-error">
+      warning
+    </mat-icon>
+  }
+  <mat-autocomplete
+    class="tb-autocomplete"
+    #customMenuAutocomplete="matAutocomplete"
+    [displayWith]="displayCustomMenuFn">
+    @for (customMenu of filteredCustomMenus | async; track customMenu) {
+      <mat-option [value]="customMenu">
+        <span [innerHTML]="customMenu.name | highlight:searchText"></span>
+      </mat-option>
+    }
+    @if (!(filteredCustomMenus | async)?.length) {
+      <mat-option [value]="null">
+        <div (click)="$event.stopPropagation()">
+          @if (!textIsNotEmpty(searchText)) {
+            <div>
+              <span>{{ 'custom-menu.no-custom-menus-prompt' | translate }}</span>
+            </div>
+          } @else {
+            <span>
+              {{ translate.get('custom-menu.no-custom-menus-matching', {entity: searchText}) | async }}
+            </span>
+          }
+        </div>
+      </mat-option>
+    }
+  </mat-autocomplete>
+  @if (!inlineField && showError) {
+    <mat-error>
+      <ng-content select="[tb-error]"></ng-content>
+    </mat-error>
+  }
+  @if (!inlineField && showHint) {
+    <mat-hint>
+      <ng-content select="[tb-hint]"></ng-content>
+    </mat-hint>
+  }
+</mat-form-field>

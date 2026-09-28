@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   Component,
   EventEmitter,
@@ -170,7 +171,7 @@ export class RuleNodeDetailsComponent extends PageComponent implements OnInit, O
     const ruleChainId = this.ruleNodeFormGroup.get('configuration')?.value?.ruleChainId;
     if (ruleChainId) {
       if (this.ruleChainType === RuleChainType.EDGE) {
-        this.router.navigateByUrl(`/edgeManagement/ruleChains/${ruleChainId}`);
+        this.router.navigateByUrl(`/edgeManagement/templates/ruleChains/${ruleChainId}`);
       } else {
         this.router.navigateByUrl(`/ruleChains/${ruleChainId}`);
       }

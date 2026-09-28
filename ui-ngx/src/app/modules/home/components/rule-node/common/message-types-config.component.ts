@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
 import { LinkLabel, MessageType, messageTypeNames, PageComponent, TruncatePipe } from '@shared/public-api';

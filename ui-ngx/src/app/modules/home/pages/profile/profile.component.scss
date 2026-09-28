@@ -1,12 +1,14 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
-@import "../../../../../scss/constants";
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+@import "constants";
 
 :host {
   .mat-mdc-card.profile-card {
     margin: 8px;
     @media #{$mat-gt-sm} {
-      width: 60%;
+      width: 700px;
+      margin: 8px auto;
     }
     .mat-headline-5 {
       margin: 0;

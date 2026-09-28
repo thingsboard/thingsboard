@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
@@ -25,6 +26,7 @@ import { DashboardWidget, DashboardWidgets } from '@home/models/dashboard-compon
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { SafeStyle } from '@angular/platform-browser';
+import { WidgetExportType, widgetExportTypeTranslationMap } from '@shared/models/widget.models';
 import { isNotEmptyStr } from '@core/utils';
 import { GridsterItemComponent } from 'angular-gridster2';
 import { UtilsService } from '@core/services/utils.service';
@@ -113,6 +115,9 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
 
   @Output()
   widgetComponentAction: EventEmitter<WidgetComponentAction> = new EventEmitter<WidgetComponentAction>();
+
+  widgetExportType = WidgetExportType;
+  widgetExportTypeTranslations = widgetExportTypeTranslationMap;
 
   hovered = false;
 

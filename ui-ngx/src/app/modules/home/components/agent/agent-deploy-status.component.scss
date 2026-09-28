@@ -1,0 +1,256 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@use './agent-shared' as *;
+@use '../../../../../scss/constants' as *;
+:host {
+  display: block;
+}
+
+.tb-deploy-status {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.tb-deploy-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 22px 24px;
+  background: #fff;
+  border: 1px solid $agent-divider-light;
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.tb-deploy-card-icon {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--tb-primary-500) 14%, transparent);
+
+  mat-icon {
+    color: var(--tb-primary-600, var(--tb-primary-500));
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+  }
+}
+
+.tb-deploy-card.tb-deploy-card-offline .tb-deploy-card-icon {
+  background: color-mix(in srgb, $agent-color-error 14%, transparent);
+
+  mat-icon {
+    color: $agent-color-error;
+  }
+}
+
+.tb-deploy-card-body {
+  flex: 1;
+  min-width: 0;
+
+  h3 {
+    margin: 0 0 4px;
+    font-size: 20px;
+    font-weight: 600;
+    color: $agent-text-primary;
+  }
+
+  .tb-deploy-card-desc {
+    margin: 0;
+    font-size: 14px;
+    color: rgba(0, 0, 0, 0.64);
+    line-height: 1.5;
+  }
+
+  .tb-deploy-agent-name {
+    display: inline-block;
+    padding: 1px 6px;
+    margin-right: 4px;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 4px;
+    font-family: $agent-mono-font;
+    font-size: 13px;
+    color: rgba(0, 0, 0, 0.78);
+  }
+}
+
+.tb-deploy-card-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.tb-deploy-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+
+  .tb-deploy-pill-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  &.healthy {
+    background: color-mix(in srgb, var(--tb-primary-500) 10%, transparent);
+    color: var(--tb-primary-600, var(--tb-primary-500));
+
+    .tb-deploy-pill-dot {
+      background: var(--tb-primary-500);
+    }
+  }
+
+  &.unhealthy {
+    background: color-mix(in srgb, $agent-color-error 10%, transparent);
+    color: $agent-color-error;
+
+    .tb-deploy-pill-dot {
+      background: $agent-color-error;
+    }
+  }
+}
+
+.tb-deploy-where {
+  margin-top: 4px;
+}
+
+.tb-deploy-where-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+.tb-deploy-reinstall-link {
+  all: unset;
+  display: inline-flex;
+  gap: 6px;
+  font-size: 13px;
+  color: $agent-text-secondary;
+  cursor: pointer;
+
+  .tb-deploy-reinstall-cta {
+    color: var(--tb-primary-500);
+    font-weight: 500;
+  }
+
+  &:hover .tb-deploy-reinstall-cta {
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--tb-primary-500);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+}
+
+.tb-deploy-where-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+
+  @media #{$mat-lt-md} {
+    grid-template-columns: 1fr;
+  }
+}
+
+.tb-deploy-where-card {
+  all: unset;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid $agent-divider-light;
+  border-radius: 10px;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+  text-align: left;
+
+  &:hover {
+    border-color: color-mix(in srgb, var(--tb-primary-500) 40%, transparent);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--tb-primary-500);
+    outline-offset: 2px;
+  }
+
+  .tb-deploy-where-card-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, var(--tb-primary-500) 10%, transparent);
+
+    mat-icon {
+      color: var(--tb-primary-600, var(--tb-primary-500));
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+  }
+
+  .tb-deploy-where-card-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--tb-primary-600, var(--tb-primary-500));
+  }
+
+  .tb-deploy-where-card-arrow {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  .tb-deploy-where-card-desc {
+    font-size: 13px;
+    line-height: 1.5;
+    color: $agent-text-secondary;
+  }
+}
+
+.tb-deploy-install-block {
+  display: block;
+}
+
+.tb-deploy-install-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
+.tb-deploy-install-hide {
+  font-size: 12px;
+  min-height: 28px;
+  line-height: 28px;
+  padding: 0 8px;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    margin-right: 4px;
+  }
+}

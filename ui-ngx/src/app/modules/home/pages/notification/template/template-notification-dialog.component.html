@@ -1,16 +1,17 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<mat-toolbar class="tb-dialog-header">
+<mat-toolbar color="tb-primary" class="tb-bottom-border">
   <h2>{{ dialogTitle | translate }}</h2>
   <span class="flex-1"></span>
   <div tb-help="templateNotifications"></div>
   <button mat-icon-button
-          (click)="cancel()"
-          type="button">
+    (click)="cancel()"
+    type="button">
     <mat-icon class="material-icons">close</mat-icon>
   </button>
 </mat-toolbar>
@@ -21,9 +22,9 @@
 }
 <div mat-dialog-content>
   <mat-horizontal-stepper linear #notificationTemplateStepper
-                          labelPosition="end"
-                          [orientation]="(stepperOrientation | async)"
-                          (selectionChange)="changeStep($event)">
+    labelPosition="end"
+    [orientation]="(stepperOrientation | async)"
+    (selectionChange)="changeStep($event)">
     <ng-template matStepperIcon="edit">
       <mat-icon>check</mat-icon>
     </ng-template>
@@ -51,7 +52,7 @@
         }
         <section formGroupName="configuration">
           <label [class.tb-error]="templateNotificationForm.get('configuration.deliveryMethodsTemplates').hasError('atLeastOne')"
-            class="tb-title tb-required">{{ "notification.delivery-methods" | translate }}</label>
+          class="tb-title tb-required">{{ "notification.delivery-methods" | translate }}</label>
           <div class="tb-hint" translate>notification.at-least-one-should-be-selected</div>
           <section formGroupName="deliveryMethodsTemplates" class="delivery-methods-container">
             @for (deliveryMethods of notificationDeliveryMethods; track deliveryMethods) {
@@ -62,6 +63,41 @@
               </section>
             }
           </section>
+          @if (!isSysAdmin() && templateNotificationForm.get('notificationType').value !== notificationType.REPORT_GENERATED) {
+            <div class="tb-form-panel stroked no-padding-bottom no-gap">
+              <mat-slide-toggle class="toggle" formControlName="attachReport">
+                <div tb-hint-tooltip-icon="{{ 'notification.attach-report-hint' | translate }}" translate>
+                  notification.attach-report
+                </div>
+              </mat-slide-toggle>
+              @if (templateNotificationForm.get('configuration.attachReport').value) {
+                <div class="tb-form-panel outlined">
+                  <tb-report-template-autocomplete
+                    required
+                    appearance="outline"
+                    [type]="ReportTemplateType.REPORT"
+                    includeCustomers
+                    showError
+                    formControlName="reportTemplateId">
+                    <span tb-error>{{'report-template.report-template-required' | translate}}</span>
+                  </tb-report-template-autocomplete>
+                  <tb-entity-autocomplete
+                    appearance="outline"
+                    required
+                    useFullEntityId
+                    [entityType]="entityType.USER"
+                    formControlName="userId">
+                  </tb-entity-autocomplete>
+                  <tb-timezone-select
+                    appearance="outline"
+                    userTimezoneByDefault
+                    required
+                    formControlName="timezone">
+                  </tb-timezone-select>
+                </div>
+              }
+            </div>
+          }
         </section>
       </form>
     </mat-step>
@@ -84,10 +120,12 @@
 <div mat-dialog-actions class="tb-dialog-actions">
   @if (selectedIndex > 0) {
     <button mat-stroked-button
-            (click)="backStep()">{{ 'action.back' | translate }}</button>
+    (click)="backStep()">{{ 'action.back' | translate }}</button>
   }
   <span class="flex-1"></span>
-  <button mat-raised-button
-          color="primary"
-          (click)="nextStep()">{{ nextStepLabel() | translate }}</button>
+  @if (!data.readonly || selectedIndex < maxStepperIndex) {
+    <button mat-raised-button
+      color="primary"
+    (click)="nextStep()">{{ nextStepLabel() | translate }}</button>
+  }
 </div>

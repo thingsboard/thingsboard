@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable } from '@angular/core';
 import { UtilsService } from '@core/services/utils.service';
 import { TimeService } from '@core/services/time.service';
@@ -50,6 +51,9 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { AliasFilterType, EntityAlias, EntityAliasFilter } from '@app/shared/models/alias.models';
 import { EntityId } from '@app/shared/models/id/entity-id';
 import { initModelFromDefaultTimewindow } from '@shared/models/time/time.models';
+import { EntityGroupService } from '@core/http/entity-group.service';
+import { Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { AlarmSearchStatus } from '@shared/models/alarm.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { BackgroundType, colorBackground, isBackgroundSettings } from '@shared/models/widget-settings.models';
@@ -72,7 +76,8 @@ export class DashboardUtilsService {
 
   constructor(private utils: UtilsService,
               private timeService: TimeService,
-              private translate: TranslateService) {
+              private translate: TranslateService,
+              private entityGroupService: EntityGroupService) {
   }
 
   public validateAndUpdateDashboard(dashboard: Dashboard): Dashboard {
@@ -478,12 +483,25 @@ export class DashboardUtilsService {
     };
   }
 
-  public createSingleEntityFilter(entityId: EntityId): EntityAliasFilter {
-    return {
-      type: AliasFilterType.singleEntity,
-      singleEntity: entityId,
-      resolveMultiple: false
-    };
+  public createSingleEntityFilter(entityId: EntityId): Observable<EntityAliasFilter> {
+    if (entityId.entityType === EntityType.ENTITY_GROUP) {
+      return this.entityGroupService.getEntityGroup(entityId.id).pipe(
+        map((entityGroup) => {
+          return {
+            type: AliasFilterType.entityGroupList,
+            groupType: entityGroup.type,
+            entityGroupList: [entityId.id],
+            resolveMultiple: false
+          };
+        })
+      );
+    } else {
+      return of({
+        type: AliasFilterType.singleEntity,
+        singleEntity: entityId,
+        resolveMultiple: false
+      });
+    }
   }
 
   public widgetConfigFromWidgetType(widgetTypeDescriptor: WidgetTypeDescriptor): WidgetConfig {

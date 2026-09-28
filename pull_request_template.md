@@ -4,7 +4,7 @@ Put your PR description here instead of this sentence.
 
 ## General checklist
 
-- [ ] You have reviewed the guidelines [document](https://docs.google.com/document/d/1wqcOafLx5hth8SAg4dqV_LV3un3m5WYR8RdTJ4MbbUM/edit?usp=sharing).
+- [ ] You have reviewed the [contributing guidelines](https://github.com/thingsboard/thingsboard/blob/master/CONTRIBUTING.md).
 - [ ] [Labels](https://docs.github.com/en/issues/using-labels-and-milestones-to-track-work/managing-labels#about-labels) that classify your pull request have been added.
 - [ ] The [milestone](https://docs.github.com/en/issues/using-labels-and-milestones-to-track-work/about-milestones) is specified and corresponds to fix version.  
 - [ ] Description references specific [issue](https://github.com/thingsboard/thingsboard/issues).
@@ -12,7 +12,6 @@ Put your PR description here instead of this sentence.
 - [ ] Description contains brief notes about what needs to be added to the documentation.
 - [ ] No merge conflicts, commented blocks of code, code formatting issues.
 - [ ] Changes are backward compatible or upgrade script is provided.
-- [ ] Similar PR is opened for PE version to simplify merge. Crosslinks between PRs added. Required for internal contributors only.
   
 ## Front-End feature checklist
 

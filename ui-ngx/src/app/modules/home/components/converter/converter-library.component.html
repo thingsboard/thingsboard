@@ -1,0 +1,24 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div [formGroup]="libraryFormGroup">
+  <tb-converter-library-vendor-autocomplete
+    [integrationType]="integrationType"
+    [converterType]="converterType"
+    appearance="outline"
+    formControlName="vendor">
+  </tb-converter-library-vendor-autocomplete>
+  @if (libraryFormGroup.get('vendor').value) {
+    <tb-converter-library-model-autocomplete
+      [integrationType]="integrationType"
+      [converterType]="converterType"
+      [vendorName]="libraryFormGroup.get('vendor').value.name"
+      appearance="outline"
+      formControlName="model">
+    </tb-converter-library-model-autocomplete>
+  }
+</div>
+

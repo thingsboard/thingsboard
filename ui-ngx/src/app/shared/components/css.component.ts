@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   ChangeDetectorRef,
   Component,
@@ -13,7 +14,7 @@ import {
 } from '@angular/core';
 import { ControlValueAccessor, UntypedFormControl, NG_VALIDATORS, NG_VALUE_ACCESSOR, Validator } from '@angular/forms';
 import { Ace } from 'ace-builds';
-import { getAce } from '@shared/models/ace/ace.models';
+import { getAce, getCssLanguageProvider } from '@shared/models/ace/ace.models';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -21,6 +22,9 @@ import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
 import { beautifyCss } from '@shared/models/beautify.models';
+import type { LanguageProvider } from 'ace-linters';
+import { of, Subscription } from 'rxjs';
+import { catchError, mergeMap } from 'rxjs/operators';
 
 @Component({
     selector: 'tb-css',
@@ -74,6 +78,9 @@ export class CssComponent implements OnInit, OnDestroy, ControlValueAccessor, Va
 
   private propagateChange = null;
 
+  private languageProvider: LanguageProvider;
+  private aceSubscription: Subscription;
+
   constructor(public elementRef: ElementRef,
               private utils: UtilsService,
               private translate: TranslateService,
@@ -98,9 +105,24 @@ export class CssComponent implements OnInit, OnDestroy, ControlValueAccessor, Va
     };
 
     editorOptions = {...editorOptions, ...advancedOptions};
-    getAce().subscribe(
-      (ace) => {
+    this.aceSubscription = getAce().pipe(
+      mergeMap((ace) => {
         this.cssEditor = ace.edit(editorElement, editorOptions);
+        this.cssEditor.session.setUseWorker(false);
+        // keep the editor usable when the linter chunk or its worker fails to load
+        return getCssLanguageProvider().pipe(catchError(() => of(null)));
+      })
+    ).subscribe(
+      (languageProvider) => {
+        if (languageProvider) {
+          this.languageProvider = languageProvider;
+          // ace hands the same module-level completers array to every editor created with
+          // enableBasicAutocompletion, and registerEditor() pushes the LSP completer onto it -
+          // give this editor its own copy so the push doesn't reach the other editors.
+          const editor = this.cssEditor as Ace.Editor & { completers: Ace.Completer[] };
+          editor.completers = [...editor.completers];
+          this.languageProvider.registerEditor(this.cssEditor);
+        }
         this.cssEditor.session.setUseWrapMode(true);
         this.cssEditor.setValue(this.modelValue ? this.modelValue : '', -1);
         this.cssEditor.setReadOnly(this.disabled);
@@ -128,8 +150,12 @@ export class CssComponent implements OnInit, OnDestroy, ControlValueAccessor, Va
   }
 
   ngOnDestroy(): void {
+    this.aceSubscription?.unsubscribe();
     if (this.editorResize$) {
       this.editorResize$.disconnect();
+    }
+    if (this.languageProvider && this.cssEditor) {
+      this.languageProvider.unregisterEditor(this.cssEditor, true);
     }
     if (this.cssEditor) {
       this.cssEditor.destroy();

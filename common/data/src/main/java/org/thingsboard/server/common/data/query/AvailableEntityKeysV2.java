@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.query;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -21,6 +22,13 @@ import java.util.Set;
 )
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record AvailableEntityKeysV2(
+        @Schema(
+                description = "Total number of entities that matched the query filter.",
+                example = "5",
+                requiredMode = Schema.RequiredMode.REQUIRED
+        )
+        @Nullable Integer totalEntities,
+
         @Schema(
                 description = "Set of entity types found among the matched entities.",
                 example = "[\"DEVICE\", \"ASSET\"]",

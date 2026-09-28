@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <section [formGroup]="restApiCallConfigForm" class="flex flex-col gap-4">
@@ -110,11 +111,9 @@
                     <mat-label translate>rule-node-config.proxy-user</mat-label>
                     <input matInput formControlName="proxyUser">
                   </mat-form-field>
-                  <mat-form-field class="mat-block" appearance="outline">
-                    <mat-label translate>rule-node-config.proxy-password</mat-label>
-                    <input matInput type="password" formControlName="proxyPassword">
-                    <tb-toggle-password matSuffix></tb-toggle-password>
-                  </mat-form-field>
+                  <tb-secret-key-input formControlName="proxyPassword" class="mat-block flex-1" appearance="outline"
+                                   label="{{ 'rule-node-config.proxy-password' | translate }}">
+              </tb-secret-key-input>
                 </div>
               }
             </div>

@@ -1,7 +1,9 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.exception;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.persistence.PersistenceException;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
@@ -38,6 +40,9 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.subscription.SubscriptionEntry;
+import org.thingsboard.server.common.data.subscription.SubscriptionErrorCode;
+import org.thingsboard.server.common.data.subscription.SubscriptionException;
 import org.thingsboard.server.common.msg.tools.MaxPayloadSizeExceededException;
 import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
 import org.thingsboard.server.dao.DaoUtil;
@@ -87,6 +92,7 @@ public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHand
         errorCodeToStatusMap.put(ThingsboardErrorCode.SUBSCRIPTION_VIOLATION, HttpStatus.FORBIDDEN);
         errorCodeToStatusMap.put(ThingsboardErrorCode.ENTITIES_LIMIT_EXCEEDED, HttpStatus.FORBIDDEN);
         errorCodeToStatusMap.put(ThingsboardErrorCode.VERSION_CONFLICT, HttpStatus.CONFLICT);
+        errorCodeToStatusMap.put(ThingsboardErrorCode.SETUP_INCOMPLETE, HttpStatus.LOCKED);
     }
 
     private static ThingsboardErrorCode statusToErrorCode(HttpStatus status) {
@@ -131,7 +137,11 @@ public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHand
 
                 if (exception instanceof ThingsboardException thingsboardException) {
                     if (thingsboardException.getErrorCode() == ThingsboardErrorCode.SUBSCRIPTION_VIOLATION) {
-                        handleSubscriptionException(thingsboardException, response);
+                        if (thingsboardException.getCause() instanceof SubscriptionException subscriptionException) {
+                            handleSubscriptionException(subscriptionException, response);
+                        } else {
+                            handleSubscriptionException(thingsboardException, response);
+                        }
                     } else if (thingsboardException.getErrorCode() == ThingsboardErrorCode.DATABASE) {
                         handleDatabaseException(thingsboardException.getCause(), response);
                     } else if (thingsboardException.getErrorCode() == ThingsboardErrorCode.ENTITIES_LIMIT_EXCEEDED) {
@@ -143,6 +153,10 @@ public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHand
                     } else {
                         handleThingsboardException(thingsboardException, response);
                     }
+                } else if (exception instanceof SystemSetupIncompleteException systemSetupIncompleteException) {
+                    handleSystemSetupIncompleteException(systemSetupIncompleteException, response);
+                } else if (exception instanceof ThingsboardRuntimeException thingsboardRuntimeException) {
+                    handleThingsboardRuntimeException(thingsboardRuntimeException, response);
                 } else if (exception instanceof TbRateLimitsException rateLimitsException) {
                     handleRateLimitException(response, rateLimitsException);
                 } else if (exception instanceof AccessDeniedException) {
@@ -183,12 +197,34 @@ public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHand
         JacksonUtil.writeValue(response.getWriter(), ThingsboardErrorResponse.of(thingsboardException.getMessage(), errorCode, status));
     }
 
+    private void handleThingsboardRuntimeException(ThingsboardRuntimeException thingsboardRuntimeException, HttpServletResponse response) throws IOException {
+        ThingsboardErrorCode errorCode = thingsboardRuntimeException.getErrorCode();
+        HttpStatus status = errorCodeToStatus(errorCode);
+        response.setStatus(status.value());
+        JacksonUtil.writeValue(response.getWriter(), ThingsboardErrorResponse.of(thingsboardRuntimeException.getMessage(), errorCode, status));
+    }
+
+    private void handleSystemSetupIncompleteException(SystemSetupIncompleteException exception, HttpServletResponse response) throws IOException {
+        writeResponse(ThingsboardSetupIncompleteResponse.of(exception.getMessage(), exception.getSetupState(),
+                errorCodeToStatus(ThingsboardErrorCode.SETUP_INCOMPLETE)), response);
+    }
+
     private void handleRateLimitException(HttpServletResponse response, TbRateLimitsException exception) throws IOException {
         response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
         String message = "Too many requests for current " + exception.getEntityType().name().toLowerCase() + "!";
         JacksonUtil.writeValue(response.getWriter(),
                 ThingsboardErrorResponse.of(message,
                         ThingsboardErrorCode.TOO_MANY_REQUESTS, HttpStatus.TOO_MANY_REQUESTS));
+    }
+
+    private void handleSubscriptionException(SubscriptionException subscriptionException, HttpServletResponse response) throws IOException {
+        SubscriptionErrorCode errorCode = subscriptionException.getErrorCode();
+        SubscriptionEntry entry = subscriptionException.getEntry();
+        JsonNode value = subscriptionException.getValue();
+        HttpStatus status = HttpStatus.FORBIDDEN;
+        response.setStatus(status.value());
+        JacksonUtil.writeValue(response.getWriter(),
+                ThingsboardErrorResponse.ofSubscriptionViolation(subscriptionException.getMessage(), errorCode, entry, value, status));
     }
 
     private void handleMaxPayloadSizeExceededException(HttpServletResponse response, MaxPayloadSizeExceededException exception) throws IOException {

@@ -1,0 +1,99 @@
+{
+  "entityId": {
+    "entityType": "DEVICE_PROFILE",
+    "id": "58183d7e-4b7a-4ad6-a476-5d6c6571174c"
+  },
+  "type": "ALARM",
+  "name": "Weekly Consumption Threshold Exceeded Customer Alarm",
+  "debugSettings": {
+    "failuresEnabled": true,
+    "allEnabled": false,
+    "allEnabledUntil": 0
+  },
+  "configurationVersion": 0,
+  "configuration": {
+    "type": "ALARM",
+    "arguments": {
+      "cWeeklyConsumptionThreshold": {
+        "refDynamicSourceConfiguration": {
+          "type": "CURRENT_OWNER"
+        },
+        "refEntityKey": {
+          "key": "cWeeklyConsumptionThreshold",
+          "type": "ATTRIBUTE",
+          "scope": "SERVER_SCOPE"
+        },
+        "defaultValue": "1.0E9"
+      },
+      "cWeeklyConsumptionAlarmEnabled": {
+        "refDynamicSourceConfiguration": {
+          "type": "CURRENT_OWNER"
+        },
+        "refEntityKey": {
+          "key": "cWeeklyConsumptionAlarmEnabled",
+          "type": "ATTRIBUTE",
+          "scope": "SERVER_SCOPE"
+        },
+        "defaultValue": "false"
+      },
+      "weeklyConsumption": {
+        "refEntityKey": {
+          "key": "weeklyConsumption",
+          "type": "TS_LATEST"
+        }
+      }
+    },
+    "createRules": {
+      "CRITICAL": {
+        "condition": {
+          "type": "SIMPLE",
+          "expression": {
+            "type": "SIMPLE",
+            "filters": [
+              {
+                "argument": "cWeeklyConsumptionAlarmEnabled",
+                "valueType": "BOOLEAN",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "BOOLEAN",
+                    "operation": "EQUAL",
+                    "value": {
+                      "staticValue": true,
+                      "dynamicValueArgument": null
+                    }
+                  }
+                ]
+              },
+              {
+                "argument": "weeklyConsumption",
+                "valueType": "NUMERIC",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "NUMERIC",
+                    "operation": "GREATER_OR_EQUAL",
+                    "value": {
+                      "staticValue": null,
+                      "dynamicValueArgument": "cWeeklyConsumptionThreshold"
+                    }
+                  }
+                ]
+              }
+            ],
+            "operation": "AND"
+          },
+          "schedule": null
+        },
+        "alarmDetails": "${weeklyConsumption}",
+        "dashboardId": null
+      }
+    },
+    "clearRule": null,
+    "propagate": false,
+    "propagateToOwner": false,
+    "propagateToTenant": false,
+    "propagateRelationTypes": null,
+    "output": null
+  }
+}

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormControl } from '@angular/forms';
 import { cssUnit, cssUnits } from '@shared/models/widget-settings.models';
@@ -31,6 +32,9 @@ export class CssUnitSelectComponent implements OnInit, ControlValueAccessor {
   @Input()
   width = '100%';
 
+  @Input()
+  allowedCssUnits: cssUnit[];
+
   cssUnitsList = cssUnits;
 
   cssUnitFormControl: UntypedFormControl;
@@ -42,6 +46,9 @@ export class CssUnitSelectComponent implements OnInit, ControlValueAccessor {
   constructor(private destroyRef: DestroyRef) {}
 
   ngOnInit(): void {
+    if (this.allowedCssUnits?.length) {
+      this.cssUnitsList = this.allowedCssUnits;
+    }
     this.cssUnitFormControl = new UntypedFormControl();
     this.cssUnitFormControl.valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)

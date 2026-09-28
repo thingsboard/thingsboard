@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.edge;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -30,6 +31,7 @@ public class EdgeEvent extends BaseData<EdgeEventId> {
     private String uid;
     private EdgeEventType type;
     private transient JsonNode body;
+    private UUID entityGroupId;
 
     public EdgeEvent() {
         super();

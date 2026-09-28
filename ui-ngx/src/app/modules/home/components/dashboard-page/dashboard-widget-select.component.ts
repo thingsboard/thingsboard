@@ -1,6 +1,16 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
-import { ChangeDetectorRef, Component, EventEmitter, Input, Output, TemplateRef, ViewChild, ViewEncapsulation } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import {
+  ChangeDetectorRef,
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+  TemplateRef,
+  ViewChild,
+  ViewEncapsulation
+} from '@angular/core';
 import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 import { IAliasController } from '@core/api/widget-api.models';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
@@ -12,7 +22,7 @@ import {
   widgetType,
   WidgetTypeInfo
 } from '@shared/models/widget.models';
-import { debounceTime, distinctUntilChanged, map, skip } from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged, map, skip } from 'rxjs/operators';
 import { BehaviorSubject, combineLatest, forkJoin, of } from 'rxjs';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
@@ -20,8 +30,12 @@ import { GridEntitiesFetchFunction, ScrollGridColumns } from '@shared/components
 import { ItemSizeStrategy } from '@shared/components/grid/scroll-grid.component';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { TranslateService } from '@ngx-translate/core';
-import { MpItemVersionQuery, MpItemVersionView, widgetTypeTranslations } from '@shared/models/iot-hub/iot-hub-version.models';
-import { ItemType, FilterParamInfo, WidgetCategory } from '@shared/models/iot-hub/iot-hub-item.models';
+import {
+  MpItemVersionQuery,
+  MpItemVersionView,
+  widgetTypeTranslations
+} from '@shared/models/iot-hub/iot-hub-version.models';
+import { FilterParamInfo, ItemType, WidgetCategory } from '@shared/models/iot-hub/iot-hub-item.models';
 import { IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
@@ -33,6 +47,12 @@ import {
   resolveIotHubItemImageUrl
 } from '@home/components/iot-hub/iot-hub-utils';
 import { IotHubBuiltInService } from '@home/components/iot-hub/iot-hub-built-in.service';
+import { Operation, Resource } from '@shared/models/security.models';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { Authority } from '@shared/models/authority.enum';
+import { WhiteLabelingService } from '@core/http/white-labeling.service';
 
 type selectWidgetMode = 'installed' | 'iotHub';
 type installedSubMode = 'default' | 'allWidgets';
@@ -80,6 +100,9 @@ export class DashboardWidgetSelectComponent {
   private installedSubMode$ = new BehaviorSubject<installedSubMode>('default');
   private iotHubSubMode$ = new BehaviorSubject<iotHubSubMode>('default');
   private widgetsBundle$ = new BehaviorSubject<WidgetsBundle>(null);
+
+  resource = Resource;
+  operation = Operation;
 
   widgetTypes = new Set<widgetType>();
   hasDeprecated = false;
@@ -268,12 +291,16 @@ export class DashboardWidgetSelectComponent {
   iotHubFilterSearch: Record<string, string> = {};
   iotHubFilterItemsHovered = false;
 
+  isTenantAdmin = getCurrentAuthUser(this.store).authority === Authority.TENANT_ADMIN;
+
   constructor(private widgetsService: WidgetService,
               private iotHubApiService: IotHubApiService,
               private iotHubActions: IotHubActionsService,
               private iotHubBuiltInService: IotHubBuiltInService,
               private translate: TranslateService,
-              private cd: ChangeDetectorRef) {
+              private store: Store<AppState>,
+              private cd: ChangeDetectorRef,
+              public wl: WhiteLabelingService) {
 
     this.widgetBundlesFetchFunction = (pageSize, page, filter) => {
       const pageLink = new PageLink(pageSize, page, filter, {
@@ -661,14 +688,15 @@ export class DashboardWidgetSelectComponent {
         return this.translate.instant('iot-hub.all-iot-hub-widgets');
       }
       return '';
+    } else {
+      if (this.widgetsBundle) {
+        return this.widgetsBundle.title;
+      }
+      if (this.installedSubMode === 'allWidgets') {
+        return this.translate.instant('widget.all-widgets');
+      }
+      return this.translate.instant('widget.select-widgets-bundle');
     }
-    if (this.widgetsBundle) {
-      return this.widgetsBundle.title;
-    }
-    if (this.installedSubMode === 'allWidgets') {
-      return this.translate.instant('widget.all-widgets');
-    }
-    return '';
   }
 
   getSearchPlaceholder(): string {
@@ -813,12 +841,15 @@ export class DashboardWidgetSelectComponent {
       return of([]);
     }
     const versionRequests = versionIds.map(id =>
-      this.iotHubApiService.getVersionInfo(id, { ignoreLoading: true })
+      this.iotHubApiService.getVersionInfo(id, { ignoreLoading: true }).pipe(catchError(() => of(null)))
     );
     return forkJoin(versionRequests).pipe(
       map(versions => {
-        this.installedWidgetVersions = versions.sort((a, b) => b.totalInstallCount - a.totalInstallCount);
-        return this.installedWidgetVersions;
+        const loaded = versions.filter(v => !!v).sort((a, b) => b.totalInstallCount - a.totalInstallCount);
+        if (loaded.length) {
+          this.installedWidgetVersions = loaded;
+        }
+        return loaded;
       })
     );
   }

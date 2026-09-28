@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.cf;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -62,6 +63,7 @@ import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.aggregation.single.AggIntervalEntry;
+import org.thingsboard.server.service.security.permission.OwnersCacheService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import java.util.Collections;
@@ -99,7 +101,7 @@ public abstract class AbstractCalculatedFieldProcessingService {
     protected final TelemetrySubscriptionService tsSubService;
     protected final ApiLimitService apiLimitService;
     protected final RelationService relationService;
-    protected final OwnerService ownerService;
+    protected final OwnersCacheService ownersCacheService;
     protected final TbClusterService clusterService;
 
     protected ListeningExecutorService calculatedFieldCallbackExecutor;
@@ -254,7 +256,10 @@ public abstract class AbstractCalculatedFieldProcessingService {
     private ListenableFuture<List<EntityId>> fromDynamicSource(TenantId tenantId, EntityId entityId, Argument value) {
         var refDynamicSourceConfiguration = value.getRefDynamicSourceConfiguration();
         return switch (refDynamicSourceConfiguration.getType()) {
-            case CURRENT_OWNER -> Futures.immediateFuture(List.of(resolveOwnerArgument(tenantId, entityId)));
+            case CURRENT_OWNER -> {
+                EntityId owner = resolveOwnerArgument(tenantId, entityId);
+                yield Futures.immediateFuture(owner != null ? List.of(owner) : List.of());
+            }
             case RELATION_PATH_QUERY -> {
                 var configuration = (RelationPathQueryDynamicSourceConfiguration) refDynamicSourceConfiguration;
                 Predicate<EntityRelation> filter = entityRelation -> CalculatedField.isSupportedRefEntity(entityRelation.getFrom()) && CalculatedField.isSupportedRefEntity(entityRelation.getTo());
@@ -265,7 +270,7 @@ public abstract class AbstractCalculatedFieldProcessingService {
     }
 
     private EntityId resolveOwnerArgument(TenantId tenantId, EntityId entityId) {
-        return ownerService.getOwner(tenantId, entityId);
+        return ownersCacheService.getOwner(tenantId, entityId);
     }
 
     private ListenableFuture<ArgumentEntry> fetchGeofencingArgumentValue(TenantId tenantId, List<EntityId> geofencingEntities, Argument argument, long startTs) {
@@ -277,7 +282,7 @@ public abstract class AbstractCalculatedFieldProcessingService {
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))), MoreExecutors.directExecutor());
     }
 
-    private List<ListenableFuture<Map.Entry<EntityId, AttributeKvEntry>>> fetchGeofencingEntityIdToKvEntriesFutures(TenantId tenantId, List<EntityId> geofencingEntities, Argument argument, long startTs) {
+    protected List<ListenableFuture<Map.Entry<EntityId, AttributeKvEntry>>> fetchGeofencingEntityIdToKvEntriesFutures(TenantId tenantId, List<EntityId> geofencingEntities, Argument argument, long startTs) {
         return geofencingEntities.stream()
                 .map(entityId -> {
                     AttributeScope scope = argument.getRefEntityKey().getScope();
@@ -336,7 +341,7 @@ public abstract class AbstractCalculatedFieldProcessingService {
         return fetchTimeSeriesInternal(tenantId, entityId, query, tsRolling -> transformTsRollingArgument(tsRolling, query.getLimit(), argTimeWindow));
     }
 
-    private ListenableFuture<ArgumentEntry> fetchAttribute(TenantId tenantId, EntityId entityId, Argument argument, long defaultLastUpdateTs) {
+    protected ListenableFuture<ArgumentEntry> fetchAttribute(TenantId tenantId, EntityId entityId, Argument argument, long defaultLastUpdateTs) {
         log.trace("[{}][{}] Fetching attribute for key {}", tenantId, entityId, argument.getRefEntityKey());
         var attributeOptFuture = attributesService.find(tenantId, entityId, argument.getRefEntityKey().getScope(), argument.getRefEntityKey().getKey());
 
@@ -346,7 +351,7 @@ public abstract class AbstractCalculatedFieldProcessingService {
         }, calculatedFieldCallbackExecutor);
     }
 
-    private ListenableFuture<ArgumentEntry> fetchTsLatest(TenantId tenantId, EntityId entityId, Argument argument, long defaultTs) {
+    protected ListenableFuture<ArgumentEntry> fetchTsLatest(TenantId tenantId, EntityId entityId, Argument argument, long defaultTs) {
         String timeseriesKey = argument.getRefEntityKey().getKey();
         log.trace("[{}][{}] Fetching latest timeseries {}", tenantId, entityId, timeseriesKey);
         return Futures.transform(timeseriesService.findLatest(tenantId, entityId, timeseriesKey), result -> {
@@ -491,6 +496,11 @@ public abstract class AbstractCalculatedFieldProcessingService {
             TimeseriesSaveRequest.Strategy strategy = new TimeseriesSaveRequest.Strategy(tsOutputStrategy.isSaveTimeSeries(), tsOutputStrategy.isSaveLatest(), tsOutputStrategy.isSendWsUpdate(), tsOutputStrategy.isProcessCfs());
             saveTimeSeriesInternal(tenantId, entityId, jsonResult, tsOutputStrategy.getTtl(), cfIds, ts, strategy, callback);
         }
+    }
+
+    protected void saveReprocessingTimeSeriesResult(TenantId tenantId, EntityId entityId, JsonElement jsonResult, long ts, TimeseriesSaveRequest.Strategy strategy, TbCallback callback) {
+        log.trace("[{}][{}] Saving CF reprocessing result: {}", tenantId, entityId, jsonResult);
+        saveTimeSeriesInternal(tenantId, entityId, jsonResult, null, null, ts, strategy, callback);
     }
 
     private void saveTimeSeriesInternal(TenantId tenantId, EntityId entityId, JsonElement jsonResult, Long ttl, List<CalculatedFieldId> cfIds, long ts, TimeseriesSaveRequest.Strategy strategy, TbCallback callback) {

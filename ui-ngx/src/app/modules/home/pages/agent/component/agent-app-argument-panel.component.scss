@@ -1,0 +1,43 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@use '../../../components/agent/agent-shared' as *;
+
+:host {
+  .tb-agent-app-argument-panel {
+    width: 480px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
+    .tb-agent-app-argument-panel-title {
+      line-height: 24px;
+      letter-spacing: 0.25px;
+      color: $agent-text-primary;
+      font-weight: 500;
+      font-size: 16px;
+    }
+
+    .tb-agent-app-argument-panel-content {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      overflow: auto;
+    }
+
+    .tb-agent-app-argument-info {
+      width: 18px;
+      height: 18px;
+      font-size: 18px;
+      color: $agent-text-hint;
+      cursor: help;
+    }
+
+    .tb-agent-app-argument-panel-buttons {
+      display: flex;
+      flex-direction: row;
+      gap: 16px;
+      justify-content: flex-end;
+      align-items: center;
+    }
+  }
+}

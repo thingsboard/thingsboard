@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.script;
 
 import com.google.common.util.concurrent.Futures;
@@ -39,7 +40,11 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
-@ConditionalOnExpression("'${js.evaluator:null}'=='remote' && ('${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core' || '${service.type:null}'=='tb-rule-engine')")
+@ConditionalOnExpression("'${js.evaluator:null}'=='remote' && " +
+        "('${service.type:null}'=='monolith' " +
+        "|| '${service.type:null}'=='tb-core' " +
+        "|| '${service.type:null}'=='tb-rule-engine'" +
+        "|| '${service.type:null}'=='tb-integration-executor')")
 @Service
 public class RemoteJsInvokeService extends AbstractJsInvokeService {
 
@@ -258,6 +263,11 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
         } else {
             log.debug("[{}] Failed to release script", scriptHash);
         }
+    }
+
+    @Override
+    protected boolean isLocal() {
+        return false;
     }
 
     protected String constructFunctionName(UUID scriptId, String scriptHash) {

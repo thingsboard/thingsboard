@@ -1,0 +1,82 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="opcMappingForm">
+  <mat-expansion-panel class="mapping-setting" [expanded]=true>
+    <mat-expansion-panel-header collapsedHeight="48px" expandedHeight="48px">
+      <mat-panel-title translate>integration.opc-ua-mapping</mat-panel-title>
+    </mat-expansion-panel-header>
+    <ng-template matExpansionPanelContent>
+      <section class="mapping-setting-content">
+        @for (mapControl of mapFormArrayControls; track mapControl; let isLast = $last) {
+          <div [class.pb-2.5]="!isLast" class="flex flex-row">
+            <div class="index">{{ $index + 1}}</div>
+            <section class="fields-group flex-1" [formGroup]="mapControl">
+              <mat-form-field appearance="outline" class="mat-block flex-1">
+                <mat-label translate>integration.opc-ua-mapping-type</mat-label>
+                <mat-select formControlName="mappingType" required>
+                  @for (type of OpcMappingTypes; track type) {
+                    <mat-option [value]="type">
+                      {{ OpcMappingTypeTranslation.get(type) }}
+                    </mat-option>
+                  }
+                </mat-select>
+                @if (mapControl.get('mappingType').hasError('required')) {
+                  <mat-error translate>
+                    integration.opc-ua-mapping-type-required
+                  </mat-error>
+                }
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="mat-block flex-1">
+                <mat-label translate>integration.opc-ua-device-node-pattern</mat-label>
+                <input matInput required formControlName="deviceNodePattern">
+                @if (mapControl.get('deviceNodePattern').hasError('required')) {
+                  <mat-error translate>
+                    integration.opc-ua-device-node-pattern-required
+                  </mat-error>
+                }
+              </mat-form-field>
+              @if (mapControl.get('mappingType').value === OpcMappingType.ID) {
+                <mat-form-field appearance="outline" class="mat-block flex-1">
+                  <mat-label translate>integration.opc-ua-namespace</mat-label>
+                  <input matInput
+                         placeholder="{{ 'integration.opc-ua-namespace' | translate }}"
+                         type="number" min="0" formControlName="namespace">
+                </mat-form-field>
+              }
+              <tb-opc-ua-subscription formControlName="subscriptionTags">
+              </tb-opc-ua-subscription>
+            </section>
+            @if (!disabled) {
+              <button mat-icon-button class="mat-icon-button"
+                      color="primary"
+                      type="button"
+                      (click)="removeMap($index)"
+                      [class.invisibility]="mapFormArrayControls.length === 1"
+                      [matTooltip]="'action.remove' | translate" matTooltipPosition="above">
+                <mat-icon>close</mat-icon>
+              </button>
+            }
+          </div>
+        }
+        @if (!mapFormArray.length) {
+          <span class="no-data-found flex items-center justify-center" translate>
+            integration.add-opc-ua-mapping-prompt
+          </span>
+        }
+        @if (!disabled) {
+          <div style="padding-top: 16px; padding-left: 36px">
+            <button mat-stroked-button color="primary" (click)="addMap()"
+                    type="button"
+                    [matTooltip]="'integration.opc-ua-add-map' | translate" matTooltipPosition="above">
+              <span translate>integration.opc-ua-add-map</span>
+            </button>
+          </div>
+        }
+      </section>
+    </ng-template>
+  </mat-expansion-panel>
+</section>

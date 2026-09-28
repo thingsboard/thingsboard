@@ -1,11 +1,14 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.msg;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +33,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 @Data
 @Slf4j
+@JsonIgnoreProperties(ignoreUnknown = true)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public final class TbMsg implements Serializable {
 
     public static final String EMPTY_JSON_OBJECT = "{}";

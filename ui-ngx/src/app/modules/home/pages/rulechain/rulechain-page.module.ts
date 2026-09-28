@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
@@ -10,10 +11,10 @@ import {
 } from '@home/components/entity/debug/entity-debug-settings-button.component';
 import { RuleNodeConfigModule } from '@home/components/rule-node/rule-node-config.module';
 import {
+  AddNoteDialogComponent,
   AddRuleNodeDialogComponent,
   AddRuleNodeLinkDialogComponent,
   CreateNestedRuleChainDialogComponent,
-  AddNoteDialogComponent,
   RuleChainPageComponent
 } from '@home/pages/rulechain/rulechain-page.component';
 import { RuleNodeDetailsComponent } from '@home/pages/rulechain/rule-node-details.component';

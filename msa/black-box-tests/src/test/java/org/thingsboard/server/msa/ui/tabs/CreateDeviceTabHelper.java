@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.msa.ui.tabs;
 
 import org.openqa.selenium.WebDriver;
@@ -28,9 +29,9 @@ public class CreateDeviceTabHelper extends CreateDeviceTabElements {
         entityFromDropdown(deviceProfileName).click();
     }
 
-    public void assignOnCustomer(String customerTitle) {
-        customerOptionBtn().click();
-        assignOnCustomerField().click();
+    public void changeOwnerOn(String customerTitle) {
+        ownerAndGroupsOptionBtn().click();
+        clearOwnerFieldBtn().click();
         customerFromDropDown(customerTitle).click();
         sleep(2); //waiting for the action to count
     }

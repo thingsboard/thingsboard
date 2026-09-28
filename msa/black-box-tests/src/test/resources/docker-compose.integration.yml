@@ -1,0 +1,95 @@
+#
+# SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+# SPDX-License-Identifier: BUSL-1.1
+#
+
+version: '3.0'
+
+services:
+  tb-http-integration:
+    restart: always
+    image: "thingsboard/tb-http-integration:latest"
+    ports:
+      - "8082"
+    environment:
+      INTEGRATION_ROUTING_KEY: routing-key-123456
+      INTEGRATION_SECRET: secret-key-123456
+      RPC_HOST: haproxy
+      RPC_PORT: 9090
+      JAVA_OPTS: "-Xmx256m -Xss256k"
+    volumes:
+      - ../tb-integration/http/conf/logback.xml:/usr/share/tb-http-integration/conf/logback.xml
+      - tb-http-integration-log-volume:/var/log/tb-http-integration
+  tb-mqtt-integration:
+    restart: always
+    image: "thingsboard/tb-mqtt-integration:latest"
+    ports:
+      - "8082"
+    environment:
+      INTEGRATION_ROUTING_KEY: routing-key-1234567
+      INTEGRATION_SECRET: secret-key-1234567
+      RPC_HOST: haproxy
+      RPC_PORT: 9090
+      JAVA_OPTS: "-Xmx256m -Xss256k"
+    volumes:
+      - ../tb-integration/mqtt/conf/logback.xml:/usr/share/tb-mqtt-integration/conf/logback.xml
+      - tb-mqtt-integration-log-volume:/var/log/tb-mqtt-integration
+  tb-tcp-integration:
+    restart: always
+    image: "thingsboard/tb-tcp-udp-integration:latest"
+    ports:
+      - "10560:10560"
+    environment:
+      INTEGRATION_ROUTING_KEY: routing-key-tcp
+      INTEGRATION_SECRET: secret-key-tcp
+      RPC_HOST: haproxy
+      RPC_PORT: 9090
+      JAVA_OPTS: "-Xmx256m -Xss256k"
+    volumes:
+      - ../tb-integration/tcp/conf/logback.xml:/usr/share/tb-tcp-udp-integration/conf/logback.xml
+      - tb-tcp-integration-log-volume:/var/log/tb-tcp-udp-integration
+  tb-udp-integration:
+    restart: always
+    image: "thingsboard/tb-tcp-udp-integration:latest"
+    ports:
+      - "11560:11560/udp"
+    environment:
+      INTEGRATION_ROUTING_KEY: routing-key-udp
+      INTEGRATION_SECRET: secret-key-udp
+      RPC_HOST: haproxy
+      RPC_PORT: 9090
+      JAVA_OPTS: "-Xmx256m -Xss256k"
+    volumes:
+      - ../tb-integration/udp/conf/logback.xml:/usr/share/tb-tcp-udp-integration/conf/logback.xml
+      - tb-udp-integration-log-volume:/var/log/tb-tcp-udp-integration
+  tb-coap-integration:
+    restart: always
+    image: "thingsboard/tb-coap-integration:latest"
+    ports:
+      - "15683:5683/udp"
+    environment:
+      INTEGRATION_ROUTING_KEY: routing-key-coap
+      INTEGRATION_SECRET: secret-key-coap
+      RPC_HOST: haproxy
+      RPC_PORT: 9090
+      JAVA_OPTS: "-Xmx256m -Xss256k"
+    volumes:
+      - ../tb-integration/coap/conf/logback.xml:/usr/share/tb-coap-integration/conf/logback.xml
+      - tb-coap-integration-log-volume:/var/log/tb-coap-integration
+
+volumes:
+  tb-http-integration-log-volume:
+    external:
+      name: ${TB_HTTP_INTEGRATION_VOLUME}
+  tb-mqtt-integration-log-volume:
+    external:
+      name: ${TB_MQTT_INTEGRATION_VOLUME}
+  tb-coap-integration-log-volume:
+    external:
+      name: ${TB_COAP_INTEGRATION_VOLUME}
+  tb-tcp-integration-log-volume:
+    external:
+      name: ${TB_TCP_INTEGRATION_VOLUME}
+  tb-udp-integration-log-volume:
+    external:
+      name: ${TB_UDP_INTEGRATION_VOLUME}

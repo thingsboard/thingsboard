@@ -1,7 +1,9 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { LegendConfig, LegendData, LegendDirection, LegendKey, LegendPosition } from '@shared/models/widget.models';
+import { UtilsService } from '@core/services/utils.service';
 
 @Component({
     selector: 'tb-legend',
@@ -25,6 +27,9 @@ export class LegendComponent implements OnInit {
   isHorizontal: boolean;
 
   isRowDirection: boolean;
+
+  constructor(private utils: UtilsService) {
+  }
 
   ngOnInit(): void {
     this.displayHeader = this.legendConfig.showMin === true ||
@@ -55,6 +60,10 @@ export class LegendComponent implements OnInit {
       }
       return keys.filter(legendKey => this.legendData.keys[legendKey.dataIndex].dataKey.inLegend);
     } catch (e) {}
+  }
+
+  getDataKeyLabel(label: string): string {
+    return this.utils.customTranslation(label, label);
   }
 
 }

@@ -1,9 +1,10 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 @use '@angular/material' as mat;
-@import '../theme.scss';
-@import '../scss/constants.scss';
+@import "../theme/app-theme.scss";
 
+$tb-primary-50: map_get(mat.$m2-teal-palette, 50);
 $tb-warn: mat.m2-get-color-from-palette(map-get($tb-theme, warn), text);
 
 :host {
@@ -21,7 +22,7 @@ $tb-warn: mat.m2-get-color-from-palette(map-get($tb-theme, warn), text);
 
   .tb-layout-preview {
     width: 100%;
-    background-color: rgba(mat.m2-get-color-from-palette($tb-primary, 50), 0.6);
+    background-color: rgba($tb-primary-50, 0.6);
     padding: 35px;
 
     &-container {
