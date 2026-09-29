@@ -1,24 +1,25 @@
-![banner](https://github.com/user-attachments/assets/3584b592-33dd-4fb4-91d4-47b62b34806c)
+![banner](https://github.com/user-attachments/assets/25e87623-bc08-429e-9239-abf92800034a)
+
 
 <div align="center">
 
-# Open-source IoT platform for data collection, processing, visualization, and device management.
+# All-in-one IoT platform for data collection, processing, visualization, and device management.
 
 </div>
 <br>
 <div align="center">
  
-💡 [Get started](https://thingsboard.io/docs/getting-started-guides/helloworld/)&ensp;•&ensp;🌐 [Website](https://thingsboard.io/)&ensp;•&ensp;📚 [Documentation](https://thingsboard.io/docs/)&ensp;•&ensp;📔 [Blog](https://thingsboard.io/blog/)&ensp;•&ensp;🔗 [LinkedIn](https://www.linkedin.com/company/thingsboard/posts/?feedView=all)
+💡 [Get started](https://thingsboard.io/docs/pe/getting-started/)&ensp;•&ensp;🌐 [Website](https://thingsboard.io/)&ensp;•&ensp;📚 [Documentation](https://thingsboard.io/docs/pe/)&ensp;•&ensp;📔 [Blog](https://thingsboard.io/blog/)&ensp;•&ensp;🔗 [LinkedIn](https://www.linkedin.com/company/thingsboard/posts/?feedView=all)
 
 </div>
 
 ## 🚀 Installation options
 
-Install ThingsBoard [on-premises](https://thingsboard.io/docs/user-guide/install/installation-options/?ceInstallType=onPremise) or use [ThingsBoard Cloud](https://thingsboard.io/installations/).
+Install ThingsBoard [on-premises](https://thingsboard.io/docs/pe/installation/) or use [ThingsBoard Cloud](https://thingsboard.io/installations/).
 
 ## 💡 Getting started with ThingsBoard
 
-Check out our [Getting Started guide](https://thingsboard.io/docs/getting-started-guides/helloworld/) or [watch the video](https://www.youtube.com/watch?v=80L0ubQLXsc) to learn the basics of ThingsBoard and create your first dashboard! You will learn to:
+Check out our [Getting Started guide](https://thingsboard.io/docs/pe/getting-started/) to learn the basics of ThingsBoard and create your first dashboard! You will learn to:
 
 * Connect devices to ThingsBoard
 * Push data from devices to ThingsBoard
@@ -42,7 +43,7 @@ Check out our [Getting Started guide](https://thingsboard.io/docs/getting-starte
       </div>
       <br>
       <div align="center">
-        <a href="https://thingsboard.io/docs/user-guide/entities-and-relations/">Read more ➜</a>
+        <a href="https://thingsboard.io/docs/pe/user-guide/digital-twins/entities/">Read more ➜</a>
       </div>
       <br>
     </td>
@@ -85,12 +86,12 @@ Check out our [Getting Started guide](https://thingsboard.io/docs/getting-starte
         <h3>Process and React</h3>
       </div>
       <div align="center">
-        <p>Define data processing rule chains. Transform and normalize your device data. Raise alarms on incoming telemetry events, attribute updates, device inactivity and user actions.<br></p>
+        <p>Turn raw telemetry into meaningful metrics with calculated fields: compute values, aggregates, and KPIs from device and asset data in real time. Combine them with rule chains to transform your data and raise alarms on telemetry events, attribute updates, device inactivity, and user actions.<br></p>
       </div>
       <br>
       <br>
       <div align="center">
-        <a href="https://thingsboard.io/docs/user-guide/rule-engine-2-0/re-getting-started/">Read more ➜</a>
+        <a href="https://thingsboard.io/docs/pe/user-guide/calculated-fields/">Read more ➜</a>
       </div>
       <br>
     </td>
@@ -99,19 +100,19 @@ Check out our [Getting Started guide](https://thingsboard.io/docs/getting-starte
 
 ## ⚙️ Powerful IoT Rule Engine
 
-ThingsBoard allows you to create complex [Rule Chains](https://thingsboard.io/docs/user-guide/rule-engine-2-0/re-getting-started/) to process data from your devices and match your application specific use cases.
+ThingsBoard allows you to create complex [Rule Chains](https://thingsboard.io/docs/pe/user-guide/rule-engine/) to process data from your devices and match your application-specific use cases.
 
-[![IoT Rule Engine](https://github.com/user-attachments/assets/43d21dc9-0e18-4f1b-8f9a-b72004e12f07 "IoT Rule Engine")](https://thingsboard.io/docs/user-guide/rule-engine-2-0/re-getting-started/)
+[![IoT Rule Engine](https://github.com/user-attachments/assets/43d21dc9-0e18-4f1b-8f9a-b72004e12f07 "IoT Rule Engine")](https://thingsboard.io/docs/pe/user-guide/rule-engine/)
 
 <div align="center">
 
-[**Read more about Rule Engine ➜**](https://thingsboard.io/docs/user-guide/rule-engine-2-0/re-getting-started/)
+[**Read more about Rule Engine ➜**](https://thingsboard.io/docs/pe/user-guide/rule-engine/)
 
 </div>
 
 ## 📦 Real-Time IoT Dashboards
 
-ThingsBoard is a scalable, user-friendly, and device-agnostic IoT platform that speeds up time-to-market with powerful built-in solution templates. It enables data collection and analysis from any devices, saving resources on routine tasks and letting you focus on your solution’s unique aspects. See more our Use Cases [here](https://thingsboard.io/iot-use-cases/).
+ThingsBoard is a scalable, user-friendly, and device-agnostic IoT platform that speeds up time-to-market with powerful built-in solution templates. It enables data collection and analysis from any devices, saving resources on routine tasks and letting you focus on your solution’s unique aspects. See more of our use cases [here](https://thingsboard.io/iot-use-cases/).
 
 [**Smart energy**](https://thingsboard.io/use-cases/smart-energy/)
 
@@ -143,11 +144,9 @@ ThingsBoard is a scalable, user-friendly, and device-agnostic IoT platform that 
 
 To get support, please visit our [GitHub issues page](https://github.com/thingsboard/thingsboard/issues)
 
-ThingsBoard Professional Edition is licensed under the Business Source License 1.1. Its terms, including the Additional Use Grant, the Change Date and the Change License (Apache License, Version 2.0), are in [LICENSE](./LICENSE).
+## 📄 License
 
-The code base is built on ThingsBoard Community Edition, so the repository contains files under two sets of terms. The `SPDX-License-Identifier` tag in each file header states which apply:
+Starting with version 4.4, ThingsBoard is licensed under the [Business Source License 1.1](https://github.com/thingsboard/thingsboard/blob/master/LICENSE) (BUSL), a source-available license. You can read, build, modify, fork, and redistribute the code, and use it freely for development and testing. Production use is free within the limits of the Additional Use Grant; beyond them, or to remove ThingsBoard branding, a commercial license is required. Each release converts to Apache 2.0 four years after it ships.
 
-- `BUSL-1.1` refers to [LICENSE](./LICENSE).
-- `Apache-2.0` refers to [LICENSES/Apache-2.0.txt](./LICENSES/Apache-2.0.txt), the license of ThingsBoard Community Edition.
+Versions released before 4.4 remain under the Apache 2.0 License.
 
-A file identified as `Apache-2.0 AND BUSL-1.1` contains Community Edition code modified by ThingsBoard, Inc.
