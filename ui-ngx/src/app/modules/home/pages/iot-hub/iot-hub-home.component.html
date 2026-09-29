@@ -72,7 +72,7 @@
           <mat-option [disabled]="true" class="tb-search-popup-loading">
             <mat-spinner diameter="24"></mat-spinner>
           </mat-option>
-        } @else if (searchResultGroups.length === 0 && searchLoaded) {
+        } @else if (searchResults.length === 0 && searchLoaded) {
           <mat-option [disabled]="true" class="tb-search-popup-no-results">
             <div class="tb-search-popup-no-results-content">
               <mat-icon>search_off</mat-icon>
@@ -84,48 +84,53 @@
             </div>
           </mat-option>
         } @else {
-          @for (group of searchResultGroups; track group.type) {
-            <mat-option class="tb-search-popup-group-header" [value]="searchText"
-                        (onSelectionChange)="rowSelectedByUser($event) && navigateToSection(group.type)">
-              <span class="tb-search-popup-group-label">{{ getSearchGroupLabel(group.type) }}</span>
-              @if (group.remaining > 0) {
-                <span class="tb-search-popup-group-more">
-                  {{ 'iot-hub.section-more' | translate:{ count: group.remaining } }}
-                  <mat-icon>chevron_right</mat-icon>
-                </span>
-              }
-            </mat-option>
-            @for (item of group.items; track item.id) {
-              <mat-option class="tb-search-popup-item" [value]="searchText"
-                          (onSelectionChange)="rowSelectedByUser($event) && openItemDetail(item)">
+          @for (item of searchResults; track item.id) {
+            <mat-option class="tb-search-popup-item" [value]="searchText"
+                        (onSelectionChange)="rowSelectedByUser($event) && openItemDetail(item)">
+              <!-- Every row gets the same 99x56 frame; an item with no screenshot shows its colour
+                   and icon as a tile inside it, so names line up down the list. -->
+              <div class="tb-search-popup-thumbnail">
                 @if (isCompactType(item.type)) {
                   <div class="tb-search-popup-icon-square" [style.background]="item.color || '#048ad3'">
                     <tb-icon class="tb-search-popup-icon-inner">{{ getCompactIcon(item) }}</tb-icon>
                   </div>
+                } @else if (getItemImage(item); as imgUrl) {
+                  <img [src]="imgUrl" alt="">
                 } @else {
-                  <div class="tb-search-popup-thumbnail">
-                    @if (getItemImage(item); as imgUrl) {
-                      <img [src]="imgUrl" alt="">
-                    } @else {
-                      <tb-icon class="tb-search-popup-thumb-placeholder">{{ getItemTypeIcon(item.type) }}</tb-icon>
-                    }
-                  </div>
+                  <tb-icon class="tb-search-popup-thumb-placeholder">{{ getItemTypeIcon(item.type) }}</tb-icon>
                 }
-                <div class="tb-search-popup-text">
-                  <span class="tb-search-popup-name">{{ item.name }}</span>
-                  <span class="tb-search-popup-author">
-                    <mat-icon>person</mat-icon>
-                    {{ item.creatorDisplayName }}
+              </div>
+              <div class="tb-search-popup-text">
+                <span class="tb-search-popup-name">{{ item.name }}</span>
+                <!-- The list mixes types, so each row names its type before the author. -->
+                <span class="tb-search-popup-meta">
+                  <span class="tb-search-popup-type" [style.--tb-search-popup-type-color]="getItemTypeColor(item.type)">
+                    <tb-icon>{{ getItemTypeIcon(item.type) }}</tb-icon>
+                    {{ getItemTypeLabel(item.type) }}
                   </span>
-                </div>
-              </mat-option>
-            }
+                  @if (item.creatorDisplayName) {
+                    <span class="tb-search-popup-author">
+                      @if (item.creatorVerified) {
+                        <mat-icon class="tb-search-popup-verified">verified</mat-icon>
+                      } @else {
+                        <mat-icon>person</mat-icon>
+                      }
+                      <span class="tb-search-popup-author-name">{{ item.creatorDisplayName }}</span>
+                    </span>
+                  }
+                </span>
+              </div>
+            </mat-option>
           }
         }
         <mat-option class="tb-search-popup-footer" [value]="searchText"
                     (onSelectionChange)="rowSelectedByUser($event) && seeAllResults()">
           @if (searchText?.trim(); as query) {
-            {{ 'iot-hub.see-results-for' | translate:{ search: query } }}
+            @if (searchTotal > searchResults.length) {
+              {{ 'iot-hub.see-all-results-for' | translate:{ count: searchTotal, search: query } }}
+            } @else {
+              {{ 'iot-hub.see-results-for' | translate:{ search: query } }}
+            }
           } @else {
             {{ 'iot-hub.see-all-results' | translate }}
           }

@@ -41,6 +41,21 @@ export const itemTypeIcons: Record<string, string> = {
 export const getItemTypeIcon = (type?: string | null): string =>
   type && itemTypeIcons[type] ? itemTypeIcons[type] : 'category';
 
+// Canonical colour per item type - the IoT Hub home's type palette - for anything that marks an
+// item's type with a colour: the hero's type cycle and the search popup's type label.
+export const itemTypeColors: Record<string, string> = {
+  [ItemType.WIDGET]: '#2c9755',
+  [ItemType.DASHBOARD]: '#5f6368',
+  [ItemType.SOLUTION_TEMPLATE]: '#2b6bb4',
+  [ItemType.CALCULATED_FIELD]: '#3cb4e0',
+  [ItemType.RULE_CHAIN]: '#a95ae2',
+  [ItemType.ALARM_RULE]: '#d66f2e',
+  [ItemType.DEVICE]: '#4b63cc'
+};
+
+export const getItemTypeColor = (type?: string | null): string =>
+  type && itemTypeColors[type] ? itemTypeColors[type] : '#5f6368';
+
 /**
  * Item types discoverable to creators in the marketplace UI.
  * DASHBOARD is intentionally absent (IoT Hub no longer accepts Dashboard contributions).

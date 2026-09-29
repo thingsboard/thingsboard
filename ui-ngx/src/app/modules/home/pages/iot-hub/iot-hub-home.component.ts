@@ -10,16 +10,14 @@ import { catchError, debounceTime, distinctUntilChanged, switchMap } from 'rxjs/
 import { MediaBreakpoints } from '@shared/models/constants';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
-import {
-  MpItemVersionGroupedQuery,
-  MpItemVersionQuery,
-  MpItemVersionSection,
-  MpItemVersionView
-} from '@shared/models/iot-hub/iot-hub-version.models';
+import { PageData } from '@shared/models/page/page-data';
+import { MpItemVersionQuery, MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
 import {
   CROSS_TYPE_ITEM_TYPES,
+  getItemTypeColor,
   getItemTypeIcon,
   ItemType,
+  itemTypeColors,
   itemTypeTranslations,
   RELEVANCE_SORT_PROPERTY
 } from '@shared/models/iot-hub/iot-hub-item.models';
@@ -44,12 +42,11 @@ interface HeroTypeConfig {
   icon: string;
 }
 
-interface SearchResultGroup {
-  type: ItemType;
-  items: MpItemVersionView[];
-  /** How many rows of this type the header offers beyond the ones shown. Zero renders no "+N more". */
-  remaining: number;
-}
+/**
+ * Rows the search popup shows: the first page of the search page's own request, so the popup is
+ * a preview of what "See results for ..." opens on.
+ */
+const SEARCH_POPUP_PAGE_SIZE = 10;
 
 @Component({
   selector: 'tb-iot-hub-home',
@@ -62,7 +59,13 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
   readonly ItemType = ItemType;
 
   searchText = '';
-  searchResultGroups: SearchResultGroup[] = [];
+  searchResults: MpItemVersionView[] = [];
+  /**
+   * What the footer's "See all N results" counts: the matches less the rows this page dropped, so
+   * a panel that shows everything it can open never claims more. Rows beyond this page that the
+   * panel could not show are still counted - only this page's drops are known.
+   */
+  searchTotal = 0;
   searchLoaded = false;
   searchLoading = false;
   @ViewChild(MatAutocompleteTrigger) searchAutoTrigger: MatAutocompleteTrigger;
@@ -74,27 +77,27 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
 
   heroTypes: HeroTypeConfig[] = [
     {
-      type: ItemType.DEVICE, labelKey: 'item.type-device-plural', color: '#4b63cc',
+      type: ItemType.DEVICE, labelKey: 'item.type-device-plural', color: itemTypeColors[ItemType.DEVICE],
       icon: 'assets/iot-hub/hero-device-cluster.svg'
     },
     {
-      type: ItemType.SOLUTION_TEMPLATE, labelKey: 'item.type-solution-template-plural', color: '#2b6bb4',
+      type: ItemType.SOLUTION_TEMPLATE, labelKey: 'item.type-solution-template-plural', color: itemTypeColors[ItemType.SOLUTION_TEMPLATE],
       icon: 'assets/iot-hub/hero-solution-template-cluster.svg'
     },
     {
-      type: ItemType.WIDGET, labelKey: 'item.type-widget-plural', color: '#2c9755',
+      type: ItemType.WIDGET, labelKey: 'item.type-widget-plural', color: itemTypeColors[ItemType.WIDGET],
       icon: 'assets/iot-hub/hero-widget-cluster.svg'
     },
     {
-      type: ItemType.CALCULATED_FIELD, labelKey: 'item.type-calculated-field-plural', color: '#3cb4e0',
+      type: ItemType.CALCULATED_FIELD, labelKey: 'item.type-calculated-field-plural', color: itemTypeColors[ItemType.CALCULATED_FIELD],
       icon: 'assets/iot-hub/hero-calculated-field-cluster.svg'
     },
     {
-      type: ItemType.ALARM_RULE, labelKey: 'item.type-alarm-rule-plural', color: '#d66f2e',
+      type: ItemType.ALARM_RULE, labelKey: 'item.type-alarm-rule-plural', color: itemTypeColors[ItemType.ALARM_RULE],
       icon: 'assets/iot-hub/hero-alarm-rule-cluster.svg'
     },
     {
-      type: ItemType.RULE_CHAIN, labelKey: 'item.type-rule-chain-plural', color: '#a95ae2',
+      type: ItemType.RULE_CHAIN, labelKey: 'item.type-rule-chain-plural', color: itemTypeColors[ItemType.RULE_CHAIN],
       icon: 'assets/iot-hub/hero-rule-chain-cluster.svg'
     }
   ];
@@ -166,18 +169,26 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
       switchMap(text => {
         this.searchLoading = true;
         const trimmed = text.trim();
+        // One flat list ranked across every type, so the best match leads whatever its type.
         // Relevance in both states, the same value every other IoT Hub surface sends: with an
         // empty field the backend serves the install count under this key, so the panel opens on
         // popularity without this component having to know it.
-        const query = new MpItemVersionGroupedQuery({}, trimmed, RELEVANCE_SORT_PROPERTY);
+        const sortOrder: SortOrder = { property: RELEVANCE_SORT_PROPERTY, direction: Direction.DESC };
+        const pageLink = new PageLink(SEARCH_POPUP_PAGE_SIZE, 0, trimmed || null, sortOrder);
+        const query = new MpItemVersionQuery(pageLink);
         // A failed request must not end the subscription: the interceptor reports it, and the
         // panel goes back to an empty answer the next keystroke can replace.
-        return this.iotHubApiService.getPublishedVersionsGrouped(query, { ignoreLoading: true }).pipe(
-          catchError(() => of([] as MpItemVersionSection[]))
+        return this.iotHubApiService.getPublishedVersions(query, { ignoreLoading: true }).pipe(
+          catchError(() => of({ data: [], totalElements: 0 } as PageData<MpItemVersionView>))
         );
       })
-    ).subscribe(sections => {
-      this.searchResultGroups = this.toResultGroups(sections);
+    ).subscribe(page => {
+      // The platform publishes no dashboards, so a type this panel has no layout for is dropped;
+      // the popup then shows fewer rows rather than asking for more.
+      const data = page.data ?? [];
+      this.searchResults = data.filter(item => CROSS_TYPE_ITEM_TYPES.includes(item.type));
+      this.searchTotal = Math.max(this.searchResults.length,
+        (page.totalElements ?? 0) - (data.length - this.searchResults.length));
       this.searchLoaded = true;
       this.searchLoading = false;
     });
@@ -285,17 +296,6 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
     void this.router.navigate(['/iot-hub/search'], { queryParams: { search } });
   }
 
-  /**
-   * The section header is the way into the rest of a type - the panel carries no per-section
-   * "see all" row, which would put six identical calls to action on one panel. The query goes
-   * with it, so the type page opens on the same search rather than on the whole type.
-   */
-  navigateToSection(type: ItemType): void {
-    this.searchAutoTrigger?.closePanel();
-    const search = this.searchText?.trim() || undefined;
-    void this.router.navigate(['/iot-hub', this.getTypeRoute(type)], { queryParams: { search } });
-  }
-
   isCompactType(type: ItemType): boolean {
     return type === ItemType.CALCULATED_FIELD
         || type === ItemType.ALARM_RULE
@@ -314,9 +314,13 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
     return getItemTypeIcon(type);
   }
 
-  getSearchGroupLabel(type: ItemType): string {
+  getItemTypeColor(type: ItemType): string {
+    return getItemTypeColor(type);
+  }
+
+  getItemTypeLabel(type: ItemType): string {
     const key = itemTypeTranslations.get(type);
-    return key ? this.translate.instant(key + '-plural') : type;
+    return key ? this.translate.instant(key) : type;
   }
 
   navigateToBrowse(type: ItemType): void {
@@ -580,28 +584,6 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
         this.popularDevices = [];
       }
     });
-  }
-
-  /**
-   * Reads the sections the server built: they arrive capped and in the order to render them, so
-   * this only drops the types this panel has no layout for - the platform publishes no dashboards
-   * - and works out each header's "+N more".
-   *
-   * `items` is defaulted because the response is an unvalidated cast of a new endpoint, and a
-   * throw here lands in a subscribe callback, where it would leave the panel on its spinner
-   * rather than reaching the catchError upstream.
-   */
-  private toResultGroups(sections: MpItemVersionSection[]): SearchResultGroup[] {
-    return sections
-      .filter(section => CROSS_TYPE_ITEM_TYPES.includes(section.itemType))
-      .map(section => {
-        const items = section.items ?? [];
-        return {
-          type: section.itemType,
-          items,
-          remaining: Math.max(0, section.total - items.length)
-        };
-      });
   }
 
 }

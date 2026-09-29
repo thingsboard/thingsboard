@@ -108,17 +108,6 @@ export interface MpItemVersionView {
   checksum?: string;
 }
 
-/**
- * One item type's share of a grouped search: the rows to show and how many exist behind them.
- * A grouped answer is a list of these, in the server's section order, and a type nothing matched
- * has no section — so a "+N more" header is `total - items.length`.
- */
-export interface MpItemVersionSection {
-  itemType: ItemType;
-  total: number;
-  items: MpItemVersionView[];
-}
-
 // 404 body shapes returned by the public listing item-version endpoint
 // (GET /api/listings/public/by-slug/{slug}/item-version) when no
 // version matches the caller's edition / platform combination.
@@ -206,32 +195,5 @@ export class MpItemVersionQuery {
 
   public toQuery(): string {
     return this.pageLink.toQuery() + filtersToQuery(this.options);
-  }
-}
-
-/**
- * A sectioned read: the filters, what to search for, and which key orders a section.
- *
- * No `PageLink`, because the grouped endpoint takes no page and no page size - it sizes its own
- * answer from the section limit - and no sort direction either, each key's direction being fixed
- * by the chain the server switches on. A page link here could only carry values nobody sends.
- */
-export class MpItemVersionGroupedQuery {
-  constructor(public options: MpItemVersionQueryOptions = {},
-              public textSearch?: string,
-              public sortProperty?: string) {}
-
-  public toQuery(): string {
-    const parts: string[] = [];
-    const text = this.textSearch?.trim();
-    if (text?.length) {
-      parts.push(`textSearch=${encodeURIComponent(text)}`);
-    }
-    if (this.sortProperty) {
-      parts.push(`sortProperty=${this.sortProperty}`);
-    }
-    // filtersToQuery() emits leading ampersands, which is what a page link needs in front of it;
-    // here they may be the whole query string, so the first one is dropped.
-    return `?${`${parts.join('&')}${filtersToQuery(this.options)}`.replace(/^&/, '')}`;
   }
 }
