@@ -457,6 +457,16 @@
             </div>
           }
         } @else {
+          <!-- Standalone control above the facets: one boolean has no list to collapse, and a
+               one-option expansion panel would read as a heading whose section never grows.
+               Always shown — no per-facet counts exist to hide it by. -->
+          <div class="tb-iot-hub-filter-option">
+            <mat-checkbox [checked]="iotHubVerifiedCreatorsOnly"
+                          (change)="toggleIotHubVerifiedCreators()">
+              {{ 'iot-hub.verified-creators-only' | translate }}
+            </mat-checkbox>
+          </div>
+          <mat-divider></mat-divider>
           <mat-expansion-panel [expanded]="true">
             <mat-expansion-panel-header>
               <mat-panel-title>

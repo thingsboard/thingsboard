@@ -131,6 +131,13 @@ export interface MpItemVersionQueryOptions {
   connectivity?: string[];
   vendors?: string[];
   scadaFirst?: boolean;
+  /**
+   * The "Verified creators only" control. The API *matches* this value rather than treating it
+   * as a switch (unlike `peOnly`): `creatorVerified=false` means "only *un*verified". A control
+   * that is off must therefore leave the parameter out entirely, which is why only `true` is
+   * ever serialized — see `toQuery()`.
+   */
+  creatorVerified?: boolean;
 }
 
 export class MpItemVersionQuery {
@@ -177,6 +184,11 @@ export class MpItemVersionQuery {
     }
     if (o.scadaFirst != null) {
       query += `&scadaFirst=${o.scadaFirst}`;
+    }
+    // Deliberately `if (truthy)` rather than `!= null`: sending `false` would ask the server for
+    // *un*verified creators only, which is never what an unchecked control means.
+    if (o.creatorVerified) {
+      query += `&creatorVerified=true`;
     }
     return query;
   }

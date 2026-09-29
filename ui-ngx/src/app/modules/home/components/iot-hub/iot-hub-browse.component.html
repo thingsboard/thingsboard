@@ -25,6 +25,17 @@
   <!-- Filter panel template (reused in sidebar and drawer) -->
   <ng-template #filterPanelContent>
     <div class="tb-iot-hub-filters-inner">
+      <!-- Standalone control, above the facets rather than inside one: a single boolean has no
+           list to collapse, and a one-option expansion panel would read as a heading whose
+           section never grows. Shown always: no per-facet counts exist to hide it by. -->
+      <div class="tb-iot-hub-filter-standalone">
+        <mat-checkbox [checked]="verifiedCreatorsOnly"
+                      (change)="onVerifiedCreatorsToggle()">
+          {{ 'iot-hub.verified-creators-only' | translate }}
+        </mat-checkbox>
+      </div>
+      <div class="tb-iot-hub-filter-divider"></div>
+
       @if (!fixedSubType && subtypeOptions.length > 0 && activeType !== ItemType.ALARM_RULE) {
         <mat-expansion-panel [expanded]="true" class="tb-iot-hub-filter-panel">
           <mat-expansion-panel-header>
@@ -253,6 +264,12 @@
         <div class="tb-iot-hub-filter-divider" style="margin-bottom: 8px"></div>
         <div class="tb-iot-hub-filter-drawer-chips flex flex-wrap items-center gap-2">
           <mat-chip-set>
+            @if (verifiedCreatorsOnly) {
+              <mat-chip (removed)="onVerifiedCreatorsToggle()">
+                {{ 'iot-hub.verified-creators-only' | translate }}
+                <mat-icon matChipRemove>close</mat-icon>
+              </mat-chip>
+            }
             @for (key of getActiveSubtypesArray(); track key) {
               <mat-chip (removed)="onSubtypeToggle(key)">
                 {{ getSubtypeLabel(key) }}
@@ -305,6 +322,12 @@
       <!-- Left sidebar filters (visible on large screens) -->
       <div class="tb-iot-hub-filters tb-iot-hub-filters-desktop">
         <div class="tb-iot-hub-filters-wrapper" [class.filter-items-hovered]="filterItemsHovered">
+          <!-- The drawer variant names the panel in its own header; the sidebar named it
+               nowhere, so it opened straight onto the standalone checkbox with nothing saying
+               what that checkbox belongs to. Same word as the drawer, and the rule below it
+               is the same one the drawer puts under its header. -->
+          <div class="tb-iot-hub-filters-header">{{ 'iot-hub.filter' | translate }}</div>
+          <div class="tb-iot-hub-filter-divider"></div>
           <ng-container *ngTemplateOutlet="filterPanelContent"></ng-container>
         </div>
       </div>
@@ -347,6 +370,12 @@
         <!-- Active filter chips (hidden on small screens) -->
         @if (hasActiveDropdownFilters()) {
           <mat-chip-set class="tb-iot-hub-active-filters">
+            @if (verifiedCreatorsOnly) {
+              <mat-chip (removed)="onVerifiedCreatorsToggle()">
+                {{ 'iot-hub.verified-creators-only' | translate }}
+                <mat-icon matChipRemove>close</mat-icon>
+              </mat-chip>
+            }
             @for (key of getActiveSubtypesArray(); track key) {
               <mat-chip (removed)="onSubtypeToggle(key)">
                 {{ getSubtypeLabel(key) }}
