@@ -41,11 +41,13 @@ export const itemTypeIcons: Record<string, string> = {
 export const getItemTypeIcon = (type?: string | null): string =>
   type && itemTypeIcons[type] ? itemTypeIcons[type] : 'category';
 
-// Canonical colour per item type - the IoT Hub home's type palette - for anything that marks an
-// item's type with a colour: the hero's type cycle and the search popup's type label.
+/** Colour for a type with no colour of its own. */
+export const DEFAULT_ITEM_TYPE_COLOR = '#5f6368';
+
+/** Colour per item type, wherever an item's type is marked with one. */
 export const itemTypeColors: Record<string, string> = {
   [ItemType.WIDGET]: '#2c9755',
-  [ItemType.DASHBOARD]: '#5f6368',
+  [ItemType.DASHBOARD]: DEFAULT_ITEM_TYPE_COLOR,
   [ItemType.SOLUTION_TEMPLATE]: '#2b6bb4',
   [ItemType.CALCULATED_FIELD]: '#3cb4e0',
   [ItemType.RULE_CHAIN]: '#a95ae2',
@@ -54,7 +56,7 @@ export const itemTypeColors: Record<string, string> = {
 };
 
 export const getItemTypeColor = (type?: string | null): string =>
-  type && itemTypeColors[type] ? itemTypeColors[type] : '#5f6368';
+  type && itemTypeColors[type] ? itemTypeColors[type] : DEFAULT_ITEM_TYPE_COLOR;
 
 /**
  * Item types discoverable to creators in the marketplace UI.
@@ -71,11 +73,7 @@ export const CREATOR_VISIBLE_ITEM_TYPES: ItemType[] = [
   ItemType.RULE_CHAIN,
 ];
 
-/**
- * Item types a surface that mixes them lays out, in the order they are shown. Distinct from
- * CREATOR_VISIBLE_ITEM_TYPES, which is the same six as a membership test and carries the type
- * tabs' own order: here DEVICE leads, matching the hero popup's sections and the website.
- */
+/** Item types a cross-type surface (search page, popup) shows, in display order. */
 export const CROSS_TYPE_ITEM_TYPES: ItemType[] = [
   ItemType.DEVICE,
   ItemType.SOLUTION_TEMPLATE,
@@ -84,6 +82,10 @@ export const CROSS_TYPE_ITEM_TYPES: ItemType[] = [
   ItemType.ALARM_RULE,
   ItemType.RULE_CHAIN,
 ];
+
+/** Types drawn as a coloured icon tile rather than a screenshot. */
+export const isCompactItemType = (type?: string | null): boolean =>
+  type === ItemType.CALCULATED_FIELD || type === ItemType.ALARM_RULE || type === ItemType.RULE_CHAIN;
 
 /** Sort property served by relevance ranking. */
 export const RELEVANCE_SORT_PROPERTY = 'relevance';
@@ -95,17 +97,8 @@ export interface SortOption {
 }
 
 /**
- * The sort menu every IoT Hub surface carrying a search field offers, and the order it offers
- * them in: the first entry is the default each surface opens on.
- *
- * Relevance is that default with or without text. With text it ranks the answer; with none the
- * backend serves the install count under the same key, so a surface opens on the order it opened
- * on before and nothing here switches on the field state. The cost is a menu reading "Most
- * relevant" over an install-ordered list until the user types; the alternative - flipping the
- * selector once text appears - moves a control the user did not touch and reorders nothing.
- *
- * One list rather than one per surface: a new key must reach all of them, and the surface that
- * missed it would keep a different default without failing.
+ * The sort menu of every IoT Hub surface with a search field; the first entry is the default.
+ * Relevance stays the default with an empty field, where it orders by install count.
  */
 export const IOT_HUB_SORT_OPTIONS: SortOption[] = [
   { value: RELEVANCE_SORT_PROPERTY, label: 'iot-hub.sort-most-relevant', direction: Direction.DESC },

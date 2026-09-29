@@ -80,31 +80,31 @@ export class IotHubApiService {
     );
   }
 
-  /**
-   * What this platform can install, filled in for a caller that did not say: items built for a
-   * newer ThingsBoard, and PE-only items on a CE instance, cannot be installed from here.
-   */
+  /** What this platform can install: no PE-only items, nothing built for a newer ThingsBoard. */
+  private platformScope(): { peOnly: boolean; tbVersion: number } {
+    return { peOnly: false, tbVersion: tbVersionToInt(env.tbVersion) };
+  }
+
+  /** Fills in the platform scope wherever the caller did not set it. */
   private applyPlatformFilters(options: MpItemVersionQueryOptions): void {
-    if (options.tbVersion == null) {
-      options.tbVersion = tbVersionToInt(env.tbVersion);
-    }
-    if (options.peOnly == null) {
-      options.peOnly = false;
-    }
+    const scope = this.platformScope();
+    options.tbVersion ??= scope.tbVersion;
+    options.peOnly ??= scope.peOnly;
+  }
+
+  private platformScopeParams(): string[] {
+    const scope = this.platformScope();
+    return [`peOnly=${scope.peOnly}`, `tbVersion=${scope.tbVersion}`];
   }
 
   public getFilterInfo(itemType: ItemType, config?: IotHubRequestConfig): Observable<ItemTypeFilterInfo> {
-    const url = `${this.baseUrl}/api/item-listing/filterInfo/${itemType}`
-      + `?peOnly=false&tbVersion=${tbVersionToInt(env.tbVersion)}`;
+    const url = `${this.baseUrl}/api/item-listing/filterInfo/${itemType}?${this.platformScopeParams().join('&')}`;
     return this.http.get<ItemTypeFilterInfo>(url, { params: this.buildParams(config) });
   }
 
   public getWidgetCategories(textSearch?: string, scadaFirst?: boolean,
                              config?: IotHubRequestConfig): Observable<WidgetCategory[]> {
-    const queryParams: string[] = [
-      `peOnly=false`,
-      `tbVersion=${tbVersionToInt(env.tbVersion)}`
-    ];
+    const queryParams: string[] = this.platformScopeParams();
     if (textSearch?.trim()) {
       queryParams.push(`textSearch=${encodeURIComponent(textSearch.trim())}`);
     }
@@ -144,7 +144,7 @@ export class IotHubApiService {
   public getListingItemVersion(slug: string, config?: IotHubRequestConfig): Observable<MpItemVersionView> {
     const queryParams = [
       'ce=true',
-      `tbVersion=${tbVersionToInt(env.tbVersion)}`
+      `tbVersion=${this.platformScope().tbVersion}`
     ];
     return this.http.get<MpItemVersionView>(
       `${this.baseUrl}/api/listings/public/by-slug/${encodeURIComponent(slug)}/item-version?${queryParams.join('&')}`,

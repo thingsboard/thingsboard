@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { MpItemVersionView, cfTypeTranslations, cfTypeIcons, ruleChainTypeTranslations, widgetTypeTranslations } from '@shared/models/iot-hub/iot-hub-version.models';
-import { getItemTypeIcon, ItemType } from '@shared/models/iot-hub/iot-hub-item.models';
+import { getItemTypeIcon, isCompactItemType, ItemType } from '@shared/models/iot-hub/iot-hub-item.models';
 import { IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { TranslateService } from '@ngx-translate/core';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
@@ -24,13 +24,8 @@ export class TbIotHubItemCardComponent {
   @Input() showSubtype = false;
   @Input() mode: 'default' | 'add' = 'default';
   /**
-   * `auto` lets the item's type choose, which is what a single-type grid wants: calculated
-   * fields, alarm rules and rule chains have nothing to preview, so they get a compact row and
-   * the grid gives them wider cells.
-   *
-   * `preview` forces the tall card on every type. A grid that mixes types cannot widen its
-   * cells for some rows only, and a horizontal row squeezed into a cell sized for a preview
-   * truncates its own title and leaves the rest of the cell empty.
+   * `auto`: compact row for the types with nothing to preview (single-type grids widen their
+   * cells for it). `preview`: the tall card for every type, for grids that mix types.
    */
   @Input() layout: 'auto' | 'preview' = 'auto';
   @Output() cardClick = new EventEmitter<MpItemVersionView>();
@@ -60,9 +55,7 @@ export class TbIotHubItemCardComponent {
     if (this.layout === 'preview') {
       return false;
     }
-    return this.item.type === ItemType.CALCULATED_FIELD
-        || this.item.type === ItemType.ALARM_RULE
-        || this.item.type === ItemType.RULE_CHAIN;
+    return isCompactItemType(this.item.type);
   }
 
   getPreviewUrl(): string | null {

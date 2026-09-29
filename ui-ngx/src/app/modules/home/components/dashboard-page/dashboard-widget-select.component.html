@@ -80,12 +80,12 @@
       }
       @if (selectWidgetMode === 'iotHub' && iotHubSubMode !== 'default') {
         <button mat-button type="button" class="tb-widget-select-sort" [matMenuTriggerFor]="sortMenu">
-          {{ iotHubSortOptions[iotHubSelectedSortIndex].label | translate }}
+          {{ iotHubSelectedSort.label | translate }}
           <mat-icon iconPositionEnd>arrow_drop_down</mat-icon>
         </button>
         <mat-menu #sortMenu="matMenu">
-          @for (option of iotHubSortOptions; track option.value; let i = $index) {
-            <button mat-menu-item (click)="onIotHubSortChange(i)">{{ option.label | translate }}</button>
+          @for (option of iotHubSortOptions; track option.value) {
+            <button mat-menu-item (click)="onIotHubSortChange(option)">{{ option.label | translate }}</button>
           }
         </mat-menu>
       }

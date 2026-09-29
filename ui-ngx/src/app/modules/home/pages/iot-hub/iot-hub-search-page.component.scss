@@ -8,12 +8,11 @@
   height: 100%;
 }
 
-// Same frame as the type pages (iot-hub-items-page): one even padding on the card, the hero
-// inside it, and the component below pulled out to the card's edges. It replaces four
-// breakpoints' worth of hand-written negative margins — one per element that needed to reach
-// an edge — and is why the filter rail, the heading and the grid now line up by construction.
+// Same frame as the type pages: one even padding on the card, and the search component pulled
+// out to the card's edges by the same amount, so the rail, heading and grid line up.
 .tb-search-page {
-  padding: 40px 40px 48px;
+  --tb-search-page-pad: 40px;
+  padding: var(--tb-search-page-pad) var(--tb-search-page-pad) calc(var(--tb-search-page-pad) + 8px);
 }
 
 // Back button
@@ -36,37 +35,24 @@
   color: rgba(0, 0, 0, 0.54);
 }
 
-// Full bleed, and it pads its own rows back in through --tb-search-side-pad. The rail and the
-// dividers are the parts that must reach the edge; everything else lines up with the hero.
+// Full bleed; it pads its own rows back in through --tb-search-side-pad.
 tb-iot-hub-search {
   flex: 1;
   min-height: 0;
-  --tb-search-side-pad: 40px;
-  margin-left: -40px;
-  margin-right: -40px;
+  --tb-search-side-pad: var(--tb-search-page-pad);
+  margin-left: calc(-1 * var(--tb-search-page-pad));
+  margin-right: calc(-1 * var(--tb-search-page-pad));
 }
 
 @media #{$mat-lt-lg} {
   .tb-search-page {
-    padding: 24px 24px 32px;
-  }
-
-  tb-iot-hub-search {
-    --tb-search-side-pad: 24px;
-    margin-left: -24px;
-    margin-right: -24px;
+    --tb-search-page-pad: 24px;
   }
 }
 
 @media #{$mat-lt-sm} {
   .tb-search-page {
-    padding: 16px 16px 24px;
+    --tb-search-page-pad: 16px;
     gap: 16px;
-  }
-
-  tb-iot-hub-search {
-    --tb-search-side-pad: 16px;
-    margin-left: -16px;
-    margin-right: -16px;
   }
 }

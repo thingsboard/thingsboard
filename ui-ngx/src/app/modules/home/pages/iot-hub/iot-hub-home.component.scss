@@ -220,9 +220,7 @@
     0 114px 46px 0 rgba(0, 0, 0, 0.01),
     0 178px 50px 0 rgba(0, 0, 0, 0);
 
-  // Every row of the panel shares the flex line and the highlight; the boxes differ per kind
-  // below. Each kind is selected by its own class rather than by leaning on source order, since
-  // .mat-mdc-option.<kind> and .mat-mdc-option:not(...) tie on specificity.
+  // Shared by every row; each row kind below is selected by its own class.
   .mat-mdc-option {
     .mdc-list-item__primary-text {
       display: flex;
@@ -357,8 +355,7 @@
     min-width: 0;
   }
 
-  // Item type in its own colour, darkened so the paler ones (rule chain, calculated field) stay
-  // legible as text.
+  // Item type in its colour, darkened so the paler ones stay legible.
   .tb-search-popup-type {
     display: flex;
     align-items: center;
@@ -368,7 +365,7 @@
     font-weight: 500;
     line-height: 16px;
     letter-spacing: 0.25px;
-    color: color-mix(in srgb, var(--tb-search-popup-type-color, #5f6368) 75%, #000);
+    color: color-mix(in srgb, var(--tb-search-popup-type-color) 75%, #000);
     white-space: nowrap;
 
     tb-icon {

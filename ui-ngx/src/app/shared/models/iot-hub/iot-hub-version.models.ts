@@ -120,12 +120,7 @@ export interface ListingItemVersionNotFound {
 export interface MpItemVersionQueryOptions {
   /** Single item type, for a surface pinned to one (the type pages, the add-item dialog). */
   type?: string;
-  /**
-   * Several item types at once, for a cross-type surface whose Type facet is multi-select.
-   * Emitted as a repeated `type` parameter, which is the shape the backend reads
-   * (`@RequestParam List<ItemType> type`). Kept separate from `type` rather than widening it,
-   * so a caller that means "exactly this type" cannot be handed an array by accident.
-   */
+  /** Several item types at once, sent as a repeated `type` parameter. */
   types?: string[];
   peOnly?: boolean;
   creatorId?: string;
@@ -141,7 +136,7 @@ export interface MpItemVersionQueryOptions {
   scadaFirst?: boolean;
 }
 
-/** Every filter, as `&name=value` pairs - shared by both query shapes below. */
+/** Every filter, as `&name=value` pairs. */
 function filtersToQuery(o: MpItemVersionQueryOptions): string {
   let query = '';
   if (o.type) {

@@ -103,8 +103,7 @@
                            (toggled)="onTypeToggle($event)">
     </tb-iot-hub-facet-list>
     @if (categoryOptions.length > 0) {
-      <!-- Closed by default: six item types are a short, fixed list worth showing outright,
-           while categories and use cases run to dozens and would push each other off screen. -->
+      <!-- Closed by default: these run to dozens of options. -->
       <tb-iot-hub-facet-list label="iot-hub.category"
                              [expanded]="false"
                              [options]="categoryOptions"
@@ -125,10 +124,7 @@
 
 <div class="relative min-h-0 flex-1">
 
-  <!-- Plain flex row, deliberately not a mat-drawer-container: that component owns its own
-       height and overflow, and a facet list taller than the card grid escaped its box and
-       painted over the page behind it. Below lt-lg the same panel becomes a block above the
-       results, opened by the Filter button. -->
+  <!-- A flex row, not mat-drawer-container, which let a tall facet list overflow the card. -->
   <div class="tb-search-layout">
     @if (showFilters) {
       <aside class="tb-search-facets-desktop" [class.opened]="filtersOpen">

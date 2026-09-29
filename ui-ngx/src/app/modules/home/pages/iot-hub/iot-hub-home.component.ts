@@ -15,6 +15,7 @@ import { MpItemVersionQuery, MpItemVersionView } from '@shared/models/iot-hub/io
 import {
   CROSS_TYPE_ITEM_TYPES,
   getItemTypeColor,
+  isCompactItemType,
   getItemTypeIcon,
   ItemType,
   itemTypeColors,
@@ -42,10 +43,7 @@ interface HeroTypeConfig {
   icon: string;
 }
 
-/**
- * Rows the search popup shows: the first page of the search page's own request, so the popup is
- * a preview of what "See results for ..." opens on.
- */
+/** Rows the search popup shows: page 0 of the search page's own request. */
 const SEARCH_POPUP_PAGE_SIZE = 10;
 
 @Component({
@@ -60,17 +58,12 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
 
   searchText = '';
   searchResults: MpItemVersionView[] = [];
-  /**
-   * What the footer's "See all N results" counts: the matches less the rows this page dropped, so
-   * a panel that shows everything it can open never claims more. Rows beyond this page that the
-   * panel could not show are still counted - only this page's drops are known.
-   */
+  /** Everything the search matched, for the footer's "See all N results". */
   searchTotal = 0;
   searchLoaded = false;
   searchLoading = false;
   @ViewChild(MatAutocompleteTrigger) searchAutoTrigger: MatAutocompleteTrigger;
   @ViewChild('searchInput', {read: ElementRef}) searchInputRef: ElementRef;
-  private enterHandledByRow = false;
   private searchSubject = new Subject<string>();
   private searchSubscription: Subscription;
 
@@ -169,26 +162,19 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
       switchMap(text => {
         this.searchLoading = true;
         const trimmed = text.trim();
-        // One flat list ranked across every type, so the best match leads whatever its type.
-        // Relevance in both states, the same value every other IoT Hub surface sends: with an
-        // empty field the backend serves the install count under this key, so the panel opens on
-        // popularity without this component having to know it.
+        // One list ranked across every type the platform surfaces. With an empty field relevance
+        // is served as the install count.
         const sortOrder: SortOrder = { property: RELEVANCE_SORT_PROPERTY, direction: Direction.DESC };
         const pageLink = new PageLink(SEARCH_POPUP_PAGE_SIZE, 0, trimmed || null, sortOrder);
-        const query = new MpItemVersionQuery(pageLink);
-        // A failed request must not end the subscription: the interceptor reports it, and the
-        // panel goes back to an empty answer the next keystroke can replace.
+        const query = new MpItemVersionQuery(pageLink, { types: CROSS_TYPE_ITEM_TYPES });
+        // A failure must not end the subscription; the next keystroke replaces the empty answer.
         return this.iotHubApiService.getPublishedVersions(query, { ignoreLoading: true }).pipe(
           catchError(() => of({ data: [], totalElements: 0 } as PageData<MpItemVersionView>))
         );
       })
     ).subscribe(page => {
-      // The platform publishes no dashboards, so a type this panel has no layout for is dropped;
-      // the popup then shows fewer rows rather than asking for more.
-      const data = page.data ?? [];
-      this.searchResults = data.filter(item => CROSS_TYPE_ITEM_TYPES.includes(item.type));
-      this.searchTotal = Math.max(this.searchResults.length,
-        (page.totalElements ?? 0) - (data.length - this.searchResults.length));
+      this.searchResults = page.data ?? [];
+      this.searchTotal = page.totalElements ?? 0;
       this.searchLoaded = true;
       this.searchLoading = false;
     });
@@ -230,13 +216,11 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
   }
 
   onSearchInput(): void {
-    this.enterHandledByRow = false;
     this.searchLoading = true;
     this.searchSubject.next(this.searchText || '');
   }
 
   onSearchFocus(): void {
-    this.enterHandledByRow = false;
     if (!this.searchLoaded) {
       this.searchLoading = true;
       this.searchSubject.next(this.searchText || '');
@@ -248,43 +232,30 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
   };
 
   clearSearch(): void {
-    this.enterHandledByRow = false;
     this.searchText = '';
     this.searchSubject.next('');
     this.searchInputRef?.nativeElement?.focus();
     setTimeout(() => this.searchAutoTrigger?.openPanel());
   }
 
-  /**
-   * Gate on every row's selection: false for the panel's own bookkeeping, true when the user
-   * picked the row - and then it records whether a keyup is still coming for it.
-   *
-   * One Enter reaches two handlers. The autocomplete trigger acts on keydown, the field's own
-   * handler on keyup, and preventDefault on the first does not stop the second. Only the
-   * keyboard leaves that second half to deal with, so only the keyboard arms the flag: a pointer
-   * selection is finished when it returns, and a flag left standing there would swallow the next
-   * onSearch - which the magnifier button can raise with no keystroke at all.
-   *
-   * activeOption is what tells the two apart, and it is readable only here: the trigger holds it
-   * while it calls _selectViaInteraction and clears it on the next line of its own handler, so by
-   * keyup it reads empty either way. A pointer never sets it.
-   */
-  rowSelectedByUser(event: MatOptionSelectionChange): boolean {
-    if (!event.isUserInput) {
-      return false;
+  onRowSelected(event: MatOptionSelectionChange, item: MpItemVersionView): void {
+    if (event.isUserInput) {
+      this.openItemDetail(item);
     }
-    this.enterHandledByRow = !!this.searchAutoTrigger?.activeOption;
-    return true;
+  }
+
+  onFooterSelected(event: MatOptionSelectionChange): void {
+    if (event.isUserInput) {
+      this.seeAllResults();
+    }
   }
 
   /**
-   * Enter in the field opens the search page, unless a row has just acted on this same press.
-   * Every path that re-enters the field clears the flag too, so nothing survives the keystroke
-   * it belongs to - including an arrow-then-click, the one selection that arms it by pointer.
+   * Enter in the field opens the search page - unless the autocomplete has just used this press
+   * to select a highlighted row, which it marks with preventDefault before this handler runs.
    */
-  onSearch(): void {
-    if (this.enterHandledByRow) {
-      this.enterHandledByRow = false;
+  onSearchEnter(event: KeyboardEvent): void {
+    if (event.defaultPrevented || event.isComposing) {
       return;
     }
     this.seeAllResults();
@@ -297,10 +268,9 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
   }
 
   isCompactType(type: ItemType): boolean {
-    return type === ItemType.CALCULATED_FIELD
-        || type === ItemType.ALARM_RULE
-        || type === ItemType.RULE_CHAIN;
+    return isCompactItemType(type);
   }
+
 
   getCompactIcon(item: MpItemVersionView): string {
     return item.icon || getItemTypeIcon(item.type);
