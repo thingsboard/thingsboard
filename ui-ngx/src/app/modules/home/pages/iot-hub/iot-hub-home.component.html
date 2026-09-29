@@ -54,13 +54,13 @@
                [matAutocomplete]="searchAuto"
                (input)="onSearchInput()"
                (focus)="onSearchFocus()"
-               (keyup.enter)="onSearch()">
+               (keydown.enter)="onSearchEnter($event)">
         @if (searchText) {
           <button matSuffix mat-icon-button (click)="clearSearch()">
             <mat-icon>close</mat-icon>
           </button>
         }
-        <button matSuffix mat-icon-button (click)="$event.stopPropagation(); onSearch()">
+        <button matSuffix mat-icon-button (click)="$event.stopPropagation(); seeAllResults()">
           <mat-icon>search</mat-icon>
         </button>
       </mat-form-field>
@@ -86,9 +86,8 @@
         } @else {
           @for (item of searchResults; track item.id) {
             <mat-option class="tb-search-popup-item" [value]="searchText"
-                        (onSelectionChange)="rowSelectedByUser($event) && openItemDetail(item)">
-              <!-- Every row gets the same 99x56 frame; an item with no screenshot shows its colour
-                   and icon as a tile inside it, so names line up down the list. -->
+                        (onSelectionChange)="onRowSelected($event, item)">
+              <!-- One 99x56 frame for every row, so names line up. -->
               <div class="tb-search-popup-thumbnail">
                 @if (isCompactType(item.type)) {
                   <div class="tb-search-popup-icon-square" [style.background]="item.color || '#048ad3'">
@@ -102,7 +101,6 @@
               </div>
               <div class="tb-search-popup-text">
                 <span class="tb-search-popup-name">{{ item.name }}</span>
-                <!-- The list mixes types, so each row names its type before the author. -->
                 <span class="tb-search-popup-meta">
                   <span class="tb-search-popup-type" [style.--tb-search-popup-type-color]="getItemTypeColor(item.type)">
                     <tb-icon>{{ getItemTypeIcon(item.type) }}</tb-icon>
@@ -124,7 +122,7 @@
           }
         }
         <mat-option class="tb-search-popup-footer" [value]="searchText"
-                    (onSelectionChange)="rowSelectedByUser($event) && seeAllResults()">
+                    (onSelectionChange)="onFooterSelected($event)">
           @if (searchText?.trim(); as query) {
             @if (searchTotal > searchResults.length) {
               {{ 'iot-hub.see-all-results-for' | translate:{ count: searchTotal, search: query } }}
