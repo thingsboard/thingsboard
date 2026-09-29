@@ -78,8 +78,7 @@
         <img [src]="previewUrl" alt="" class="tb-iot-hub-preview-image">
       } @else {
         <div class="tb-iot-hub-preview-placeholder">
-          <!-- The item's own colour, where it has one: it is what makes a calculated field read
-               as a calculated field once the compact card's coloured square is not there. -->
+          <!-- The item's own colour, standing in for the compact card's coloured square. -->
           <tb-icon [style.color]="item.color || null">{{ getPlaceholderIcon() }}</tb-icon>
         </div>
       }

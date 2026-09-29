@@ -3,6 +3,7 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { environment as env } from '@env/environment';
+import { ItemType, itemTypeColors } from '@shared/models/iot-hub/iot-hub-item.models';
 
 @Component({
   selector: 'tb-iot-hub-alarm-rules-unavailable-page',
@@ -12,8 +13,7 @@ import { environment as env } from '@env/environment';
 })
 export class TbIotHubAlarmRulesUnavailablePageComponent {
 
-  // Same colour as the ALARM_RULE HeroTypeConfig entry on the home page.
-  readonly alarmRulesColor = '#d66f2e';
+  readonly alarmRulesColor = itemTypeColors[ItemType.ALARM_RULE];
 
   readonly currentTbVersion: string = env.tbVersion;
 
