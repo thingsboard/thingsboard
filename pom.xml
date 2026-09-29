@@ -892,7 +892,7 @@
                     <configuration>
                         <licenseSets>
                             <licenseSet>
-                                <header>${main.dir}/license-header.txt</header>
+                                <header>${main.dir}/license-headers/license-header.txt</header>
                                 <excludes>
                                     <exclude>**/.env</exclude>
                                     <exclude>**/*.env</exclude>
