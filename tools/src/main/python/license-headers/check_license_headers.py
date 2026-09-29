@@ -25,9 +25,9 @@ import xml.etree.ElementTree as ET
 
 
 TEMPLATES = {
-    "apache": "license-header.txt",
-    "ce-modified": "license-header-ce-modified.txt",
-    "pe-only": "license-header-busl.txt",
+    "apache": "license-headers/license-header.txt",
+    "ce-modified": "license-headers/license-header-ce-modified.txt",
+    "pe-only": "license-headers/license-header-busl.txt",
 }
 CE_REMOTE = "https://github.com/thingsboard/thingsboard.git"
 CURATIONS = "tools/src/main/python/license-headers/curations.json"
@@ -509,6 +509,7 @@ class Mycila:
         self.sentinel = ("license-provenance-" + uuid.uuid4().hex).encode("ascii")
         self.templates = {header: (repo / name).read_bytes() for header, name in TEMPLATES.items()}
         for header, name in TEMPLATES.items():
+            (directory / name).parent.mkdir(parents=True, exist_ok=True)
             (directory / name).write_bytes(self.templates[header])
 
     def add(self, key, name, content):
