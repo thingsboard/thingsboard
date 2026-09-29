@@ -937,10 +937,10 @@
                     <configuration>
                         <licenseSets>
                             <licenseSet>
-                                <header>${main.dir}/license-header-busl.txt</header>
+                                <header>${main.dir}/license-headers/license-header-busl.txt</header>
                                 <validHeaders>
                                     <validHeader>${main.dir}/license-headers/license-header.txt</validHeader>
-                                    <validHeader>${main.dir}/license-header-ce-modified.txt</validHeader>
+                                    <validHeader>${main.dir}/license-headers/license-header-ce-modified.txt</validHeader>
                                 </validHeaders>
                                 <excludes>
                                     <exclude>**/.env</exclude>
