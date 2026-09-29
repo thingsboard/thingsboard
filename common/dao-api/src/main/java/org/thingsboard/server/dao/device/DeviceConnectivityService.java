@@ -22,4 +22,6 @@ public interface DeviceConnectivityService {
     Resource createGatewayDockerComposeFile(String baseUrl, Device device, DockerComposeParams params) throws URISyntaxException;
 
     String resolveGatewayHost(String baseUrl);
+
+    String resolveGatewayPort();
 }
