@@ -939,7 +939,7 @@
                             <licenseSet>
                                 <header>${main.dir}/license-header-busl.txt</header>
                                 <validHeaders>
-                                    <validHeader>${main.dir}/license-header.txt</validHeader>
+                                    <validHeader>${main.dir}/tools/src/main/python/license-headers/templates/license-header.txt</validHeader>
                                     <validHeader>${main.dir}/license-header-ce-modified.txt</validHeader>
                                 </validHeaders>
                                 <excludes>
