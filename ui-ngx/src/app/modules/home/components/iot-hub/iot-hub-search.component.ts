@@ -1,13 +1,14 @@
 // SPDX-FileCopyrightText: Copyright The Thingsboard Authors
 // SPDX-License-Identifier: Apache-2.0
-import { Component, OnInit, OnDestroy, Input, Output, EventEmitter, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, Output, EventEmitter, ViewChild, ElementRef, NgZone } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { forkJoin, of, Subject, Subscription } from 'rxjs';
-import { catchError, debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged, map, switchMap } from 'rxjs/operators';
 import { PageLink } from '@shared/models/page/page-link';
 import { SortOrder } from '@shared/models/page/sort-order';
 import { MpItemVersionQuery, MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
+import { PageData } from '@shared/models/page/page-data';
 import {
   CROSS_TYPE_ITEM_TYPES,
   FilterParamInfo,
@@ -18,11 +19,9 @@ import {
 import { IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { IotHubActionsService } from './iot-hub-actions.service';
+import { measureGridColumns } from './iot-hub-utils';
 
-/**
- * Rows a page holds, as a multiple of the column count, so a page always ends on a complete row.
- * The floor keeps a one- or two-column phone layout from falling to three cards a page.
- */
+/** A page is whole rows of the grid, and never fewer than MIN_PAGE_SIZE cards. */
 const ROWS_PER_PAGE = 3;
 const MIN_PAGE_SIZE = 12;
 
@@ -37,10 +36,7 @@ export class TbIotHubSearchComponent implements OnInit, OnDestroy {
   @Input() searchText = '';
   @Input() creatorId: string;
   @Input() showCreator = true;
-  /**
-   * Render the filter panel. The search page does; the creator profile does not - it is already
-   * scoped to one creator, and the site's profile has no panel either.
-   */
+  /** Off on the creator profile, which is already scoped to one creator. */
   @Input() showFilters = true;
   @Output() searchTextChange = new EventEmitter<string>();
 
@@ -56,27 +52,26 @@ export class TbIotHubSearchComponent implements OnInit, OnDestroy {
 
   pageIndex = 0;
 
-  /**
-   * Read from a hidden probe that carries the real grid's classes, not guessed from breakpoints:
-   * the grid's column count is a CSS fact, and duplicating its media queries in TypeScript is a
-   * second source of truth that drifts the first time someone edits the stylesheet.
-   */
+  /** A hidden element carrying the real grid's classes, so the column count comes from the CSS. */
   @ViewChild('cardGridProbe', { static: true }) cardGridProbe!: ElementRef<HTMLElement>;
   cols = 5;
   pageSize = MIN_PAGE_SIZE;
+  private resizeObserver?: ResizeObserver;
+  private resizeSubject = new Subject<void>();
+  private resizeSubscription?: Subscription;
 
   get pageSizeOptions(): number[] {
     const base = Math.max(MIN_PAGE_SIZE, this.cols * ROWS_PER_PAGE);
     return [base, base * 2, base * 4];
   }
 
-  // Filter panel state. Empty sets mean "no filter", which is what the query object expects.
+  // Filter panel state. An empty set means "no filter".
 
   /** Narrow widths only: the facet panel is a block above the results, not a sidebar. */
   filtersOpen = false;
-  typeOptions: FilterParamInfo[] = [];
-  categoryOptions: FilterParamInfo[] = [];
-  useCaseOptions: FilterParamInfo[] = [];
+  readonly typeOptions: string[] = CROSS_TYPE_ITEM_TYPES;
+  categoryOptions: string[] = [];
+  useCaseOptions: string[] = [];
   activeTypes = new Set<string>();
   activeCategories = new Set<string>();
   activeUseCases = new Set<string>();
@@ -93,12 +88,16 @@ export class TbIotHubSearchComponent implements OnInit, OnDestroy {
 
   private searchSubject = new Subject<string>();
   private searchSubscription: Subscription;
+  /** Every reload goes through here, so a newer request cancels an older one still in flight. */
+  private loadSubject = new Subject<void>();
+  private loadSubscription: Subscription;
 
   constructor(
     private router: Router,
     private translate: TranslateService,
     private iotHubApiService: IotHubApiService,
-    private iotHubActions: IotHubActionsService
+    private iotHubActions: IotHubActionsService,
+    private zone: NgZone
   ) {}
 
   ngOnInit(): void {
@@ -108,6 +107,23 @@ export class TbIotHubSearchComponent implements OnInit, OnDestroy {
       this.loadFilterInfo();
     }
     this.loadInstalledItems();
+    this.loadSubscription = this.loadSubject.pipe(
+      switchMap(() => this.fetchResults(this.searchText || '').pipe(
+        map(result => ({ result })),
+        catchError(() => of({ result: null as PageData<MpItemVersionView> | null }))
+      ))
+    ).subscribe(({ result }) => {
+      this.isLoading = false;
+      if (result) {
+        this.totalElements = result.totalElements;
+        this.results = result.data;
+        this.hasError = false;
+      } else {
+        this.hasError = true;
+        this.results = [];
+        this.totalElements = 0;
+      }
+    });
     this.searchSubscription = this.searchSubject.pipe(
       debounceTime(300),
       distinctUntilChanged()
@@ -120,6 +136,7 @@ export class TbIotHubSearchComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.searchSubscription?.unsubscribe();
+    this.loadSubscription?.unsubscribe();
     this.resizeSubscription?.unsubscribe();
     this.resizeObserver?.disconnect();
   }
@@ -160,11 +177,7 @@ export class TbIotHubSearchComponent implements OnInit, OnDestroy {
     this.reloadFromFirstPage();
   }
 
-  /**
-   * Returns a new Set rather than mutating the one passed in: TbIotHubFacetListComponent holds
-   * this very instance as an @Input, and a mutation it cannot see is a trap for the first person
-   * to put that component on OnPush.
-   */
+  /** A new Set rather than a mutation, so the facet list's @Input sees the change. */
   private toggled(set: Set<string>, key: string): Set<string> {
     const next = new Set(set);
     if (!next.delete(key)) {
@@ -179,14 +192,8 @@ export class TbIotHubSearchComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * There is no catalogue-wide filterInfo endpoint - it answers per item type - so the six
-   * answers are merged here, the way the site merges the same six at build time. Counts are
-   * deliberately not rendered: filterInfo takes no text query, so beside a searched result they
-   * would be the whole catalogue's numbers pretending to describe this answer.
-   *
-   * Each request carries its own catchError so one type's failure costs that type's categories
-   * and use cases, not the panel: a bare forkJoin is all-or-nothing, and the Type facet needs no
-   * server data at all.
+   * filterInfo answers per item type, so the six answers are merged. Each request has its own
+   * catchError: one type failing costs that type's options, not the panel.
    */
   private loadFilterInfo(): void {
     const config = { ignoreLoading: true, ignoreErrors: true };
@@ -196,43 +203,26 @@ export class TbIotHubSearchComponent implements OnInit, OnDestroy {
       )
     ).subscribe({
       next: infos => {
-        // Every item type is offered, not only the ones filterInfo reports facets for: the
-        // endpoint describes a type's categories and vendors, never how many items it has, and
-        // a type whose items carry no categories would vanish from its own facet.
-        this.typeOptions = CROSS_TYPE_ITEM_TYPES.map(type => ({
-          key: type as string,
-          totalItems: 0,
-          totalInstallCount: 0
-        }));
         this.categoryOptions = this.mergeFacet(infos.map(i => i?.categories));
         this.useCaseOptions = this.mergeFacet(infos.map(i => i?.useCases));
       }
     });
   }
 
-  private mergeFacet(lists: (FilterParamInfo[] | undefined)[]): FilterParamInfo[] {
-    const byKey = new Map<string, FilterParamInfo>();
+  /** Keys that have items in any of the per-type answers, sorted. */
+  private mergeFacet(lists: (FilterParamInfo[] | undefined)[]): string[] {
+    const keys = new Set<string>();
     for (const list of lists) {
       for (const option of list || []) {
-        const seen = byKey.get(option.key);
-        if (seen) {
-          seen.totalItems += option.totalItems;
-          seen.totalInstallCount += option.totalInstallCount;
-        } else {
-          byKey.set(option.key, { ...option });
+        if (option.totalItems > 0) {
+          keys.add(option.key);
         }
       }
     }
-    return [...byKey.values()]
-      .filter(o => o.totalItems > 0)
-      .sort((a, b) => a.key.localeCompare(b.key));
+    return [...keys].sort((a, b) => a.localeCompare(b));
   }
 
   // Column count -> page size
-
-  private resizeObserver?: ResizeObserver;
-  private resizeSubject = new Subject<void>();
-  private resizeSubscription?: Subscription;
 
   private observeGridWidth(): void {
     const el = this.cardGridProbe?.nativeElement;
@@ -245,14 +235,14 @@ export class TbIotHubSearchComponent implements OnInit, OnDestroy {
       if (this.pageSizeOptions[0] === before) {
         return;
       }
-      // Keep the user roughly where they were in the list rather than on the same page number:
-      // page 4 of 12-card pages is a different place from page 4 of 18-card pages.
+      // Keep the same first item in view, not the same page number.
       const firstItem = this.pageIndex * this.pageSize;
       this.pageSize = this.pageSizeOptions[0];
       this.pageIndex = Math.floor(firstItem / this.pageSize);
       this.loadResults();
     });
-    this.resizeObserver = new ResizeObserver(() => this.resizeSubject.next());
+    // zone.js does not patch ResizeObserver; without zone.run the reload would not render.
+    this.resizeObserver = new ResizeObserver(() => this.zone.run(() => this.resizeSubject.next()));
     this.resizeObserver.observe(el);
   }
 
@@ -261,17 +251,7 @@ export class TbIotHubSearchComponent implements OnInit, OnDestroy {
     if (!el) {
       return;
     }
-    // Force layout so grid-template-columns resolves to pixel tracks rather than `repeat(...)`.
-    void el.offsetWidth;
-    const tracks = getComputedStyle(el).gridTemplateColumns;
-    if (!tracks || tracks === 'none') {
-      this.cols = 1;
-    } else if (tracks.startsWith('repeat(')) {
-      const match = tracks.match(/^repeat\(\s*(\d+)\s*,/);
-      this.cols = match ? parseInt(match[1], 10) : 1;
-    } else {
-      this.cols = Math.max(1, tracks.trim().split(/\s+/).filter(t => t.length > 0).length);
-    }
+    this.cols = measureGridColumns(el);
     if (!this.pageSizeOptions.includes(this.pageSize)) {
       this.pageSize = this.pageSizeOptions[0];
     }
@@ -420,21 +400,9 @@ export class TbIotHubSearchComponent implements OnInit, OnDestroy {
       clearTimeout(this.retryTimer);
       this.retryTimer = null;
     }
+    // hasError stays as-is until a request succeeds.
     this.isLoading = true;
-    // hasError stays as-is until the request actually succeeds
-    // (cleared in the `next` callback below).
-    this.fetchResults(this.searchText || '').subscribe({
-      next: result => {
-        this.applyResults(result.data, result.totalElements);
-        this.hasError = false;
-      },
-      error: () => {
-        this.isLoading = false;
-        this.hasError = true;
-        this.results = [];
-        this.totalElements = 0;
-      }
-    });
+    this.loadSubject.next();
   }
 
   private fetchResults(text: string) {
@@ -443,20 +411,13 @@ export class TbIotHubSearchComponent implements OnInit, OnDestroy {
     const pageLink = new PageLink(this.pageSize, this.pageIndex, text.trim() || null, sortOrder);
     const query = new MpItemVersionQuery(pageLink, {
       creatorId: this.creatorId || undefined,
-      // Empty sets are left off the query entirely - an empty array would narrow to nothing.
-      types: this.activeTypes.size ? [...this.activeTypes] : undefined,
+      // No type selected means every type the platform surfaces (the Hub also holds dashboards).
+      types: this.activeTypes.size ? [...this.activeTypes] : CROSS_TYPE_ITEM_TYPES,
       categories: this.activeCategories.size ? [...this.activeCategories] : undefined,
       useCases: this.activeUseCases.size ? [...this.activeUseCases] : undefined
     });
     return this.iotHubApiService.getPublishedVersions(query, { ignoreLoading: true, ignoreErrors: true });
   }
-
-  private applyResults(data: MpItemVersionView[], totalElements: number): void {
-    this.totalElements = totalElements;
-    this.results = data;
-    this.isLoading = false;
-  }
-
 
   private loadInstalledItems(): void {
     const config = { ignoreLoading: true };

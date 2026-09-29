@@ -2,16 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 @import "./iot-hub-common";
 
-// Values follow the type pages' filter panel so the two read as one control, minus its deep
-// left indent: that indent exists because the panel there sits in a wider rail.
+// Matches the type pages' filter panel, minus its rail indent.
 .tb-iot-hub-facet-panel.mat-expansion-panel {
   box-shadow: none;
   border-radius: 0;
   background: transparent;
 
-  // Indented from the column's edges, because the rules between facets are not: they span the
-  // whole column, as they do on the type pages. The host sets --tb-facet-indent to whatever
-  // puts this text on the page's own left margin.
+  // Text is indented by --tb-facet-indent (set by the host); the rules between facets are not.
   .mat-expansion-panel-header {
     padding: 8px 16px 8px var(--tb-facet-indent, 16px);
     height: 48px;
@@ -38,8 +35,7 @@
   }
 
   .tb-iot-hub-facet-items {
-    // Uncapped until the list is long enough to need it, so a three-option facet does not
-    // reserve a scroll area it never uses.
+    // Capped only when long enough to scroll.
     &.scrollable {
       max-height: 280px;
       overflow-y: auto;

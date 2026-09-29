@@ -1,17 +1,11 @@
 // SPDX-FileCopyrightText: Copyright The Thingsboard Authors
 // SPDX-License-Identifier: Apache-2.0
-import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { FilterParamInfo } from '@shared/models/iot-hub/iot-hub-item.models';
+import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
+import { filterByLabel, IOT_HUB_FILTER_SCROLL_THRESHOLD } from '@home/components/iot-hub/iot-hub-utils';
 
 /**
- * One checkbox facet of a filter panel: a title, the options with their item counts, and the
- * set of keys currently selected. Presentational only - it owns no filter state and issues no
- * request; the host decides what a toggle means.
- *
- * Written for the cross-type search page, which needs three plain facets (item type, category,
- * use case). The type pages keep their own panel in TbIotHubBrowseComponent: theirs carries
- * facets this one has no notion of - grouped connectivity, vendor lists, per-type subtypes -
- * so folding the two together would mean parameterising that panel for a shape it never uses.
+ * One checkbox facet of a filter panel: a title, the option keys, and the set of keys currently
+ * selected. Presentational only - the host decides what a toggle means.
  */
 @Component({
   selector: 'tb-iot-hub-facet-list',
@@ -19,55 +13,36 @@ import { FilterParamInfo } from '@shared/models/iot-hub/iot-hub-item.models';
   templateUrl: './iot-hub-facet-list.component.html',
   styleUrls: ['./iot-hub-facet-list.component.scss']
 })
-export class TbIotHubFacetListComponent {
+export class TbIotHubFacetListComponent implements OnChanges {
 
   /** Translation key for the facet's heading. */
   @Input() label: string;
 
-  @Input() options: FilterParamInfo[] = [];
+  @Input() options: string[] = [];
 
-  /** Keys the host currently has selected. Read, never written - the host hands over a new Set
-   *  on every toggle rather than mutating this one. */
+  /** Keys the host has selected. The host hands over a new Set on every toggle. */
   @Input() selected = new Set<string>();
 
-  /**
-   * Turns an option key into what the user reads. Defaults to the key, which is already the
-   * display value for categories and use cases; item types come through as enum names and need
-   * their translated plural.
-   */
+  /** Turns an option key into what the user reads. */
   @Input() labelFor: (key: string) => string = (key) => key;
 
-  /**
-   * Open on first render. The host decides: a short, always-relevant facet earns the space it
-   * takes, a long one costs the reader the facets below it — on the search page all three
-   * headings fit above the fold only because two of them start closed.
-   */
   @Input() expanded = true;
 
   @Output() toggled = new EventEmitter<string>();
 
-  /**
-   * Above this many options the facet gets its own search box and a scroll cap. Matches the
-   * threshold the type pages' panel uses, so the two feel the same at the same list lengths.
-   */
-  private static readonly SEARCH_THRESHOLD = 8;
-
   search = '';
+  searchable = false;
+  visibleOptions: string[] = [];
+  scrollable = false;
 
-  get searchable(): boolean {
-    return this.options.length > TbIotHubFacetListComponent.SEARCH_THRESHOLD;
+  ngOnChanges(): void {
+    this.searchable = this.options.length > IOT_HUB_FILTER_SCROLL_THRESHOLD;
+    this.applySearch();
   }
 
-  get visibleOptions(): FilterParamInfo[] {
-    const needle = this.search.trim().toLowerCase();
-    if (!needle) {
-      return this.options;
-    }
-    return this.options.filter(o => this.labelFor(o.key).toLowerCase().includes(needle));
-  }
-
-  get scrollable(): boolean {
-    return this.visibleOptions.length > TbIotHubFacetListComponent.SEARCH_THRESHOLD;
+  onSearchChange(search: string): void {
+    this.search = search;
+    this.applySearch();
   }
 
   isSelected(key: string): boolean {
@@ -76,5 +51,10 @@ export class TbIotHubFacetListComponent {
 
   onToggle(key: string): void {
     this.toggled.emit(key);
+  }
+
+  private applySearch(): void {
+    this.visibleOptions = filterByLabel(this.options, this.search.trim(), this.labelFor);
+    this.scrollable = this.visibleOptions.length > IOT_HUB_FILTER_SCROLL_THRESHOLD;
   }
 }

@@ -12,9 +12,9 @@
   @if (searchable) {
     <div class="tb-iot-hub-facet-search">
       <mat-icon>search</mat-icon>
-      <input [placeholder]="'iot-hub.search' | translate" [(ngModel)]="search">
+      <input [placeholder]="'iot-hub.search' | translate" [ngModel]="search" (ngModelChange)="onSearchChange($event)">
       @if (search) {
-        <button mat-icon-button class="tb-iot-hub-facet-search-clear" (click)="search = ''">
+        <button mat-icon-button class="tb-iot-hub-facet-search-clear" (click)="onSearchChange('')">
           <mat-icon>close</mat-icon>
         </button>
       }
@@ -22,9 +22,9 @@
   }
 
   <div class="tb-iot-hub-facet-items" [class.scrollable]="scrollable">
-    @for (option of visibleOptions; track option.key) {
-      <mat-checkbox [checked]="isSelected(option.key)" (change)="onToggle(option.key)">
-        {{ labelFor(option.key) }}
+    @for (key of visibleOptions; track key) {
+      <mat-checkbox [checked]="isSelected(key)" (change)="onToggle(key)">
+        {{ labelFor(key) }}
       </mat-checkbox>
     }
   </div>

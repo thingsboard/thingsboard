@@ -8,9 +8,8 @@
   flex-direction: column;
 }
 
-// The page hands this component the card's full width and its own side padding as a variable.
-// Rows that are ordinary content pad themselves back in; the divider and the filter rail are
-// the two things that are supposed to reach the edge, so they do not.
+// Full bleed: content rows pad themselves in by --tb-search-side-pad; the divider and the filter
+// rail reach the edge.
 .tb-search-pad {
   padding-left: var(--tb-search-side-pad, 0px);
   padding-right: var(--tb-search-side-pad, 0px);
@@ -157,8 +156,7 @@
   grid-template-columns: repeat(5, 1fr);
   gap: 20px;
 
-  // Probe: zero-height element used only to read the computed column count.
-  // Keeps display: grid and non-zero width so grid-template-columns resolves.
+  // Zero-height probe for the column count; needs display: grid and a width to resolve tracks.
   &.tb-search-card-grid-probe {
     width: 100%;
     height: 0;
@@ -169,7 +167,7 @@
   }
 }
 
-// Filter button — the drawer's trigger, and where the active count is shown
+// Filter button, with the active count
 .tb-search-filter-btn {
   flex-shrink: 0;
 }
@@ -186,11 +184,8 @@
   font-variant-numeric: tabular-nums;
 }
 
-// Content: facet sidebar beside the grid
-// The page gives this component the viewport's remaining height and expects its body to scroll
-// inside, not to grow past the white card. So the row takes that height and BOTH columns scroll
-// themselves — the grid as it always did, the facets likewise. A facet list can then be any
-// length at all without reaching the page behind it.
+// Facet sidebar beside the grid. Both columns scroll inside the given height, so neither grows
+// past the card.
 .tb-search-layout {
   display: flex;
   gap: 24px;
@@ -210,10 +205,7 @@
   flex-shrink: 0;
   border-right: 1px solid rgba(0, 0, 0, 0.12);
 
-  // The component is already full-bleed, so this column starts at the card's edge with no
-  // margin of its own and every rule drawn across it reaches that edge. The indent goes INSIDE
-  // each facet — padding here would inset the rules too — and matches the page's own margin, so
-  // the words line up with the heading above them.
+  // Starts at the card's edge so the rules across it reach it; each facet indents its own text.
   --tb-facet-indent: var(--tb-search-side-pad, 16px);
 
   align-self: stretch;
@@ -237,8 +229,7 @@
   flex-direction: column;
   padding-bottom: 24px;
 
-  // The type pages put a rule between filter sections. No gap and no padding around it: the
-  // rule sits flush between two sections, edge to edge, rather than floating inside a gap.
+  // A flush rule between filter sections, as on the type pages.
   tb-iot-hub-facet-list + tb-iot-hub-facet-list {
     border-top: 1px solid rgba(0, 0, 0, 0.12);
   }
@@ -325,8 +316,7 @@
   }
 }
 
-// The sidebar costs a whole card column, so below this width it stops being a column: the
-// panel collapses, and the Filter button opens it as a block above the results.
+// Below this width the sidebar collapses and the Filter button opens it above the results.
 @media #{$mat-lt-lg} {
   .tb-search-layout {
     flex-direction: column;
@@ -334,8 +324,7 @@
 
   .tb-search-facets-desktop {
     display: none;
-    // As a block above the results it is ordinary content, not a rail, so it lines up with
-    // the rows above it rather than with the card's edge.
+    // Above the results it is content, not a rail, so it is padded in like the rows above.
     width: 100%;
     height: auto;
     max-height: 60vh;
@@ -353,7 +342,7 @@
   }
 }
 
-// Wide enough for the sidebar, so the button that opens the block has nothing to open.
+// The sidebar is shown, so there is nothing for the button to open.
 @media #{$mat-gt-md} {
   .tb-search-filter-btn {
     display: none;
