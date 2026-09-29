@@ -7,10 +7,8 @@ import { Observable } from 'rxjs';
 import { PageData } from '@shared/models/page/page-data';
 import { PageLink } from '@shared/models/page/page-link';
 import {
-  MpItemVersionGroupedQuery,
   MpItemVersionQuery,
   MpItemVersionQueryOptions,
-  MpItemVersionSection,
   MpItemVersionView
 } from '@shared/models/iot-hub/iot-hub-version.models';
 import { CreatorView } from '@shared/models/iot-hub/iot-hub-creator.models';
@@ -78,20 +76,6 @@ export class IotHubApiService {
     this.applyPlatformFilters(query.options);
     return this.http.get<PageData<MpItemVersionView>>(
       `${this.baseUrl}/api/versions/published${query.toQuery()}`,
-      { params: this.buildParams(config) }
-    );
-  }
-
-  /**
-   * The sectioned answer: one section per item type, in the server's order, each capped by the
-   * server and carrying the total behind that cap. Its own endpoint, which takes no page, page
-   * size or sort direction.
-   */
-  public getPublishedVersionsGrouped(query: MpItemVersionGroupedQuery,
-                                     config?: IotHubRequestConfig): Observable<MpItemVersionSection[]> {
-    this.applyPlatformFilters(query.options);
-    return this.http.get<MpItemVersionSection[]>(
-      `${this.baseUrl}/api/versions/published/grouped${query.toQuery()}`,
       { params: this.buildParams(config) }
     );
   }
