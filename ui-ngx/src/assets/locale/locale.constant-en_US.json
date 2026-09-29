@@ -2612,7 +2612,7 @@
             "certificate-value-required": "Certificate in PEM format is required",
             "cn-regex-variable": "CN Regular Expression variable",
             "cn-regex-variable-required": "CN Regular Expression variable is required",
-            "cn-regex-variable-hint": "Required to fetch device name from device's X509 certificate's common name."
+            "cn-regex-variable-hint": "Required to fetch device name from device's X509 certificate's common name. Also selects this device profile when several device profiles share the same certificate."
         },
         "condition": "Condition",
         "condition-type": "Condition type",

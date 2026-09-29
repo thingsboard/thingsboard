@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTrans
 import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
+import org.thingsboard.server.common.data.device.profile.X509CertificateChainProvisionConfiguration;
 import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.AbstractLwM2MBootstrapServerCredential;
 import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.LwM2MBootstrapServerCredential;
 import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.RPKLwM2MBootstrapServerCredential;
@@ -55,6 +56,8 @@ import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import static org.thingsboard.server.common.data.device.credentials.lwm2m.Lwm2mServerIdentifier.LWM2M_SERVER_MAX;
 import static org.thingsboard.server.common.data.device.credentials.lwm2m.Lwm2mServerIdentifier.PRIMARY_LWM2M_SERVER;
@@ -140,6 +143,7 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
             if (isDeviceProfileCertificateInJavaCacerts(deviceProfile.getProfileData().getProvisionConfiguration().getProvisionDeviceSecret())) {
                 throw new DataValidationException("Device profile certificate cannot be well known root CA!");
             }
+            validateSharedProvisionCertificate(tenantId, deviceProfile);
         }
         DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
         transportConfiguration.validate();
@@ -248,8 +252,37 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
             if (isDeviceProfileCertificateInJavaCacerts(deviceProfile.getProvisionDeviceKey())) {
                 throw new DataValidationException("Device profile certificate cannot be well known root CA!");
             }
+            validateSharedProvisionCertificate(tenantId, deviceProfile);
         }
         return old;
+    }
+
+    private void validateSharedProvisionCertificate(TenantId tenantId, DeviceProfile deviceProfile) {
+        String regex = deviceProfile.getProfileData().getProvisionConfiguration() instanceof X509CertificateChainProvisionConfiguration configuration
+                ? configuration.getCertificateRegExPattern() : null;
+        if (StringUtils.isNotBlank(regex)) {
+            try {
+                Pattern.compile(regex);
+            } catch (PatternSyntaxException e) {
+                throw new DataValidationException("Invalid CN regular expression pattern: " + e.getDescription() + "!");
+            }
+        }
+        List<DeviceProfile> others = deviceProfileDao.findAllByProvisionDeviceKey(deviceProfile.getProvisionDeviceKey()).stream()
+                .filter(other -> !other.getId().equals(deviceProfile.getId()))
+                .toList();
+        if (others.isEmpty()) {
+            return;
+        }
+        if (others.stream().anyMatch(other -> !other.getTenantId().equals(tenantId))) {
+            throw new DataValidationException("Device profile certificate is already used by a device profile of another tenant!");
+        }
+        if (StringUtils.isBlank(regex)) {
+            throw new DataValidationException("CN regular expression pattern is required when the certificate is shared between device profiles!");
+        }
+        if (others.stream().anyMatch(other -> other.getProfileData().getProvisionConfiguration() instanceof X509CertificateChainProvisionConfiguration configuration
+                && regex.equals(configuration.getCertificateRegExPattern()))) {
+            throw new DataValidationException("Device profile with such certificate and CN regular expression pattern already exists!");
+        }
     }
 
     private void validateProtoSchemas(ProtoTransportPayloadConfiguration protoTransportPayloadTypeConfiguration) {

@@ -34,6 +34,8 @@ public interface DeviceProfileDao extends Dao<DeviceProfile>, ExportableEntityDa
 
     DeviceProfile findByProvisionDeviceKey(String provisionDeviceKey);
 
+    List<DeviceProfile> findAllByProvisionDeviceKey(String provisionDeviceKey);
+
     DeviceProfile findByName(TenantId tenantId, String profileName);
 
     PageData<DeviceProfile> findAllWithImages(PageLink pageLink);

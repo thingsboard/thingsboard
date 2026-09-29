@@ -286,7 +286,6 @@ CREATE TABLE IF NOT EXISTS device_profile (
     external_id uuid,
     version BIGINT DEFAULT 1,
     CONSTRAINT device_profile_name_unq_key UNIQUE (tenant_id, name),
-    CONSTRAINT device_provision_key_unq_key UNIQUE (provision_device_key),
     CONSTRAINT device_profile_external_id_unq_key UNIQUE (tenant_id, external_id),
     CONSTRAINT fk_default_rule_chain_device_profile FOREIGN KEY (default_rule_chain_id) REFERENCES rule_chain(id),
     CONSTRAINT fk_default_dashboard_device_profile FOREIGN KEY (default_dashboard_id) REFERENCES dashboard(id),
@@ -294,6 +293,10 @@ CREATE TABLE IF NOT EXISTS device_profile (
     CONSTRAINT fk_software_device_profile FOREIGN KEY (software_id) REFERENCES ota_package(id),
     CONSTRAINT fk_default_edge_rule_chain_device_profile FOREIGN KEY (default_edge_rule_chain_id) REFERENCES rule_chain(id)
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS device_provision_key_unq_key
+    ON device_profile (provision_device_key,
+                       COALESCE(profile_data -> 'provisionConfiguration' ->> 'certificateRegExPattern', ''));
 
 DO
 $$

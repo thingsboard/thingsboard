@@ -140,6 +140,13 @@ public class DeviceProfileServiceImpl extends CachedVersionedEntityService<Devic
     }
 
     @Override
+    public List<DeviceProfile> findDeviceProfilesByProvisionDeviceKey(String provisionDeviceKey) {
+        log.trace("Executing findDeviceProfilesByProvisionDeviceKey provisionKey [{}]", provisionDeviceKey);
+        validateString(provisionDeviceKey, dk -> INCORRECT_PROVISION_DEVICE_KEY + dk);
+        return deviceProfileDao.findAllByProvisionDeviceKey(provisionDeviceKey);
+    }
+
+    @Override
     public DeviceProfileInfo findDeviceProfileInfoById(TenantId tenantId, DeviceProfileId deviceProfileId) {
         log.trace("Executing findDeviceProfileById [{}]", deviceProfileId);
         validateId(deviceProfileId, id -> INCORRECT_DEVICE_PROFILE_ID + id);

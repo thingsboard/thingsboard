@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.dao.sql.device;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.PageRequest;
@@ -29,6 +30,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+@Slf4j
 @Component
 @SqlDao
 public class JpaDeviceProfileDao extends JpaAbstractDao<DeviceProfileEntity, DeviceProfile> implements DeviceProfileDao, TenantEntityDao<DeviceProfile> {
@@ -90,7 +92,20 @@ public class JpaDeviceProfileDao extends JpaAbstractDao<DeviceProfileEntity, Dev
 
     @Override
     public DeviceProfile findByProvisionDeviceKey(String provisionDeviceKey) {
-        return DaoUtil.getData(deviceProfileRepository.findByProvisionDeviceKey(provisionDeviceKey));
+        List<DeviceProfile> deviceProfiles = findAllByProvisionDeviceKey(provisionDeviceKey);
+        if (deviceProfiles.isEmpty()) {
+            return null;
+        }
+        if (deviceProfiles.size() > 1) {
+            log.debug("Found {} device profiles sharing one provision device key, expected a single one", deviceProfiles.size());
+            return null;
+        }
+        return deviceProfiles.get(0);
+    }
+
+    @Override
+    public List<DeviceProfile> findAllByProvisionDeviceKey(String provisionDeviceKey) {
+        return DaoUtil.convertDataList(deviceProfileRepository.findAllByProvisionDeviceKey(provisionDeviceKey));
     }
 
     @Override

@@ -21,6 +21,7 @@ import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.device.credentials.ProvisionDeviceCredentialsData;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
+import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfileProvisionConfiguration;
 import org.thingsboard.server.common.data.device.profile.X509CertificateChainProvisionConfiguration;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -56,6 +57,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -195,10 +197,132 @@ public class DeviceProvisionServiceTest {
         Assertions.assertThat(result).isEqualTo("DeviceA");
     }
 
+    private static final String MATCHING_CN_REGEX = "(deviceCert.*)";
+    private static final String NON_MATCHING_CN_REGEX = "(otherDevice.*)";
+
+    @Test
+    public void singleCandidateDelegatesWithoutCommonNameSelection() {
+        var tenant = createTenant();
+        var deviceProfile = createDeviceProfile(tenant.getId(), chain[1], true);
+        deviceProfile.getProfileData().setProvisionConfiguration(new DisabledDeviceProfileProvisionConfiguration(null));
+
+        Assertions.assertThatThrownBy(() ->
+                        service.provisionDeviceViaX509Chain(List.of(deviceProfile), createProvisionRequest(chain[0])))
+                .isInstanceOf(ProvisionFailedException.class)
+                .hasMessage("Device profile provision strategy is not X509_CERTIFICATE_CHAIN!");
+    }
+
+    @Test
+    public void singleCandidateIsProvisionedEvenWhenRegexOnlyMatchesLoosely() {
+        var tenant = createTenant();
+        var deviceProfile = createDeviceProfile(tenant.getId(), chain[1], true, MATCHING_CN_REGEX);
+
+        var device = createDevice(tenant.getId(), deviceProfile.getId());
+        when(deviceService.findDeviceByTenantIdAndName(any(), any())).thenReturn(device);
+
+        var deviceCredentials = createDeviceCredentials(chain[0], device.getId());
+        when(deviceCredentialsService.findDeviceCredentialsByDeviceId(any(), any())).thenReturn(deviceCredentials);
+        when(deviceCredentialsService.updateDeviceCredentials(any(), any())).thenReturn(deviceCredentials);
+
+        ProvisionResponse response = service.provisionDeviceViaX509Chain(List.of(deviceProfile), createProvisionRequest(chain[0]));
+
+        Assertions.assertThat(response.getResponseStatus()).isEqualTo(ProvisionResponseStatus.SUCCESS);
+    }
+
+    @Test
+    public void selectProfileBySharedCertificateAndMatchingCommonName() {
+        var tenant = createTenant();
+        var matchingProfile = createDeviceProfile(tenant.getId(), chain[1], false, MATCHING_CN_REGEX);
+        var otherProfile = createDeviceProfile(tenant.getId(), chain[1], false, NON_MATCHING_CN_REGEX);
+
+        var device = createDevice(tenant.getId(), matchingProfile.getId());
+        when(deviceService.findDeviceByTenantIdAndName(any(), any())).thenReturn(device);
+
+        var deviceCredentials = createDeviceCredentials(chain[0], device.getId());
+        when(deviceCredentialsService.findDeviceCredentialsByDeviceId(any(), any())).thenReturn(deviceCredentials);
+        when(deviceCredentialsService.updateDeviceCredentials(any(), any())).thenReturn(deviceCredentials);
+
+        ProvisionResponse response = service.provisionDeviceViaX509Chain(
+                List.of(otherProfile, matchingProfile), createProvisionRequest(chain[0]));
+
+        Assertions.assertThat(response.getResponseStatus()).isEqualTo(ProvisionResponseStatus.SUCCESS);
+        verify(deviceService, times(1)).findDeviceByTenantIdAndName(tenant.getId(), "deviceCertificate@X509ProvisionStrategy");
+    }
+
+    @Test
+    public void failWhenSeveralProfilesMatchCommonName() {
+        var tenant = createTenant();
+        var first = createDeviceProfile(tenant.getId(), chain[1], true, MATCHING_CN_REGEX);
+        var second = createDeviceProfile(tenant.getId(), chain[1], true, "(device.*)");
+
+        Assertions.assertThatThrownBy(() ->
+                        service.provisionDeviceViaX509Chain(List.of(first, second), createProvisionRequest(chain[0])))
+                .isInstanceOf(ProvisionFailedException.class);
+
+        verify(deviceService, never()).saveDevice(any());
+        verify(deviceService, never()).findDeviceByTenantIdAndName(any(), any());
+    }
+
+    @Test
+    public void failWhenNoProfileMatchesCommonName() {
+        var tenant = createTenant();
+        var first = createDeviceProfile(tenant.getId(), chain[1], true, NON_MATCHING_CN_REGEX);
+        var second = createDeviceProfile(tenant.getId(), chain[1], true, "(yetAnother.*)");
+
+        Assertions.assertThatThrownBy(() ->
+                        service.provisionDeviceViaX509Chain(List.of(first, second), createProvisionRequest(chain[0])))
+                .isInstanceOf(ProvisionFailedException.class);
+
+        verify(deviceService, never()).findDeviceByTenantIdAndName(any(), any());
+    }
+
+    @Test
+    public void failWhenSharedProfileRegexIsBlankOrInvalid() {
+        var tenant = createTenant();
+        for (String regex : new String[]{null, "", "   ", "["}) {
+            var unusable = createDeviceProfile(tenant.getId(), chain[1], true, regex);
+            var other = createDeviceProfile(tenant.getId(), chain[1], true, NON_MATCHING_CN_REGEX);
+
+            Assertions.assertThatThrownBy(() ->
+                            service.provisionDeviceViaX509Chain(List.of(unusable, other), createProvisionRequest(chain[0])))
+                    .as("CN regular expression [%s] must not be selectable", regex)
+                    .isInstanceOf(ProvisionFailedException.class);
+        }
+    }
+
+    @Test
+    public void failWhenCommonNameCannotBeParsed() {
+        var tenant = createTenant();
+        var first = createDeviceProfile(tenant.getId(), chain[1], true, MATCHING_CN_REGEX);
+        var second = createDeviceProfile(tenant.getId(), chain[1], true, NON_MATCHING_CN_REGEX);
+
+        Assertions.assertThatThrownBy(() ->
+                        service.provisionDeviceViaX509Chain(List.of(first, second), createProvisionRequest("not a certificate")))
+                .isInstanceOf(ProvisionFailedException.class);
+    }
+
+    @Test
+    public void failWhenNoCandidateProfileIsGiven() {
+        Assertions.assertThatThrownBy(() ->
+                        service.provisionDeviceViaX509Chain(List.of(), createProvisionRequest(chain[0])))
+                .isInstanceOf(ProvisionFailedException.class)
+                .hasMessage("Device profile is not specified!");
+
+        Assertions.assertThatThrownBy(() ->
+                        service.provisionDeviceViaX509Chain((List<DeviceProfile>) null, createProvisionRequest(chain[0])))
+                .isInstanceOf(ProvisionFailedException.class)
+                .hasMessage("Device profile is not specified!");
+    }
+
     private DeviceProfile createDeviceProfile(TenantId tenantId, String certificateValue, boolean isAllowToCreateNewDevices) {
+        return createDeviceProfile(tenantId, certificateValue, isAllowToCreateNewDevices, "([^@]+)");
+    }
+
+    private DeviceProfile createDeviceProfile(TenantId tenantId, String certificateValue, boolean isAllowToCreateNewDevices,
+                                              String certificateRegExPattern) {
         X509CertificateChainProvisionConfiguration provision = new X509CertificateChainProvisionConfiguration();
         provision.setProvisionDeviceSecret(certificateValue);
-        provision.setCertificateRegExPattern("([^@]+)");
+        provision.setCertificateRegExPattern(certificateRegExPattern);
         provision.setAllowCreateNewDevicesByX509Certificate(isAllowToCreateNewDevices);
 
         DeviceProfileData deviceProfileData = new DeviceProfileData();

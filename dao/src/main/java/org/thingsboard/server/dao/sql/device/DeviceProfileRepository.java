@@ -62,7 +62,7 @@ public interface DeviceProfileRepository extends JpaRepository<DeviceProfileEnti
 
     DeviceProfileEntity findByTenantIdAndName(UUID id, String profileName);
 
-    DeviceProfileEntity findByProvisionDeviceKey(@Param("provisionDeviceKey") String provisionDeviceKey);
+    List<DeviceProfileEntity> findAllByProvisionDeviceKey(@Param("provisionDeviceKey") String provisionDeviceKey);
 
     @Query("SELECT new org.thingsboard.server.common.data.DeviceProfileInfo(d.id, d.tenantId, d.name, d.image, d.defaultDashboardId, d.type, d.transportType) " +
             "FROM DeviceProfileEntity d WHERE d.tenantId = :tenantId AND d.image = :imageLink")

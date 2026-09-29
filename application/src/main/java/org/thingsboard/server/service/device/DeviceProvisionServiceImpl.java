@@ -50,10 +50,13 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -81,6 +84,38 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
         this.attributesService = attributesService;
         this.auditLogService = auditLogService;
         this.partitionService = partitionService;
+    }
+
+    @Override
+    public ProvisionResponse provisionDeviceViaX509Chain(List<DeviceProfile> candidateProfiles, ProvisionRequest provisionRequest) throws ProvisionFailedException {
+        if (candidateProfiles == null || candidateProfiles.isEmpty()) {
+            throw new ProvisionFailedException("Device profile is not specified!");
+        }
+        if (candidateProfiles.size() == 1) {
+            return provisionDeviceViaX509Chain(candidateProfiles.get(0), provisionRequest);
+        }
+        String certificateValue = provisionRequest.getCredentialsData().getX509CertHash();
+        String commonName = getCNFromX509Certificate(certificateValue);
+        if (commonName == null) {
+            log.warn("Failed to parse CN from the device X509 certificate, cannot select one of {} device profiles sharing the certificate",
+                    candidateProfiles.size());
+            throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
+        }
+        List<DeviceProfile> matchingProfiles = candidateProfiles.stream()
+                .filter(profile -> matchesCommonName(profile, commonName))
+                .toList();
+        if (matchingProfiles.isEmpty()) {
+            log.warn("None of the {} device profiles sharing the certificate matches CN [{}]: {}",
+                    candidateProfiles.size(), commonName, toProfileLogRefs(candidateProfiles));
+            throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
+        }
+        if (matchingProfiles.size() > 1) {
+            log.warn("CN [{}] matches {} device profiles sharing the certificate, refusing to provision an " +
+                            "ambiguous device. Make the CN regular expressions mutually exclusive. Matched: {}",
+                    commonName, matchingProfiles.size(), toProfileLogRefs(matchingProfiles));
+            throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
+        }
+        return provisionDeviceViaX509Chain(matchingProfiles.get(0), provisionRequest);
     }
 
     @Override
@@ -301,6 +336,42 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
             log.trace("[{}][{}] Failed to parse CN from X509 certificate {}", profile.getTenantId(), profile.getId(), x509Value);
             return null;
         }
+    }
+
+    private String getCNFromX509Certificate(String x509Value) {
+        try {
+            return SslUtil.parseCommonName(SslUtil.readCertFile(x509Value));
+        } catch (Exception e) {
+            log.trace("Failed to parse CN from X509 certificate {}", x509Value);
+            return null;
+        }
+    }
+
+    private boolean matchesCommonName(DeviceProfile profile, String commonName) {
+        if (!(profile.getProfileData().getProvisionConfiguration() instanceof X509CertificateChainProvisionConfiguration configuration)) {
+            log.warn("[{}][{}] Device profile provision strategy is not X509_CERTIFICATE_CHAIN, it cannot be selected",
+                    profile.getTenantId(), profile.getId());
+            return false;
+        }
+        String regex = configuration.getCertificateRegExPattern();
+        if (StringUtils.isBlank(regex)) {
+            log.warn("[{}][{}] Device profile shares its X509 certificate with another profile but has no CN " +
+                    "regular expression, it cannot be selected", profile.getTenantId(), profile.getId());
+            return false;
+        }
+        try {
+            return Pattern.compile(regex).matcher(commonName).find();
+        } catch (PatternSyntaxException e) {
+            log.warn("[{}][{}] Invalid CN regular expression [{}], device profile cannot be selected",
+                    profile.getTenantId(), profile.getId(), regex);
+            return false;
+        }
+    }
+
+    private String toProfileLogRefs(List<DeviceProfile> profiles) {
+        return profiles.stream()
+                .map(profile -> "[" + profile.getTenantId() + "][" + profile.getId() + "] " + profile.getName())
+                .collect(Collectors.joining(", "));
     }
 
     public String extractDeviceNameFromCNByRegEx(DeviceProfile profile, String commonName, String regex) throws ProvisionFailedException {

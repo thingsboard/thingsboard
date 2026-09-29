@@ -15,9 +15,11 @@ import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileInfo;
+import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.OtaPackage;
+import org.thingsboard.server.common.data.device.profile.X509CertificateChainProvisionConfiguration;
 import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -48,6 +50,8 @@ public class DeviceProfileServiceTest extends AbstractServiceTest {
     @Autowired
     OtaPackageService otaPackageService;
 
+    private static final String CA_CERTIFICATE = "issuing-ca-certificate-for-both-products";
+
     private IdComparator<DeviceProfile> idComparator = new IdComparator<>();
     private IdComparator<DeviceProfileInfo> deviceProfileInfoIdComparator = new IdComparator<>();
 
@@ -67,6 +71,96 @@ public class DeviceProfileServiceTest extends AbstractServiceTest {
         deviceProfileService.saveDeviceProfile(savedDeviceProfile);
         DeviceProfile foundDeviceProfile = deviceProfileService.findDeviceProfileById(tenantId, savedDeviceProfile.getId());
         Assert.assertEquals(savedDeviceProfile.getName(), foundDeviceProfile.getName());
+    }
+
+    @Test
+    public void testSaveDeviceProfilesSharingX509CertificateWithDifferentRegExPatterns() {
+        DeviceProfile first = saveX509DeviceProfile("Device Profile 1", CA_CERTIFICATE, "^(devP1-.*)$");
+        DeviceProfile second = saveX509DeviceProfile("Device Profile 2", CA_CERTIFICATE, "^(devP2-.*)$");
+
+        assertThat(first.getProvisionDeviceKey()).isEqualTo(second.getProvisionDeviceKey());
+        assertThat(deviceProfileService.findDeviceProfilesByProvisionDeviceKey(first.getProvisionDeviceKey()))
+                .extracting(DeviceProfile::getId)
+                .containsExactlyInAnyOrder(first.getId(), second.getId());
+    }
+
+    @Test
+    public void testSaveDeviceProfilesSharingX509CertificateWithSameRegExPattern() {
+        saveX509DeviceProfile("Device Profile 1", CA_CERTIFICATE, "^(devP1-.*)$");
+
+        Assertions.assertThrows(DataValidationException.class,
+                () -> saveX509DeviceProfile("Device Profile 2", CA_CERTIFICATE, "^(devP1-.*)$"));
+    }
+
+    @Test
+    public void testDatabaseRejectsSharedX509CertificateWithSameRegExPatternWithoutValidation() {
+        saveX509DeviceProfile("Device Profile 1", CA_CERTIFICATE, "^(devP1-.*)$");
+
+        DeviceProfile duplicate = x509DeviceProfile("Device Profile 2", CA_CERTIFICATE, "^(devP1-.*)$");
+        Assertions.assertThrows(Exception.class,
+                () -> deviceProfileService.saveDeviceProfile(duplicate, false, true));
+    }
+
+    @Test
+    public void testSaveDeviceProfileSharingX509CertificateWithoutRegExPattern() {
+        saveX509DeviceProfile("Device Profile 1", CA_CERTIFICATE, "^(devP1-.*)$");
+
+        Assertions.assertThrows(DataValidationException.class,
+                () -> saveX509DeviceProfile("Device Profile 2", CA_CERTIFICATE, null));
+    }
+
+    @Test
+    public void testSaveDeviceProfileWithInvalidCertificateRegExPattern() {
+        Assertions.assertThrows(DataValidationException.class,
+                () -> saveX509DeviceProfile("Broken pattern", CA_CERTIFICATE, "["));
+    }
+
+    @Test
+    public void testUpdateDeviceProfileSharingX509CertificateKeepsItsOwnRegExPattern() {
+        saveX509DeviceProfile("Device Profile 1", CA_CERTIFICATE, "^(devP1-.*)$");
+        DeviceProfile second = saveX509DeviceProfile("Device Profile 2", CA_CERTIFICATE, "^(devP2-.*)$");
+
+        second.setDescription("updated");
+        DeviceProfile updated = deviceProfileService.saveDeviceProfile(second);
+
+        assertThat(updated.getDescription()).isEqualTo("updated");
+    }
+
+    @Test
+    public void testFindDeviceProfileByProvisionDeviceKeyReturnsNullForSharedX509Certificate() {
+        DeviceProfile first = saveX509DeviceProfile("Device Profile 1", CA_CERTIFICATE, "^(devP1-.*)$");
+        saveX509DeviceProfile("Device Profile 2", CA_CERTIFICATE, "^(devP2-.*)$");
+
+        assertThat(deviceProfileService.findDeviceProfileByProvisionDeviceKey(first.getProvisionDeviceKey())).isNull();
+    }
+
+    @Test
+    public void testSaveDeviceProfilesWithSameProvisionDeviceKeyIsStillRejected() {
+        DeviceProfile first = this.createDeviceProfile(tenantId, "Provision key A");
+        first.setProvisionType(DeviceProfileProvisionType.ALLOW_CREATE_NEW_DEVICES);
+        first.setProvisionDeviceKey("sharedProvisionKey");
+        deviceProfileService.saveDeviceProfile(first);
+
+        DeviceProfile second = this.createDeviceProfile(tenantId, "Provision key B");
+        second.setProvisionType(DeviceProfileProvisionType.ALLOW_CREATE_NEW_DEVICES);
+        second.setProvisionDeviceKey("sharedProvisionKey");
+
+        Assertions.assertThrows(DataValidationException.class, () -> deviceProfileService.saveDeviceProfile(second));
+    }
+
+    private DeviceProfile saveX509DeviceProfile(String name, String certificate, String certificateRegExPattern) {
+        return deviceProfileService.saveDeviceProfile(x509DeviceProfile(name, certificate, certificateRegExPattern));
+    }
+
+    private DeviceProfile x509DeviceProfile(String name, String certificate, String certificateRegExPattern) {
+        DeviceProfile deviceProfile = this.createDeviceProfile(tenantId, name);
+        X509CertificateChainProvisionConfiguration provisionConfiguration = new X509CertificateChainProvisionConfiguration();
+        provisionConfiguration.setProvisionDeviceSecret(certificate);
+        provisionConfiguration.setCertificateRegExPattern(certificateRegExPattern);
+        provisionConfiguration.setAllowCreateNewDevicesByX509Certificate(true);
+        deviceProfile.getProfileData().setProvisionConfiguration(provisionConfiguration);
+        deviceProfile.setProvisionType(DeviceProfileProvisionType.X509_CERTIFICATE_CHAIN);
+        return deviceProfile;
     }
 
     @Test
