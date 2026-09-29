@@ -937,10 +937,10 @@
                     <configuration>
                         <licenseSets>
                             <licenseSet>
-                                <header>${main.dir}/license-header-busl.txt</header>
+                                <header>${main.dir}/tools/src/main/python/license-headers/templates/license-header-busl.txt</header>
                                 <validHeaders>
                                     <validHeader>${main.dir}/tools/src/main/python/license-headers/templates/license-header.txt</validHeader>
-                                    <validHeader>${main.dir}/license-header-ce-modified.txt</validHeader>
+                                    <validHeader>${main.dir}/tools/src/main/python/license-headers/templates/license-header-ce-modified.txt</validHeader>
                                 </validHeaders>
                                 <excludes>
                                     <exclude>**/.env</exclude>

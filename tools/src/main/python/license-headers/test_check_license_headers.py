@@ -386,6 +386,7 @@ class GitHistoryTests(unittest.TestCase):
     def test_normalized_copy_search_is_bounded_and_ignores_empty_sources(self):
         repo = temporary_directory(self)
         for name in p.TEMPLATES.values():
+            (repo / name).parent.mkdir(parents=True, exist_ok=True)
             (repo / name).write_text("fixture header\n")
         tool = p.Mycila(repo, temporary_directory(self), fixture_plugin())
         source, empty = ("Source.java", "blob"), ("Empty.java", "empty")
