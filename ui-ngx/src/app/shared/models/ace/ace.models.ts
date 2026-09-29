@@ -96,8 +96,9 @@ export function getCssLanguageProvider(): Observable<LanguageProvider> {
     return from(import('ace-linters')).pipe(
       map((module) => {
         if (!cssLanguageProvider) {
+          const aceLinters: typeof module = unwrapModule(module);
           const worker = new Worker(new URL('../../../core/worker/css-linter.worker', import.meta.url), { type: 'module' });
-          cssLanguageProvider = module.LanguageProvider.create(worker, {
+          cssLanguageProvider = aceLinters.LanguageProvider.create(worker, {
             functionality: {
               completion: {
                 overwriteCompleters: false

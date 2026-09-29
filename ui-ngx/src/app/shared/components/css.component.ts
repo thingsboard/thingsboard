@@ -92,6 +92,8 @@ export class CssComponent implements OnInit, OnDestroy, ControlValueAccessor, Va
   ngOnInit(): void {
     const editorElement = this.cssEditorElmRef.nativeElement;
     let editorOptions: Partial<Ace.EditorOptions> = {
+      // must precede mode, otherwise ace spawns its css_worker before this option applies
+      useWorker: false,
       mode: 'ace/mode/css',
       showGutter: true,
       showPrintMargin: true,
@@ -108,7 +110,6 @@ export class CssComponent implements OnInit, OnDestroy, ControlValueAccessor, Va
     this.aceSubscription = getAce().pipe(
       mergeMap((ace) => {
         this.cssEditor = ace.edit(editorElement, editorOptions);
-        this.cssEditor.session.setUseWorker(false);
         // keep the editor usable when the linter chunk or its worker fails to load
         return getCssLanguageProvider().pipe(catchError(() => of(null)));
       })
@@ -116,11 +117,9 @@ export class CssComponent implements OnInit, OnDestroy, ControlValueAccessor, Va
       (languageProvider) => {
         if (languageProvider) {
           this.languageProvider = languageProvider;
-          // ace hands the same module-level completers array to every editor created with
-          // enableBasicAutocompletion, and registerEditor() pushes the LSP completer onto it -
-          // give this editor its own copy so the push doesn't reach the other editors.
+          // own copy of ace's shared completers (registerEditor() pushes onto it), minus keywordCompleter that shadows LSP items
           const editor = this.cssEditor as Ace.Editor & { completers: Ace.Completer[] };
-          editor.completers = [...editor.completers];
+          editor.completers = editor.completers.filter(completer => completer.id !== 'keywordCompleter');
           this.languageProvider.registerEditor(this.cssEditor);
         }
         this.cssEditor.session.setUseWrapMode(true);
