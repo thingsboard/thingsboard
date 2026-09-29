@@ -25,8 +25,13 @@ import {
   FilterParamInfo,
   IOT_HUB_SORT_OPTIONS,
   ItemType,
+  RELEVANCE_SORT_PROPERTY,
+  SortOption,
   WidgetCategory
 } from '@shared/models/iot-hub/iot-hub-item.models';
+
+/** The Installed list is sorted locally, and only the Hub can rank by relevance. */
+const INSTALLED_SORT_OPTIONS = IOT_HUB_SORT_OPTIONS.filter(o => o.value !== RELEVANCE_SORT_PROPERTY);
 import { IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
@@ -87,12 +92,7 @@ export class DashboardWidgetSelectComponent {
   includeDeprecated = false;
   searchFocused = false;
 
-  /**
-   * scadaFirst is unaffected by the sort: the backend prepends it ahead of the caller's key AND
-   * ahead of relevance, so a SCADA context still lists SCADA widgets first.
-   */
-  readonly iotHubSortOptions = IOT_HUB_SORT_OPTIONS;
-  iotHubSelectedSortIndex = 0;
+  private iotHubSelectedSortValue = IOT_HUB_SORT_OPTIONS[0].value;
 
   @Input()
   aliasController: IAliasController;
@@ -302,7 +302,7 @@ export class DashboardWidgetSelectComponent {
 
     this.iotHubWidgetsFetchFunction = (pageSize, page, filter) => {
       const search = typeof filter === 'string' ? filter.split('|')[0] : filter;
-      const sort = this.iotHubSortOptions[this.iotHubSelectedSortIndex];
+      const sort = this.iotHubSelectedSort;
       const sortOrder: SortOrder = { property: sort.value, direction: sort.direction };
       const pageLink = new PageLink(pageSize, page, search || null, sortOrder);
       const effectiveCategories = this.iotHubSelectedCategory
@@ -569,9 +569,19 @@ export class DashboardWidgetSelectComponent {
     this.reloadIotHubWidgets();
   }
 
-  onIotHubSortChange(index: number): void {
-    if (this.iotHubSelectedSortIndex !== index) {
-      this.iotHubSelectedSortIndex = index;
+  get iotHubSortOptions(): SortOption[] {
+    return this.iotHubSubMode === 'installed' ? INSTALLED_SORT_OPTIONS : IOT_HUB_SORT_OPTIONS;
+  }
+
+  /** The chosen sort, or the list's first option where the chosen one is not offered. */
+  get iotHubSelectedSort(): SortOption {
+    const options = this.iotHubSortOptions;
+    return options.find(o => o.value === this.iotHubSelectedSortValue) ?? options[0];
+  }
+
+  onIotHubSortChange(option: SortOption): void {
+    if (this.iotHubSelectedSort.value !== option.value) {
+      this.iotHubSelectedSortValue = option.value;
       this.installedWidgetVersions = null;
       this.reloadIotHubWidgets();
     }
@@ -844,7 +854,7 @@ export class DashboardWidgetSelectComponent {
   }
 
   private sortInstalledVersions(versions: MpItemVersionView[]): MpItemVersionView[] {
-    const sort = this.iotHubSortOptions[this.iotHubSelectedSortIndex];
+    const sort = this.iotHubSelectedSort;
     const sign = sort.direction === Direction.ASC ? 1 : -1;
     const copy = [...versions];
     copy.sort((a, b) => {
