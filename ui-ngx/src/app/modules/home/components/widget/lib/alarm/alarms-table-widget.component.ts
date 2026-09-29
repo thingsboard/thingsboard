@@ -23,7 +23,15 @@ import { DataKey, WidgetActionDescriptor, WidgetConfig } from '@shared/models/wi
 import { IWidgetSubscription } from '@core/api/widget-api.models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
-import { deepClone, hashCode, isDefined, isDefinedAndNotNull, isNotEmptyStr, isObject, isUndefined } from '@core/utils';
+import {
+  deepClone,
+  hashCode,
+  isDefined,
+  isDefinedAndNotNull,
+  isNotEmptyStr,
+  isObject,
+  isUndefined
+} from '@core/utils';
 import cssjs from '@core/css/css';
 import { SortColumnType, sortItems } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
@@ -59,6 +67,7 @@ import {
   noDataMessage,
   prepareTableCellButtonActions,
   RowStyleInfo,
+  setupPaginationResets,
   TableCellButtonActionDescriptor,
   TableWidgetDataKeySettings,
   TableWidgetSettings,
@@ -188,6 +197,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   private subscription: IWidgetSubscription;
   private widgetResize$: ResizeObserver;
   private destroy$ = new Subject<void>();
+  private paginationResetsSubscription: Subscription;
 
   private displayActivity = false;
   private displayDetails = true;
@@ -293,6 +303,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     if (this.widgetResize$) {
       this.widgetResize$.disconnect();
     }
+    this.paginationResetsSubscription?.unsubscribe();
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -309,7 +320,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     });
 
     if (this.displayPagination) {
-      this.sort.sortChange.pipe(takeUntil(this.destroy$)).subscribe(() => this.paginator.pageIndex = 0);
+      this.paginationResetsSubscription = setupPaginationResets(this.ctx, this.paginator, this.sort);
 
       this.ctx.aliasController?.filtersChanged.pipe(
         takeUntil(this.destroy$)
