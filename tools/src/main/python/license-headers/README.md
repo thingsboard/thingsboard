@@ -13,7 +13,9 @@ check compares against the latest CE commits merged into the current branch:
   `31936b09d24` in their history, for example pre-4.4 master and the lts-4.3
   commits merged into lts-4.4.
 - With `--ce-ref`, CE commits are the history of the given CE branch, tag, or
-  commit. It is fetched from `https://github.com/thingsboard/thingsboard.git`
+  commit, without the commits that have the relicensing commit in their
+  history. Use it when the history of the current branch does not come from CE
+  alone. The ref is fetched from `https://github.com/thingsboard/thingsboard.git`
   on every run; pass `--ce-remote` to fetch from another URL or a local clone.
 
 ## Rules
