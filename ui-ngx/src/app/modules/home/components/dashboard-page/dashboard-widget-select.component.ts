@@ -29,7 +29,6 @@ import {
   SortOption,
   WidgetCategory
 } from '@shared/models/iot-hub/iot-hub-item.models';
-
 import { IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
