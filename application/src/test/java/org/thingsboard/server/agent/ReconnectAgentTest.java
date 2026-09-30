@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.agent;
 
+import org.awaitility.Awaitility;
 import org.junit.Assert;
 import org.junit.Test;
 import org.thingsboard.server.common.data.agent.AgentAppEventActionType;
@@ -17,6 +18,8 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.agent.v1.AckStatus;
 import org.thingsboard.server.gen.agent.v1.AppCommand;
 import org.thingsboard.server.gen.agent.v1.AppCommandAction;
+
+import java.util.concurrent.TimeUnit;
 
 @DaoSqlTest
 public class ReconnectAgentTest extends AbstractAgentTest {
@@ -59,8 +62,11 @@ public class ReconnectAgentTest extends AbstractAgentTest {
         agentImitator.sendCommandAck(resumedCmd.getCommandId(), AckStatus.ACCEPTED);
         agentImitator.sendCommandResult(resumedCmd.getCommandId(), resumedCmd.getStepId(), true);
 
-        // Wait for and complete step 2
-        AppCommand step2Cmd = waitForCommand();
+        // Wait for and complete step 2, skipping any duplicate resend of step 1
+        Awaitility.await()
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .until(() -> agentImitator.hasUnconsumedCommand(c -> !c.getStepId().equals(resumedCmd.getStepId())));
+        AppCommand step2Cmd = agentImitator.consumeNextCommand(c -> !c.getStepId().equals(resumedCmd.getStepId()));
         agentImitator.sendCommandAck(step2Cmd.getCommandId(), AckStatus.ACCEPTED);
         agentImitator.sendCommandResult(step2Cmd.getCommandId(), step2Cmd.getStepId(), true);
 

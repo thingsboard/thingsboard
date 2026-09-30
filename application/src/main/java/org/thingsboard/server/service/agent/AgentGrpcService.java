@@ -285,25 +285,25 @@ public class AgentGrpcService extends AgentRpcServiceGrpc.AgentRpcServiceImplBas
 
     private void resumeEvents(AgentSession session) {
         var agent = session.getState().getAgent();
-        scheduleResume(agent.getTenantId(), agent.getId());
+        scheduleResume(agent.getTenantId(), agent.getId(), session);
     }
 
-    private void scheduleResume(TenantId tenantId, AgentId agentId) {
+    private void scheduleResume(TenantId tenantId, AgentId agentId, AgentSession session) {
         long maxDelayMs = agentCtx.getReconnectResumeMaxDelayMs();
         long delayMs = maxDelayMs > 0 ? ThreadLocalRandom.current().nextLong(maxDelayMs + 1) : 0;
-        agentCtx.getReconnectResumeScheduler().schedule(() -> submitResume(tenantId, agentId), delayMs, TimeUnit.MILLISECONDS);
+        agentCtx.getReconnectResumeScheduler().schedule(() -> submitResume(tenantId, agentId, session), delayMs, TimeUnit.MILLISECONDS);
     }
 
-    private void submitResume(TenantId tenantId, AgentId agentId) {
-        if (sessions.getByAgentId(agentId) == null) {
-            log.trace("[{}][{}] Skipping resume-on-reconnect, no active session", tenantId, agentId);
+    private void submitResume(TenantId tenantId, AgentId agentId, AgentSession session) {
+        if (sessions.getByAgentId(agentId) != session) {
+            log.trace("[{}][{}] Skipping resume-on-reconnect, session is no longer active", tenantId, agentId);
             return;
         }
         try {
             agentCtx.getAgentEventExecutor().execute(() -> agentEventProcessor.resumeEventsOnReconnect(tenantId, agentId));
         } catch (RejectedExecutionException e) {
             log.warn("[{}][{}] Agent event executor saturated, retrying resume-on-reconnect after delay", tenantId, agentId);
-            scheduleResume(tenantId, agentId);
+            scheduleResume(tenantId, agentId, session);
         }
     }
 
