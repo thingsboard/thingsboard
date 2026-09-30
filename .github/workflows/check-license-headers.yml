@@ -11,19 +11,12 @@ on:
       - master
       - rc
       - 'lts-[0-9]+.[0-9]+'
-      - 'license-lts-[0-9]+.[0-9]+'
   pull_request:
     branches:
       - master
       - rc
       - 'lts-[0-9]+.[0-9]+'
-      - 'license-lts-[0-9]+.[0-9]+'
   workflow_dispatch:
-    inputs:
-      ce-branch:
-        description: CE branch to compare against; defaults to the counterpart of the current branch
-        required: false
-        type: string
 
 permissions:
   contents: read
@@ -53,27 +46,10 @@ jobs:
           java-version: 21
           cache: maven
 
-      - name: Resolve CE branch
-        id: ce
-        env:
-          PE_BRANCH: ${{ github.base_ref || github.ref_name }}
-          CE_BRANCH: ${{ inputs.ce-branch }}
-        run: |
-          if [[ -z "$CE_BRANCH" ]]; then
-            case "$PE_BRANCH" in
-              master|rc) CE_BRANCH="$PE_BRANCH" ;;
-              lts-*|license-lts-*) CE_BRANCH="${PE_BRANCH#license-}" ;;
-              *) echo "::error::No CE counterpart is defined for branch $PE_BRANCH"; exit 1 ;;
-            esac
-          fi
-          echo "branch=$CE_BRANCH" >> "$GITHUB_OUTPUT"
-
       - name: Check license headers
-        env:
-          CE_BRANCH: ${{ steps.ce.outputs.branch }}
         run: |
           mkdir -p target/license-provenance
-          ./check-license-headers.sh "${CE_BRANCH}" 2>&1 | tee target/license-provenance/console.log
+          ./check-license-headers.sh 2>&1 | tee target/license-provenance/console.log
 
       - name: Add findings to the job summary
         if: failure() && hashFiles('target/license-provenance/console.log') != ''
