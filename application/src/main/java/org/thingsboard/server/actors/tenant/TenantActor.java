@@ -327,6 +327,9 @@ public class TenantActor extends RuleChainManagerActor {
             DeviceId deviceId = (DeviceId) msg.getEntityId();
             onToDeviceActorMsg(new DeviceDeleteMsg(tenantId, deviceId), true);
             deletedDevices.add(deviceId);
+        } else if (msg.getEntityId().getEntityType() == EntityType.DEVICE && ComponentLifecycleEvent.CREATED == msg.getEvent()) {
+            // a device can come back with the same id (e.g. a Version Control restore); stop dropping its messages
+            deletedDevices.remove((DeviceId) msg.getEntityId());
         }
         if (isRuleEngine) {
             if (ruleChainsInitialized) {
