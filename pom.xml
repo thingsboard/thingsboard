@@ -20,7 +20,7 @@
     <licenses>
         <license>
             <name>Business Source License 1.1</name>
-            <url>https://github.com/thingsboard/thingsboard-pe/blob/master/LICENSE</url>
+            <url>https://github.com/thingsboard/thingsboard/blob/master/LICENSE</url>
             <distribution>manual</distribution>
         </license>
     </licenses>
