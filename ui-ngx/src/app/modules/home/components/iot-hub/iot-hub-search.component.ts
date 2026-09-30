@@ -4,7 +4,7 @@ import { Component, OnInit, OnDestroy, Input, Output, EventEmitter, ViewChild, E
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { forkJoin, of, Subject, Subscription } from 'rxjs';
-import { catchError, debounceTime, distinctUntilChanged, map, switchMap } from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { PageLink } from '@shared/models/page/page-link';
 import { SortOrder } from '@shared/models/page/sort-order';
 import { MpItemVersionQuery, MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
@@ -109,21 +109,9 @@ export class TbIotHubSearchComponent implements OnInit, OnDestroy {
     this.loadInstalledItems();
     this.loadSubscription = this.loadSubject.pipe(
       switchMap(() => this.fetchResults(this.searchText || '').pipe(
-        map(result => ({ result })),
-        catchError(() => of({ result: null as PageData<MpItemVersionView> | null }))
+        catchError(() => of(null))
       ))
-    ).subscribe(({ result }) => {
-      this.isLoading = false;
-      if (result) {
-        this.totalElements = result.totalElements;
-        this.results = result.data;
-        this.hasError = false;
-      } else {
-        this.hasError = true;
-        this.results = [];
-        this.totalElements = 0;
-      }
-    });
+    ).subscribe(result => this.applyResult(result));
     this.searchSubscription = this.searchSubject.pipe(
       debounceTime(300),
       distinctUntilChanged()
@@ -403,6 +391,20 @@ export class TbIotHubSearchComponent implements OnInit, OnDestroy {
     // hasError stays as-is until a request succeeds.
     this.isLoading = true;
     this.loadSubject.next();
+  }
+
+  /** A null result is a failed request. */
+  private applyResult(result: PageData<MpItemVersionView> | null): void {
+    this.isLoading = false;
+    if (result) {
+      this.totalElements = result.totalElements;
+      this.results = result.data;
+      this.hasError = false;
+    } else {
+      this.hasError = true;
+      this.results = [];
+      this.totalElements = 0;
+    }
   }
 
   private fetchResults(text: string) {

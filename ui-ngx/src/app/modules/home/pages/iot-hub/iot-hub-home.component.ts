@@ -55,6 +55,7 @@ const SEARCH_POPUP_PAGE_SIZE = 10;
 export class TbIotHubHomeComponent implements OnInit, OnDestroy {
 
   readonly ItemType = ItemType;
+  readonly isCompactType = isCompactItemType;
 
   searchText = '';
   searchResults: MpItemVersionView[] = [];
@@ -266,11 +267,6 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
     const search = this.searchText?.trim() || undefined;
     void this.router.navigate(['/iot-hub/search'], { queryParams: { search } });
   }
-
-  isCompactType(type: ItemType): boolean {
-    return isCompactItemType(type);
-  }
-
 
   getCompactIcon(item: MpItemVersionView): string {
     return item.icon || getItemTypeIcon(item.type);

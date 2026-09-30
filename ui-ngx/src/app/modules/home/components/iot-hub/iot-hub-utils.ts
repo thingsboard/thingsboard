@@ -65,7 +65,7 @@ export interface IotHubFilterGroup {
 }
 
 export function filterByLabel<T>(items: T[], search: string, labelOf: (item: T) => string): T[] {
-  const normalized = (search || '').toLowerCase();
+  const normalized = (search || '').trim().toLowerCase();
   if (!normalized) {
     return items;
   }

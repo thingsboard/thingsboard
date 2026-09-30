@@ -11,6 +11,7 @@ import {
   CREATOR_VISIBLE_ITEM_TYPES,
   FilterParamInfo,
   IOT_HUB_SORT_OPTIONS,
+  isCompactItemType,
   ItemType
 } from '@shared/models/iot-hub/iot-hub-item.models';
 import { widgetTypeTranslations, cfTypeTranslations, ruleChainTypeTranslations } from '@shared/models/iot-hub/iot-hub-version.models';
@@ -80,9 +81,7 @@ export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy
   }
 
   get isCompactType(): boolean {
-    return this._activeType === ItemType.CALCULATED_FIELD
-        || this._activeType === ItemType.ALARM_RULE
-        || this._activeType === ItemType.RULE_CHAIN;
+    return isCompactItemType(this._activeType);
   }
 
   get searchPlaceholderKey(): string {
