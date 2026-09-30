@@ -128,30 +128,6 @@
       "contentHash": "sha256:ee00a93535d92e1b048a3c79b90e9741c8091a3db7c794eb3dd2aa38aee18142"
     },
     {
-      "path": "application/src/test/java/org/thingsboard/server/transport/lwm2m/Lwm2mTestHelper.java",
-      "header": "apache",
-      "reason": "Unmodified CE code from CE master, not yet in CE lts-4.4. Byte-identical to CE master 3150f863b7952d723ffb3a62ffbc0116946c2000 (blob 29c95099771c693b55b4e7c7b5dc3cc307ce4ea2). Brought by the LwM2M fixes thingsboard/thingsboard#15962 and #16095, merged into CE master after CE lts-4.4 forked on 2026-08-06; PE lts-4.4 inherited them from PE master, where thingsboard-pe#5090 already stamped them apache. Remove this entry once CE lts-4.4 contains these commits.",
-      "contentHash": "sha256:a416dd1dc4252d105cf67e26545e67c0c31c2ad4919a61e2a9f7a8597b64dd1e"
-    },
-    {
-      "path": "application/src/test/java/org/thingsboard/server/transport/lwm2m/client/LwM2mTestObject.java",
-      "header": "apache",
-      "reason": "Unmodified CE code from CE master, not yet in CE lts-4.4. Byte-identical to CE master 3150f863b7952d723ffb3a62ffbc0116946c2000 (blob 6c0f3011ec428bc9aad07130afab1132e882d389). Brought by the LwM2M fixes thingsboard/thingsboard#15962 and #16095, merged into CE master after CE lts-4.4 forked on 2026-08-06; PE lts-4.4 inherited them from PE master, where thingsboard-pe#5090 already stamped them apache. Remove this entry once CE lts-4.4 contains these commits.",
-      "contentHash": "sha256:8ca86329a94705f67fa56de12c3d6c0c30bf1e35064fa1fd43e9fdfb182eca11"
-    },
-    {
-      "path": "application/src/test/java/org/thingsboard/server/transport/lwm2m/rpc/AbstractRpcLwM2MIntegrationTest.java",
-      "header": "apache",
-      "reason": "Unmodified CE code from CE master, not yet in CE lts-4.4. Byte-identical to CE master 3150f863b7952d723ffb3a62ffbc0116946c2000 (blob d81c3c4856dc3354feacf0f24e337f534fb8b312). Brought by the LwM2M fixes thingsboard/thingsboard#15962 and #16095, merged into CE master after CE lts-4.4 forked on 2026-08-06; PE lts-4.4 inherited them from PE master, where thingsboard-pe#5090 already stamped them apache. Remove this entry once CE lts-4.4 contains these commits.",
-      "contentHash": "sha256:eeb512f1445800ddab3c42adfbba0ce1ea354b0daf1384766dadcec814350952"
-    },
-    {
-      "path": "application/src/test/java/org/thingsboard/server/transport/lwm2m/rpc/sql/RpcLwm2mIntegrationWriteTest.java",
-      "header": "apache",
-      "reason": "Unmodified CE code from CE master, not yet in CE lts-4.4. Byte-identical to CE master 3150f863b7952d723ffb3a62ffbc0116946c2000 (blob 30c37ae6c58bd11e3fada59f232c426b7b9d6b0f). Brought by the LwM2M fixes thingsboard/thingsboard#15962 and #16095, merged into CE master after CE lts-4.4 forked on 2026-08-06; PE lts-4.4 inherited them from PE master, where thingsboard-pe#5090 already stamped them apache. Remove this entry once CE lts-4.4 contains these commits.",
-      "contentHash": "sha256:345e60fe8b881d8d405115d5c63cea5f711b28f5769d86a6b7d7b34eebf97770"
-    },
-    {
       "path": "common/cache/src/main/java/org/thingsboard/server/cache/agent/AgentAppProfileCaffeineCache.java",
       "header": "busl",
       "reason": "PE agent cache added in 41416ebe327 as part of the PE agent feature introduced on lts-4.4, which has no counterpart in CE. The candidate CE dao/src/main/java/org/thingsboard/server/dao/dashboard/DashboardTitlesCaffeineCache.java shares only the Caffeine or Redis cache boilerplate and caches a different key and value type. Reviewed candidate at a0aff29ef42d3636473b017115a9334b48d54d15 (blob f2e2f32f037).",
@@ -464,18 +440,6 @@
       "contentHash": "sha256:c5da9a11ed196635c09972733cf511bee2bd111242c0d084d115d37e2e7524c5"
     },
     {
-      "path": "common/data/src/main/java/org/thingsboard/server/common/data/notification/targets/platform/UserGroupListFilter.java",
-      "header": "busl",
-      "reason": "PE-specific data/configuration type UserGroupListFilter.java. Reviewed fields, type discriminators and serialization hooks describe PE entities or PE behavior; matching CE types supply only the common DTO/interface pattern. Resolved as PE-authored consistently with the maintainer decision for PE entity wrappers. Reviewed candidate common/data/src/main/java/org/thingsboard/server/common/data/notification/targets/platform/UserListFilter.java at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob e0adb26d59bf493b3e53444327c6da6255806853).",
-      "contentHash": "sha256:64563fbc6ee416025b555c14cf3c517c5027bfc112a883078cc717ed471c5b52"
-    },
-    {
-      "path": "common/data/src/main/java/org/thingsboard/server/common/data/notification/targets/platform/UserRoleFilter.java",
-      "header": "busl",
-      "reason": "PE-specific data/configuration type UserRoleFilter.java. Reviewed fields, type discriminators and serialization hooks describe PE entities or PE behavior; matching CE types supply only the common DTO/interface pattern. Resolved as PE-authored consistently with the maintainer decision for PE entity wrappers. Reviewed candidate common/data/src/main/java/org/thingsboard/server/common/data/notification/targets/platform/UserListFilter.java at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob e0adb26d59bf493b3e53444327c6da6255806853).",
-      "contentHash": "sha256:007e94e798f25a9d0ccd1716b8a68eada4fe3ced71e531bd0538c2c56e24ecb7"
-    },
-    {
       "path": "common/data/src/main/java/org/thingsboard/server/common/data/permission/Operation.java",
       "header": "ce-modified",
       "reason": "Reviewed relocation from application/src/main/java/org/thingsboard/server/service/security/permission/Operation.java in PE commit d97b2f71224e96c27fbdf287f592a08b6fa0407b. The source exists in shared CE ancestry 4c2aa4a60368318eafc2dea155b93721668654c4. The relocated CE permission enum has PE permission/group extensions. Compared with CE fa82445a7078506defbaadc5bea07227dc1b016d (blob b481176e53d5d4e1460882c578b4e4c00f895b3b); a move alone does not imply PE authorship.",
@@ -488,22 +452,10 @@
       "contentHash": "sha256:635cb50f3945d1bca662a7100a6129bea1270755bf4fe7cd6bc9849f228a4f08"
     },
     {
-      "path": "common/data/src/main/java/org/thingsboard/server/common/data/query/EntityGroupListFilter.java",
-      "header": "busl",
-      "reason": "PE-specific data/configuration type EntityGroupListFilter.java. Reviewed fields, type discriminators and serialization hooks describe PE entities or PE behavior; matching CE types supply only the common DTO/interface pattern. Resolved as PE-authored consistently with the maintainer decision for PE entity wrappers. Reviewed candidate common/data/src/main/java/org/thingsboard/server/common/data/query/EntityListFilter.java at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 43feb031908aaabba3677d8bc78aaa814bb03010).",
-      "contentHash": "sha256:7c6b5eaa41feb8a6e50e808da65c682b2b28e9b8736510fd50e5371f0856c91e"
-    },
-    {
       "path": "common/data/src/main/java/org/thingsboard/server/common/data/query/EntityGroupNameFilter.java",
       "header": "busl",
       "reason": "PE-specific data/configuration type EntityGroupNameFilter.java. Reviewed fields, type discriminators and serialization hooks describe PE entities or PE behavior; matching CE types supply only the common DTO/interface pattern. Resolved as PE-authored consistently with the maintainer decision for PE entity wrappers. Reviewed candidate common/data/src/main/java/org/thingsboard/server/common/data/query/EntityNameFilter.java at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob a3889bc7c07de44917eac165a9c4e8578bbbcd62).",
       "contentHash": "sha256:46cc0073210fb81fb1a71f44604042da6056f78f62468cf45bdc78cdaf8cdd09"
-    },
-    {
-      "path": "common/data/src/main/java/org/thingsboard/server/common/data/query/StateEntityFilter.java",
-      "header": "busl",
-      "reason": "PE-specific data/configuration type StateEntityFilter.java. Reviewed fields, type discriminators and serialization hooks describe PE entities or PE behavior; matching CE types supply only the common DTO/interface pattern. Resolved as PE-authored consistently with the maintainer decision for PE entity wrappers. Reviewed candidate common/data/src/main/java/org/thingsboard/server/common/data/query/SingleEntityFilter.java at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 046f86f4146154859564ad3aa69aa84aadc47139).",
-      "contentHash": "sha256:46835b82b0320007209a5d53528f9fdb534af41c2fcb5a528754c316c530394a"
     },
     {
       "path": "common/data/src/main/java/org/thingsboard/server/common/data/query/StateEntityOwnerFilter.java",
@@ -530,12 +482,6 @@
       "contentHash": "sha256:270369239ea8a5fac515ab759903b9f993268b5d32cf830afcb210cba1783a97"
     },
     {
-      "path": "common/data/src/main/java/org/thingsboard/server/exception/DataValidationException.java",
-      "header": "ce-modified",
-      "reason": "Reviewed relocation from dao/src/main/java/org/thingsboard/server/dao/exception/DataValidationException.java in PE commit 18bb4e5323c87f26fbad43ef7e9f31bf4181e705. The source exists in shared CE ancestry ec7e2852728a6f24f94e40fc6a10e63a4931d320. Package declaration changed; current implementation otherwise matches the CE counterpart. Compared with CE fa82445a7078506defbaadc5bea07227dc1b016d (blob f9f807e380305778913dd9a6cf97529c05191a83); a move alone does not imply PE authorship.",
-      "contentHash": "sha256:0797bc8471f7ac22635688b1590dbced0ec2c191daa64bd0fc76a8bb64eb4f31"
-    },
-    {
       "path": "common/integration/cluster-integration-api/src/main/java/org/thingsboard/server/service/integration/downlink/DownlinkCaffeineCache.java",
       "header": "busl",
       "reason": "Typed cache adapter for a PE feature. Reviewed as a new PE cache registration using the shared cache framework: service/cache identity and entity/key types are PE-specific. Constructor and Spring annotation overlap with CE cache adapters is framework template use, analogous to the maintainer-resolved PE entity ID wrappers. Reviewed similarity candidate common/cache/src/main/java/org/thingsboard/server/cache/user/UserCaffeineCache.java at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 3eb9c3f16f619210d6ccdf4e3084ee36ec954796).",
@@ -560,40 +506,10 @@
       "contentHash": "sha256:2532fe77ca3458baffa12c317daff7af64e72ae3b74509dbf4ca7295378e2417"
     },
     {
-      "path": "common/integration/mqtt-integrations/src/main/java/org/thingsboard/integration/mqtt/azure/AzureIotHubSasCredentials.java",
-      "header": "busl",
-      "reason": "New PE file implementing a PE feature. It was written by adapting CE rule-engine/rule-engine-components/src/main/java/org/thingsboard/rule/engine/mqtt/azure/AzureIotHubSasCredentials.java, which PE still carries at its own path, so this is not a CE file with PE modifications. Adaptation from CE does not make it CE-derived. Maintainer rule (2026-09-09): a file that exists in CE and carries PE changes is modified CE; a file that does not exist in CE and implements a PE feature is PE-only, however closely it resembles a CE file.",
-      "contentHash": "sha256:8e35a5cf2c10fcfa6a922a60aabdd0864358dc9efdc73f6db76eab58153cb9c0"
-    },
-    {
-      "path": "common/integration/mqtt-integrations/src/main/java/org/thingsboard/integration/mqtt/credentials/AnonymousCredentials.java",
-      "header": "busl",
-      "reason": "The MQTT integration credential family originated in PE application/service/integration/mqtt in d601117d0fa (2017-12-25) and moved into the integration module in 72a187ee116 (2019-06-11). The matching CE rule-engine family appeared later on the selected CE mainline in 9fce3e068e4 (2018-05-28); this is retained PE integration code. Reviewed CE candidate rule-engine/rule-engine-components/src/main/java/org/thingsboard/rule/engine/mqtt/credentials/AnonymousCredentials.java at 1265a9a1e364aed339377b05f93354f01fa949f5 (blob dfbba93de5a7c073e09582db5ffae79f02fa8df4).",
-      "contentHash": "sha256:eb7bf7aaa4d8670c119c148af47fabfe66edbe3c544d0a04185a3943ff090d71"
-    },
-    {
-      "path": "common/integration/mqtt-integrations/src/main/java/org/thingsboard/integration/mqtt/credentials/BasicCredentials.java",
-      "header": "busl",
-      "reason": "Retained PE MQTT integration credentials from the original application/service/integration/mqtt credential family, moved into common/integration by 72a187ee116. The later CE rule-engine credential counterpart is not evidence that the earlier PE integration family was inherited from CE. Reviewed CE candidate rule-engine/rule-engine-components/src/main/java/org/thingsboard/rule/engine/mqtt/credentials/BasicCredentials.java at 1265a9a1e364aed339377b05f93354f01fa949f5 (blob 9674115d7572c1b3d9eee2015dc73de4b6ca555c).",
-      "contentHash": "sha256:5523afe4ef62be834ceba35909248ebcaf85b657d765c536376273aae6e50126"
-    },
-    {
       "path": "common/integration/mqtt-integrations/src/main/java/org/thingsboard/integration/mqtt/credentials/CertPemClientCredentials.java",
       "header": "busl",
       "reason": "Retained PE MQTT integration client-certificate credentials from the original integration credential family. Similar CE rule-engine credential implementations do not establish CE origin for that earlier PE family; PE supplies its client-certificate configuration. Reviewed CE candidate rule-engine/rule-engine-components/src/main/java/org/thingsboard/rule/engine/credentials/CertPemCredentials.java at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 46d844d2c4aff3d5af24802dfee974f0af416113).",
       "contentHash": "sha256:d4ae03b84f499bede7580d21ed131995793ee01d9a5bbd602f48a1a47325e896"
-    },
-    {
-      "path": "common/integration/mqtt-integrations/src/main/java/org/thingsboard/integration/mqtt/credentials/MqttClientCredentials.java",
-      "header": "busl",
-      "reason": "PE integration credential interface and subtype registration, retained from the integration family introduced in d601117d0fa before its CE rule-engine counterpart. Its Jackson subtype declarations identify PE integration credential implementations. Reviewed CE candidate rule-engine/rule-engine-components/src/main/java/org/thingsboard/rule/engine/mqtt/credentials/MqttClientCredentials.java at c041b3f44d100acf6289bc0a8f4004f9854f533e^1 (blob 1c397614ea5a08d5caf132dcd3b22c08e9194b0e).",
-      "contentHash": "sha256:e5bf626f0429ecf2aee0a251d48ce96338d726271ab78fd3dcbdd5060f6a52cc"
-    },
-    {
-      "path": "common/queue/src/main/java/org/thingsboard/server/queue/provider/KafkaTbIntegrationExecutorQueueFactory.java",
-      "header": "busl",
-      "reason": "New PE file implementing a PE feature. It was written by adapting CE common/queue/src/main/java/org/thingsboard/server/queue/provider/KafkaTbRuleEngineQueueFactory.java, which PE still carries at its own path, so this is not a CE file with PE modifications. Adaptation from CE does not make it CE-derived. Maintainer rule (2026-09-09): a file that exists in CE and carries PE changes is modified CE; a file that does not exist in CE and implements a PE feature is PE-only, however closely it resembles a CE file.",
-      "contentHash": "sha256:23520476f4bc1b69a96abb6fc37d5988d00ef874d7bc769be4b60c316926d1dc"
     },
     {
       "path": "common/queue/src/main/java/org/thingsboard/server/queue/settings/TbQueueIntegrationApiSettings.java",
@@ -636,30 +552,6 @@
       "header": "ce-modified",
       "reason": "PE moved/copied the CE CSV parsing utility and added report CSV generation. The parseCsv implementation is retained, with a different package and additional output support. Reviewed CE candidate application/src/main/java/org/thingsboard/server/utils/CsvUtils.java at a203c336f11265de3c4a6317496749d499930f86 (blob a40b41955ded5c67a0cb29b9733e3f1010d552c3). The current normalized PE body differs from the selected CE counterpart.",
       "contentHash": "sha256:b8053ea556c7f0c3208c6113358952109653bdc53101db3946925d2ba26dd750"
-    },
-    {
-      "path": "common/transport/lwm2m/src/main/java/org/thingsboard/server/transport/lwm2m/server/downlink/DefaultLwM2mDownlinkMsgHandler.java",
-      "header": "apache",
-      "reason": "Unmodified CE code from CE master, not yet in CE lts-4.4. Byte-identical to CE master 3150f863b7952d723ffb3a62ffbc0116946c2000 (blob ef9aae62ad67fc8d60e66af779021eb96bdb6aff). Brought by the LwM2M fixes thingsboard/thingsboard#15962 and #16095, merged into CE master after CE lts-4.4 forked on 2026-08-06; PE lts-4.4 inherited them from PE master, where thingsboard-pe#5090 already stamped them apache. Remove this entry once CE lts-4.4 contains these commits.",
-      "contentHash": "sha256:d43ecbef2a4359efc743e64f7ef50a596428164fa3f174694b25ab32bc9938dd"
-    },
-    {
-      "path": "common/transport/lwm2m/src/main/java/org/thingsboard/server/transport/lwm2m/utils/LwM2MTransportUtil.java",
-      "header": "apache",
-      "reason": "Unmodified CE code from CE master, not yet in CE lts-4.4. Byte-identical to CE master 3150f863b7952d723ffb3a62ffbc0116946c2000 (blob 562707bd1708e52c3edfb66dcb8d3daf4368401e). Brought by the LwM2M fixes thingsboard/thingsboard#15962 and #16095, merged into CE master after CE lts-4.4 forked on 2026-08-06; PE lts-4.4 inherited them from PE master, where thingsboard-pe#5090 already stamped them apache. Remove this entry once CE lts-4.4 contains these commits.",
-      "contentHash": "sha256:19e816d5cc7a39f62fd08c7fedd4fa26ffe9343c2f5b70f8ae711ef23a0cf210"
-    },
-    {
-      "path": "common/transport/lwm2m/src/main/java/org/thingsboard/server/transport/lwm2m/utils/LwM2mValueConverterImpl.java",
-      "header": "apache",
-      "reason": "Unmodified CE code from CE master, not yet in CE lts-4.4. Byte-identical to CE master 3150f863b7952d723ffb3a62ffbc0116946c2000 (blob 6f958ede4a33f6ffdcd7001438147c467cc139f8). Brought by the LwM2M fixes thingsboard/thingsboard#15962 and #16095, merged into CE master after CE lts-4.4 forked on 2026-08-06; PE lts-4.4 inherited them from PE master, where thingsboard-pe#5090 already stamped them apache. Remove this entry once CE lts-4.4 contains these commits.",
-      "contentHash": "sha256:15786a30ae24809a8e14a3683efd1439485948b2c222d0b0eaf2cdfc88310d77"
-    },
-    {
-      "path": "common/transport/transport-api/src/main/java/org/thingsboard/server/common/transport/util/JsonUtils.java",
-      "header": "apache",
-      "reason": "Unmodified CE code from CE master, not yet in CE lts-4.4. Byte-identical to CE master 3150f863b7952d723ffb3a62ffbc0116946c2000 (blob 83f2b53f632a9cf709c38a4cebca4d20a112c627). Brought by the LwM2M fixes thingsboard/thingsboard#15962 and #16095, merged into CE master after CE lts-4.4 forked on 2026-08-06; PE lts-4.4 inherited them from PE master, where thingsboard-pe#5090 already stamped them apache. Remove this entry once CE lts-4.4 contains these commits.",
-      "contentHash": "sha256:6433bb1de8e359136d111382b3ec6c571aadb446a66bd802b13b91ab14503e1c"
     },
     {
       "path": "dao/src/main/java/org/thingsboard/server/dao/agent/AgentSessionCaffeineCache.java",
@@ -786,12 +678,6 @@
       "header": "busl",
       "reason": "PE persistence interface RawEventRepository.java. Reviewed Spring Data declarations/query bindings target PE entities and event tables; shared repository declaration/query conventions do not establish CE file lineage. Reviewed candidate dao/src/main/java/org/thingsboard/server/dao/sql/event/ErrorEventRepository.java at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob bed19b008d18634d8e4c35fcbe059bad3a51ae51).",
       "contentHash": "sha256:a89153896cfac844fdc9747b211715273fbdb3ec57e368df2537a6e9c8178b3e"
-    },
-    {
-      "path": "dao/src/main/java/org/thingsboard/server/dao/sql/secret/SecretRepository.java",
-      "header": "busl",
-      "reason": "PE persistence interface SecretRepository.java. Reviewed Spring Data declarations/query bindings target PE entities and event tables; shared repository declaration/query conventions do not establish CE file lineage. Reviewed candidate dao/src/main/java/org/thingsboard/server/dao/sql/domain/DomainRepository.java at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob fc35b71fb97fa795345886a607a01cedac36b43a).",
-      "contentHash": "sha256:6eb360663c17d9dba72b69a858ca199c45644ea63c2a9519c1421e302479f2b5"
     },
     {
       "path": "dao/src/main/java/org/thingsboard/server/dao/translation/CustomTranslationRedisCache.java",
@@ -938,12 +824,6 @@
       "contentHash": "sha256:e90986dc965608a6880ae3af8dbf5ffb1c0c980f6237f274cddbaf68daf557f1"
     },
     {
-      "path": "integration/executor/src/main/java/org/thingsboard/integration/service/IntegrationQueueRoutingInfoService.java",
-      "header": "busl",
-      "reason": "PE integration-executor wiring: this dummy routing implementation returns no rule-engine queues/routing because the integration executor does not produce rule-engine messages. Shared service-interface syntax is PE launch scaffolding. Reviewed candidate msa/vc-executor/src/main/java/org/thingsboard/server/vc/service/VersionControlQueueRoutingInfoService.java at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 5ad54b92f7318c9b181ba7ccbbf65d14e3fa5558).",
-      "contentHash": "sha256:6f249d1322eaf2d54074772efa5467c8ce5a77353d7ea6c05ee12057b37831cf"
-    },
-    {
       "path": "integration/executor/src/main/java/org/thingsboard/integration/service/IntegrationTenantRoutingInfoService.java",
       "header": "busl",
       "reason": "PE integration-executor wiring: this dummy routing implementation returns no rule-engine queues/routing because the integration executor does not produce rule-engine messages. Shared service-interface syntax is PE launch scaffolding. Reviewed candidate msa/vc-executor/src/main/java/org/thingsboard/server/vc/service/VersionControlTenantRoutingInfoService.java at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 397eecf629f9b8296ad846d71a7a971006b25d3d).",
@@ -954,12 +834,6 @@
       "header": "busl",
       "reason": "Launch, logging or runtime scaffolding for a PE service. Maintainer explicitly resolved this PE module scaffolding as PE-only; matching CE startup/logging conventions do not override that decision. Reviewed similarity candidate msa/vc-executor/src/main/resources/logback.xml at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob c868af4b6c1fbb8e65d18387d577ddf5d8c9dd71).",
       "contentHash": "sha256:82f1e20adbaeadfe9fcc4b5fa65580e48cbf26d39dd0e8bd205db3bfb2842b7b"
-    },
-    {
-      "path": "integration/executor/src/main/resources/tb-integration-executor.yml",
-      "header": "busl",
-      "reason": "Launch, logging or runtime scaffolding for a PE service. Maintainer explicitly resolved this PE module scaffolding as PE-only; matching CE startup/logging conventions do not override that decision. Reviewed similarity candidate transport/coap/src/main/resources/tb-coap-transport.yml at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob f9909e5fdc19ee9137cbbb45d775c72337a106c5).",
-      "contentHash": "sha256:6c0f39b89e3c6ede1649cebaa652ebe06f8680c157b2e85d1788bd4fb777c138"
     },
     {
       "path": "integration/http/src/main/conf/logback.xml",
@@ -1316,12 +1190,6 @@
       "contentHash": "sha256:0b91a00b698884c6654781d43c0debb2e61dcfcb9898811e27dc13baafde2bb0"
     },
     {
-      "path": "rule-engine/rule-engine-components/src/main/java/org/thingsboard/rule/engine/transform/TbAbstractDuplicateMsgNode.java",
-      "header": "busl",
-      "reason": "New PE file implementing a PE feature. It was written by adapting CE rule-engine/rule-engine-components/src/main/java/org/thingsboard/rule/engine/transform/TbAbstractTransformNode.java, which PE still carries at its own path, so this is not a CE file with PE modifications. Adaptation from CE does not make it CE-derived. Maintainer rule (2026-09-09): a file that exists in CE and carries PE changes is modified CE; a file that does not exist in CE and implements a PE feature is PE-only, however closely it resembles a CE file.",
-      "contentHash": "sha256:ca13fdc9263fd9dbd0637547d192cd80b01454f0e8aca719460e30fe392427e1"
-    },
-    {
       "path": "ui-ngx/src/app/modules/home/components/converter/converter-autocomplete.component.scss",
       "header": "busl",
       "reason": "PE converter autocomplete styling. The entire body is a host-scoped Material icon-link border/color reset, also present in unrelated CE autocomplete controls. This trivial shared UI style does not establish CE provenance for a PE converter component. Reviewed candidate ui-ngx/src/app/modules/home/components/profile/tenant-profile-autocomplete.component.scss at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 95fd62939ec09897ed96164f7a2a47d6805c3245).",
@@ -1356,12 +1224,6 @@
       "header": "busl",
       "reason": "New PE file implementing a PE feature. It was written by adapting CE ui-ngx/src/app/modules/home/components/entity/contact-based.component.ts, which PE still carries at its own path, so this is not a CE file with PE modifications. Adaptation from CE does not make it CE-derived. Maintainer rule (2026-09-09): a file that exists in CE and carries PE changes is modified CE; a file that does not exist in CE and implements a PE feature is PE-only, however closely it resembles a CE file.",
       "contentHash": "sha256:56a6d5bf2593d2e7801cb1e357b8de9073334e7f2d053bd118182ef4dae2181a"
-    },
-    {
-      "path": "ui-ngx/src/app/modules/home/components/group/manage-owner-and-groups-dialog.component.html",
-      "header": "busl",
-      "reason": "PE view template manage-owner-and-groups-dialog.component.html. Reviewed form fields, bindings and entity/component selection implement the PE feature; the candidate shares standard Material dialog/form/tab scaffolding rather than a CE feature implementation. Reviewed CE candidate ui-ngx/src/app/modules/home/dialogs/assign-to-customer-dialog.component.html at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 4af3aa07a136de6f06469ab94134f84552ed0f80).",
-      "contentHash": "sha256:6663727de4d162e6fc966c2e36dd771058655f0a801232a56e3425825f6cbe54"
     },
     {
       "path": "ui-ngx/src/app/modules/home/components/integration/integration-credentials/integration-credentials.component.scss",
@@ -1460,24 +1322,6 @@
       "contentHash": "sha256:c0370968c3b22e8c69b22cb6d94d77c8265aea5ec4376ee2051f5159b343dea0"
     },
     {
-      "path": "ui-ngx/src/app/modules/home/dialogs/add-entity-groups-to-edge-dialog.component.html",
-      "header": "busl",
-      "reason": "PE view template add-entity-groups-to-edge-dialog.component.html. Reviewed form fields, bindings and entity/component selection implement the PE feature; the candidate shares standard Material dialog/form/tab scaffolding rather than a CE feature implementation. Reviewed CE candidate ui-ngx/src/app/modules/home/dialogs/assign-to-customer-dialog.component.html at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 4af3aa07a136de6f06469ab94134f84552ed0f80).",
-      "contentHash": "sha256:a388333c5d948f47324c0a03f0a16cd1e2ee4baab27c8a851553f97a1ca3fe44"
-    },
-    {
-      "path": "ui-ngx/src/app/modules/home/dialogs/select-owner-dialog.component.html",
-      "header": "busl",
-      "reason": "PE view template select-owner-dialog.component.html. Reviewed form fields, bindings and entity/component selection implement the PE feature; the candidate shares standard Material dialog/form/tab scaffolding rather than a CE feature implementation. Reviewed CE candidate ui-ngx/src/app/modules/home/dialogs/assign-to-customer-dialog.component.html at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 4af3aa07a136de6f06469ab94134f84552ed0f80).",
-      "contentHash": "sha256:df68ce9ec827575d8a46e9602df0b3b5bfbd755441cfc0322d7ec0ea95352186"
-    },
-    {
-      "path": "ui-ngx/src/app/modules/home/dialogs/share-entity-group-dialog.component.html",
-      "header": "busl",
-      "reason": "PE view template share-entity-group-dialog.component.html. Reviewed form fields, bindings and entity/component selection implement the PE feature; the candidate shares standard Material dialog/form/tab scaffolding rather than a CE feature implementation. Reviewed CE candidate ui-ngx/src/app/modules/home/components/entity/add-entity-dialog.component.html at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 955f8f58be2d9d462570164005f4a2ee693b0dd7).",
-      "contentHash": "sha256:e36c42e81593ec7f224cbf8be4dce11a594a28085c81c49c860c1132f19b3920"
-    },
-    {
       "path": "ui-ngx/src/app/modules/home/pages/admin/custom-css-dialog.component.scss",
       "header": "busl",
       "reason": "PE component stylesheet custom-css-dialog.component.scss. Reviewed overlap consists of shared Material fieldset/panel/button typography, sizing, spacing or host-layout conventions; it does not identify a relocated CE component implementation. Curated as PE-specific UI template use. Reviewed CE candidate ui-ngx/src/app/shared/components/protobuf-content.component.scss at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 0633395c0a9e8241a8ea678aa45e58d86b8bc03d).",
@@ -1514,22 +1358,10 @@
       "contentHash": "sha256:57aabaed35a0bf7d372df84d6d3c7e7562eeccc06bd19655f94000bd2693f3c0"
     },
     {
-      "path": "ui-ngx/src/app/modules/home/pages/converter/converter-tabs.component.html",
-      "header": "busl",
-      "reason": "PE view template converter-tabs.component.html. Reviewed form fields, bindings and entity/component selection implement the PE feature; the candidate shares standard Material dialog/form/tab scaffolding rather than a CE feature implementation. Reviewed CE candidate ui-ngx/src/app/modules/home/pages/rulechain/rulechain-tabs.component.html at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob cd93367fc0cf1a7b4cdb66a7b2cbdebf54c6b9c4).",
-      "contentHash": "sha256:a262251d15be697e4a048aefa756b376fd3cdca7093d3ff486f4e632c24d145c"
-    },
-    {
       "path": "ui-ngx/src/app/modules/home/pages/converter/converter.module.ts",
       "header": "busl",
       "reason": "Angular module/routing registration for a PE feature. Imports, declarations and routes select PE components using common Angular module scaffolding; no CE feature implementation is relocated. Reviewed candidate ui-ngx/src/app/modules/home/pages/asset/asset.module.ts at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob d6dcf2b0b4232555f55d4ab649e8fe10b1dd1a2e).",
       "contentHash": "sha256:92d96e89c654fa7d0e000083169e992e709ed6a050ce180f71fa11970479bdb2"
-    },
-    {
-      "path": "ui-ngx/src/app/modules/home/pages/custom-menu/add-custom-menu-item-dialog.component.html",
-      "header": "busl",
-      "reason": "PE view template add-custom-menu-item-dialog.component.html. Reviewed form fields, bindings and entity/component selection implement the PE feature; the candidate shares standard Material dialog/form/tab scaffolding rather than a CE feature implementation. Reviewed CE candidate ui-ngx/src/app/modules/home/pages/admin/oauth2/clients/client-dialog.component.html at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 168100e58624f5c65473ab68270ae19842eef2ea).",
-      "contentHash": "sha256:9a924655c21da389103bb38a050aefc51c15440cc78dfa7ef35ca0061bfc86b6"
     },
     {
       "path": "ui-ngx/src/app/modules/home/pages/custom-menu/custom-menu-is-assigned-dialog.component.scss",
@@ -1560,12 +1392,6 @@
       "header": "busl",
       "reason": "PE component stylesheet add-new-language-dialog.component.scss. Reviewed overlap consists of shared Material fieldset/panel/button typography, sizing, spacing or host-layout conventions; it does not identify a relocated CE component implementation. Curated as PE-specific UI template use. Reviewed CE candidate ui-ngx/src/app/modules/home/pages/device/device-credentials-dialog.component.scss at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 4fa7a8e072bf9c5a830b04cb8af04d6fd5dd6650).",
       "contentHash": "sha256:8f197828a805fb07ae43bd26c9ccc9b0eb676d2d3ea8fce41380f1bc4f98d615"
-    },
-    {
-      "path": "ui-ngx/src/app/modules/home/pages/dashboard/public-dashboard-link.dialog.component.html",
-      "header": "busl",
-      "reason": "New PE file implementing a PE feature. It was written by adapting CE ui-ngx/src/app/modules/home/pages/dashboard/make-dashboard-public-dialog.component.html, which PE still carries at its own path, so this is not a CE file with PE modifications. Adaptation from CE does not make it CE-derived. Maintainer rule (2026-09-09): a file that exists in CE and carries PE changes is modified CE; a file that does not exist in CE and implements a PE feature is PE-only, however closely it resembles a CE file.",
-      "contentHash": "sha256:32d3a2ee42bc23949a121a100dc09125891341255f5c1cd8a0d69d447fc5f78d"
     },
     {
       "path": "ui-ngx/src/app/modules/home/pages/dashboard/public-dashboard-link.dialog.component.ts",
@@ -1698,12 +1524,6 @@
       "header": "busl",
       "reason": "PE task manager page header stylesheet added in 61d991bde83. The candidate CE audit-log-header.component.scss matches only on generic host layout properties. Reviewed candidate at 317a75614137ab5ddd1aecef1abd4c2fcdcb8710 (blob 0d057f16ca9).",
       "contentHash": "sha256:c97d917157cdbed82ac411d7e6a69a1c8590ac8dedace15ad8b1959f917cb6bf"
-    },
-    {
-      "path": "ui-ngx/src/app/modules/signup/pages/signup/signup-dialog.component.html",
-      "header": "busl",
-      "reason": "PE view template signup-dialog.component.html. Reviewed form fields, bindings and entity/component selection implement the PE feature; the candidate shares standard Material dialog/form/tab scaffolding rather than a CE feature implementation. Reviewed CE candidate ui-ngx/src/app/modules/home/components/entity/add-entity-dialog.component.html at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 955f8f58be2d9d462570164005f4a2ee693b0dd7).",
-      "contentHash": "sha256:07fb450cc0a3d66a35fcb5e56089294ad1181e741f87eef9a76ae38cbbc74882"
     },
     {
       "path": "ui-ngx/src/app/modules/signup/pages/signup/signup-dialog.component.scss",
