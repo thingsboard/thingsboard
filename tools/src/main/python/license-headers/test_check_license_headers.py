@@ -457,6 +457,18 @@ class GitHistoryTests(unittest.TestCase):
         with self.assertRaisesRegex(p.Failure, "shares no history"):
             p.merged_ce_bases(git.root, unrelated, tip)
 
+    def test_merged_ce_bases_below_a_relicensed_ce_ref_exclude_relicensed_commits(self):
+        git, fix, last, relicensing = self.relicensed_fixture()
+        ce_tip = git("rev-parse", "HEAD")
+        git("checkout", "-b", "downstream", git("rev-list", "--max-parents=0", "HEAD"))
+        git.write("Own.java", "own\n")
+        own = git.commit("own history without the relicensing commit")
+        git("merge", "--no-ff", "master", "-m", "integrate CE master")
+        head = git("rev-parse", "HEAD")
+        with patch.object(p, "RELICENSING_COMMIT", relicensing):
+            self.assertIn(own, p.relicensed_ce_bases(git.root, head))
+            self.assertEqual(sorted([fix, last]), p.merged_ce_bases(git.root, head, ce_tip))
+
     def test_lineage_records_first_parent_ce_deletions(self):
         git = GitFixture(temporary_directory(self), "ce")
         git.write("Gone.java", "removed from CE\n")

@@ -188,7 +188,9 @@ def merged_ce_bases(repo, head, baseline):
     bases = run(["git", "merge-base", "--all", head, baseline], repo, ok=(0, 1)).stdout.decode().split()
     if not bases:
         raise Failure("HEAD shares no history with the CE ref. Check that the right CE branch was passed.")
-    return independent(repo, bases)
+    ce = [ce_base for base in bases
+          for ce_base in (relicensed_ce_bases(repo, base) if contains(repo, RELICENSING_COMMIT, base) else [base])]
+    return independent(repo, ce)
 
 
 def merge_blobs(repo, ours, base, theirs):
@@ -1210,7 +1212,7 @@ def main(argv=None):
     parser.add_argument("command", choices=["check"])
     parser.add_argument("--ce-ref",
                         help="CE branch, tag, or commit that this branch integrates, fetched from --ce-remote; "
-                             "without it, CE is the history that does not contain the relicensing commit")
+                             "without it, CE is the history of HEAD that does not contain the relicensing commit")
     parser.add_argument("--ce-remote", default=CE_REMOTE,
                         help=f"Git URL or path of the CE repository to fetch --ce-ref from (default: {CE_REMOTE})")
     parser.add_argument("--output", default="target/license-provenance/report.json")
