@@ -30,8 +30,6 @@ import {
   WidgetCategory
 } from '@shared/models/iot-hub/iot-hub-item.models';
 
-/** The Installed list is sorted locally, and only the Hub can rank by relevance. */
-const INSTALLED_SORT_OPTIONS = IOT_HUB_SORT_OPTIONS.filter(o => o.value !== RELEVANCE_SORT_PROPERTY);
 import { IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
@@ -43,6 +41,9 @@ import {
   resolveIotHubItemImageUrl
 } from '@home/components/iot-hub/iot-hub-utils';
 import { IotHubBuiltInService } from '@home/components/iot-hub/iot-hub-built-in.service';
+
+/** The Installed list is sorted locally, and only the Hub can rank by relevance. */
+const INSTALLED_SORT_OPTIONS = IOT_HUB_SORT_OPTIONS.filter(o => o.value !== RELEVANCE_SORT_PROPERTY);
 
 type selectWidgetMode = 'installed' | 'iotHub';
 type installedSubMode = 'default' | 'allWidgets';
@@ -580,8 +581,11 @@ export class DashboardWidgetSelectComponent {
   }
 
   onIotHubSortChange(option: SortOption): void {
-    if (this.iotHubSelectedSort.value !== option.value) {
-      this.iotHubSelectedSortValue = option.value;
+    // Store the choice even when it is already the effective sort (the Installed list's fallback
+    // for relevance), so it survives a switch back to the IoT Hub list; reload only on a change.
+    const effective = this.iotHubSelectedSort.value;
+    this.iotHubSelectedSortValue = option.value;
+    if (effective !== option.value) {
       this.installedWidgetVersions = null;
       this.reloadIotHubWidgets();
     }

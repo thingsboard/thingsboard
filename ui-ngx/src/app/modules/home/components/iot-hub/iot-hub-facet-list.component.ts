@@ -54,7 +54,7 @@ export class TbIotHubFacetListComponent implements OnChanges {
   }
 
   private applySearch(): void {
-    this.visibleOptions = filterByLabel(this.options, this.search.trim(), this.labelFor);
+    this.visibleOptions = filterByLabel(this.options, this.search, this.labelFor);
     this.scrollable = this.visibleOptions.length > IOT_HUB_FILTER_SCROLL_THRESHOLD;
   }
 }
