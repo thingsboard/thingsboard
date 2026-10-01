@@ -112,7 +112,7 @@
         <maven-install-plugin.version>3.1.4</maven-install-plugin.version>
         <maven-deploy-plugin.version>3.1.4</maven-deploy-plugin.version>
         <maven-clean-plugin.version>3.5.0</maven-clean-plugin.version>
-        <springdoc-swagger.version>2.8.8TB</springdoc-swagger.version>
+        <springdoc-swagger.version>2.8.8TB2</springdoc-swagger.version>
         <swagger-annotations.version>2.2.30</swagger-annotations.version>
         <spatial4j.version>0.8</spatial4j.version>
         <jts.version>1.19.0</jts.version>
