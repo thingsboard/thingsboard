@@ -29,8 +29,8 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.ai.TbAiSettings;
 import org.thingsboard.server.service.ai.chat.AiChatService;
 import org.thingsboard.server.service.ai.transport.TbAiClientRequest;
+import org.thingsboard.server.service.ai.transport.TbAiClientRequestFactory;
 import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.service.security.system.SystemSecurityService;
 import reactor.core.publisher.Flux;
 
 import java.util.UUID;
@@ -46,7 +46,7 @@ class AiChatController extends BaseController {
 
     private final AiChatService aiChatService;
     private final TbAiSettings aiSettings;
-    private final SystemSecurityService systemSecurityService;
+    private final TbAiClientRequestFactory clientRequestFactory;
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @PostMapping
@@ -106,8 +106,7 @@ class AiChatController extends BaseController {
     ) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
         accessControlService.checkPermission(user, Resource.AI, Operation.WRITE);
-        String clientOrigin = systemSecurityService.getBaseUrl(user.getTenantId(), user.getCustomerId(), httpRequest);
-        TbAiClientRequest clientRequest = TbAiClientRequest.of(clientOrigin, httpRequest);
+        TbAiClientRequest clientRequest = clientRequestFactory.create(user, httpRequest);
         return withTraceLogging(chatId, aiChatService.sendChatMessage(chatId, request, tbAccessToken, acceptLanguage, clientRequest, user));
     }
 

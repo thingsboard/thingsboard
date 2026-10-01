@@ -38,6 +38,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -72,6 +73,7 @@ class ChannelTbAiTransportTest {
             var response = new TbHttpResponse(200, Map.of("Content-Type", List.of("application/json")), "{\"id\":\"d1\"}", "utf8");
             return Mono.just(ChannelFrame.reply(ChannelProtocol.TB_RESPONSE, frame, codec.toPayload(response)));
         });
+        doCallRealMethod().when(requestExecutor).serve(any(), any(), any(), same(context), anyInt());
 
         // WHEN
         List<ServerSentEvent<String>> events = transport().sendChatMessage(chatId, request, context)

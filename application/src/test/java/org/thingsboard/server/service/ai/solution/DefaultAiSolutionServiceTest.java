@@ -14,11 +14,19 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.thingsboard.ai.common.channel.ChannelProtocol;
+import org.thingsboard.ai.common.channel.SolutionOperationRequest;
 import org.thingsboard.ai.common.client.TbAiClient;
 import org.thingsboard.ai.common.data.solution.SolutionStep;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.service.ai.TbAiService;
+import org.thingsboard.server.service.ai.transport.TbAiClientRequest;
+import org.thingsboard.server.service.ai.transport.TbAiOperation;
+import org.thingsboard.server.service.ai.transport.TbAiOperations;
+import org.thingsboard.server.service.ai.transport.TbAiTurnContext;
 import org.thingsboard.server.service.security.model.SecurityUser;
+
+import java.util.Map;
 
 import java.util.UUID;
 
@@ -41,13 +49,17 @@ class DefaultAiSolutionServiceTest {
     @Mock
     TbAiClient.TbAiResponse tbAiResponse;
     @Mock
+    TbAiOperations operations;
+    @Mock
     SecurityUser user;
+
+    TbAiClientRequest clientRequest = new TbAiClientRequest("https://tb.example.com", Map.of());
 
     DefaultAiSolutionService service;
 
     @BeforeEach
     void setUp() {
-        service = new DefaultAiSolutionService(tbAiService);
+        service = new DefaultAiSolutionService(tbAiService, operations);
     }
 
     @Test
@@ -200,15 +212,23 @@ class DefaultAiSolutionServiceTest {
         JsonNode expectedResponse = solutionInstallResultResponse(UUID.randomUUID());
         given(tbAiService.process(any(), same(user), eq(false))).willReturn(expectedResponse);
         given(tbAiClient.installSolution(eq(solutionId), eq(tbAccessToken), same(tokenProvider))).willReturn(tbAiResponse);
+        stubOperationsWithHttpCall();
 
         // WHEN
-        JsonNode result = service.installSolution(solutionId, tbAccessToken, user);
+        JsonNode result = service.installSolution(solutionId, tbAccessToken, clientRequest, user);
 
         // THEN
         assertThat(result).isSameAs(expectedResponse);
 
         assertThat(captureProcessCallWithoutCreditCheck().apply(tbAiClient, tokenProvider)).isSameAs(tbAiResponse);
         then(tbAiClient).should().installSolution(eq(solutionId), eq(tbAccessToken), same(tokenProvider));
+        TbAiTurnContext[] context = new TbAiTurnContext[1];
+        TbAiOperation operation = captureOperation(context);
+        assertThat(operation.type()).isEqualTo(ChannelProtocol.SOLUTION_INSTALL);
+        assertThat(operation.payload()).isEqualTo(new SolutionOperationRequest(solutionId));
+        assertThat(context[0].clientRequest()).isSameAs(clientRequest);
+        assertThat(context[0].tbAccessToken()).isEqualTo(tbAccessToken);
+        assertThat(context[0].tokenProvider()).isSameAs(tokenProvider);
         then(tbAiClient).shouldHaveNoMoreInteractions();
         then(tbAiService).shouldHaveNoMoreInteractions();
     }
@@ -221,15 +241,23 @@ class DefaultAiSolutionServiceTest {
         JsonNode expectedResponse = solutionResponse(solutionId, "Energy Monitoring", true, false);
         given(tbAiService.process(any(), same(user), eq(false))).willReturn(expectedResponse);
         given(tbAiClient.uninstallSolution(eq(solutionId), eq(tbAccessToken), same(tokenProvider))).willReturn(tbAiResponse);
+        stubOperationsWithHttpCall();
 
         // WHEN
-        JsonNode result = service.uninstallSolution(solutionId, tbAccessToken, user);
+        JsonNode result = service.uninstallSolution(solutionId, tbAccessToken, clientRequest, user);
 
         // THEN
         assertThat(result).isSameAs(expectedResponse);
 
         assertThat(captureProcessCallWithoutCreditCheck().apply(tbAiClient, tokenProvider)).isSameAs(tbAiResponse);
         then(tbAiClient).should().uninstallSolution(eq(solutionId), eq(tbAccessToken), same(tokenProvider));
+        TbAiTurnContext[] context = new TbAiTurnContext[1];
+        TbAiOperation operation = captureOperation(context);
+        assertThat(operation.type()).isEqualTo(ChannelProtocol.SOLUTION_UNINSTALL);
+        assertThat(operation.payload()).isEqualTo(new SolutionOperationRequest(solutionId));
+        assertThat(context[0].clientRequest()).isSameAs(clientRequest);
+        assertThat(context[0].tbAccessToken()).isEqualTo(tbAccessToken);
+        assertThat(context[0].tokenProvider()).isSameAs(tokenProvider);
         then(tbAiClient).shouldHaveNoMoreInteractions();
         then(tbAiService).shouldHaveNoMoreInteractions();
     }
@@ -263,6 +291,18 @@ class DefaultAiSolutionServiceTest {
         ArgumentCaptor<TbAiService.TbAiCall> callCaptor = ArgumentCaptor.forClass(TbAiService.TbAiCall.class);
         then(tbAiService).should().process(callCaptor.capture(), same(user));
         return callCaptor.getValue();
+    }
+
+    private void stubOperationsWithHttpCall() {
+        given(operations.execute(any(), any())).willAnswer(invocation -> invocation.<TbAiOperation>getArgument(0).httpCall().get());
+    }
+
+    private TbAiOperation captureOperation(TbAiTurnContext[] context) {
+        ArgumentCaptor<TbAiOperation> operationCaptor = ArgumentCaptor.forClass(TbAiOperation.class);
+        ArgumentCaptor<TbAiTurnContext> contextCaptor = ArgumentCaptor.forClass(TbAiTurnContext.class);
+        then(operations).should().execute(operationCaptor.capture(), contextCaptor.capture());
+        context[0] = contextCaptor.getValue();
+        return operationCaptor.getValue();
     }
 
     private static ObjectNode solutionResponse(UUID solutionId, String solutionTitle, boolean built, boolean installed) {

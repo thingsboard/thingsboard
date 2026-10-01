@@ -7,7 +7,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.ai.common.data.solution.SolutionStep;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.ai.common.channel.ChannelProtocol;
+import org.thingsboard.ai.common.channel.SolutionOperationRequest;
 import org.thingsboard.server.service.ai.TbAiService;
+import org.thingsboard.server.service.ai.transport.TbAiClientRequest;
+import org.thingsboard.server.service.ai.transport.TbAiOperation;
+import org.thingsboard.server.service.ai.transport.TbAiOperations;
+import org.thingsboard.server.service.ai.transport.TbAiTurnContext;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.UUID;
@@ -18,6 +24,7 @@ import java.util.UUID;
 public class DefaultAiSolutionService implements AiSolutionService {
 
     private final TbAiService tbAiService;
+    private final TbAiOperations operations;
 
     @Override
     public JsonNode startNew(SecurityUser user) {
@@ -69,17 +76,19 @@ public class DefaultAiSolutionService implements AiSolutionService {
     }
 
     @Override
-    public JsonNode installSolution(UUID solutionId, String tbAccessToken, SecurityUser user) {
-        return tbAiService.process((client, tokenProvider) -> {
-            return client.installSolution(solutionId, tbAccessToken, tokenProvider);
-        }, user, false);
+    public JsonNode installSolution(UUID solutionId, String tbAccessToken, TbAiClientRequest clientRequest, SecurityUser user) {
+        return tbAiService.process((client, tokenProvider) -> operations.execute(
+                new TbAiOperation(ChannelProtocol.SOLUTION_INSTALL, new SolutionOperationRequest(solutionId),
+                        () -> client.installSolution(solutionId, tbAccessToken, tokenProvider)),
+                new TbAiTurnContext(user, tbAccessToken, null, tokenProvider, clientRequest)), user, false);
     }
 
     @Override
-    public JsonNode uninstallSolution(UUID solutionId, String tbAccessToken, SecurityUser user) {
-        return tbAiService.process((client, tokenProvider) -> {
-            return client.uninstallSolution(solutionId, tbAccessToken, tokenProvider);
-        }, user, false);
+    public JsonNode uninstallSolution(UUID solutionId, String tbAccessToken, TbAiClientRequest clientRequest, SecurityUser user) {
+        return tbAiService.process((client, tokenProvider) -> operations.execute(
+                new TbAiOperation(ChannelProtocol.SOLUTION_UNINSTALL, new SolutionOperationRequest(solutionId),
+                        () -> client.uninstallSolution(solutionId, tbAccessToken, tokenProvider)),
+                new TbAiTurnContext(user, tbAccessToken, null, tokenProvider, clientRequest)), user, false);
     }
 
     @Override

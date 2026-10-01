@@ -100,7 +100,7 @@ class TbAiTransportSelectorTest {
     }
 
     TbAiTransportSelector selector(boolean enabled, Clock clock) {
-        return new TbAiTransportSelector(sse, channel, enabled, Duration.ofMinutes(10), clock);
+        return new TbAiTransportSelector(sse, channel, new TbAiChannelAvailability(enabled, Duration.ofMinutes(10), clock));
     }
 
     static class MutableClock extends Clock {

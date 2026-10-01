@@ -17,9 +17,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.thingsboard.ai.common.channel.ChannelBodies;
 import org.thingsboard.ai.common.channel.ChannelError;
+import org.thingsboard.ai.common.channel.ChannelException;
 import org.thingsboard.ai.common.channel.ChannelFrame;
 import org.thingsboard.ai.common.channel.ChannelFrameCodec;
 import org.thingsboard.ai.common.channel.ChannelProtocol;
+import org.thingsboard.ai.common.channel.ChannelSession;
 import org.thingsboard.ai.common.channel.TbAiChannelClient;
 import org.thingsboard.ai.common.channel.TbHttpRequest;
 import org.thingsboard.ai.common.channel.TbHttpResponse;
@@ -117,6 +119,16 @@ public class TbAiRequestExecutor {
                         }))
                 .timeout(timeout)
                 .onErrorResume(e -> Mono.just(failure(frame, codec, request, e)));
+    }
+
+    public void serve(ChannelSession session, ChannelFrame frame, ChannelFrameCodec codec, TbAiTurnContext context, int maxBodyBytes) {
+        execute(frame, codec, context, maxBodyBytes).subscribe(reply -> {
+            try {
+                session.send(reply);
+            } catch (ChannelException e) {
+                log.debug("Dropped '{}' reply: {}", reply.type(), e.getMessage());
+            }
+        });
     }
 
     static String validate(TbHttpRequest request) {

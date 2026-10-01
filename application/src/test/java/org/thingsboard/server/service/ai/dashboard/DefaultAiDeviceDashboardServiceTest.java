@@ -11,10 +11,18 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.thingsboard.ai.common.channel.ChannelProtocol;
+import org.thingsboard.ai.common.channel.DashboardOperationRequest;
 import org.thingsboard.ai.common.client.TbAiClient;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.service.ai.TbAiService;
+import org.thingsboard.server.service.ai.transport.TbAiClientRequest;
+import org.thingsboard.server.service.ai.transport.TbAiOperation;
+import org.thingsboard.server.service.ai.transport.TbAiOperations;
+import org.thingsboard.server.service.ai.transport.TbAiTurnContext;
 import org.thingsboard.server.service.security.model.SecurityUser;
+
+import java.util.Map;
 
 import java.util.UUID;
 
@@ -37,13 +45,17 @@ class DefaultAiDeviceDashboardServiceTest {
     @Mock
     TbAiClient.TbAiResponse tbAiResponse;
     @Mock
+    TbAiOperations operations;
+    @Mock
     SecurityUser user;
+
+    TbAiClientRequest clientRequest = new TbAiClientRequest("https://tb.example.com", Map.of());
 
     DefaultAiDeviceDashboardService service;
 
     @BeforeEach
     void setUp() {
-        service = new DefaultAiDeviceDashboardService(tbAiService);
+        service = new DefaultAiDeviceDashboardService(tbAiService, operations);
     }
 
     @Test
@@ -57,15 +69,23 @@ class DefaultAiDeviceDashboardServiceTest {
         given(tbAiService.process(any(), same(user))).willReturn(expectedResponse);
         given(tbAiClient.generateDashboard(eq(deviceId), same(request), eq(tbAccessToken), same(tokenProvider)))
                 .willReturn(tbAiResponse);
+        stubOperationsWithHttpCall();
 
         // WHEN
-        JsonNode result = service.generateDashboard(deviceId, request, tbAccessToken, user);
+        JsonNode result = service.generateDashboard(deviceId, request, tbAccessToken, clientRequest, user);
 
         // THEN
         assertThat(result).isSameAs(expectedResponse);
 
         assertThat(captureProcessCall().apply(tbAiClient, tokenProvider)).isSameAs(tbAiResponse);
         then(tbAiClient).should().generateDashboard(eq(deviceId), same(request), eq(tbAccessToken), same(tokenProvider));
+        TbAiTurnContext[] context = new TbAiTurnContext[1];
+        TbAiOperation operation = captureOperation(context);
+        assertThat(operation.type()).isEqualTo(ChannelProtocol.DASHBOARD_GENERATE);
+        assertThat(operation.payload()).isEqualTo(new DashboardOperationRequest(deviceId, request));
+        assertThat(context[0].clientRequest()).isSameAs(clientRequest);
+        assertThat(context[0].tbAccessToken()).isEqualTo(tbAccessToken);
+        assertThat(context[0].tokenProvider()).isSameAs(tokenProvider);
         then(tbAiClient).shouldHaveNoMoreInteractions();
         then(tbAiService).shouldHaveNoMoreInteractions();
     }
@@ -75,6 +95,18 @@ class DefaultAiDeviceDashboardServiceTest {
         ArgumentCaptor<TbAiService.TbAiCall> callCaptor = ArgumentCaptor.forClass(TbAiService.TbAiCall.class);
         then(tbAiService).should().process(callCaptor.capture(), same(user));
         return callCaptor.getValue();
+    }
+
+    private void stubOperationsWithHttpCall() {
+        given(operations.execute(any(), any())).willAnswer(invocation -> invocation.<TbAiOperation>getArgument(0).httpCall().get());
+    }
+
+    private TbAiOperation captureOperation(TbAiTurnContext[] context) {
+        ArgumentCaptor<TbAiOperation> operationCaptor = ArgumentCaptor.forClass(TbAiOperation.class);
+        ArgumentCaptor<TbAiTurnContext> contextCaptor = ArgumentCaptor.forClass(TbAiTurnContext.class);
+        then(operations).should().execute(operationCaptor.capture(), contextCaptor.capture());
+        context[0] = contextCaptor.getValue();
+        return operationCaptor.getValue();
     }
 
     private static ObjectNode generateDashboardRequest(String... timeseriesKeys) {

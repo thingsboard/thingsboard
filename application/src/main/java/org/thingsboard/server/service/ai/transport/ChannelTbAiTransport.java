@@ -143,8 +143,7 @@ class ChannelTbAiTransport implements TbAiTransport {
                 switch (frame.type()) {
                     case ChannelProtocol.HELLO -> onHello(frameSession, frame);
                     case ChannelProtocol.CHAT_EVENT -> onChatEvent(frameSession, frame);
-                    case ChannelProtocol.TB_REQUEST -> requestExecutor.execute(frame, codec, context, maxFrameBytes)
-                            .subscribe(reply -> sendQuietly(frameSession, reply));
+                    case ChannelProtocol.TB_REQUEST -> requestExecutor.serve(frameSession, frame, codec, context, maxFrameBytes);
                     case ChannelProtocol.TURN_END -> finish(null);
                     case ChannelProtocol.ERROR -> onError(frameSession, frame);
                     default -> log.debug("[{}] Ignoring AI channel frame '{}'", chatId, frame.type());
@@ -224,14 +223,6 @@ class ChannelTbAiTransport implements TbAiTransport {
                     sink.next(lastEvent);
                 }
                 sink.complete();
-            }
-        }
-
-        private void sendQuietly(ChannelSession replySession, ChannelFrame reply) {
-            try {
-                replySession.send(reply);
-            } catch (ChannelException e) {
-                log.debug("[{}] Dropped '{}' reply: {}", chatId, reply.type(), e.getMessage());
             }
         }
 
