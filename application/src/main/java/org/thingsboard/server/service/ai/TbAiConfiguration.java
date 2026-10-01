@@ -5,6 +5,7 @@ package org.thingsboard.server.service.ai;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.thingsboard.ai.common.channel.TbAiChannelClient;
 import org.thingsboard.ai.common.client.TbAiClient;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
@@ -17,6 +18,11 @@ class TbAiConfiguration {
     @Bean
     TbAiClient tbAiClient(@Value("${TB_AI_BASE_URL:https://ai.thingsboard.cloud}") String baseUrl) {
         return new TbAiClient(baseUrl);
+    }
+
+    @Bean
+    TbAiChannelClient tbAiChannelClient(@Value("${TB_AI_BASE_URL:https://ai.thingsboard.cloud}") String baseUrl) {
+        return new TbAiChannelClient(baseUrl);
     }
 
 }

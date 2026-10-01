@@ -16,11 +16,13 @@ import org.springframework.http.codec.ServerSentEvent;
 import org.thingsboard.ai.common.client.TbAiClient;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.service.ai.TbAiService;
+import org.thingsboard.server.service.ai.transport.TbAiClientRequest;
 import org.thingsboard.server.service.ai.transport.TbAiTransport;
 import org.thingsboard.server.service.ai.transport.TbAiTurnContext;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import reactor.core.publisher.Flux;
 
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -161,11 +163,12 @@ class DefaultAiChatServiceTest {
                 .data("{\"message\":\"ok\"}")
                 .build());
         given(tbAiService.processStream(eq(chatId), any(), same(user))).willReturn(expectedStream);
-        var expectedContext = new TbAiTurnContext(user, tbAccessToken, acceptLanguage, tokenProvider);
+        var clientRequest = new TbAiClientRequest("https://tb.example.com", Map.of("Host", "tb.example.com"));
+        var expectedContext = new TbAiTurnContext(user, tbAccessToken, acceptLanguage, tokenProvider, clientRequest);
         given(tbAiTransport.sendChatMessage(eq(chatId), same(request), eq(expectedContext))).willReturn(expectedStream);
 
         // WHEN
-        Flux<ServerSentEvent<String>> result = service.sendChatMessage(chatId, request, tbAccessToken, acceptLanguage, user);
+        Flux<ServerSentEvent<String>> result = service.sendChatMessage(chatId, request, tbAccessToken, acceptLanguage, clientRequest, user);
 
         // THEN
         assertThat(result).isSameAs(expectedStream);

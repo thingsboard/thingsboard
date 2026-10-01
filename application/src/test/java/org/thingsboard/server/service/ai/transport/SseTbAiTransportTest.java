@@ -14,6 +14,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import reactor.core.publisher.Flux;
 
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -49,7 +50,8 @@ class SseTbAiTransportTest {
 
         // WHEN
         Flux<ServerSentEvent<String>> result = transport.sendChatMessage(chatId, request,
-                new TbAiTurnContext(user, "tb-access-token", "de-DE", tokenProvider));
+                new TbAiTurnContext(user, "tb-access-token", "de-DE", tokenProvider,
+                        new TbAiClientRequest("https://tb.example.com", Map.of())));
 
         // THEN
         assertThat(result).isSameAs(expectedStream);

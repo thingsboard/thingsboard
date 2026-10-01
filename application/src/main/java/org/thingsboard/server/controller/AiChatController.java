@@ -3,6 +3,7 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -27,7 +28,9 @@ import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.ai.TbAiSettings;
 import org.thingsboard.server.service.ai.chat.AiChatService;
+import org.thingsboard.server.service.ai.transport.TbAiClientRequest;
 import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.security.system.SystemSecurityService;
 import reactor.core.publisher.Flux;
 
 import java.util.UUID;
@@ -43,6 +46,7 @@ class AiChatController extends BaseController {
 
     private final AiChatService aiChatService;
     private final TbAiSettings aiSettings;
+    private final SystemSecurityService systemSecurityService;
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @PostMapping
@@ -97,11 +101,14 @@ class AiChatController extends BaseController {
             @PathVariable UUID chatId,
             @RequestBody JsonNode request,
             @RequestHeader(AUTHORIZATION_HEADER) String tbAccessToken,
-            @RequestHeader(value = HttpHeaders.ACCEPT_LANGUAGE, required = false) String acceptLanguage
+            @RequestHeader(value = HttpHeaders.ACCEPT_LANGUAGE, required = false) String acceptLanguage,
+            HttpServletRequest httpRequest
     ) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
         accessControlService.checkPermission(user, Resource.AI, Operation.WRITE);
-        return withTraceLogging(chatId, aiChatService.sendChatMessage(chatId, request, tbAccessToken, acceptLanguage, user));
+        String clientOrigin = systemSecurityService.getBaseUrl(user.getTenantId(), user.getCustomerId(), httpRequest);
+        TbAiClientRequest clientRequest = TbAiClientRequest.of(clientOrigin, httpRequest);
+        return withTraceLogging(chatId, aiChatService.sendChatMessage(chatId, request, tbAccessToken, acceptLanguage, clientRequest, user));
     }
 
     private Flux<ServerSentEvent<String>> withTraceLogging(UUID chatId, Flux<ServerSentEvent<String>> events) {

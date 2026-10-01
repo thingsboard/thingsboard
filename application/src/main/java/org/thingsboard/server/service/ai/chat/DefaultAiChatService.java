@@ -8,6 +8,7 @@ import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.ai.TbAiService;
+import org.thingsboard.server.service.ai.transport.TbAiClientRequest;
 import org.thingsboard.server.service.ai.transport.TbAiTransport;
 import org.thingsboard.server.service.ai.transport.TbAiTurnContext;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -60,10 +61,11 @@ class DefaultAiChatService implements AiChatService {
 
     @Override
     public Flux<ServerSentEvent<String>> sendChatMessage(
-            UUID chatId, JsonNode request, String tbAccessToken, String acceptLanguage, SecurityUser user
+            UUID chatId, JsonNode request, String tbAccessToken, String acceptLanguage, TbAiClientRequest clientRequest,
+            SecurityUser user
     ) {
         return tbAiService.processStream(chatId, (client, tokenProvider) -> {
-            var context = new TbAiTurnContext(user, tbAccessToken, acceptLanguage, tokenProvider);
+            var context = new TbAiTurnContext(user, tbAccessToken, acceptLanguage, tokenProvider, clientRequest);
             return tbAiTransport.sendChatMessage(chatId, request, context);
         }, user);
     }

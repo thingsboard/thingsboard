@@ -9,5 +9,6 @@ public record TbAiTurnContext(
         SecurityUser user,
         String tbAccessToken,
         String acceptLanguage,
-        TbAiClient.TokenProvider tokenProvider
+        TbAiClient.TokenProvider tokenProvider,
+        TbAiClientRequest clientRequest
 ) {}
