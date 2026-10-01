@@ -4,6 +4,7 @@
 
 .tb-action-settings-panel {
   width: 530px;
+  max-height: 90vh;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -15,6 +16,7 @@
     flex-direction: column;
     gap: 16px;
     overflow: auto;
+    flex: 1;
   }
   .tb-action-settings-title {
     font-size: 16px;
