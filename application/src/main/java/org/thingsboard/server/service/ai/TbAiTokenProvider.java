@@ -16,6 +16,13 @@ public interface TbAiTokenProvider {
         return Map.of();
     }
 
+    /**
+     * Checks that TB AI can call back the user's ThingsBoard at the origin sent with the token. Only the legacy
+     * HTTP paths (SSE chat, HTTP solution and dashboard operations) need this: over the channel TB AI calls TB
+     * through the WebSocket, so a localhost origin is fine there.
+     */
+    default void validateCallbackOrigin(SecurityUser user) {}
+
     default boolean isTokenAvailable() {
         return true;
     }

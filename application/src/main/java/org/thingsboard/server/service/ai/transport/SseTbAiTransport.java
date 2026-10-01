@@ -18,11 +18,15 @@ import java.util.UUID;
 class SseTbAiTransport implements TbAiTransport {
 
     private final TbAiClient tbAiClient;
+    private final TbAiCallbackOriginValidator callbackOriginValidator;
 
     @Override
     public Flux<ServerSentEvent<String>> sendChatMessage(UUID chatId, JsonNode request, TbAiTurnContext context) {
-        return tbAiClient.sendChatMessage(chatId, request, context.tbAccessToken(), context.acceptLanguage(),
-                context.tokenProvider());
+        return Flux.defer(() -> {
+            callbackOriginValidator.validate(context.user());
+            return tbAiClient.sendChatMessage(chatId, request, context.tbAccessToken(), context.acceptLanguage(),
+                    context.tokenProvider());
+        });
     }
 
 }

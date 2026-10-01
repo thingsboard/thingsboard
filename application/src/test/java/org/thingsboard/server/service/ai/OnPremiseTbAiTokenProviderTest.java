@@ -128,14 +128,29 @@ class OnPremiseTbAiTokenProviderTest {
     }
 
     @Test
-    void shouldThrowBadRequest_whenCoreBaseUrlIsBlankAndResolvedOriginIsLocalhost() {
+    void shouldAcceptLocalhostOrigin_whenBuildingUserHeaders() {
         // GIVEN — no configured core URL and the security service falls back to a localhost base URL.
+        OnPremiseTbAiTokenProvider providerWithoutCoreUrl = newProvider("");
+        given(projectInfo.getProjectVersion()).willReturn(tbVersion);
+        given(systemSecurityService.getBaseUrl(user.getAuthority(), user.getTenantId(), user.getCustomerId(), null))
+                .willReturn(localhostBaseUrl);
+
+        // WHEN
+        Map<String, String> additionalInfo = providerWithoutCoreUrl.getAdditionalInfo(user);
+
+        // THEN — calls that TB AI does not answer by calling TB back work without a public base URL.
+        assertThat(additionalInfo).containsExactlyInAnyOrderEntriesOf(expectedHeaders(localhostBaseUrl));
+    }
+
+    @Test
+    void shouldThrowBadRequest_whenValidatingCallbackOriginAndResolvedOriginIsLocalhost() {
+        // GIVEN
         OnPremiseTbAiTokenProvider providerWithoutCoreUrl = newProvider("");
         given(systemSecurityService.getBaseUrl(user.getAuthority(), user.getTenantId(), user.getCustomerId(), null))
                 .willReturn(localhostBaseUrl);
 
         // WHEN
-        Throwable thrown = catchThrowable(() -> providerWithoutCoreUrl.getAdditionalInfo(user));
+        Throwable thrown = catchThrowable(() -> providerWithoutCoreUrl.validateCallbackOrigin(user));
 
         // THEN
         assertThat(thrown)
@@ -143,8 +158,24 @@ class OnPremiseTbAiTokenProviderTest {
                 .hasMessageContaining("Please configure the base URL");
         assertThat(((ThingsboardRuntimeException) thrown).getErrorCode())
                 .isEqualTo(ThingsboardErrorCode.BAD_REQUEST_PARAMS);
-        // The version header is never assembled once origin resolution fails.
-        then(projectInfo).shouldHaveNoInteractions();
+    }
+
+    @Test
+    void shouldAcceptCallbackOrigin_whenResolvedOriginIsPublic() {
+        // GIVEN
+        OnPremiseTbAiTokenProvider providerWithoutCoreUrl = newProvider("");
+        given(systemSecurityService.getBaseUrl(user.getAuthority(), user.getTenantId(), user.getCustomerId(), null))
+                .willReturn(resolvedBaseUrl);
+
+        // WHEN-THEN
+        providerWithoutCoreUrl.validateCallbackOrigin(user);
+    }
+
+    @Test
+    void shouldAcceptCallbackOrigin_whenCoreBaseUrlIsSet() {
+        // WHEN-THEN
+        provider.validateCallbackOrigin(user);
+        then(systemSecurityService).shouldHaveNoInteractions();
     }
 
     // ---------------------------------------------------------------------------------------------

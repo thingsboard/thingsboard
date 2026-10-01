@@ -143,6 +143,8 @@ class DefaultTbAiService implements TbAiService {
             return "Service unavailable";
         } else if (e instanceof WebClientResponseException wcre) {
             return toUserFriendlyMessage(wcre);
+        } else if (e instanceof ThingsboardRuntimeException tre) {
+            return tre.getMessage();
         }
         return "Internal error";
     }
