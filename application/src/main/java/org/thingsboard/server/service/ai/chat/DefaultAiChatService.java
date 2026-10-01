@@ -8,6 +8,8 @@ import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.ai.TbAiService;
+import org.thingsboard.server.service.ai.transport.TbAiTransport;
+import org.thingsboard.server.service.ai.transport.TbAiTurnContext;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import reactor.core.publisher.Flux;
 
@@ -19,6 +21,7 @@ import java.util.UUID;
 class DefaultAiChatService implements AiChatService {
 
     private final TbAiService tbAiService;
+    private final TbAiTransport tbAiTransport;
 
     @Override
     public JsonNode createChat(JsonNode request, SecurityUser user) {
@@ -60,7 +63,8 @@ class DefaultAiChatService implements AiChatService {
             UUID chatId, JsonNode request, String tbAccessToken, String acceptLanguage, SecurityUser user
     ) {
         return tbAiService.processStream(chatId, (client, tokenProvider) -> {
-            return client.sendChatMessage(chatId, request, tbAccessToken, acceptLanguage, tokenProvider);
+            var context = new TbAiTurnContext(user, tbAccessToken, acceptLanguage, tokenProvider);
+            return tbAiTransport.sendChatMessage(chatId, request, context);
         }, user);
     }
 

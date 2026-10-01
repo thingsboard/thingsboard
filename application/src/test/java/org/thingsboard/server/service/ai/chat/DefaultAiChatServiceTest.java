@@ -16,6 +16,8 @@ import org.springframework.http.codec.ServerSentEvent;
 import org.thingsboard.ai.common.client.TbAiClient;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.service.ai.TbAiService;
+import org.thingsboard.server.service.ai.transport.TbAiTransport;
+import org.thingsboard.server.service.ai.transport.TbAiTurnContext;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import reactor.core.publisher.Flux;
 
@@ -41,12 +43,14 @@ class DefaultAiChatServiceTest {
     TbAiClient.TbAiResponse tbAiResponse;
     @Mock
     SecurityUser user;
+    @Mock
+    TbAiTransport tbAiTransport;
 
     DefaultAiChatService service;
 
     @BeforeEach
     void setUp() {
-        service = new DefaultAiChatService(tbAiService);
+        service = new DefaultAiChatService(tbAiService, tbAiTransport);
     }
 
     @Test
@@ -146,7 +150,7 @@ class DefaultAiChatServiceTest {
     }
 
     @Test
-    void shouldProcessStreamAndDelegateToClientWithAcceptLanguage_whenSendChatMessageWithClientContextCalled() {
+    void shouldProcessStreamAndDelegateToTransportWithTurnContext_whenSendChatMessageWithClientContextCalled() {
         // GIVEN
         UUID chatId = UUID.randomUUID();
         JsonNode request = sendMessageBody("Generate a dashboard", "DASHBOARD_LIST");
@@ -157,8 +161,8 @@ class DefaultAiChatServiceTest {
                 .data("{\"message\":\"ok\"}")
                 .build());
         given(tbAiService.processStream(eq(chatId), any(), same(user))).willReturn(expectedStream);
-        given(tbAiClient.sendChatMessage(eq(chatId), same(request), eq(tbAccessToken), eq(acceptLanguage), same(tokenProvider)))
-                .willReturn(expectedStream);
+        var expectedContext = new TbAiTurnContext(user, tbAccessToken, acceptLanguage, tokenProvider);
+        given(tbAiTransport.sendChatMessage(eq(chatId), same(request), eq(expectedContext))).willReturn(expectedStream);
 
         // WHEN
         Flux<ServerSentEvent<String>> result = service.sendChatMessage(chatId, request, tbAccessToken, acceptLanguage, user);
@@ -167,8 +171,9 @@ class DefaultAiChatServiceTest {
         assertThat(result).isSameAs(expectedStream);
 
         assertThat(captureProcessStreamCall(chatId).apply(tbAiClient, tokenProvider)).isSameAs(expectedStream);
-        then(tbAiClient).should().sendChatMessage(eq(chatId), same(request), eq(tbAccessToken), eq(acceptLanguage), same(tokenProvider));
-        then(tbAiClient).shouldHaveNoMoreInteractions();
+        then(tbAiTransport).should().sendChatMessage(eq(chatId), same(request), eq(expectedContext));
+        then(tbAiTransport).shouldHaveNoMoreInteractions();
+        then(tbAiClient).shouldHaveNoInteractions();
         then(tbAiService).shouldHaveNoMoreInteractions();
     }
 
