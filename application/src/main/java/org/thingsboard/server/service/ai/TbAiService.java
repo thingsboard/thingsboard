@@ -28,7 +28,7 @@ public interface TbAiService {
     @FunctionalInterface
     interface TbAiCall<T> {
 
-        T apply(TbAiClient client, TbAiClient.TokenProvider tokenProvider);
+        T apply(TbAiClient.TokenProvider tokenProvider);
 
     }
 

@@ -2,11 +2,16 @@
 // SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.controller;
 
+import org.thingsboard.server.service.ai.transport.TbAiTurnContext;
+import org.thingsboard.ai.common.channel.ChannelProtocol;
+import org.thingsboard.ai.common.channel.SolutionStepRequest;
+import org.thingsboard.ai.common.channel.SolutionDataRequest;
+import org.thingsboard.ai.common.channel.SolutionChatRequest;
+import org.thingsboard.ai.common.channel.SolutionOperationRequest;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
 import org.thingsboard.ai.common.client.TbAiClient;
 import org.thingsboard.ai.common.data.solution.SolutionStep;
 import org.thingsboard.common.util.JacksonUtil;
@@ -20,12 +25,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
@@ -40,7 +40,7 @@ public class AiSolutionControllerTest extends AbstractAiControllerTest {
         // GIVEN
         loginTenantAdmin();
         ObjectNode solution = solutionResponse(UUID.randomUUID(), "Energy Monitoring", false, false);
-        given(tbAiClient.startNewSolution(any(TbAiClient.TokenProvider.class))).willReturn(success(solution));
+        givenOperation(ChannelProtocol.SOLUTION_START, null, success(solution));
 
         // WHEN
         JsonNode result = readResponse(doPost("/api/ai/solution/start").andExpect(status().isOk()), JsonNode.class);
@@ -56,16 +56,15 @@ public class AiSolutionControllerTest extends AbstractAiControllerTest {
         loginTenantAdmin();
         UUID solutionId = UUID.randomUUID();
         ObjectNode solution = solutionResponse(solutionId, "Energy Monitoring", false, false);
-        given(tbAiClient.getSolution(eq(solutionId), any(TbAiClient.TokenProvider.class))).willReturn(success(solution));
+        givenOperation(ChannelProtocol.SOLUTION_GET, new SolutionOperationRequest(solutionId), success(solution));
 
         // WHEN
         JsonNode result = doGet("/api/ai/solution/" + solutionId, JsonNode.class);
 
         // THEN
         assertThat(result).isEqualTo(solution);
-        ArgumentCaptor<TbAiClient.TokenProvider> tokenProvider = ArgumentCaptor.forClass(TbAiClient.TokenProvider.class);
-        verify(tbAiClient).getSolution(eq(solutionId), tokenProvider.capture());
-        assertTokenProviderBelongsToTenantAdmin(tokenProvider.getValue());
+        TbAiTurnContext context = verifyOperation(ChannelProtocol.SOLUTION_GET, new SolutionOperationRequest(solutionId));
+        assertTokenProviderBelongsToTenantAdmin(context.tokenProvider());
     }
 
     @Test
@@ -73,14 +72,14 @@ public class AiSolutionControllerTest extends AbstractAiControllerTest {
         // GIVEN
         loginTenantAdmin();
         ArrayNode infos = solutionInfosResponse(UUID.randomUUID(), "Energy Monitoring");
-        given(tbAiClient.getSolutions(any(TbAiClient.TokenProvider.class))).willReturn(success(infos));
+        givenOperation(ChannelProtocol.SOLUTION_LIST, null, success(infos));
 
         // WHEN
         JsonNode result = doGet("/api/ai/solution/infos", JsonNode.class);
 
         // THEN
         assertThat(result).isEqualTo(infos);
-        verify(tbAiClient).getSolutions(any(TbAiClient.TokenProvider.class));
+        verifyOperation(ChannelProtocol.SOLUTION_LIST, null);
     }
 
     @Test
@@ -91,17 +90,15 @@ public class AiSolutionControllerTest extends AbstractAiControllerTest {
         SolutionStep step = SolutionStep.INITIAL_CONFIGURATION;
         String message = "Add humidity monitoring to the solution.";
         ObjectNode solution = solutionResponse(solutionId, "Energy Monitoring", false, false);
-        given(tbAiClient.sendSolutionMessage(eq(solutionId), eq(step), eq(message), any(TbAiClient.TokenProvider.class)))
-                .willReturn(success(solution));
+        givenOperation(ChannelProtocol.SOLUTION_CHAT, new SolutionChatRequest(solutionId, step, message), success(solution));
 
         // WHEN
         JsonNode result = readResponse(performChat(solutionId, step, message).andExpect(status().isOk()), JsonNode.class);
 
         // THEN
         assertThat(result).isEqualTo(solution);
-        ArgumentCaptor<TbAiClient.TokenProvider> tokenProvider = ArgumentCaptor.forClass(TbAiClient.TokenProvider.class);
-        verify(tbAiClient).sendSolutionMessage(eq(solutionId), eq(step), eq(message), tokenProvider.capture());
-        assertTokenProviderBelongsToTenantAdmin(tokenProvider.getValue());
+        TbAiTurnContext context = verifyOperation(ChannelProtocol.SOLUTION_CHAT, new SolutionChatRequest(solutionId, step, message));
+        assertTokenProviderBelongsToTenantAdmin(context.tokenProvider());
     }
 
     @Test
@@ -110,14 +107,14 @@ public class AiSolutionControllerTest extends AbstractAiControllerTest {
         loginTenantAdmin();
         UUID solutionId = UUID.randomUUID();
         ObjectNode solution = solutionResponse(solutionId, "Energy Monitoring", true, false);
-        given(tbAiClient.createSolution(eq(solutionId), any(TbAiClient.TokenProvider.class))).willReturn(success(solution));
+        givenOperation(ChannelProtocol.SOLUTION_CREATE, new SolutionOperationRequest(solutionId), success(solution));
 
         // WHEN
         JsonNode result = readResponse(doPost("/api/ai/solution/" + solutionId + "/create").andExpect(status().isOk()), JsonNode.class);
 
         // THEN
         assertThat(result).isEqualTo(solution);
-        verify(tbAiClient).createSolution(eq(solutionId), any(TbAiClient.TokenProvider.class));
+        verifyOperation(ChannelProtocol.SOLUTION_CREATE, new SolutionOperationRequest(solutionId));
     }
 
     @Test
@@ -129,15 +126,14 @@ public class AiSolutionControllerTest extends AbstractAiControllerTest {
         ObjectNode value = JacksonUtil.newObjectNode();
         value.putArray("devices").add("Thermostat");
         ObjectNode solution = solutionResponse(solutionId, "Energy Monitoring", false, false);
-        given(tbAiClient.updateData(eq(solutionId), eq(dataKey), eq(value), any(TbAiClient.TokenProvider.class)))
-                .willReturn(success(solution));
+        givenOperation(ChannelProtocol.SOLUTION_DATA_UPDATE, new SolutionDataRequest(solutionId, dataKey, value), success(solution));
 
         // WHEN
         JsonNode result = doPut("/api/ai/solution/" + solutionId + "/" + dataKey, value, JsonNode.class);
 
         // THEN
         assertThat(result).isEqualTo(solution);
-        verify(tbAiClient).updateData(eq(solutionId), eq(dataKey), eq(value), any(TbAiClient.TokenProvider.class));
+        verifyOperation(ChannelProtocol.SOLUTION_DATA_UPDATE, new SolutionDataRequest(solutionId, dataKey, value));
     }
 
     @Test
@@ -146,13 +142,13 @@ public class AiSolutionControllerTest extends AbstractAiControllerTest {
         loginTenantAdmin();
         UUID solutionId = UUID.randomUUID();
         SolutionStep step = SolutionStep.DASHBOARDS_CONFIGURATION;
-        given(tbAiClient.clearStep(eq(solutionId), eq(step), any(TbAiClient.TokenProvider.class))).willReturn(success());
+        givenOperation(ChannelProtocol.SOLUTION_STEP_CLEAR, new SolutionStepRequest(solutionId, step), success());
 
         // WHEN
         doDelete("/api/ai/solution/" + solutionId + "/" + step + "/clear").andExpect(status().isOk());
 
         // THEN
-        verify(tbAiClient).clearStep(eq(solutionId), eq(step), any(TbAiClient.TokenProvider.class));
+        verifyOperation(ChannelProtocol.SOLUTION_STEP_CLEAR, new SolutionStepRequest(solutionId, step));
     }
 
     @Test
@@ -161,17 +157,16 @@ public class AiSolutionControllerTest extends AbstractAiControllerTest {
         loginTenantAdmin();
         UUID solutionId = UUID.randomUUID();
         ObjectNode installResult = solutionInstallResultResponse(UUID.randomUUID());
-        given(tbAiClient.installSolution(eq(solutionId), eq("Bearer " + token), any(TbAiClient.TokenProvider.class)))
-                .willReturn(success(installResult));
+        givenOperation(ChannelProtocol.SOLUTION_INSTALL, new SolutionOperationRequest(solutionId), success(installResult));
 
         // WHEN
         JsonNode result = readResponse(doPost("/api/ai/solution/" + solutionId + "/install").andExpect(status().isOk()), JsonNode.class);
 
         // THEN
         assertThat(result).isEqualTo(installResult);
-        ArgumentCaptor<TbAiClient.TokenProvider> tokenProvider = ArgumentCaptor.forClass(TbAiClient.TokenProvider.class);
-        verify(tbAiClient).installSolution(eq(solutionId), eq("Bearer " + token), tokenProvider.capture());
-        assertTokenProviderBelongsToTenantAdmin(tokenProvider.getValue());
+        TbAiTurnContext context = verifyOperation(ChannelProtocol.SOLUTION_INSTALL, new SolutionOperationRequest(solutionId));
+        assertThat(context.tbAccessToken()).isEqualTo("Bearer " + token);
+        assertTokenProviderBelongsToTenantAdmin(context.tokenProvider());
     }
 
     @Test
@@ -180,15 +175,15 @@ public class AiSolutionControllerTest extends AbstractAiControllerTest {
         loginTenantAdmin();
         UUID solutionId = UUID.randomUUID();
         ObjectNode solution = solutionResponse(solutionId, "Energy Monitoring", true, false);
-        given(tbAiClient.uninstallSolution(eq(solutionId), eq("Bearer " + token), any(TbAiClient.TokenProvider.class)))
-                .willReturn(success(solution));
+        givenOperation(ChannelProtocol.SOLUTION_UNINSTALL, new SolutionOperationRequest(solutionId), success(solution));
 
         // WHEN
         JsonNode result = readResponse(doDelete("/api/ai/solution/" + solutionId + "/uninstall").andExpect(status().isOk()), JsonNode.class);
 
         // THEN
         assertThat(result).isEqualTo(solution);
-        verify(tbAiClient).uninstallSolution(eq(solutionId), eq("Bearer " + token), any(TbAiClient.TokenProvider.class));
+        TbAiTurnContext context = verifyOperation(ChannelProtocol.SOLUTION_UNINSTALL, new SolutionOperationRequest(solutionId));
+        assertThat(context.tbAccessToken()).isEqualTo("Bearer " + token);
     }
 
     @Test
@@ -196,13 +191,13 @@ public class AiSolutionControllerTest extends AbstractAiControllerTest {
         // GIVEN
         loginTenantAdmin();
         UUID solutionId = UUID.randomUUID();
-        given(tbAiClient.deleteSolution(eq(solutionId), any(TbAiClient.TokenProvider.class))).willReturn(success());
+        givenOperation(ChannelProtocol.SOLUTION_DELETE, new SolutionOperationRequest(solutionId), success());
 
         // WHEN
         doDelete("/api/ai/solution/" + solutionId).andExpect(status().isOk());
 
         // THEN
-        verify(tbAiClient).deleteSolution(eq(solutionId), any(TbAiClient.TokenProvider.class));
+        verifyOperation(ChannelProtocol.SOLUTION_DELETE, new SolutionOperationRequest(solutionId));
     }
 
     // ------------------------------------------------------------------------
@@ -221,7 +216,7 @@ public class AiSolutionControllerTest extends AbstractAiControllerTest {
                 .andExpect(statusReason(equalTo(MSG_OUT_OF_CREDITS)));
 
         // THEN
-        verifyNoInteractions(tbAiClient);
+        verifyNoAiCalls();
     }
 
     @Test
@@ -230,14 +225,14 @@ public class AiSolutionControllerTest extends AbstractAiControllerTest {
         loginTenantAdmin();
         givenAiCreditsExhausted();
         ObjectNode solution = solutionResponse(UUID.randomUUID(), "Energy Monitoring", false, false);
-        given(tbAiClient.startNewSolution(any(TbAiClient.TokenProvider.class))).willReturn(success(solution));
+        givenOperation(ChannelProtocol.SOLUTION_START, null, success(solution));
 
         // WHEN
         JsonNode result = readResponse(doPost("/api/ai/solution/start").andExpect(status().isOk()), JsonNode.class);
 
         // THEN
         assertThat(result).isEqualTo(solution);
-        verify(tbAiClient).startNewSolution(any(TbAiClient.TokenProvider.class));
+        verifyOperation(ChannelProtocol.SOLUTION_START, null);
     }
 
     // ------------------------------------------------------------------------
@@ -256,7 +251,7 @@ public class AiSolutionControllerTest extends AbstractAiControllerTest {
                 .andExpect(statusReason(equalTo(MSG_AI_DISABLED)));
 
         // THEN
-        verifyNoInteractions(tbAiClient);
+        verifyNoAiCalls();
     }
 
     @Test
@@ -265,7 +260,7 @@ public class AiSolutionControllerTest extends AbstractAiControllerTest {
         loginTenantAdmin();
         UUID solutionId = UUID.randomUUID();
         String error = "Solution service unavailable";
-        given(tbAiClient.getSolution(eq(solutionId), any(TbAiClient.TokenProvider.class))).willReturn(failure(error));
+        givenOperation(ChannelProtocol.SOLUTION_GET, new SolutionOperationRequest(solutionId), failure(error));
 
         // WHEN
         doGet("/api/ai/solution/" + solutionId)
@@ -273,7 +268,7 @@ public class AiSolutionControllerTest extends AbstractAiControllerTest {
                 .andExpect(statusReason(equalTo(error)));
 
         // THEN
-        verify(tbAiClient).getSolution(eq(solutionId), any(TbAiClient.TokenProvider.class));
+        verifyOperation(ChannelProtocol.SOLUTION_GET, new SolutionOperationRequest(solutionId));
     }
 
     // ------------------------------------------------------------------------
@@ -291,7 +286,7 @@ public class AiSolutionControllerTest extends AbstractAiControllerTest {
                 .andExpect(statusReason(equalTo(msgErrorPermission)));
 
         // THEN
-        verifyNoInteractions(tbAiClient);
+        verifyNoAiCalls();
     }
 
     @Test
@@ -305,7 +300,7 @@ public class AiSolutionControllerTest extends AbstractAiControllerTest {
                 .andExpect(statusReason(equalTo(msgErrorPermission)));
 
         // THEN
-        verifyNoInteractions(tbAiClient);
+        verifyNoAiCalls();
     }
 
     @Test
@@ -322,7 +317,7 @@ public class AiSolutionControllerTest extends AbstractAiControllerTest {
                 .andExpect(statusReason(equalTo(msgErrorPermissionWrite + AI_RESOURCE)));
 
         // THEN
-        verifyNoInteractions(tbAiClient);
+        verifyNoAiCalls();
     }
 
     @Test
@@ -339,7 +334,7 @@ public class AiSolutionControllerTest extends AbstractAiControllerTest {
                 .andExpect(statusReason(equalTo(msgErrorPermissionRead + AI_RESOURCE)));
 
         // THEN
-        verifyNoInteractions(tbAiClient);
+        verifyNoAiCalls();
     }
 
     // ------------------------------------------------------------------------
@@ -347,9 +342,8 @@ public class AiSolutionControllerTest extends AbstractAiControllerTest {
     // ------------------------------------------------------------------------
 
     private TbAiClient.TokenProvider captureStartNewTokenProvider() {
-        ArgumentCaptor<TbAiClient.TokenProvider> tokenProvider = ArgumentCaptor.forClass(TbAiClient.TokenProvider.class);
-        verify(tbAiClient).startNewSolution(tokenProvider.capture());
-        return tokenProvider.getValue();
+        TbAiTurnContext context = verifyOperation(ChannelProtocol.SOLUTION_START, null);
+        return context.tokenProvider();
     }
 
     private static ObjectNode solutionResponse(UUID solutionId, String solutionTitle, boolean built, boolean installed) {
