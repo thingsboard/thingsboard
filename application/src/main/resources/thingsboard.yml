@@ -2754,8 +2754,7 @@ ai:
     inactivity_timeout: "${TB_AI_SSE_INACTIVITY_TIMEOUT:600}"
     # Maximum number of characters of event data to include in trace logs
     log_max_data_length: "${TB_AI_SSE_LOG_MAX_DATA_LENGTH:150}"
-  # Base URL of the ThingsBoard AI service. TB opens the AI WebSocket channel (wss://<host>/api/ws/v1) and, for
-  # older AI service versions, sends HTTP requests to this URL
+  # Base URL of the ThingsBoard AI service; TB opens the AI WebSocket channel at wss://<host>/api/ws/v1
   base_url: "${TB_AI_BASE_URL:https://ai.thingsboard.cloud}"
   # Tokens this instance signs for the AI service itself (ThingsBoard Cloud). When the signing key is empty, the
   # instance uses the AI token of its subscription instead (on-premise)
@@ -2769,10 +2768,6 @@ ai:
   # WebSocket channel to the AI service: chat turns and all other AI calls run over it, and the AI service calls this
   # instance back through it, so no public base URL is needed
   channel:
-    # Use the channel; when false, or when the AI service does not support it, the HTTP and SSE path is used
-    enabled: "${TB_AI_CHANNEL_ENABLED:true}"
-    # After the channel cannot be opened, minutes to use the HTTP and SSE path before trying the channel again
-    fallback_backoff_minutes: "${TB_AI_CHANNEL_FALLBACK_BACKOFF_MINUTES:10}"
     # Channels are shared by the calls of one user on this node
     pool:
       # Maximum pooled channels on this node; when full, the least recently used idle channel is closed, or a call

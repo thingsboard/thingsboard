@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Runs a chat turn on a pooled channel and re-emits its events as SSE. A turn the channel did not start is retried
- * once on a new channel; a channel that cannot be opened makes the selector fall back to SSE.
+ * once on a new channel; a channel that cannot be opened fails the turn with "Service unavailable".
  */
 @Slf4j
 @Component
@@ -138,7 +138,6 @@ class ChannelTbAiTransport implements TbAiTransport {
                 return;
             }
             if (!frameSeen) {
-                // Nothing reached the browser yet, so the selector may still run the turn over SSE.
                 fail(new TbAiChannelUnavailableException("AI channel closed before the turn started [" + code + "] " + reason, null));
             } else if (code == ChannelProtocol.CLOSE_NORMAL) {
                 end(null);

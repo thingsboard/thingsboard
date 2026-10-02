@@ -142,42 +142,6 @@ class OnPremiseTbAiTokenProviderTest {
         assertThat(additionalInfo).containsExactlyInAnyOrderEntriesOf(expectedHeaders(localhostBaseUrl));
     }
 
-    @Test
-    void shouldThrowBadRequest_whenValidatingCallbackOriginAndResolvedOriginIsLocalhost() {
-        // GIVEN
-        OnPremiseTbAiTokenProvider providerWithoutCoreUrl = newProvider("");
-        given(systemSecurityService.getBaseUrl(user.getAuthority(), user.getTenantId(), user.getCustomerId(), null))
-                .willReturn(localhostBaseUrl);
-
-        // WHEN
-        Throwable thrown = catchThrowable(() -> providerWithoutCoreUrl.validateCallbackOrigin(user));
-
-        // THEN
-        assertThat(thrown)
-                .isInstanceOf(ThingsboardRuntimeException.class)
-                .hasMessageContaining("Please configure the base URL");
-        assertThat(((ThingsboardRuntimeException) thrown).getErrorCode())
-                .isEqualTo(ThingsboardErrorCode.BAD_REQUEST_PARAMS);
-    }
-
-    @Test
-    void shouldAcceptCallbackOrigin_whenResolvedOriginIsPublic() {
-        // GIVEN
-        OnPremiseTbAiTokenProvider providerWithoutCoreUrl = newProvider("");
-        given(systemSecurityService.getBaseUrl(user.getAuthority(), user.getTenantId(), user.getCustomerId(), null))
-                .willReturn(resolvedBaseUrl);
-
-        // WHEN-THEN
-        providerWithoutCoreUrl.validateCallbackOrigin(user);
-    }
-
-    @Test
-    void shouldAcceptCallbackOrigin_whenCoreBaseUrlIsSet() {
-        // WHEN-THEN
-        provider.validateCallbackOrigin(user);
-        then(systemSecurityService).shouldHaveNoInteractions();
-    }
-
     // ---------------------------------------------------------------------------------------------
     // Id-based access (background housekeeper deletion tasks)
     // ---------------------------------------------------------------------------------------------

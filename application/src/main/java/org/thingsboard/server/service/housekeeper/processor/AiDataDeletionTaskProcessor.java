@@ -21,7 +21,6 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public abstract class AiDataDeletionTaskProcessor extends HousekeeperTaskProcessor<HousekeeperTask> {
 
-    protected final TbAiClient tbAiClient;
     private final Optional<TbAiTokenProvider> tokenProvider;
     private final TbAiOperations operations;
     private final TbAiClientRequestFactory clientRequestFactory;
@@ -37,7 +36,7 @@ public abstract class AiDataDeletionTaskProcessor extends HousekeeperTaskProcess
         UserId userId = new UserId(task.getEntityId().getId());
         TbAiClient.TokenProvider scopedTokenProvider = TbAiTokenProviderFactory.idScoped(tokenProvider, task.getTenantId(), userId);
         TbAiResponse response = operations.execute(
-                new TbAiOperation(operationType(), null, () -> deleteData(scopedTokenProvider)),
+                new TbAiOperation(operationType(), null),
                 TbAiTurnContext.background(task.getTenantId(), userId, scopedTokenProvider, clientRequestFactory.forTenant(task.getTenantId())));
         if (!response.isSuccess()) {
             throw new RuntimeException(response.getError());
@@ -45,7 +44,5 @@ public abstract class AiDataDeletionTaskProcessor extends HousekeeperTaskProcess
     }
 
     protected abstract String operationType();
-
-    protected abstract TbAiResponse deleteData(TbAiClient.TokenProvider tokenProvider);
 
 }

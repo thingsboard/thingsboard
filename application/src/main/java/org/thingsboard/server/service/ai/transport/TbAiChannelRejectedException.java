@@ -3,7 +3,7 @@
 package org.thingsboard.server.service.ai.transport;
 
 /**
- * TB AI refused the channel handshake with 401 or 403: an error for the user, not a reason to fall back to HTTP.
+ * TB AI refused the channel handshake with 401 or 403; the reason phrase is shown to the user.
  */
 public class TbAiChannelRejectedException extends RuntimeException {
 

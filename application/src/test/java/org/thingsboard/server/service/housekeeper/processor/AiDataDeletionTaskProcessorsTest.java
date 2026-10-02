@@ -9,7 +9,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.ai.common.channel.ChannelProtocol;
-import org.thingsboard.ai.common.client.TbAiClient;
 import org.thingsboard.ai.common.client.TbAiClient.TbAiResponse;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTask;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTaskType;
@@ -37,8 +36,6 @@ import static org.mockito.Mockito.lenient;
 class AiDataDeletionTaskProcessorsTest {
 
     @Mock
-    TbAiClient tbAiClient;
-    @Mock
     TbAiTokenProvider tokenProvider;
     @Mock
     TbAiOperations operations;
@@ -55,11 +52,11 @@ class AiDataDeletionTaskProcessorsTest {
     void setUp() {
         tenantId = TenantId.fromUUID(UUID.randomUUID());
         userId = new UserId(UUID.randomUUID());
-        userDataProcessor = new AiUserDataDeletionTaskProcessor(tbAiClient, Optional.of(tokenProvider), operations, clientRequestFactory);
-        tenantDataProcessor = new AiTenantDataDeletionTaskProcessor(tbAiClient, Optional.of(tokenProvider), operations, clientRequestFactory);
+        userDataProcessor = new AiUserDataDeletionTaskProcessor(Optional.of(tokenProvider), operations, clientRequestFactory);
+        tenantDataProcessor = new AiTenantDataDeletionTaskProcessor(Optional.of(tokenProvider), operations, clientRequestFactory);
         lenient().when(clientRequestFactory.forTenant(any())).thenReturn(TbAiClientRequest.withDefaultOrigin("https://tb.example.com"));
         lenient().when(operations.execute(any(TbAiOperation.class), any(TbAiTurnContext.class)))
-                .thenAnswer(invocation -> invocation.<TbAiOperation>getArgument(0).httpCall().get());
+                .thenReturn(TbAiResponse.builder().success(true).build());
     }
 
     @Test
@@ -71,7 +68,6 @@ class AiDataDeletionTaskProcessorsTest {
     @Test
     void shouldCallUserDataDeletionWithIdScopedToken_whenProcessingUserDataTask() throws Exception {
         // GIVEN
-        given(tbAiClient.deleteUserData(any())).willReturn(TbAiResponse.builder().success(true).build());
         given(tokenProvider.isTokenAvailable()).willReturn(true);
         given(tokenProvider.getToken(tenantId, userId)).willReturn("id-scoped-token");
         given(tokenProvider.getAdditionalInfo(tenantId, userId)).willReturn(Map.of("X-User-Id", userId.toString()));
@@ -79,14 +75,12 @@ class AiDataDeletionTaskProcessorsTest {
         // WHEN
         userDataProcessor.process(HousekeeperTask.deleteAiUserData(tenantId, userId));
 
-        // THEN — the client is called once with a token provider that resolves identity from the task's raw ids.
-        ArgumentCaptor<TbAiClient.TokenProvider> captor = ArgumentCaptor.forClass(TbAiClient.TokenProvider.class);
-        then(tbAiClient).should().deleteUserData(captor.capture());
-        assertThat(captor.getValue().getToken()).isEqualTo("id-scoped-token");
-        assertThat(captor.getValue().getAdditionalInfo()).isEqualTo(Map.of("X-User-Id", userId.toString()));
+        // THEN — one background operation, with a token provider that resolves identity from the task's raw ids.
         ArgumentCaptor<TbAiOperation> operation = ArgumentCaptor.forClass(TbAiOperation.class);
         ArgumentCaptor<TbAiTurnContext> context = ArgumentCaptor.forClass(TbAiTurnContext.class);
         then(operations).should().execute(operation.capture(), context.capture());
+        assertThat(context.getValue().tokenProvider().getToken()).isEqualTo("id-scoped-token");
+        assertThat(context.getValue().tokenProvider().getAdditionalInfo()).isEqualTo(Map.of("X-User-Id", userId.toString()));
         assertThat(operation.getValue().type()).isEqualTo(ChannelProtocol.USER_DATA_DELETE);
         assertThat(context.getValue().isBackground()).isTrue();
         assertThat(context.getValue().tenantId()).isEqualTo(tenantId);
@@ -97,7 +91,6 @@ class AiDataDeletionTaskProcessorsTest {
     @Test
     void shouldCallTenantDataDeletionWithIdScopedToken_whenProcessingTenantDataTask() throws Exception {
         // GIVEN — for a tenant task the tenant id doubles as the token's user identity.
-        given(tbAiClient.deleteTenantData(any())).willReturn(TbAiResponse.builder().success(true).build());
         given(tokenProvider.isTokenAvailable()).willReturn(true);
         given(tokenProvider.getToken(tenantId, new UserId(tenantId.getId()))).willReturn("id-scoped-token");
 
@@ -105,16 +98,18 @@ class AiDataDeletionTaskProcessorsTest {
         tenantDataProcessor.process(HousekeeperTask.deleteAiTenantData(tenantId));
 
         // THEN
-        ArgumentCaptor<TbAiClient.TokenProvider> captor = ArgumentCaptor.forClass(TbAiClient.TokenProvider.class);
-        then(tbAiClient).should().deleteTenantData(captor.capture());
-        assertThat(captor.getValue().getToken()).isEqualTo("id-scoped-token");
+        ArgumentCaptor<TbAiOperation> operation = ArgumentCaptor.forClass(TbAiOperation.class);
+        ArgumentCaptor<TbAiTurnContext> context = ArgumentCaptor.forClass(TbAiTurnContext.class);
+        then(operations).should().execute(operation.capture(), context.capture());
+        assertThat(operation.getValue().type()).isEqualTo(ChannelProtocol.TENANT_DATA_DELETE);
+        assertThat(context.getValue().tokenProvider().getToken()).isEqualTo("id-scoped-token");
     }
 
     @Test
     void shouldThrow_whenAiServiceReportsFailure() {
         // GIVEN
         given(tokenProvider.isTokenAvailable()).willReturn(true);
-        given(tbAiClient.deleteUserData(any()))
+        given(operations.execute(any(TbAiOperation.class), any(TbAiTurnContext.class)))
                 .willReturn(TbAiResponse.builder().success(false).error("Service unavailable").build());
 
         // WHEN
@@ -134,14 +129,14 @@ class AiDataDeletionTaskProcessorsTest {
         tenantDataProcessor.process(HousekeeperTask.deleteAiTenantData(tenantId));
 
         // THEN
-        then(tbAiClient).shouldHaveNoInteractions();
+        then(operations).shouldHaveNoInteractions();
     }
 
     @Test
     void shouldThrowWithoutCallingAiService_whenNoTokenProviderIsConfigured() {
         // GIVEN
-        userDataProcessor = new AiUserDataDeletionTaskProcessor(tbAiClient, Optional.empty(), operations, clientRequestFactory);
-        tenantDataProcessor = new AiTenantDataDeletionTaskProcessor(tbAiClient, Optional.empty(), operations, clientRequestFactory);
+        userDataProcessor = new AiUserDataDeletionTaskProcessor(Optional.empty(), operations, clientRequestFactory);
+        tenantDataProcessor = new AiTenantDataDeletionTaskProcessor(Optional.empty(), operations, clientRequestFactory);
 
         // WHEN
         Throwable userTaskThrown = catchThrowable(() -> userDataProcessor.process(HousekeeperTask.deleteAiUserData(tenantId, userId)));
@@ -150,7 +145,7 @@ class AiDataDeletionTaskProcessorsTest {
         // THEN — a missing provider is a misconfiguration, not a no-op: fail so Housekeeper reprocessing kicks in.
         assertThat(userTaskThrown).isInstanceOf(IllegalStateException.class).hasMessage("AI token provider is not configured");
         assertThat(tenantTaskThrown).isInstanceOf(IllegalStateException.class).hasMessage("AI token provider is not configured");
-        then(tbAiClient).shouldHaveNoInteractions();
+        then(operations).shouldHaveNoInteractions();
     }
 
 }

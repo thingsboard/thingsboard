@@ -31,37 +31,32 @@ class DefaultAiChatService implements AiChatService {
 
     @Override
     public JsonNode createChat(JsonNode request, SecurityUser user) {
-        return tbAiService.process((client, tokenProvider) -> operations.execute(
-                new TbAiOperation(ChannelProtocol.CHAT_CREATE, new ChatOperationRequest(null, request),
-                        () -> client.createChat(request, tokenProvider)), user, tokenProvider), user, false);
+        return tbAiService.process(tokenProvider -> operations.execute(
+                new TbAiOperation(ChannelProtocol.CHAT_CREATE, new ChatOperationRequest(null, request)), user, tokenProvider), user, false);
     }
 
     @Override
     public void updateChat(UUID chatId, JsonNode request, SecurityUser user) {
-        tbAiService.process((client, tokenProvider) -> operations.execute(
-                new TbAiOperation(ChannelProtocol.CHAT_UPDATE, new ChatOperationRequest(chatId, request),
-                        () -> client.updateChat(chatId, request, tokenProvider)), user, tokenProvider), user, false);
+        tbAiService.process(tokenProvider -> operations.execute(
+                new TbAiOperation(ChannelProtocol.CHAT_UPDATE, new ChatOperationRequest(chatId, request)), user, tokenProvider), user, false);
     }
 
     @Override
     public JsonNode listChats(SecurityUser user) {
-        return tbAiService.process((client, tokenProvider) -> operations.execute(
-                new TbAiOperation(ChannelProtocol.CHAT_LIST, null,
-                        () -> client.listChats(tokenProvider)), user, tokenProvider), user, false);
+        return tbAiService.process(tokenProvider -> operations.execute(
+                new TbAiOperation(ChannelProtocol.CHAT_LIST, null), user, tokenProvider), user, false);
     }
 
     @Override
     public JsonNode getChatMessages(UUID chatId, SecurityUser user) {
-        return tbAiService.process((client, tokenProvider) -> operations.execute(
-                new TbAiOperation(ChannelProtocol.CHAT_MESSAGES, new ChatOperationRequest(chatId, null),
-                        () -> client.getChatMessages(chatId, tokenProvider)), user, tokenProvider), user, false);
+        return tbAiService.process(tokenProvider -> operations.execute(
+                new TbAiOperation(ChannelProtocol.CHAT_MESSAGES, new ChatOperationRequest(chatId, null)), user, tokenProvider), user, false);
     }
 
     @Override
     public void deleteChat(UUID chatId, SecurityUser user) {
-        tbAiService.process((client, tokenProvider) -> operations.execute(
-                new TbAiOperation(ChannelProtocol.CHAT_DELETE, new ChatOperationRequest(chatId, null),
-                        () -> client.deleteChat(chatId, tokenProvider)), user, tokenProvider), user, false);
+        tbAiService.process(tokenProvider -> operations.execute(
+                new TbAiOperation(ChannelProtocol.CHAT_DELETE, new ChatOperationRequest(chatId, null)), user, tokenProvider), user, false);
     }
 
     @Override
@@ -69,7 +64,7 @@ class DefaultAiChatService implements AiChatService {
             UUID chatId, JsonNode request, String tbAccessToken, String acceptLanguage, TbAiClientRequest clientRequest,
             SecurityUser user
     ) {
-        return tbAiService.processStream(chatId, (client, tokenProvider) -> {
+        return tbAiService.processStream(chatId, tokenProvider -> {
             var context = new TbAiTurnContext(user, tbAccessToken, acceptLanguage, tokenProvider, clientRequest);
             return tbAiTransport.sendChatMessage(chatId, request, context);
         }, user);

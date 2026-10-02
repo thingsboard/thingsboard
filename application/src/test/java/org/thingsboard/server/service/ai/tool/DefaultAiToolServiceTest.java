@@ -41,8 +41,6 @@ class DefaultAiToolServiceTest {
     @Mock
     TbAiService tbAiService;
     @Mock
-    TbAiClient tbAiClient;
-    @Mock
     TbAiClient.TokenProvider tokenProvider;
     @Mock
     TbAiClient.TbAiResponse tbAiResponse;
@@ -66,9 +64,7 @@ class DefaultAiToolServiceTest {
         JsonNode decision = toolApprovalDecision(UUID.randomUUID(), true);
         JsonNode expectedResponse = TextNode.valueOf("APPROVED");
         given(tbAiService.process(any(), same(user), eq(false))).willReturn(expectedResponse);
-        given(tbAiClient.resolveToolApproval(same(decision), same(tokenProvider))).willReturn(tbAiResponse);
-        given(operations.execute(any(TbAiOperation.class), same(user), same(tokenProvider)))
-                .willAnswer(invocation -> invocation.<TbAiOperation>getArgument(0).httpCall().get());
+        given(operations.execute(any(TbAiOperation.class), same(user), same(tokenProvider))).willReturn(tbAiResponse);
 
         // WHEN
         JsonNode result = service.resolveToolApproval(decision, user);
@@ -76,9 +72,7 @@ class DefaultAiToolServiceTest {
         // THEN
         assertThat(result).isSameAs(expectedResponse);
 
-        assertThat(captureProcessCall().apply(tbAiClient, tokenProvider)).isSameAs(tbAiResponse);
-        then(tbAiClient).should().resolveToolApproval(same(decision), same(tokenProvider));
-        then(tbAiClient).shouldHaveNoMoreInteractions();
+        assertThat(captureProcessCall().apply(tokenProvider)).isSameAs(tbAiResponse);
         then(operations).should().execute(argThat(operation -> ChannelProtocol.TOOL_APPROVAL_RESOLVE.equals(operation.type())
                 && operation.payload() == decision), same(user), same(tokenProvider));
         then(tbAiService).shouldHaveNoMoreInteractions();

@@ -49,8 +49,6 @@ class DefaultAiSolutionServiceTest {
     @Mock
     TbAiService tbAiService;
     @Mock
-    TbAiClient tbAiClient;
-    @Mock
     TbAiClient.TokenProvider tokenProvider;
     @Mock
     TbAiClient.TbAiResponse tbAiResponse;
@@ -67,7 +65,7 @@ class DefaultAiSolutionServiceTest {
     void setUp() {
         service = new DefaultAiSolutionService(tbAiService, operations);
         lenient().when(operations.execute(any(TbAiOperation.class), any(SecurityUser.class), any(TbAiClient.TokenProvider.class)))
-                .thenAnswer(invocation -> invocation.<TbAiOperation>getArgument(0).httpCall().get());
+                .thenReturn(tbAiResponse);
     }
 
     @Test
@@ -75,7 +73,6 @@ class DefaultAiSolutionServiceTest {
         // GIVEN
         JsonNode expectedResponse = solutionResponse(UUID.randomUUID(), "Energy Monitoring", false, false);
         given(tbAiService.process(any(), same(user), eq(false))).willReturn(expectedResponse);
-        given(tbAiClient.startNewSolution(same(tokenProvider))).willReturn(tbAiResponse);
 
         // WHEN
         JsonNode result = service.startNew(user);
@@ -83,11 +80,9 @@ class DefaultAiSolutionServiceTest {
         // THEN
         assertThat(result).isSameAs(expectedResponse);
 
-        assertThat(captureProcessCallWithoutCreditCheck().apply(tbAiClient, tokenProvider)).isSameAs(tbAiResponse);
-        then(tbAiClient).should().startNewSolution(same(tokenProvider));
+        assertThat(captureProcessCallWithoutCreditCheck().apply(tokenProvider)).isSameAs(tbAiResponse);
         then(operations).should().execute(argThat(operation -> ChannelProtocol.SOLUTION_START.equals(operation.type())
                 && Objects.equals(null, operation.payload())), same(user), same(tokenProvider));
-        then(tbAiClient).shouldHaveNoMoreInteractions();
         then(tbAiService).shouldHaveNoMoreInteractions();
     }
 
@@ -97,7 +92,6 @@ class DefaultAiSolutionServiceTest {
         UUID solutionId = UUID.randomUUID();
         JsonNode expectedResponse = solutionResponse(solutionId, "Energy Monitoring", false, false);
         given(tbAiService.process(any(), same(user), eq(false))).willReturn(expectedResponse);
-        given(tbAiClient.getSolution(eq(solutionId), same(tokenProvider))).willReturn(tbAiResponse);
 
         // WHEN
         JsonNode result = service.getSolution(solutionId, user);
@@ -105,11 +99,9 @@ class DefaultAiSolutionServiceTest {
         // THEN
         assertThat(result).isSameAs(expectedResponse);
 
-        assertThat(captureProcessCallWithoutCreditCheck().apply(tbAiClient, tokenProvider)).isSameAs(tbAiResponse);
-        then(tbAiClient).should().getSolution(eq(solutionId), same(tokenProvider));
+        assertThat(captureProcessCallWithoutCreditCheck().apply(tokenProvider)).isSameAs(tbAiResponse);
         then(operations).should().execute(argThat(operation -> ChannelProtocol.SOLUTION_GET.equals(operation.type())
                 && Objects.equals(new SolutionOperationRequest(solutionId), operation.payload())), same(user), same(tokenProvider));
-        then(tbAiClient).shouldHaveNoMoreInteractions();
         then(tbAiService).shouldHaveNoMoreInteractions();
     }
 
@@ -118,7 +110,6 @@ class DefaultAiSolutionServiceTest {
         // GIVEN
         JsonNode expectedResponse = solutionInfosResponse(UUID.randomUUID(), "Energy Monitoring");
         given(tbAiService.process(any(), same(user), eq(false))).willReturn(expectedResponse);
-        given(tbAiClient.getSolutions(same(tokenProvider))).willReturn(tbAiResponse);
 
         // WHEN
         JsonNode result = service.getSolutions(user);
@@ -126,11 +117,9 @@ class DefaultAiSolutionServiceTest {
         // THEN
         assertThat(result).isSameAs(expectedResponse);
 
-        assertThat(captureProcessCallWithoutCreditCheck().apply(tbAiClient, tokenProvider)).isSameAs(tbAiResponse);
-        then(tbAiClient).should().getSolutions(same(tokenProvider));
+        assertThat(captureProcessCallWithoutCreditCheck().apply(tokenProvider)).isSameAs(tbAiResponse);
         then(operations).should().execute(argThat(operation -> ChannelProtocol.SOLUTION_LIST.equals(operation.type())
                 && Objects.equals(null, operation.payload())), same(user), same(tokenProvider));
-        then(tbAiClient).shouldHaveNoMoreInteractions();
         then(tbAiService).shouldHaveNoMoreInteractions();
     }
 
@@ -142,8 +131,6 @@ class DefaultAiSolutionServiceTest {
         String message = "Add humidity monitoring to the solution.";
         JsonNode expectedResponse = solutionResponse(solutionId, "Energy Monitoring", false, false);
         given(tbAiService.process(any(), same(user))).willReturn(expectedResponse);
-        given(tbAiClient.sendSolutionMessage(eq(solutionId), eq(step), eq(message), same(tokenProvider)))
-                .willReturn(tbAiResponse);
 
         // WHEN
         JsonNode result = service.chat(solutionId, step, message, user);
@@ -151,11 +138,9 @@ class DefaultAiSolutionServiceTest {
         // THEN
         assertThat(result).isSameAs(expectedResponse);
 
-        assertThat(captureProcessCallWithCreditCheck().apply(tbAiClient, tokenProvider)).isSameAs(tbAiResponse);
-        then(tbAiClient).should().sendSolutionMessage(eq(solutionId), eq(step), eq(message), same(tokenProvider));
+        assertThat(captureProcessCallWithCreditCheck().apply(tokenProvider)).isSameAs(tbAiResponse);
         then(operations).should().execute(argThat(operation -> ChannelProtocol.SOLUTION_CHAT.equals(operation.type())
                 && Objects.equals(new SolutionChatRequest(solutionId, step, message), operation.payload())), same(user), same(tokenProvider));
-        then(tbAiClient).shouldHaveNoMoreInteractions();
         then(tbAiService).shouldHaveNoMoreInteractions();
     }
 
@@ -165,7 +150,6 @@ class DefaultAiSolutionServiceTest {
         UUID solutionId = UUID.randomUUID();
         JsonNode expectedResponse = solutionResponse(solutionId, "Energy Monitoring", true, false);
         given(tbAiService.process(any(), same(user))).willReturn(expectedResponse);
-        given(tbAiClient.createSolution(eq(solutionId), same(tokenProvider))).willReturn(tbAiResponse);
 
         // WHEN
         JsonNode result = service.createSolution(solutionId, user);
@@ -173,11 +157,9 @@ class DefaultAiSolutionServiceTest {
         // THEN
         assertThat(result).isSameAs(expectedResponse);
 
-        assertThat(captureProcessCallWithCreditCheck().apply(tbAiClient, tokenProvider)).isSameAs(tbAiResponse);
-        then(tbAiClient).should().createSolution(eq(solutionId), same(tokenProvider));
+        assertThat(captureProcessCallWithCreditCheck().apply(tokenProvider)).isSameAs(tbAiResponse);
         then(operations).should().execute(argThat(operation -> ChannelProtocol.SOLUTION_CREATE.equals(operation.type())
                 && Objects.equals(new SolutionOperationRequest(solutionId), operation.payload())), same(user), same(tokenProvider));
-        then(tbAiClient).shouldHaveNoMoreInteractions();
         then(tbAiService).shouldHaveNoMoreInteractions();
     }
 
@@ -189,7 +171,6 @@ class DefaultAiSolutionServiceTest {
         JsonNode value = TextNode.valueOf("Energy Monitoring");
         JsonNode expectedResponse = solutionResponse(solutionId, "Energy Monitoring", false, false);
         given(tbAiService.process(any(), same(user))).willReturn(expectedResponse);
-        given(tbAiClient.updateData(eq(solutionId), eq(dataKey), same(value), same(tokenProvider))).willReturn(tbAiResponse);
 
         // WHEN
         JsonNode result = service.updateData(solutionId, dataKey, value, user);
@@ -197,11 +178,9 @@ class DefaultAiSolutionServiceTest {
         // THEN
         assertThat(result).isSameAs(expectedResponse);
 
-        assertThat(captureProcessCallWithCreditCheck().apply(tbAiClient, tokenProvider)).isSameAs(tbAiResponse);
-        then(tbAiClient).should().updateData(eq(solutionId), eq(dataKey), same(value), same(tokenProvider));
+        assertThat(captureProcessCallWithCreditCheck().apply(tokenProvider)).isSameAs(tbAiResponse);
         then(operations).should().execute(argThat(operation -> ChannelProtocol.SOLUTION_DATA_UPDATE.equals(operation.type())
                 && Objects.equals(new SolutionDataRequest(solutionId, dataKey, value), operation.payload())), same(user), same(tokenProvider));
-        then(tbAiClient).shouldHaveNoMoreInteractions();
         then(tbAiService).shouldHaveNoMoreInteractions();
     }
 
@@ -211,18 +190,14 @@ class DefaultAiSolutionServiceTest {
         // GIVEN
         UUID solutionId = UUID.randomUUID();
         given(tbAiService.process(any(), same(user), eq(false))).willReturn(null);
-        given(tbAiClient.clearStep(eq(solutionId), eq(step), same(tokenProvider)))
-                .willReturn(tbAiResponse);
 
         // WHEN
         service.clearStep(solutionId, step, user);
 
         // THEN
-        assertThat(captureProcessCallWithoutCreditCheck().apply(tbAiClient, tokenProvider)).isSameAs(tbAiResponse);
-        then(tbAiClient).should().clearStep(eq(solutionId), eq(step), same(tokenProvider));
+        assertThat(captureProcessCallWithoutCreditCheck().apply(tokenProvider)).isSameAs(tbAiResponse);
         then(operations).should().execute(argThat(operation -> ChannelProtocol.SOLUTION_STEP_CLEAR.equals(operation.type())
                 && Objects.equals(new SolutionStepRequest(solutionId, step), operation.payload())), same(user), same(tokenProvider));
-        then(tbAiClient).shouldHaveNoMoreInteractions();
         then(tbAiService).shouldHaveNoMoreInteractions();
     }
 
@@ -233,8 +208,7 @@ class DefaultAiSolutionServiceTest {
         String tbAccessToken = "tb-access-token";
         JsonNode expectedResponse = solutionInstallResultResponse(UUID.randomUUID());
         given(tbAiService.process(any(), same(user), eq(false))).willReturn(expectedResponse);
-        given(tbAiClient.installSolution(eq(solutionId), eq(tbAccessToken), same(tokenProvider))).willReturn(tbAiResponse);
-        stubOperationsWithHttpCall();
+        stubOperations();
 
         // WHEN
         JsonNode result = service.installSolution(solutionId, tbAccessToken, clientRequest, user);
@@ -242,8 +216,7 @@ class DefaultAiSolutionServiceTest {
         // THEN
         assertThat(result).isSameAs(expectedResponse);
 
-        assertThat(captureProcessCallWithoutCreditCheck().apply(tbAiClient, tokenProvider)).isSameAs(tbAiResponse);
-        then(tbAiClient).should().installSolution(eq(solutionId), eq(tbAccessToken), same(tokenProvider));
+        assertThat(captureProcessCallWithoutCreditCheck().apply(tokenProvider)).isSameAs(tbAiResponse);
         TbAiTurnContext[] context = new TbAiTurnContext[1];
         TbAiOperation operation = captureOperation(context);
         assertThat(operation.type()).isEqualTo(ChannelProtocol.SOLUTION_INSTALL);
@@ -251,7 +224,6 @@ class DefaultAiSolutionServiceTest {
         assertThat(context[0].clientRequest()).isSameAs(clientRequest);
         assertThat(context[0].tbAccessToken()).isEqualTo(tbAccessToken);
         assertThat(context[0].tokenProvider()).isSameAs(tokenProvider);
-        then(tbAiClient).shouldHaveNoMoreInteractions();
         then(tbAiService).shouldHaveNoMoreInteractions();
     }
 
@@ -262,8 +234,7 @@ class DefaultAiSolutionServiceTest {
         String tbAccessToken = "tb-access-token";
         JsonNode expectedResponse = solutionResponse(solutionId, "Energy Monitoring", true, false);
         given(tbAiService.process(any(), same(user), eq(false))).willReturn(expectedResponse);
-        given(tbAiClient.uninstallSolution(eq(solutionId), eq(tbAccessToken), same(tokenProvider))).willReturn(tbAiResponse);
-        stubOperationsWithHttpCall();
+        stubOperations();
 
         // WHEN
         JsonNode result = service.uninstallSolution(solutionId, tbAccessToken, clientRequest, user);
@@ -271,8 +242,7 @@ class DefaultAiSolutionServiceTest {
         // THEN
         assertThat(result).isSameAs(expectedResponse);
 
-        assertThat(captureProcessCallWithoutCreditCheck().apply(tbAiClient, tokenProvider)).isSameAs(tbAiResponse);
-        then(tbAiClient).should().uninstallSolution(eq(solutionId), eq(tbAccessToken), same(tokenProvider));
+        assertThat(captureProcessCallWithoutCreditCheck().apply(tokenProvider)).isSameAs(tbAiResponse);
         TbAiTurnContext[] context = new TbAiTurnContext[1];
         TbAiOperation operation = captureOperation(context);
         assertThat(operation.type()).isEqualTo(ChannelProtocol.SOLUTION_UNINSTALL);
@@ -280,7 +250,6 @@ class DefaultAiSolutionServiceTest {
         assertThat(context[0].clientRequest()).isSameAs(clientRequest);
         assertThat(context[0].tbAccessToken()).isEqualTo(tbAccessToken);
         assertThat(context[0].tokenProvider()).isSameAs(tokenProvider);
-        then(tbAiClient).shouldHaveNoMoreInteractions();
         then(tbAiService).shouldHaveNoMoreInteractions();
     }
 
@@ -289,17 +258,14 @@ class DefaultAiSolutionServiceTest {
         // GIVEN
         UUID solutionId = UUID.randomUUID();
         given(tbAiService.process(any(), same(user), eq(false))).willReturn(null);
-        given(tbAiClient.deleteSolution(eq(solutionId), same(tokenProvider))).willReturn(tbAiResponse);
 
         // WHEN
         service.deleteSolution(solutionId, user);
 
         // THEN
-        assertThat(captureProcessCallWithoutCreditCheck().apply(tbAiClient, tokenProvider)).isSameAs(tbAiResponse);
-        then(tbAiClient).should().deleteSolution(eq(solutionId), same(tokenProvider));
+        assertThat(captureProcessCallWithoutCreditCheck().apply(tokenProvider)).isSameAs(tbAiResponse);
         then(operations).should().execute(argThat(operation -> ChannelProtocol.SOLUTION_DELETE.equals(operation.type())
                 && Objects.equals(new SolutionOperationRequest(solutionId), operation.payload())), same(user), same(tokenProvider));
-        then(tbAiClient).shouldHaveNoMoreInteractions();
         then(tbAiService).shouldHaveNoMoreInteractions();
     }
 
@@ -317,8 +283,8 @@ class DefaultAiSolutionServiceTest {
         return callCaptor.getValue();
     }
 
-    private void stubOperationsWithHttpCall() {
-        given(operations.execute(any(), any())).willAnswer(invocation -> invocation.<TbAiOperation>getArgument(0).httpCall().get());
+    private void stubOperations() {
+        given(operations.execute(any(), any())).willReturn(tbAiResponse);
     }
 
     private TbAiOperation captureOperation(TbAiTurnContext[] context) {

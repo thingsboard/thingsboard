@@ -18,7 +18,6 @@ import org.thingsboard.server.service.install.ProjectInfo;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 
-import java.net.URI;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -53,12 +52,6 @@ class OnPremiseTbAiTokenProvider implements TbAiTokenProvider {
         return additionalInfo(user.getUuidId(), user.getTenantId(), resolveOrigin(user));
     }
 
-    @Override
-    public void validateCallbackOrigin(SecurityUser user) {
-        if ("localhost".equals(URI.create(resolveOrigin(user)).getHost())) {
-            throw new ThingsboardRuntimeException("Please configure the base URL under Login white labeling or General settings at the sysadmin level", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
-        }
-    }
 
     @Override
     public boolean isTokenAvailable() {

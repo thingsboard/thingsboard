@@ -38,8 +38,7 @@ class ChannelTbAiOperationsTest {
     UUID solutionId = UUID.randomUUID();
     TbAiRequestExecutor requestExecutor = mock(TbAiRequestExecutor.class);
     TbAiTurnContext context = TbAiChannelPoolTest.context(TbAiChannelPoolTest.user(), "https://tb.example.com", true);
-    TbAiOperation install = new TbAiOperation(ChannelProtocol.SOLUTION_INSTALL, new SolutionOperationRequest(solutionId),
-            () -> { throw new AssertionError("HTTP must not be used"); });
+    TbAiOperation install = new TbAiOperation(ChannelProtocol.SOLUTION_INSTALL, new SolutionOperationRequest(solutionId));
     FakeTbAiServer server;
     TbAiChannelPool pool;
     int maxConnections = 10;
@@ -99,7 +98,7 @@ class ChannelTbAiOperationsTest {
             });
         });
         ChannelTbAiOperations operations = operations();
-        TbAiOperation list = new TbAiOperation(ChannelProtocol.CHAT_LIST, null, null);
+        TbAiOperation list = new TbAiOperation(ChannelProtocol.CHAT_LIST, null);
 
         // WHEN
         CompletableFuture<TbAiResponse> first = CompletableFuture.supplyAsync(() -> operations.execute(list, context));
@@ -118,7 +117,7 @@ class ChannelTbAiOperationsTest {
         server = FakeTbAiServer.start(MUX, (connection, frame) -> CompletableFuture.runAsync(() ->
                 connection.result(frame, new OperationResult(200, JacksonUtil.toJsonNode("[]"), 0))));
         ChannelTbAiOperations operations = operations();
-        TbAiOperation list = new TbAiOperation(ChannelProtocol.CHAT_LIST, null, null);
+        TbAiOperation list = new TbAiOperation(ChannelProtocol.CHAT_LIST, null);
         List<TbAiTurnContext> users = java.util.stream.IntStream.range(0, 50)
                 .mapToObj(i -> TbAiChannelPoolTest.context(TbAiChannelPoolTest.user(), "https://tb.example.com", false))
                 .toList();
@@ -144,7 +143,7 @@ class ChannelTbAiOperationsTest {
         server = FakeTbAiServer.start(MUX, (connection, frame) -> CompletableFuture.runAsync(() ->
                 connection.result(frame, new OperationResult(200, JacksonUtil.toJsonNode("[]"), 0))));
         ChannelTbAiOperations operations = operations();
-        TbAiOperation list = new TbAiOperation(ChannelProtocol.CHAT_LIST, null, null);
+        TbAiOperation list = new TbAiOperation(ChannelProtocol.CHAT_LIST, null);
         var executor = java.util.concurrent.Executors.newVirtualThreadPerTaskExecutor();
 
         // WHEN
@@ -173,7 +172,7 @@ class ChannelTbAiOperationsTest {
         });
 
         // WHEN
-        TbAiResponse response = operations().execute(new TbAiOperation(ChannelProtocol.CHAT_LIST, null, null), context);
+        TbAiResponse response = operations().execute(new TbAiOperation(ChannelProtocol.CHAT_LIST, null), context);
 
         // THEN
         assertThat(response.isSuccess()).isTrue();
@@ -252,7 +251,7 @@ class ChannelTbAiOperationsTest {
                 ChannelProtocol.CAPABILITY_MUX), (connection, frame) -> {});
 
         // WHEN-THEN
-        assertThatThrownBy(() -> operations().execute(new TbAiOperation(ChannelProtocol.CHAT_LIST, null, null), context))
+        assertThatThrownBy(() -> operations().execute(new TbAiOperation(ChannelProtocol.CHAT_LIST, null), context))
                 .isInstanceOf(TbAiOperationsUnsupportedException.class);
         assertThat(server.received(ChannelProtocol.CHAT_LIST)).isEmpty();
     }

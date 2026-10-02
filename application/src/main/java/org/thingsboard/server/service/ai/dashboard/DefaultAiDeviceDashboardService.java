@@ -27,9 +27,8 @@ class DefaultAiDeviceDashboardService implements AiDeviceDashboardService {
 
     @Override
     public JsonNode generateDashboard(UUID deviceId, JsonNode request, String tbAccessToken, TbAiClientRequest clientRequest, SecurityUser user) {
-        return tbAiService.process((client, tokenProvider) -> operations.execute(
-                new TbAiOperation(ChannelProtocol.DASHBOARD_GENERATE, new DashboardOperationRequest(deviceId, request),
-                        () -> client.generateDashboard(deviceId, request, tbAccessToken, tokenProvider)),
+        return tbAiService.process(tokenProvider -> operations.execute(
+                new TbAiOperation(ChannelProtocol.DASHBOARD_GENERATE, new DashboardOperationRequest(deviceId, request)),
                 new TbAiTurnContext(user, tbAccessToken, null, tokenProvider, clientRequest)), user);
     }
 

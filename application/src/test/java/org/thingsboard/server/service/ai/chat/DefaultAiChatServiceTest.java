@@ -45,8 +45,6 @@ class DefaultAiChatServiceTest {
     @Mock
     TbAiService tbAiService;
     @Mock
-    TbAiClient tbAiClient;
-    @Mock
     TbAiClient.TokenProvider tokenProvider;
     @Mock
     TbAiClient.TbAiResponse tbAiResponse;
@@ -63,7 +61,7 @@ class DefaultAiChatServiceTest {
     void setUp() {
         service = new DefaultAiChatService(tbAiService, tbAiTransport, operations);
         lenient().when(operations.execute(any(TbAiOperation.class), any(SecurityUser.class), any(TbAiClient.TokenProvider.class)))
-                .thenAnswer(invocation -> invocation.<TbAiOperation>getArgument(0).httpCall().get());
+                .thenReturn(tbAiResponse);
     }
 
     @Test
@@ -73,7 +71,6 @@ class DefaultAiChatServiceTest {
         UUID chatId = UUID.randomUUID();
         JsonNode expectedResponse = TextNode.valueOf(chatId.toString());
         given(tbAiService.process(any(), same(user), eq(false))).willReturn(expectedResponse);
-        given(tbAiClient.createChat(same(request), same(tokenProvider))).willReturn(tbAiResponse);
 
         // WHEN
         JsonNode result = service.createChat(request, user);
@@ -81,11 +78,9 @@ class DefaultAiChatServiceTest {
         // THEN
         assertThat(result).isSameAs(expectedResponse);
 
-        assertThat(captureProcessCall().apply(tbAiClient, tokenProvider)).isSameAs(tbAiResponse);
-        then(tbAiClient).should().createChat(same(request), same(tokenProvider));
+        assertThat(captureProcessCall().apply(tokenProvider)).isSameAs(tbAiResponse);
         then(operations).should().execute(argThat(operation -> ChannelProtocol.CHAT_CREATE.equals(operation.type())
                 && Objects.equals(new ChatOperationRequest(null, request), operation.payload())), same(user), same(tokenProvider));
-        then(tbAiClient).shouldHaveNoMoreInteractions();
         then(tbAiService).shouldHaveNoMoreInteractions();
     }
 
@@ -95,17 +90,14 @@ class DefaultAiChatServiceTest {
         UUID chatId = UUID.randomUUID();
         JsonNode request = updateChatRequest("Updated chat");
         given(tbAiService.process(any(), same(user), eq(false))).willReturn(null);
-        given(tbAiClient.updateChat(eq(chatId), same(request), same(tokenProvider))).willReturn(tbAiResponse);
 
         // WHEN
         service.updateChat(chatId, request, user);
 
         // THEN
-        assertThat(captureProcessCall().apply(tbAiClient, tokenProvider)).isSameAs(tbAiResponse);
-        then(tbAiClient).should().updateChat(eq(chatId), same(request), same(tokenProvider));
+        assertThat(captureProcessCall().apply(tokenProvider)).isSameAs(tbAiResponse);
         then(operations).should().execute(argThat(operation -> ChannelProtocol.CHAT_UPDATE.equals(operation.type())
                 && Objects.equals(new ChatOperationRequest(chatId, request), operation.payload())), same(user), same(tokenProvider));
-        then(tbAiClient).shouldHaveNoMoreInteractions();
         then(tbAiService).shouldHaveNoMoreInteractions();
     }
 
@@ -115,7 +107,6 @@ class DefaultAiChatServiceTest {
         UUID chatId = UUID.randomUUID();
         JsonNode expectedResponse = chatSummariesResponse(chatId, 1716460800000L, "My Test Chat");
         given(tbAiService.process(any(), same(user), eq(false))).willReturn(expectedResponse);
-        given(tbAiClient.listChats(same(tokenProvider))).willReturn(tbAiResponse);
 
         // WHEN
         JsonNode result = service.listChats(user);
@@ -123,11 +114,9 @@ class DefaultAiChatServiceTest {
         // THEN
         assertThat(result).isSameAs(expectedResponse);
 
-        assertThat(captureProcessCall().apply(tbAiClient, tokenProvider)).isSameAs(tbAiResponse);
-        then(tbAiClient).should().listChats(same(tokenProvider));
+        assertThat(captureProcessCall().apply(tokenProvider)).isSameAs(tbAiResponse);
         then(operations).should().execute(argThat(operation -> ChannelProtocol.CHAT_LIST.equals(operation.type())
                 && Objects.equals(null, operation.payload())), same(user), same(tokenProvider));
-        then(tbAiClient).shouldHaveNoMoreInteractions();
         then(tbAiService).shouldHaveNoMoreInteractions();
     }
 
@@ -137,7 +126,6 @@ class DefaultAiChatServiceTest {
         UUID chatId = UUID.randomUUID();
         JsonNode expectedResponse = chatMessagesResponse("Hello", "Hi there!");
         given(tbAiService.process(any(), same(user), eq(false))).willReturn(expectedResponse);
-        given(tbAiClient.getChatMessages(eq(chatId), same(tokenProvider))).willReturn(tbAiResponse);
 
         // WHEN
         JsonNode result = service.getChatMessages(chatId, user);
@@ -145,11 +133,9 @@ class DefaultAiChatServiceTest {
         // THEN
         assertThat(result).isSameAs(expectedResponse);
 
-        assertThat(captureProcessCall().apply(tbAiClient, tokenProvider)).isSameAs(tbAiResponse);
-        then(tbAiClient).should().getChatMessages(eq(chatId), same(tokenProvider));
+        assertThat(captureProcessCall().apply(tokenProvider)).isSameAs(tbAiResponse);
         then(operations).should().execute(argThat(operation -> ChannelProtocol.CHAT_MESSAGES.equals(operation.type())
                 && Objects.equals(new ChatOperationRequest(chatId, null), operation.payload())), same(user), same(tokenProvider));
-        then(tbAiClient).shouldHaveNoMoreInteractions();
         then(tbAiService).shouldHaveNoMoreInteractions();
     }
 
@@ -158,17 +144,14 @@ class DefaultAiChatServiceTest {
         // GIVEN
         UUID chatId = UUID.randomUUID();
         given(tbAiService.process(any(), same(user), eq(false))).willReturn(null);
-        given(tbAiClient.deleteChat(eq(chatId), same(tokenProvider))).willReturn(tbAiResponse);
 
         // WHEN
         service.deleteChat(chatId, user);
 
         // THEN
-        assertThat(captureProcessCall().apply(tbAiClient, tokenProvider)).isSameAs(tbAiResponse);
-        then(tbAiClient).should().deleteChat(eq(chatId), same(tokenProvider));
+        assertThat(captureProcessCall().apply(tokenProvider)).isSameAs(tbAiResponse);
         then(operations).should().execute(argThat(operation -> ChannelProtocol.CHAT_DELETE.equals(operation.type())
                 && Objects.equals(new ChatOperationRequest(chatId, null), operation.payload())), same(user), same(tokenProvider));
-        then(tbAiClient).shouldHaveNoMoreInteractions();
         then(tbAiService).shouldHaveNoMoreInteractions();
     }
 
@@ -194,10 +177,9 @@ class DefaultAiChatServiceTest {
         // THEN
         assertThat(result).isSameAs(expectedStream);
 
-        assertThat(captureProcessStreamCall(chatId).apply(tbAiClient, tokenProvider)).isSameAs(expectedStream);
+        assertThat(captureProcessStreamCall(chatId).apply(tokenProvider)).isSameAs(expectedStream);
         then(tbAiTransport).should().sendChatMessage(eq(chatId), same(request), eq(expectedContext));
         then(tbAiTransport).shouldHaveNoMoreInteractions();
-        then(tbAiClient).shouldHaveNoInteractions();
         then(tbAiService).shouldHaveNoMoreInteractions();
     }
 

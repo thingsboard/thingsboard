@@ -28,7 +28,6 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
@@ -38,8 +37,6 @@ class DefaultAiDeviceDashboardServiceTest {
 
     @Mock
     TbAiService tbAiService;
-    @Mock
-    TbAiClient tbAiClient;
     @Mock
     TbAiClient.TokenProvider tokenProvider;
     @Mock
@@ -67,9 +64,7 @@ class DefaultAiDeviceDashboardServiceTest {
         String tbAccessToken = "tb-access-token";
         JsonNode expectedResponse = TextNode.valueOf(dashboardId.toString());
         given(tbAiService.process(any(), same(user))).willReturn(expectedResponse);
-        given(tbAiClient.generateDashboard(eq(deviceId), same(request), eq(tbAccessToken), same(tokenProvider)))
-                .willReturn(tbAiResponse);
-        stubOperationsWithHttpCall();
+        stubOperations();
 
         // WHEN
         JsonNode result = service.generateDashboard(deviceId, request, tbAccessToken, clientRequest, user);
@@ -77,8 +72,7 @@ class DefaultAiDeviceDashboardServiceTest {
         // THEN
         assertThat(result).isSameAs(expectedResponse);
 
-        assertThat(captureProcessCall().apply(tbAiClient, tokenProvider)).isSameAs(tbAiResponse);
-        then(tbAiClient).should().generateDashboard(eq(deviceId), same(request), eq(tbAccessToken), same(tokenProvider));
+        assertThat(captureProcessCall().apply(tokenProvider)).isSameAs(tbAiResponse);
         TbAiTurnContext[] context = new TbAiTurnContext[1];
         TbAiOperation operation = captureOperation(context);
         assertThat(operation.type()).isEqualTo(ChannelProtocol.DASHBOARD_GENERATE);
@@ -86,7 +80,6 @@ class DefaultAiDeviceDashboardServiceTest {
         assertThat(context[0].clientRequest()).isSameAs(clientRequest);
         assertThat(context[0].tbAccessToken()).isEqualTo(tbAccessToken);
         assertThat(context[0].tokenProvider()).isSameAs(tokenProvider);
-        then(tbAiClient).shouldHaveNoMoreInteractions();
         then(tbAiService).shouldHaveNoMoreInteractions();
     }
 
@@ -97,8 +90,8 @@ class DefaultAiDeviceDashboardServiceTest {
         return callCaptor.getValue();
     }
 
-    private void stubOperationsWithHttpCall() {
-        given(operations.execute(any(), any())).willAnswer(invocation -> invocation.<TbAiOperation>getArgument(0).httpCall().get());
+    private void stubOperations() {
+        given(operations.execute(any(), any())).willReturn(tbAiResponse);
     }
 
     private TbAiOperation captureOperation(TbAiTurnContext[] context) {

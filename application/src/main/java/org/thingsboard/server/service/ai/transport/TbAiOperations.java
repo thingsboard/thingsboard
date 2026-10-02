@@ -17,8 +17,6 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 public class TbAiOperations {
 
     private final ChannelTbAiOperations channelOperations;
-    private final TbAiChannelAvailability availability;
-    private final TbAiCallbackOriginValidator callbackOriginValidator;
     private final TbAiClientRequestFactory clientRequestFactory;
 
     /**
@@ -29,29 +27,17 @@ public class TbAiOperations {
     }
 
     public TbAiResponse execute(TbAiOperation operation, TbAiTurnContext context) {
-        if (!availability.isUsable()) {
-            return executeOverHttp(operation, context);
-        }
         try {
             return channelOperations.execute(operation, context);
         } catch (TbAiChannelUnavailableException e) {
-            log.warn("AI channel unavailable, using HTTP for '{}' and backing off for {}: {}",
-                    operation.type(), availability.fallbackBackoff(), e.getMessage());
-            availability.markUnavailable();
-            return executeOverHttp(operation, context);
+            log.warn("[{}][{}] AI channel unavailable for '{}': {}", context.tenantId(), context.userId(), operation.type(), e.getMessage());
+            return ChannelTbAiOperations.failure("Service unavailable");
         } catch (TbAiOperationsUnsupportedException e) {
-            log.debug("TB AI has no channel operations, using HTTP for '{}'", operation.type());
-            return executeOverHttp(operation, context);
+            log.warn("[{}][{}] {}", context.tenantId(), context.userId(), e.getMessage());
+            return ChannelTbAiOperations.failure("The AI service does not support this ThingsBoard version");
         } catch (TbAiChannelRejectedException e) {
             return ChannelTbAiOperations.failure(e.getMessage());
         }
-    }
-
-    private TbAiResponse executeOverHttp(TbAiOperation operation, TbAiTurnContext context) {
-        if (ChannelTbAiOperations.CALLBACK_OPERATIONS.contains(operation.type())) {
-            callbackOriginValidator.validate(context.user());
-        }
-        return operation.httpCall().get();
     }
 
 }

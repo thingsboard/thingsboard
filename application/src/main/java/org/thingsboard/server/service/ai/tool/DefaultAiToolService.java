@@ -42,10 +42,9 @@ class DefaultAiToolService implements AiToolService {
                 return status;
             }
         }
-        // The turn runs on another node or over SSE: TB AI resolves the approval by its execution id.
-        return tbAiService.process((client, tokenProvider) -> operations.execute(
-                new TbAiOperation(ChannelProtocol.TOOL_APPROVAL_RESOLVE, decision,
-                        () -> client.resolveToolApproval(decision, tokenProvider)), user, tokenProvider), user, false);
+        // The turn runs on another tb-core node: TB AI resolves the approval by its execution id.
+        return tbAiService.process(tokenProvider -> operations.execute(
+                new TbAiOperation(ChannelProtocol.TOOL_APPROVAL_RESOLVE, decision), user, tokenProvider), user, false);
     }
 
     private JsonNode resolveOverChannel(TbAiChannelRegistry.ApprovalRoute route, JsonNode decision) {
@@ -58,7 +57,7 @@ class DefaultAiToolService implements AiToolService {
             Thread.currentThread().interrupt();
             return null;
         } catch (Exception e) {
-            log.warn("Failed to resolve tool approval over the AI channel, falling back to HTTP: {}", e.getMessage());
+            log.warn("Failed to resolve tool approval on the turn's channel, resolving it by execution id: {}", e.getMessage());
             return null;
         }
     }

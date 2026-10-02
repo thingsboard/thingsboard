@@ -13,11 +13,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.codec.ServerSentEvent;
-import org.springframework.web.reactive.function.client.WebClientRequestException;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.thingsboard.ai.common.channel.ChannelProtocol;
 import org.thingsboard.ai.common.client.TbAiClient;
 import org.thingsboard.ai.common.client.TbAiClient.TbAiResponse;
@@ -33,6 +29,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.exception.ThingsboardRuntimeException;
+import org.thingsboard.server.service.ai.transport.TbAiChannelRejectedException;
+import org.thingsboard.server.service.ai.transport.TbAiChannelUnavailableException;
 import org.thingsboard.server.service.ai.transport.TbAiOperation;
 import org.thingsboard.server.service.ai.transport.TbAiOperations;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
@@ -41,9 +39,6 @@ import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
-import java.io.IOException;
-import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -60,7 +55,6 @@ import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
@@ -75,8 +69,6 @@ class DefaultTbAiServiceTest {
     TbApiUsageReportClient apiUsageReportClient;
     @Mock
     TbAiTokenProvider tbAiTokenProvider;
-    @Mock
-    TbAiClient tbAiClient;
     @Mock
     TbAiService.TbAiCall<TbAiResponse> call;
 
@@ -108,19 +100,18 @@ class DefaultTbAiServiceTest {
         // GIVEN
         given(apiUsageStateService.getApiUsageState(tenantId)).willReturn(enabledApiUsageState());
         JsonNode value = JacksonUtil.newObjectNode().put("answer", 42);
-        given(call.apply(any(), any())).willReturn(TbAiResponse.builder().success(true).value(value).creditsUsed(150).build());
+        given(call.apply(any())).willReturn(TbAiResponse.builder().success(true).value(value).creditsUsed(150).build());
 
         // WHEN
         JsonNode returned = service.process(call, user, true);
 
         // THEN
         assertThat(returned).isSameAs(value);
-        then(call).should().apply(same(tbAiClient), notNull()); // invoked with the real client and a user-scoped provider
+        then(call).should().apply(notNull()); // invoked with a user-scoped token provider
 
         then(apiUsageStateService).should().getApiUsageState(tenantId);
         then(apiUsageReportClient).should().report(tenantId, customerId, ApiUsageRecordKey.AI_CREDITS_COUNT, 150L);
         then(apiUsageReportClient).shouldHaveNoMoreInteractions();
-        then(tbAiClient).shouldHaveNoInteractions();
     }
 
     @Test
@@ -128,14 +119,14 @@ class DefaultTbAiServiceTest {
         // GIVEN: checkCredits=false only skips the pre-request availability check; credits actually
         // consumed by the call must still be reported
         JsonNode value = JacksonUtil.newObjectNode().put("ok", true);
-        given(call.apply(any(), any())).willReturn(TbAiResponse.builder().success(true).value(value).creditsUsed(75).build());
+        given(call.apply(any())).willReturn(TbAiResponse.builder().success(true).value(value).creditsUsed(75).build());
 
         // WHEN
         JsonNode returned = service.process(call, user, false);
 
         // THEN
         assertThat(returned).isSameAs(value);
-        then(call).should().apply(same(tbAiClient), notNull());
+        then(call).should().apply(notNull());
 
         then(apiUsageStateService).shouldHaveNoInteractions(); // pre-request credit check skipped
         then(apiUsageReportClient).should().report(tenantId, customerId, ApiUsageRecordKey.AI_CREDITS_COUNT, 75L);
@@ -153,9 +144,8 @@ class DefaultTbAiServiceTest {
         // THEN
         assertThat(thrown).isInstanceOf(ThingsboardRuntimeException.class).hasMessage("Out of AI credits");
         assertThat(((ThingsboardRuntimeException) thrown).getErrorCode()).isEqualTo(ThingsboardErrorCode.TOO_MANY_REQUESTS);
-        then(call).should(never()).apply(any(), any());
+        then(call).should(never()).apply(any());
         then(apiUsageReportClient).shouldHaveNoInteractions();
-        then(tbAiClient).shouldHaveNoInteractions();
     }
 
     @Test
@@ -169,17 +159,16 @@ class DefaultTbAiServiceTest {
         // THEN
         assertThat(thrown).isInstanceOf(ThingsboardRuntimeException.class).hasMessage("AI feature is disabled");
         assertThat(((ThingsboardRuntimeException) thrown).getErrorCode()).isEqualTo(ThingsboardErrorCode.PERMISSION_DENIED);
-        then(call).should(never()).apply(any(), any());
+        then(call).should(never()).apply(any());
         then(apiUsageStateService).shouldHaveNoInteractions();
         then(apiUsageReportClient).shouldHaveNoInteractions();
-        then(tbAiClient).shouldHaveNoInteractions();
     }
 
     @Test
     void shouldReportCreditsThenThrowGeneral_whenProcessAndResponseIsFailure() {
         // GIVEN
         given(apiUsageStateService.getApiUsageState(tenantId)).willReturn(enabledApiUsageState());
-        given(call.apply(any(), any())).willReturn(TbAiResponse.builder().success(false).error("Upstream rejected").creditsUsed(42).build());
+        given(call.apply(any())).willReturn(TbAiResponse.builder().success(false).error("Upstream rejected").creditsUsed(42).build());
 
         // WHEN
         Throwable thrown = catchThrowable(() -> service.process(call, user, true));
@@ -203,9 +192,8 @@ class DefaultTbAiServiceTest {
         // THEN
         assertThat(thrown).isInstanceOf(ThingsboardRuntimeException.class).hasMessage("AI feature is not available");
         assertThat(((ThingsboardRuntimeException) thrown).getErrorCode()).isEqualTo(ThingsboardErrorCode.BAD_REQUEST_PARAMS);
-        then(call).should(never()).apply(any(), any());
+        then(call).should(never()).apply(any());
         then(apiUsageStateService).shouldHaveNoInteractions();
-        then(tbAiClient).shouldHaveNoInteractions();
     }
 
     @Test
@@ -213,14 +201,14 @@ class DefaultTbAiServiceTest {
         // GIVEN
         given(tbAiTokenProvider.getToken(user)).willReturn("jwt-token");
         given(tbAiTokenProvider.getAdditionalInfo(user)).willReturn(Map.of("X-Forwarded-For", "198.51.100.10"));
-        given(call.apply(any(), any())).willReturn(TbAiResponse.builder().success(true).value(JacksonUtil.newObjectNode()).build());
+        given(call.apply(any())).willReturn(TbAiResponse.builder().success(true).value(JacksonUtil.newObjectNode()).build());
 
         // WHEN
         service.process(call, user, false);
 
         // THEN the provider handed to the call is scoped to the calling user
         ArgumentCaptor<TbAiClient.TokenProvider> tokenProviderCaptor = ArgumentCaptor.forClass(TbAiClient.TokenProvider.class);
-        then(call).should().apply(same(tbAiClient), tokenProviderCaptor.capture());
+        then(call).should().apply(tokenProviderCaptor.capture());
 
         TbAiClient.TokenProvider tokenProvider = tokenProviderCaptor.getValue();
         assertThat(tokenProvider.getToken()).isEqualTo("jwt-token");
@@ -256,7 +244,6 @@ class DefaultTbAiServiceTest {
         // THEN
         assertThat(usageInfo.usage()).isEmpty();
         assertThat(usageInfo.periodStartTs()).isZero();
-        then(tbAiClient).shouldHaveNoInteractions();
     }
 
     @Test
@@ -275,7 +262,7 @@ class DefaultTbAiServiceTest {
         response.set("usage", usage);
         response.put("periodStartTs", 1716460800000L);
         response.put("unexpectedTopLevelField", "ignored");
-        given(tbAiClient.getApiUsageInfo(any()))
+        given(operations.execute(any(TbAiOperation.class), same(user), any(TbAiClient.TokenProvider.class)))
                 .willReturn(TbAiResponse.builder().success(true).value(response).build());
 
         // WHEN
@@ -285,14 +272,13 @@ class DefaultTbAiServiceTest {
         assertThat(usageInfo.periodStartTs()).isEqualTo(1716460800000L);
         assertThat(usageInfo.usage()).containsEntry(Resource.AI_CREDITS, new ApiUsageInfo.ResourceUsage(250L, 1000));
         then(apiUsageStateService).shouldHaveNoInteractions(); // usage is fetched without a credit check
-        then(tbAiClient).should().getApiUsageInfo(any());
         then(operations).should().execute(argThat(operation -> ChannelProtocol.USAGE_GET.equals(operation.type())), same(user), any());
     }
 
     @Test
     void shouldReturnEmptyUsage_whenClientResponseIsFailure() {
         // GIVEN
-        given(tbAiClient.getApiUsageInfo(any()))
+        given(operations.execute(any(TbAiOperation.class), same(user), any(TbAiClient.TokenProvider.class)))
                 .willReturn(TbAiResponse.builder().success(false).error("AI service down").build());
 
         // WHEN
@@ -301,7 +287,6 @@ class DefaultTbAiServiceTest {
         // THEN
         assertThat(usageInfo.usage()).isEmpty();
         assertThat(usageInfo.periodStartTs()).isZero();
-        then(tbAiClient).should().getApiUsageInfo(any());
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -315,7 +300,7 @@ class DefaultTbAiServiceTest {
 
         // WHEN
         Throwable thrown = catchThrowable(() ->
-                disabledService.processStream(chatId, (client, tokenProvider) -> Flux.empty(), user));
+                disabledService.processStream(chatId, tokenProvider -> Flux.empty(), user));
 
         // THEN
         assertThat(thrown).isInstanceOf(ThingsboardRuntimeException.class).hasMessage("AI feature is disabled");
@@ -331,7 +316,7 @@ class DefaultTbAiServiceTest {
 
         // WHEN
         Throwable thrown = catchThrowable(() ->
-                service.processStream(chatId, (client, tokenProvider) -> Flux.empty(), user));
+                service.processStream(chatId, tokenProvider -> Flux.empty(), user));
 
         // THEN
         assertThat(thrown).isInstanceOf(ThingsboardRuntimeException.class).hasMessage("Out of AI credits");
@@ -455,22 +440,11 @@ class DefaultTbAiServiceTest {
         return List.of(
                 // PE-side inactivity timeout from the .timeout(...) operator
                 arguments(new TimeoutException("inactivity"), "Request timed out"),
-                // AI service unreachable (e.g. connection refused / DNS failure)
-                arguments(connectError(), "Service unavailable"),
-                // auth failures: the response body is ignored and the status reason phrase is used
-                arguments(aiError(401, "Unauthorized", "Authentication required"), "Unauthorized"),
-                arguments(aiError(403, "Forbidden", "Access denied"), "Forbidden"),
-                // the AI service always wraps errors in an {"message": ...} body, which is surfaced verbatim
-                arguments(aiError(400, "Bad Request", "message: must not be blank"), "message: must not be blank"),
-                arguments(aiError(404, "Not Found", "Chat not found"), "Chat not found"),
-                arguments(aiError(429, "Too Many Requests", "Rate limit exceeded. Please try again later."), "Rate limit exceeded. Please try again later."),
-                arguments(aiError(500, "Internal Server Error", "Unexpected error"), "Unexpected error"),
-                // infrastructure in front of the AI service (proxy/gateway/CDN) returns non-JSON bodies,
-                // so the status-class fallback message is used
-                arguments(gatewayError(502, "Bad Gateway"), "Service unavailable"),
-                arguments(gatewayError(413, "Payload Too Large"), "Invalid request"),
-                // non-standard / unresolvable status code -> generic message
-                arguments(gatewayError(520, "Web Server Returned an Unknown Error"), "Internal error"),
+                // the AI channel cannot be opened or closed before the turn started
+                arguments(new TbAiChannelUnavailableException("Connection refused", null), "Service unavailable"),
+                // the channel handshake was refused: the reason phrase is shown
+                arguments(new TbAiChannelRejectedException("Unauthorized"), "Unauthorized"),
+                arguments(new TbAiChannelRejectedException("Forbidden"), "Forbidden"),
                 // any other unexpected throwable
                 arguments(new RuntimeException("boom"), "Internal error")
         );
@@ -481,10 +455,8 @@ class DefaultTbAiServiceTest {
     // ---------------------------------------------------------------------------------------------
 
     private DefaultTbAiService newService(boolean enabled, Optional<TbAiTokenProvider> tokenProvider) {
-        lenient().when(operations.execute(any(TbAiOperation.class), any(SecurityUser.class), any(TbAiClient.TokenProvider.class)))
-                .thenAnswer(invocation -> invocation.<TbAiOperation>getArgument(0).httpCall().get());
         return new DefaultTbAiService(apiUsageStateService, apiUsageReportClient, tokenProvider,
-                tbAiClient, new TbAiSettings(enabled, sseInactivityTimeoutSeconds, sseLogMaxDataLength), operations);
+                new TbAiSettings(enabled, sseInactivityTimeoutSeconds, sseLogMaxDataLength), operations);
     }
 
     private SecurityUser newUser(TenantId tenant) {
@@ -498,7 +470,7 @@ class DefaultTbAiServiceTest {
     private Flux<ServerSentEvent<String>> startStream() {
         given(apiUsageStateService.getApiUsageState(tenantId)).willReturn(enabledApiUsageState());
         upstream = Sinks.many().unicast().onBackpressureBuffer();
-        return service.processStream(chatId, (client, tokenProvider) -> upstream.asFlux(), user);
+        return service.processStream(chatId, tokenProvider -> upstream.asFlux(), user);
     }
 
     private static ApiUsageState enabledApiUsageState() {
@@ -511,26 +483,6 @@ class DefaultTbAiServiceTest {
         ApiUsageState state = new ApiUsageState();
         state.setAiState(ApiUsageStateValue.DISABLED);
         return state;
-    }
-
-    private static WebClientRequestException connectError() {
-        return new WebClientRequestException(new IOException("Connection refused"), HttpMethod.POST,
-                URI.create("https://ai.example.test/api/chats/x/messages"), HttpHeaders.EMPTY);
-    }
-
-    // mirrors the AI service ErrorHandler, which always responds with an {"message": ...} body
-    private static WebClientResponseException aiError(int status, String reasonPhrase, String message) {
-        return wcre(status, reasonPhrase, JacksonUtil.toString(JacksonUtil.newObjectNode().put("message", message)));
-    }
-
-    // mirrors an infrastructure error in front of the AI service: a non-JSON (e.g. HTML) body
-    private static WebClientResponseException gatewayError(int status, String reasonPhrase) {
-        return wcre(status, reasonPhrase, "<html><body><h1>" + status + " " + reasonPhrase + "</h1></body></html>");
-    }
-
-    private static WebClientResponseException wcre(int status, String reasonPhrase, String body) {
-        return new WebClientResponseException(status, reasonPhrase, HttpHeaders.EMPTY,
-                body.getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8);
     }
 
     private static String errorMessageOf(ServerSentEvent<String> event) {
