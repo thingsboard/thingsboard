@@ -13,15 +13,13 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 @TbCoreComponent
 class TbAiConfiguration {
 
-    // TB_AI_BASE_URL is read directly from an environment variable, not a yaml property: it is a
-    // managed-service setting, not operator-tunable configuration.
     @Bean
-    TbAiClient tbAiClient(@Value("${TB_AI_BASE_URL:https://ai.thingsboard.cloud}") String baseUrl) {
+    TbAiClient tbAiClient(@Value("${ai.base_url:https://ai.thingsboard.cloud}") String baseUrl) {
         return new TbAiClient(baseUrl);
     }
 
     @Bean
-    TbAiChannelClient tbAiChannelClient(@Value("${TB_AI_BASE_URL:https://ai.thingsboard.cloud}") String baseUrl) {
+    TbAiChannelClient tbAiChannelClient(@Value("${ai.base_url:https://ai.thingsboard.cloud}") String baseUrl) {
         return new TbAiChannelClient(baseUrl);
     }
 

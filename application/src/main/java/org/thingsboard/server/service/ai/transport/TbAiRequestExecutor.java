@@ -88,9 +88,11 @@ public class TbAiRequestExecutor {
         } catch (RuntimeException e) {
             return Mono.just(error(frame, codec, INVALID_REQUEST, "Malformed tb.request payload"));
         }
-        String invalidReason = validate(request);
+        String invalidReason = context.tbAccessToken() == null
+                ? "ThingsBoard access is not available for this operation"
+                : validate(request);
         if (invalidReason != null) {
-            log.warn("[{}][{}] Rejected AI request {} {}: {}", context.user().getTenantId(), context.user().getId(),
+            log.warn("[{}][{}] Rejected AI request {} {}: {}", context.tenantId(), context.userId(),
                     request.method(), request.path(), invalidReason);
             return Mono.just(error(frame, codec, INVALID_REQUEST, invalidReason));
         }

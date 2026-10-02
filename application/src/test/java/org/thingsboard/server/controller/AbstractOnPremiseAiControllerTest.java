@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
 
 @TestPropertySource(properties = {
-        "TB_AI_JWT_SIGNING_KEY=",
+        "ai.jwt.signing_key=",
         "TB_CORE_BASE_URL=" + AbstractOnPremiseAiControllerTest.ORIGIN
 })
 public abstract class AbstractOnPremiseAiControllerTest extends AbstractAiControllerTest {

@@ -21,8 +21,8 @@ public class TbAiChannelAvailability {
     private volatile long unavailableUntil;
 
     @Autowired
-    TbAiChannelAvailability(@Value("${TB_AI_CHANNEL_ENABLED:true}") boolean enabled,
-                            @Value("${TB_AI_CHANNEL_FALLBACK_BACKOFF_MINUTES:10}") long fallbackBackoffMinutes) {
+    TbAiChannelAvailability(@Value("${ai.channel.enabled:true}") boolean enabled,
+                            @Value("${ai.channel.fallback_backoff_minutes:10}") long fallbackBackoffMinutes) {
         this(enabled, Duration.ofMinutes(fallbackBackoffMinutes), Clock.systemUTC());
     }
 

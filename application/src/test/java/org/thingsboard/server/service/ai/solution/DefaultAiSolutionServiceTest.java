@@ -15,7 +15,10 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.ai.common.channel.ChannelProtocol;
+import org.thingsboard.ai.common.channel.SolutionChatRequest;
+import org.thingsboard.ai.common.channel.SolutionDataRequest;
 import org.thingsboard.ai.common.channel.SolutionOperationRequest;
+import org.thingsboard.ai.common.channel.SolutionStepRequest;
 import org.thingsboard.ai.common.client.TbAiClient;
 import org.thingsboard.ai.common.data.solution.SolutionStep;
 import org.thingsboard.common.util.JacksonUtil;
@@ -28,14 +31,17 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.Map;
 
+import java.util.Objects;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 class DefaultAiSolutionServiceTest {
@@ -60,6 +66,8 @@ class DefaultAiSolutionServiceTest {
     @BeforeEach
     void setUp() {
         service = new DefaultAiSolutionService(tbAiService, operations);
+        lenient().when(operations.execute(any(TbAiOperation.class), any(SecurityUser.class), any(TbAiClient.TokenProvider.class)))
+                .thenAnswer(invocation -> invocation.<TbAiOperation>getArgument(0).httpCall().get());
     }
 
     @Test
@@ -77,6 +85,8 @@ class DefaultAiSolutionServiceTest {
 
         assertThat(captureProcessCallWithoutCreditCheck().apply(tbAiClient, tokenProvider)).isSameAs(tbAiResponse);
         then(tbAiClient).should().startNewSolution(same(tokenProvider));
+        then(operations).should().execute(argThat(operation -> ChannelProtocol.SOLUTION_START.equals(operation.type())
+                && Objects.equals(null, operation.payload())), same(user), same(tokenProvider));
         then(tbAiClient).shouldHaveNoMoreInteractions();
         then(tbAiService).shouldHaveNoMoreInteractions();
     }
@@ -97,6 +107,8 @@ class DefaultAiSolutionServiceTest {
 
         assertThat(captureProcessCallWithoutCreditCheck().apply(tbAiClient, tokenProvider)).isSameAs(tbAiResponse);
         then(tbAiClient).should().getSolution(eq(solutionId), same(tokenProvider));
+        then(operations).should().execute(argThat(operation -> ChannelProtocol.SOLUTION_GET.equals(operation.type())
+                && Objects.equals(new SolutionOperationRequest(solutionId), operation.payload())), same(user), same(tokenProvider));
         then(tbAiClient).shouldHaveNoMoreInteractions();
         then(tbAiService).shouldHaveNoMoreInteractions();
     }
@@ -116,6 +128,8 @@ class DefaultAiSolutionServiceTest {
 
         assertThat(captureProcessCallWithoutCreditCheck().apply(tbAiClient, tokenProvider)).isSameAs(tbAiResponse);
         then(tbAiClient).should().getSolutions(same(tokenProvider));
+        then(operations).should().execute(argThat(operation -> ChannelProtocol.SOLUTION_LIST.equals(operation.type())
+                && Objects.equals(null, operation.payload())), same(user), same(tokenProvider));
         then(tbAiClient).shouldHaveNoMoreInteractions();
         then(tbAiService).shouldHaveNoMoreInteractions();
     }
@@ -139,6 +153,8 @@ class DefaultAiSolutionServiceTest {
 
         assertThat(captureProcessCallWithCreditCheck().apply(tbAiClient, tokenProvider)).isSameAs(tbAiResponse);
         then(tbAiClient).should().sendSolutionMessage(eq(solutionId), eq(step), eq(message), same(tokenProvider));
+        then(operations).should().execute(argThat(operation -> ChannelProtocol.SOLUTION_CHAT.equals(operation.type())
+                && Objects.equals(new SolutionChatRequest(solutionId, step, message), operation.payload())), same(user), same(tokenProvider));
         then(tbAiClient).shouldHaveNoMoreInteractions();
         then(tbAiService).shouldHaveNoMoreInteractions();
     }
@@ -159,6 +175,8 @@ class DefaultAiSolutionServiceTest {
 
         assertThat(captureProcessCallWithCreditCheck().apply(tbAiClient, tokenProvider)).isSameAs(tbAiResponse);
         then(tbAiClient).should().createSolution(eq(solutionId), same(tokenProvider));
+        then(operations).should().execute(argThat(operation -> ChannelProtocol.SOLUTION_CREATE.equals(operation.type())
+                && Objects.equals(new SolutionOperationRequest(solutionId), operation.payload())), same(user), same(tokenProvider));
         then(tbAiClient).shouldHaveNoMoreInteractions();
         then(tbAiService).shouldHaveNoMoreInteractions();
     }
@@ -181,6 +199,8 @@ class DefaultAiSolutionServiceTest {
 
         assertThat(captureProcessCallWithCreditCheck().apply(tbAiClient, tokenProvider)).isSameAs(tbAiResponse);
         then(tbAiClient).should().updateData(eq(solutionId), eq(dataKey), same(value), same(tokenProvider));
+        then(operations).should().execute(argThat(operation -> ChannelProtocol.SOLUTION_DATA_UPDATE.equals(operation.type())
+                && Objects.equals(new SolutionDataRequest(solutionId, dataKey, value), operation.payload())), same(user), same(tokenProvider));
         then(tbAiClient).shouldHaveNoMoreInteractions();
         then(tbAiService).shouldHaveNoMoreInteractions();
     }
@@ -200,6 +220,8 @@ class DefaultAiSolutionServiceTest {
         // THEN
         assertThat(captureProcessCallWithoutCreditCheck().apply(tbAiClient, tokenProvider)).isSameAs(tbAiResponse);
         then(tbAiClient).should().clearStep(eq(solutionId), eq(step), same(tokenProvider));
+        then(operations).should().execute(argThat(operation -> ChannelProtocol.SOLUTION_STEP_CLEAR.equals(operation.type())
+                && Objects.equals(new SolutionStepRequest(solutionId, step), operation.payload())), same(user), same(tokenProvider));
         then(tbAiClient).shouldHaveNoMoreInteractions();
         then(tbAiService).shouldHaveNoMoreInteractions();
     }
@@ -275,6 +297,8 @@ class DefaultAiSolutionServiceTest {
         // THEN
         assertThat(captureProcessCallWithoutCreditCheck().apply(tbAiClient, tokenProvider)).isSameAs(tbAiResponse);
         then(tbAiClient).should().deleteSolution(eq(solutionId), same(tokenProvider));
+        then(operations).should().execute(argThat(operation -> ChannelProtocol.SOLUTION_DELETE.equals(operation.type())
+                && Objects.equals(new SolutionOperationRequest(solutionId), operation.payload())), same(user), same(tokenProvider));
         then(tbAiClient).shouldHaveNoMoreInteractions();
         then(tbAiService).shouldHaveNoMoreInteractions();
     }

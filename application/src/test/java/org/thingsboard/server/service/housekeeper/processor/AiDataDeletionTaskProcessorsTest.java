@@ -8,6 +8,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.thingsboard.ai.common.channel.ChannelProtocol;
 import org.thingsboard.ai.common.client.TbAiClient;
 import org.thingsboard.ai.common.client.TbAiClient.TbAiResponse;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTask;
@@ -15,6 +16,11 @@ import org.thingsboard.server.common.data.housekeeper.HousekeeperTaskType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.service.ai.TbAiTokenProvider;
+import org.thingsboard.server.service.ai.transport.TbAiClientRequest;
+import org.thingsboard.server.service.ai.transport.TbAiClientRequestFactory;
+import org.thingsboard.server.service.ai.transport.TbAiOperation;
+import org.thingsboard.server.service.ai.transport.TbAiOperations;
+import org.thingsboard.server.service.ai.transport.TbAiTurnContext;
 
 import java.util.Map;
 import java.util.Optional;
@@ -25,6 +31,7 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 class AiDataDeletionTaskProcessorsTest {
@@ -33,6 +40,10 @@ class AiDataDeletionTaskProcessorsTest {
     TbAiClient tbAiClient;
     @Mock
     TbAiTokenProvider tokenProvider;
+    @Mock
+    TbAiOperations operations;
+    @Mock
+    TbAiClientRequestFactory clientRequestFactory;
 
     TenantId tenantId;
     UserId userId;
@@ -44,8 +55,11 @@ class AiDataDeletionTaskProcessorsTest {
     void setUp() {
         tenantId = TenantId.fromUUID(UUID.randomUUID());
         userId = new UserId(UUID.randomUUID());
-        userDataProcessor = new AiUserDataDeletionTaskProcessor(tbAiClient, Optional.of(tokenProvider));
-        tenantDataProcessor = new AiTenantDataDeletionTaskProcessor(tbAiClient, Optional.of(tokenProvider));
+        userDataProcessor = new AiUserDataDeletionTaskProcessor(tbAiClient, Optional.of(tokenProvider), operations, clientRequestFactory);
+        tenantDataProcessor = new AiTenantDataDeletionTaskProcessor(tbAiClient, Optional.of(tokenProvider), operations, clientRequestFactory);
+        lenient().when(clientRequestFactory.forTenant(any())).thenReturn(TbAiClientRequest.withDefaultOrigin("https://tb.example.com"));
+        lenient().when(operations.execute(any(TbAiOperation.class), any(TbAiTurnContext.class)))
+                .thenAnswer(invocation -> invocation.<TbAiOperation>getArgument(0).httpCall().get());
     }
 
     @Test
@@ -70,6 +84,14 @@ class AiDataDeletionTaskProcessorsTest {
         then(tbAiClient).should().deleteUserData(captor.capture());
         assertThat(captor.getValue().getToken()).isEqualTo("id-scoped-token");
         assertThat(captor.getValue().getAdditionalInfo()).isEqualTo(Map.of("X-User-Id", userId.toString()));
+        ArgumentCaptor<TbAiOperation> operation = ArgumentCaptor.forClass(TbAiOperation.class);
+        ArgumentCaptor<TbAiTurnContext> context = ArgumentCaptor.forClass(TbAiTurnContext.class);
+        then(operations).should().execute(operation.capture(), context.capture());
+        assertThat(operation.getValue().type()).isEqualTo(ChannelProtocol.USER_DATA_DELETE);
+        assertThat(context.getValue().isBackground()).isTrue();
+        assertThat(context.getValue().tenantId()).isEqualTo(tenantId);
+        assertThat(context.getValue().userId()).isEqualTo(userId);
+        assertThat(context.getValue().tbAccessToken()).isNull();
     }
 
     @Test
@@ -118,8 +140,8 @@ class AiDataDeletionTaskProcessorsTest {
     @Test
     void shouldThrowWithoutCallingAiService_whenNoTokenProviderIsConfigured() {
         // GIVEN
-        userDataProcessor = new AiUserDataDeletionTaskProcessor(tbAiClient, Optional.empty());
-        tenantDataProcessor = new AiTenantDataDeletionTaskProcessor(tbAiClient, Optional.empty());
+        userDataProcessor = new AiUserDataDeletionTaskProcessor(tbAiClient, Optional.empty(), operations, clientRequestFactory);
+        tenantDataProcessor = new AiTenantDataDeletionTaskProcessor(tbAiClient, Optional.empty(), operations, clientRequestFactory);
 
         // WHEN
         Throwable userTaskThrown = catchThrowable(() -> userDataProcessor.process(HousekeeperTask.deleteAiUserData(tenantId, userId)));

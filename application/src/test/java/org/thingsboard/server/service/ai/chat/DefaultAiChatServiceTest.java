@@ -13,24 +13,31 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.codec.ServerSentEvent;
+import org.thingsboard.ai.common.channel.ChannelProtocol;
+import org.thingsboard.ai.common.channel.ChatOperationRequest;
 import org.thingsboard.ai.common.client.TbAiClient;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.service.ai.TbAiService;
 import org.thingsboard.server.service.ai.transport.TbAiClientRequest;
 import org.thingsboard.server.service.ai.transport.TbAiTransport;
 import org.thingsboard.server.service.ai.transport.TbAiTurnContext;
+import org.thingsboard.server.service.ai.transport.TbAiOperation;
+import org.thingsboard.server.service.ai.transport.TbAiOperations;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import reactor.core.publisher.Flux;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 class DefaultAiChatServiceTest {
@@ -46,13 +53,17 @@ class DefaultAiChatServiceTest {
     @Mock
     SecurityUser user;
     @Mock
+    TbAiOperations operations;
+    @Mock
     TbAiTransport tbAiTransport;
 
     DefaultAiChatService service;
 
     @BeforeEach
     void setUp() {
-        service = new DefaultAiChatService(tbAiService, tbAiTransport);
+        service = new DefaultAiChatService(tbAiService, tbAiTransport, operations);
+        lenient().when(operations.execute(any(TbAiOperation.class), any(SecurityUser.class), any(TbAiClient.TokenProvider.class)))
+                .thenAnswer(invocation -> invocation.<TbAiOperation>getArgument(0).httpCall().get());
     }
 
     @Test
@@ -72,6 +83,8 @@ class DefaultAiChatServiceTest {
 
         assertThat(captureProcessCall().apply(tbAiClient, tokenProvider)).isSameAs(tbAiResponse);
         then(tbAiClient).should().createChat(same(request), same(tokenProvider));
+        then(operations).should().execute(argThat(operation -> ChannelProtocol.CHAT_CREATE.equals(operation.type())
+                && Objects.equals(new ChatOperationRequest(null, request), operation.payload())), same(user), same(tokenProvider));
         then(tbAiClient).shouldHaveNoMoreInteractions();
         then(tbAiService).shouldHaveNoMoreInteractions();
     }
@@ -90,6 +103,8 @@ class DefaultAiChatServiceTest {
         // THEN
         assertThat(captureProcessCall().apply(tbAiClient, tokenProvider)).isSameAs(tbAiResponse);
         then(tbAiClient).should().updateChat(eq(chatId), same(request), same(tokenProvider));
+        then(operations).should().execute(argThat(operation -> ChannelProtocol.CHAT_UPDATE.equals(operation.type())
+                && Objects.equals(new ChatOperationRequest(chatId, request), operation.payload())), same(user), same(tokenProvider));
         then(tbAiClient).shouldHaveNoMoreInteractions();
         then(tbAiService).shouldHaveNoMoreInteractions();
     }
@@ -110,6 +125,8 @@ class DefaultAiChatServiceTest {
 
         assertThat(captureProcessCall().apply(tbAiClient, tokenProvider)).isSameAs(tbAiResponse);
         then(tbAiClient).should().listChats(same(tokenProvider));
+        then(operations).should().execute(argThat(operation -> ChannelProtocol.CHAT_LIST.equals(operation.type())
+                && Objects.equals(null, operation.payload())), same(user), same(tokenProvider));
         then(tbAiClient).shouldHaveNoMoreInteractions();
         then(tbAiService).shouldHaveNoMoreInteractions();
     }
@@ -130,6 +147,8 @@ class DefaultAiChatServiceTest {
 
         assertThat(captureProcessCall().apply(tbAiClient, tokenProvider)).isSameAs(tbAiResponse);
         then(tbAiClient).should().getChatMessages(eq(chatId), same(tokenProvider));
+        then(operations).should().execute(argThat(operation -> ChannelProtocol.CHAT_MESSAGES.equals(operation.type())
+                && Objects.equals(new ChatOperationRequest(chatId, null), operation.payload())), same(user), same(tokenProvider));
         then(tbAiClient).shouldHaveNoMoreInteractions();
         then(tbAiService).shouldHaveNoMoreInteractions();
     }
@@ -147,6 +166,8 @@ class DefaultAiChatServiceTest {
         // THEN
         assertThat(captureProcessCall().apply(tbAiClient, tokenProvider)).isSameAs(tbAiResponse);
         then(tbAiClient).should().deleteChat(eq(chatId), same(tokenProvider));
+        then(operations).should().execute(argThat(operation -> ChannelProtocol.CHAT_DELETE.equals(operation.type())
+                && Objects.equals(new ChatOperationRequest(chatId, null), operation.payload())), same(user), same(tokenProvider));
         then(tbAiClient).shouldHaveNoMoreInteractions();
         then(tbAiService).shouldHaveNoMoreInteractions();
     }

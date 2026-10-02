@@ -25,7 +25,7 @@ import java.util.function.Supplier;
 
 @Component
 @TbCoreComponent
-@ConditionalOnExpression("'${TB_AI_JWT_SIGNING_KEY:}' == ''")
+@ConditionalOnExpression("'${ai.jwt.signing_key:}' == ''")
 class OnPremiseTbAiTokenProvider implements TbAiTokenProvider {
 
     private final SubscriptionService subscriptionService;

@@ -18,6 +18,8 @@ import org.thingsboard.ai.common.client.TbAiClient;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.service.ai.TbAiService;
 import org.thingsboard.server.service.ai.transport.TbAiChannelRegistry;
+import org.thingsboard.server.service.ai.transport.TbAiOperation;
+import org.thingsboard.server.service.ai.transport.TbAiOperations;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.Optional;
@@ -26,6 +28,7 @@ import java.util.concurrent.CompletableFuture;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.BDDMockito.given;
@@ -47,21 +50,25 @@ class DefaultAiToolServiceTest {
     SecurityUser user;
     @Mock
     TbAiChannelRegistry channelRegistry;
+    @Mock
+    TbAiOperations operations;
 
     DefaultAiToolService service;
 
     @BeforeEach
     void setUp() {
-        service = new DefaultAiToolService(tbAiService, channelRegistry);
+        service = new DefaultAiToolService(tbAiService, channelRegistry, operations);
     }
 
     @Test
-    void shouldProcessWithoutCreditCheckAndDelegateToClient_whenResolveToolApprovalCalled() {
+    void shouldResolveThroughOperation_whenApprovalIsNotOnThisNode() {
         // GIVEN
         JsonNode decision = toolApprovalDecision(UUID.randomUUID(), true);
         JsonNode expectedResponse = TextNode.valueOf("APPROVED");
         given(tbAiService.process(any(), same(user), eq(false))).willReturn(expectedResponse);
         given(tbAiClient.resolveToolApproval(same(decision), same(tokenProvider))).willReturn(tbAiResponse);
+        given(operations.execute(any(TbAiOperation.class), same(user), same(tokenProvider)))
+                .willAnswer(invocation -> invocation.<TbAiOperation>getArgument(0).httpCall().get());
 
         // WHEN
         JsonNode result = service.resolveToolApproval(decision, user);
@@ -72,6 +79,8 @@ class DefaultAiToolServiceTest {
         assertThat(captureProcessCall().apply(tbAiClient, tokenProvider)).isSameAs(tbAiResponse);
         then(tbAiClient).should().resolveToolApproval(same(decision), same(tokenProvider));
         then(tbAiClient).shouldHaveNoMoreInteractions();
+        then(operations).should().execute(argThat(operation -> ChannelProtocol.TOOL_APPROVAL_RESOLVE.equals(operation.type())
+                && operation.payload() == decision), same(user), same(tokenProvider));
         then(tbAiService).shouldHaveNoMoreInteractions();
     }
 
@@ -81,7 +90,7 @@ class DefaultAiToolServiceTest {
         UUID executionId = UUID.randomUUID();
         JsonNode decision = toolApprovalDecision(executionId, true);
         ChannelSession session = mock(ChannelSession.class);
-        given(channelRegistry.findApprovalSession(executionId)).willReturn(Optional.of(session));
+        given(channelRegistry.findApprovalRoute(executionId)).willReturn(Optional.of(new TbAiChannelRegistry.ApprovalRoute(session, "op-1")));
         given(session.request(any(), any())).willAnswer(invocation -> {
             ChannelFrame request = invocation.getArgument(0);
             return CompletableFuture.completedFuture(ChannelFrame.reply(ChannelProtocol.TOOL_APPROVAL_RESULT, request, "\"APPROVED\""));
@@ -95,6 +104,7 @@ class DefaultAiToolServiceTest {
         ArgumentCaptor<ChannelFrame> frame = ArgumentCaptor.forClass(ChannelFrame.class);
         then(session).should().request(frame.capture(), any());
         assertThat(frame.getValue().type()).isEqualTo(ChannelProtocol.TOOL_APPROVAL);
+        assertThat(frame.getValue().op()).isEqualTo("op-1");
         assertThat(JacksonUtil.toJsonNode(frame.getValue().payload())).isEqualTo(decision);
         then(tbAiService).shouldHaveNoInteractions();
     }
@@ -105,7 +115,7 @@ class DefaultAiToolServiceTest {
         UUID executionId = UUID.randomUUID();
         JsonNode decision = toolApprovalDecision(executionId, false);
         ChannelSession session = mock(ChannelSession.class);
-        given(channelRegistry.findApprovalSession(executionId)).willReturn(Optional.of(session));
+        given(channelRegistry.findApprovalRoute(executionId)).willReturn(Optional.of(new TbAiChannelRegistry.ApprovalRoute(session, null)));
         given(session.request(any(), any())).willReturn(CompletableFuture.failedFuture(new IllegalStateException("closed")));
         JsonNode expectedResponse = TextNode.valueOf("DENIED");
         given(tbAiService.process(any(), same(user), eq(false))).willReturn(expectedResponse);

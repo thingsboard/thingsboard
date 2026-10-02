@@ -29,7 +29,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 @TestPropertySource(properties = {
         // base64-encoded ASCII "shared-test-jwt-signing-key-for-ai-controller-tests-not-secret!!"
         // (64 bytes — required minimum for HS512; tests only JWT.decode(), never verify the signature)
-        "TB_AI_JWT_SIGNING_KEY=c2hhcmVkLXRlc3Qtand0LXNpZ25pbmcta2V5LWZvci1haS1jb250cm9sbGVyLXRlc3RzLW5vdC1zZWNyZXQhIQ=="
+        "ai.jwt.signing_key=c2hhcmVkLXRlc3Qtand0LXNpZ25pbmcta2V5LWZvci1haS1jb250cm9sbGVyLXRlc3RzLW5vdC1zZWNyZXQhIQ=="
 })
 public abstract class AbstractAiControllerTest extends AbstractControllerTest {
 

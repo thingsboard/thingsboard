@@ -10,6 +10,10 @@ import org.thingsboard.server.common.data.housekeeper.HousekeeperTask;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.service.ai.TbAiTokenProvider;
 import org.thingsboard.server.service.ai.TbAiTokenProviderFactory;
+import org.thingsboard.server.service.ai.transport.TbAiClientRequestFactory;
+import org.thingsboard.server.service.ai.transport.TbAiOperation;
+import org.thingsboard.server.service.ai.transport.TbAiOperations;
+import org.thingsboard.server.service.ai.transport.TbAiTurnContext;
 
 import java.util.Optional;
 
@@ -19,6 +23,8 @@ public abstract class AiDataDeletionTaskProcessor extends HousekeeperTaskProcess
 
     protected final TbAiClient tbAiClient;
     private final Optional<TbAiTokenProvider> tokenProvider;
+    private final TbAiOperations operations;
+    private final TbAiClientRequestFactory clientRequestFactory;
 
     @Override
     public void process(HousekeeperTask task) throws Exception {
@@ -29,11 +35,16 @@ public abstract class AiDataDeletionTaskProcessor extends HousekeeperTaskProcess
             return;
         }
         UserId userId = new UserId(task.getEntityId().getId());
-        TbAiResponse response = deleteData(TbAiTokenProviderFactory.idScoped(tokenProvider, task.getTenantId(), userId));
+        TbAiClient.TokenProvider scopedTokenProvider = TbAiTokenProviderFactory.idScoped(tokenProvider, task.getTenantId(), userId);
+        TbAiResponse response = operations.execute(
+                new TbAiOperation(operationType(), null, () -> deleteData(scopedTokenProvider)),
+                TbAiTurnContext.background(task.getTenantId(), userId, scopedTokenProvider, clientRequestFactory.forTenant(task.getTenantId())));
         if (!response.isSuccess()) {
             throw new RuntimeException(response.getError());
         }
     }
+
+    protected abstract String operationType();
 
     protected abstract TbAiResponse deleteData(TbAiClient.TokenProvider tokenProvider);
 

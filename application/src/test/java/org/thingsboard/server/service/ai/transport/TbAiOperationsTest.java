@@ -3,6 +3,7 @@
 package org.thingsboard.server.service.ai.transport;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.thingsboard.ai.common.channel.ChannelProtocol;
 import org.thingsboard.ai.common.client.TbAiClient.TbAiResponse;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
@@ -14,6 +15,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.mock;
@@ -30,7 +32,8 @@ class TbAiOperationsTest {
     ChannelTbAiOperations channel = mock(ChannelTbAiOperations.class);
     TbAiChannelAvailability availability = mock(TbAiChannelAvailability.class);
     TbAiCallbackOriginValidator callbackOriginValidator = mock(TbAiCallbackOriginValidator.class);
-    TbAiOperations operations = new TbAiOperations(channel, availability, callbackOriginValidator);
+    TbAiClientRequestFactory clientRequestFactory = mock(TbAiClientRequestFactory.class);
+    TbAiOperations operations = new TbAiOperations(channel, availability, callbackOriginValidator, clientRequestFactory);
 
     @Test
     void shouldUseChannel_whenUsable() {
@@ -89,6 +92,52 @@ class TbAiOperationsTest {
         // WHEN-THEN
         assertThat(operations.execute(operation, context)).isSameAs(httpResponse);
         verify(availability, never()).markUnavailable();
+    }
+
+    @Test
+    void shouldReturnRejection_whenChannelHandshakeIsRefused() {
+        // GIVEN
+        given(availability.isUsable()).willReturn(true);
+        given(channel.execute(operation, context)).willThrow(new TbAiChannelRejectedException("Unauthorized"));
+
+        // WHEN
+        TbAiResponse response = operations.execute(operation, context);
+
+        // THEN
+        assertThat(response.isSuccess()).isFalse();
+        assertThat(response.getError()).isEqualTo("Unauthorized");
+        verify(availability, never()).markUnavailable();
+    }
+
+    @Test
+    void shouldNotRequirePublicOrigin_whenOperationHasNoCallback() {
+        // GIVEN
+        given(availability.isUsable()).willReturn(false);
+        TbAiOperation listChats = new TbAiOperation(ChannelProtocol.CHAT_LIST, null, () -> httpResponse);
+
+        // WHEN-THEN
+        assertThat(operations.execute(listChats, context)).isSameAs(httpResponse);
+        verify(callbackOriginValidator, never()).validate(any());
+    }
+
+    @Test
+    void shouldBuildDefaultOriginContext_whenCalledForUser() {
+        // GIVEN
+        SecurityUser user = mock(SecurityUser.class);
+        TbAiClientRequest defaultRequest = TbAiClientRequest.withDefaultOrigin("https://tb.example.com");
+        given(clientRequestFactory.forUser(user)).willReturn(defaultRequest);
+        given(availability.isUsable()).willReturn(true);
+        given(channel.execute(any(), any())).willReturn(channelResponse);
+
+        // WHEN
+        operations.execute(operation, user, () -> "token");
+
+        // THEN
+        ArgumentCaptor<TbAiTurnContext> captured = ArgumentCaptor.forClass(TbAiTurnContext.class);
+        verify(channel).execute(same(operation), captured.capture());
+        assertThat(captured.getValue().clientRequest()).isSameAs(defaultRequest);
+        assertThat(captured.getValue().clientRequest().exactOrigin()).isFalse();
+        assertThat(captured.getValue().tbAccessToken()).isNull();
     }
 
 }

@@ -11,14 +11,20 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+/**
+ * Tool approvals awaiting a decision on this node: the channel and the turn ({@code op}, null on a single-use
+ * channel) they belong to.
+ */
 @Component
 @TbCoreComponent
 public class TbAiChannelRegistry {
 
-    private final ConcurrentMap<UUID, ChannelSession> pendingApprovals = new ConcurrentHashMap<>();
+    public record ApprovalRoute(ChannelSession session, String op) {}
 
-    public void registerApproval(UUID executionId, ChannelSession session) {
-        pendingApprovals.put(executionId, session);
+    private final ConcurrentMap<UUID, ApprovalRoute> pendingApprovals = new ConcurrentHashMap<>();
+
+    public void registerApproval(UUID executionId, ChannelSession session, String op) {
+        pendingApprovals.put(executionId, new ApprovalRoute(session, op));
     }
 
     public void unregisterApproval(UUID executionId) {
@@ -26,11 +32,11 @@ public class TbAiChannelRegistry {
     }
 
     public void unregisterSession(ChannelSession session) {
-        pendingApprovals.values().removeIf(registered -> registered == session);
+        pendingApprovals.values().removeIf(route -> route.session() == session);
     }
 
-    public Optional<ChannelSession> findApprovalSession(UUID executionId) {
-        return Optional.ofNullable(pendingApprovals.get(executionId)).filter(ChannelSession::isOpen);
+    public Optional<ApprovalRoute> findApprovalRoute(UUID executionId) {
+        return Optional.ofNullable(pendingApprovals.get(executionId)).filter(route -> route.session().isOpen());
     }
 
 }

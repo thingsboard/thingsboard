@@ -18,6 +18,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.thingsboard.ai.common.channel.ChannelProtocol;
 import org.thingsboard.ai.common.client.TbAiClient;
 import org.thingsboard.ai.common.client.TbAiClient.TbAiResponse;
 import org.thingsboard.ai.common.data.usage.ApiUsageInfo;
@@ -32,6 +33,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.exception.ThingsboardRuntimeException;
+import org.thingsboard.server.service.ai.transport.TbAiOperation;
+import org.thingsboard.server.service.ai.transport.TbAiOperations;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import reactor.core.Disposable;
@@ -52,14 +55,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
 class DefaultTbAiServiceTest {
+
+    @Mock
+    TbAiOperations operations;
 
     @Mock
     TbApiUsageStateService apiUsageStateService;
@@ -278,6 +286,7 @@ class DefaultTbAiServiceTest {
         assertThat(usageInfo.usage()).containsEntry(Resource.AI_CREDITS, new ApiUsageInfo.ResourceUsage(250L, 1000));
         then(apiUsageStateService).shouldHaveNoInteractions(); // usage is fetched without a credit check
         then(tbAiClient).should().getApiUsageInfo(any());
+        then(operations).should().execute(argThat(operation -> ChannelProtocol.USAGE_GET.equals(operation.type())), same(user), any());
     }
 
     @Test
@@ -472,8 +481,10 @@ class DefaultTbAiServiceTest {
     // ---------------------------------------------------------------------------------------------
 
     private DefaultTbAiService newService(boolean enabled, Optional<TbAiTokenProvider> tokenProvider) {
+        lenient().when(operations.execute(any(TbAiOperation.class), any(SecurityUser.class), any(TbAiClient.TokenProvider.class)))
+                .thenAnswer(invocation -> invocation.<TbAiOperation>getArgument(0).httpCall().get());
         return new DefaultTbAiService(apiUsageStateService, apiUsageReportClient, tokenProvider,
-                tbAiClient, new TbAiSettings(enabled, sseInactivityTimeoutSeconds, sseLogMaxDataLength));
+                tbAiClient, new TbAiSettings(enabled, sseInactivityTimeoutSeconds, sseLogMaxDataLength), operations);
     }
 
     private SecurityUser newUser(TenantId tenant) {

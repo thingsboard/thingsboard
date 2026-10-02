@@ -11,6 +11,7 @@ import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.thingsboard.ai.common.channel.ChannelProtocol;
 import org.thingsboard.ai.common.client.TbAiClient;
 import org.thingsboard.ai.common.client.TbAiClient.TbAiResponse;
 import org.thingsboard.ai.common.data.usage.ApiUsageInfo;
@@ -21,6 +22,8 @@ import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.exception.ThingsboardRuntimeException;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.ai.transport.TbAiOperation;
+import org.thingsboard.server.service.ai.transport.TbAiOperations;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import reactor.core.publisher.Flux;
@@ -43,6 +46,7 @@ class DefaultTbAiService implements TbAiService {
     private final Optional<TbAiTokenProvider> tokenProvider;
     private final TbAiClient tbAiClient;
     private final TbAiSettings aiSettings;
+    private final TbAiOperations operations;
 
     @Override
     public JsonNode process(TbAiCall<TbAiResponse> call, SecurityUser user, boolean checkCredits) {
@@ -98,7 +102,8 @@ class DefaultTbAiService implements TbAiService {
         }
         try {
             return JacksonUtil.IGNORE_UNKNOWN_PROPERTIES_AND_ENUMS_JSON_MAPPER.treeToValue(
-                    process(TbAiClient::getApiUsageInfo, user, false), ApiUsageInfo.class);
+                    process((client, tokenProvider) -> operations.execute(new TbAiOperation(ChannelProtocol.USAGE_GET, null,
+                            () -> client.getApiUsageInfo(tokenProvider)), user, tokenProvider), user, false), ApiUsageInfo.class);
         } catch (Exception e) {
             log.warn("[{}][{}] Couldn't get AI API usage info", user.getTenantId(), user.getId(), e);
             return new ApiUsageInfo(Map.of(), 0);

@@ -2754,6 +2754,37 @@ ai:
     inactivity_timeout: "${TB_AI_SSE_INACTIVITY_TIMEOUT:600}"
     # Maximum number of characters of event data to include in trace logs
     log_max_data_length: "${TB_AI_SSE_LOG_MAX_DATA_LENGTH:150}"
+  # Base URL of the ThingsBoard AI service. TB opens the AI WebSocket channel (wss://<host>/api/ws/v1) and, for
+  # older AI service versions, sends HTTP requests to this URL
+  base_url: "${TB_AI_BASE_URL:https://ai.thingsboard.cloud}"
+  # Tokens this instance signs for the AI service itself (ThingsBoard Cloud). When the signing key is empty, the
+  # instance uses the AI token of its subscription instead (on-premise)
+  jwt:
+    # Base64-encoded HMAC key shared with the AI service; leave empty on-premise
+    signing_key: "${TB_AI_JWT_SIGNING_KEY:}"
+    # Issuer claim of the signed tokens
+    issuer: "${TB_AI_JWT_ISSUER:local}"
+    # Lifetime of a signed token in minutes
+    expiration_time_minutes: "${TB_AI_JWT_EXPIRATION_TIME_MINUTES:60}"
+  # WebSocket channel to the AI service: chat turns and all other AI calls run over it, and the AI service calls this
+  # instance back through it, so no public base URL is needed
+  channel:
+    # Use the channel; when false, or when the AI service does not support it, the HTTP and SSE path is used
+    enabled: "${TB_AI_CHANNEL_ENABLED:true}"
+    # After the channel cannot be opened, minutes to use the HTTP and SSE path before trying the channel again
+    fallback_backoff_minutes: "${TB_AI_CHANNEL_FALLBACK_BACKOFF_MINUTES:10}"
+    # Channels are shared by the calls of one user on this node
+    pool:
+      # Maximum pooled channels on this node; when full, the least recently used idle channel is closed, or a call
+      # gets a channel of its own that closes after it
+      max_connections: "${TB_AI_CHANNEL_POOL_MAX_CONNECTIONS:2000}"
+      # Maximum chat turns and operations running at once on one channel; further calls open another channel
+      max_operations_per_connection: "${TB_AI_CHANNEL_MAX_OPERATIONS_PER_CONNECTION:20}"
+      # Seconds a channel with nothing running stays open; keep it below the proxy's tunnel timeout
+      idle_timeout_seconds: "${TB_AI_CHANNEL_IDLE_TIMEOUT_SECONDS:60}"
+      # Minutes after which a channel takes no new calls and closes once idle, so a revoked token or a changed
+      # subscription is picked up by the next handshake
+      max_age_minutes: "${TB_AI_CHANNEL_MAX_AGE_MINUTES:10}"
 
 iot-hub:
   base-url: "${IOT_HUB_BASE_URL:https://iot-hub.thingsboard.io}" # IoT Hub base URL for fetching published items, resources, etc.

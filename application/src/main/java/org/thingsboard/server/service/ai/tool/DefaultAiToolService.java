@@ -8,11 +8,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.ai.common.channel.ChannelFrame;
 import org.thingsboard.ai.common.channel.ChannelProtocol;
-import org.thingsboard.ai.common.channel.ChannelSession;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.ai.TbAiService;
 import org.thingsboard.server.service.ai.transport.TbAiChannelRegistry;
+import org.thingsboard.server.service.ai.transport.TbAiOperation;
+import org.thingsboard.server.service.ai.transport.TbAiOperations;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.time.Duration;
@@ -30,25 +31,28 @@ class DefaultAiToolService implements AiToolService {
 
     private final TbAiService tbAiService;
     private final TbAiChannelRegistry channelRegistry;
+    private final TbAiOperations operations;
 
     @Override
     public JsonNode resolveToolApproval(JsonNode decision, SecurityUser user) {
-        Optional<ChannelSession> channel = executionId(decision).flatMap(channelRegistry::findApprovalSession);
-        if (channel.isPresent()) {
-            JsonNode status = resolveOverChannel(channel.get(), decision);
+        Optional<TbAiChannelRegistry.ApprovalRoute> route = executionId(decision).flatMap(channelRegistry::findApprovalRoute);
+        if (route.isPresent()) {
+            JsonNode status = resolveOverChannel(route.get(), decision);
             if (status != null) {
                 return status;
             }
         }
-        return tbAiService.process((client, tokenProvider) -> {
-            return client.resolveToolApproval(decision, tokenProvider);
-        }, user, false);
+        // The turn runs on another node or over SSE: TB AI resolves the approval by its execution id.
+        return tbAiService.process((client, tokenProvider) -> operations.execute(
+                new TbAiOperation(ChannelProtocol.TOOL_APPROVAL_RESOLVE, decision,
+                        () -> client.resolveToolApproval(decision, tokenProvider)), user, tokenProvider), user, false);
     }
 
-    private JsonNode resolveOverChannel(ChannelSession session, JsonNode decision) {
+    private JsonNode resolveOverChannel(TbAiChannelRegistry.ApprovalRoute route, JsonNode decision) {
         try {
-            ChannelFrame reply = session.request(ChannelFrame.request(ChannelProtocol.TOOL_APPROVAL, JacksonUtil.toString(decision)),
-                    CHANNEL_APPROVAL_TIMEOUT).get(CHANNEL_APPROVAL_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);
+            ChannelFrame request = ChannelFrame.request(ChannelProtocol.TOOL_APPROVAL, JacksonUtil.toString(decision)).withOp(route.op());
+            ChannelFrame reply = route.session().request(request, CHANNEL_APPROVAL_TIMEOUT)
+                    .get(CHANNEL_APPROVAL_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);
             return JacksonUtil.toJsonNode(reply.payload());
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

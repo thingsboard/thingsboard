@@ -9,7 +9,20 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public record TbAiClientRequest(String clientOrigin, Map<String, String> forwardedHeaders) {
+/**
+ * @param exactOrigin true when {@code clientOrigin} comes from the browser request: TB AI shows it to the user (device
+ *                    connectivity commands, audit), so the call needs a channel opened with exactly this origin. False
+ *                    for a default origin, which any channel of the same user may serve.
+ */
+public record TbAiClientRequest(String clientOrigin, Map<String, String> forwardedHeaders, boolean exactOrigin) {
+
+    public TbAiClientRequest(String clientOrigin, Map<String, String> forwardedHeaders) {
+        this(clientOrigin, forwardedHeaders, true);
+    }
+
+    public static TbAiClientRequest withDefaultOrigin(String clientOrigin) {
+        return new TbAiClientRequest(clientOrigin, Map.of(), false);
+    }
 
     private static final List<String> FORWARDED_HEADERS = List.of(
             HttpHeaders.HOST, "X-Forwarded-Host", "X-Forwarded-Proto", "X-Forwarded-Port", "X-Forwarded-For");
