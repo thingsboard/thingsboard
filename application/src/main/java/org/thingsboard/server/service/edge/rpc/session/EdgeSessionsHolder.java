@@ -16,6 +16,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 @Data
@@ -35,11 +36,16 @@ public class EdgeSessionsHolder {
         unique.forEach(consumer);
     }
 
-    public void put(EdgeGrpcSessionManager session) {
+    public EdgeGrpcSessionManager put(EdgeGrpcSessionManager session) {
         UUID sessionId = session.getState().getSessionId();
         EdgeId edgeId = session.getState().getEdgeId();
-        sessionsById.put(sessionId, session);
-        sessions.put(edgeId, session);
+        AtomicReference<EdgeGrpcSessionManager> previousSession = new AtomicReference<>();
+        sessions.compute(edgeId, (id, previous) -> {
+            previousSession.set(previous);
+            sessionsById.put(sessionId, session);
+            return session;
+        });
+        return previousSession.get();
     }
 
     public EdgeGrpcSessionManager getByEdgeId(EdgeId id) {
@@ -52,6 +58,10 @@ public class EdgeSessionsHolder {
 
     public EdgeGrpcSessionManager removeByEdgeId(EdgeId id) {
         return sessions.remove(id);
+    }
+
+    public boolean removeByEdgeId(EdgeId id, EdgeGrpcSessionManager session) {
+        return sessions.remove(id, session);
     }
 
     public EdgeGrpcSessionManager removeBySessionId(UUID sessionId) {
