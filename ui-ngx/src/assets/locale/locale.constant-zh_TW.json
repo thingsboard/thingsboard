@@ -2330,7 +2330,7 @@
         "manage-edge-scheduler-events": "管理 Edge 排程事件",
         "select-group-to-add": "選擇要加入所選 Edge 的目標群組",
         "select-group-to-move": "選擇要移入所選 Edge 的目標群組",
-        "remove-edges-from-group": "確定要從群組「{entityGroup}」移除 { count, plural, =1 {1 個 Edge} other {# 個 Edge} }嗎？",
+        "remove-edges-from-group": "確定要從群組「{entityGroup}」移除 { count, plural, =1 {1 個 Edge} other {# 個 Edge} } 嗎？",
         "group": "Edge 群組",
         "list-of-groups": "{ count, plural, =1 {1 個 Edge 群組} other {# 個 Edge 群組的清單} }",
         "group-name-starts-with": "名稱以「{{prefix}}」開頭的 Edge 群組",
@@ -2361,7 +2361,7 @@
         "missing-attributes-text": "指派給 Edge 的整合包含此 Edge 未提供的屬性預留位置。<br><br>缺少的 Edge 屬性清單：<br>{{missingEdgeAttributes}}",
         "missing-all-related-attributes-title": "Edge 缺少屬性",
         "missing-all-related-attributes-text": "與整合關聯的 Edge 缺少整合設定中屬性預留位置所指定的屬性。<br><br>缺少的 Edge 屬性清單：<br>{{missingEdgeAttributes}}",
-        "quick-overview-widget-header": "{{edgeName}} 快速概覽",
+        "quick-overview-widget-header": "「{{edgeName}}」快速概覽",
         "managed-application": "受控應用程式",
         "app-upgrade-available": "有可用的升級",
         "auto-provision": "自動佈建",
@@ -7563,8 +7563,8 @@
             "convert-value-function": "轉換值函式",
             "error": {
                 "target-entity-is-not-set": "未設定目標實體！",
-                "failed-to-perform-action": "執行 <b>{{ actionLabel }}</b> 操作失敗。",
-                "invalid-attribute-scope": "<b>{{entityType}}</b> 實體不支援 {{scope}} 屬性範圍。"
+                "failed-to-perform-action": "執行「<b>{{ actionLabel }}</b>」操作失敗。",
+                "invalid-attribute-scope": "類型為「<b>{{entityType}}</b>」的實體不支援「{{scope}}」屬性範圍。"
             }
         },
         "home": {
@@ -8030,7 +8030,7 @@
             "unassigned-to-user": "警報已由使用者 {{userName}} 取消指派",
             "unassigned-from-deleted-user": "警報已取消指派，因為使用者 {{userName}} 已被刪除",
             "comment-deleted": "使用者 {{userName}} 刪除了留言",
-            "severity-changed": "警報嚴重程度已從 {{oldSeverity}} 更新為 {{newSeverity}}"
+            "severity-changed": "警報嚴重程度已從「{{oldSeverity}}」更新為「{{newSeverity}}」"
         }
     },
     "alarm-activity": {
@@ -9993,7 +9993,7 @@
     "rpc": {
         "error": {
             "target-device-is-not-set": "目標裝置未設定！",
-            "invalid-target-entity": "<b>{{entityType}}</b> 實體不支援 RPC 命令。",
+            "invalid-target-entity": "類型為「<b>{{entityType}}</b>」的實體不支援 RPC 命令。",
             "failed-to-resolve-target-device": "無法解析目標裝置！",
             "request-timeout": "請求逾時",
             "rpc-http-error": "錯誤：{{status}} - {{statusText}}"
@@ -10638,7 +10638,7 @@
         "skip-empty-fields-tooltip": "值為空的欄位將不會新增到輸出訊息/輸出詮釋資料中。",
         "fetch-interval": "取得間隔",
         "fetch-strategy": "取得策略",
-        "fetch-timeseries-from-to": "取得從 {{startInterval}} {{startIntervalTimeUnit}}前到 {{endInterval}} {{endIntervalTimeUnit}}前的時間序列。",
+        "fetch-timeseries-from-to": "取得從 {{startInterval}} {{startIntervalTimeUnit}} 前到 {{endInterval}} {{endIntervalTimeUnit}} 前的時間序列。",
         "fetch-timeseries-from-to-invalid": "取得時間序列無效（「間隔開始」應小於「間隔結束」）。",
         "use-metadata-dynamic-interval-tooltip": "如果選取，規則節點將基於訊息和詮釋資料模式使用動態間隔的開始和結束。",
         "all-mode-hint": "如果選擇「全部」取得模式，規則節點會依設定的查詢參數，取得指定時間區間內的遙測資料。",
@@ -11661,7 +11661,7 @@
         "add-integration-text": "新增整合",
         "no-integrations-text": "找不到整合",
         "data-convertor-name": "「{{integrationName}}」的資料轉換器（{{convertorType}}）",
-        "integration-name": "{{integrationType}} 整合",
+        "integration-name": "整合（{{integrationType}}）",
         "selected-integrations": "已選擇 { count, plural, =1 {1 個整合} other {# 個整合} }",
         "delete-integration-title": "確定要刪除整合「{{integrationName}}」嗎？",
         "delete-integration-text": "請注意，確認後將無法復原整合及所有相關資料。",
@@ -12529,8 +12529,8 @@
         "preset-advanced-description": "設定佈建策略，並選擇或建立應用程式設定檔",
         "preset-advanced-configure": "設定",
         "preset-summary-title": "預設組合：{{label}}",
-        "preset-summary-body": "建立代理程式設定檔，指派 {{apps}}，並採用「每種類型一個應用程式」佈建策略。",
-        "preset-summary-apps-two": "{{first}} 與 {{second}}",
+        "preset-summary-body": "建立代理程式設定檔，指派「{{apps}}」，並採用「每種類型一個應用程式」佈建策略。",
+        "preset-summary-apps-two": "{{first}}、{{second}}",
         "preset-templates-load-failed": "無法載入以下類型的最新應用程式範本：{{types}}。需要這些範本的預設組合已停用。",
         "app-type-required": "應用程式類型為必填項。",
         "provision-type-disabled": "停用",
@@ -13601,7 +13601,7 @@
         "set-url": "設定 URL",
         "set-access-token": "設定存取權杖",
         "menu-conflict": "選單衝突",
-        "menu-conflict-message": "範圍為 <b>{{scope}}</b> 的預設自訂選單已存在。確定要以您的自訂選單取代嗎？",
+        "menu-conflict-message": "範圍為<b>{{scope}}</b>的預設自訂選單已存在。確定要以您的自訂選單取代嗎？",
         "replace": "取代"
     },
     "custom-translation": {
@@ -14205,11 +14205,11 @@
         "add-addon": "{ type, select, PROFESSIONAL_UPGRADE {加入「{name}」} other {加入「{name}」} }",
         "add-addon-subscription": "「{{name}}」是付費附加元件，會增加您的每月費用。",
         "add-addon-perpetual": "「{{name}}」是付費附加元件，可為此授權一次購買。",
-        "upgrade-plan-devices": "在 {{plan}} 方案中，裝置數量上限由方案決定。",
-        "upgrade-plan-instances": "在 {{plan}} 方案中，正式環境執行個體數量上限由方案決定。",
-        "upgrade-plan-credits": "在 {{plan}} 方案中，每月 AI 點數由方案決定。",
-        "upgrade-plan-edges": "在 {{plan}} 方案中，Edge 數量上限由方案決定。",
-        "upgrade-plan-agents": "在 {{plan}} 方案中，遠端代理程式數量上限由方案決定。",
+        "upgrade-plan-devices": "在「{{plan}}」方案中，裝置數量上限由方案決定。",
+        "upgrade-plan-instances": "在「{{plan}}」方案中，正式環境執行個體數量上限由方案決定。",
+        "upgrade-plan-credits": "在「{{plan}}」方案中，每月 AI 點數由方案決定。",
+        "upgrade-plan-edges": "在「{{plan}}」方案中，Edge 數量上限由方案決定。",
+        "upgrade-plan-agents": "在「{{plan}}」方案中，遠端代理程式數量上限由方案決定。",
         "upgrade-plan-white-labeling": "所有付費方案均包含白標功能。",
         "upgrade-plan-addon": "「{{name}}」是付費附加元件，必須使用付費方案才能加入。",
         "ce-grant-case": "任何購買都會將您的 Community Grant 轉換為永久商業授權。您只需支付新增項目的費用，原本涵蓋的項目無需付費。",
@@ -14250,7 +14250,7 @@
         "learn-more": "深入了解",
         "feature-request-sent-title": "系統已自動向您的系統管理員提出啟用{{addonName}}的要求",
         "feature-request-sent-text": "請等候管理員審查要求並更新設定。您可能需要重新整理此頁面才能看到變更。",
-        "request-trendz-title": "使用 {{name}} 將 IoT 資料集轉化為深入解析，簡化決策流程",
+        "request-trendz-title": "使用「{{name}}」將 IoT 資料集轉化為深入解析，簡化決策流程",
         "request-trendz-text": "在 AI 驅動的統一工作區中，無需撰寫程式即可探索遙測資料、建立邏輯、偵測異常及產生預測，將原始資料轉化為清楚且可據以行動的深入解析",
         "request-trendz-action-text": "「{{name}}」是附加元件。請聯絡系統管理員以啟用。",
         "trendz-card-metric-explorer-title": "指標探索工具",
@@ -14393,8 +14393,8 @@
         "retry-healthcheck": "重試健全狀況檢查",
         "save-configuration": "儲存設定",
         "service-connection": "服務連線",
-        "service-unavailable": "{{ name }} 暫時無法使用",
-        "service-unavailable-message": "目前發生技術問題，無法存取 {{ name }} 服務。",
+        "service-unavailable": "「{{ name }}」暫時無法使用",
+        "service-unavailable-message": "目前發生技術問題，無法存取「{{ name }}」服務。",
         "service-unavailable-incident-reported": "原因是平台與分析伺服器之間的設定或連線問題。請向系統管理員回報此問題。",
         "service-unavailable-report-issue": "回報問題",
         "service-unavailable-request-sent-title": "系統已自動向您的系統管理員回報此問題",
