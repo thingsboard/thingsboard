@@ -1384,6 +1384,11 @@
         "activation-link-text": ": </a>استفاده کنيد <a href='{{activationLink}}' target='_blank'> جهت فعال سازي کاربر، از پيوند فعال سازي زير",
         "copy-activation-link": "رونوشت پيوند فعال سازي",
         "activation-link-copied-message": "پيوند فعال سازي کاربر در حافظه موقت رونوشت شد",
+        "display-password-reset-link": "Display password reset link",
+        "password-reset-link": "User password reset link",
+        "password-reset-link-text": "In order to reset user password use the following <a href='{{passwordResetLink}}' target='_blank'>password reset link</a> (expires in {{passwordResetLinkTtl}}) :",
+        "copy-password-reset-link": "Copy password reset link",
+        "password-reset-link-copied-message": "Password reset link has been copied to clipboard",
         "details": "جزئيات",
         "login-as-tenant-admin": "ورود به عنوان کاربر مدير",
         "login-as-customer-user": "ورود به عنوان کاربر مشتري"

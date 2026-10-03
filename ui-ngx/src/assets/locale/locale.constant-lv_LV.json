@@ -1431,6 +1431,11 @@
         "activation-link-text": "Lai aktivizētu lietotāju, lieto sekojošo <a href='{{activationLink}}' target='_blank'>aktivizācijas saiti</a> :",
         "copy-activation-link": "Kopēt aktivizācijas saiti",
         "activation-link-copied-message": "Lietotāja aktivizācijas saite ir kopēta uz starpliktuvi",
+        "display-password-reset-link": "Display password reset link",
+        "password-reset-link": "User password reset link",
+        "password-reset-link-text": "In order to reset user password use the following <a href='{{passwordResetLink}}' target='_blank'>password reset link</a> (expires in {{passwordResetLinkTtl}}) :",
+        "copy-password-reset-link": "Copy password reset link",
+        "password-reset-link-copied-message": "Password reset link has been copied to clipboard",
         "details": "Detaļas",
         "login-as-tenant-admin": "Login kā īrnieka administrātors",
         "login-as-customer-user": "Login kā klienta lietotājs"
