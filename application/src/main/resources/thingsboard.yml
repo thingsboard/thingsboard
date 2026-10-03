@@ -1306,8 +1306,16 @@ audit-log:
       "group_permission": "${AUDIT_LOG_MASK_GROUP_PERMISSION:W}" # Group permission logging levels.
       "report_template": "${AUDIT_LOG_MASK_REPORT_TEMPLATE:W}" # Report template logging levels.
   sink:
-    # Type of external sink. possible options: none, elasticsearch
+    # Type of external sink. possible options: none, elasticsearch, webhook or stdout (info-scope)
     type: "${AUDIT_LOG_SINK_TYPE:none}"
+    #URL for the Webhook Endpoint
+    webhook_url: "${AUDIT_LOG_SINK_WEBHOOK_URL}"
+    #Webhook API Key is transmitted via (X-API-KEY Header)
+    webhook_api_key: "${AUDIT_LOG_SINK_WEBHOOK_API_KEY:}"
+    #Webhook API Secret is transmitted via (X-API-KEY Header)
+    webhook_api_secret: "${AUDIT_LOG_SINK_WEBHOOK_API_SECRET:}"
+    #Set Header "Content-Encoding", "gzip" and compress each webhook messages with gzip
+    webhook_compression: "${AUDIT_LOG_SINK_WEBHOOK_COMPRESSION:false}"
     # Name of the index where audit logs are stored
     # Index name could contain next placeholders (not mandatory):
     # @{TENANT} - substituted by tenant ID
