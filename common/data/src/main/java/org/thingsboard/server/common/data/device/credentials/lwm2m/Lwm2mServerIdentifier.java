@@ -85,7 +85,7 @@ public enum Lwm2mServerIdentifier {
      */
     public static Lwm2mServerIdentifier fromId(Integer id) {
         for (Lwm2mServerIdentifier s : values()) {
-            if (s.id == id) {
+            if (s.id.equals(id)) {
                 return s;
             }
         }
