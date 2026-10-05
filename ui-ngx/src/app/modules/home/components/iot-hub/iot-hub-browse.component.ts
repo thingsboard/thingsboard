@@ -4,23 +4,29 @@ import { AfterViewInit, Component, ElementRef, EventEmitter, Input, NgZone, OnDe
 import { Subject } from 'rxjs';
 import { debounceTime, takeUntil } from 'rxjs/operators';
 import { PageLink } from '@shared/models/page/page-link';
-import { Direction, SortOrder } from '@shared/models/page/sort-order';
+import { SortOrder } from '@shared/models/page/sort-order';
 import { PageData } from '@shared/models/page/page-data';
 import { MpItemVersionQuery, MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
-import { ItemType, FilterParamInfo, CREATOR_VISIBLE_ITEM_TYPES } from '@shared/models/iot-hub/iot-hub-item.models';
+import {
+  CREATOR_VISIBLE_ITEM_TYPES,
+  FilterParamInfo,
+  IOT_HUB_SORT_OPTIONS,
+  isCompactItemType,
+  ItemType
+} from '@shared/models/iot-hub/iot-hub-item.models';
 import { widgetTypeTranslations, cfTypeTranslations, ruleChainTypeTranslations } from '@shared/models/iot-hub/iot-hub-version.models';
 import { IotHubInstalledItem, DeviceInstalledItemDescriptor } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
-import { filterIotHubItemsBySearch, groupIotHubFilterItems, IotHubFilterGroup } from '@home/components/iot-hub/iot-hub-utils';
-
-interface SortOption {
-  value: string;
-  label: string;
-  direction: Direction;
-}
+import {
+  filterIotHubItemsBySearch,
+  groupIotHubFilterItems,
+  IOT_HUB_FILTER_SCROLL_THRESHOLD,
+  IotHubFilterGroup,
+  measureGridColumns
+} from '@home/components/iot-hub/iot-hub-utils';
 
 @Component({
   selector: 'tb-iot-hub-browse',
@@ -44,6 +50,7 @@ export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy
   }
 
   readonly ItemType = ItemType;
+  readonly scrollThreshold = IOT_HUB_FILTER_SCROLL_THRESHOLD;
 
   @Input() creatorId: string;
   @Input() embedded = false;
@@ -79,9 +86,7 @@ export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy
   }
 
   get isCompactType(): boolean {
-    return this._activeType === ItemType.CALCULATED_FIELD
-        || this._activeType === ItemType.ALARM_RULE
-        || this._activeType === ItemType.RULE_CHAIN;
+    return isCompactItemType(this._activeType);
   }
 
   get searchPlaceholderKey(): string {
@@ -131,11 +136,7 @@ export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy
   activeHardwareTypes = new Set<string>();
   activeVendors = new Set<string>();
 
-  sortOptions: SortOption[] = [
-    { value: 'totalInstallCount', label: 'iot-hub.sort-most-installed', direction: Direction.DESC },
-    { value: 'publishedTime', label: 'iot-hub.sort-newest', direction: Direction.DESC },
-    { value: 'name', label: 'iot-hub.sort-name', direction: Direction.ASC }
-  ];
+  readonly sortOptions = IOT_HUB_SORT_OPTIONS;
 
   typeTabs: { type: ItemType; label: string }[] = CREATOR_VISIBLE_ITEM_TYPES.map(t => ({
     type: t,
@@ -222,17 +223,7 @@ export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy
     if (!el) {
       return this.probeCols;
     }
-    // Force layout so `grid-template-columns` resolves to pixel tracks, not `repeat(...)`.
-    void el.offsetWidth;
-    const tracks = getComputedStyle(el).gridTemplateColumns;
-    if (!tracks || tracks === 'none') {
-      return 1;
-    }
-    if (tracks.startsWith('repeat(')) {
-      const match = tracks.match(/^repeat\(\s*(\d+)\s*,/);
-      return match ? parseInt(match[1], 10) : 1;
-    }
-    return Math.max(1, tracks.trim().split(/\s+/).filter(t => t.length > 0).length);
+    return measureGridColumns(el);
   }
 
   private adjustPageSize(): void {

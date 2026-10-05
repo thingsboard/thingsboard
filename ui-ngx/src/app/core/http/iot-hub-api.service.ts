@@ -7,7 +7,11 @@ import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
 import { PageData } from '@shared/models/page/page-data';
 import { PageLink } from '@shared/models/page/page-link';
-import { MpItemVersionQuery, MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
+import {
+  MpItemVersionQuery,
+  MpItemVersionQueryOptions,
+  MpItemVersionView
+} from '@shared/models/iot-hub/iot-hub-version.models';
 import { CreatorView } from '@shared/models/iot-hub/iot-hub-creator.models';
 import { IotHubInstalledItem, InstallItemVersionResult, InstallPlan, InstallPlanResult, UpdateItemVersionResult, ItemPublishedVersionInfo } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { ItemType, ItemTypeFilterInfo, WidgetCategory } from '@shared/models/iot-hub/iot-hub-item.models';
@@ -70,30 +74,38 @@ export class IotHubApiService {
   }
 
   public getPublishedVersions(query: MpItemVersionQuery, config?: IotHubRequestConfig): Observable<PageData<MpItemVersionView>> {
-    if (query.options.tbVersion == null) {
-      query.options.tbVersion = tbVersionToInt(env.tbVersion);
-    }
-    if (query.options.ceOnly == null) {
-      query.options.ceOnly = false;
-    }
+    this.applyPlatformFilters(query.options);
     return this.http.get<PageData<MpItemVersionView>>(
       `${this.baseUrl}/api/versions/published${query.toQuery()}`,
       { params: this.buildParams(config) }
     );
   }
 
+  /** What this platform can install: items of every edition, nothing built for a newer ThingsBoard. */
+  private platformScope(): { ceOnly: boolean; tbVersion: number } {
+    return { ceOnly: false, tbVersion: tbVersionToInt(env.tbVersion) };
+  }
+
+  /** Fills in the platform scope wherever the caller did not set it. */
+  private applyPlatformFilters(options: MpItemVersionQueryOptions): void {
+    const scope = this.platformScope();
+    options.tbVersion ??= scope.tbVersion;
+    options.ceOnly ??= scope.ceOnly;
+  }
+
+  private platformScopeParams(): string[] {
+    const scope = this.platformScope();
+    return [`ceOnly=${scope.ceOnly}`, `tbVersion=${scope.tbVersion}`];
+  }
+
   public getFilterInfo(itemType: ItemType, config?: IotHubRequestConfig): Observable<ItemTypeFilterInfo> {
-    const url = `${this.baseUrl}/api/item-listing/filterInfo/${itemType}`
-      + `?ceOnly=false&tbVersion=${tbVersionToInt(env.tbVersion)}`;
+    const url = `${this.baseUrl}/api/item-listing/filterInfo/${itemType}?${this.platformScopeParams().join('&')}`;
     return this.http.get<ItemTypeFilterInfo>(url, { params: this.buildParams(config) });
   }
 
   public getWidgetCategories(textSearch?: string, scadaFirst?: boolean,
                              config?: IotHubRequestConfig): Observable<WidgetCategory[]> {
-    const queryParams: string[] = [
-      `ceOnly=false`,
-      `tbVersion=${tbVersionToInt(env.tbVersion)}`
-    ];
+    const queryParams: string[] = this.platformScopeParams();
     if (textSearch?.trim()) {
       queryParams.push(`textSearch=${encodeURIComponent(textSearch.trim())}`);
     }
@@ -133,7 +145,7 @@ export class IotHubApiService {
   public getListingItemVersion(slug: string, config?: IotHubRequestConfig): Observable<MpItemVersionView> {
     const queryParams = [
       'ce=false',
-      `tbVersion=${tbVersionToInt(env.tbVersion)}`
+      `tbVersion=${this.platformScope().tbVersion}`
     ];
     return this.http.get<MpItemVersionView>(
       `${this.baseUrl}/api/listings/public/by-slug/${encodeURIComponent(slug)}/item-version?${queryParams.join('&')}`,

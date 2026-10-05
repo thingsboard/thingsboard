@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { MpItemVersionView, cfTypeTranslations, cfTypeIcons, ruleChainTypeTranslations, widgetTypeTranslations } from '@shared/models/iot-hub/iot-hub-version.models';
-import { getItemTypeIcon, ItemType } from '@shared/models/iot-hub/iot-hub-item.models';
+import { getItemTypeIcon, isCompactItemType, ItemType } from '@shared/models/iot-hub/iot-hub-item.models';
 import { IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { TranslateService } from '@ngx-translate/core';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
@@ -23,6 +23,11 @@ export class TbIotHubItemCardComponent {
   @Input() showTypeChip = true;
   @Input() showSubtype = false;
   @Input() mode: 'default' | 'add' = 'default';
+  /**
+   * `auto`: compact row for the types with nothing to preview (single-type grids widen their
+   * cells for it). `preview`: the tall card for every type, for grids that mix types.
+   */
+  @Input() layout: 'auto' | 'preview' = 'auto';
   @Output() cardClick = new EventEmitter<MpItemVersionView>();
   @Output() creatorClick = new EventEmitter<string>();
   @Output() installClick = new EventEmitter<MpItemVersionView>();
@@ -47,9 +52,10 @@ export class TbIotHubItemCardComponent {
   }
 
   isCompactLayout(): boolean {
-    return this.item.type === ItemType.CALCULATED_FIELD
-        || this.item.type === ItemType.ALARM_RULE
-        || this.item.type === ItemType.RULE_CHAIN;
+    if (this.layout === 'preview') {
+      return false;
+    }
+    return isCompactItemType(this.item.type);
   }
 
   getPreviewUrl(): string | null {
