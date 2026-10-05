@@ -13,6 +13,10 @@ import $ from 'jquery';
 
 if (environment.production) {
   enableProdMode();
+  // Extensions are loaded at runtime via SystemJS as ng-packagr library bundles, which keep
+  // bare `ngDevMode` references. The app build replaces `ngDevMode` at compile time (dropping
+  // the global assignment in enableProdMode), so define it for runtime-loaded bundles.
+  (globalThis as any).ngDevMode = false;
 }
 
 platformBrowserDynamic().bootstrapModule(AppModule)
