@@ -20,7 +20,7 @@ import org.apache.curator.framework.state.ConnectionStateListener;
 import org.apache.curator.retry.RetryForever;
 import org.apache.curator.utils.CloseableUtils;
 import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.data.Stat;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -146,21 +146,25 @@ public class ZkDiscoveryService implements DiscoveryService {
     @SneakyThrows
     public synchronized void publishCurrentServer() {
         TransportProtos.ServiceInfo self = serviceInfoProvider.getServiceInfo();
-        if (currentServerExists()) {
-            log.trace("[{}] Updating ZK node for current instance: {}", self.getServiceId(), nodePath);
-            client.setData().forPath(nodePath, serviceInfoProvider.generateNewServiceInfoWithCurrentSystemInfo().toByteArray());
-        } else {
-            try {
-                log.info("[{}] Creating ZK node for current instance", self.getServiceId());
-                nodePath = client.create()
-                        .creatingParentsIfNeeded()
-                        .withMode(CreateMode.EPHEMERAL_SEQUENTIAL).forPath(zkNodesDir + "/", self.toByteArray());
-                log.info("[{}] Created ZK node for current instance: {}", self.getServiceId(), nodePath);
-                client.getConnectionStateListenable().addListener(checkReconnect(self));
-            } catch (Exception e) {
-                log.error("Failed to create ZK node", e);
-                throw new RuntimeException(e);
+        switch (getCurrentServerNodeState()) {
+            case PRESENT -> {
+                log.trace("[{}] Updating ZK node for current instance: {}", self.getServiceId(), nodePath);
+                client.setData().forPath(nodePath, serviceInfoProvider.generateNewServiceInfoWithCurrentSystemInfo().toByteArray());
             }
+            case ABSENT -> {
+                try {
+                    log.info("[{}] Creating ZK node for current instance", self.getServiceId());
+                    nodePath = client.create()
+                            .creatingParentsIfNeeded()
+                            .withMode(CreateMode.EPHEMERAL_SEQUENTIAL).forPath(zkNodesDir + "/", self.toByteArray());
+                    log.info("[{}] Created ZK node for current instance: {}", self.getServiceId(), nodePath);
+                    client.getConnectionStateListenable().addListener(checkReconnect(self));
+                } catch (Exception e) {
+                    log.error("Failed to create ZK node", e);
+                    throw new RuntimeException(e);
+                }
+            }
+            case UNKNOWN -> log.debug("[{}] Skipping ZK node publish, node state is unknown", self.getServiceId());
         }
     }
 
@@ -177,23 +181,35 @@ public class ZkDiscoveryService implements DiscoveryService {
         }
     }
 
-    private boolean currentServerExists() {
+    private NodeState getCurrentServerNodeState() {
         if (nodePath == null) {
-            return false;
+            return NodeState.ABSENT;
         }
         try {
-            TransportProtos.ServiceInfo self = serviceInfoProvider.getServiceInfo();
-            TransportProtos.ServiceInfo registeredServerInfo = null;
-            registeredServerInfo = TransportProtos.ServiceInfo.parseFrom(client.getData().forPath(nodePath));
-            if (self.equals(registeredServerInfo)) {
-                return true;
+            Stat stat = client.checkExists().forPath(nodePath);
+            if (stat == null) {
+                log.info("ZK node does not exist: {}", nodePath);
+                return NodeState.ABSENT;
             }
-        } catch (KeeperException.NoNodeException e) {
-            log.info("ZK node does not exist: {}", nodePath);
+            long sessionId = client.getZookeeperClient().getZooKeeper().getSessionId();
+            if (stat.getEphemeralOwner() != sessionId) {
+                log.warn("ZK node {} is owned by another session 0x{}, current session 0x{}",
+                        nodePath, Long.toHexString(stat.getEphemeralOwner()), Long.toHexString(sessionId));
+                return NodeState.ABSENT;
+            }
+            return NodeState.PRESENT;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error("Interrupted while checking if ZK node exists", e);
+            return NodeState.UNKNOWN;
         } catch (Exception e) {
             log.error("Couldn't check if ZK node exists", e);
+            return NodeState.UNKNOWN;
         }
-        return false;
+    }
+
+    private enum NodeState {
+        PRESENT, ABSENT, UNKNOWN
     }
 
     private ConnectionStateListener checkReconnect(TransportProtos.ServiceInfo self) {
