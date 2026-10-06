@@ -17,6 +17,7 @@ import org.thingsboard.server.common.data.agent.step.ComposeTypeChoiceStep;
 import org.thingsboard.server.common.data.agent.template.AgentAppTemplate;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.agent.StepLinkedListUtils;
+import org.thingsboard.server.dao.edge.EdgeEditionStyle;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -234,6 +235,10 @@ public class AppTemplateMaterializer {
         return String.join("/", folders);
     }
 
+    private static String edgeRepo(String version) {
+        return version == null ? null : EdgeEditionStyle.getEdgeEditionStyle(version).getDockerRepo();
+    }
+
     private static String parentVersion(String version) {
         return version.substring(0, version.lastIndexOf('.'));
     }
@@ -251,6 +256,9 @@ public class AppTemplateMaterializer {
         vars.put("nextVersion", d.getNextVersion());
         vars.put("nextEdgeVersion", d.getNextVersion());
         vars.put("nextGatewayVersion", d.getNextVersion());
+        // edge image repo per version, as CE-style versions are published under tb-edge instead of tb-edge-pe
+        vars.put("edgeRepo", edgeRepo(d.getVersion()));
+        vars.put("nextEdgeRepo", edgeRepo(d.getNextVersion()));
         vars.put("composeLine", composeLine(d.getVersion()));
         vars.put("requiresUpdateDb", d.isRequiresUpdateDb());
         return vars;

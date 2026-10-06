@@ -40,8 +40,10 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -69,6 +71,9 @@ public class AgentAppTemplateSyncService {
     private static final int APP_TYPE_GROUP_NUM = 1;
     private static final int CONFIG_TYPE_GROUP_NUM = 2;
     private static final String REPO_KEY = "agent-app-templates";
+    // <basePath>/since/<version>/ holds templates that replace the same-named base ones from that platform version on
+    private static final String SINCE_DIR = "since";
+    private static final Pattern SINCE_VERSION_PATTERN = Pattern.compile("\\d+(\\.\\d+)*");
     private static final Duration UPDATE_SERVER_CONNECT_TIMEOUT = Duration.ofSeconds(10);
     private static final Duration UPDATE_SERVER_READ_TIMEOUT = Duration.ofSeconds(30);
 
@@ -147,10 +152,33 @@ public class AgentAppTemplateSyncService {
         return new RestTemplate(factory);
     }
 
-    private List<RepoFile> getTemplateFiles() {
-        return gitSyncService.listFiles(REPO_KEY, basePath, 1, FileType.FILE).stream()
+    /**
+     * Base templates overridden per file name by {@code since/<version>/} ones, taking the newest folder whose version
+     * is not above the platform version. Servers older than a {@code since} folder only list the base folder, so the
+     * templates there are free to rely on newer materialization variables.
+     */
+    List<RepoFile> getTemplateFiles() {
+        String platform = TbVersionUtils.extractStartingDigits(projectInfo.getProjectVersion());
+        Map<String, RepoFile> byName = new LinkedHashMap<>();
+        listTemplateFiles(basePath, 1).forEach(file -> byName.put(file.name(), file));
+        listTemplateFiles(basePath + "/" + SINCE_DIR, 3).stream()
+                .filter(file -> RegexUtils.matches(sinceVersion(file), SINCE_VERSION_PATTERN))
+                .filter(file -> TbVersionUtils.compare(sinceVersion(file), platform) <= 0)
+                .sorted(Comparator.comparing(AgentAppTemplateSyncService::sinceVersion, TbVersionUtils::compare))
+                .forEach(file -> byName.put(file.name(), file));
+        return new ArrayList<>(byName.values());
+    }
+
+    private List<RepoFile> listTemplateFiles(String path, int depth) {
+        return gitSyncService.listFiles(REPO_KEY, path, depth, FileType.FILE).stream()
                 .filter(file -> RegexUtils.matches(file.name(), TEMPLATE_FILE_PATTERN))
                 .collect(Collectors.toList());
+    }
+
+    // Name of the folder holding the file, e.g. templates/since/4.4.1/template-EDGE-DOCKER_COMPOSE.json -> 4.4.1
+    private static String sinceVersion(RepoFile file) {
+        String folder = file.path().substring(0, file.path().lastIndexOf('/'));
+        return folder.substring(folder.lastIndexOf('/') + 1);
     }
 
     private Function<String, JsonNode> composeLoader() {
