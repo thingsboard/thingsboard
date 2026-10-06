@@ -61,16 +61,34 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
     return this.layoutCtx.gridSettings.layoutType === LayoutType.scada;
   }
 
+  get isHtml(): boolean {
+    return this.layoutCtx.gridSettings.layoutType === LayoutType.html;
+  }
+
+  // The HTML page layout has no widget grid: its only widget is virtual and is not stored in the layout,
+  // so widgets cannot be copied from it, pasted into it, cut from it or referenced.
+  get widgetLayoutEditable(): boolean {
+    return this.isEdit && !this.isEditingWidget && !this.widgetEditMode && !this.isHtml;
+  }
+
+  get disableMargins(): boolean {
+    return this.isScada || this.isHtml;
+  }
+
   get outerMargin(): boolean {
-    return this.isScada ? false : this.layoutCtx.gridSettings.outerMargin;
+    return this.disableMargins ? false : this.layoutCtx.gridSettings.outerMargin;
   }
 
   get margin(): number {
-    return this.isScada ? 0 : this.layoutCtx.gridSettings.margin;
+    return this.disableMargins ? 0 : this.layoutCtx.gridSettings.margin;
   }
 
   get autoFillHeight(): boolean {
-    return (this.isEdit || this.isScada) ? false : this.layoutCtx.gridSettings.autoFillHeight;
+    if (this.isHtml) {
+      return true;
+    } else {
+      return (this.isEdit || this.isScada) ? false : this.layoutCtx.gridSettings.autoFillHeight;
+    }
   }
 
   get mobileAutoFillHeight(): boolean {
@@ -87,7 +105,7 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
   }
 
   get isMobileDisabled(): boolean {
-    return this.widgetEditMode || this.isScada || (this.layoutCtx.breakpoint !== 'default' && !this.isMobileValue);
+    return this.widgetEditMode || this.isScada || this.isHtml || (this.layoutCtx.breakpoint !== 'default' && !this.isMobileValue);
   }
 
   get mobielRowHeigth(): number {
@@ -162,7 +180,7 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
   private initHotKeys(): void {
     this.hotKeys.push(
       new Hotkey(['ctrl+c', 'meta+c'], (event: KeyboardEvent) => {
-          if (this.isEdit && !this.isEditingWidget && !this.widgetEditMode) {
+          if (this.widgetLayoutEditable) {
             const widget = this.dashboard.getSelectedWidget();
             if (widget) {
               event.preventDefault();
@@ -176,7 +194,7 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
     );
     this.hotKeys.push(
       new Hotkey(['ctrl+r', 'meta+r'], (event: KeyboardEvent) => {
-          if (this.isEdit && !this.isEditingWidget && !this.widgetEditMode) {
+          if (this.widgetLayoutEditable) {
             const widget = this.dashboard.getSelectedWidget();
             if (widget) {
               event.preventDefault();
@@ -190,7 +208,7 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
     );
     this.hotKeys.push(
       new Hotkey(['ctrl+v', 'meta+v'], (event: KeyboardEvent) => {
-          if (this.isEdit && !this.isEditingWidget && !this.widgetEditMode) {
+          if (this.widgetLayoutEditable) {
             if (this.itembuffer.hasWidget()) {
               event.preventDefault();
               this.pasteWidget(event);
@@ -203,7 +221,7 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
     );
     this.hotKeys.push(
       new Hotkey(['ctrl+i', 'meta+i'], (event: KeyboardEvent) => {
-          if (this.isEdit && !this.isEditingWidget && !this.widgetEditMode) {
+          if (this.widgetLayoutEditable) {
             if (this.itembuffer.canPasteWidgetReference(this.dashboardCtx.getDashboard(),
               this.dashboardCtx.state, this.layoutCtx.id, this.layoutCtx.breakpoint)) {
               event.preventDefault();
@@ -217,7 +235,7 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
     );
     this.hotKeys.push(
       new Hotkey(['ctrl+x', 'meta+x'], (event: KeyboardEvent) => {
-          if (this.isEdit && !this.isEditingWidget && !this.widgetEditMode) {
+          if (this.widgetLayoutEditable) {
             const widget = this.dashboard.getSelectedWidget();
             if (widget) {
               event.preventDefault();
