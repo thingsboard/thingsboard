@@ -35,11 +35,11 @@
   <div mat-dialog-content>
     <fieldset [disabled]="isLoading$ | async" style="margin-bottom: 22px">
       <div class="flex flex-row gap-1.5">
-        <mat-form-field class="mat-block flex-1">
+        <mat-form-field class="mat-block flex-1" appearance="outline">
           <mat-label translate>alarm.originator</mat-label>
           <input matInput formControlName="originatorName" readonly>
         </mat-form-field>
-        <mat-form-field class="mat-block flex-1">
+        <mat-form-field class="mat-block flex-1" appearance="outline">
           <mat-label translate>alarm.severity</mat-label>
           <input matInput formControlName="alarmSeverity" readonly
                  style="font-weight: bold"
@@ -48,24 +48,24 @@
       </div>
       <div class="flex flex-row gap-1.5">
         @if (alarmFormGroup.get('startTime').value) {
-          <mat-form-field class="mat-block flex-1">
+          <mat-form-field class="mat-block flex-1" appearance="outline">
             <mat-label translate>alarm.start-time</mat-label>
             <input matInput formControlName="startTime" readonly>
           </mat-form-field>
         }
         @if (alarmFormGroup.get('duration').value) {
-          <mat-form-field class="mat-block flex-1">
+          <mat-form-field class="mat-block flex-1" appearance="outline">
             <mat-label translate>alarm.duration</mat-label>
             <input matInput formControlName="duration" readonly>
           </mat-form-field>
         }
       </div>
       <div class="flex flex-row gap-1.5">
-        <mat-form-field class="mat-block flex-1">
+        <mat-form-field class="mat-block flex-1" appearance="outline">
           <mat-label translate>alarm.type</mat-label>
           <input matInput formControlName="type" readonly>
         </mat-form-field>
-        <mat-form-field class="mat-block flex-1">
+        <mat-form-field class="mat-block flex-1" appearance="outline">
           <mat-label translate>alarm.status</mat-label>
           <input matInput formControlName="alarmStatus" readonly>
         </mat-form-field>
