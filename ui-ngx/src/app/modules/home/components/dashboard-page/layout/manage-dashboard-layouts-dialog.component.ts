@@ -24,6 +24,7 @@ import {
   DashboardLayoutId,
   DashboardStateLayouts,
   LayoutDimension,
+  HtmlPageConfig,
   LayoutType,
   layoutTypes,
   layoutTypeTranslationMap,
@@ -77,6 +78,9 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
 
   private readonly initialLayoutType: LayoutType;
 
+  // The page content of a state that starts as HTML, kept if the type is switched away and back in this dialog.
+  private readonly htmlPageConfig: HtmlPageConfig;
+
   layoutWidthType = LayoutWidthType;
 
   layoutPercentageSize = LayoutPercentageSize;
@@ -117,6 +121,7 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
       layoutType = this.layouts.main.gridSettings.layoutType;
     }
     this.initialLayoutType = layoutType;
+    this.htmlPageConfig = deepClone(this.layouts.main.gridSettings.htmlPageConfig);
 
     this.layoutsFormGroup = this.fb.group({
         layoutType: [layoutType],
@@ -132,6 +137,16 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
           [Validators.min(this.layoutFixedSize.MIN), Validators.max(this.layoutFixedSize.MAX), Validators.required]],
         fixedLayout: ['main', []]
       }
+    );
+
+    this.subscriptions.push(
+      this.layoutsFormGroup.get('layoutType').valueChanges.subscribe((value) => {
+        if (value !== LayoutType.html && this.layouts.main.gridSettings.htmlPageConfig) {
+          // Leaving the HTML page: start the widget grid from the defaults right away, so that layout settings
+          // and new breakpoints copied from the main layout are based on them.
+          this.layouts.main.gridSettings = this.dashboardUtils.createDefaultGridSettings();
+        }
+      })
     );
 
     this.subscriptions.push(
@@ -299,10 +314,6 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
 
   private applyLayouts(): void {
     const layoutType = this.layoutsFormGroup.value.layoutType;
-    if (this.initialLayoutType === LayoutType.html && !this.isHtmlLayout) {
-      // The HTML page kept no grid settings: start the widget grid from the defaults.
-      this.layouts.main.gridSettings = this.dashboardUtils.createDefaultGridSettings();
-    }
     this.layouts.main.gridSettings.layoutType = layoutType;
     delete this.layouts.main.gridSettings.layoutDimension;
     if (this.isBreakpointsLayout) {
@@ -338,19 +349,15 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
       delete this.layouts.right;
     }
     if (this.isHtmlLayout) {
-      delete this.layouts.main.widgets;
+      // An empty widgets map rather than none: code that walks layouts keeps working with HTML pages.
+      this.layouts.main.widgets = {};
       this.layouts.main.gridSettings = {
         layoutType: LayoutType.html,
         htmlPageConfig: {
-          settings: this.layouts.main.gridSettings.htmlPageConfig?.settings,
-          actions: this.layouts.main.gridSettings.htmlPageConfig?.actions
+          settings: this.htmlPageConfig?.settings,
+          actions: this.htmlPageConfig?.actions
         }
       };
-    } else {
-      delete this.layouts.main.gridSettings.htmlPageConfig;
-      if (!this.layouts.main.widgets) {
-        this.layouts.main.widgets = {};
-      }
     }
     this.dialogRef.close(this.layouts);
   }

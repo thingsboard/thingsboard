@@ -1067,6 +1067,7 @@
         "prev-widget": "Previous widget",
         "add-to-dashboard": "Add to dashboard",
         "add-widget-to-dashboard": "Add widget to dashboard",
+        "no-widget-grid-in-dashboard": "All states of this dashboard are HTML pages, so the widget cannot be added to it.",
         "selected-attributes": "{ count, plural, =1 {1 attribute} other {# attributes} } selected",
         "selected-telemetry": "{ count, plural, =1 {1 telemetry unit} other {# telemetry units} } selected",
         "no-attributes-text": "No attributes found",

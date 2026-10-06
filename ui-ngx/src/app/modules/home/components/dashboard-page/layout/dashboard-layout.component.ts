@@ -66,7 +66,7 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
   }
 
   // The HTML page layout has no widget grid: its only widget is virtual and is not stored in the layout,
-  // so widgets cannot be pasted into it, cut from it or referenced.
+  // so widgets cannot be copied from it, pasted into it, cut from it or referenced.
   get widgetLayoutEditable(): boolean {
     return this.isEdit && !this.isEditingWidget && !this.widgetEditMode && !this.isHtml;
   }
@@ -92,9 +92,7 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
   }
 
   get mobileAutoFillHeight(): boolean {
-    if (this.isHtml) {
-      return true;
-    } else if (this.isEdit || this.isScada) {
+    if (this.isEdit || this.isScada) {
       return false;
     } else if (this.layoutCtx.breakpoint !== 'default' && this.layoutCtx.gridSettings.viewFormat === ViewFormatType.list) {
       return this.layoutCtx.gridSettings.autoFillHeight;
@@ -182,7 +180,7 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
   private initHotKeys(): void {
     this.hotKeys.push(
       new Hotkey(['ctrl+c', 'meta+c'], (event: KeyboardEvent) => {
-          if (this.isEdit && !this.isEditingWidget && !this.widgetEditMode) {
+          if (this.widgetLayoutEditable) {
             const widget = this.dashboard.getSelectedWidget();
             if (widget) {
               event.preventDefault();

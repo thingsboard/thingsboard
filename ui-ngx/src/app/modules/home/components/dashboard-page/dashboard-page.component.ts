@@ -1733,7 +1733,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   }
 
   widgetMouseDown($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget) {
-    if (this.isEdit && !this.isEditingWidget) {
+    if (this.isEdit && !this.isEditingWidget && !this.isHtml) {
       layoutCtx.ctrl.selectWidget(widget.id, 0);
     }
   }

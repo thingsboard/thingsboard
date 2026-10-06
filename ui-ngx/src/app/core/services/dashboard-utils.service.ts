@@ -563,6 +563,9 @@ export class DashboardUtilsService {
     if (!layout.gridSettings) {
       layout.gridSettings = this.createDefaultGridSettings();
     }
+    if (!layout.widgets) {
+      layout.widgets = {};
+    }
     if ((layout.gridSettings as any).margins && (layout.gridSettings as any).margins.length === 2) {
       layout.gridSettings.margin = (layout.gridSettings as any).margins[0];
       delete (layout.gridSettings as any).margins;
@@ -618,7 +621,7 @@ export class DashboardUtilsService {
 
     for (const state of Object.values(states)) {
       for (const layout of Object.values(state.layouts)) {
-        if (layout.widgets && layout.widgets[widgetId]) {
+        if (layout.widgets[widgetId]) {
           foundWidgetRefs++;
         }
         if (layout.breakpoints) {
@@ -738,8 +741,12 @@ export class DashboardUtilsService {
       return false;
     }
     // An HTML page has content but no stored widgets: its widget is virtual.
-    return !Object.values(dashboard?.configuration?.states || {}).some(state =>
-      Object.values(state.layouts || {}).some(layout => layout?.gridSettings?.layoutType === LayoutType.html));
+    return !Object.values(dashboard?.configuration?.states || {}).some(state => this.isHtmlPageState(state));
+  }
+
+  // A state whose widget grid is replaced by an HTML page: widgets cannot be added to it.
+  public isHtmlPageState(state: DashboardState): boolean {
+    return state?.layouts?.main?.gridSettings?.layoutType === LayoutType.html;
   }
 
   public addWidgetToLayout(dashboard: Dashboard,
@@ -909,10 +916,6 @@ export class DashboardUtilsService {
     const columns = gridSettings.columns || 24;
     const ratio = columns / prevColumns;
     layout.gridSettings = gridSettings;
-    if (!layout.widgets) {
-      // HTML page layout: no widget grid to rescale
-      return;
-    }
     for (const w of Object.keys(layout.widgets)) {
       const widget = layout.widgets[w];
       if (!widget.sizeX) {
@@ -1011,7 +1014,7 @@ export class DashboardUtilsService {
         const state = states[s];
         for (const l of Object.keys(state.layouts)) {
           const layout: DashboardLayout = state.layouts[l];
-          if (layout.widgets && layout.widgets[widgetId]) {
+          if (layout.widgets[widgetId]) {
             found = true;
             break;
           }
