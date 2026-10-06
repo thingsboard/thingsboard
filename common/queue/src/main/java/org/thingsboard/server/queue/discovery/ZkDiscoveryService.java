@@ -32,12 +32,14 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.discovery.event.OtherServiceShutdownEvent;
 import org.thingsboard.server.queue.util.AfterStartUp;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.apache.curator.framework.recipes.cache.CuratorCacheAccessor.parentPathFilter;
@@ -103,19 +105,28 @@ public class ZkDiscoveryService implements DiscoveryService {
 
     @Override
     public List<TransportProtos.ServiceInfo> getOtherServers() {
+        String currentServiceId = serviceInfoProvider.getServiceInfo().getServiceId();
         return cache.stream()
                 .filter(parentPathFilter(zkNodesDir))
                 .filter(cd -> !cd.getPath().equals(nodePath))
                 .map(cd -> {
                     try {
-                        return TransportProtos.ServiceInfo.parseFrom(cd.getData());
+                        return new Registration(cd, TransportProtos.ServiceInfo.parseFrom(cd.getData()));
                     } catch (NoSuchElementException | InvalidProtocolBufferException e) {
                         log.error("Failed to decode ZK node", e);
                         throw new RuntimeException(e);
                     }
                 })
+                .filter(r -> !r.info().getServiceId().equals(currentServiceId))
+                .collect(Collectors.toMap(r -> r.info().getServiceId(), Function.identity(),
+                        (a, b) -> b.data().getStat().getMtime() > a.data().getStat().getMtime() ? b : a,
+                        LinkedHashMap::new))
+                .values().stream()
+                .map(Registration::info)
                 .collect(Collectors.toList());
     }
+
+    private record Registration(ChildData data, TransportProtos.ServiceInfo info) {}
 
     @Override
     public boolean isMonolith() {
@@ -329,6 +340,14 @@ public class ZkDiscoveryService implements DiscoveryService {
         String serviceId = instance.getServiceId();
         ProtocolStringList serviceTypesList = instance.getServiceTypesList();
 
+        if (serviceId.equals(serviceInfoProvider.getServiceInfo().getServiceId())) {
+            if (type == CuratorCacheListener.Type.NODE_CREATED) {
+                log.error("[{}] Ignoring ZK node {} registered with the current service id. " +
+                        "It is either a stale registration of this service or another service uses the same service id", serviceId, data.getPath());
+            }
+            return;
+        }
+
         log.trace("Processing [{}] event for [{}]", type, serviceId);
         switch (type) {
             case NODE_CREATED:
@@ -349,6 +368,10 @@ public class ZkDiscoveryService implements DiscoveryService {
                 }
                 break;
             case NODE_DELETED:
+                if (getOtherServers().stream().anyMatch(s -> s.getServiceId().equals(serviceId))) {
+                    log.debug("[{}] Ignoring removal of duplicate ZK node {}, service is still registered", serviceId, data.getPath());
+                    break;
+                }
                 zkExecutorService.submit(() -> applicationEventPublisher.publishEvent(new OtherServiceShutdownEvent(this, serviceId, serviceTypesList)));
                 ScheduledFuture<?> future = zkExecutorService.schedule(() -> {
                     log.debug("[{}] Going to recalculate partitions due to removed node [{}]",

@@ -25,6 +25,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.queue.discovery.event.OtherServiceShutdownEvent;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -257,6 +258,56 @@ public class ZkDiscoveryServiceTest {
         verify(client, never()).setData();
     }
 
+    @Test
+    public void getOtherServersIgnoresNodesWithCurrentServiceIdTest() {
+        dataList.add(new ChildData("/thingsboard/nodes/0000000011", statWithMtime(1), currentInfo.toByteArray()));
+        dataList.add(childData);
+
+        assertEquals(List.of(childInfo), zkDiscoveryService.getOtherServers());
+    }
+
+    @Test
+    public void getOtherServersKeepsLatestNodeForDuplicatedServiceIdTest() {
+        TransportProtos.ServiceInfo latestInfo = childInfo.toBuilder().setReady(true).build();
+        dataList.add(new ChildData("/thingsboard/nodes/0000000020", statWithMtime(1), childInfo.toByteArray()));
+        dataList.add(new ChildData("/thingsboard/nodes/0000000021", statWithMtime(2), latestInfo.toByteArray()));
+
+        assertEquals(List.of(latestInfo), zkDiscoveryService.getOtherServers());
+
+        Collections.swap(dataList, 1, 2);
+
+        assertEquals(List.of(latestInfo), zkDiscoveryService.getOtherServers());
+    }
+
+    @Test
+    public void nodeWithCurrentServiceIdDoesNotTriggerRecalculationTest() {
+        ChildData orphanData = new ChildData("/thingsboard/nodes/0000000011", statWithMtime(1), currentInfo.toByteArray());
+
+        startNode(orphanData);
+        stopNode(orphanData);
+
+        assertTrue(zkDiscoveryService.delayedTasks.isEmpty());
+        verify(partitionService, never()).recalculatePartitions(any(), any());
+        verify(applicationEventPublisher, never()).publishEvent(any(OtherServiceShutdownEvent.class));
+    }
+
+    @Test
+    public void removalOfDuplicatedNodeDoesNotPublishShutdownEventTest() {
+        ChildData staleData = new ChildData("/thingsboard/nodes/0000000019", statWithMtime(1), childInfo.toByteArray());
+        ChildData liveData = new ChildData("/thingsboard/nodes/0000000020", statWithMtime(2), childInfo.toByteArray());
+        startNode(staleData);
+        startNode(liveData);
+
+        stopNode(staleData);
+
+        assertTrue(zkDiscoveryService.delayedTasks.isEmpty());
+        verify(applicationEventPublisher, never()).publishEvent(any(OtherServiceShutdownEvent.class));
+
+        stopNode(liveData);
+
+        assertEquals(1, zkDiscoveryService.delayedTasks.size());
+    }
+
     private ExistsBuilder mockExistsBuilder() {
         ExistsBuilder existsBuilder = mock(ExistsBuilder.class);
         when(client.checkExists()).thenReturn(existsBuilder);
@@ -274,6 +325,12 @@ public class ZkDiscoveryServiceTest {
     private static Stat statOwnedBy(long sessionId) {
         Stat stat = new Stat();
         stat.setEphemeralOwner(sessionId);
+        return stat;
+    }
+
+    private static Stat statWithMtime(long mtime) {
+        Stat stat = new Stat();
+        stat.setMtime(mtime);
         return stat;
     }
 
