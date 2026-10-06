@@ -135,15 +135,28 @@ class AgentAppTemplateSyncServiceTest {
     }
 
     @Test
-    void appendVersionSuffixRewritesBothVersionAndNextVersion() {
-        List<AppVersionDescriptor> result = AgentAppTemplateSyncService.appendVersionSuffix(List.of(
+    void appendEdgeVersionSuffixRewritesBothVersionAndNextVersion() {
+        List<AppVersionDescriptor> result = AgentAppTemplateSyncService.appendEdgeVersionSuffix(List.of(
                 new AppVersionDescriptor("4.1.0", "4.2.0", true),
-                new AppVersionDescriptor("4.2.0", null, false)), "EDGEPE");
+                new AppVersionDescriptor("4.2.0", null, false)));
 
         assertThat(result).extracting(AppVersionDescriptor::getVersion)
                 .containsExactly("4.1.0EDGEPE", "4.2.0EDGEPE");
         assertThat(result.get(0).getNextVersion()).isEqualTo("4.2.0EDGEPE");
         assertThat(result.get(0).isRequiresUpdateDb()).isTrue();
         assertThat(result.get(1).getNextVersion()).isNull();
+    }
+
+    @Test
+    void appendEdgeVersionSuffixSwitchesToCeStyleFrom441() {
+        List<AppVersionDescriptor> result = AgentAppTemplateSyncService.appendEdgeVersionSuffix(List.of(
+                new AppVersionDescriptor("4.4.0", "4.4.0.1", false),
+                new AppVersionDescriptor("4.4.0.1", "4.4.1", true),
+                new AppVersionDescriptor("4.4.1", null, false)));
+
+        assertThat(result).extracting(AppVersionDescriptor::getVersion)
+                .containsExactly("4.4.0EDGEPE", "4.4.0.1EDGEPE", "4.4.1EDGE");
+        assertThat(result).extracting(AppVersionDescriptor::getNextVersion)
+                .containsExactly("4.4.0.1EDGEPE", "4.4.1EDGE", null);
     }
 }

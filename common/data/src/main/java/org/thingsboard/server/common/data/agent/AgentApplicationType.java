@@ -15,8 +15,9 @@ public enum AgentApplicationType {
     // GENERIC has no version graph; its single template is materialized and registered under this defaultVersion.
     GENERIC(null, "default", null, Collections.emptyList()),
     // the leading "(?:[^/\s]+/)*" accepts optional registry/namespace segments, so an image pulled through a
-    // private mirror still matches: patterns are applied with Matcher.matches() over the whole image reference
-    EDGE("(?:[^/\\s]+/)*thingsboard/tb-edge-pe:.+", null, EntityType.EDGE,
+    // private mirror still matches: patterns are applied with Matcher.matches() over the whole image reference;
+    // edge accepts both the CE-style "tb-edge" repo and the legacy "tb-edge-pe" one
+    EDGE("(?:[^/\\s]+/)*thingsboard/tb-edge(?:-pe)?:.+", null, EntityType.EDGE,
             List.of("CLOUD_ROUTING_KEY", "CLOUD_ROUTING_SECRET")),
     GATEWAY("(?:[^/\\s]+/)*thingsboard/tb-gateway:.+", null, EntityType.DEVICE,
             gatewayCredentialEnvKeys());

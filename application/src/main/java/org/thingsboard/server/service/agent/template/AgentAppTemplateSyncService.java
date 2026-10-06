@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.EdgeUpgradeMessageV2;
 import org.thingsboard.server.common.data.agent.AgentApplicationType;
 import org.thingsboard.server.common.data.agent.config.AgentAppConfigType;
 import org.thingsboard.server.common.data.util.CollectionsUtil;
+import org.thingsboard.server.dao.edge.EdgeEditionStyle;
 import org.thingsboard.server.dao.sql.agent.AppTemplateRegistry;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -68,7 +69,6 @@ public class AgentAppTemplateSyncService {
     private static final int APP_TYPE_GROUP_NUM = 1;
     private static final int CONFIG_TYPE_GROUP_NUM = 2;
     private static final String REPO_KEY = "agent-app-templates";
-    private static final String EDGE_IMAGE_VERSION_SUFFIX = "EDGEPE";
     private static final Duration UPDATE_SERVER_CONNECT_TIMEOUT = Duration.ofSeconds(10);
     private static final Duration UPDATE_SERVER_READ_TIMEOUT = Duration.ofSeconds(30);
 
@@ -169,8 +169,8 @@ public class AgentAppTemplateSyncService {
 
     private List<AppVersionDescriptor> resolveDescriptors(AgentApplicationType appType) {
         return switch (appType) {
-            case EDGE -> appendVersionSuffix(filterCurrentlySupportedVersions(
-                    filterVersionsWithoutTemplates(edgeDescriptors(), minSupportedEdgeVersion, appType)), EDGE_IMAGE_VERSION_SUFFIX);
+            case EDGE -> appendEdgeVersionSuffix(filterCurrentlySupportedVersions(
+                    filterVersionsWithoutTemplates(edgeDescriptors(), minSupportedEdgeVersion, appType)));
             case GATEWAY -> filterVersionsWithoutTemplates(
                     buildDescriptors(gatewayVersionGraph(), "gatewayVersions", "nextGatewayVersion", false),
                     minSupportedGatewayVersion, appType);
@@ -178,16 +178,21 @@ public class AgentAppTemplateSyncService {
         };
     }
 
-    static List<AppVersionDescriptor> appendVersionSuffix(List<AppVersionDescriptor> descriptors, String suffix) {
+    // edge image tags carry an edition suffix that depends on the version itself (e.g. 4.4.0EDGEPE vs 4.4.1EDGE)
+    static List<AppVersionDescriptor> appendEdgeVersionSuffix(List<AppVersionDescriptor> descriptors) {
         if (CollectionsUtil.isEmpty(descriptors)) {
             return descriptors;
         }
         return descriptors.stream()
                 .map(d -> new AppVersionDescriptor(
-                        d.getVersion() + suffix,
-                        d.getNextVersion() == null ? null : d.getNextVersion() + suffix,
+                        withEdgeVersionSuffix(d.getVersion()),
+                        withEdgeVersionSuffix(d.getNextVersion()),
                         d.isRequiresUpdateDb()))
                 .collect(Collectors.toList());
+    }
+
+    private static String withEdgeVersionSuffix(String version) {
+        return version == null ? null : version + EdgeEditionStyle.getEdgeEditionStyle(version).getVersionSuffix();
     }
 
     List<AppVersionDescriptor> filterCurrentlySupportedVersions(List<AppVersionDescriptor> descriptors) {
