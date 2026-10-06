@@ -217,7 +217,7 @@ public class ZkDiscoveryServiceTest {
         when(existsBuilder.forPath(currentData.getPath())).thenReturn(null);
         CreateBuilder createBuilder = mock(CreateBuilder.class, RETURNS_DEEP_STUBS);
         when(client.create()).thenReturn(createBuilder);
-        when(createBuilder.creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL_SEQUENTIAL).forPath("/thingsboard/nodes/", currentInfo.toByteArray()))
+        when(createBuilder.creatingParentsIfNeeded().withProtection().withMode(CreateMode.EPHEMERAL_SEQUENTIAL).forPath("/thingsboard/nodes/node-", currentInfo.toByteArray()))
                 .thenReturn(newPath);
         when(client.getConnectionStateListenable()).thenReturn(mock(Listenable.class));
 
@@ -235,7 +235,7 @@ public class ZkDiscoveryServiceTest {
         mockSessionId();
         CreateBuilder createBuilder = mock(CreateBuilder.class, RETURNS_DEEP_STUBS);
         when(client.create()).thenReturn(createBuilder);
-        when(createBuilder.creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL_SEQUENTIAL).forPath("/thingsboard/nodes/", currentInfo.toByteArray()))
+        when(createBuilder.creatingParentsIfNeeded().withProtection().withMode(CreateMode.EPHEMERAL_SEQUENTIAL).forPath("/thingsboard/nodes/node-", currentInfo.toByteArray()))
                 .thenReturn(newPath);
         when(client.getConnectionStateListenable()).thenReturn(mock(Listenable.class));
 

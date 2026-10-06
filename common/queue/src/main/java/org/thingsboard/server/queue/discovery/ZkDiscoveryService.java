@@ -167,7 +167,8 @@ public class ZkDiscoveryService implements DiscoveryService {
                     log.info("[{}] Creating ZK node for current instance", self.getServiceId());
                     nodePath = client.create()
                             .creatingParentsIfNeeded()
-                            .withMode(CreateMode.EPHEMERAL_SEQUENTIAL).forPath(zkNodesDir + "/", self.toByteArray());
+                            .withProtection()
+                            .withMode(CreateMode.EPHEMERAL_SEQUENTIAL).forPath(zkNodesDir + "/node-", self.toByteArray());
                     log.info("[{}] Created ZK node for current instance: {}", self.getServiceId(), nodePath);
                     client.getConnectionStateListenable().addListener(checkReconnect(self));
                 } catch (Exception e) {
