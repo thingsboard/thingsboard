@@ -9,7 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ExceptionUtil;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.cf.CalculatedField;
@@ -23,7 +22,6 @@ import org.thingsboard.server.common.data.id.IotHubInstalledItemId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.iot_hub.CalculatedFieldInstalledItemDescriptor;
-import org.thingsboard.server.common.data.iot_hub.DashboardInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.DeviceInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.IotHubInstalledItem;
 import org.thingsboard.server.common.data.iot_hub.IotHubInstalledItemDescriptor;
@@ -679,11 +677,6 @@ public class DefaultIotHubService implements IotHubService {
             WidgetTypeDetails widgetType = widgetTypeService.findWidgetTypeDetailsById(tenantId, wd.getWidgetTypeId());
             if (widgetType != null) {
                 tbWidgetTypeService.delete(widgetType, user);
-            }
-        } else if (descriptor instanceof DashboardInstalledItemDescriptor dd) {
-            Dashboard dashboard = dashboardService.findDashboardById(tenantId, dd.getDashboardId());
-            if (dashboard != null) {
-                tbDashboardService.delete(dashboard, user);
             }
         } else if (descriptor instanceof CalculatedFieldInstalledItemDescriptor cd) {
             CalculatedField calculatedField = calculatedFieldService.findById(tenantId, cd.getCalculatedFieldId());
