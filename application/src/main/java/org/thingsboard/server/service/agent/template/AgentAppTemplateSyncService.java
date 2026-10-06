@@ -40,7 +40,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -73,7 +73,6 @@ public class AgentAppTemplateSyncService {
     private static final String REPO_KEY = "agent-app-templates";
     // <basePath>/since/<version>/ holds templates that replace the same-named base ones from that platform version on
     private static final String SINCE_DIR = "since";
-    private static final Pattern SINCE_VERSION_PATTERN = Pattern.compile("\\d+(\\.\\d+)*");
     private static final Duration UPDATE_SERVER_CONNECT_TIMEOUT = Duration.ofSeconds(10);
     private static final Duration UPDATE_SERVER_READ_TIMEOUT = Duration.ofSeconds(30);
 
@@ -130,7 +129,7 @@ public class AgentAppTemplateSyncService {
                     continue;
                 }
                 MaterializationResult result = materializer.materialize(
-                        rawTemplate, appType, configType, descriptors, composeLoader());
+                        rawTemplate, appType, configType, descriptors, composeLoader(), folderLister());
                 if (result.getByVersion().isEmpty()) {
                     log.warn("Materialized no versions for {}-{} (the version graph is empty or unreachable); " +
                             "keeping the previously registered templates", appType, configType);
@@ -159,26 +158,38 @@ public class AgentAppTemplateSyncService {
      */
     List<RepoFile> getTemplateFiles() {
         String platform = TbVersionUtils.extractStartingDigits(projectInfo.getProjectVersion());
+        Map<String, List<RepoFile>> sinceFilesByVersion = listTemplateFiles(basePath + "/" + SINCE_DIR, 2).stream()
+                .collect(Collectors.groupingBy(AgentAppTemplateSyncService::sinceVersion));
         Map<String, RepoFile> byName = new LinkedHashMap<>();
-        listTemplateFiles(basePath, 1).forEach(file -> byName.put(file.name(), file));
-        listTemplateFiles(basePath + "/" + SINCE_DIR, 3).stream()
-                .filter(file -> RegexUtils.matches(sinceVersion(file), SINCE_VERSION_PATTERN))
-                .filter(file -> TbVersionUtils.compare(sinceVersion(file), platform) <= 0)
-                .sorted(Comparator.comparing(AgentAppTemplateSyncService::sinceVersion, TbVersionUtils::compare))
-                .forEach(file -> byName.put(file.name(), file));
+        for (String version : VersionFolders.applicableTo(sinceFilesByVersion.keySet(), platform)) {
+            sinceFilesByVersion.get(version).forEach(file -> byName.putIfAbsent(file.name(), file));
+        }
+        listTemplateFiles(basePath, 1).forEach(file -> byName.putIfAbsent(file.name(), file));
         return new ArrayList<>(byName.values());
     }
-
-    private List<RepoFile> listTemplateFiles(String path, int depth) {
-        return gitSyncService.listFiles(REPO_KEY, path, depth, FileType.FILE).stream()
+    // Template files the given number of folders below path
+    private List<RepoFile> listTemplateFiles(String path, int levels) {
+        return gitSyncService.listFiles(REPO_KEY, path, depthBelow(path, levels), FileType.FILE).stream()
                 .filter(file -> RegexUtils.matches(file.name(), TEMPLATE_FILE_PATTERN))
                 .collect(Collectors.toList());
     }
 
     // Name of the folder holding the file, e.g. templates/since/4.4.1/template-EDGE-DOCKER_COMPOSE.json -> 4.4.1
+    // Tree depth of the entries the given number of folders below path (root entries are at depth 0)
+    private static int depthBelow(String path, int levels) {
+        return path.split("/").length - 1 + levels;
+    }
+
     private static String sinceVersion(RepoFile file) {
         String folder = file.path().substring(0, file.path().lastIndexOf('/'));
         return folder.substring(folder.lastIndexOf('/') + 1);
+    }
+
+    // Names of the folders directly under a repo path, cached per template since every version lists the same folders
+    private Function<String, List<String>> folderLister() {
+        Map<String, List<String>> cache = new HashMap<>();
+        return path -> cache.computeIfAbsent(path, p -> gitSyncService.listFiles(REPO_KEY, p, depthBelow(p, 1), FileType.DIRECTORY)
+                .stream().map(RepoFile::name).toList());
     }
 
     private Function<String, JsonNode> composeLoader() {

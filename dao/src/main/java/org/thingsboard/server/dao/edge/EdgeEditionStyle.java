@@ -17,7 +17,7 @@ public enum EdgeEditionStyle {
     private final String packageSuffix;
 
     public static EdgeEditionStyle getEdgeEditionStyle(String edgeVersion) {
-        return TbVersionUtils.compare(edgeVersion, "4.4.1") >= 0 ? CE : PE;
+        return TbVersionUtils.compare(edgeVersion, "4.4.0.1") >= 0 ? CE : PE;
     }
 
     public String replacePlaceholders(String instructions) {

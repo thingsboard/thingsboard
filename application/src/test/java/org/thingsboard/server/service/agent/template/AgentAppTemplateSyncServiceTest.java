@@ -151,16 +151,17 @@ class AgentAppTemplateSyncServiceTest {
     }
 
     @Test
-    void appendEdgeVersionSuffixSwitchesToCeStyleFrom441() {
+    void appendEdgeVersionSuffixSwitchesToCeStyleFrom4401() {
         List<AppVersionDescriptor> result = AgentAppTemplateSyncService.appendEdgeVersionSuffix(List.of(
+                new AppVersionDescriptor("4.3.1.6", "4.4.0", true),
                 new AppVersionDescriptor("4.4.0", "4.4.0.1", false),
-                new AppVersionDescriptor("4.4.0.1", "4.4.1", true),
+                new AppVersionDescriptor("4.4.0.1", "4.4.1", false),
                 new AppVersionDescriptor("4.4.1", null, false)));
 
         assertThat(result).extracting(AppVersionDescriptor::getVersion)
-                .containsExactly("4.4.0EDGEPE", "4.4.0.1EDGEPE", "4.4.1EDGE");
+                .containsExactly("4.3.1.6EDGEPE", "4.4.0EDGEPE", "4.4.0.1EDGE", "4.4.1EDGE");
         assertThat(result).extracting(AppVersionDescriptor::getNextVersion)
-                .containsExactly("4.4.0.1EDGEPE", "4.4.1EDGE", null);
+                .containsExactly("4.4.0EDGEPE", "4.4.0.1EDGE", "4.4.1EDGE", null);
     }
 
     @Test
@@ -174,10 +175,19 @@ class AgentAppTemplateSyncServiceTest {
 
     @Test
     void sinceFolderReplacesOnlyTheTemplatesItContains() {
-        AgentAppTemplateSyncService service = serviceWithTemplateFiles("4.4.1PE-SNAPSHOT");
+        AgentAppTemplateSyncService service = serviceWithTemplateFiles("4.4.0.1PE-SNAPSHOT");
 
         assertThat(service.getTemplateFiles()).extracting(RepoFile::path).containsExactlyInAnyOrder(
-                "templates/since/4.4.1/template-EDGE-DOCKER_COMPOSE.json",
+                "templates/since/4.4.0.1/template-EDGE-DOCKER_COMPOSE.json",
+                "templates/template-GATEWAY-DOCKER_COMPOSE.json");
+    }
+
+    @Test
+    void versionWithoutItsOwnSinceFolderUsesTheNewestLowerOne() {
+        AgentAppTemplateSyncService service = serviceWithTemplateFiles("4.4.1");
+
+        assertThat(service.getTemplateFiles()).extracting(RepoFile::path).containsExactlyInAnyOrder(
+                "templates/since/4.4.0.1/template-EDGE-DOCKER_COMPOSE.json",
                 "templates/template-GATEWAY-DOCKER_COMPOSE.json");
     }
 
@@ -199,7 +209,7 @@ class AgentAppTemplateSyncServiceTest {
                 file("templates/README.md")));
         when(gitSyncService.listFiles("agent-app-templates", "templates/since", 3, FileType.FILE)).thenReturn(List.of(
                 file("templates/since/4.9/template-EDGE-DOCKER_COMPOSE.json"),
-                file("templates/since/4.4.1/template-EDGE-DOCKER_COMPOSE.json"),
+                file("templates/since/4.4.0.1/template-EDGE-DOCKER_COMPOSE.json"),
                 file("templates/since/4.5/template-GATEWAY-DOCKER_COMPOSE.json"),
                 file("templates/since/4.11/template-GATEWAY-DOCKER_COMPOSE.json"),
                 file("templates/since/draft/template-EDGE-DOCKER_COMPOSE.json")));

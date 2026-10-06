@@ -19,7 +19,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.agent.StepLinkedListUtils;
 import org.thingsboard.server.dao.edge.EdgeEditionStyle;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -69,7 +68,8 @@ public class AppTemplateMaterializer {
                                              AgentApplicationType appType,
                                              AgentAppConfigType configType,
                                              List<AppVersionDescriptor> descriptors,
-                                             Function<String, JsonNode> composeLoader) {
+                                             Function<String, JsonNode> composeLoader,
+                                             Function<String, List<String>> folderLister) {
         Map<String, AgentAppTemplate> byVersion = new LinkedHashMap<>();
         AgentAppTemplate latest = null;
 
@@ -81,7 +81,7 @@ public class AppTemplateMaterializer {
             try {
                 Map<String, Object> vars = buildVars(d);
                 AgentAppTemplate template = materializeOne(rawTemplate, appType, configType,
-                        d.getVersion(), d.getNextVersion(), vars, composeLoader);
+                        d.getVersion(), d.getNextVersion(), vars, composeLoader, folderLister);
                 byVersion.put(d.getVersion(), template);
                 if (d.getNextVersion() == null) {
                     latest = template;
@@ -115,7 +115,8 @@ public class AppTemplateMaterializer {
                                             String version,
                                             String nextVersion,
                                             Map<String, Object> vars,
-                                            Function<String, JsonNode> composeLoader) {
+                                            Function<String, JsonNode> composeLoader,
+                                            Function<String, List<String>> folderLister) {
 
         JsonNode substituted = TemplateVarSubstitutor.substitute(rawTemplate, vars);
         AgentAppTemplate template = JacksonUtil.IGNORE_UNKNOWN_PROPERTIES_JSON_MAPPER
@@ -127,7 +128,7 @@ public class AppTemplateMaterializer {
         template.setCurrentVersion(version);
         template.setNextVersion(nextVersion);
 
-        resolveComposeTemplates(template.getStartSteps(), vars, composeLoader);
+        resolveComposeTemplates(template.getStartSteps(), vars, composeLoader, folderLister);
 
         Predicate<AgentAppStep> disabled = step ->
                 step.getCondition() != null && !truthy(vars.get(step.getCondition()));
@@ -140,7 +141,8 @@ public class AppTemplateMaterializer {
     }
 
     private void resolveComposeTemplates(List<AgentAppStep> steps, Map<String, Object> vars,
-                                         Function<String, JsonNode> composeLoader) {
+                                         Function<String, JsonNode> composeLoader,
+                                         Function<String, List<String>> folderLister) {
         if (steps == null) {
             return;
         }
@@ -154,7 +156,7 @@ public class AppTemplateMaterializer {
                 if (value != null && value.isTextual()) {
                     String path = value.asText();
                     if (path.endsWith(".yml") || path.endsWith(".yaml")) {
-                        JsonNode compose = loadMostSpecificCompose(path, vars, composeLoader);
+                        JsonNode compose = loadMostSpecificCompose(path, vars, composeLoader, folderLister);
                         resolved.put(entry.getKey(), TemplateVarSubstitutor.substitute(compose, vars));
                         continue;
                     }
@@ -166,14 +168,15 @@ public class AppTemplateMaterializer {
     }
 
     /**
-     * Load the compose body for {@code path}, preferring the most specific version subfolder that actually exists in
-     * the repo. For version {@code 4.4.3} with a base {@code composeLine} of {@code 4.4}, this tries
-     * {@code compose/edge/4.4/4.4.3/…}, then the lower siblings {@code …/4.4/4.4.2/…}, {@code …/4.4/4.4.1/…},
-     * {@code …/4.4/4.4.0/…}, then the base {@code …/4.4/…}. Falls through to an error (so the version is skipped,
-     * as before) only when no candidate exists.
+     * Load the compose body for {@code path}, taking the file from the newest version folder that has it. For version
+     * {@code 4.4.1} and {@code compose/edge/4.4/kafka.yml} with folders {@code 4.3, 4.4, 4.4.0.1} under
+     * {@code compose/edge}, this tries {@code compose/edge/4.4.0.1/kafka.yml}, then {@code compose/edge/4.4/kafka.yml},
+     * then {@code compose/edge/4.3/kafka.yml}. Falls through to an error (so the version is skipped) only when no
+     * candidate exists.
      */
-    private JsonNode loadMostSpecificCompose(String path, Map<String, Object> vars, Function<String, JsonNode> composeLoader) {
-        List<String> candidates = composePathCandidates(path, vars);
+    private JsonNode loadMostSpecificCompose(String path, Map<String, Object> vars, Function<String, JsonNode> composeLoader,
+                                             Function<String, List<String>> folderLister) {
+        List<String> candidates = composePathCandidates(path, vars, folderLister);
         for (String candidate : candidates) {
             JsonNode compose = composeLoader.apply(candidate);
             if (compose != null) {
@@ -184,67 +187,26 @@ public class AppTemplateMaterializer {
     }
 
     /**
-     * Candidate compose paths, most specific first. The {@code composeLine} folder of {@code path} is swapped for the
-     * nested version subfolders of {@link #subfolderVersions}, ending with {@code path} itself, e.g. for version
-     * {@code 4.4.3}: {@code …/4.4/4.4.3/…}, {@code …/4.4/4.4.2/…}, {@code …/4.4/4.4.1/…}, {@code …/4.4/4.4.0/…},
-     * {@code …/4.4/…}.
+     * Candidate compose paths, newest first: the {@code composeLine} folder of {@code path} is swapped for each sibling
+     * version folder that applies to the version (see {@link VersionFolders}). Paths without a {@code composeLine}
+     * folder (e.g. {@code compose/generic/default/...}) are used as-is.
      */
-    static List<String> composePathCandidates(String path, Map<String, Object> vars) {
+    static List<String> composePathCandidates(String path, Map<String, Object> vars, Function<String, List<String>> folderLister) {
         Object line = vars.get("composeLine");
         Object version = vars.get("version");
-        if (line == null || version == null) {
+        String lineFolder = "/" + line + "/";
+        if (line == null || version == null || !path.contains(lineFolder)) {
             return List.of(path);
         }
-        String lineFolder = "/" + line + "/";
-        List<String> candidates = new ArrayList<>();
-        for (String subfolderVersion : subfolderVersions(line.toString(), TbVersionUtils.extractStartingDigits(version.toString()))) {
-            String subfolder = "/" + nestedFolder(line.toString(), subfolderVersion) + "/";
-            candidates.add(path.replaceFirst(Pattern.quote(lineFolder), Matcher.quoteReplacement(subfolder)));
-        }
-        candidates.add(path);
-        return candidates;
-    }
-
-    /**
-     * Versions whose subfolder may hold the compose for {@code version}, most specific first. A subfolder applies to
-     * its own version and every later sibling until a newer one exists, so each level is followed by its lower
-     * siblings: {@code 4.4.1.2} -> {@code 4.4.1.2, 4.4.1.1, 4.4.1.0, 4.4.1, 4.4.0}. Empty when the version is the line
-     * itself or does not belong to it.
-     */
-    private static List<String> subfolderVersions(String line, String version) {
-        List<String> versions = new ArrayList<>();
-        if (!version.startsWith(line + ".")) {
-            return versions;
-        }
-        for (String level = version; !level.equals(line); level = parentVersion(level)) {
-            String parent = parentVersion(level);
-            for (int sibling = lastSegment(level); sibling >= 0; sibling--) {
-                versions.add(parent + "." + sibling);
-            }
-        }
-        return versions;
-    }
-
-    // Nested folder of a version under its line, e.g. line 4.4 and version 4.4.1.2 -> "4.4/4.4.1/4.4.1.2".
-    private static String nestedFolder(String line, String version) {
-        List<String> folders = new ArrayList<>();
-        for (String level = version; !level.equals(line); level = parentVersion(level)) {
-            folders.add(0, level);
-        }
-        folders.add(0, line);
-        return String.join("/", folders);
+        String parent = path.substring(0, path.indexOf(lineFolder));
+        String file = path.substring(path.indexOf(lineFolder) + lineFolder.length());
+        List<String> folders = VersionFolders.applicableTo(folderLister.apply(parent),
+                TbVersionUtils.extractStartingDigits(version.toString()));
+        return folders.isEmpty() ? List.of(path) : folders.stream().map(folder -> parent + "/" + folder + "/" + file).toList();
     }
 
     private static String edgeRepo(String version) {
         return version == null ? null : EdgeEditionStyle.getEdgeEditionStyle(version).getDockerRepo();
-    }
-
-    private static String parentVersion(String version) {
-        return version.substring(0, version.lastIndexOf('.'));
-    }
-
-    private static int lastSegment(String version) {
-        return Integer.parseInt(version.substring(version.lastIndexOf('.') + 1));
     }
 
     private Map<String, Object> buildVars(AppVersionDescriptor d) {
