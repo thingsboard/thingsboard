@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.transport.service;
 
 import lombok.extern.slf4j.Slf4j;
@@ -12,7 +13,6 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.transport.config.ssl.SslCredentials;
 import org.thingsboard.server.common.transport.config.ssl.SslCredentialsConfig;
-import org.thingsboard.server.queue.util.TbTransportComponent;
 
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -30,7 +30,6 @@ import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Component
-@TbTransportComponent
 public class CertificateReloadManager implements SmartInitializingSingleton, DisposableBean {
 
     private static final int MAX_CONSECUTIVE_FAILURES = 10;
@@ -143,6 +142,10 @@ public class CertificateReloadManager implements SmartInitializingSingleton, Dis
         log.info("Initializing Certificate Reload Manager...");
 
         discoverAndRegisterSslCredentials();
+        if (watchers.isEmpty()) {
+            log.debug("No certificate files to watch. Skipping scheduler initialization...");
+            return;
+        }
 
         scheduler = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("certificate-reload-manager"));
         scheduler.scheduleWithFixedDelay(this::checkCertificates, checkIntervalInSeconds, checkIntervalInSeconds, TimeUnit.SECONDS);

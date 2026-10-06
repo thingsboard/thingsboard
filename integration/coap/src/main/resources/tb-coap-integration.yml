@@ -3,6 +3,8 @@
 # SPDX-License-Identifier: BUSL-1.1
 #
 
+spring.main.allow-circular-references: "true" # Spring Boot configuration property that controls whether circular dependencies between beans are allowed.
+
 server:
   # Server bind address
   address: "${HTTP_BIND_ADDRESS:0.0.0.0}"
@@ -134,14 +136,41 @@ coap:
     # } MaxFragmentLength;
     # TLS already requires clients and servers to support fragmentation of handshake messages.
     max_fragment_length: "${COAP_DTLS_MAX_FRAGMENT_LENGTH:1024}"
-    # Path to the key store that holds the certificate
-    key_store: "${COAP_DTLS_KEY_STORE:coapserver.jks}"
-    # Password used to access the key store
-    key_store_password: "${COAP_DTLS_KEY_STORE_PASSWORD:server_ks_password}"
-    # Password used to access the key
-    key_password: "${COAP_DTLS_KEY_PASSWORD:server_key_password}"
-    # Key alias
-    key_alias: "${COAP_DTLS_KEY_ALIAS:serveralias}"
+    # Server DTLS credentials
+    credentials:
+      # Server credentials type (PEM - pem certificate file; KEYSTORE - java keystore)
+      type: "${COAP_DTLS_CREDENTIALS_TYPE:PEM}"
+      # PEM server credentials
+      pem:
+        # Path to the server certificate file (holds server certificate or certificate chain, may include server private key)
+        cert_file: "${COAP_DTLS_PEM_CERT:coapserver.pem}"
+        # Path to the server certificate private key file. Optional by default. Required if the private key is not present in server certificate file;
+        key_file: "${COAP_DTLS_PEM_KEY:coapserver_key.pem}"
+        # Server certificate private key password (optional)
+        key_password: "${COAP_DTLS_PEM_KEY_PASSWORD:server_key_password}"
+      # Keystore server credentials
+      keystore:
+        # Type of the key store (JKS or PKCS12)
+        type: "${COAP_DTLS_KEY_STORE_TYPE:JKS}"
+        # Path to the key store that holds the SSL certificate
+        store_file: "${COAP_DTLS_KEY_STORE:coapserver.jks}"
+        # Password used to access the key store
+        store_password: "${COAP_DTLS_KEY_STORE_PASSWORD:server_ks_password}"
+        # Key alias
+        key_alias: "${COAP_DTLS_KEY_ALIAS:serveralias}"
+        # Password used to access the key
+        key_password: "${COAP_DTLS_KEY_PASSWORD:server_key_password}"
+
+transport:
+  ssl:
+    # SSL/TLS settings
+    certificate:
+      # X.509 certificate configuration to auto-detect and reload certificate used by the CoAP server (DTLS) in real-time
+      reload:
+        # Enable/disable automatic SSL certificates reload
+        enabled: "${TB_TRANSPORT_SSL_CERTIFICATE_RELOAD_ENABLED:true}"
+        # Check interval in seconds for certificates reload
+        check_interval_seconds: "${TB_TRANSPORT_SSL_CERTIFICATE_RELOAD_CHECK_INTERVAL_SECONDS:60}"
 
 service:
   type: "${TB_SERVICE_TYPE:tb-integration}"
