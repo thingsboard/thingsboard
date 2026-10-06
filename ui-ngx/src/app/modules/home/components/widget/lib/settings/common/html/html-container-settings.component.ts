@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   AfterViewInit,
   Component,
@@ -27,12 +28,11 @@ import {
 import {
   AngularContainerFunctionEditorCompleter,
   HTMLContainerFunctionEditorCompleter,
-  HtmlContainerWidgetSettings,
-  HtmlContainerWidgetType
 } from '@home/components/widget/lib/html/html-container-widget.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { isJSResource } from '@shared/models/resource.models';
 import { WidgetService } from '@core/http/widget.service';
+import { HtmlContainerWidgetSettings, HtmlContainerWidgetType } from '@shared/models/html-container.models';
 
 @Component({
   selector: 'tb-html-container-settings',

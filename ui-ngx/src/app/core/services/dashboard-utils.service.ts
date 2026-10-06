@@ -19,6 +19,8 @@ import {
   DashboardState,
   DashboardStateLayouts,
   GridSettings,
+  htmlPageDefaultConfig,
+  htmlPageWidgetId,
   LayoutType,
   WidgetLayout
 } from '@shared/models/dashboard.models';
@@ -29,8 +31,10 @@ import {
   isDefinedAndNotNull,
   isNotEmptyStr,
   isString,
-  isUndefined
+  isUndefined,
+  mergeDeep
 } from '@core/utils';
+import { htmlContainerDefaultSettings, HtmlContainerWidgetSettings } from '@shared/models/html-container.models';
 import {
   Datasource,
   datasourcesHasAggregation,
@@ -458,7 +462,7 @@ export class DashboardUtilsService {
     };
   }
 
-  private createDefaultGridSettings(): GridSettings {
+  public createDefaultGridSettings(): GridSettings {
     return {
       layoutType: LayoutType.default,
       backgroundColor: '#eeeeee',
@@ -614,7 +618,7 @@ export class DashboardUtilsService {
 
     for (const state of Object.values(states)) {
       for (const layout of Object.values(state.layouts)) {
-        if (layout.widgets[widgetId]) {
+        if (layout.widgets && layout.widgets[widgetId]) {
           foundWidgetRefs++;
         }
         if (layout.breakpoints) {
@@ -650,11 +654,11 @@ export class DashboardUtilsService {
         const layout: DashboardLayout = state.layouts[l];
         if (layout) {
           result[l]= {
-            default: this.getBreakpointLayoutData(layout)
+            default: this.getBreakpointLayoutData(layout, targetState)
           };
           if (layout.breakpoints) {
             for (const breakpoint of Object.keys(layout.breakpoints)) {
-              result[l][breakpoint] = this.getBreakpointLayoutData(layout.breakpoints[breakpoint]);
+              result[l][breakpoint] = this.getBreakpointLayoutData(layout.breakpoints[breakpoint], targetState);
             }
           }
         }
@@ -665,17 +669,56 @@ export class DashboardUtilsService {
     }
   }
 
-  private getBreakpointLayoutData(layout: DashboardLayout): BreakpointLayoutInfo {
+  private getBreakpointLayoutData(layout: DashboardLayout, stateId: string): BreakpointLayoutInfo {
     const result: BreakpointLayoutInfo = {
       widgetIds: [],
       widgetLayouts: {},
       gridSettings: {}
     };
-    for (const id of Object.keys(layout.widgets)) {
-      result.widgetIds.push(id);
+    if (layout.gridSettings?.layoutType === LayoutType.html) {
+      result.gridSettings = {
+        layoutType: LayoutType.html,
+        autoFillHeight: true,
+        mobileAutoFillHeight: true,
+        columns: 1,
+        minColumns: 1,
+        margin: 0,
+        outerMargin: false
+      };
+      // Stable per state: an unchanged page keeps its rendered instance, a changed one is re-rendered.
+      const widgetId = htmlPageWidgetId(stateId);
+      const config = mergeDeep({},
+        htmlPageDefaultConfig,
+        {
+          settings: layout.gridSettings?.htmlPageConfig?.settings || mergeDeep({} as HtmlContainerWidgetSettings, htmlContainerDefaultSettings),
+          actions: layout.gridSettings?.htmlPageConfig?.actions
+        }
+      );
+      result.widget = {
+        id: widgetId,
+        col: 0,
+        row: 0,
+        sizeX: 1,
+        sizeY: 1,
+        typeFullFqn: 'system.html_container',
+        type: widgetType.static,
+        config
+      };
+      result.widgetLayouts[widgetId] = {
+        col: 0,
+        row: 0,
+        sizeX: 1,
+        sizeY: 1,
+        resizable: false,
+        mobileOrder: 0
+      };
+    } else {
+      for (const id of Object.keys(layout.widgets)) {
+        result.widgetIds.push(id);
+      }
+      result.widgetLayouts = layout.widgets;
+      result.gridSettings = layout.gridSettings;
     }
-    result.widgetLayouts = layout.widgets;
-    result.gridSettings = layout.gridSettings;
     return result;
   }
 
@@ -691,11 +734,12 @@ export class DashboardUtilsService {
   }
 
   public isEmptyDashboard(dashboard: Dashboard): boolean {
-    if (dashboard?.configuration?.widgets) {
-      return Object.keys(dashboard?.configuration?.widgets).length === 0;
-    } else {
-      return true;
+    if (dashboard?.configuration?.widgets && Object.keys(dashboard.configuration.widgets).length) {
+      return false;
     }
+    // An HTML page has content but no stored widgets: its widget is virtual.
+    return !Object.values(dashboard?.configuration?.states || {}).some(state =>
+      Object.values(state.layouts || {}).some(layout => layout?.gridSettings?.layoutType === LayoutType.html));
   }
 
   public addWidgetToLayout(dashboard: Dashboard,
@@ -865,6 +909,10 @@ export class DashboardUtilsService {
     const columns = gridSettings.columns || 24;
     const ratio = columns / prevColumns;
     layout.gridSettings = gridSettings;
+    if (!layout.widgets) {
+      // HTML page layout: no widget grid to rescale
+      return;
+    }
     for (const w of Object.keys(layout.widgets)) {
       const widget = layout.widgets[w];
       if (!widget.sizeX) {
@@ -963,7 +1011,7 @@ export class DashboardUtilsService {
         const state = states[s];
         for (const l of Object.keys(state.layouts)) {
           const layout: DashboardLayout = state.layouts[l];
-          if (layout.widgets[widgetId]) {
+          if (layout.widgets && layout.widgets[widgetId]) {
             found = true;
             break;
           }
@@ -1273,7 +1321,11 @@ export class DashboardUtilsService {
     if (layoutInfo.gridSettings) {
       layout.layoutCtx.gridSettings = layoutInfo.gridSettings;
     }
-    layout.layoutCtx.widgets.setWidgetIds(layoutInfo.widgetIds);
+    if (layoutInfo.widget) {
+      layout.layoutCtx.widgets.setWidget(layoutInfo.widget);
+    } else {
+      layout.layoutCtx.widgets.setWidgetIds(layoutInfo.widgetIds);
+    }
     layout.layoutCtx.widgetLayouts = layoutInfo.widgetLayouts;
     if (layout.show && layout.layoutCtx.ctrl) {
       layout.layoutCtx.ctrl.reload();

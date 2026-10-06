@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, Inject, OnDestroy, SkipSelf, ViewChild } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -74,6 +75,8 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
 
   layoutsFormGroup: UntypedFormGroup;
 
+  private readonly initialLayoutType: LayoutType;
+
   layoutWidthType = LayoutWidthType;
 
   layoutPercentageSize = LayoutPercentageSize;
@@ -113,6 +116,7 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
     } else if (isDefined(this.layouts.main.gridSettings.layoutType)) {
       layoutType = this.layouts.main.gridSettings.layoutType;
     }
+    this.initialLayoutType = layoutType;
 
     this.layoutsFormGroup = this.fb.group({
         layoutType: [layoutType],
@@ -184,7 +188,7 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
 
     this.addLayoutConfiguration('default');
 
-    if (!this.isDividerLayout && this.layouts.main.breakpoints) {
+    if (this.isBreakpointsLayout && this.layouts.main.breakpoints) {
       for (const breakpoint of (Object.keys(this.layouts.main.breakpoints) as BreakpointId[])) {
         this.addLayoutConfiguration(breakpoint);
         this.selectedBreakpointIds.push(breakpoint);
@@ -276,10 +280,32 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
 
   save(): void {
     this.submitted = true;
+    const removedWidgetsCount = this.isHtmlLayout && this.initialLayoutType !== LayoutType.html ? this.countLayoutWidgets() : 0;
+    if (removedWidgetsCount) {
+      this.dialogs.confirm(
+        this.translate.instant('layout.switch-to-html-page-title'),
+        this.translate.instant('layout.switch-to-html-page-text', {count: removedWidgetsCount}),
+        this.translate.instant('action.no'),
+        this.translate.instant('action.yes')
+      ).subscribe((res) => {
+        if (res) {
+          this.applyLayouts();
+        }
+      });
+    } else {
+      this.applyLayouts();
+    }
+  }
+
+  private applyLayouts(): void {
     const layoutType = this.layoutsFormGroup.value.layoutType;
+    if (this.initialLayoutType === LayoutType.html && !this.isHtmlLayout) {
+      // The HTML page kept no grid settings: start the widget grid from the defaults.
+      this.layouts.main.gridSettings = this.dashboardUtils.createDefaultGridSettings();
+    }
     this.layouts.main.gridSettings.layoutType = layoutType;
-    if (!this.isDividerLayout) {
-      delete this.layouts.right;
+    delete this.layouts.main.gridSettings.layoutDimension;
+    if (this.isBreakpointsLayout) {
       if (this.layouts.main.breakpoints) {
         for (const breakpoint of Object.values(this.layouts.main.breakpoints)) {
           breakpoint.gridSettings.layoutType = layoutType;
@@ -287,13 +313,10 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
       }
     } else {
       delete this.layouts.main.breakpoints;
-      this.layouts.right.gridSettings.layoutType = layoutType;
-    }
-    delete this.layouts.main.gridSettings.layoutDimension;
-    if (this.layouts.right?.gridSettings) {
-      delete this.layouts.right.gridSettings.layoutDimension;
     }
     if (this.isDividerLayout) {
+      this.layouts.right.gridSettings.layoutType = layoutType;
+      delete this.layouts.right.gridSettings.layoutDimension;
       const formValues = this.layoutsFormGroup.value;
       const widthType = formValues.type;
       const layoutDimension: LayoutDimension = {
@@ -310,6 +333,23 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
         } else {
           this.layouts.right.gridSettings.layoutDimension = layoutDimension;
         }
+      }
+    } else {
+      delete this.layouts.right;
+    }
+    if (this.isHtmlLayout) {
+      delete this.layouts.main.widgets;
+      this.layouts.main.gridSettings = {
+        layoutType: LayoutType.html,
+        htmlPageConfig: {
+          settings: this.layouts.main.gridSettings.htmlPageConfig?.settings,
+          actions: this.layouts.main.gridSettings.htmlPageConfig?.actions
+        }
+      };
+    } else {
+      delete this.layouts.main.gridSettings.htmlPageConfig;
+      if (!this.layouts.main.widgets) {
+        this.layouts.main.widgets = {};
       }
     }
     this.dialogRef.close(this.layouts);
@@ -412,6 +452,27 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
 
   get isDividerLayout(): boolean {
     return this.layoutsFormGroup.get('layoutType').value === LayoutType.divider;
+  }
+
+  // Widgets placed in the state's layouts, which the HTML page replaces.
+  private countLayoutWidgets(): number {
+    const widgetIds = new Set<string>();
+    const layouts = [this.layouts.main, ...Object.values(this.layouts.main?.breakpoints || {})];
+    if (this.initialLayoutType === LayoutType.divider) {
+      layouts.push(this.layouts.right);
+    }
+    for (const layout of layouts) {
+      Object.keys(layout?.widgets || {}).forEach(id => widgetIds.add(id));
+    }
+    return widgetIds.size;
+  }
+
+  get isHtmlLayout(): boolean {
+    return this.layoutsFormGroup.get('layoutType').value === LayoutType.html;
+  }
+
+  get isBreakpointsLayout(): boolean {
+    return [LayoutType.default, LayoutType.scada].includes(this.layoutsFormGroup.get('layoutType').value);
   }
 
   addBreakpoint() {
