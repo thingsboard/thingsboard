@@ -19,7 +19,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.agent.StepLinkedListUtils;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -167,9 +166,10 @@ public class AppTemplateMaterializer {
 
     /**
      * Load the compose body for {@code path}, preferring the most specific version subfolder that actually exists in
-     * the repo. For version {@code 4.3.1.2} with a base {@code composeLine} of {@code 4.3}, this tries
-     * {@code compose/edge/4.3/4.3.1/4.3.1.2/…}, then {@code …/4.3/4.3.1/…}, then the base {@code …/4.3/…}. Falls through
-     * to an error (so the version is skipped, as before) only when no candidate exists.
+     * the repo. For version {@code 4.4.3} with a base {@code composeLine} of {@code 4.4}, this tries
+     * {@code compose/edge/4.4/4.4.3/…}, then the lower siblings {@code …/4.4/4.4.2/…}, {@code …/4.4/4.4.1/…},
+     * {@code …/4.4/4.4.0/…}, then the base {@code …/4.4/…}. Falls through to an error (so the version is skipped,
+     * as before) only when no candidate exists.
      */
     private JsonNode loadMostSpecificCompose(String path, Map<String, Object> vars, Function<String, JsonNode> composeLoader) {
         List<String> candidates = composePathCandidates(path, vars);
@@ -183,38 +183,63 @@ public class AppTemplateMaterializer {
     }
 
     /**
-     * Candidate compose paths, most specific first, obtained by expanding the {@code composeLine} folder segment into
-     * progressively deeper version subfolders (e.g. {@code 4.3} -> {@code 4.3/4.3.1} -> {@code 4.3/4.3.1/4.3.1.2}).
+     * Candidate compose paths, most specific first. The {@code composeLine} folder of {@code path} is swapped for the
+     * nested version subfolders of {@link #subfolderVersions}, ending with {@code path} itself, e.g. for version
+     * {@code 4.4.3}: {@code …/4.4/4.4.3/…}, {@code …/4.4/4.4.2/…}, {@code …/4.4/4.4.1/…}, {@code …/4.4/4.4.0/…},
+     * {@code …/4.4/…}.
      */
-    private List<String> composePathCandidates(String path, Map<String, Object> vars) {
-        Object lineObj = vars.get("composeLine");
-        Object versionObj = vars.get("version");
-        if (lineObj == null || versionObj == null) {
+    static List<String> composePathCandidates(String path, Map<String, Object> vars) {
+        Object line = vars.get("composeLine");
+        Object version = vars.get("version");
+        if (line == null || version == null) {
             return List.of(path);
         }
-        String line = lineObj.toString();
-        String[] parts = TbVersionUtils.extractStartingDigits(versionObj.toString()).split("\\.");
-        int baseFolderDepth = line.split("\\.").length;
-
-        // Dotted prefixes from the composeLine depth up to the full numeric version, e.g. ["4.3","4.3.1","4.3.1.2"].
-        List<String> dottedPrefixes = new ArrayList<>();
-        for (int i = baseFolderDepth; i <= parts.length; i++) {
-            dottedPrefixes.add(String.join(".", Arrays.copyOfRange(parts, 0, i)));
-        }
-        // Guard: version must share the composeLine prefix; otherwise just use the base path.
-        if (dottedPrefixes.isEmpty() || !dottedPrefixes.get(0).equals(line)) {
-            return List.of(path);
-        }
-
+        String lineFolder = "/" + line + "/";
         List<String> candidates = new ArrayList<>();
-        for (int depth = dottedPrefixes.size(); depth >= 1; depth--) {
-            String nestedLine = String.join("/", dottedPrefixes.subList(0, depth));
-            candidates.add(line.equals(nestedLine)
-                    ? path
-                    : path.replaceFirst("/" + Pattern.quote(line) + "/",
-                    "/" + Matcher.quoteReplacement(nestedLine) + "/"));
+        for (String subfolderVersion : subfolderVersions(line.toString(), TbVersionUtils.extractStartingDigits(version.toString()))) {
+            String subfolder = "/" + nestedFolder(line.toString(), subfolderVersion) + "/";
+            candidates.add(path.replaceFirst(Pattern.quote(lineFolder), Matcher.quoteReplacement(subfolder)));
         }
+        candidates.add(path);
         return candidates;
+    }
+
+    /**
+     * Versions whose subfolder may hold the compose for {@code version}, most specific first. A subfolder applies to
+     * its own version and every later sibling until a newer one exists, so each level is followed by its lower
+     * siblings: {@code 4.4.1.2} -> {@code 4.4.1.2, 4.4.1.1, 4.4.1.0, 4.4.1, 4.4.0}. Empty when the version is the line
+     * itself or does not belong to it.
+     */
+    private static List<String> subfolderVersions(String line, String version) {
+        List<String> versions = new ArrayList<>();
+        if (!version.startsWith(line + ".")) {
+            return versions;
+        }
+        for (String level = version; !level.equals(line); level = parentVersion(level)) {
+            String parent = parentVersion(level);
+            for (int sibling = lastSegment(level); sibling >= 0; sibling--) {
+                versions.add(parent + "." + sibling);
+            }
+        }
+        return versions;
+    }
+
+    // Nested folder of a version under its line, e.g. line 4.4 and version 4.4.1.2 -> "4.4/4.4.1/4.4.1.2".
+    private static String nestedFolder(String line, String version) {
+        List<String> folders = new ArrayList<>();
+        for (String level = version; !level.equals(line); level = parentVersion(level)) {
+            folders.add(0, level);
+        }
+        folders.add(0, line);
+        return String.join("/", folders);
+    }
+
+    private static String parentVersion(String version) {
+        return version.substring(0, version.lastIndexOf('.'));
+    }
+
+    private static int lastSegment(String version) {
+        return Integer.parseInt(version.substring(version.lastIndexOf('.') + 1));
     }
 
     private Map<String, Object> buildVars(AppVersionDescriptor d) {
