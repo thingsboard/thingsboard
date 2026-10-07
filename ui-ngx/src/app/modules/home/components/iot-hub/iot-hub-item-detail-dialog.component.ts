@@ -172,15 +172,9 @@ export class TbIotHubItemDetailDialogComponent extends DialogComponent<TbIotHubI
       && this.installedItem.itemVersionId !== this.item.id;
   }
 
-  /**
-   * Title to show for the item. While the dialog displays exactly the installed version, the tracking row is the
-   * better source: a version keeps the title it was published under, whereas the row carries the item's current
-   * one, and the two differ for a listing renamed between platform families (a 4.2 "Fleet tracking" package is
-   * installed, the item is now "Site fleet tracking"). For any other displayed version -- the update flow, or an
-   * item that is not installed -- that version's own name is the correct one.
-   */
+  /** The tracking row keeps the item's current name; a version keeps the one it was published under. */
   get itemTitle(): string {
-    return this.installedItem != null && !this.hasUpdate() ? this.installedItem.itemName : this.item.name;
+    return this.installedItem?.itemVersionId === this.item.id ? this.installedItem.itemName : this.item.name;
   }
 
   /** Runs whatever the item's action mode calls for: open the local copy, connect, or install. */
