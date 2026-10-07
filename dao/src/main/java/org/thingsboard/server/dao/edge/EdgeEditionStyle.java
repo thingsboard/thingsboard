@@ -20,6 +20,14 @@ public enum EdgeEditionStyle {
         return TbVersionUtils.compare(edgeVersion, "4.4.0.1") >= 0 ? CE : PE;
     }
 
+    /**
+     * The edge version with the tag suffix its release is published under, e.g. {@code 4.4.0EDGEPE}, {@code 4.4.0.1EDGE}.
+     * Agent app templates are registered under these versions.
+     */
+    public static String withVersionSuffix(String edgeVersion) {
+        return edgeVersion + getEdgeEditionStyle(edgeVersion).getVersionSuffix();
+    }
+
     public String replacePlaceholders(String instructions) {
         return instructions
                 .replace("${TB_EDGE_REPO}", dockerRepo)

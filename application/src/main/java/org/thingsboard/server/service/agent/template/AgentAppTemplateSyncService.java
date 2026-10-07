@@ -231,7 +231,7 @@ public class AgentAppTemplateSyncService {
     }
 
     private static String withEdgeVersionSuffix(String version) {
-        return version == null ? null : version + EdgeEditionStyle.getEdgeEditionStyle(version).getVersionSuffix();
+        return version == null ? null : EdgeEditionStyle.withVersionSuffix(version);
     }
 
     List<AppVersionDescriptor> filterCurrentlySupportedVersions(List<AppVersionDescriptor> descriptors) {
