@@ -34,13 +34,13 @@ import java.util.UUID;
 @Component
 @TbCoreComponent
 @RequiredArgsConstructor
-public class V4_3_1_5Migration implements LtsMigration {
+public class V4_3_1_7Migration implements LtsMigration {
 
     private final JdbcTemplate jdbcTemplate;
 
     @Override
     public String getVersion() {
-        return "4.3.1.5";
+        return "4.3.1.7";
     }
 
     @Override

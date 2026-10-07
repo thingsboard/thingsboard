@@ -8,7 +8,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.thingsboard.server.service.install.lts.V4_3_1_5Migration.SolutionTemplateMove;
+import org.thingsboard.server.service.install.lts.V4_3_1_7Migration.SolutionTemplateMove;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -26,17 +26,17 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class V4_3_1_5MigrationTest {
+class V4_3_1_7MigrationTest {
 
     @Mock
     private JdbcTemplate jdbcTemplate;
 
     @InjectMocks
-    private V4_3_1_5Migration migration;
+    private V4_3_1_7Migration migration;
 
     @Test
     void versionIs4315() {
-        assertEquals("4.3.1.5", migration.getVersion());
+        assertEquals("4.3.1.7", migration.getVersion());
     }
 
     @Test
@@ -45,11 +45,11 @@ class V4_3_1_5MigrationTest {
 
         migration.apply();
 
-        verify(jdbcTemplate, times(V4_3_1_5Migration.SOLUTION_TEMPLATE_MOVES.size()))
-                .update(eq(V4_3_1_5Migration.REMAP_SQL), any(Object[].class));
-        for (SolutionTemplateMove move : V4_3_1_5Migration.SOLUTION_TEMPLATE_MOVES) {
+        verify(jdbcTemplate, times(V4_3_1_7Migration.SOLUTION_TEMPLATE_MOVES.size()))
+                .update(eq(V4_3_1_7Migration.REMAP_SQL), any(Object[].class));
+        for (SolutionTemplateMove move : V4_3_1_7Migration.SOLUTION_TEMPLATE_MOVES) {
             // SET item_id, item_name WHERE item_id = from AND NOT EXISTS (... item_id = to)
-            verify(jdbcTemplate).update(eq(V4_3_1_5Migration.REMAP_SQL),
+            verify(jdbcTemplate).update(eq(V4_3_1_7Migration.REMAP_SQL),
                     eq(move.toItemId()), eq(move.toItemName()), eq(move.fromItemId()), eq(move.toItemId()));
         }
     }
@@ -58,7 +58,7 @@ class V4_3_1_5MigrationTest {
     void movesFormOneHopWithNoDuplicateSources() {
         Set<UUID> sources = new HashSet<>();
         Set<UUID> targets = new HashSet<>();
-        for (SolutionTemplateMove move : V4_3_1_5Migration.SOLUTION_TEMPLATE_MOVES) {
+        for (SolutionTemplateMove move : V4_3_1_7Migration.SOLUTION_TEMPLATE_MOVES) {
             assertNotEquals(move.fromItemId(), move.toItemId(), move.listingSlug());
             assertTrue(sources.add(move.fromItemId()), "duplicate source item: " + move.fromItemId());
             assertTrue(targets.add(move.toItemId()), "duplicate target item: " + move.toItemId());
@@ -66,7 +66,7 @@ class V4_3_1_5MigrationTest {
         // A target that is also a source would make the outcome depend on list order (A -> B, then B -> C).
         sources.retainAll(targets);
         assertTrue(sources.isEmpty(), "items used both as source and target: " + sources);
-        assertFalse(V4_3_1_5Migration.SOLUTION_TEMPLATE_MOVES.isEmpty());
+        assertFalse(V4_3_1_7Migration.SOLUTION_TEMPLATE_MOVES.isEmpty());
     }
 
 }

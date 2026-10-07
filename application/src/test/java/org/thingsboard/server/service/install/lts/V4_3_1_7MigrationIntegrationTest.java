@@ -9,7 +9,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.service.install.lts.V4_3_1_5Migration.SolutionTemplateMove;
+import org.thingsboard.server.service.install.lts.V4_3_1_7Migration.SolutionTemplateMove;
 
 import java.util.Map;
 import java.util.UUID;
@@ -17,15 +17,15 @@ import java.util.UUID;
 import static org.junit.Assert.assertEquals;
 
 @DaoSqlTest
-public class V4_3_1_5MigrationIntegrationTest extends AbstractControllerTest {
+public class V4_3_1_7MigrationIntegrationTest extends AbstractControllerTest {
 
     private static final String DESCRIPTOR = "{\"createdEntityIds\":[{\"entityType\":\"DASHBOARD\",\"id\":\"c1b3c3b0-0000-11f1-0000-000000000001\"}]}";
 
     // CE "Temperature & Humidity sensors": the first move in the table.
-    private static final SolutionTemplateMove TEMPERATURE = V4_3_1_5Migration.SOLUTION_TEMPLATE_MOVES.get(0);
+    private static final SolutionTemplateMove TEMPERATURE = V4_3_1_7Migration.SOLUTION_TEMPLATE_MOVES.get(0);
 
     @Autowired
-    private V4_3_1_5Migration migration;
+    private V4_3_1_7Migration migration;
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
