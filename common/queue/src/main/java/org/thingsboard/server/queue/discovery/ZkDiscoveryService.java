@@ -374,15 +374,14 @@ public class ZkDiscoveryService implements DiscoveryService {
                     break;
                 }
                 zkExecutorService.submit(() -> applicationEventPublisher.publishEvent(new OtherServiceShutdownEvent(this, serviceId, serviceTypesList)));
-                ScheduledFuture<?> future = zkExecutorService.schedule(() -> {
+                delayedTasks.compute(serviceId, (id, previous) -> zkExecutorService.schedule(() -> {
                     log.debug("[{}] Going to recalculate partitions due to removed node [{}]",
                             serviceId, serviceTypesList);
                     ScheduledFuture<?> removedTask = delayedTasks.remove(serviceId);
                     if (removedTask != null) {
                         recalculatePartitions();
                     }
-                }, recalculateDelay, TimeUnit.MILLISECONDS);
-                delayedTasks.put(serviceId, future);
+                }, recalculateDelay, TimeUnit.MILLISECONDS));
                 break;
             default:
                 break;
