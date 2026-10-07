@@ -35,7 +35,7 @@ class V4_3_1_7MigrationTest {
     private V4_3_1_7Migration migration;
 
     @Test
-    void versionIs4315() {
+    void versionIs4317() {
         assertEquals("4.3.1.7", migration.getVersion());
     }
 
