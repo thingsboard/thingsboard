@@ -1067,6 +1067,7 @@
         "prev-widget": "Previous widget",
         "add-to-dashboard": "Add to dashboard",
         "add-widget-to-dashboard": "Add widget to dashboard",
+        "no-widget-grid-in-dashboard": "All states of this dashboard are HTML pages, so the widget cannot be added to it.",
         "selected-attributes": "{ count, plural, =1 {1 attribute} other {# attributes} } selected",
         "selected-telemetry": "{ count, plural, =1 {1 telemetry unit} other {# telemetry units} } selected",
         "no-attributes-text": "No attributes found",
@@ -2375,6 +2376,8 @@
         "no-widgets": "No widgets configured",
         "add-widget": "Add new widget",
         "add-widget-button-text": "Add widget",
+        "edit-html-page": "Edit HTML page",
+        "html-page": "HTML page",
         "title": "Title",
         "image": "Dashboard image",
         "mobile-app-settings": "Mobile application settings",
@@ -2448,6 +2451,7 @@
         "layout-type-default": "Default",
         "layout-type-scada": "SCADA",
         "layout-type-divider": "Divider",
+        "layout-type-html": "HTML Page",
         "layout-settings-type": "Layout settings: {{ type }} breakpoint",
         "columns-count": "Columns count",
         "columns-count-required": "Columns count is required.",
@@ -6573,6 +6577,8 @@
         "no-data": "No entries"
     },
     "layout": {
+        "switch-to-html-page-title": "Switch to HTML page?",
+        "switch-to-html-page-text": "The HTML page replaces the widget grid of this state. { count, plural, =1 {1 widget} other {# widgets} } placed in its layouts will be removed from this state.",
         "layout": "Layout",
         "layouts": "Layouts",
         "manage": "Manage layouts",

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
-import { Component, Inject, OnInit, SkipSelf } from '@angular/core';
+import { Component, Inject, SkipSelf } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
@@ -16,7 +16,7 @@ import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { EntityId } from '@app/shared/models/id/entity-id';
 import { Widget } from '@app/shared/models/widget.models';
 import { DashboardService } from '@core/http/dashboard.service';
-import { forkJoin, Observable, of } from 'rxjs';
+import { EMPTY, forkJoin, Observable, of } from 'rxjs';
 import { SelectTargetLayoutDialogComponent } from '@home/components/dashboard/select-target-layout-dialog.component';
 import {
   SelectTargetStateDialogComponent,
@@ -28,6 +28,8 @@ import { ItemBufferService } from '@core/services/item-buffer.service';
 import { StateObject } from '@core/api/widget-api.models';
 import { FiltersInfo } from '@shared/models/query/query.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { TranslateService } from '@ngx-translate/core';
+import { ActionNotificationShow } from '@core/notification/notification.actions';
 
 export interface AddWidgetToDashboardDialogData {
   entityId: EntityId;
@@ -44,7 +46,7 @@ export interface AddWidgetToDashboardDialogData {
 })
 export class AddWidgetToDashboardDialogComponent extends
   DialogComponent<AddWidgetToDashboardDialogComponent, void>
-  implements OnInit, ErrorStateMatcher {
+  implements ErrorStateMatcher {
 
   addWidgetFormGroup: UntypedFormGroup;
 
@@ -60,7 +62,8 @@ export class AddWidgetToDashboardDialogComponent extends
               private dashboardUtils: DashboardUtilsService,
               private dashboardService: DashboardService,
               private itembuffer: ItemBufferService,
-              private dialog: MatDialog) {
+              private dialog: MatDialog,
+              private translate: TranslateService) {
     super(store, router, dialogRef);
 
     this.addWidgetFormGroup = this.fb.group(
@@ -93,9 +96,6 @@ export class AddWidgetToDashboardDialogComponent extends
         }
       }
     );
-  }
-
-  ngOnInit(): void {
   }
 
   isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {
@@ -134,8 +134,17 @@ export class AddWidgetToDashboardDialogComponent extends
   }
 
   private selectTargetState(dashboard: Dashboard): Observable<string> {
-    const states = dashboard.configuration.states;
+    // A state with an HTML page has no widget grid to add the widget to.
+    const states = Object.fromEntries(Object.entries(dashboard.configuration.states)
+      .filter(([, state]) => !this.dashboardUtils.isHtmlPageState(state)));
     const stateIds = Object.keys(states);
+    if (!stateIds.length) {
+      this.store.dispatch(new ActionNotificationShow({
+        message: this.translate.instant('attribute.no-widget-grid-in-dashboard'),
+        type: 'error'
+      }));
+      return EMPTY;
+    }
     if (stateIds.length > 1) {
       return this.dialog.open<SelectTargetStateDialogComponent, SelectTargetStateDialogData,
         string>(SelectTargetStateDialogComponent, {
