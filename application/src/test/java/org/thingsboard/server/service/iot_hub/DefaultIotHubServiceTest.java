@@ -15,8 +15,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.id.IotHubInstalledItemId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.iot_hub.DashboardInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.IotHubInstalledItem;
+import org.thingsboard.server.common.data.iot_hub.RuleChainInstalledItemDescriptor;
 import org.thingsboard.server.dao.iot_hub.IotHubInstalledItemService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
@@ -89,7 +89,7 @@ class DefaultIotHubServiceTest {
         mockTenant();
         String versionId = UUID.randomUUID().toString();
         String itemId = UUID.randomUUID().toString();
-        when(iotHubRestClient.getVersionInfo(versionId)).thenReturn(version(versionId, itemId, "DASHBOARD", "Root", "1.0"));
+        when(iotHubRestClient.getVersionInfo(versionId)).thenReturn(version(versionId, itemId, "RULE_CHAIN", "Root", "1.0"));
         when(iotHubInstalledItemService.findInstalledItemIdsByTenantIdAndItemIdIn(eq(tenantId), any())).thenReturn(List.of());
 
         InstallPlan plan = service.resolveInstallPlan(user, versionId);
@@ -107,7 +107,7 @@ class DefaultIotHubServiceTest {
         String versionId = UUID.randomUUID().toString();
         String rootItemId = UUID.randomUUID().toString();
         String relatedItemId = UUID.randomUUID().toString();
-        ObjectNode root = version(versionId, rootItemId, "DASHBOARD", "Root", "1.0");
+        ObjectNode root = version(versionId, rootItemId, "RULE_CHAIN", "Root", "1.0");
         root.putArray("relatedItems").add(relatedItemId);
         when(iotHubRestClient.getVersionInfo(versionId)).thenReturn(root);
         when(iotHubRestClient.getPublishedVersionByItemId(relatedItemId))
@@ -129,7 +129,7 @@ class DefaultIotHubServiceTest {
         String versionId = UUID.randomUUID().toString();
         String rootItemId = UUID.randomUUID().toString();
         String relatedItemId = UUID.randomUUID().toString();
-        ObjectNode root = version(versionId, rootItemId, "DASHBOARD", "Root", "1.0");
+        ObjectNode root = version(versionId, rootItemId, "RULE_CHAIN", "Root", "1.0");
         root.putArray("relatedItems").add(relatedItemId);
         when(iotHubRestClient.getVersionInfo(versionId)).thenReturn(root);
         when(iotHubRestClient.getPublishedVersionByItemId(relatedItemId)).thenReturn(null);
@@ -149,7 +149,7 @@ class DefaultIotHubServiceTest {
         String versionId = UUID.randomUUID().toString();
         String rootItemId = UUID.randomUUID().toString();
         String relatedItemId = UUID.randomUUID().toString();
-        ObjectNode root = version(versionId, rootItemId, "DASHBOARD", "Root", "1.0");
+        ObjectNode root = version(versionId, rootItemId, "RULE_CHAIN", "Root", "1.0");
         root.putArray("relatedItems").add(relatedItemId);
         when(iotHubRestClient.getVersionInfo(versionId)).thenReturn(root);
         when(iotHubRestClient.getPublishedVersionByItemId(relatedItemId)).thenThrow(new RuntimeException("boom"));
@@ -280,7 +280,7 @@ class DefaultIotHubServiceTest {
         when(iotHubInstalledItemService.findInstalledItemIdsByTenantIdAndItemIdIn(eq(tenantId), any())).thenReturn(List.of());
         IotHubInstalledItem depItem = installedItem(UUID.randomUUID());
         IotHubInstalledItem rootItem = installedItem(UUID.randomUUID());
-        DashboardInstalledItemDescriptor rootDescriptor = new DashboardInstalledItemDescriptor();
+        RuleChainInstalledItemDescriptor rootDescriptor = new RuleChainInstalledItemDescriptor();
         rootItem.setDescriptor(rootDescriptor);
         doReturn(depItem).when(service).doInstallVersion(eq(user), eq(depVersionId), any(), any());
         doReturn(rootItem).when(service).doInstallVersion(eq(user), eq(rootVersionId), any(), any());

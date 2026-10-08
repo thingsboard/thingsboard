@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
+import './inspectorShim';
 import express from 'express';
 import bodyParser from 'body-parser';
 import config from 'config';

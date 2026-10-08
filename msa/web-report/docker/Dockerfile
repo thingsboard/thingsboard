@@ -23,7 +23,7 @@ COPY package/linux/conf ./config
 COPY ${pkg.name}.conf ./conf
 COPY src/api ./api
 COPY src/config ./config
-COPY src/server.js ./
+COPY src/inspectorShim.js src/server.js ./
 
 RUN apt-get update \
     && apt-get install -yq --no-install-recommends fonts-noto-cjk-extra fonts-roboto fonts-noto-color-emoji fonts-unifont libfreetype6 xfonts-scalable fonts-liberation \

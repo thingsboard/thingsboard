@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   ChangeDetectorRef,
   Component, ComponentRef,
@@ -16,9 +17,6 @@ import {
 } from '@angular/core';
 import { WidgetContext } from '@home/models/widget-component.models';
 import {
-  htmlContainerDefaultSettings,
-  HtmlContainerWidgetSettings,
-  HtmlContainerWidgetType,
   WidgetContainerAngularFunction,
   WidgetContainerPlainFunction
 } from '@home/components/widget/lib/html/html-container-widget.models';
@@ -40,6 +38,11 @@ import {
 import { MODULES_MAP } from '@shared/models/constants';
 import { IModulesMap } from '@modules/common/modules-map.models';
 import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
+import {
+  htmlContainerDefaultSettings,
+  HtmlContainerWidgetSettings,
+  HtmlContainerWidgetType
+} from '@shared/models/html-container.models';
 
 @Component({
   selector: 'tb-html-container-widget',
