@@ -2175,7 +2175,6 @@
         "manage-public-dashboards": "Manage public dashboards",
         "manage-customer-assets": "Manage customer assets",
         "manage-customer-edges": "Manage customer edges",
-        "manage-customer-agents": "Manage agents",
         "manage-public-assets": "Manage public assets",
         "add-customer-text": "Add new customer",
         "no-customers-text": "No customers found",
@@ -2220,7 +2219,8 @@
         "search": "Search customers",
         "selected-customers": "{ count, plural, =1 {1 customer} other {# customers} } selected",
         "edges": "Customer edge instances",
-        "manage-edges": "Manage edges"
+        "manage-edges": "Manage edges",
+        "manage-agents": "Manage agents"
     },
     "customers-hierarchy": {
         "customers-hierarchy": "Customers hierarchy",

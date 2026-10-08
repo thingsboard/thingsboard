@@ -60,6 +60,14 @@
       {{'customer.manage-edges' | translate }}
     </button>
   }
+  @if (resource.AGENT | hasGenericPermission: operation.READ) {
+    <button mat-stroked-button color="primary"
+            [disabled]="(isLoading$ | async)"
+            (click)="onEntityAction($event, 'manageAgents')"
+            [class.!hidden]="hideManageAgents() || isEdit">
+      {{'customer.manage-agents' | translate }}
+    </button>
+  }
   @if (resource.DASHBOARD | hasGenericPermission: operation.READ) {
     <button mat-stroked-button color="primary"
             [disabled]="(isLoading$ | async)"
