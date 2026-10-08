@@ -12,6 +12,7 @@ import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.actors.TbRuleNodeUpdateException;
 import org.thingsboard.server.actors.shared.ComponentMsgProcessor;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
+
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleState;
@@ -25,6 +26,7 @@ import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
+import org.thingsboard.server.service.trace.TraceMessageService;
 
 /**
  * @author Andrew Shvayka
@@ -37,6 +39,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     private final TbApiUsageReportClient apiUsageClient;
     private final DefaultTbContext defaultCtx;
     private final ComponentDiscoveryService componentService;
+    private final TraceMessageService traceMessageService;
     private TbNode tbNode;
     private RuleNodeInfo info;
 
@@ -46,6 +49,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
         this.apiUsageClient = systemContext.getApiUsageClient();
         this.ruleChainName = ruleChainName;
         this.componentService = systemContext.getComponentService();
+        this.traceMessageService = systemContext.getTraceMessageService();
         RuleNode ruleNode = systemContext.getRuleChainService().findRuleNodeById(tenantId, entityId);
         this.info = new RuleNodeInfo(ruleNodeId, ruleChainName, getName(ruleNode));
         replaceSecretUsages(ruleNode);
@@ -123,6 +127,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
             apiUsageClient.report(tenantId, tbMsg.getCustomerId(), ApiUsageRecordKey.RE_EXEC_COUNT);
             persistDebugInputIfAllowed(msg.getMsg(), "Self");
             try {
+                defaultCtx.setProcessingMsgStartTime(System.currentTimeMillis());
                 tbNode.onMsg(defaultCtx, msg.getMsg());
             } catch (Exception e) {
                 defaultCtx.tellFailure(msg.getMsg(), e);
@@ -139,6 +144,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
             msg.getMsg().getCallback().onProcessingStart(info);
             checkComponentStateActive(msg.getMsg());
             TbMsg tbMsg = msg.getMsg();
+
             int ruleNodeCount = tbMsg.getAndIncrementRuleNodeCounter();
             var tenantProfileConfiguration = getTenantProfileConfiguration();
             int maxRuleNodeExecutionsPerMessage = tenantProfileConfiguration.getMaxRuleNodeExecsPerMessage();
@@ -146,11 +152,15 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
                 apiUsageClient.report(tenantId, tbMsg.getCustomerId(), ApiUsageRecordKey.RE_EXEC_COUNT);
                 persistDebugInputIfAllowed(msg.getMsg(), msg.getFromRelationType());
                 try {
+                    prepareNodeExecution((DefaultTbContext) msg.getCtx(), tbMsg);
                     tbNode.onMsg(msg.getCtx(), msg.getMsg());
                 } catch (Exception e) {
                     msg.getCtx().tellFailure(msg.getMsg(), e);
                 }
             } else {
+                if (tbMsg.isTraced() && traceMessageService != null) {
+                    traceMessageService.onMaxRuleNodeExecutions((DefaultTbContext) msg.getCtx(), tbMsg);
+                }
                 tbMsg.getCallback().onFailure(new RuleNodeException("Message is processed by more than " + maxRuleNodeExecutionsPerMessage + " rule nodes!", ruleChainName, defaultCtx.getSelf()));
             }
         }
@@ -216,6 +226,15 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     private void replaceSecretUsages(RuleNode ruleNode) {
         if (componentService.getRuleNodeInfo(ruleNode.getType()).map(info -> info.getAnnotation().hasSecrets()).orElse(false)) {
             systemContext.getSecretConfigurationService().replaceSecretUsages(tenantId, ruleNode.getConfiguration());
+        }
+    }
+
+    private void prepareNodeExecution(DefaultTbContext ctx, TbMsg tbMsg) {
+        ctx.setProcessingMsgStartTime(System.currentTimeMillis());
+        ctx.setProcessingMsg(tbMsg);
+
+        if (tbMsg.isTraced() && traceMessageService != null) {
+            traceMessageService.onRuleNodeEnter(ctx, tbMsg);
         }
     }
 

@@ -26,13 +26,15 @@ import org.thingsboard.server.dao.model.sql.RawDataEventEntity;
 import org.thingsboard.server.dao.model.sql.RuleChainDebugEventEntity;
 import org.thingsboard.server.dao.model.sql.RuleNodeDebugEventEntity;
 import org.thingsboard.server.dao.model.sql.StatisticsEventEntity;
+import org.thingsboard.server.dao.model.sql.ruleenginemonitoring.RuleNodeExecStatsEntity;
+import org.thingsboard.server.dao.model.sql.trace.SpanEntity;
 
 import javax.sql.DataSource;
 import java.util.Objects;
 
 @DedicatedEventsDataSource
 @Configuration
-@EnableJpaRepositories(value = {"org.thingsboard.server.dao.sql.event", "org.thingsboard.server.dao.sql.audit"},
+@EnableJpaRepositories(value = {"org.thingsboard.server.dao.sql.event", "org.thingsboard.server.dao.sql.audit", "org.thingsboard.server.dao.sql.trace"},
         bootstrapMode = BootstrapMode.LAZY,
         entityManagerFactoryRef = "eventsEntityManagerFactory", transactionManagerRef = "eventsTransactionManager")
 public class DedicatedEventsJpaDaoConfig {
@@ -61,7 +63,8 @@ public class DedicatedEventsJpaDaoConfig {
         return builder
                 .dataSource(eventsDataSource)
                 .packages(LifecycleEventEntity.class, StatisticsEventEntity.class, ErrorEventEntity.class, RuleNodeDebugEventEntity.class, RuleChainDebugEventEntity.class,
-                        ConverterDebugEventEntity.class, IntegrationDebugEventEntity.class, RawDataEventEntity.class, AuditLogEntity.class, CalculatedFieldDebugEventEntity.class)
+                        ConverterDebugEventEntity.class, IntegrationDebugEventEntity.class, RawDataEventEntity.class, AuditLogEntity.class, CalculatedFieldDebugEventEntity.class, SpanEntity.class,
+                        RuleNodeExecStatsEntity.class)
                 .persistenceUnit(EVENTS_PERSISTENCE_UNIT)
                 .build();
     }

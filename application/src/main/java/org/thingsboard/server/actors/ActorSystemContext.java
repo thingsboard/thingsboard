@@ -132,6 +132,8 @@ import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.service.ruleenginemonitoring.RuleEngineMonitoringService;
+import org.thingsboard.server.service.trace.TraceMessageService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.queue.discovery.DiscoveryService;
@@ -318,6 +320,14 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private RuleNodeStateService ruleNodeStateService;
+
+    @Autowired(required = false)
+    @Getter
+    private TraceMessageService traceMessageService;
+
+    @Autowired(required = false)
+    @Getter
+    private RuleEngineMonitoringService ruleEngineMonitoringService;
 
     @Autowired
     @Getter

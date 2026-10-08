@@ -1,0 +1,251 @@
+/**
+ * ThingsBoard, Inc. ("COMPANY") CONFIDENTIAL
+ *
+ * Copyright © 2016-2026 ThingsBoard, Inc. All Rights Reserved.
+ *
+ * NOTICE: All information contained herein is, and remains
+ * the property of ThingsBoard, Inc. and its suppliers,
+ * if any.  The intellectual and technical concepts contained
+ * herein are proprietary to ThingsBoard, Inc.
+ * and its suppliers and may be covered by U.S. and Foreign Patents,
+ * patents in process, and are protected by trade secret or copyright law.
+ *
+ * Dissemination of this information or reproduction of this material is strictly forbidden
+ * unless prior written permission is obtained from COMPANY.
+ *
+ * Access to the source code contained herein is hereby forbidden to anyone except current COMPANY employees,
+ * managers or contractors who have executed Confidentiality and Non-disclosure agreements
+ * explicitly covering such access.
+ *
+ * The copyright notice above does not evidence any actual or intended publication
+ * or disclosure  of  this source code, which includes
+ * information that is confidential and/or proprietary, and is a trade secret, of  COMPANY.
+ * ANY REPRODUCTION, MODIFICATION, DISTRIBUTION, PUBLIC  PERFORMANCE,
+ * OR PUBLIC DISPLAY OF OR THROUGH USE  OF THIS  SOURCE CODE  WITHOUT
+ * THE EXPRESS WRITTEN CONSENT OF COMPANY IS STRICTLY PROHIBITED,
+ * AND IN VIOLATION OF APPLICABLE LAWS AND INTERNATIONAL TREATIES.
+ * THE RECEIPT OR POSSESSION OF THIS SOURCE CODE AND/OR RELATED INFORMATION
+ * DOES NOT CONVEY OR IMPLY ANY RIGHTS TO REPRODUCE, DISCLOSE OR DISTRIBUTE ITS CONTENTS,
+ * OR TO MANUFACTURE, USE, OR SELL ANYTHING THAT IT  MAY DESCRIBE, IN WHOLE OR IN PART.
+ */
+package org.thingsboard.server.controller;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.thingsboard.server.dao.model.sql.ruleenginemonitoring.MergedStatsDelta;
+import org.thingsboard.server.dao.model.sql.ruleenginemonitoring.MergedStatsTableRow;
+import org.thingsboard.server.dao.model.sql.ruleenginemonitoring.QueueLagTableEntry;
+import org.thingsboard.server.dao.model.sql.ruleenginemonitoring.QueueLagTimeseriesEntry;
+import org.thingsboard.server.dao.model.sql.ruleenginemonitoring.QueueTableEntry;
+import org.thingsboard.server.dao.model.sql.ruleenginemonitoring.QueueTimeseriesEntry;
+import org.thingsboard.server.dao.model.sql.ruleenginemonitoring.RuleNodeTableRow;
+import org.thingsboard.server.dao.model.sql.ruleenginemonitoring.RuleNodeTsKvEntry;
+import org.thingsboard.server.dao.sql.ruleenginemonitoring.RuleEngineMonitoringFilters;
+import org.thingsboard.server.dao.sql.ruleenginemonitoring.RuleNodeDimension;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.ruleenginemonitoring.RuleEngineMonitoringQueryService;
+
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+
+@RestController
+@TbCoreComponent
+@RequestMapping("/api/ruleEngineMonitoring")
+@PreAuthorize("hasAuthority('TENANT_ADMIN')")
+@RequiredArgsConstructor
+public class RuleEngineMonitoringController extends BaseController {
+    private final RuleEngineMonitoringQueryService queryService;
+
+    @GetMapping("/filters")
+    public RuleEngineMonitoringFilters getFilterOptions() throws ThingsboardException {
+        return queryService.getFilters(getTenantId().getId());
+    }
+
+    @GetMapping("/nodeStats/timeseries")
+    public List<RuleNodeTsKvEntry> getRuleNodeTimeSeries(
+            @RequestParam long startTs,
+            @RequestParam long endTs,
+            @RequestParam(required = false) String groupBy,
+            @RequestParam(required = false) List<UUID> queueIds,
+            @RequestParam(required = false) List<UUID> ruleChainIds,
+            @RequestParam(required = false) List<UUID> ruleNodeIds,
+            @RequestParam(required = false) List<String> serviceIds,
+            @RequestParam(required = false) Long intervalMs
+    ) throws ThingsboardException {
+        UUID tenantId = getTenantId().getId();
+        return queryService.getNodeStatsTimeseries(
+                tenantId, startTs, endTs, parseGroupBy(groupBy),
+                queueIds, ruleChainIds, ruleNodeIds, serviceIds, intervalMs);
+    }
+
+    @GetMapping("/nodeStats/table")
+    public List<RuleNodeTableRow> getRuleNodeTable(
+            @RequestParam long startTs,
+            @RequestParam long endTs,
+            @RequestParam(required = false) String groupBy,
+            @RequestParam(required = false) List<UUID> queueIds,
+            @RequestParam(required = false) List<UUID> ruleChainIds,
+            @RequestParam(required = false) List<UUID> ruleNodeIds,
+            @RequestParam(required = false) List<String> serviceIds
+    ) throws ThingsboardException {
+        UUID tenantId = getTenantId().getId();
+        return queryService.getNodeStatsTable(
+                tenantId, startTs, endTs, parseGroupBy(groupBy),
+                queueIds, ruleChainIds, ruleNodeIds, serviceIds);
+    }
+
+    @GetMapping("/queueStats/timeseries")
+    public List<QueueTimeseriesEntry> getQueueTimeSeries(
+            @RequestParam long startTs,
+            @RequestParam long endTs,
+            @RequestParam(required = false) String groupBy,
+            @RequestParam(required = false) List<UUID> queueIds,
+            @RequestParam(required = false) List<UUID> ruleChainIds,
+            @RequestParam(required = false) List<UUID> ruleNodeIds,
+            @RequestParam(required = false) List<String> serviceIds,
+            @RequestParam(required = false) Long intervalMs
+    ) throws ThingsboardException {
+        UUID tenantId = getTenantId().getId();
+        return queryService.getQueueStatsTimeseries(
+                tenantId, startTs, endTs, parseQueueGroupBy(groupBy),
+                queueIds, ruleChainIds, ruleNodeIds, serviceIds, intervalMs);
+    }
+
+    @GetMapping("/queueStats/table")
+    public List<QueueTableEntry> getQueueTable(
+            @RequestParam long startTs,
+            @RequestParam long endTs,
+            @RequestParam(required = false) String groupBy,
+            @RequestParam(required = false) List<UUID> queueIds,
+            @RequestParam(required = false) List<UUID> ruleChainIds,
+            @RequestParam(required = false) List<UUID> ruleNodeIds,
+            @RequestParam(required = false) List<String> serviceIds
+    ) throws ThingsboardException {
+        UUID tenantId = getTenantId().getId();
+        return queryService.getQueueStatsTable(
+                tenantId, startTs, endTs, parseQueueGroupBy(groupBy),
+                queueIds, ruleChainIds, ruleNodeIds, serviceIds);
+    }
+
+    @GetMapping("/queueLagStats/timeseries")
+    public List<QueueLagTimeseriesEntry> getQueueLagTimeSeries(
+            @RequestParam long startTs,
+            @RequestParam long endTs,
+            @RequestParam(required = false) String groupBy,
+            @RequestParam(required = false) List<UUID> queueIds,
+            @RequestParam(required = false) Long intervalMs
+    ) throws ThingsboardException {
+        UUID tenantId = getTenantId().getId();
+        return queryService.getQueueLagTimeseries(
+                tenantId, startTs, endTs, parseLagGroupBy(groupBy), queueIds, intervalMs);
+    }
+
+    @GetMapping("/queueLagStats/table")
+    public List<QueueLagTableEntry> getQueueLagTable(
+            @RequestParam long startTs,
+            @RequestParam long endTs,
+            @RequestParam(required = false) String groupBy,
+            @RequestParam(required = false) List<UUID> queueIds
+    ) throws ThingsboardException {
+        UUID tenantId = getTenantId().getId();
+        return queryService.getQueueLagTable(
+                tenantId, startTs, endTs, parseLagGroupBy(groupBy), queueIds);
+    }
+
+    @GetMapping("/queueLagStats/last")
+    public long getCurrentQueueLag(
+            @RequestParam(required = false) List<UUID> queueIds
+    ) throws ThingsboardException {
+        UUID tenantId = getTenantId().getId();
+        return queryService.getCurrentQueueLag(tenantId, queueIds);
+    }
+
+    @GetMapping("/stats/table")
+    public List<MergedStatsTableRow> getMergedStatsTable(
+            @RequestParam long startTs,
+            @RequestParam long endTs,
+            @RequestParam(required = false) String groupBy,
+            @RequestParam(required = false) List<UUID> queueIds,
+            @RequestParam(required = false) List<UUID> ruleChainIds,
+            @RequestParam(required = false) List<UUID> ruleNodeIds,
+            @RequestParam(required = false) List<String> serviceIds
+    ) throws ThingsboardException {
+        return queryService.getMergedStatsTable(
+                getTenantId().getId(),
+                startTs, endTs,
+                parseGroupBy(groupBy), parseQueueGroupBy(groupBy),
+                queueIds, ruleChainIds, ruleNodeIds, serviceIds
+        );
+    }
+
+    @GetMapping("/stats/table/compare")
+    public List<MergedStatsDelta> getMergedStatsTableCompare(
+            @RequestParam long startTs,
+            @RequestParam long endTs,
+            @RequestParam long compareStartTs,
+            @RequestParam long compareEndTs,
+            @RequestParam(required = false) String groupBy,
+            @RequestParam(required = false) List<UUID> queueIds,
+            @RequestParam(required = false) List<UUID> ruleChainIds,
+            @RequestParam(required = false) List<UUID> ruleNodeIds,
+            @RequestParam(required = false) List<String> serviceIds
+    ) throws ThingsboardException {
+        return queryService.getMergedStatsTableCompare(
+                getTenantId().getId(),
+                startTs, endTs,
+                compareStartTs, compareEndTs,
+                parseGroupBy(groupBy), parseQueueGroupBy(groupBy),
+                queueIds, ruleChainIds, ruleNodeIds, serviceIds
+        );
+    }
+
+    private Set<RuleNodeDimension> parseGroupBy(String groupBy) {
+        Set<RuleNodeDimension> dims = new LinkedHashSet<>();
+        if (groupBy == null || groupBy.isBlank()) return dims;
+        for (String token : groupBy.split(",")) {
+            switch (token.trim()) {
+                case "tenantId"     -> dims.add(RuleNodeDimension.TENANT_ID);
+                case "serviceId"    -> dims.add(RuleNodeDimension.SERVICE_ID);
+                case "queueId"      -> dims.add(RuleNodeDimension.QUEUE_ID);
+                case "ruleChainId"  -> dims.add(RuleNodeDimension.RULE_CHAIN_ID);
+                case "ruleNodeId"   -> dims.add(RuleNodeDimension.RULE_NODE_ID);
+            }
+        }
+        return dims;
+    }
+
+    private Set<RuleNodeDimension> parseLagGroupBy(String groupBy) {
+        Set<RuleNodeDimension> dims = new LinkedHashSet<>();
+        if (groupBy == null || groupBy.isBlank()) return dims;
+        for (String token : groupBy.split(",")) {
+            switch (token.trim()) {
+                case "queueTenantId" -> dims.add(RuleNodeDimension.QUEUE_TENANT_ID);
+                case "queueId"       -> dims.add(RuleNodeDimension.QUEUE_ID);
+            }
+        }
+        return dims;
+    }
+
+    private Set<RuleNodeDimension> parseQueueGroupBy(String groupBy) {
+        Set<RuleNodeDimension> dims = new LinkedHashSet<>();
+        if (groupBy == null || groupBy.isBlank()) return dims;
+        for (String token : groupBy.split(",")) {
+            switch (token.trim()) {
+                case "queueTenantId" -> dims.add(RuleNodeDimension.QUEUE_TENANT_ID);
+                case "tenantId"      -> dims.add(RuleNodeDimension.TENANT_ID);
+                case "serviceId"     -> dims.add(RuleNodeDimension.SERVICE_ID);
+                case "queueId"       -> dims.add(RuleNodeDimension.QUEUE_ID);
+                case "ruleChainId"   -> dims.add(RuleNodeDimension.RULE_CHAIN_ID);
+                case "ruleNodeId"    -> dims.add(RuleNodeDimension.LAST_VISITED_RULE_NODE_ID);
+            }
+        }
+        return dims;
+    }
+}

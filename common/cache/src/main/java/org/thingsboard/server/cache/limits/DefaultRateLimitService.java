@@ -105,6 +105,31 @@ public class DefaultRateLimitService implements RateLimitService {
     }
 
     @Override
+    public boolean checkRateLimitAvailability(LimitedApi api, TenantId tenantId) {
+        if (tenantId.isSysTenantId()) {
+            return true;
+        }
+        TenantProfile tenantProfile = tenantProfileProvider.get(tenantId);
+        if (tenantProfile == null) {
+            return true;
+        }
+
+        String rateLimitConfig = tenantProfile.getProfileConfiguration()
+                .map(api::getLimitConfig).orElse(null);
+        if (StringUtils.isEmpty(rateLimitConfig)) {
+            return true;
+        }
+
+        RateLimitKey key = new RateLimitKey(api, tenantId);
+        TbRateLimits rateLimit = rateLimits.asMap().computeIfAbsent(key, k -> {
+            log.trace("[{}] Created new rate limit bucket for availability check {} ({})", tenantId, api, rateLimitConfig);
+            return new TbRateLimits(rateLimitConfig, api.isRefillRateLimitIntervally());
+        });
+
+        return rateLimit.getAvailableTokens() > 0;
+    }
+
+    @Override
     public void cleanUp(LimitedApi api, Object level) {
         RateLimitKey key = new RateLimitKey(api, level);
         rateLimits.invalidate(key);

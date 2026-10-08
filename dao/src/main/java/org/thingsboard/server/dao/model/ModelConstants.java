@@ -127,6 +127,21 @@ public class ModelConstants {
     public static final String ADMIN_SETTINGS_JSON_VALUE_PROPERTY = "json_value";
 
     /**
+     * Trace coverage setting constants.
+     */
+    public static final String TRACE_COVERAGE_SETTING_TABLE_NAME = "trace_coverage_setting";
+    public static final String TRACE_COVERAGE_SETTING_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String TRACE_COVERAGE_SETTING_ENABLED_PROPERTY = "enabled";
+    public static final String TRACE_COVERAGE_SETTING_TRACES_PER_INTERVAL_PROPERTY = "traces_per_interval";
+    public static final String TRACE_COVERAGE_SETTING_TRACES_PER_PACK_PROPERTY = "traces_per_pack";
+    public static final String TRACE_COVERAGE_SETTING_INTERVAL_SECONDS_PROPERTY = "interval_seconds";
+    public static final String TRACE_COVERAGE_SETTING_RULE_ENGINE_ROTATION_PROPERTY = "rule_engine_rotation";
+    public static final String TRACE_COVERAGE_SETTING_SWITCH_PERIOD_SECONDS_PROPERTY = "switch_period_seconds";
+    public static final String TRACE_COVERAGE_SETTING_RELATED_TRACE_SAMPLE_INTERVAL_SECONDS_PROPERTY = "related_trace_sample_interval_seconds";
+    public static final String TRACE_COVERAGE_SETTING_MESSAGE_PAYLOAD_RECORDING_PROPERTY = "message_payload_recording";
+    public static final String TRACE_COVERAGE_SETTING_MAX_TRACE_GROUPS_PER_DAY_PROPERTY = "max_trace_groups_per_day";
+
+    /**
      * Contact constants.
      */
     public static final String COUNTRY_PROPERTY = "country";
@@ -1110,6 +1125,15 @@ public class ModelConstants {
     public static final String IOT_HUB_INSTALLED_ITEM_ITEM_TYPE_COLUMN = "item_type";
     public static final String IOT_HUB_INSTALLED_ITEM_VERSION_COLUMN = "version";
     public static final String IOT_HUB_INSTALLED_ITEM_DESCRIPTOR_COLUMN = "descriptor";
+
+    /**
+     * Trace tables constants.
+     */
+    public static final String TRACE_TABLE_NAME = "trace";
+    public static final String SPAN_TABLE_NAME = "span";
+    public static final String SPAN_ATTRIBUTE_TABLE_NAME = "span_attribute";
+    public static final String SPAN_EVENT_TABLE_NAME = "span_event";
+    public static final String SPAN_LINK_TABLE_NAME = "span_link";
 
     protected static final String[] NONE_AGGREGATION_COLUMNS = new String[]{LONG_VALUE_COLUMN, DOUBLE_VALUE_COLUMN, BOOLEAN_VALUE_COLUMN, STRING_VALUE_COLUMN, JSON_VALUE_COLUMN, KEY_COLUMN, TS_COLUMN};
 

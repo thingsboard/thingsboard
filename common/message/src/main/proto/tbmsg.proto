@@ -22,6 +22,7 @@ message TbMsgProcessingStackItemProto {
 message TbMsgProcessingCtxProto {
     int32 ruleNodeExecCounter = 1;
     repeated TbMsgProcessingStackItemProto stack = 2;
+    bool traceAuthorized = 3;
 }
 
 message TbMsgProto {

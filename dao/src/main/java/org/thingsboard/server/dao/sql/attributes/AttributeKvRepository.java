@@ -29,6 +29,11 @@ public interface AttributeKvRepository extends JpaRepository<AttributeKvEntity, 
     List<AttributeKvEntity> findAllByEntityIdAndAttributeType(@Param("entityId") UUID entityId,
                                                               @Param("attributeType") int attributeType);
 
+    @Query("SELECT a FROM AttributeKvEntity a WHERE a.id.entityId IN :entityIds " +
+            "AND a.id.attributeType = :attributeType")
+    List<AttributeKvEntity> findAllByEntityIdsAndAttributeType(@Param("entityIds") List<UUID> entityIds,
+                                                                @Param("attributeType") int attributeType);
+
     @Transactional
     @Modifying
     @Query("DELETE FROM AttributeKvEntity a WHERE a.id.entityId = :entityId " +

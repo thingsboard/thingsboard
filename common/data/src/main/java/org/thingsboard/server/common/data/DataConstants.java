@@ -162,4 +162,11 @@ public class DataConstants {
 
     public static final String LATEST_TELEMETRY_SCOPE = "LATEST_TELEMETRY";
 
+    public static final String TRACE_ID = "ss_traceId";
+    public static final String TRACE_PARENT = "ss_traceparent";
+    public static final String SPAN_ON_RETRY = "ss_spanOnRetry";
+    public static final String TRACE_LOG_LEVEL = "ss_traceLogLevel";
+    public static final String TRACE_CREATED_AT = "ss_traceCreatedAt";
+    public static final String TRACE_RECORD_MSG_PAYLOAD = "ss_traceRecordMsgPayload";
+
 }

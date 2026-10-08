@@ -13,6 +13,7 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -278,6 +279,28 @@ public final class TbMsg implements Serializable {
             }
         }
         return TbMsgType.NA;
+    }
+
+    public String getTraceId() {
+        return metaData.getValue(DataConstants.TRACE_ID);
+    }
+
+    public String getTraceParent() {
+        return metaData.getValue(DataConstants.TRACE_PARENT);
+    }
+
+    public boolean isTraced() {
+        return getTraceId() != null;
+    }
+
+    @JsonIgnore
+    public boolean isTraceAuthorized() {
+        return ctx.isTraceAuthorized();
+    }
+
+    @JsonIgnore
+    public void setTraceAuthorized(boolean traceAuthorized) {
+        ctx.setTraceAuthorized(traceAuthorized);
     }
 
     public boolean isTypeOf(TbMsgType tbMsgType) {

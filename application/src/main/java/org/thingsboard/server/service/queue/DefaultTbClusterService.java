@@ -1094,6 +1094,7 @@ public class DefaultTbClusterService implements TbClusterService {
         ToCoreNotificationMsg coreMsg = ToCoreNotificationMsg.newBuilder().addAllQueueUpdateMsgs(queueUpdateMsgs).build();
         ToTransportMsg transportMsg = ToTransportMsg.newBuilder().addAllQueueUpdateMsgs(queueUpdateMsgs).build();
         doSendQueueNotifications(ruleEngineMsg, coreMsg, transportMsg);
+        queues.forEach(queue -> broadcastEntityStateChangeEvent(queue.getTenantId(), queue.getId(), ComponentLifecycleEvent.UPDATED));
     }
 
     @Override
@@ -1112,6 +1113,7 @@ public class DefaultTbClusterService implements TbClusterService {
         ToCoreNotificationMsg coreMsg = ToCoreNotificationMsg.newBuilder().addAllQueueDeleteMsgs(queueDeleteMsgs).build();
         ToTransportMsg transportMsg = ToTransportMsg.newBuilder().addAllQueueDeleteMsgs(queueDeleteMsgs).build();
         doSendQueueNotifications(ruleEngineMsg, coreMsg, transportMsg);
+        queues.forEach(queue -> broadcastEntityStateChangeEvent(queue.getTenantId(), queue.getId(), ComponentLifecycleEvent.DELETED));
     }
 
     private void doSendQueueNotifications(ToRuleEngineNotificationMsg ruleEngineMsg, ToCoreNotificationMsg coreMsg, ToTransportMsg transportMsg) {

@@ -52,4 +52,8 @@ public class TbRateLimits {
         return bucket.tryConsume(number);
     }
 
+    public long getAvailableTokens() {
+        return bucket.getAvailableTokens();
+    }
+
 }

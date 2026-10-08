@@ -1,0 +1,114 @@
+/**
+ * ThingsBoard, Inc. ("COMPANY") CONFIDENTIAL
+ *
+ * Copyright © 2016-2026 ThingsBoard, Inc. All Rights Reserved.
+ *
+ * NOTICE: All information contained herein is, and remains
+ * the property of ThingsBoard, Inc. and its suppliers,
+ * if any.  The intellectual and technical concepts contained
+ * herein are proprietary to ThingsBoard, Inc.
+ * and its suppliers and may be covered by U.S. and Foreign Patents,
+ * patents in process, and are protected by trade secret or copyright law.
+ *
+ * Dissemination of this information or reproduction of this material is strictly forbidden
+ * unless prior written permission is obtained from COMPANY.
+ *
+ * Access to the source code contained herein is hereby forbidden to anyone except current COMPANY employees,
+ * managers or contractors who have executed Confidentiality and Non-disclosure agreements
+ * explicitly covering such access.
+ *
+ * The copyright notice above does not evidence any actual or intended publication
+ * or disclosure  of  this source code, which includes
+ * information that is confidential and/or proprietary, and is a trade secret, of  COMPANY.
+ * ANY REPRODUCTION, MODIFICATION, DISTRIBUTION, PUBLIC  PERFORMANCE,
+ * OR PUBLIC DISPLAY OF OR THROUGH USE  OF THIS  SOURCE CODE  WITHOUT
+ * THE EXPRESS WRITTEN CONSENT OF COMPANY IS STRICTLY PROHIBITED,
+ * AND IN VIOLATION OF APPLICABLE LAWS AND INTERNATIONAL TREATIES.
+ * THE RECEIPT OR POSSESSION OF THIS SOURCE CODE AND/OR RELATED INFORMATION
+ * DOES NOT CONVEY OR IMPLY ANY RIGHTS TO REPRODUCE, DISCLOSE OR DISTRIBUTE ITS CONTENTS,
+ * OR TO MANUFACTURE, USE, OR SELL ANYTHING THAT IT  MAY DESCRIBE, IN WHOLE OR IN PART.
+ */
+package org.thingsboard.server.common.data.trace;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.io.Serializable;
+import java.util.UUID;
+
+@Data
+@NoArgsConstructor
+@Schema
+public class TraceCoverageSetting implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    public static final int DEFAULT_TRACES_PER_INTERVAL = 10;
+    public static final int DEFAULT_TRACES_PER_PACK = 1;
+    public static final int DEFAULT_INTERVAL_SECONDS = 1;
+    public static final boolean DEFAULT_RULE_ENGINE_ROTATION = true;
+    public static final int DEFAULT_SWITCH_PERIOD_SECONDS = 60;
+    public static final int DEFAULT_RELATED_TRACE_SAMPLE_INTERVAL_SECONDS = 1800;
+    public static final MessagePayloadRecording DEFAULT_MESSAGE_PAYLOAD_RECORDING = MessagePayloadRecording.NONE;
+    public static final int DEFAULT_MAX_TRACE_GROUPS_PER_DAY = 10000;
+
+    public static final UUID SETTINGS_ASSET_ID = UUID.fromString("00000000-0000-0000-0000-00000000c0fe");
+
+    public enum MessagePayloadRecording {
+        NONE,
+        FIRST_SPAN,
+        ALL_SPANS
+    }
+
+    @Schema(description = "The Id of the Trace Coverage Setting, auto-generated, UUID", accessMode = Schema.AccessMode.READ_ONLY)
+    private UUID id;
+
+    @Schema(description = "Id of the owning tenant", accessMode = Schema.AccessMode.READ_ONLY)
+    private UUID tenantId;
+
+    @Schema(description = "Timestamp of the setting creation, in milliseconds", accessMode = Schema.AccessMode.READ_ONLY)
+    private long createdTime;
+
+    @Schema(description = "Whether trace coverage is active for this tenant", example = "false")
+    private boolean enabled;
+
+    @Schema(description = "How many traces to admit per interval (one message per admitted trace group)", example = "10")
+    private int tracesPerInterval = DEFAULT_TRACES_PER_INTERVAL;
+
+    @Schema(description = "Max traced messages per pack per tenant; 0 means unlimited (no grouping by message type)", example = "1")
+    private int tracesPerPack = DEFAULT_TRACES_PER_PACK;
+
+    @Schema(description = "Length of the trace budget window, in seconds", example = "1")
+    private int intervalSeconds = DEFAULT_INTERVAL_SECONDS;
+
+    @Schema(description = "Whether coverage evaluation rotates across rule-engine instances (one at a time) instead of every instance sampling", example = "true")
+    private boolean ruleEngineRotation = DEFAULT_RULE_ENGINE_ROTATION;
+
+    @Schema(description = "How long (seconds) a single rule-engine instance owns coverage evaluation before rotating; applies only when ruleEngineRotation is true", example = "60")
+    private int switchPeriodSeconds = DEFAULT_SWITCH_PERIOD_SECONDS;
+
+    @Schema(description = "Minimum spacing (seconds) between related traces persisted per path, so drill-down trace coverage is spread over time", example = "1800")
+    private int relatedTraceSampleIntervalSeconds = DEFAULT_RELATED_TRACE_SAMPLE_INTERVAL_SECONDS;
+
+    @Schema(description = "Controls whether message data and metadata are recorded in trace spans", example = "NONE")
+    private MessagePayloadRecording messagePayloadRecording = DEFAULT_MESSAGE_PAYLOAD_RECORDING;
+
+    @Schema(description = "Max distinct trace groups (execution paths) tracked per tenant per day; once reached, traces on new paths " +
+            "are not persisted while already-tracked paths keep aggregating. 0 means unlimited.", example = "10000")
+    private int maxTraceGroupsPerDay = DEFAULT_MAX_TRACE_GROUPS_PER_DAY;
+
+    public static TraceCoverageSetting defaultSetting(UUID tenantId) {
+        TraceCoverageSetting setting = new TraceCoverageSetting();
+        setting.setTenantId(tenantId);
+        setting.setEnabled(false);
+        setting.setTracesPerInterval(DEFAULT_TRACES_PER_INTERVAL);
+        setting.setTracesPerPack(DEFAULT_TRACES_PER_PACK);
+        setting.setIntervalSeconds(DEFAULT_INTERVAL_SECONDS);
+        setting.setRuleEngineRotation(DEFAULT_RULE_ENGINE_ROTATION);
+        setting.setSwitchPeriodSeconds(DEFAULT_SWITCH_PERIOD_SECONDS);
+        setting.setRelatedTraceSampleIntervalSeconds(DEFAULT_RELATED_TRACE_SAMPLE_INTERVAL_SECONDS);
+        setting.setMessagePayloadRecording(DEFAULT_MESSAGE_PAYLOAD_RECORDING);
+        setting.setMaxTraceGroupsPerDay(DEFAULT_MAX_TRACE_GROUPS_PER_DAY);
+        return setting;
+    }
+}
