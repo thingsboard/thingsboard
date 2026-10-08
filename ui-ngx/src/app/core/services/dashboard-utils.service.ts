@@ -19,7 +19,8 @@ import {
   DashboardStateLayouts,
   GridSettings,
   LayoutType,
-  WidgetLayout
+  WidgetLayout,
+  WidgetLayouts
 } from '@shared/models/dashboard.models';
 import { deepClone, isDefined, isDefinedAndNotNull, isNotEmptyStr, isString, isUndefined } from '@core/utils';
 import {
@@ -758,6 +759,25 @@ export class DashboardUtilsService {
     return false;
   }
 
+  public hasCollidingWidgets(widgetLayouts: WidgetLayouts): boolean {
+    if (!widgetLayouts) {
+      return false;
+    }
+    const layouts = Object.values(widgetLayouts).map(widget => ({
+      row: widget.row || 0,
+      col: widget.col || 0,
+      sizeX: widget.sizeX || 1,
+      sizeY: widget.sizeY || 1
+    }));
+    for (let i = 0; i < layouts.length; i++) {
+      const widget = layouts[i];
+      if (this.hasWidgetCollision(widget.row, widget.col, widget.sizeX, widget.sizeY, layouts.slice(i + 1))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public removeWidgetFromLayout(dashboard: Dashboard,
                                 targetState: string,
                                 targetLayout: DashboardLayoutId,
@@ -807,10 +827,14 @@ export class DashboardUtilsService {
     const widgets: WidgetLayout[] = [];
     for (const w of Object.keys(layout.widgets)) {
       const widget = layout.widgets[w];
-      widget.row = Math.round(widget.row * ratio);
-      widget.col = Math.round(widget.col * ratio);
-      widget.sizeX = Math.max(1, Math.round(widget.sizeX * ratio));
-      widget.sizeY = Math.max(1, Math.round(widget.sizeY * ratio));
+      const col = widget.col || 0;
+      const row = widget.row || 0;
+      const right = Math.round((col + widget.sizeX) * ratio);
+      const bottom = Math.round((row + widget.sizeY) * ratio);
+      widget.col = Math.round(col * ratio);
+      widget.row = Math.round(row * ratio);
+      widget.sizeX = Math.max(1, right - widget.col);
+      widget.sizeY = Math.max(1, bottom - widget.row);
       widgets.push(widget);
     }
     widgets.sort((w1, w2) => {
@@ -856,6 +880,40 @@ export class DashboardUtilsService {
         }
       }
     }
+    // The loop above only repairs a one unit overlap and mutates widgets it has already
+    // visited, so it may leave - or introduce - conflicts. Re-place whatever is still colliding.
+    this.resolveWidgetCollisions(widgets, gridSettings.minColumns || columns);
+  }
+
+  private resolveWidgetCollisions(widgets: WidgetLayout[], columns: number) {
+    const placed: WidgetLayout[] = [];
+    for (const widget of widgets) {
+      if (this.hasWidgetCollision(widget.row, widget.col, widget.sizeX, widget.sizeY, placed)) {
+        this.findFreeWidgetPosition(widget, placed, columns);
+      }
+      placed.push(widget);
+    }
+  }
+
+  private findFreeWidgetPosition(widgetLayout: WidgetLayout, widgetLayouts: WidgetLayout[], columns: number) {
+    let maxCol = columns;
+    let maxRow = 0;
+    widgetLayouts.forEach(widget => {
+      maxCol = Math.max(maxCol, widget.col + widget.sizeX);
+      maxRow = Math.max(maxRow, widget.row + widget.sizeY);
+    });
+    for (let row = 0; row <= maxRow; row++) {
+      for (let col = 0; col + widgetLayout.sizeX <= maxCol; col++) {
+        if (!this.hasWidgetCollision(row, col, widgetLayout.sizeX, widgetLayout.sizeY, widgetLayouts)) {
+          widgetLayout.row = row;
+          widgetLayout.col = col;
+          return;
+        }
+      }
+    }
+    // Wider than the grid: park it on a fresh row.
+    widgetLayout.row = maxRow;
+    widgetLayout.col = 0;
   }
 
   public moveWidgets(layout: DashboardLayout, cols: number, rows: number) {
