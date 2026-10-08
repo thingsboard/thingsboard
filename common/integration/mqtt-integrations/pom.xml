@@ -9,7 +9,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard.common</groupId>
-        <version>4.4.0-SNAPSHOT</version>
+        <version>4.4.0.1-SNAPSHOT</version>
         <artifactId>integration</artifactId>
     </parent>
     <groupId>org.thingsboard.common.integration</groupId>
@@ -67,7 +67,7 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>RELEASE</version>
+            <version>4.13.2</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

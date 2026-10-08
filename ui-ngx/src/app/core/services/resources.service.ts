@@ -79,6 +79,23 @@ export const componentTypeBySelector = (modulesWithComponents: ModulesWithCompon
   return found?.type;
 }
 
+// The file type of a resource URL: the extension of its last path segment, or the segment itself when it is named
+// after the type with an optional version, as in Google Maps' /maps/api/js and Google Fonts' /css and /css2.
+const resourceFileType = (url: string, baseUrl: string): string => {
+  let path: string;
+  try {
+    path = new URL(url, baseUrl).pathname;
+  } catch {
+    return undefined;
+  }
+  const segment = path.substring(path.lastIndexOf('/') + 1).toLowerCase();
+  const extensionIndex = segment.lastIndexOf('.');
+  if (extensionIndex > -1) {
+    return segment.substring(extensionIndex + 1);
+  }
+  return /^(css|js)\d*$/.exec(segment)?.[1];
+};
+
 const matchesSelector = (selectors: ɵCssSelectorList, selector: string) =>
   selectors.some(s => s.some(s1 => typeof s1 === 'string' && s1 === selector));
 
@@ -142,11 +159,7 @@ export class ResourcesService {
       return this.loadedResources[url].asObservable();
     }
 
-    let fileType: string;
-    const match = /[./](css|less|html|htm|js)?(([?#]).*)?$/.exec(url);
-    if (match !== null) {
-      fileType = match[1];
-    }
+    const fileType = resourceFileType(url, this.document.baseURI);
     if (!fileType) {
       return throwError(() => new Error(`Unable to detect file type from url: ${url}`));
     } else if (fileType !== 'css' && fileType !== 'js') {
