@@ -5,7 +5,7 @@
 
 -->
 @for (subEntity of subEntities; track subEntity) {
-  <a class="tb-entity-chip"
+  <a class="tb-entity-chip" [tbTruncateWithTooltip]="subEntity.name | customTranslate"
      routerLink="{{entityDetailsPrefixUrl}}/{{subEntity.id.id}}" (click)="$event.stopPropagation();">
     {{ subEntity.name | customTranslate }}
   </a>
