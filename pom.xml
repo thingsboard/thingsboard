@@ -219,7 +219,6 @@
         <module>common</module>
         <module>rule-engine</module>
         <module>dao</module>
-        <module>packaging</module>
         <module>edqs</module>
         <module>transport</module>
         <module>integration</module>

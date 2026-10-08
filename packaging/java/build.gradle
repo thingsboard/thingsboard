@@ -3,17 +3,9 @@
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import org.apache.tools.ant.filters.ReplaceTokens
 
-buildscript {
-    repositories {
-        mavenLocal()
-        mavenCentral()
-    }
-    dependencies {
-        classpath("org.thingsboard:packaging:${projectVersion}")
-    }
+plugins {
+    id "com.netflix.nebula.ospackage" version "12.1.1"
 }
-
-apply plugin: "thingsboard.package"
 
 buildDir = projectBuildDir
 version = projectVersion
