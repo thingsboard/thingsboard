@@ -13,6 +13,7 @@ import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.AggHistoryCmd;
 
 public interface EntityQueryService {
 
@@ -26,5 +27,7 @@ public interface EntityQueryService {
 
     DeferredResult<ResponseEntity> getKeysByQuery(SecurityUser securityUser, TenantId tenantId, EntityDataQuery query,
                                                   boolean isTimeseries, boolean isAttributes, String attributesScope);
+
+    DeferredResult<PageData<EntityData>> findEntityDataAggHistoryByQuery(SecurityUser securityUser, EntityDataQuery query, AggHistoryCmd aggHistoryCmd);
 
 }
