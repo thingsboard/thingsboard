@@ -1,22 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 :host ::ng-deep {
-  .assignee-field {
-    .mat-form-field-label-wrapper {
-      overflow: visible;
-      left: -36px;
-    }
-    .user-avatar {
-      min-width: 28px;
-      min-height: 28px;
-      margin-right: 8px;
-      border-radius: 50%;
-      font-weight: 700;
-      color: #fff;
-      font-size: 13px;
-      line-height: normal;
-    }
-  }
   .mat-expansion-panel {
     &.tb-alarm-details {
       box-shadow: none;
