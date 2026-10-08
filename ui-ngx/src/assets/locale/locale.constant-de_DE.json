@@ -5953,7 +5953,7 @@
     },
     "realtime": "Echtzeit",
     "history": "Verlauf",
-    "last-prefix": "letzte",
+    "last-prefix": "{ count, plural, =1 {{ unit, select, days {letzter} years {letztes} other {letzte} }} other {letzte} }",
     "period": "von {{ startTime }} bis {{ endTime }}",
     "edit": "Zeitfenster bearbeiten",
     "date-range": "Datumsbereich",
