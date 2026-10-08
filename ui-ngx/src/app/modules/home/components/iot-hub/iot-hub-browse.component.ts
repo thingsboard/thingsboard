@@ -34,7 +34,6 @@ export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy
   private static typeTabLabel(t: ItemType): string {
     switch (t) {
       case ItemType.WIDGET: return 'item.type-widget-plural';
-      case ItemType.DASHBOARD: return 'item.type-dashboard-plural';
       case ItemType.SOLUTION_TEMPLATE: return 'item.type-solution-template-plural';
       case ItemType.CALCULATED_FIELD: return 'item.type-calculated-field-plural';
       case ItemType.ALARM_RULE: return 'item.type-alarm-rule-plural';
@@ -87,7 +86,6 @@ export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy
   get searchPlaceholderKey(): string {
     switch (this._activeType) {
       case ItemType.WIDGET: return 'iot-hub.search-widgets';
-      case ItemType.DASHBOARD: return 'iot-hub.search-dashboards';
       case ItemType.SOLUTION_TEMPLATE: return 'iot-hub.search-solution-templates';
       case ItemType.CALCULATED_FIELD: return 'iot-hub.search-calculated-fields';
       case ItemType.ALARM_RULE: return 'iot-hub.search-alarm-rules';
@@ -524,7 +522,6 @@ export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy
   getTitle(): string {
     switch (this.activeType) {
       case ItemType.WIDGET: return 'iot-hub.title-widgets';
-      case ItemType.DASHBOARD: return 'iot-hub.title-dashboards';
       case ItemType.SOLUTION_TEMPLATE: return 'iot-hub.title-solution-templates';
       case ItemType.CALCULATED_FIELD: return 'iot-hub.title-calculated-fields';
       case ItemType.ALARM_RULE: return 'iot-hub.title-alarm-rules';
