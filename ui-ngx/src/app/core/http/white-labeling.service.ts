@@ -210,7 +210,7 @@ export class WhiteLabelingService {
   }
 
   public isPrimaryColorPanels(): boolean {
-    return this.getCurrentWlParams() ? this.getCurrentWlParams().primaryColorPanels : false;
+    return !!this.getCurrentWlParams()?.primaryColorPanels;
   }
 
   public isPrimaryColorPanels$(): Observable<boolean> {
