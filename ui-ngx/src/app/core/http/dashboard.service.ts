@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Inject, Injectable } from '@angular/core';
 import { defaultHttpOptions, defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
 import { Observable } from 'rxjs';
@@ -24,6 +11,9 @@ import { Dashboard, DashboardInfo, HomeDashboard, HomeDashboardInfo } from '@sha
 import { WINDOW } from '@core/services/window.service';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter, map, publishReplay, refCount } from 'rxjs/operators';
+import { sortEntitiesByIds } from '@shared/models/base-data';
+import { Operation } from '@shared/models/security.models';
+import { EntityGroup, ShortEntityView } from '@shared/models/entity-group.models';
 
 // @dynamic
 @Injectable({
@@ -62,8 +52,48 @@ export class DashboardService {
       defaultHttpOptionsFromConfig(config));
   }
 
-  public getCustomerDashboards(customerId: string, pageLink: PageLink, config?: RequestConfig): Observable<PageData<DashboardInfo>> {
-    return this.http.get<PageData<DashboardInfo>>(`/api/customer/${customerId}/dashboards${pageLink.toQuery()}`,
+  public getDashboards(dashboardIds: string[], config?: RequestConfig): Observable<Array<DashboardInfo>> {
+    return this.http.get<Array<DashboardInfo>>(`/api/dashboards?dashboardIds=${dashboardIds.join(',')}`,
+      defaultHttpOptionsFromConfig(config)).pipe(
+      map((dashboards) => sortEntitiesByIds(dashboards, dashboardIds))
+    );
+  }
+
+  public getUserDashboards(userId: string, operation: Operation,
+                           pageLink: PageLink, config?: RequestConfig): Observable<PageData<DashboardInfo>> {
+    let url = `/api/user/dashboards${pageLink.toQuery()}`;
+    if (userId) {
+      url += `&userId=${userId}`;
+    }
+    if (operation) {
+      url += `&operation=${operation}`;
+    }
+    return this.http.get<PageData<DashboardInfo>>(url,
+      defaultHttpOptionsFromConfig(config));
+  }
+
+  public getAllDashboards(includeCustomers: boolean,
+                          pageLink: PageLink, config?: RequestConfig): Observable<PageData<DashboardInfo>> {
+    let url = `/api/dashboards/all${pageLink.toQuery()}`;
+    if (includeCustomers) {
+      url += `&includeCustomers=true`;
+    }
+    return this.http.get<PageData<DashboardInfo>>(url,
+      defaultHttpOptionsFromConfig(config));
+  }
+
+  public getCustomerDashboards(includeCustomers: boolean, customerId: string,
+                               pageLink: PageLink, config?: RequestConfig): Observable<PageData<DashboardInfo>> {
+    let url = `/api/customer/${customerId}/dashboards${pageLink.toQuery()}`;
+    if (includeCustomers) {
+      url += `&includeCustomers=true`;
+    }
+    return this.http.get<PageData<DashboardInfo>>(url,
+      defaultHttpOptionsFromConfig(config));
+  }
+
+  public getGroupDashboards(groupId: string, pageLink: PageLink, config?: RequestConfig): Observable<PageData<DashboardInfo>> {
+    return this.http.get<PageData<DashboardInfo>>(`/api/entityGroup/${groupId}/dashboards${pageLink.toQuery()}`,
       defaultHttpOptionsFromConfig(config));
   }
 
@@ -83,20 +113,23 @@ export class DashboardService {
     return this.http.get<DashboardInfo>(`/api/dashboard/info/${dashboardId}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public getDashboards(dashboardIds: string[], config?: RequestConfig): Observable<Array<DashboardInfo>> {
-    return this.http.get<Array<DashboardInfo>>(`/api/dashboards?dashboardIds=${dashboardIds.join(',')}`,
-      defaultHttpOptionsFromConfig(config));
-  }
-
-  public saveDashboard(dashboard: Dashboard, config?: RequestConfig): Observable<Dashboard> {
-    return this.http.post<Dashboard>('/api/dashboard', dashboard, defaultHttpOptionsFromConfig(config));
+  public saveDashboard(dashboard: Dashboard, entityGroupIds?: string | string[], config?: RequestConfig): Observable<Dashboard> {
+    let url = '/api/dashboard';
+    if (entityGroupIds) {
+      if (Array.isArray(entityGroupIds)) {
+        url += `?entityGroupIds=${entityGroupIds.join(',')}`;
+      } else {
+        url += `?entityGroupId=${entityGroupIds}`;
+      }
+    }
+    return this.http.post<Dashboard>(url, dashboard, defaultHttpOptionsFromConfig(config));
   }
 
   public deleteDashboard(dashboardId: string, config?: RequestConfig) {
     return this.http.delete(`/api/dashboard/${dashboardId}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public assignDashboardToCustomer(customerId: string, dashboardId: string,
+/*  public assignDashboardToCustomer(customerId: string, dashboardId: string,
                                    config?: RequestConfig): Observable<Dashboard> {
     return this.http.post<Dashboard>(`/api/customer/${customerId}/dashboard/${dashboardId}`,
       null, defaultHttpOptionsFromConfig(config));
@@ -133,6 +166,17 @@ export class DashboardService {
                                   config?: RequestConfig): Observable<Dashboard> {
     return this.http.post<Dashboard>(`/api/dashboard/${dashboardId}/customers/remove`, customerIds,
       defaultHttpOptionsFromConfig(config));
+  }*/
+
+  public getPublicDashboardLink(dashboard: DashboardInfo | ShortEntityView, entityGroup: EntityGroup): string | null {
+      const publicCustomerId = entityGroup.additionalInfo.publicCustomerId;
+      let url = this.window.location.protocol + '//' + this.window.location.hostname;
+      const port = this.window.location.port;
+      if (port && port.length > 0 && port !== '80' && port !== '443') {
+         url += ':' + port;
+      }
+      url += `/dashboard/${dashboard.id.id}?publicId=${publicCustomerId}`;
+      return url;
   }
 
   public getHomeDashboard(config?: RequestConfig): Observable<HomeDashboard> {
@@ -143,27 +187,18 @@ export class DashboardService {
     return this.http.get<HomeDashboardInfo>('/api/tenant/dashboard/home/info', defaultHttpOptionsFromConfig(config));
   }
 
+  public getCustomerHomeDashboardInfo(config?: RequestConfig): Observable<HomeDashboardInfo> {
+    return this.http.get<HomeDashboardInfo>('/api/customer/dashboard/home/info', defaultHttpOptionsFromConfig(config));
+  }
+
   public setTenantHomeDashboardInfo(homeDashboardInfo: HomeDashboardInfo, config?: RequestConfig): Observable<any> {
     return this.http.post<any>('/api/tenant/dashboard/home/info', homeDashboardInfo,
       defaultHttpOptionsFromConfig(config));
   }
 
-  public getPublicDashboardLink(dashboard: DashboardInfo): string | null {
-    if (dashboard && dashboard.assignedCustomers && dashboard.assignedCustomers.length > 0) {
-      const publicCustomers = dashboard.assignedCustomers
-        .filter(customerInfo => customerInfo.public);
-      if (publicCustomers.length > 0) {
-        const publicCustomerId = publicCustomers[0].customerId.id;
-        let url = this.window.location.protocol + '//' + this.window.location.hostname;
-        const port = this.window.location.port;
-        if (port && port.length > 0 && port !== '80' && port !== '443') {
-          url += ':' + port;
-        }
-        url += `/dashboard/${dashboard.id.id}?publicId=${publicCustomerId}`;
-        return url;
-      }
-    }
-    return null;
+  public setCustomerHomeDashboardInfo(homeDashboardInfo: HomeDashboardInfo, config?: RequestConfig): Observable<any> {
+    return this.http.post<any>('/api/customer/dashboard/home/info', homeDashboardInfo,
+      defaultHttpOptionsFromConfig(config));
   }
 
   public getServerTimeDiff(): Observable<number> {
@@ -181,24 +216,6 @@ export class DashboardService {
       );
     }
     return this.stDiffObservable;
-  }
-
-  public getEdgeDashboards(edgeId: string, pageLink: PageLink, type: string = '',
-                           config?: RequestConfig): Observable<PageData<DashboardInfo>> {
-    return this.http.get<PageData<DashboardInfo>>(`/api/edge/${edgeId}/dashboards${pageLink.toQuery()}&type=${type}`,
-      defaultHttpOptionsFromConfig(config))
-  }
-
-  public assignDashboardToEdge(edgeId: string, dashboardId: string,
-                               config?: RequestConfig): Observable<Dashboard> {
-    return this.http.post<Dashboard>(`/api/edge/${edgeId}/dashboard/${dashboardId}`, null,
-      defaultHttpOptionsFromConfig(config));
-  }
-
-  public unassignDashboardFromEdge(edgeId: string, dashboardId: string,
-                                   config?: RequestConfig) {
-    return this.http.delete(`/api/edge/${edgeId}/dashboard/${dashboardId}`,
-      defaultHttpOptionsFromConfig(config));
   }
 
 }

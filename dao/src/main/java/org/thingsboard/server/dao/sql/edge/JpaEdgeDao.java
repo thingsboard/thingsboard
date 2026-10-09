@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.edge;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -24,16 +12,16 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.edge.Edge;
-import org.thingsboard.server.common.data.edge.EdgeInfo;
 import org.thingsboard.server.common.data.edqs.fields.EdgeFields;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.edge.EdgeDao;
+import org.thingsboard.server.dao.group.BaseEntityGroupService;
 import org.thingsboard.server.dao.model.sql.EdgeEntity;
-import org.thingsboard.server.dao.model.sql.EdgeInfoEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
@@ -62,11 +50,6 @@ public class JpaEdgeDao extends JpaAbstractDao<EdgeEntity, Edge> implements Edge
     }
 
     @Override
-    public EdgeInfo findEdgeInfoById(TenantId tenantId, UUID edgeId) {
-        return DaoUtil.getData(edgeRepository.findEdgeInfoById(edgeId));
-    }
-
-    @Override
     public PageData<Edge> findActiveEdges(PageLink pageLink) {
         return DaoUtil.toPageData(edgeRepository.findActiveEdges(DaoUtil.toPageable(pageLink)));
     }
@@ -90,8 +73,41 @@ public class JpaEdgeDao extends JpaAbstractDao<EdgeEntity, Edge> implements Edge
     }
 
     @Override
+    public Long countEdges() {
+        return edgeRepository.count();
+    }
+
+    @Override
     public ListenableFuture<List<Edge>> findEdgesByTenantIdAndIdsAsync(UUID tenantId, List<UUID> edgeIds) {
         return service.submit(() -> DaoUtil.convertDataList(edgeRepository.findEdgesByTenantIdAndIdIn(tenantId, edgeIds)));
+    }
+
+    @Override
+    public PageData<Edge> findEdgesByEntityGroupId(UUID groupId, PageLink pageLink) {
+        return DaoUtil.toPageData(edgeRepository
+                .findByEntityGroupId(
+                        groupId,
+                        pageLink.getTextSearch(),
+                        DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public PageData<Edge> findEdgesByEntityGroupIds(List<UUID> groupIds, PageLink pageLink) {
+        return DaoUtil.toPageData(edgeRepository
+                .findByEntityGroupIds(
+                        groupIds,
+                        pageLink.getTextSearch(),
+                        DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public PageData<Edge> findEdgesByEntityGroupIdsAndType(List<UUID> groupIds, String type, PageLink pageLink) {
+        return DaoUtil.toPageData(edgeRepository
+                .findByEntityGroupIdsAndType(
+                        groupIds,
+                        type,
+                        pageLink.getTextSearch(),
+                        DaoUtil.toPageable(pageLink)));
     }
 
     @Override
@@ -138,48 +154,8 @@ public class JpaEdgeDao extends JpaAbstractDao<EdgeEntity, Edge> implements Edge
     }
 
     @Override
-    public PageData<EdgeInfo> findEdgeInfosByTenantIdAndCustomerId(UUID tenantId, UUID customerId, PageLink pageLink) {
-        return DaoUtil.toPageData(
-                edgeRepository.findEdgeInfosByTenantIdAndCustomerId(
-                        tenantId,
-                        customerId,
-                        pageLink.getTextSearch(),
-                        DaoUtil.toPageable(pageLink, EdgeInfoEntity.edgeInfoColumnMap)));
-    }
-
-    @Override
-    public PageData<EdgeInfo> findEdgeInfosByTenantIdAndCustomerIdAndType(UUID tenantId, UUID customerId, String type, PageLink pageLink) {
-        return DaoUtil.toPageData(
-                edgeRepository.findEdgeInfosByTenantIdAndCustomerIdAndType(
-                        tenantId,
-                        customerId,
-                        type,
-                        pageLink.getTextSearch(),
-                        DaoUtil.toPageable(pageLink, EdgeInfoEntity.edgeInfoColumnMap)));
-    }
-
-    @Override
     public ListenableFuture<List<EntitySubtype>> findTenantEdgeTypesAsync(UUID tenantId) {
         return service.submit(() -> convertTenantEntityTypesToDto(tenantId, EntityType.EDGE, edgeRepository.findTenantEdgeTypes(tenantId)));
-    }
-
-    @Override
-    public PageData<EdgeInfo> findEdgeInfosByTenantIdAndType(UUID tenantId, String type, PageLink pageLink) {
-        return DaoUtil.toPageData(
-                edgeRepository.findEdgeInfosByTenantIdAndType(
-                        tenantId,
-                        type,
-                        pageLink.getTextSearch(),
-                        DaoUtil.toPageable(pageLink, EdgeInfoEntity.edgeInfoColumnMap)));
-    }
-
-    @Override
-    public PageData<EdgeInfo> findEdgeInfosByTenantId(UUID tenantId, PageLink pageLink) {
-        return DaoUtil.toPageData(
-                edgeRepository.findEdgeInfosByTenantId(
-                        tenantId,
-                        pageLink.getTextSearch(),
-                        DaoUtil.toPageable(pageLink, EdgeInfoEntity.edgeInfoColumnMap)));
     }
 
     @Override
@@ -196,6 +172,7 @@ public class JpaEdgeDao extends JpaAbstractDao<EdgeEntity, Edge> implements Edge
                         tenantId,
                         entityId,
                         entityType.name(),
+                        EntityRelation.CONTAINS_TYPE,
                         pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink)));
     }
@@ -209,6 +186,44 @@ public class JpaEdgeDao extends JpaAbstractDao<EdgeEntity, Edge> implements Edge
                         entityId,
                         entityType.name(),
                         pageLink.getTextSearch(),
+                        DaoUtil.toPageable(pageLink))).mapData(EdgeId::fromUUID);
+    }
+
+    @Override
+    public PageData<EdgeId> findEdgeIdsByTenantIdAndEntityIds(UUID tenantId, List<UUID> entityIds, EntityType entityType, PageLink pageLink) {
+        log.debug("Try to find edge ids by tenantId [{}], entityIds [{}], pageLink [{}]", tenantId, entityIds, pageLink);
+        return DaoUtil.pageToPageData(
+                edgeRepository.findEdgeIdsByTenantIdAndEntityIds(
+                        tenantId,
+                        entityIds,
+                        entityType.name(),
+                        EntityRelation.CONTAINS_TYPE,
+                        DaoUtil.toPageable(pageLink))).mapData(EdgeId::fromUUID);
+    }
+
+    @Override
+    public PageData<EdgeId> findEdgeIdsByTenantIdAndEntityGroupIds(UUID tenantId, List<UUID> entityGroupIds, EntityType groupType, PageLink pageLink) {
+        log.debug("Try to find edge ids by tenantId [{}], entityGroupIds [{}]", tenantId, entityGroupIds);
+        String relationType = BaseEntityGroupService.EDGE_ENTITY_GROUP_RELATION_PREFIX + groupType.name();
+        return DaoUtil.pageToPageData(
+                edgeRepository.findEdgeIdsByTenantIdAndEntityIds(
+                        tenantId,
+                        entityGroupIds,
+                        EntityType.ENTITY_GROUP.name(),
+                        relationType,
+                        DaoUtil.toPageable(pageLink))).mapData(EdgeId::fromUUID);
+    }
+
+    @Override
+    public PageData<EdgeId> findEdgeIdsByTenantIdAndGroupEntityId(UUID tenantId, UUID entityId, EntityType groupType, PageLink pageLink) {
+        log.debug("Try to find edge ids by tenantId [{}], group entityId [{}]", tenantId, entityId);
+        String relationType = BaseEntityGroupService.EDGE_ENTITY_GROUP_RELATION_PREFIX + groupType.name();
+        return DaoUtil.pageToPageData(
+                edgeRepository.findEdgeIdsByTenantIdAndGroupEntityId(
+                        tenantId,
+                        entityId,
+                        groupType.name(),
+                        relationType,
                         DaoUtil.toPageable(pageLink))).mapData(EdgeId::fromUUID);
     }
 

@@ -1,35 +1,27 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Pipe, PipeTransform } from '@angular/core';
 
+export interface ShortNumberArgs {
+  long?: boolean;
+  roundDown?: boolean;
+}
+
 @Pipe({
-    name: 'shortNumber',
-    standalone: false
+  name: 'shortNumber',
+  standalone: false
 })
 export class ShortNumberPipe implements PipeTransform {
 
-  transform(number: number, args?: any): any {
-    if (isNaN(number)) return 0;
-    if (number === null) return 0;
-    if (number === 0) return 0;
+  transform(number: number, args?: ShortNumberArgs): string {
+    if (!Number.isFinite(number) || number === 0) {
+      return '0';
+    }
     let abs = Math.abs(number);
     const rounder = Math.pow(10, 1);
     const isNegative = number < 0;
-    const isLong = args && args.long;
+    const isLong = args?.long;
+    const roundDown = args?.roundDown;
     let key = '';
 
     const powers = [
@@ -42,7 +34,7 @@ export class ShortNumberPipe implements PipeTransform {
 
     for (let i = 0; i < powers.length; i++) {
       let reduced = abs / powers[i].value;
-      reduced = Math.round(reduced * rounder) / rounder;
+      reduced = (roundDown ? Math.floor : Math.round)(reduced * rounder) / rounder;
       if (reduced >= 1) {
         abs = reduced;
         key = isLong ? powers[i].longKey : powers[i].key;

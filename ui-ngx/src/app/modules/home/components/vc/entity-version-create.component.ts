@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
@@ -48,6 +35,9 @@ export class EntityVersionCreateComponent extends PageComponent implements OnIni
 
   @Input()
   entityId: EntityId;
+
+  @Input()
+  groupType: EntityType;
 
   @Input()
   entityName: string;
@@ -91,7 +81,9 @@ export class EntityVersionCreateComponent extends PageComponent implements OnIni
       saveRelations: [false, []],
       saveAttributes: [true, []],
       saveCredentials: [true, []],
-      saveCalculatedFields: [true, []]
+      saveCalculatedFields: [true, []],
+      savePermissions: [true, []],
+      saveGroupEntities: [true, []]
     });
   }
 
@@ -120,8 +112,13 @@ export class EntityVersionCreateComponent extends PageComponent implements OnIni
             ? this.createVersionFormGroup.get('saveRelations').value : false,
           saveAttributes: !entityTypesWithoutRelatedData.has(this.entityId.entityType)
             ? this.createVersionFormGroup.get('saveAttributes').value : false,
-          saveCredentials: this.entityId.entityType === EntityType.DEVICE ? this.createVersionFormGroup.get('saveCredentials').value : false,
+          saveCredentials: (this.entityId.entityType === EntityType.DEVICE || EntityType.DEVICE === this.groupType) ?
+            this.createVersionFormGroup.get('saveCredentials').value : false,
           saveCalculatedFields: typesWithCalculatedFields.has(this.entityId.entityType) ? this.createVersionFormGroup.get('saveCalculatedFields').value : false,
+          savePermissions: this.entityId.entityType === EntityType.ENTITY_GROUP && EntityType.USER === this.groupType ?
+            this.createVersionFormGroup.get('savePermissions').value : false,
+          saveGroupEntities: this.entityId.entityType === EntityType.ENTITY_GROUP && EntityType.USER !== this.groupType ?
+            this.createVersionFormGroup.get('saveGroupEntities').value : false,
         },
         type: VersionCreateRequestType.SINGLE_ENTITY
       };

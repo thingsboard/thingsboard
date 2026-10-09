@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { BaseData, ExportableEntity } from '@shared/models/base-data';
 import { TenantId } from '@shared/models/id/tenant-id';
 import { WidgetTypeId } from '@shared/models/id/widget-type-id';
@@ -24,6 +11,7 @@ import { EntityId } from '@shared/models/id/entity-id';
 import {
   AlarmFilter,
   AlarmFilterConfig,
+  ComplexOperation,
   EntityDataPageLink,
   EntityFilter,
   KeyFilter
@@ -33,7 +21,7 @@ import { PageComponent } from '@shared/components/page.component';
 import { AfterViewInit, DestroyRef, Directive, EventEmitter, inject, Inject, OnInit, Type } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { AbstractControl, UntypedFormGroup, ValidatorFn } from '@angular/forms';
+import { AbstractControl, UntypedFormGroup } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { IAliasController } from '@core/api/widget-api.models';
@@ -52,6 +40,12 @@ import { FormProperty, jsonFormSchemaToFormProperties } from '@shared/models/dyn
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TbUnit } from '@shared/models/unit.models';
 import { ImageResourceInfo } from '@shared/models/resource.models';
+import {
+  GetLocationDescriptor,
+  MobileLocationResult,
+  SaveBrowserLocationDescriptor,
+  StartLiveLocationDescriptor
+} from '@shared/models/location.models';
 
 export enum widgetType {
   timeseries = 'timeseries',
@@ -368,6 +362,7 @@ export const comparisonResultTypeTranslationMap = new Map<ComparisonResultType, 
 export interface KeyInfo {
   name: string;
   aggregationType?: AggregationType;
+  timewindow?: Timewindow;
   comparisonEnabled?: boolean;
   timeForComparison?: ComparisonDuration;
   comparisonCustomIntervalValue?: number;
@@ -375,6 +370,7 @@ export interface KeyInfo {
   label?: string;
   color?: string;
   funcBody?: TbFunction;
+  builtInFunc?: (time: number, prevValue: any) => any;
   postFuncBody?: TbFunction;
   units?: TbUnit;
   decimals?: number;
@@ -395,6 +391,7 @@ export const dataKeyAggregationTypeHintTranslationMap = new Map<AggregationType,
 export interface DataKey extends KeyInfo {
   type: DataKeyType;
   pattern?: string;
+  title?: string;
   settings?: any;
   usePostProcessing?: boolean;
   hidden?: boolean;
@@ -450,6 +447,7 @@ export interface Datasource {
   origDatasourceIndex?: number;
   pageLink?: EntityDataPageLink;
   keyFilters?: Array<KeyFilter>;
+  keyFiltersOperation?: ComplexOperation;
   entityFilter?: EntityFilter;
   alarmFilterConfig?: AlarmFilterConfig;
   alarmFilter?: AlarmFilter;
@@ -617,7 +615,8 @@ export enum WidgetActionType {
   customPretty = 'customPretty',
   mobileAction = 'mobileAction',
   openURL = 'openURL',
-  placeMapItem = 'placeMapItem'
+  placeMapItem = 'placeMapItem',
+  saveBrowserLocation = 'saveBrowserLocation'
 }
 
 export enum WidgetMobileActionType {
@@ -628,6 +627,8 @@ export enum WidgetMobileActionType {
   scanQrCode = 'scanQrCode',
   makePhoneCall = 'makePhoneCall',
   getLocation = 'getLocation',
+  startLiveLocation = 'startLiveLocation',
+  stopLiveLocation = 'stopLiveLocation',
   takeScreenshot = 'takeScreenshot',
   deviceProvision = 'deviceProvision',
 }
@@ -678,6 +679,7 @@ export const widgetActionTypeTranslationMap = new Map<WidgetActionType, string>(
     [ WidgetActionType.mobileAction, 'widget-action.mobile-action' ],
     [ WidgetActionType.openURL, 'widget-action.open-URL' ],
     [ WidgetActionType.placeMapItem, 'widget-action.place-map-item' ],
+    [ WidgetActionType.saveBrowserLocation, 'widget-action.save-browser-location' ],
   ]
 );
 
@@ -690,6 +692,8 @@ export const widgetMobileActionTypeTranslationMap = new Map<WidgetMobileActionTy
     [ WidgetMobileActionType.scanQrCode, 'widget-action.mobile.scan-qr-code' ],
     [ WidgetMobileActionType.makePhoneCall, 'widget-action.mobile.make-phone-call' ],
     [ WidgetMobileActionType.getLocation, 'widget-action.mobile.get-location' ],
+    [ WidgetMobileActionType.startLiveLocation, 'widget-action.mobile.start-live-location' ],
+    [ WidgetMobileActionType.stopLiveLocation, 'widget-action.mobile.stop-live-location' ],
     [ WidgetMobileActionType.takeScreenshot, 'widget-action.mobile.take-screenshot' ],
     [ WidgetMobileActionType.deviceProvision, 'widget-action.mobile.device-provision' ]
   ]
@@ -705,6 +709,22 @@ export const mapItemTypeTranslationMap = new Map<MapItemType, string>(
   ]
 )
 
+export type ExportRow = {[key: string]: any} | Map<string, any>;
+
+export enum WidgetExportType {
+  csv = 'csv',
+  xls = 'xls',
+  xlsx = 'xlsx'
+}
+
+export const widgetExportTypeTranslationMap = new Map<WidgetExportType, string>(
+  [
+    [ WidgetExportType.csv, 'widget.export-to-csv' ],
+    [ WidgetExportType.xls, 'widget.export-to-excel' ],
+    [ WidgetExportType.xlsx, 'widget.export-to-excel-xlsx' ]
+  ]
+);
+
 export interface MobileLaunchResult {
   launched: boolean;
 }
@@ -717,11 +737,6 @@ export interface MobileImageResult {
 export interface MobileQrCodeResult {
   code: string;
   format: string;
-}
-
-export interface MobileLocationResult {
-  latitude: number;
-  longitude: number;
 }
 
 export interface MobileDeviceProvisionResult {
@@ -767,15 +782,12 @@ export interface MakePhoneCallDescriptor extends ProcessLaunchResultDescriptor {
   getPhoneNumberFunction: TbFunction;
 }
 
-export interface GetLocationDescriptor {
-  processLocationFunction: TbFunction;
-}
-
 export type WidgetMobileActionDescriptors = ProcessImageDescriptor &
                                             LaunchMapDescriptor &
                                             ScanQrCodeDescriptor &
                                             MakePhoneCallDescriptor &
                                             GetLocationDescriptor &
+                                            StartLiveLocationDescriptor &
                                             ProvisionSuccessDescriptor;
 
 export interface WidgetMobileActionDescriptor extends WidgetMobileActionDescriptors {
@@ -818,6 +830,7 @@ export interface WidgetAction extends CustomActionDescriptor {
   url?: string;
   mapItemType?: MapItemType;
   mapItemTooltips?: MapItemTooltips;
+  saveBrowserLocation?: SaveBrowserLocationDescriptor;
 }
 
 export interface MapItemTooltips {
@@ -862,6 +875,8 @@ export interface WidgetActionDescriptor extends WidgetAction {
   columnIndex?: number;
 }
 
+export type WidgetActionsMap = {[actionSourceId: string]: Array<WidgetActionDescriptor>};
+
 export const actionDescriptorToAction = (descriptor: WidgetActionDescriptor): WidgetAction => {
   const result: WidgetActionDescriptor = {...descriptor};
   delete result.id;
@@ -880,8 +895,8 @@ export const actionDescriptorToAction = (descriptor: WidgetActionDescriptor): Wi
   return result;
 };
 
-export const defaultWidgetAction = (setEntityId = true): WidgetAction => ({
-    type: WidgetActionType.updateDashboardState,
+export const defaultWidgetAction = (isEntityGroup = false, setEntityId = true): WidgetAction => ({
+    type: isEntityGroup ? WidgetActionType.custom : WidgetActionType.updateDashboardState,
     targetDashboardStateId: null,
     openRightLayout: false,
     setEntityId,
@@ -929,6 +944,7 @@ export interface WidgetConfig {
   titleTooltip?: string;
   dropShadow?: boolean;
   enableFullscreen?: boolean;
+  enableDataExport?: boolean;
   useDashboardTimewindow?: boolean;
   displayTimewindow?: boolean;
   timewindow?: Timewindow;
@@ -951,7 +967,7 @@ export interface WidgetConfig {
   decimals?: number;
   noDataDisplayMessage?: string;
   pageSize?: number;
-  actions?: {[actionSourceId: string]: Array<WidgetActionDescriptor>};
+  actions?: WidgetActionsMap;
   settings?: WidgetSettings;
   alarmSource?: Datasource;
   alarmFilterConfig?: AlarmFilterConfig;
@@ -984,6 +1000,7 @@ export interface WidgetInfo extends BaseWidgetInfo {
 
 export interface DynamicFormData {
   settingsForm?: FormProperty[];
+  settingsFormTrimDefaults?: boolean;
   model?: any;
   settingsDirective?: string;
 }
@@ -1012,6 +1029,7 @@ export interface IWidgetSettingsComponent {
   settings: WidgetSettings;
   settingsChanged: Observable<WidgetSettings>;
   validateSettings(): boolean;
+  reportMode: boolean;
   [key: string]: any;
 }
 
@@ -1031,6 +1049,8 @@ export abstract class WidgetSettingsComponent extends PageComponent implements
   dashboard: Dashboard;
 
   widget: Widget;
+
+  reportMode: boolean;
 
   widgetConfigValue: WidgetConfigComponentData;
 

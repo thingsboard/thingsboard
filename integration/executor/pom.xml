@@ -1,0 +1,144 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.thingsboard</groupId>
+        <version>4.4.0.1-SNAPSHOT</version>
+        <artifactId>integration</artifactId>
+    </parent>
+    <groupId>org.thingsboard.integration</groupId>
+    <artifactId>executor</artifactId>
+    <packaging>jar</packaging>
+
+    <name>Thingsboard Integration Executor</name>
+    <url>https://thingsboard.io</url>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <main.dir>${basedir}/../..</main.dir>
+        <pkg.type>java</pkg.type>
+        <pkg.process-resources.phase>process-resources</pkg.process-resources.phase>
+        <pkg.package.phase>package</pkg.package.phase>
+        <pkg.name>tb-integration-executor</pkg.name>
+        <pkg.copyInstallScripts>false</pkg.copyInstallScripts>
+        <pkg.win.dist>${project.build.directory}/windows</pkg.win.dist>
+        <pkg.implementationTitle>ThingsBoard Integration Executor</pkg.implementationTitle>
+        <pkg.mainClass>org.thingsboard.integration.ThingsboardIntegrationExecutorApplication</pkg.mainClass>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.thingsboard.common</groupId>
+            <artifactId>queue</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common.script</groupId>
+            <artifactId>remote-js-client</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common.integration</groupId>
+            <artifactId>cluster-integration-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common</groupId>
+                <artifactId>coap-server</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common.integration</groupId>
+            <artifactId>http-integrations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common.integration</groupId>
+            <artifactId>mqtt-integrations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common.integration</groupId>
+            <artifactId>gcloud-integrations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common.integration</groupId>
+            <artifactId>aws-integrations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common.integration</groupId>
+            <artifactId>opcua-integrations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common.integration</groupId>
+            <artifactId>kafka-integrations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common.integration</groupId>
+            <artifactId>rabbitmq-integrations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common.integration</groupId>
+            <artifactId>apache-pulsar</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common.integration</groupId>
+            <artifactId>coap-integrations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common.integration</groupId>
+            <artifactId>tuya-integrations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>${pkg.name}-${project.version}</finalName>
+        <resources>
+            <resource>
+                <directory>${project.basedir}/src/main/resources</directory>
+            </resource>
+        </resources>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.thingsboard</groupId>
+                <artifactId>gradle-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

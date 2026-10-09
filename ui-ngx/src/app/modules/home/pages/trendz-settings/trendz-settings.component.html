@@ -1,0 +1,83 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="flex flex-col">
+    <mat-card appearance="outlined" class="settings-card service-connection">
+        <div class="tb-form-panel no-border">
+            <div class="tb-form-panel-title flex items-center">
+                <span class="flex-1">{{ 'trendz-analytics.service-connection' | translate }}</span>
+                <div class="tb-form-panel-help" tb-help="trendzSettings"></div>
+            </div>
+            <div class="sync-result flex flex-1 flex-col gap-4" [class.active]="trendzSyncInfo.healthcheckStatus === TrendzSynchronizationStatus.SYNCED">
+                <div class="flex flex-col gap-2">
+                    <div class="sync-result-title flex items-center gap-2">
+                        @if(trendzSyncInfo.healthcheckStatus === TrendzSynchronizationStatus.SYNCED) {
+                            <mat-icon svgIcon="mdi:check-circle-outline"></mat-icon>
+                            {{ 'trendz-analytics.trendz-synced' | translate }}
+                        } @else {
+                            <mat-icon class="material-icons">block</mat-icon>
+                            {{ (trendzSyncInfo.healthcheckStatus === TrendzSynchronizationStatus.AVAILABLE ? 'trendz-analytics.trendz-available' : 'trendz-analytics.trendz-unavailable') | translate }}
+                        }
+                    </div>
+                    <div class="sync-result-description">
+                        {{ TrendzSynchronizationResultTypeTranslationMap.get(trendzSyncInfo.type) | translate }}
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                  <button mat-button mat-raised-button color="primary" type="button" [disabled]="(isLoading$ | async) || !trendzEnabled" (click)="retryDiscovery()">
+                        <tb-icon matButtonIcon>refresh</tb-icon>
+                        {{ 'trendz-analytics.retry-discovery' | translate }}
+                    </button>
+                    @if(trendzSyncInfo.syncStatus === TrendzSynchronizationStatus.SYNCED) {
+                      <button mat-stroked-button color="primary" type="button" [disabled]="(isLoading$ | async) || !trendzEnabled" (click)="retryHealthcheck()">
+                        {{ 'trendz-analytics.retry-healthcheck' | translate }}
+                      </button>
+                    }
+                </div>
+            </div>
+        </div>
+    </mat-card>
+    <mat-card appearance="outlined" class="settings-card">
+        <div class="tb-form-panel no-border">
+            <div class="tb-form-panel-title">
+                {{ 'trendz-analytics.trendz-configuration' | translate }}
+            </div>
+            <div class="flex flex-row xs:flex-col gap-4 items-start" [formGroup]="trendzSettingsForm">
+                <mat-form-field class="flex-1 xs:w-full" appearance="outline" subscriptSizing="dynamic">
+                    <mat-label>{{ 'trendz-analytics.trendz-internal-url' | translate }}</mat-label>
+                    <input matInput required formControlName="trendzUrl">
+                    @if (trendzSettingsForm.get('trendzUrl').errors && trendzSettingsForm.get('trendzUrl').touched) {
+                        <mat-error>
+                            @if (trendzSettingsForm.get('trendzUrl').hasError('required')) {
+                                {{ 'trendz-analytics.trendz-internal-url-required' | translate }}
+                            } @else if (trendzSettingsForm.get('trendzUrl').hasError('pattern')) {
+                                {{ 'trendz-analytics.trendz-internal-url-invalid' | translate }}
+                            }
+                        </mat-error>
+                    }
+                </mat-form-field>
+                <mat-form-field class="flex-1 xs:w-full" appearance="outline" subscriptSizing="dynamic">
+                    <mat-label>{{ 'trendz-analytics.thingsboard-internal-url' | translate }}</mat-label>
+                    <input matInput required formControlName="tbUrl">
+                    @if (trendzSettingsForm.get('tbUrl').errors && trendzSettingsForm.get('tbUrl').touched) {
+                        <mat-error>
+                            @if (trendzSettingsForm.get('tbUrl').hasError('required')) {
+                                {{ 'trendz-analytics.thingsboard-internal-url-required' | translate }}
+                            } @else if (trendzSettingsForm.get('tbUrl').hasError('pattern')) {
+                                {{ 'trendz-analytics.thingsboard-internal-url-invalid' | translate }}
+                            }
+                        </mat-error>
+                    }
+                </mat-form-field>
+            </div>
+            <div class="flex w-full flex-row flex-wrap items-center justify-end">
+                <button mat-button mat-raised-button color="primary" [disabled]="(isLoading$ | async) || trendzSettingsForm.invalid || !trendzSettingsForm.dirty || !trendzEnabled" (click)="save()">
+                  {{ 'trendz-analytics.save-configuration' | translate }}
+                </button>
+              </div>
+        </div>
+    </mat-card>
+</div>

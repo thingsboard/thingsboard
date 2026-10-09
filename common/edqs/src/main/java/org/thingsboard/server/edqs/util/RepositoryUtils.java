@@ -1,31 +1,27 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.edqs.util;
 
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.edqs.DataPoint;
+import org.thingsboard.server.common.data.group.EntityGroup;
+import org.thingsboard.server.common.data.permission.MergedGroupTypePermissionInfo;
+import org.thingsboard.server.common.data.permission.MergedUserPermissions;
+import org.thingsboard.server.common.data.permission.Operation;
 import org.thingsboard.server.common.data.permission.QueryContext;
+import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
 import org.thingsboard.server.common.data.query.ComplexFilterPredicate;
+import org.thingsboard.server.common.data.query.ComplexOperation;
+import org.thingsboard.server.common.data.query.EntitiesByGroupNameFilter;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.EntityDataSortOrder;
 import org.thingsboard.server.common.data.query.EntityFilter;
+import org.thingsboard.server.common.data.query.EntityGroupFilter;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.EntityKeyValueType;
@@ -54,14 +50,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static org.apache.commons.lang3.StringUtils.containsIgnoreCase;
 import static org.thingsboard.server.common.data.StringUtils.equalsAny;
 import static org.thingsboard.server.common.data.StringUtils.splitByCommaWithoutQuotes;
-import static org.thingsboard.server.common.data.query.ComplexFilterPredicate.ComplexOperation.AND;
-import static org.thingsboard.server.common.data.query.ComplexFilterPredicate.ComplexOperation.OR;
+import static org.thingsboard.server.common.data.query.ComplexOperation.AND;
+import static org.thingsboard.server.common.data.query.ComplexOperation.OR;
 
 @Slf4j
 public class RepositoryUtils {
@@ -69,15 +67,24 @@ public class RepositoryUtils {
     public static final Comparator<SortableEntityData> SORT_ASC = Comparator.comparing(SortableEntityData::getSortValue, Comparator.nullsFirst(Comparator.naturalOrder()))
             .thenComparing(sp -> sp.getId().toString());
 
-    public static final Comparator<SortableEntityData> SORT_DESC =  Comparator.comparing(SortableEntityData::getSortValue, Comparator.nullsFirst(Comparator.naturalOrder()))
+    public static final Comparator<SortableEntityData> SORT_DESC = Comparator.comparing(SortableEntityData::getSortValue, Comparator.nullsFirst(Comparator.naturalOrder()))
             .thenComparing(sp -> sp.getId().toString()).reversed();
+
+    public static final MergedUserPermissions SYS_ADMIN_PERMISSIONS = new MergedUserPermissions(Collections.singletonMap(Resource.ALL, Set.of(Operation.READ, Operation.READ_ATTRIBUTES, Operation.READ_TELEMETRY)), Collections.emptyMap());
+    public static final MergedUserPermissions ALL_READ_PERMISSIONS = new MergedUserPermissions(
+            Collections.singletonMap(Resource.ALL, Set.of(Operation.READ, Operation.READ_ATTRIBUTES, Operation.READ_TELEMETRY)), Collections.emptyMap());
 
     public static EntityType resolveEntityType(EntityFilter entityFilter) {
         return switch (entityFilter.getType()) {
             case SINGLE_ENTITY -> ((SingleEntityFilter) entityFilter).getSingleEntity().getEntityType();
+            case ENTITY_GROUP -> ((EntityGroupFilter) entityFilter).getGroupType();
             case ENTITY_LIST -> ((EntityListFilter) entityFilter).getEntityType();
             case ENTITY_NAME -> ((EntityNameFilter) entityFilter).getEntityType();
             case ENTITY_TYPE -> ((EntityTypeFilter) entityFilter).getEntityType();
+            case ENTITY_GROUP_LIST, ENTITY_GROUP_NAME -> EntityType.ENTITY_GROUP;
+            case ENTITIES_BY_GROUP_NAME -> ((EntitiesByGroupNameFilter) entityFilter).getGroupType();
+            case STATE_ENTITY -> throw new RuntimeException("Not implemented!");
+            case STATE_ENTITY_OWNER -> throw new RuntimeException("Not implemented!"); // TODO: implement
             case ASSET_TYPE, ASSET_SEARCH_QUERY -> EntityType.ASSET;
             case DEVICE_TYPE, DEVICE_SEARCH_QUERY -> EntityType.DEVICE;
             case ENTITY_VIEW_TYPE, ENTITY_VIEW_SEARCH_QUERY -> EntityType.ENTITY_VIEW;
@@ -87,7 +94,25 @@ public class RepositoryUtils {
                 yield rgf.isMultiRoot() ? rgf.getMultiRootEntitiesType() : rgf.getRootEntity().getEntityType();
             }
             case API_USAGE_STATE -> EntityType.API_USAGE_STATE;
+            case SCHEDULER_EVENT -> EntityType.SCHEDULER_EVENT;
         };
+    }
+
+    public static boolean hasNoPermissionsForAllRelationQueryResources(Map<Resource, MergedGroupTypePermissionInfo> permissionsMap) {
+        if (permissionsMap.get(Resource.resourceFromEntityType(EntityType.TENANT)).isHasGenericRead()) {
+            return false;
+        }
+        for (EntityType entityType : EntityGroup.groupTypes) {
+            if (permissionsMap.get(Resource.resourceFromEntityType(entityType)).isHasGenericRead() ||
+                !permissionsMap.get(Resource.resourceFromEntityType(entityType)).getEntityGroupIds().isEmpty()) {
+                return false;
+            }
+            if (permissionsMap.get(Resource.groupResourceFromGroupType(entityType)).isHasGenericRead() ||
+                !permissionsMap.get(Resource.groupResourceFromGroupType(entityType)).getEntityGroupIds().isEmpty()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public static boolean customerUserIsTryingToAccessTenantEntity(QueryContext ctx, EntityFilter entityFilter) {
@@ -118,8 +143,8 @@ public class RepositoryUtils {
 
     private static boolean isSystemOrTenantEntity(EntityType entityType) {
         return switch (entityType) {
-            case DEVICE_PROFILE, ASSET_PROFILE, RULE_CHAIN, TENANT,
-                    TENANT_PROFILE, WIDGET_TYPE, WIDGETS_BUNDLE -> true;
+            case INTEGRATION, CONVERTER, DEVICE_PROFILE, ASSET_PROFILE, RULE_CHAIN, SCHEDULER_EVENT, TENANT,
+                 TENANT_PROFILE, WIDGET_TYPE, WIDGETS_BUNDLE -> true;
             default -> false;
         };
     }
@@ -139,6 +164,7 @@ public class RepositoryUtils {
         }
         query.entityFilter(oldQuery.getEntityFilter());
         query.keyFilters(toKeyFilters(oldQuery.getKeyFilters()));
+        query.keyFiltersOperation(oldQuery.getKeyFiltersOperationOrDefault());
         query.entityFields(toNewKeys(oldQuery.getEntityFields()));
         query.latestValues(toNewKeys(oldQuery.getLatestValues()));
         return query.build();
@@ -149,6 +175,7 @@ public class RepositoryUtils {
                 .entityFilter(oldQuery.getEntityFilter())
                 .hasKeyFilters(CollectionsUtil.isNotEmpty(oldQuery.getKeyFilters()))
                 .keyFilters(toKeyFilters(oldQuery.getKeyFilters()))
+                .keyFiltersOperation(oldQuery.getKeyFiltersOperationOrDefault())
                 .build();
     }
 
@@ -196,38 +223,57 @@ public class RepositoryUtils {
     }
 
     public static boolean checkKeyFilters(EntityData entity, List<EdqsFilter> keyFilters) {
-        for (EdqsFilter keyFilter : keyFilters) {
-            EntityKeyValueType valueType = keyFilter.valueType();
-            if (valueType == null) {
-                valueType = switch (keyFilter.predicate().getType()) {
-                    case STRING -> EntityKeyValueType.STRING;
-                    case NUMERIC -> EntityKeyValueType.NUMERIC;
-                    case BOOLEAN -> EntityKeyValueType.BOOLEAN;
-                    default -> throw new IllegalStateException();
-                };
+        return checkKeyFilters(entity, keyFilters, ComplexOperation.AND);
+    }
+
+    public static boolean checkKeyFilters(EntityData entity, List<EdqsFilter> keyFilters, ComplexOperation operation) {
+        ComplexOperation op = operation != null ? operation : ComplexOperation.AND;
+        if (op == ComplexOperation.OR) {
+            for (EdqsFilter keyFilter : keyFilters) {
+                if (evaluateSingleFilter(entity, keyFilter)) {
+                    return true;
+                }
             }
-            DataKey dataKey = keyFilter.key();
-            DataPoint dp = entity.getDataPoint(dataKey, null);
-            boolean checkResult = switch (valueType) {
-                case STRING -> {
-                    String str = dp != null ? dp.valueToString() : null;
-                    yield (dataKey.type() == EntityKeyType.ENTITY_FIELD) ? (str == null || checkKeyFilter(str, keyFilter.predicate())) :
-                            (str != null && checkKeyFilter(str, keyFilter.predicate()));
+            // Vacuously true when OR is called with an empty filter list. Unreachable via checkFilters
+            // (which guards on isHasKeyFilters()), but kept defensive for any future direct caller.
+            return keyFilters.isEmpty();
+        } else {
+            for (EdqsFilter keyFilter : keyFilters) {
+                if (!evaluateSingleFilter(entity, keyFilter)) {
+                    return false;
                 }
-                case BOOLEAN -> {
-                    Boolean booleanValue = dp != null ? dp.getBool() : null;
-                    yield booleanValue != null && checkKeyFilter(booleanValue, keyFilter.predicate());
-                }
-                case DATE_TIME, NUMERIC -> {
-                    Double doubleValue = dp != null ? dp.getDouble() : null;
-                    yield doubleValue != null && checkKeyFilter(doubleValue, keyFilter.predicate());
-                }
-            };
-            if (!checkResult) {
-                return false;
             }
+            return true;
         }
-        return true;
+    }
+
+    private static boolean evaluateSingleFilter(EntityData entity, EdqsFilter keyFilter) {
+        EntityKeyValueType valueType = keyFilter.valueType();
+        if (valueType == null) {
+            valueType = switch (keyFilter.predicate().getType()) {
+                case STRING -> EntityKeyValueType.STRING;
+                case NUMERIC -> EntityKeyValueType.NUMERIC;
+                case BOOLEAN -> EntityKeyValueType.BOOLEAN;
+                default -> throw new IllegalStateException();
+            };
+        }
+        DataKey dataKey = keyFilter.key();
+        DataPoint dp = entity.getDataPoint(dataKey, null);
+        return switch (valueType) {
+            case STRING -> {
+                String str = dp != null ? dp.valueToString() : null;
+                yield (dataKey.type() == EntityKeyType.ENTITY_FIELD) ? (str == null || checkKeyFilter(str, keyFilter.predicate())) :
+                        (str != null && checkKeyFilter(str, keyFilter.predicate()));
+            }
+            case BOOLEAN -> {
+                Boolean booleanValue = dp != null ? dp.getBool() : null;
+                yield booleanValue != null && checkKeyFilter(booleanValue, keyFilter.predicate());
+            }
+            case DATE_TIME, NUMERIC -> {
+                Double doubleValue = dp != null ? dp.getDouble() : null;
+                yield doubleValue != null && checkKeyFilter(doubleValue, keyFilter.predicate());
+            }
+        };
     }
 
     public static boolean checkKeyFilter(String value, KeyFilterPredicate keyFilterPredicate) {
@@ -369,14 +415,14 @@ public class RepositoryUtils {
         if (sortKey == null) {
             return null;
         }
-       return entity.getDataPoint(sortKey, queryContext);
+        return entity.getDataPoint(sortKey, queryContext);
     }
 
     public static boolean checkFilters(EdqsQuery query, EntityData entity) {
         if (entity == null || entity.getFields() == null) {
             return false; // Entity was already removed or not arrived yet;
         }
-        if (query.isHasKeyFilters() && !checkKeyFilters(entity, query.getKeyFilters())) {
+        if (query.isHasKeyFilters() && !checkKeyFilters(entity, query.getKeyFilters(), query.getKeyFiltersOperation())) {
             return false;
         }
         if (query instanceof EdqsDataQuery dataQuery) {

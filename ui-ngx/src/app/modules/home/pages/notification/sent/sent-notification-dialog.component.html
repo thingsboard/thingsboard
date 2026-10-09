@@ -1,21 +1,11 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<mat-toolbar color="primary">
+<mat-toolbar color="tb-primary" class="tb-bottom-border">
   <h2>{{ dialogTitle | translate }}</h2>
   <span class="flex-1"></span>
   <div tb-help="sentNotification"></div>
@@ -107,6 +97,41 @@
                   }
                 </section>
               </section>
+              @if (!isSysAdmin()) {
+                <div class="tb-form-panel stroked no-padding-bottom no-gap mb-5">
+                  <mat-slide-toggle class="toggle" formControlName="attachReport">
+                    <div tb-hint-tooltip-icon="{{ 'notification.attach-report-hint' | translate }}" translate>
+                      notification.attach-report
+                    </div>
+                  </mat-slide-toggle>
+                  @if (notificationRequestForm.get('template.configuration.attachReport').value) {
+                    <div class="tb-form-panel outlined">
+                      <tb-report-template-autocomplete
+                        required
+                        appearance="outline"
+                        [type]="ReportTemplateType.REPORT"
+                        includeCustomers
+                        showError
+                        formControlName="reportTemplateId">
+                        <span tb-error>{{'report-template.report-template-required' | translate}}</span>
+                      </tb-report-template-autocomplete>
+                      <tb-entity-autocomplete
+                        appearance="outline"
+                        required
+                        useFullEntityId
+                        [entityType]="entityType.USER"
+                        formControlName="userId">
+                      </tb-entity-autocomplete>
+                      <tb-timezone-select
+                        appearance="outline"
+                        userTimezoneByDefault
+                        required
+                        formControlName="timezone">
+                      </tb-timezone-select>
+                    </div>
+                  }
+                </div>
+              }
             </section>
           }
         </div>
@@ -120,7 +145,7 @@
             placeholderText="{{ 'notification.recipient' | translate }}"
             requiredText="{{ 'notification.recipients-required' | translate }}"
             [entityType]="entityType.NOTIFICATION_TARGET"
-            subType="{{ notificationType.GENERAL }}">
+            entitySubType="{{ notificationType.GENERAL }}">
             <button #createTargetButton
                     mat-button color="primary" matSuffix
                     (click)="createTarget($event, createTargetButton)">
@@ -242,7 +267,7 @@
               <div class="notification-content">
                 <div class="subject">{{ preview.processedTemplates.EMAIL.subject }}</div>
                 <mat-divider></mat-divider>
-                <editor [init]="tinyMceOptions" [initialValue]="preview.processedTemplates.EMAIL.body"></editor>
+                <editor [init]="hugeRteOptions" [initialValue]="preview.processedTemplates.EMAIL.body"></editor>
               </div>
             </section>
           }

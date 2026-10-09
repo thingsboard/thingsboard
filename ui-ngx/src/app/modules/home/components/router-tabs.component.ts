@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, ComponentRef, OnInit, Type, ViewChild } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
@@ -35,6 +22,8 @@ import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 })
 export class RouterTabsComponent extends PageComponent implements OnInit {
 
+  @ViewChild('replaceComponentAnchor', {static: true}) replaceComponentAnchor: TbAnchorComponent;
+
   @ViewChild('tabsHeaderComponent', {static: true}) tabsHeaderComponentAnchor: TbAnchorComponent;
 
   tabsHeaderComponentRef: ComponentRef<any>;
@@ -45,8 +34,10 @@ export class RouterTabsComponent extends PageComponent implements OnInit {
 
   tabs$: Observable<Array<MenuSection>>;
 
+  replaceComponent: Type<any>;
+
   constructor(protected store: Store<AppState>,
-              private activatedRoute: ActivatedRoute,
+              public activatedRoute: ActivatedRoute,
               public router: Router,
               private menuService: MenuService,
               private activeComponentService: ActiveComponentService) {
@@ -54,30 +45,39 @@ export class RouterTabsComponent extends PageComponent implements OnInit {
   }
 
   ngOnInit() {
-    if (this.activatedRoute.snapshot.data.useChildrenRoutesForTabs) {
-      this.tabs$ = this.router.events.pipe(
-        filter((event) => event instanceof NavigationEnd),
-        startWith(''),
-        map(() => this.buildTabsForRoutes(this.activatedRoute))
-      );
+    const viewContainerRef = this.replaceComponentAnchor.viewContainerRef;
+    viewContainerRef.clear();
+    if (this.activatedRoute.snapshot.data.replaceComponent) {
+      this.replaceComponent = this.activatedRoute.snapshot.data.replaceComponent(this.store);
+    }
+    if (this.replaceComponent) {
+      viewContainerRef.createComponent(this.replaceComponent);
     } else {
-      this.tabs$ = merge(this.menuService.menuSections(),
-        this.router.events.pipe(
-          filter((event) => event instanceof NavigationEnd ),
-          distinctUntilChanged())
-      ).pipe(
-        mergeMap(() => this.menuService.menuSections().pipe(take(1))),
-        map((sections) => this.buildTabs(this.activatedRoute, sections))
+      if (this.activatedRoute.snapshot.data.useChildrenRoutesForTabs) {
+        this.tabs$ = this.router.events.pipe(
+          filter((event) => event instanceof NavigationEnd),
+          startWith(''),
+          map(() => this.buildTabsForRoutes(this.activatedRoute))
+        );
+      } else {
+        this.tabs$ = merge(this.menuService.menuSections(),
+          this.router.events.pipe(
+            filter((event) => event instanceof NavigationEnd),
+            distinctUntilChanged())
+        ).pipe(
+          mergeMap(() => this.menuService.menuSections().pipe(take(1))),
+          map((sections) => this.buildTabs(this.activatedRoute, sections))
+        );
+      }
+
+      if (this.activatedRoute.snapshot.data.replaceUrl) {
+        this.replaceUrl = true;
+      }
+
+      this.activatedRoute.data.subscribe(
+        (data) => this.buildTabsHeaderComponent(data)
       );
     }
-
-    if (this.activatedRoute.snapshot.data.replaceUrl) {
-      this.replaceUrl = true;
-    }
-
-    this.activatedRoute.data.subscribe(
-      (data) => this.buildTabsHeaderComponent(data)
-    );
   }
 
   activeComponentChanged(activeComponent: any) {
@@ -131,7 +131,7 @@ export class RouterTabsComponent extends PageComponent implements OnInit {
     });
     if (children.length) {
       return children.map(tab => ({
-        id: tab.component.name,
+        id: tab.component?.name ?? tab.path,
         type: 'link',
         name: tab.data?.breadcrumb?.label ?? '',
         icon: tab.data?.breadcrumb?.icon ?? '',

@@ -1,22 +1,11 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
 
 -->
 <section [formGroup]="deduplicationConfigForm">
-  <mat-form-field class="mat-block">
+  <mat-form-field class="mat-block" appearance="outline">
     <mat-label>{{'rule-node-config.interval' | translate}}</mat-label>
     <input type='number' required matInput formControlName="interval">
     @if (deduplicationConfigForm.get('interval').hasError('required')) {
@@ -44,26 +33,24 @@
         }
       </tb-toggle-select>
       @if (deduplicationConfigForm.get('strategy').value === 'ALL') {
-        <tb-example-hint [hintText]="'rule-node-config.strategy-all-hint'"
-                         >
+        <tb-example-hint [hintText]="'rule-node-config.strategy-all-hint'">
         </tb-example-hint>
       }
       @if (deduplicationConfigForm.get('strategy').value === 'FIRST') {
         <tb-example-hint [hintText]="'rule-node-config.strategy-first-hint'"
-                         textAlign="'center'"
-                         >
+                         textAlign="'center'">
         </tb-example-hint>
       }
       @if (deduplicationConfigForm.get('strategy').value === 'LAST') {
         <tb-example-hint [hintText]="'rule-node-config.strategy-last-hint'"
-                         textAlign="'center'"
-                         >
+                         textAlign="'center'">
         </tb-example-hint>
       }
       @if (deduplicationConfigForm.get('strategy').value === deduplicationStrategie.ALL) {
         <div>
           <tb-output-message-type-autocomplete
             required
+            appearance="outline"
             formControlName="outMsgType">
           </tb-output-message-type-autocomplete>
         </div>
@@ -75,7 +62,7 @@
           <mat-panel-title translate>rule-node-config.advanced-settings</mat-panel-title>
         </mat-expansion-panel-header>
         <div class="tb-form-row no-border no-padding tb-standard-fields">
-          <mat-form-field class="flex">
+          <mat-form-field class="flex" appearance="outline">
             <mat-label>{{'rule-node-config.max-pending-msgs' | translate}}</mat-label>
             <input type = 'number' required matInput formControlName="maxPendingMsgs">
             @if (deduplicationConfigForm.get('maxPendingMsgs').hasError('required')) {
@@ -97,7 +84,7 @@
                       color="primary"
             matTooltip="{{ 'rule-node-config.max-pending-msgs-hint' | translate }}">help</mat-icon>
           </mat-form-field>
-          <mat-form-field class="flex">
+          <mat-form-field class="flex" appearance="outline">
             <mat-label>{{'rule-node-config.max-retries' | translate}}</mat-label>
             <input type = 'number' required matInput formControlName="maxRetries">
             @if (deduplicationConfigForm.get('maxRetries').hasError('required')) {

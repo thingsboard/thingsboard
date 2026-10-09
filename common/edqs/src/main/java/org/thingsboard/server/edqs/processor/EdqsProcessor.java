@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.edqs.processor;
 
 import com.google.common.collect.Sets;
@@ -33,6 +21,7 @@ import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.edqs.EdqsEvent;
 import org.thingsboard.server.common.data.edqs.EdqsEventType;
 import org.thingsboard.server.common.data.edqs.EdqsObject;
+import org.thingsboard.server.common.data.edqs.EdqsObjectKey;
 import org.thingsboard.server.common.data.edqs.query.EdqsRequest;
 import org.thingsboard.server.common.data.edqs.query.EdqsResponse;
 import org.thingsboard.server.common.data.edqs.query.QueryResult;
@@ -227,10 +216,10 @@ public class EdqsProcessor implements TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>,
         try {
             if (request.getEntityDataQuery() != null) {
                 PageData<QueryResult> result = repository.findEntityDataByQuery(tenantId, customerId,
-                        request.getEntityDataQuery(), false);
+                        request.getUserPermissions(), request.getEntityDataQuery(), false);
                 response.setEntityDataQueryResult(result.mapData(QueryResult::toOldEntityData));
             } else if (request.getEntityCountQuery() != null) {
-                long result = repository.countEntitiesByQuery(tenantId, customerId, request.getEntityCountQuery(), tenantId.isSysTenantId());
+                long result = repository.countEntitiesByQuery(tenantId, customerId, request.getUserPermissions(), request.getEntityCountQuery(), tenantId.isSysTenantId());
                 response.setEntityCountQueryResult(result);
             }
             log.trace("[{}] Request: {}, response: {}", tenantId, request, response);
@@ -252,7 +241,8 @@ public class EdqsProcessor implements TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>,
             EdqsObject object = mapper.deserialize(objectType, eventMsg.getData().toByteArray(), false);
 
             if (version != null) {
-                if (!versionsStore.isNew(mapper.getKey(object), version)) {
+                EdqsObjectKey key = mapper.getKey(object);
+                if (!versionsStore.isNew(key, version, eventType, eventMsg.getVersionsResetOnDelete())) {
                     return;
                 }
             } else if (!ObjectType.unversionedTypes.contains(objectType)) {

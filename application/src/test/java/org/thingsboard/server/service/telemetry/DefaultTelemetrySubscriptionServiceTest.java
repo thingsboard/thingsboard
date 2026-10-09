@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.telemetry;
 
 import com.google.common.util.concurrent.FutureCallback;
@@ -29,6 +17,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.AttributesDeleteRequest;
 import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.DeviceStateManager;
@@ -40,9 +29,13 @@ import org.thingsboard.server.common.data.ApiUsageStateValue;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
+import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.data.exception.TenantNotFoundException;
 import org.thingsboard.server.common.data.id.ApiUsageStateId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.EntityViewId;
@@ -89,6 +82,7 @@ import java.util.stream.Stream;
 import static com.google.common.util.concurrent.Futures.immediateFailedFuture;
 import static com.google.common.util.concurrent.Futures.immediateFuture;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -164,8 +158,8 @@ class DefaultTelemetrySubscriptionServiceTest {
 
         lenient().when(partitionService.resolve(eq(ServiceType.TB_CORE), eq(tenantId), any())).thenReturn(tpi);
 
-        lenient().when(tsService.save(tenantId, entityId, sampleTimeseries, sampleTtl)).thenReturn(immediateFuture(TimeseriesSaveResult.of(sampleTimeseries.size(), listOfNNumbers(sampleTimeseries.size()))));
-        lenient().when(tsService.saveWithoutLatest(tenantId, entityId, sampleTimeseries, sampleTtl)).thenReturn(immediateFuture(TimeseriesSaveResult.of(sampleTimeseries.size(), null)));
+        lenient().when(tsService.save(tenantId, entityId, sampleTimeseries, sampleTtl, false)).thenReturn(immediateFuture(TimeseriesSaveResult.of(sampleTimeseries.size(), listOfNNumbers(sampleTimeseries.size()))));
+        lenient().when(tsService.saveWithoutLatest(tenantId, entityId, sampleTimeseries, sampleTtl, false)).thenReturn(immediateFuture(TimeseriesSaveResult.of(sampleTimeseries.size(), null)));
         lenient().when(tsService.saveLatest(tenantId, entityId, sampleTimeseries)).thenReturn(immediateFuture(TimeseriesSaveResult.of(sampleTimeseries.size(), listOfNNumbers(sampleTimeseries.size()))));
 
         // mock no entity views
@@ -351,7 +345,7 @@ class DefaultTelemetrySubscriptionServiceTest {
 
         // THEN
         // should save only time series for the main entity
-        then(tsService).should().saveWithoutLatest(tenantId, entityId, sampleTimeseries, sampleTtl);
+        then(tsService).should().saveWithoutLatest(tenantId, entityId, sampleTimeseries, sampleTtl, false);
         then(tsService).shouldHaveNoMoreInteractions();
 
         // should not send any WS updates
@@ -381,14 +375,14 @@ class DefaultTelemetrySubscriptionServiceTest {
                 .strategy(new TimeseriesSaveRequest.Strategy(true, true, false, false))
                 .build();
 
-        given(tsService.save(tenantId, entityId, sampleTimeseries, sampleTtl)).willReturn(immediateFailedFuture(new RuntimeException("failed to save data on main entity")));
+        given(tsService.save(tenantId, entityId, sampleTimeseries, sampleTtl, request.isOverwriteValue())).willReturn(immediateFailedFuture(new RuntimeException("failed to save data on main entity")));
 
         // WHEN
         telemetryService.saveTimeseries(request);
 
         // THEN
         // should save only time series for the main entity
-        then(tsService).should().save(tenantId, entityId, sampleTimeseries, sampleTtl);
+        then(tsService).should().save(tenantId, entityId, sampleTimeseries, sampleTtl, request.isOverwriteValue());
         then(tsService).shouldHaveNoMoreInteractions();
 
         // should not send any WS updates
@@ -413,18 +407,17 @@ class DefaultTelemetrySubscriptionServiceTest {
 
         // THEN
         if (saveTimeseries && saveLatest) {
-            then(tsService).should().save(tenantId, entityId, sampleTimeseries, sampleTtl);
+            then(tsService).should().save(tenantId, entityId, sampleTimeseries, sampleTtl, false);
         } else if (saveLatest) {
             then(tsService).should().saveLatest(tenantId, entityId, sampleTimeseries);
         } else if (saveTimeseries) {
-            then(tsService).should().saveWithoutLatest(tenantId, entityId, sampleTimeseries, sampleTtl);
+            then(tsService).should().saveWithoutLatest(tenantId, entityId, sampleTimeseries, sampleTtl, false);
         }
+        then(tsService).shouldHaveNoMoreInteractions();
 
         if (processCalculatedFields) {
             then(calculatedFieldQueueService).should().pushRequestToQueue(eq(request), any(), eq(request.getCallback()));
         }
-
-        then(tsService).shouldHaveNoMoreInteractions();
 
         if (sendWsUpdate) {
             then(subscriptionManagerService).should().onTimeSeriesUpdate(tenantId, entityId, sampleTimeseries, TbCallback.EMPTY);
@@ -887,6 +880,121 @@ class DefaultTelemetrySubscriptionServiceTest {
         then(deviceStateManager).should().onDeviceInactivityTimeoutUpdate(tenantId, deviceId, 3000L, TbCallback.EMPTY);
     }
 
+    @Test
+    void shouldSendAttributesUpdatedNotificationToEdgeWhenEdgeAttributesAreSaved() {
+        // GIVEN
+        var edgeId = EdgeId.fromString("3bf0e8d8-f850-11ef-9cd2-0242ac120002");
+        List<AttributeKvEntry> entries = List.of(
+                new BaseAttributeKvEntry(123L, new DoubleDataEntry("edge1", 65.2)),
+                new BaseAttributeKvEntry(456L, new StringDataEntry("edge2", "test"))
+        );
+
+        var request = AttributesSaveRequest.builder()
+                .tenantId(tenantId)
+                .entityId(edgeId)
+                .scope(AttributeScope.SERVER_SCOPE)
+                .entries(entries)
+                .notifyDevice(false)
+                .strategy(new AttributesSaveRequest.Strategy(true, false, false))
+                .build();
+
+        given(attrService.save(tenantId, edgeId, request.getScope(), entries))
+                .willReturn(immediateFuture(AttributesSaveResult.of(listOfNNumbers(request.getEntries().size()))));
+
+        // WHEN
+        telemetryService.saveAttributes(request);
+
+        // THEN
+        then(clusterService).should().sendNotificationMsgToEdge(
+                tenantId, edgeId, edgeId, JacksonUtil.writeValueAsString(entries), EdgeEventType.EDGE, EdgeEventActionType.ATTRIBUTES_UPDATED, null
+        );
+    }
+
+    @ParameterizedTest
+    @EnumSource(
+            value = EntityType.class,
+            names = {"EDGE", "API_USAGE_STATE"}, // API usage state excluded due to coverage in another test
+            mode = EnumSource.Mode.EXCLUDE
+    )
+    void shouldNotSendAttributesUpdatedNotificationToEdgeWhenEntityIsNotEdge(EntityType entityType) {
+        // GIVEN
+        var nonEdgeId = EntityIdFactory.getByTypeAndUuid(entityType, "3bf0e8d8-f850-11ef-9cd2-0242ac120002");
+        List<AttributeKvEntry> entries = List.of(
+                new BaseAttributeKvEntry(123L, new DoubleDataEntry("edge1", 65.2)),
+                new BaseAttributeKvEntry(456L, new StringDataEntry("edge2", "test"))
+        );
+
+        var request = AttributesSaveRequest.builder()
+                .tenantId(tenantId)
+                .entityId(nonEdgeId)
+                .scope(AttributeScope.SERVER_SCOPE)
+                .entries(entries)
+                .notifyDevice(false)
+                .strategy(new AttributesSaveRequest.Strategy(true, false, false))
+                .build();
+
+        given(attrService.save(tenantId, nonEdgeId, request.getScope(), entries))
+                .willReturn(immediateFuture(AttributesSaveResult.of(listOfNNumbers(request.getEntries().size()))));
+
+        // WHEN
+        telemetryService.saveAttributes(request);
+
+        // THEN
+        then(clusterService).shouldHaveNoInteractions();
+    }
+
+    @Test
+    void shouldNotSendAttributesUpdatedNotificationToEdgeWhenAttributesSaveWasSkipped() {
+        // GIVEN
+        var edgeId = EdgeId.fromString("3bf0e8d8-f850-11ef-9cd2-0242ac120002");
+        List<AttributeKvEntry> entries = List.of(
+                new BaseAttributeKvEntry(123L, new DoubleDataEntry("edge1", 65.2)),
+                new BaseAttributeKvEntry(456L, new StringDataEntry("edge2", "test"))
+        );
+
+        var request = AttributesSaveRequest.builder()
+                .tenantId(tenantId)
+                .entityId(edgeId)
+                .scope(AttributeScope.SERVER_SCOPE)
+                .entries(entries)
+                .notifyDevice(false)
+                .strategy(new AttributesSaveRequest.Strategy(false, false, false))
+                .build();
+
+        // WHEN
+        telemetryService.saveAttributes(request);
+
+        // THEN
+        then(clusterService).shouldHaveNoInteractions();
+    }
+
+    @Test
+    void shouldNotSendAttributesUpdatedNotificationToEdgeWhenAttributesSaveFailed() {
+        // GIVEN
+        var edgeId = EdgeId.fromString("3bf0e8d8-f850-11ef-9cd2-0242ac120002");
+        List<AttributeKvEntry> entries = List.of(
+                new BaseAttributeKvEntry(123L, new DoubleDataEntry("edge1", 65.2)),
+                new BaseAttributeKvEntry(456L, new StringDataEntry("edge2", "test"))
+        );
+
+        var request = AttributesSaveRequest.builder()
+                .tenantId(tenantId)
+                .entityId(edgeId)
+                .scope(AttributeScope.SERVER_SCOPE)
+                .entries(entries)
+                .notifyDevice(false)
+                .strategy(new AttributesSaveRequest.Strategy(true, false, false))
+                .build();
+
+        given(attrService.save(tenantId, edgeId, request.getScope(), entries)).willReturn(immediateFailedFuture(new RuntimeException("failed to save")));
+
+        // WHEN
+        telemetryService.saveAttributes(request);
+
+        // THEN
+        then(clusterService).shouldHaveNoInteractions();
+    }
+
     /* --- Delete attributes API --- */
 
     @Test
@@ -1149,6 +1257,26 @@ class DefaultTelemetrySubscriptionServiceTest {
 
         // THEN
         then(deviceStateManager).shouldHaveNoInteractions();
+    }
+
+    /* --- Subscription forwarding --- */
+
+    @Test
+    void shouldSkipSubscriptionForwardWhenTenantWasDeleted() {
+        // GIVEN the tenant was deleted concurrently, so partition resolution fails
+        given(partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId))
+                .willThrow(new TenantNotFoundException(tenantId));
+
+        // WHEN forwarding a subscription update (e.g. from an in-flight async save callback)
+        // THEN it must not propagate the exception
+        assertThatNoException().isThrownBy(() -> telemetryService.forwardToSubscriptionManagerService(
+                tenantId, entityId,
+                sm -> sm.onAttributesUpdate(tenantId, entityId, AttributeScope.SERVER_SCOPE.name(), List.of(), TbCallback.EMPTY),
+                () -> null));
+
+        // AND nothing is forwarded, since there is no partition to route to and no subscribers to notify
+        then(subscriptionManagerService).shouldHaveNoInteractions();
+        then(clusterService).shouldHaveNoInteractions();
     }
 
     // used to emulate versions returned by save APIs

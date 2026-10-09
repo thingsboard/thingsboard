@@ -1,0 +1,90 @@
+{
+  "entityId": {
+    "entityType": "DEVICE_PROFILE",
+    "id": "2dd0d486-15f4-4f7d-b65d-92b589040d7b"
+  },
+  "type": "ALARM",
+  "name": "High Temperature",
+  "debugSettings": {
+    "failuresEnabled": true,
+    "allEnabled": false,
+    "allEnabledUntil": 0
+  },
+  "configurationVersion": 0,
+  "configuration": {
+    "type": "ALARM",
+    "arguments": {
+      "temperature": {
+        "refEntityKey": {
+          "key": "temperature",
+          "type": "TS_LATEST"
+        }
+      }
+    },
+    "createRules": {
+      "CRITICAL": {
+        "condition": {
+          "type": "SIMPLE",
+          "expression": {
+            "type": "SIMPLE",
+            "filters": [
+              {
+                "argument": "temperature",
+                "valueType": "NUMERIC",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "NUMERIC",
+                    "operation": "GREATER",
+                    "value": {
+                      "staticValue": 25.5,
+                      "dynamicValueArgument": null
+                    }
+                  }
+                ]
+              }
+            ],
+            "operation": "AND"
+          },
+          "schedule": null
+        },
+        "alarmDetails": "${temperature} °C",
+        "dashboardId": null
+      }
+    },
+    "clearRule": {
+      "condition": {
+        "type": "SIMPLE",
+        "expression": {
+          "type": "SIMPLE",
+          "filters": [
+            {
+              "argument": "temperature",
+              "valueType": "NUMERIC",
+              "operation": "AND",
+              "predicates": [
+                {
+                  "type": "NUMERIC",
+                  "operation": "LESS_OR_EQUAL",
+                  "value": {
+                    "staticValue": 23.5,
+                    "dynamicValueArgument": null
+                  }
+                }
+              ]
+            }
+          ],
+          "operation": "AND"
+        },
+        "schedule": null
+      },
+      "alarmDetails": "${temperature} °C",
+      "dashboardId": null
+    },
+    "propagate": false,
+    "propagateToOwner": false,
+    "propagateToTenant": false,
+    "propagateRelationTypes": null,
+    "output": null
+  }
+}

@@ -1,0 +1,317 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@import "constants.scss";
+
+:host {
+  width: 100%;
+  padding-top: 16px;
+  padding-bottom: 48px;
+  @media #{$mat-gt-sm} {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  display: block;
+  .mat-mdc-card.request-pe-pack {
+    margin: 0 auto;
+
+    display: block;
+    line-height: 1.55;
+    max-width: 720px;
+
+    @media #{$mat-lt-md} {
+      border-radius: 0;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 500;
+      letter-spacing: 0;
+      line-height: 1.3;
+      color: var(--tb-ink);
+      text-wrap: balance;
+    }
+
+    h2 {
+      margin: 0 0 13px;
+      font-size: 16px;
+      font-weight: 500;
+      line-height: 1.55;
+      color: var(--tb-ink);
+    }
+
+    p {
+      letter-spacing: normal;
+      line-height: 1.55;
+    }
+
+    .offer-done {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0;
+      height: 36px;
+      padding: 0 16px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--tb-ink);
+      white-space: nowrap;
+      svg {
+        flex: none;
+        width: 18px;
+        height: 18px;
+        color: var(--tb-brand-ink);
+      }
+    }
+
+    .offer-strip {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 4px 10px;
+      padding: 7px 28px;
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--tb-ink);
+      background: var(--tb-caution-tint);
+      @media #{$mat-lt-md} {
+        padding: 7px 20px;
+      }
+      span.t {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+        > svg {
+          flex: none;
+          color: var(--tb-caution);
+        }
+      }
+      .mat-mdc-button.request-access {
+        margin-left: auto;
+        --mat-button-text-container-height: 26px;
+        --mat-button-text-label-text-size: 13px;
+      }
+      .offer-done {
+        flex: none;
+        margin-left: auto;
+        height: 26px;
+        padding: 0 9px;
+        font-size: 13px;
+        svg {
+          width: 15px;
+          height: 15px;
+        }
+      }
+    }
+
+    .offer-body {
+      padding: 26px 28px 26px;
+      @media #{$mat-lt-md} {
+        padding: 22px 20px 24px;
+      }
+    }
+
+    .offer-head {
+      display: flex;
+      align-items: flex-start;
+      gap: 20px;
+      margin: 0 0 26px;
+      @media #{$mat-xs} {
+        flex-direction: column;
+        gap: 12px;
+      }
+      .t {
+        flex: 1;
+        min-width: 0;
+      }
+    }
+
+    .offer-mark {
+      flex: none;
+      display: block;
+      margin: -2px 0 0 -6px;
+      @media #{$mat-xs} {
+        width: 88px;
+        height: 86px;
+        margin-top: 0;
+      }
+    }
+
+    .offer-kick {
+      margin: 0 0 7px;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--tb-pro-ink);
+    }
+
+    .offer-lede {
+      margin: 11px 0 0;
+      padding: 0;
+      max-width: 62ch;
+      font-size: 15px;
+      line-height: 1.6;
+      color: var(--tb-ink-2);
+      text-wrap: pretty;
+    }
+
+    .offer-section {
+      margin-top: 26px;
+    }
+
+    .offer-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      overflow: hidden;
+      border: 1px solid var(--tb-line);
+      border-radius: 8px;
+      @media #{$mat-xs} {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .offer-card {
+      display: flex;
+      gap: 12px;
+      padding: 16px 17px 17px;
+      background: #fff;
+      box-shadow: -1px 0 0 var(--tb-line), 0 -1px 0 var(--tb-line);
+      text-align: left;
+      .offer-svg {
+        flex: none;
+        display: block;
+        margin-top: 1px;
+        width: 24px;
+        height: 24px;
+        color: var(--tb-ink-2);
+      }
+      .t {
+        min-width: 0;
+        b {
+          display: block;
+          margin: 0 0 4px;
+          font-size: 14px;
+          font-weight: 500;
+          color: var(--tb-ink);
+        }
+        span {
+          display: block;
+          font-size: 12.5px;
+          line-height: 1.45;
+          color: var(--tb-ink-2);
+        }
+      }
+    }
+
+    .offer-note {
+      margin: -7px 0 13px;
+      font-size: 13px;
+      line-height: 1.55;
+      color: var(--tb-ink-2);
+    }
+
+    .offer-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .offer-chip {
+      display: inline-flex;
+      align-items: center;
+      height: 27px;
+      padding: 0 11px;
+      border: 1px solid var(--tb-line);
+      border-radius: 4px;
+      background: #fff;
+      font: inherit;
+      font-size: 13px;
+      color: var(--tb-ink-2);
+      white-space: nowrap;
+      cursor: pointer;
+      transition: box-shadow 0.14s ease, color 0.14s ease;
+      &:hover {
+        box-shadow: var(--tb-elev-card);
+        color: var(--tb-brand-ink);
+        text-decoration: underline;
+        text-underline-offset: 2px;
+      }
+    }
+
+    .offer-foot {
+      padding: 22px 28px 24px;
+      background: var(--tb-pack-ground);
+      @media #{$mat-lt-md} {
+        padding: 20px 20px 22px;
+      }
+      h2 {
+        margin-bottom: 9px;
+      }
+      .offer-note {
+        margin: 0 0 14px;
+        font-size: 12.5px;
+      }
+    }
+
+    .offer-cards {
+      display: block;
+      margin: 0 0 20px;
+    }
+
+    .offer-act {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      grid-template-areas: "price act" "self act";
+      align-items: center;
+      gap: 0 20px;
+      > .self:first-child {
+        grid-row: 1 / -1;
+      }
+      .price {
+        grid-area: price;
+        & + .self {
+          margin-top: 6px;
+        }
+      }
+      .self {
+        grid-area: self;
+        font-size: 12.5px;
+        color: var(--tb-ink-3);
+        text-wrap: pretty;
+      }
+      .request-access {
+        flex: none;
+        grid-area: act;
+        align-self: center;
+      }
+      .offer-done {
+        grid-area: act;
+        align-self: center;
+      }
+      p {
+        margin: 0;
+        font-size: 13px;
+        line-height: 1.5;
+        color: var(--tb-ink-2);
+      }
+      @media #{$mat-xs} {
+        grid-template-columns: 1fr;
+        grid-template-areas: "price" "act" "self";
+        align-items: stretch;
+        gap: 12px;
+        > .self:first-child {
+          grid-row: auto;
+          grid-area: self;
+        }
+        .request-access {
+          align-self: stretch;
+        }
+        .offer-done {
+          justify-content: center;
+        }
+      }
+    }
+  }
+}

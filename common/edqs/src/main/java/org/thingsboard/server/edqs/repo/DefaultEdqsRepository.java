@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.edqs.repo;
 
 import lombok.AllArgsConstructor;
@@ -26,6 +14,7 @@ import org.thingsboard.server.common.data.edqs.query.QueryResult;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.permission.MergedUserPermissions;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.stats.EdqsStatsService;
@@ -61,18 +50,18 @@ public class DefaultEdqsRepository implements EdqsRepository {
     }
 
     @Override
-    public long countEntitiesByQuery(TenantId tenantId, CustomerId customerId, EntityCountQuery query, boolean ignorePermissionCheck) {
+    public long countEntitiesByQuery(TenantId tenantId, CustomerId customerId, MergedUserPermissions userPermissions, EntityCountQuery query, boolean ignorePermissionCheck) {
         long startNs = System.nanoTime();
-        long result = get(tenantId).countEntitiesByQuery(customerId, query, ignorePermissionCheck);
+        long result = get(tenantId).countEntitiesByQuery(customerId, userPermissions, query, ignorePermissionCheck);
         statsService.reportEdqsCountQuery(tenantId, query, System.nanoTime() - startNs);
         return result;
     }
 
     @Override
     public PageData<QueryResult> findEntityDataByQuery(TenantId tenantId, CustomerId customerId,
-                                                       EntityDataQuery query, boolean ignorePermissionCheck) {
+                                                       MergedUserPermissions userPermissions, EntityDataQuery query, boolean ignorePermissionCheck) {
         long startNs = System.nanoTime();
-        var result = get(tenantId).findEntityDataByQuery(customerId, query, ignorePermissionCheck);
+        var result = get(tenantId).findEntityDataByQuery(customerId, userPermissions, query, ignorePermissionCheck);
         statsService.reportEdqsDataQuery(tenantId, query, System.nanoTime() - startNs);
         return result;
     }

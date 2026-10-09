@@ -1,41 +1,34 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import {
+  CartoMapLayerSettings,
   CustomMapLayerSettings,
+  defaultCartoMapLayerSettings,
   defaultCustomMapLayerSettings,
   defaultGoogleMapLayerSettings,
   defaultHereMapLayerSettings,
   defaultLayerTitle,
+  defaultOpenFreeMapLayerSettings,
   defaultOpenStreetMapLayerSettings,
   defaultTencentMapLayerSettings,
   GoogleMapLayerSettings,
   HereMapLayerSettings,
+  hereV3Provider,
   MapLayerSettings,
   MapProvider,
+  OpenFreeMapLayerSettings,
+  OpenFreeMapStyleType,
+  normalizeMapLayerSettings,
   OpenStreetMapLayerSettings,
   ReferenceLayerType,
-  TencentMapLayerSettings
+  TencentMapLayerSettings, WEBGL_ERROR_EVENT
 } from '@shared/models/widget/maps/map.models';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { DeepPartial } from '@shared/models/common';
 import { mergeDeep } from '@core/utils';
 import { Observable, of, shareReplay, switchMap } from 'rxjs';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
-import L from 'leaflet';
+import L, { LeafletEvent } from 'leaflet';
 import { catchError, map } from 'rxjs/operators';
 import { ResourcesService } from '@core/services/resources.service';
 import { StyleSpecification } from '@maplibre/maplibre-gl-style-spec';
@@ -60,9 +53,14 @@ export abstract class TbMapLayer<S extends MapLayerSettings> {
   static fromSettings(ctx: WidgetContext,
                       inputSettings: DeepPartial<MapLayerSettings>) {
 
+    inputSettings = normalizeMapLayerSettings(inputSettings as MapLayerSettings);
     switch (inputSettings.provider) {
+      case MapProvider.openfreemap:
+        return new TbOpenFreeMapLayer(ctx, inputSettings);
       case MapProvider.openstreet:
         return new TbOpenStreetMapLayer(ctx, inputSettings);
+      case MapProvider.carto:
+        return new TbCartoMapLayer(ctx, inputSettings);
       case MapProvider.google:
         return new TbGoogleMapLayer(ctx, inputSettings);
       case MapProvider.tencent:
@@ -120,6 +118,13 @@ export abstract class TbMapLayer<S extends MapLayerSettings> {
                     let referenceLayerLoaded = false;
                     baseLayer.addTo(layer);
                     referenceLayer.addTo(layer);
+                    // Forwarding is needed only here: when a reference layer is present the base layer is
+                    // wrapped in this featureGroup, and geo-map listens for WEBGL_ERROR_EVENT on the
+                    // returned layer (the group). In the other branches the MapLibreGLLayer is returned
+                    // directly and fires WEBGL_ERROR_EVENT itself, so no forwarding is required.
+                    baseLayer.once(WEBGL_ERROR_EVENT, (e: LeafletEvent) => {
+                      layer.fire(WEBGL_ERROR_EVENT, e);
+                    });
                     baseLayer.once('load', () => {
                       baseLayerLoaded = true;
                       if (referenceLayerLoaded) {
@@ -219,6 +224,50 @@ class TbOpenStreetMapLayer extends TbMapLayer<OpenStreetMapLayerSettings> {
 
 }
 
+const openFreeMapStyleUrl = (style: OpenFreeMapStyleType): string =>
+  `https://tiles.openfreemap.org/styles/${style}`;
+
+class TbOpenFreeMapLayer extends TbMapLayer<OpenFreeMapLayerSettings> {
+
+  constructor(protected ctx: WidgetContext,
+              protected inputSettings: DeepPartial<MapLayerSettings>) {
+    super(ctx, inputSettings);
+  }
+
+  protected defaultSettings(): OpenFreeMapLayerSettings {
+    return defaultOpenFreeMapLayerSettings;
+  }
+
+  protected createLayer(): Observable<L.Layer> {
+    const styleUrl = openFreeMapStyleUrl(this.settings.layerType);
+    const layer = L.TB.MapLibreGL.mapLibreGLLayer({
+      style: styleUrl,
+      attributionControl: {
+        customAttribution: 'OpenFreeMap, &copy; OpenMapTiles, Data from OpenStreetMap'
+      }
+    });
+    return of(layer);
+  }
+}
+
+class TbCartoMapLayer extends TbMapLayer<CartoMapLayerSettings> {
+
+  constructor(protected ctx: WidgetContext,
+              protected inputSettings: DeepPartial<MapLayerSettings>) {
+    super(ctx, inputSettings);
+  }
+
+  protected defaultSettings(): CartoMapLayerSettings {
+    return defaultCartoMapLayerSettings;
+  }
+
+  protected createLayer(): Observable<L.Layer> {
+    const layer = L.tileLayer.provider(this.settings.layerType, {apikey: this.settings.apiKey || ''});
+    return of(layer);
+  }
+
+}
+
 class TbGoogleMapLayer extends TbMapLayer<GoogleMapLayerSettings> {
 
   static loadedApiKeysGlobal: {[key: string]: boolean} = {};
@@ -300,7 +349,7 @@ class TbHereMapLayer extends TbMapLayer<HereMapLayerSettings> {
 
   protected createLayer(): Observable<L.Layer> {
     const apiKey = this.settings.apiKey || defaultHereMapLayerSettings.apiKey;
-    const layer = L.tileLayer.provider(this.settings.layerType, {useV3: true, apiKey} as any);
+    const layer = L.tileLayer.provider(hereV3Provider(this.settings.layerType), {apiKey});
     return of(layer);
   }
 
@@ -318,7 +367,20 @@ class TbCustomMapLayer extends TbMapLayer<CustomMapLayerSettings> {
   }
 
   protected createLayer(): Observable<L.Layer> {
-    const layer = L.tileLayer(this.settings.tileUrl);
+    if (this.settings.vectorTiles) {
+      const options: any = {
+        style: this.settings.tileUrl
+      };
+      if (this.settings.customAttribution) {
+        options.attributionControl = {
+          customAttribution: this.settings.customAttribution
+        };
+      }
+      return of(L.TB.MapLibreGL.mapLibreGLLayer(options));
+    }
+    const layer = L.tileLayer(this.settings.tileUrl, this.settings.customAttribution ? {
+      attribution: this.settings.customAttribution
+    } : undefined);
     return of(layer);
   }
 

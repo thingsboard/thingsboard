@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { EntityId } from '@shared/models/id/entity-id';
 import { DataKey, FormattedData, WidgetActionDescriptor, WidgetConfig } from '@shared/models/widget.models';
 import { getDescendantProp, isDefined, isNotEmptyStr } from '@core/utils';
@@ -40,6 +27,12 @@ type ColumnVisibilityOptions = 'visible' | 'hidden' | 'hidden-mobile';
 
 type ColumnSelectionOptions = 'enabled' | 'disabled';
 
+export enum columnExportOptions {
+  always = 'always',
+  onlyVisible = 'onlyVisible',
+  never = 'never'
+}
+
 export interface TableWidgetSettings {
   enableSearch: boolean;
   enableSelectColumnDisplay: boolean;
@@ -61,9 +54,11 @@ export interface TableWidgetDataKeySettings {
   useCellStyleFunction: boolean;
   cellStyleFunction?: TbFunction;
   useCellContentFunction: boolean;
+  useCellContentFunctionOnExport: boolean;
   cellContentFunction?: TbFunction;
   defaultColumnVisibility?: ColumnVisibilityOptions;
   columnSelectionToDisplay?: ColumnSelectionOptions;
+  columnExportOption?: columnExportOptions;
   disableSorting?: boolean;
 }
 
@@ -96,12 +91,14 @@ export interface DisplayColumn {
   def: string;
   display: boolean;
   selectable: boolean;
+  includeToExport?: columnExportOptions;
 }
 
 export type CellContentFunction = (...args: any[]) => string;
 
 export interface CellContentFunctionInfo {
   useCellContentFunction: boolean;
+  useCellContentFunctionOnExport?: boolean;
   cellContentFunction?: CompiledTbFunction<CellContentFunction>;
 }
 
@@ -325,12 +322,16 @@ export function getCellContentFunctionInfo(widgetContext: WidgetContext, keySett
         if (!cellContentFunction) {
           return {
             useCellContentFunction: false,
-            cellContentFunction: null
+            cellContentFunction: null,
+            useCellContentFunctionOnExport: false
           }
         } else {
+          const useCellContentFunctionOnExport = isDefined(keySettings.useCellContentFunctionOnExport) ?
+            keySettings.useCellContentFunctionOnExport : true;
           return {
             useCellContentFunction: true,
-            cellContentFunction
+            cellContentFunction,
+            useCellContentFunctionOnExport
           }
         }
       })
@@ -339,7 +340,8 @@ export function getCellContentFunctionInfo(widgetContext: WidgetContext, keySett
     cellContentFunctionInfo$ = of(
       {
         useCellContentFunction: false,
-        cellContentFunction: null
+        cellContentFunction: null,
+        useCellContentFunctionOnExport: false
       }
     )
   }

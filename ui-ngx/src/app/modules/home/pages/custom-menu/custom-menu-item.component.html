@@ -1,0 +1,78 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<ng-container [formGroup]="menuItemFormGroup">
+  <div class="tb-form-row space-between">
+    <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="visible">
+      {{ 'custom-menu.visible' | translate }}
+    </mat-slide-toggle>
+  </div>
+  <div class="flex flex-row items-center justify-center gap-2">
+    <tb-material-icon-select asBoxInput
+      allowedCustomIcon
+      required
+      color="var(--tb-primary-500)"
+      formControlName="icon">
+    </tb-material-icon-select>
+    <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic" floatLabel="always">
+      <mat-label translate>custom-menu.menu-item-name</mat-label>
+      <input required matInput formControlName="name" placeholder="{{ 'custom-menu.menu-item-name' | translate }}">
+    </mat-form-field>
+  </div>
+  @if (menuItemTypeEditable) {
+    <div class="tb-form-row no-border no-padding space-between">
+      <div class="tb-custom-menu-item-type">{{ 'custom-menu.item-type' | translate }}</div>
+      <tb-toggle-select formControlName="menuItemType" appearance="fill">
+        @for (type of cmItemTypes; track type) {
+          <tb-toggle-option [value]="type">{{ cmItemTypeTranslations.get(type) | translate }}</tb-toggle-option>
+        }
+      </tb-toggle-select>
+    </div>
+  }
+  @if (menuItemFormGroup.get('menuItemType').value === CMItemType.LINK) {
+    <div class="tb-form-panel stroked">
+      <div class="tb-form-row no-border no-padding space-between">
+        <div>{{ 'custom-menu.link' | translate }}</div>
+        @if (linkTypeEditable) {
+          <tb-toggle-select formControlName="linkType">
+            @for (type of cmLinkTypes; track type) {
+              <tb-toggle-option [value]="type">{{ cmLinkTypeTranslations.get(type) | translate }}</tb-toggle-option>
+            }
+          </tb-toggle-select>
+        }
+      </div>
+      @if (menuItemFormGroup.get('linkType').value === CMItemLinkType.URL) {
+        <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic" floatLabel="always">
+          <mat-label translate>custom-menu.url</mat-label>
+          <input required matInput formControlName="url" placeholder="{{ 'custom-menu.set-url' | translate }}">
+        </mat-form-field>
+        <div class="tb-form-row space-between">
+          <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="setAccessToken">
+            {{ 'custom-menu.set-access-token' | translate }}
+          </mat-slide-toggle>
+        </div>
+      }
+      @if (menuItemFormGroup.get('linkType').value === CMItemLinkType.DASHBOARD) {
+        <tb-dashboard-autocomplete class="flex-1"
+          formControlName="dashboardId"
+          required
+          label="{{ 'dashboard.dashboard' | translate }}"
+          floatLabel="always"
+          appearance="outline"
+          subscriptSizing="dynamic"
+          requiredText="dashboard.dashboard-required"
+          placeholder="{{ 'dashboard.select-dashboard' | translate }}"
+          [selectFirstDashboard]="false"
+        ></tb-dashboard-autocomplete>
+        <div class="tb-form-row space-between">
+          <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="hideDashboardToolbar">
+            {{ 'custom-menu.hide-toolbar' | translate }}
+          </mat-slide-toggle>
+        </div>
+      }
+    </div>
+  }
+</ng-container>

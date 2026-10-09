@@ -1,0 +1,84 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host {
+  display: block;
+}
+
+.issues-popover {
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  overflow: hidden;
+
+  .header {
+    padding: 12px 12px 12px 16px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+
+    .subtitle {
+      margin-top: 2px;
+      font-size: 12px;
+      color: rgba(0, 0, 0, 0.54);
+    }
+  }
+
+  .body {
+    padding: 8px 16px 16px 16px;
+    max-height: 420px;
+    overflow-y: auto;
+  }
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 12px 0 8px 0;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+
+    &.section-error {
+      color: #D12730;
+    }
+
+    &.section-warn {
+      color: #c76a00;
+    }
+
+    .section-count {
+      font-weight: 500;
+    }
+
+    &:first-child {
+      margin-top: 0;
+    }
+  }
+
+  .issue {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    color: rgba(0, 0, 0, 0.86);
+
+    .severity-icon {
+      flex: 0 0 auto;
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      line-height: 18px;
+      margin-top: 1px;
+    }
+
+    &.error .severity-icon {
+      color: #D12730;
+    }
+
+    &.warn .severity-icon {
+      color: #c76a00;
+    }
+
+    .message {
+      flex: 1;
+      word-break: break-word;
+    }
+  }
+}

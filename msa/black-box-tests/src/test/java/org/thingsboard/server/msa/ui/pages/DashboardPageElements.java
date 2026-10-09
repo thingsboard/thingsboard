@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.msa.ui.pages;
 
 import org.openqa.selenium.WebDriver;
@@ -25,11 +13,14 @@ public class DashboardPageElements extends OtherPageElementsHelper {
         super(driver);
     }
 
-    private static final String TITLES = "//mat-cell[contains(@class,'cdk-column-title')]/span";
+    private static final String TITLES = "//mat-cell[contains(@class,'cdk-column-column1')]/span";
     private static final String ASSIGNED_BTN = ENTITY + "/../..//mat-icon[contains(text(),' assignment_ind')]/../..";
     private static final String MANAGE_ASSIGNED_ENTITY_LIST_FIELD = "//input[@formcontrolname='entity']";
     private static final String MANAGE_ASSIGNED_ENTITY = "//mat-option//span[contains(text(),'%s')]";
     private static final String MANAGE_ASSIGNED_UPDATE_BTN = "//button[@type='submit']";
+    private static final String OPEN_DASHBOARD_GROUP_BTN = "//mat-icon[contains(text(),'view_list')]";
+    private static final String ALL_GROUP_NAMES = "//mat-icon[contains(text(),'check')]/ancestor::mat-row/mat-cell[contains(@class,'name')]/span";
+    private static final String GROUPS_BTN = "//a[@href='/dashboards/groups']/span[@class='mdc-tab__content']";
     private static final String EDIT_BTN = "//mat-icon[text() = 'edit']/parent::button[@mat-stroked-button]";
     private static final String ADD_BTN = "//mat-fab-actions//mat-icon[text() = 'add']/parent::button";
     private static final String ALARM_WIDGET_BUNDLE = "//mat-card-title[text() = 'Alarm widgets']/ancestor::mat-card";
@@ -56,6 +47,19 @@ public class DashboardPageElements extends OtherPageElementsHelper {
     public WebElement manageAssignedUpdateBtn() {
         return waitUntilElementToBeClickable(MANAGE_ASSIGNED_UPDATE_BTN);
     }
+
+    public List<WebElement> openDashboardCroupBtn() {
+        return waitUntilElementsToBeClickable(OPEN_DASHBOARD_GROUP_BTN);
+    }
+
+    public List<WebElement> allGroupName() {
+        return waitUntilElementsToBeClickable(ALL_GROUP_NAMES);
+    }
+
+    public WebElement groupsBtn() {
+        return waitUntilElementToBeClickable(GROUPS_BTN);
+    }
+
 
     public WebElement editBtn() {
         return waitUntilElementToBeClickable(EDIT_BTN);

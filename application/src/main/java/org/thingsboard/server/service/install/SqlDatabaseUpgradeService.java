@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.install;
 
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +11,7 @@ import org.springframework.jdbc.core.StatementCallback;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.thingsboard.server.service.install.lts.LtsMigrationService;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -42,18 +31,33 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
     private final InstallScripts installScripts;
     private final JdbcTemplate jdbcTemplate;
     private final TransactionTemplate transactionTemplate;
+    private final DatabaseSchemaSettingsService schemaSettingsService;
+    private final LtsMigrationService ltsMigrationService;
 
-    public SqlDatabaseUpgradeService(InstallScripts installScripts, JdbcTemplate jdbcTemplate, PlatformTransactionManager transactionManager) {
+    public SqlDatabaseUpgradeService(InstallScripts installScripts, JdbcTemplate jdbcTemplate,
+                                     PlatformTransactionManager transactionManager,
+                                     DatabaseSchemaSettingsService schemaSettingsService,
+                                     LtsMigrationService ltsMigrationService) {
         this.installScripts = installScripts;
         this.jdbcTemplate = jdbcTemplate;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
         this.transactionTemplate.setTimeout((int) TimeUnit.MINUTES.toSeconds(120));
+        this.schemaSettingsService = schemaSettingsService;
+        this.ltsMigrationService = ltsMigrationService;
     }
 
     @Override
-    public void upgradeDatabase() {
+    public void upgradeDatabase(boolean fromCe) {
         log.info("Updating schema...");
+        if (fromCe) {
+            // The delta is not confined to the version the database is already at - it also carries package-version
+            // DDL that the LTS chain below adds again (the job.customer_id and tb_cluster columns, for instance).
+            // Running it first is safe because every statement in it is repeat-safe, not because it is version-scoped.
+            loadSql(getSchemaUpdateFile("pe"));
+        }
         loadSql(getSchemaUpdateFile("basic"));
+        ltsMigrationService.runSchemaMigrations(schemaSettingsService.getDbSchemaVersion(), schemaSettingsService.getPackageSchemaVersion(),
+                schemaSettingsService.isForcedReUpgrade());
         log.info("Schema updated.");
     }
 

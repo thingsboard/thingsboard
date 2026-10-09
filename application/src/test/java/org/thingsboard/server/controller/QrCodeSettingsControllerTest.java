@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -157,6 +145,43 @@ public class QrCodeSettingsControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testShouldNotSaveTenantQrCodeSettingsWithoutRequiredConfig() throws Exception {
+        loginSysAdmin();
+        QrCodeSettings qrCodeSettings = doGet("/api/mobile/qr/settings", QrCodeSettings.class);
+        assertThat(qrCodeSettings.isUseSystemSettings()).isFalse();
+        qrCodeSettings.setUseDefaultApp(true);
+        qrCodeSettings.setQrCodeConfig(QRCodeConfig.builder().showOnHomePage(true).build());
+        doPost("/api/mobile/qr/settings", qrCodeSettings);
+
+        loginTenantAdmin();
+        QrCodeSettings tenantQrCodeSettings = doGet("/api/mobile/qr/settings", QrCodeSettings.class);
+        assertThat(tenantQrCodeSettings.isUseSystemSettings()).isTrue();
+
+        tenantQrCodeSettings.setUseSystemSettings(false);
+        tenantQrCodeSettings.setUseDefaultApp(false);
+        doPost("/api/mobile/qr/settings", tenantQrCodeSettings)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Mobile app bundle is required to use custom application!")));
+
+        tenantQrCodeSettings.setMobileAppBundleId(mobileAppBundle.getId());
+        doPost("/api/mobile/qr/settings", tenantQrCodeSettings)
+                .andExpect(status().isForbidden());
+
+        MobileAppBundle tenantBundle = new MobileAppBundle();
+        tenantBundle.setTitle("Test bundle");
+        tenantBundle = doPost("/api/mobile/bundle", tenantBundle, MobileAppBundle.class);
+
+        tenantQrCodeSettings.setMobileAppBundleId(tenantBundle.getId());
+        tenantQrCodeSettings = doPost("/api/mobile/qr/settings", tenantQrCodeSettings, QrCodeSettings.class);
+
+        //set system settings
+        tenantQrCodeSettings.setMobileAppBundleId(null);
+        tenantQrCodeSettings.setUseSystemSettings(true);
+        doPost("/api/mobile/qr/settings", tenantQrCodeSettings)
+                .andExpect(status().isOk());
+    }
+
+    @Test
     public void testShouldSaveQrCodeSettingsForDefaultApp() throws Exception {
         loginSysAdmin();
         QrCodeSettings qrCodeSettings = doGet("/api/mobile/qr/settings", QrCodeSettings.class);
@@ -195,7 +220,7 @@ public class QrCodeSettingsControllerTest extends AbstractControllerTest {
         String appHost = parsedDeepLink.group(1);
         String secret = parsedDeepLink.group(2);
         String ttl = parsedDeepLink.group(3);
-        assertThat(appHost).isEqualTo("demo.thingsboard.io");
+        assertThat(appHost).isEqualTo("thingsboard.cloud");
         assertThat(ttl).isEqualTo(String.valueOf(mobileSecretKeyTtl));
 
         JwtPair jwtPair = doGet("/api/noauth/qr/" + secret, JwtPair.class);

@@ -1,20 +1,9 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.rule;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Limit;
@@ -33,6 +22,7 @@ import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.RuleChainEntity;
 import org.thingsboard.server.dao.rule.RuleChainDao;
+import org.thingsboard.server.dao.sql.HasSecretsEntityDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
@@ -44,7 +34,7 @@ import java.util.UUID;
 @Slf4j
 @Component
 @SqlDao
-public class JpaRuleChainDao extends JpaAbstractDao<RuleChainEntity, RuleChain> implements RuleChainDao {
+public class JpaRuleChainDao extends JpaAbstractDao<RuleChainEntity, RuleChain> implements RuleChainDao, HasSecretsEntityDao {
 
     @Autowired
     private RuleChainRepository ruleChainRepository;
@@ -113,6 +103,11 @@ public class JpaRuleChainDao extends JpaAbstractDao<RuleChainEntity, RuleChain> 
     }
 
     @Override
+    public ListenableFuture<List<RuleChain>> findRuleChainsByTenantIdAndIdsAsync(UUID tenantId, List<UUID> ruleChainIds) {
+        return service.submit(() -> DaoUtil.convertDataList(ruleChainRepository.findRuleChainsByTenantIdAndIdIn(tenantId, ruleChainIds)));
+    }
+
+    @Override
     public List<RuleChain> findRuleChainsByTenantIdAndIds(UUID tenantId, List<UUID> ruleChainIds) {
         return DaoUtil.convertDataList(ruleChainRepository.findRuleChainsByTenantIdAndIdIn(tenantId, ruleChainIds));
     }
@@ -146,6 +141,11 @@ public class JpaRuleChainDao extends JpaAbstractDao<RuleChainEntity, RuleChain> 
     @Override
     public PageData<RuleChain> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
         return findRuleChainsByTenantId(tenantId.getId(), pageLink);
+    }
+
+    @Override
+    public List<EntityInfo> findByTenantIdAndSecretPlaceholder(TenantId tenantId, String placeholder) {
+        return ruleChainRepository.findByTenantIdAndSecretPlaceholder(tenantId.getId(), placeholder);
     }
 
     @Override

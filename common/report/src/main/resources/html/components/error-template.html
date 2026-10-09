@@ -1,0 +1,8 @@
+<div th:if="${errorMessage != null}"
+     style="border: 1px solid #e53935; background-color: #ffebee; color: #b71c1c; padding: 16px; margin: 16px 0; border-radius: 4px;">
+  <strong>Error!</strong></br>
+  <span th:text="${errorMessage}">An unexpected error occurred.</span><br>
+  <div th:if="${exception != null}">
+    <span th:text="|Exception details: ${exception}|">Exception.</span>
+  </div>
+</div>

@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, Input, OnInit } from '@angular/core';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -22,7 +9,10 @@ import { AlarmCommentService } from '@core/http/alarm-comment.service';
 import { AbstractControl, FormBuilder, FormGroup } from '@angular/forms';
 import { DialogService } from '@core/services/dialog.service';
 import { AuthUser } from '@shared/models/user.model';
+import { Authority } from '@shared/models/authority.enum';
 import { getCurrentAuthUser, selectUserDetails } from '@core/auth/auth.selectors';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { Operation, Resource } from '@shared/models/security.models';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { MAX_SAFE_PAGE_SIZE, PageLink } from '@shared/models/page/page-link';
 import { DateAgoPipe } from '@shared/pipe/date-ago.pipe';
@@ -52,6 +42,8 @@ interface AlarmCommentsDisplayData {
   editedTime?: string;
   editedDateAgo?: string;
   showActions?: boolean;
+  canEdit?: boolean;
+  canDelete?: boolean;
   commentText?: string;
   isSystemComment?: boolean;
   avatarBgColor?: string;
@@ -72,6 +64,8 @@ export class AlarmCommentComponent implements OnInit {
   alarmActivityOnly = false;
 
   authUser: AuthUser;
+
+  hasAlarmWritePermission: boolean;
 
   alarmCommentFormGroup: FormGroup;
 
@@ -102,9 +96,11 @@ export class AlarmCommentComponent implements OnInit {
               public dateAgoPipe: DateAgoPipe,
               private utilsService: UtilsService,
               private datePipe: DatePipe,
-              private importExportService: ImportExportService) {
+              private importExportService: ImportExportService,
+              private userPermissionsService: UserPermissionsService) {
 
     this.authUser = getCurrentAuthUser(store);
+    this.hasAlarmWritePermission = this.userPermissionsService.hasGenericPermission(Resource.ALARM, Operation.WRITE);
 
     this.alarmCommentFormGroup = this.fb.group(
       {
@@ -143,6 +139,11 @@ export class AlarmCommentComponent implements OnInit {
             displayDataElement.editedTime = this.datePipe.transform(alarmComment.comment.editedOn, 'yyyy-MM-dd HH:mm:ss');
             displayDataElement.editedDateAgo = this.dateAgoPipe.transform(alarmComment.comment.editedOn) + '\n';
             displayDataElement.showActions = false;
+            const isCommentAuthor = this.authUser.userId === alarmComment.userId?.id;
+            // Matches backend: editing requires Alarm WRITE permission and being the comment author,
+            // while deleting only requires Alarm WRITE permission (any such user may delete any comment).
+            displayDataElement.canEdit = isCommentAuthor && this.hasAlarmWritePermission;
+            displayDataElement.canDelete = this.hasAlarmWritePermission;
             displayDataElement.isSystemComment = false;
             displayDataElement.avatarBgColor = this.utilsService.stringToHslColor(displayDataElement.displayName,
               40, 60);
@@ -273,11 +274,11 @@ export class AlarmCommentComponent implements OnInit {
     return this.alarmCommentSortOrder.direction === Direction.ASC;
   }
 
-  onCommentMouseEnter(commentId: string, displayDataIndex: number): void {
+  onCommentMouseEnter(displayDataIndex: number): void {
     if (!this.editMode) {
-      const alarmUserId = this.getAlarmCommentById(commentId).userId.id;
-      if (this.authUser.userId === alarmUserId) {
-        this.displayData[displayDataIndex].showActions = true;
+      const displayDataElement = this.displayData[displayDataIndex];
+      if (displayDataElement.canEdit || displayDataElement.canDelete) {
+        displayDataElement.showActions = true;
       }
     }
   }

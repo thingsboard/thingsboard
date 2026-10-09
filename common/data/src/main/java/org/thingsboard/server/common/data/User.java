@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -22,6 +10,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import org.thingsboard.server.common.data.id.CustomMenuId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -31,11 +20,14 @@ import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
+import java.util.Locale;
+import java.util.Optional;
+
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
 @Schema
 @EqualsAndHashCode(callSuper = true)
-public class User extends BaseDataWithAdditionalInfo<UserId> implements HasName, HasTenantId, HasCustomerId, NotificationRecipient, HasVersion {
+public class User extends BaseDataWithAdditionalInfo<UserId> implements GroupEntity<UserId>, NotificationRecipient, HasVersion, ExportableEntity<UserId> {
 
     private static final long serialVersionUID = 8250339805336035966L;
 
@@ -51,9 +43,14 @@ public class User extends BaseDataWithAdditionalInfo<UserId> implements HasName,
     private String lastName;
     @NoXss
     private String phone;
+    @Getter @Setter
+    private CustomMenuId customMenuId;
 
     @Getter @Setter
     private Long version;
+
+    @Getter @Setter
+    private UserId externalId;
 
     public User() {
         super();
@@ -73,8 +70,9 @@ public class User extends BaseDataWithAdditionalInfo<UserId> implements HasName,
         this.lastName = user.getLastName();
         this.phone = user.getPhone();
         this.version = user.getVersion();
+        this.customMenuId = user.getCustomMenuId();
+        this.externalId = user.getExternalId();
     }
-
 
     @Schema(description = "JSON object with the User Id. " +
             "Specify this field to update the device. " +
@@ -107,6 +105,21 @@ public class User extends BaseDataWithAdditionalInfo<UserId> implements HasName,
 
     public void setCustomerId(CustomerId customerId) {
         this.customerId = customerId;
+    }
+
+    @Schema(description = "JSON object with Customer or Tenant Id", accessMode = Schema.AccessMode.READ_ONLY)
+    @Override
+    public EntityId getOwnerId() {
+        return customerId != null && !customerId.isNullUid() ? customerId : tenantId;
+    }
+
+    @Override
+    public void setOwnerId(EntityId entityId) {
+        if (EntityType.CUSTOMER.equals(entityId.getEntityType())) {
+            this.customerId = new CustomerId(entityId.getId());
+        } else {
+            this.customerId = new CustomerId(CustomerId.NULL_UUID);
+        }
     }
 
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Email of the user", example = "user@example.com")
@@ -236,6 +249,17 @@ public class User extends BaseDataWithAdditionalInfo<UserId> implements HasName,
     @JsonIgnore
     public boolean isCustomerUser() {
         return !isSystemAdmin() && !isTenantAdmin();
+    }
+
+    @JsonIgnore
+    public String getLocale() {
+        return getAdditionalInfoField("lang", JsonNode::asText, Locale.US.toString());
+    }
+
+    @Override
+    @JsonIgnore
+    public EntityType getEntityType() {
+        return EntityType.USER;
     }
 
 }

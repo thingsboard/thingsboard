@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   CellActionDescriptorType,
   DateEntityTableColumn,
@@ -100,6 +87,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
               private viewContainerRef: ViewContainerRef,
               private cd: ChangeDetectorRef,
               private store: Store<AppState>,
+              private isReadOnly: boolean,
               public testButtonLabel?: string,
               private debugEventSelected?: EventEmitter<EventBody>,
               public hideClearEventAction = false,
@@ -244,6 +232,87 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
             () => ({}),
             false,
             () => ({}), () => undefined, true)
+        );
+        break;
+      case DebugEventType.DEBUG_CONVERTER:
+        this.columns.push(
+          new EntityTableColumn<Event>('type', 'event.type', '20%',
+            (entity) => entity.body.type, entity => ({
+              padding: '0 12px 0 0',
+            }), false, key => ({
+              padding: '0 12px 0 0'
+            })),
+          new EntityActionTableColumn<Event>('in', 'event.in',
+            {
+              name: this.translate.instant('action.view'),
+              icon: 'more_horiz',
+              isEnabled: (entity) => entity.body.in ? entity.body.in.length > 0 : false,
+              onAction: ($event, entity) => this.showContent($event, entity.body.in,
+                'event.in', entity.body.inMessageType)
+            },
+            '20%'),
+          new EntityActionTableColumn<Event>('out', 'event.out',
+            {
+              name: this.translate.instant('action.view'),
+              icon: 'more_horiz',
+              isEnabled: (entity) => entity.body.out ? entity.body.out.length > 0 : false,
+              onAction: ($event, entity) => this.showContent($event, entity.body.out,
+                'event.out', entity.body.outMessageType)
+            },
+            '20%'),
+          new EntityActionTableColumn<Event>('metadata', 'event.metadata',
+            {
+              name: this.translate.instant('action.view'),
+              icon: 'more_horiz',
+              isEnabled: (entity) => entity.body.metadata ? entity.body.metadata.length > 0 : false,
+              onAction: ($event, entity) => this.showContent($event, entity.body.metadata,
+                'event.metadata', ContentType.JSON)
+            },
+            '20%'),
+          new EntityActionTableColumn<Event>('error', 'event.error',
+            {
+              name: this.translate.instant('action.view'),
+              icon: 'more_horiz',
+              isEnabled: (entity) => entity.body.error && entity.body.error.length > 0,
+              onAction: ($event, entity) => this.showContent($event, entity.body.error,
+                'event.error')
+            },
+            '20%')
+        );
+        break;
+      case DebugEventType.DEBUG_INTEGRATION:
+        this.columns[1].width = '20%';
+        this.columns.push(
+          new EntityTableColumn<Event>('type', 'event.type', '20%',
+            (entity) => entity.body.type, entity => ({
+              padding: '0 12px 0 0',
+            }), false, key => ({
+              padding: '0 12px 0 0'
+            })),
+          new EntityActionTableColumn<Event>('message', 'event.message',
+            {
+              name: this.translate.instant('action.view'),
+              icon: 'more_horiz',
+              isEnabled: (entity) => entity.body.message ? entity.body.message.length > 0 : false,
+              onAction: ($event, entity) => this.showContent($event, entity.body.message,
+                'event.message', entity.body.messageType)
+            },
+            '20%'),
+          new EntityTableColumn<Event>('status', 'event.status', '20%',
+            (entity) => entity.body.status, entity => ({
+              padding: '0 12px 0 0',
+            }), false, key => ({
+              padding: '0 12px 0 0'
+            })),
+          new EntityActionTableColumn<Event>('error', 'event.error',
+            {
+              name: this.translate.instant('action.view'),
+              icon: 'more_horiz',
+              isEnabled: (entity) => entity.body.error && entity.body.error.length > 0,
+              onAction: ($event, entity) => this.showContent($event, entity.body.error,
+                'event.error')
+            },
+            '20%')
         );
         break;
       case DebugEventType.DEBUG_RULE_NODE:
@@ -457,7 +526,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
     this.cellActionDescriptors = [];
     switch (this.eventType) {
       case DebugEventType.DEBUG_RULE_NODE:
-        if (this.testButtonLabel) {
+        if (this.testButtonLabel && !this.isReadOnly) {
           this.cellActionDescriptors.push({
             name: this.translate.instant('rulenode.test-with-this-message', {test: this.translate.instant(this.testButtonLabel)}),
             icon: 'bug_report',
@@ -476,6 +545,18 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
           onAction: (_, entity) => this.debugEventSelected.next(entity.body)
         });
         break;
+      case DebugEventType.DEBUG_CONVERTER:
+        if (this.testButtonLabel && !this.isReadOnly) {
+          this.cellActionDescriptors.push({
+            name: this.translate.instant('converter.test-with-this-message',{test: this.testButtonLabel}),
+            icon: 'bug_report',
+            isEnabled: (entity) => true,
+            onAction: ($event, entity) => {
+              this.debugEventSelected.next(entity.body);
+            }
+          });
+        }
+        break
     }
     this.getTable()?.cellActionDescriptorsUpdated();
   }
@@ -528,6 +609,25 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
           {key: 'maxMessagesProcessed', title: 'event.max-messages-processed'},
           {key: 'minErrorsOccurred', title: 'event.min-errors-occurred'},
           {key: 'maxErrorsOccurred', title: 'event.max-errors-occurred'}
+        );
+        break;
+      case DebugEventType.DEBUG_CONVERTER:
+        this.filterColumns.push(
+          {key: 'type', title: 'event.type'},
+          {key: 'in', title: 'event.in'},
+          {key: 'out', title: 'event.out'},
+          {key: 'metadataSearch', title: 'event.metadata'},
+          {key: 'isError', title: 'event.error'},
+          {key: 'errorStr', title: 'event.error'}
+        );
+        break;
+      case DebugEventType.DEBUG_INTEGRATION:
+        this.filterColumns.push(
+          {key: 'type', title: 'event.type'},
+          {key: 'message', title: 'event.message'},
+          {key: 'statusIntegration', title: 'event.status'},
+          {key: 'isError', title: 'event.error'},
+          {key: 'errorStr', title: 'event.error'}
         );
         break;
       case DebugEventType.DEBUG_RULE_NODE:

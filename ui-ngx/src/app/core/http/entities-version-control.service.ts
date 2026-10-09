@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { defaultHttpOptionsFromConfig, RequestConfig } from '@core/http/http-utils';
@@ -83,9 +70,10 @@ export class EntitiesVersionControlService {
   }
 
   public getEntityDataInfo(externalEntityId: EntityId,
+                           internalEntityId: EntityId,
                            versionId: string,
                            config?: RequestConfig): Observable<EntityDataInfo> {
-    return this.http.get<EntityDataInfo>(`/api/entities/vc/info/${versionId}/${externalEntityId.entityType}/${externalEntityId.id}`,
+    return this.http.get<EntityDataInfo>(`/api/entities/vc/info/${versionId}/${externalEntityId.entityType}/${externalEntityId.id}?internalEntityId=${internalEntityId.id}`,
       defaultHttpOptionsFromConfig(config));
   }
 
@@ -116,9 +104,10 @@ export class EntitiesVersionControlService {
 
   public listEntityVersions(pageLink: PageLink, branch: string,
                             externalEntityId: EntityId,
+                            internalEntityId: EntityId,
                             config?: RequestConfig): Observable<PageData<EntityVersion>> {
     const encodedBranch = encodeURIComponent(branch);
-    return this.http.get<PageData<EntityVersion>>(`/api/entities/vc/version/${externalEntityId.entityType}/${externalEntityId.id}${pageLink.toQuery()}&branch=${encodedBranch}`,
+    return this.http.get<PageData<EntityVersion>>(`/api/entities/vc/version/${externalEntityId.entityType}/${externalEntityId.id}${pageLink.toQuery()}&branch=${encodedBranch}&internalEntityId=${internalEntityId.id}`,
       defaultHttpOptionsFromConfig(config));
   }
 
@@ -171,6 +160,7 @@ export class EntitiesVersionControlService {
     const messageArgs = {} as any;
     switch (type) {
       case EntityLoadErrorType.DEVICE_CREDENTIALS_CONFLICT:
+      case EntityLoadErrorType.INTEGRATION_ROUTING_KEY_CONFLICT:
         messageArgs.entityId = entityLoadError.source.id;
         break;
       case EntityLoadErrorType.MISSING_REFERENCED_ENTITY:

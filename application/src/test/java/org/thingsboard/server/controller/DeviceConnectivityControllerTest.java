@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -162,12 +150,12 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
         mqttProfile.setName("Mqtt device profile");
         mqttProfile.setType(DeviceProfileType.DEFAULT);
         mqttProfile.setTransportType(DeviceTransportType.MQTT);
-        DeviceProfileData mqttProfileData = new DeviceProfileData();
-        mqttProfileData.setConfiguration(new DefaultDeviceProfileConfiguration());
+        DeviceProfileData deviceProfileData = new DeviceProfileData();
+        deviceProfileData.setConfiguration(new DefaultDeviceProfileConfiguration());
         MqttDeviceProfileTransportConfiguration transportConfiguration = new MqttDeviceProfileTransportConfiguration();
         transportConfiguration.setDeviceTelemetryTopic(DEVICE_TELEMETRY_TOPIC);
-        mqttProfileData.setTransportConfiguration(transportConfiguration);
-        mqttProfile.setProfileData(mqttProfileData);
+        deviceProfileData.setTransportConfiguration(transportConfiguration);
+        mqttProfile.setProfileData(deviceProfileData);
         mqttProfile.setDefault(false);
         mqttProfile.setDefaultRuleChainId(null);
 
@@ -177,10 +165,10 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
         coapProfile.setName("Coap device profile");
         coapProfile.setType(DeviceProfileType.DEFAULT);
         coapProfile.setTransportType(DeviceTransportType.COAP);
-        DeviceProfileData coapProfileData = new DeviceProfileData();
-        coapProfileData.setConfiguration(new DefaultDeviceProfileConfiguration());
-        coapProfileData.setTransportConfiguration(new CoapDeviceProfileTransportConfiguration());
-        coapProfile.setProfileData(coapProfileData);
+        DeviceProfileData deviceProfileData2 = new DeviceProfileData();
+        deviceProfileData2.setConfiguration(new DefaultDeviceProfileConfiguration());
+        deviceProfileData2.setTransportConfiguration(new CoapDeviceProfileTransportConfiguration());
+        coapProfile.setProfileData(deviceProfileData);
         coapProfile.setDefault(false);
         coapProfile.setDefaultRuleChainId(null);
 

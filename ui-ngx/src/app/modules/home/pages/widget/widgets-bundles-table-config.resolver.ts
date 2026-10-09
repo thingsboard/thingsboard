@@ -1,25 +1,13 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable } from '@angular/core';
 
 import { Router } from '@angular/router';
 import {
   checkBoxCell,
   DateEntityTableColumn,
+  defaultEntityTablePermissions,
   EntityTableColumn,
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
@@ -33,11 +21,14 @@ import { WidgetsBundleComponent } from '@modules/home/pages/widget/widgets-bundl
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { getCurrentAuthState, getCurrentAuthUser } from '@app/core/auth/auth.selectors';
+import { getCurrentAuthUser } from '@app/core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 import { DialogService } from '@core/services/dialog.service';
 import { ImportExportService } from '@shared/import-export/import-export.service';
 import { Direction } from '@shared/models/page/sort-order';
+import { UtilsService } from '@core/services/utils.service';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { Operation, Resource } from '@shared/models/security.models';
 import { WidgetsBundleTabsComponent } from '@home/pages/widget/widgets-bundle-tabs.component';
 
 @Injectable()
@@ -48,10 +39,12 @@ export class WidgetsBundlesTableConfigResolver  {
   constructor(private store: Store<AppState>,
               private dialogService: DialogService,
               private widgetsService: WidgetService,
+              private userPermissionsService: UserPermissionsService,
               private translate: TranslateService,
               private importExport: ImportExportService,
               private datePipe: DatePipe,
-              private router: Router) {
+              private router: Router,
+              private utils: UtilsService) {
 
     this.config.entityType = EntityType.WIDGETS_BUNDLE;
     this.config.entityComponent = WidgetsBundleComponent;
@@ -63,11 +56,11 @@ export class WidgetsBundlesTableConfigResolver  {
     this.config.rowPointer = true;
 
     this.config.entityTitle = (widgetsBundle) => widgetsBundle ?
-      widgetsBundle.title : '';
+      this.utils.customTranslation(widgetsBundle.title, widgetsBundle.title) : '';
 
     this.config.columns.push(
       new DateEntityTableColumn<WidgetsBundle>('createdTime', 'common.created-time', this.datePipe, '150px'),
-      new EntityTableColumn<WidgetsBundle>('title', 'widgets-bundle.title', '100%'),
+      new EntityTableColumn<WidgetsBundle>('title', 'widgets-bundle.title', '100%', this.config.entityTitle),
       new EntityTableColumn<WidgetsBundle>('tenantId', 'widgets-bundle.system', '60px',
         entity => {
           return checkBoxCell(entity.tenantId.id === NULL_UUID);
@@ -93,7 +86,7 @@ export class WidgetsBundlesTableConfigResolver  {
       {
         name: this.translate.instant('widgets-bundle.export'),
         icon: 'file_download',
-        isEnabled: () => true,
+        isEnabled: () => userPermissionsService.hasGenericPermission(Resource.WIDGET_TYPE, Operation.READ),
         onAction: ($event, entity) => this.exportWidgetsBundle($event, entity)
       },
       {
@@ -110,20 +103,10 @@ export class WidgetsBundlesTableConfigResolver  {
     this.config.deleteEntitiesTitle = count => this.translate.instant('widgets-bundle.delete-widgets-bundles-title', {count});
     this.config.deleteEntitiesContent = () => this.translate.instant('widgets-bundle.delete-widgets-bundles-text');
 
-
     this.config.loadEntity = id => this.widgetsService.getWidgetsBundle(id.id);
     this.config.saveEntity = widgetsBundle => this.widgetsService.saveWidgetsBundle(widgetsBundle);
     this.config.deleteEntity = id => this.widgetsService.deleteWidgetsBundle(id.id);
     this.config.onEntityAction = action => this.onWidgetsBundleAction(action, this.config);
-
-    this.config.handleRowClick = ($event, widgetsBundle) => {
-      if (this.config.isDetailsOpen()) {
-        this.config.toggleEntityDetails($event, widgetsBundle);
-      } else {
-        this.openWidgetsBundle($event, widgetsBundle);
-      }
-      return true;
-    };
 
     this.config.entityAdded = widgetsBundle => {
       this.openWidgetsBundle(null, widgetsBundle);
@@ -133,11 +116,27 @@ export class WidgetsBundlesTableConfigResolver  {
   resolve(): EntityTableConfig<WidgetsBundle> {
     this.config.tableTitle = this.translate.instant('widgets-bundle.widgets-bundles');
     const authUser = getCurrentAuthUser(this.store);
-    this.config.deleteEnabled = (widgetsBundle) => this.isWidgetsBundleEditable(widgetsBundle, authUser.authority);
-    this.config.entitySelectionEnabled = (widgetsBundle) => this.isWidgetsBundleEditable(widgetsBundle, authUser.authority);
+    this.config.deleteEnabled = (widgetsBundle) =>
+      this.isWidgetsBundleEditable(widgetsBundle, authUser.authority) &&
+      this.userPermissionsService.hasGenericPermission(Resource.WIDGETS_BUNDLE, Operation.DELETE);
+    this.config.entitySelectionEnabled = (widgetsBundle) =>
+      this.isWidgetsBundleEditable(widgetsBundle, authUser.authority) &&
+      this.userPermissionsService.hasGenericPermission(Resource.WIDGETS_BUNDLE, Operation.DELETE);
     this.config.detailsReadonly = (widgetsBundle) => !this.isWidgetsBundleEditable(widgetsBundle, authUser.authority);
-    const authState = getCurrentAuthState(this.store);
     this.config.entitiesFetchFunction = pageLink => this.widgetsService.getWidgetBundles(pageLink);
+    defaultEntityTablePermissions(this.userPermissionsService, this.config);
+    if (this.userPermissionsService.hasGenericPermission(Resource.WIDGET_TYPE, Operation.READ)) {
+      this.config.handleRowClick = ($event, widgetsBundle) => {
+        if (this.config.isDetailsOpen()) {
+          this.config.toggleEntityDetails($event, widgetsBundle);
+        } else {
+          this.openWidgetsBundle($event, widgetsBundle);
+        }
+        return true;
+      };
+    } else {
+      this.config.handleRowClick = () => false;
+    }
     return this.config;
   }
 

@@ -1,22 +1,10 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Widget, WidgetTypeDetails } from '@app/shared/models/widget.models';
 import { DashboardLayoutId } from '@shared/models/dashboard.models';
 import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
+import { CustomerId } from '@shared/models/id/customer-id';
 
 export interface ImportWidgetResult {
   widget: Widget;
@@ -71,6 +59,8 @@ export enum ImportEntityColumnType {
   snmpCommunityString = 'SNMP_COMMUNITY_STRING',
   isGateway = 'IS_GATEWAY',
   description = 'DESCRIPTION',
+  edgeLicenseKey = 'EDGE_LICENSE_KEY',
+  cloudEndpoint = 'CLOUD_ENDPOINT',
   routingKey = 'ROUTING_KEY',
   secret = 'SECRET'
 }
@@ -106,6 +96,8 @@ export const importEntityColumnTypeTranslations = new Map<ImportEntityColumnType
     [ImportEntityColumnType.snmpCommunityString, 'import.column-type.snmp.community-string'],
     [ImportEntityColumnType.isGateway, 'import.column-type.isgateway'],
     [ImportEntityColumnType.description, 'import.column-type.description'],
+    [ImportEntityColumnType.edgeLicenseKey, 'import.column-type.edge-license-key'],
+    [ImportEntityColumnType.cloudEndpoint, 'import.column-type.cloud-endpoint'],
     [ImportEntityColumnType.routingKey, 'import.column-type.routing-key'],
     [ImportEntityColumnType.secret, 'import.column-type.secret']
   ]
@@ -124,6 +116,8 @@ export interface ColumnMapping {
 
 export interface BulkImportRequest {
   file: string;
+  customerId?: CustomerId;
+  entityGroupId: string;
   mapping: {
     columns: Array<ColumnMapping>;
     delimiter: CSVDelimiter;
@@ -154,15 +148,34 @@ export const JSON_TYPE: FileType = {
   extension: 'json'
 };
 
+export const CSV_TYPE: FileType = {
+  mimeType: 'text/csv',
+  extension: 'csv'
+};
+
+export const XLS_TYPE: FileType = {
+  mimeType: 'application/vnd.ms-excel',
+  extension: 'xls'
+};
+
+export const XLSX_TYPE: FileType = {
+  mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  extension: 'xlsx'
+};
+
 export const ZIP_TYPE: FileType = {
   mimeType: 'application/zip',
   extension: 'zip'
 };
 
-export const CSV_TYPE: FileType = {
-  mimeType: 'text/csv',
-  extension: 'csv'
-};
+
+export const TEMPLATE_XLS = `
+  <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+  <meta http-equiv="content-type" content="application/vnd.ms-excel; charset=UTF-8"/>
+  <head><!--[if gte mso 9]><xml>
+  <x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>{title}</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml>
+  <![endif]--></head>
+  <body>{table}</body></html>`;
 
 export function convertCSVToJson(csvdata: string, config: CsvToJsonConfig,
                                  onError: (messageId: string, params?: any) => void): CsvToJsonResult | number {
@@ -210,7 +223,7 @@ function splitCSV(str: string, sep: string): string[] {
         foo = foo.shift().split(sep).concat(foo);
       }
     } else {
-      foo[x].replace(/""/g, '"');
+      foo[x] = foo[x].replace(/""/g, '"');
     }
   }
   return foo;

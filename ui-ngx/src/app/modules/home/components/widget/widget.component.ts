@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -38,13 +25,14 @@ import {
 } from '@angular/core';
 import { DashboardWidget } from '@home/models/dashboard-component.models';
 import {
-  MobileImageResult,
+  ExportRow,
   Widget,
   WidgetAction,
   WidgetActionDescriptor,
   widgetActionSources,
   WidgetActionType,
   WidgetComparisonSettings,
+  WidgetExportType,
   WidgetHeaderActionButtonType,
   WidgetMobileActionDescriptor,
   WidgetMobileActionType,
@@ -52,16 +40,19 @@ import {
   widgetType,
   WidgetTypeParameters
 } from '@shared/models/widget.models';
+import { LiveTrackingSaveInfo } from '@shared/models/location.models';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { UtilsService } from '@core/services/utils.service';
-import { forkJoin, Observable, of, ReplaySubject, Subscription, throwError } from 'rxjs';
+import { LocationService } from '@core/services/location.service';
+import { forkJoin, isObservable, Observable, of, ReplaySubject, Subscription, throwError } from 'rxjs';
 import {
   deepClone,
   guid,
   insertVariable,
   isDefined,
+  isFunction,
   isNotEmptyStr,
   objToBase64,
   objToBase64URI,
@@ -74,7 +65,7 @@ import {
   WidgetContext,
   widgetContextToken,
   widgetErrorMessagesToken,
-  WidgetHeaderAction,
+  WidgetHeaderAction, widgetHeaderActionsPanelToken,
   WidgetInfo,
   widgetTitlePanelToken,
   WidgetTypeInstance
@@ -98,7 +89,7 @@ import {
   modulesWithComponentsToTypes,
   ResourcesService
 } from '@core/services/resources.service';
-import { catchError, map, switchMap } from 'rxjs/operators';
+import { catchError, map, mergeMap, switchMap, take } from 'rxjs/operators';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { TimeService } from '@core/services/time.service';
 import { DeviceService } from '@app/core/http/device.service';
@@ -110,7 +101,9 @@ import { UnitService } from '@core/services/unit.service';
 import { DashboardService } from '@core/http/dashboard.service';
 import { WidgetSubscription } from '@core/api/widget-subscription';
 import { EntityService } from '@core/http/entity.service';
+import { DatePipe } from '@angular/common';
 import { ServicesMap } from '@home/models/services.map';
+import { ImportExportService } from '@shared/import-export/import-export.service';
 import { EntityDataService } from '@core/api/entity-data.service';
 import { TranslateService } from '@ngx-translate/core';
 import { NotificationType } from '@core/notification/notification.models';
@@ -127,7 +120,6 @@ import { IModulesMap } from '@modules/common/modules-map.models';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { CompiledTbFunction, compileTbFunction, isNotEmptyTbFunction } from '@shared/models/js-function.models';
 import { HttpClient } from '@angular/common/http';
-import { addDiagnosticChain } from '@angular/compiler-cli/src/ngtsc/diagnostics';
 
 @Component({
     selector: 'tb-widget',
@@ -213,10 +205,13 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
               private deviceService: DeviceService,
               private entityService: EntityService,
               private dashboardService: DashboardService,
+              private importExport: ImportExportService,
               private entityDataService: EntityDataService,
               private alarmDataService: AlarmDataService,
               private translate: TranslateService,
+              private locationService: LocationService,
               private utils: UtilsService,
+              private datePipe: DatePipe,
               private dashboardUtils: DashboardUtilsService,
               private mobileService: MobileService,
               private raf: RafService,
@@ -257,6 +252,7 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
     this.widgetContext.toastTargetId = this.toastTargetId;
     this.widgetContext.renderer = this.renderer;
     this.widgetContext.widgetContentContainer = this.widgetContentContainer;
+    this.widgetContext.widgetHeaderActionsPanel = this.widgetHeaderActionsPanel;
 
     this.widgetContext.subscriptionApi = {
       createSubscription: this.createSubscription.bind(this),
@@ -278,11 +274,14 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
       elementClick: this.elementClick.bind(this),
       cardClick: this.cardClick.bind(this),
       click: this.click.bind(this),
+      invokeAction: this.invokeAction.bind(this),
       getActiveEntityInfo: this.getActiveEntityInfo.bind(this),
       openDashboardStateInSeparateDialog: this.openDashboardStateInSeparateDialog.bind(this),
       openDashboardStateInPopover: this.openDashboardStateInPopover.bind(this),
       placeMapItem: () => {}
     };
+
+    this.widgetContext.exportWidgetData = this.exportWidgetData.bind(this);
 
     this.widgetContext.customHeaderActions = [];
 
@@ -334,12 +333,14 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
     if (customHeaderActions$.length) {
       forkJoin(customHeaderActions$).subscribe((customHeaderActions) => {
         this.widgetContext.customHeaderActions.push(...customHeaderActions);
+        this.dashboardWidget.updateParamsFromData(true);
       });
     }
 
     this.subscriptionContext = new WidgetSubscriptionContext(this.widgetContext.dashboard);
     this.subscriptionContext.timeService = this.timeService;
     this.subscriptionContext.deviceService = this.deviceService;
+    this.subscriptionContext.datePipe = this.datePipe;
     this.subscriptionContext.translate = this.translate;
     this.subscriptionContext.entityDataService = this.entityDataService;
     this.subscriptionContext.alarmDataService = this.alarmDataService;
@@ -683,6 +684,7 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
   }
 
   private reInitImpl() {
+    this.displayNoData = false;
     this.onDestroy();
     if (!this.typeParameters.useCustomDatasources) {
       this.createDefaultSubscription().subscribe({
@@ -726,7 +728,6 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
           subscriptionChanged = subscriptionChanged || subscription.onAliasesChanged(aliasIds);
         }
         if (subscriptionChanged && !this.typeParameters.useCustomDatasources) {
-          this.displayNoData = false;
           this.reInit();
         }
       }
@@ -740,7 +741,6 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
           subscriptionChanged = subscriptionChanged || subscription.onFiltersChanged(filterIds);
         }
         if (subscriptionChanged && !this.typeParameters.useCustomDatasources) {
-          this.displayNoData = false;
           this.reInit();
         }
       }
@@ -825,6 +825,10 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
             {
               provide: widgetTitlePanelToken,
               useValue: this.widgetTitlePanel
+            },
+            {
+              provide: widgetHeaderActionsPanelToken,
+              useValue: this.widgetHeaderActionsPanel
             }
           ],
           parent: this.injector
@@ -1164,7 +1168,7 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
         const state = objToBase64URI([ stateObject ]);
         const isSinglePage = this.route.snapshot.data.singlePageMode;
         let url: string;
-        if (isSinglePage) {
+        if (isSinglePage && !this.router.url.startsWith('/dashboards')) {
           url = `/dashboard/${targetDashboardId}?state=${state}`;
         } else {
           url = `/dashboards/${targetDashboardId}?state=${state}`;
@@ -1215,6 +1219,9 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
         const mobileAction = descriptor.mobileAction;
         this.handleMobileAction($event, mobileAction, entityId, entityName, additionalParams, entityLabel);
         break;
+      case WidgetActionType.saveBrowserLocation:
+        this.locationService.saveBrowserLocation(this.widgetContext, descriptor.saveBrowserLocation, entityId);
+        break;
     }
   }
 
@@ -1230,7 +1237,11 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
         break;
       case WidgetMobileActionType.scanQrCode:
       case WidgetMobileActionType.getLocation:
+      case WidgetMobileActionType.stopLiveLocation:
         argsObservable = of([]);
+        break;
+      case WidgetMobileActionType.startLiveLocation:
+        argsObservable = this.locationService.liveTrackingArgs(this.widgetContext, mobileAction, entityId);
         break;
       case WidgetMobileActionType.deviceProvision:
         argsObservable = of([mobileAction.provisionType]);
@@ -1370,37 +1381,41 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
                     case WidgetMobileActionType.getLocation:
                       const latitude = actionResult.latitude;
                       const longitude = actionResult.longitude;
-                      if (isNotEmptyTbFunction(mobileAction.processLocationFunction)) {
-                        compileTbFunction(this.http, mobileAction.processLocationFunction, 'latitude', 'longitude', '$event', 'widgetContext', 'entityId',
-                          'entityName', 'additionalParams', 'entityLabel').subscribe(
-                          {
-                            next: (compiled) => {
-                              try {
-                                compiled.execute(latitude, longitude, $event, this.widgetContext,
-                                  entityId, entityName, additionalParams, entityLabel);
-                              } catch (e) {
-                                console.error(e);
-                              }
-                            },
-                            error: (err) => {
-                              console.error(err);
-                            }
+                      if (mobileAction.saveToEntity) {
+                        this.locationService.saveMobileActionLocation(this.widgetContext, mobileAction,
+                          actionResult, entityId).subscribe({
+                          next: (saveInfo) => {
+                            this.executeProcessLocationFunction(mobileAction, latitude, longitude, $event,
+                              entityId, entityName, additionalParams, entityLabel, saveInfo);
+                          },
+                          error: (err) => {
+                            this.handleWidgetMobileActionError(this.translate.instant('widget-action.mobile.location-save-failed',
+                              {error: err?.message}), $event, mobileAction, entityId, entityName, additionalParams, entityLabel);
                           }
-                        );
+                        });
+                      } else {
+                        this.executeProcessLocationFunction(mobileAction, latitude, longitude, $event,
+                          entityId, entityName, additionalParams, entityLabel);
                       }
                       break;
                     case WidgetMobileActionType.mapDirection:
                     case WidgetMobileActionType.mapLocation:
                     case WidgetMobileActionType.makePhoneCall:
+                    case WidgetMobileActionType.startLiveLocation:
+                    case WidgetMobileActionType.stopLiveLocation:
                       const launched = actionResult.launched;
+                      let trackingInfo: LiveTrackingSaveInfo = null;
+                      if (type === WidgetMobileActionType.startLiveLocation) {
+                        trackingInfo = this.locationService.liveTrackingInfo(args[0]);
+                      }
                       if (isNotEmptyTbFunction(mobileAction.processLaunchResultFunction)) {
                         compileTbFunction(this.http, mobileAction.processLaunchResultFunction, 'launched', '$event', 'widgetContext', 'entityId',
-                          'entityName', 'additionalParams', 'entityLabel').subscribe(
+                          'entityName', 'additionalParams', 'entityLabel', 'trackingInfo').subscribe(
                           {
                             next: (compiled) => {
                               try {
                                 compiled.execute(launched, $event, this.widgetContext,
-                                  entityId, entityName, additionalParams, entityLabel);
+                                  entityId, entityName, additionalParams, entityLabel, trackingInfo);
                               } catch (e) {
                                 console.error(e);
                               }
@@ -1464,6 +1479,30 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
           this.handleWidgetMobileActionError(errorMessage, $event, mobileAction, entityId, entityName, additionalParams, entityLabel);
         }
       });
+  }
+
+  private executeProcessLocationFunction(mobileAction: WidgetMobileActionDescriptor, latitude: number, longitude: number,
+                                         $event: Event, entityId?: EntityId, entityName?: string, additionalParams?: any,
+                                         entityLabel?: string, saveInfo?: LiveTrackingSaveInfo) {
+    if (!isNotEmptyTbFunction(mobileAction.processLocationFunction)) {
+      return;
+    }
+    compileTbFunction(this.http, mobileAction.processLocationFunction, 'latitude', 'longitude', '$event', 'widgetContext',
+      'entityId', 'entityName', 'additionalParams', 'entityLabel', 'saveInfo').subscribe(
+      {
+        next: (compiled) => {
+          try {
+            compiled.execute(latitude, longitude, $event, this.widgetContext,
+              entityId, entityName, additionalParams, entityLabel, saveInfo);
+          } catch (e) {
+            console.error(e);
+          }
+        },
+        error: (err) => {
+          console.error(err);
+        }
+      }
+    );
   }
 
   private handleWidgetMobileActionError(error: string, $event: Event, mobileAction: WidgetMobileActionDescriptor,
@@ -1616,6 +1655,16 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
     }
   }
 
+  private invokeAction($event: Event, actionName: string, additionalParams?: any) {
+    const descriptors = this.getActionDescriptors('javaScript');
+    if (descriptors?.length) {
+      const found = descriptors.find(d => d.name === actionName);
+      if (found) {
+        this.handleWidgetAction($event, found, null, null, additionalParams);
+      }
+    }
+  }
+
   private onWidgetAction($event: Event, action: WidgetAction) {
     if ($event) {
       $event.stopPropagation();
@@ -1737,6 +1786,54 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
       messageToShow += `<div>${error}</div>`;
     });
     this.store.dispatch(new ActionNotificationShow({message: messageToShow, type: 'error'}));
+  }
+
+  private exportWidgetData(widgetExportType: WidgetExportType) {
+    const data = this.prepareWidgetExportData();
+    const dateFormat = this.widgetExportDateFormat();
+    this.dashboardWidget.title$.pipe(
+      take(1),
+      mergeMap(widgetTitle => {
+        if (isObservable(data)) {
+          return data.pipe(
+            map(widgetData => ({widgetTitle, data: widgetData}))
+          );
+        } else {
+          return of({widgetTitle, data});
+        }
+      })
+    ).subscribe(result => {
+      const fileName = this.widgetInfo.widgetName + (isNotEmptyStr(result.widgetTitle) ? `_${result.widgetTitle}` : '');
+      this.doExportWidgetData(fileName, result.data, widgetExportType, dateFormat);
+    });
+  }
+
+  private doExportWidgetData(filename: string, data: ExportRow[],
+                             widgetExportType: WidgetExportType, dateFormat: string) {
+    if (widgetExportType === WidgetExportType.csv) {
+      this.importExport.exportCsv(data, filename, true, dateFormat);
+    } else if (widgetExportType === WidgetExportType.xls) {
+      this.importExport.exportXls(data, filename, true, dateFormat);
+    } else if (widgetExportType === WidgetExportType.xlsx) {
+      this.importExport.exportXlsx(data, filename, dateFormat, true);
+    }
+  }
+
+  private prepareWidgetExportData(): ExportRow[] | Observable<ExportRow[]> {
+    if (isFunction(this.widgetContext.customDataExport)) {
+      return this.widgetContext.customDataExport();
+    } else if (this.widgetContext.defaultSubscription){
+      return this.widgetContext.defaultSubscription.exportData();
+    } else {
+      return [];
+    }
+  }
+
+  private widgetExportDateFormat(): string {
+    if (isNotEmptyStr(this.widgetContext.exportDateFormat)) {
+      return this.widgetContext.exportDateFormat;
+    }
+    return 'yyyy-MM-dd HH:mm:ss';
   }
 
   private getActiveEntityInfo(): SubscriptionEntityInfo {

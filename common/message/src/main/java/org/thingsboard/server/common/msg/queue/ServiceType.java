@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.msg.queue;
 
 import lombok.Getter;
@@ -26,9 +14,11 @@ public enum ServiceType {
     TB_RULE_ENGINE("TB Rule Engine"),
     TB_TRANSPORT("TB Transport"),
     JS_EXECUTOR("JS Executor"),
+    TB_INTEGRATION_EXECUTOR("TB Integration Executor"),
     TB_VC_EXECUTOR("TB VC Executor"),
     EDQS("TB Entity Data Query Service"),
-    TASK_PROCESSOR("Task Processor");
+    TASK_PROCESSOR("Task Processor"),
+    TB_REPORT("TB Report Service");
 
     private final String label;
 

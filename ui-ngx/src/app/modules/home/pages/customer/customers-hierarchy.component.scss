@@ -1,0 +1,142 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host {
+  width: 100%;
+  height: 100%;
+
+  .tb-customers-hierarchy {
+    width: 100%;
+    height: 100%;
+
+    section.tb-header-buttons.tb-customers-hierarchy-buttons {
+      position: absolute;
+      top: 0;
+      z-index: 3;
+      pointer-events: none;
+
+      .mdc-fab {
+        width: 36px;
+        height: 36px;
+        line-height: 36px;
+        opacity: .5;
+      }
+
+      &.tb-nav-tree-open {
+        left: 0;
+        .mdc-fab.tb-btn-open-nav-tree {
+          top: 0;
+          left: 0;
+          margin: 4px 0 0 4px;
+        }
+      }
+
+      &.tb-customers-nav-tree-toolbar {
+        .mdc-fab {
+          margin: 4px 8px 0 0;
+        }
+      }
+    }
+
+    .tb-customers-nav-tree {
+      z-index: 1;
+      width: 360px;
+      min-width: 360px;
+
+      .tb-customers-nav-tree-panel {
+        overflow-x: auto;
+        overflow-y: auto;
+      }
+    }
+
+    .tb-customers-hierarchy-content {
+      z-index: 0;
+      overflow: auto;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  :host {
+    .tb-customers-hierarchy {
+      .tb-customers-nav-tree {
+        width: 100vw;
+        min-width: 100vw;
+      }
+    }
+  }
+}
+
+:host ::ng-deep {
+  .tb-customers-hierarchy {
+    .tb-nav-tree-container {
+      &.jstree-proton {
+        .jstree-anchor {
+          div.node-icon {
+            display: inline-block;
+            width: 22px;
+            height: 22px;
+            margin-right: 2px;
+            margin-bottom: 2px;
+            background-color: transparent;
+            background-repeat: no-repeat;
+            background-attachment: scroll;
+            background-position: center center;
+            background-size: 18px 18px;
+          }
+
+          .mat-icon.node-icon {
+            width: 22px;
+            min-width: 22px;
+            height: 22px;
+            min-height: 22px;
+            margin-right: 2px;
+            margin-bottom: 2px;
+            color: inherit;
+            vertical-align: middle;
+
+            &.material-icons {
+              font-size: 18px;
+              line-height: 22px;
+              text-align: center;
+            }
+          }
+
+          &.jstree-hovered:not(.jstree-clicked),
+          &.jstree-disabled {
+            div.node-icon {
+              opacity: .5;
+            }
+          }
+        }
+      }
+    }
+
+    @media (max-width: 768px) {
+      .tb-nav-tree-container {
+        &.jstree-proton-responsive {
+          .jstree-anchor {
+            div.node-icon {
+              width: 40px;
+              height: 40px;
+              margin: 0;
+              background-size: 24px 24px;
+            }
+
+            .mat-icon.node-icon {
+              width: 40px;
+              min-width: 40px;
+              height: 40px;
+              min-height: 40px;
+              margin: 0;
+
+              &.material-icons {
+                font-size: 24px;
+                line-height: 40px;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

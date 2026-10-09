@@ -1,0 +1,136 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="scheduleConfigFormGroup" class="flex flex-col">
+  <tb-timezone-select
+    userTimezoneByDefault
+    appearance="outline"
+    required
+    formControlName="timezone">
+  </tb-timezone-select>
+  <section class="flex flex-col gap-4 gt-sm:flex-row gt-sm:items-start gt-sm:justify-start">
+    <mat-form-field class="mat-block tb-layout-fill" appearance="outline">
+      <mat-label translate>scheduler.start-time</mat-label>
+      <mat-datetimepicker-toggle [for]="startDatePicker" matPrefix></mat-datetimepicker-toggle>
+      <mat-datetimepicker #startDatePicker type="datetime" openOnFocus="true"></mat-datetimepicker>
+      <input required matInput formControlName="startDate" [matDatetimepicker]="startDatePicker">
+    </mat-form-field>
+  </section>
+  <section class="tb-form-panel stroked"
+           [class.no-padding-bottom]="repeatConfigPanel.expanded">
+    <mat-expansion-panel class="tb-settings" #repeatConfigPanel
+                         [disabled]="!scheduleConfigFormGroup.get('repeat').value"
+                         [expanded]="scheduleConfigFormGroup.get('repeat').value">
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          <mat-slide-toggle formControlName="repeat" class="mat-slide flex-1" (click)="$event.stopPropagation()">
+            {{ 'scheduler.repeat' | translate }}
+          </mat-slide-toggle>
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        <div [class.!hidden]="!scheduleConfigFormGroup.get('repeat').value"
+             class="no-gap flex flex-col">
+          <mat-form-field class="mat-block" appearance="outline">
+            <mat-label translate>scheduler.repeats</mat-label>
+            <mat-select matInput formControlName="repeatType" required>
+              @for (repeatType of schedulerRepeatTypes; track repeatType) {
+                <mat-option [value]="repeatType">
+                  {{ getSchedulerRepeatTypeTranslations(repeatType) | translate }}
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field class="mat-block" [class.!hidden]="scheduleConfigFormGroup.get('repeatType').value !== schedulerRepeatType.EVERY_N_DAYS" appearance="outline">
+            <mat-label translate>scheduler.repeat-every-n-days</mat-label>
+            <input type="number" min="1" step="1" matInput formControlName="days" required>
+            @if (scheduleConfigFormGroup.get('days').hasError('required')) {
+              <mat-error>
+                {{ 'scheduler.repeat-days-required' | translate }}
+              </mat-error>
+            }
+            @if (scheduleConfigFormGroup.get('days').hasError('min')) {
+              <mat-error>
+                {{ 'scheduler.invalid-repeat-days-value' | translate }}
+              </mat-error>
+            }
+          </mat-form-field>
+          <mat-form-field class="mat-block" [class.!hidden]="scheduleConfigFormGroup.get('repeatType').value !== schedulerRepeatType.EVERY_N_WEEKS" appearance="outline">
+            <mat-label translate>scheduler.repeat-every-n-weeks</mat-label>
+            <input type="number" min="1" step="1" matInput formControlName="weeks" required>
+            @if (scheduleConfigFormGroup.get('weeks').hasError('required')) {
+              <mat-error>
+                {{ 'scheduler.repeat-weeks-required' | translate }}
+              </mat-error>
+            }
+            @if (scheduleConfigFormGroup.get('weeks').hasError('min')) {
+              <mat-error>
+                {{ 'scheduler.invalid-repeat-weeks-value' | translate }}
+              </mat-error>
+            }
+          </mat-form-field>
+          <div [class.!hidden]="scheduleConfigFormGroup.get('repeatType').value !== schedulerRepeatType.TIMER"
+               formGroupName="timerRepeat"
+               class="flex flex-col">
+            <label translate class="tb-small">scheduler.repeat-every</label>
+            <div class="flex flex-col gap-2 gt-sm:flex-row">
+              <mat-form-field class="mat-block gt-sm:max-w-50% gt-sm:flex-full" appearance="outline">
+                <input type="number" min="0" stype="any" matInput formControlName="repeatInterval" required>
+                @if (scheduleConfigFormGroup.get('timerRepeat.repeatInterval').hasError('required')) {
+                  <mat-error>
+                    {{ 'scheduler.time-interval-required' | translate }}
+                  </mat-error>
+                }
+              </mat-form-field>
+              <mat-form-field class="mat-block gt-sm:max-w-50% gt-sm:flex-full" appearance="outline">
+                <mat-select matInput formControlName="timeUnit" required>
+                  @for ( timeUnit of schedulerTimeUnits; track timeUnit) {
+                    <mat-option [value]="timeUnit">
+                      {{ getSchedulerTimeUnitTranslations(timeUnit) | translate }}
+                    </mat-option>
+                  }
+                </mat-select>
+                @if (scheduleConfigFormGroup.get('timerRepeat.timeUnit').hasError('required')) {
+                  <mat-error>
+                    {{ 'scheduler.time-unit-required' | translate }}
+                  </mat-error>
+                }
+              </mat-form-field>
+            </div>
+          </div>
+          <div class="tb-form-row space-between column-xs"
+               [class.!hidden]="scheduleConfigFormGroup.get('repeatType').value !== schedulerRepeatType.WEEKLY">
+            <div class="no-wrap">{{ 'scheduler.repeat-on' | translate }}</div>
+            <div formArrayName="weeklyRepeat">
+              <mat-chip-listbox multiple #repeatChipListBox>
+                @for ( day of weekDays; track day) {
+                  <mat-chip-option [selected]="weeklyRepeatControl($index).value"
+                                   (click)="onChipClicked($index, repeatChipListBox)"
+                                   [matTooltip]="day.tooltip | translate" matTooltipPosition="above">
+                    {{ day.label | translate }}
+                  </mat-chip-option>
+                }
+              </mat-chip-listbox>
+            </div>
+          </div>
+          <section class="flex flex-row items-start justify-start">
+            <mat-form-field class="mat-block tb-layout-fill" appearance="outline">
+              <mat-label translate>scheduler.ends-on</mat-label>
+              <mat-datetimepicker-toggle [for]="endDatePicker" matPrefix></mat-datetimepicker-toggle>
+              <mat-datetimepicker #endDatePicker type="date" openOnFocus="true"></mat-datetimepicker>
+              <input required matInput formControlName="endsOnDate" [matDatetimepicker]="endDatePicker" [errorStateMatcher]="endsOnDateMatcher">
+              @if (scheduleConfigFormGroup.hasError('endsOnDateValidator')) {
+                <mat-error>
+                  {{ 'scheduler.invalid-time' | translate }}
+                </mat-error>
+              }
+            </mat-form-field>
+          </section>
+        </div>
+      </ng-template>
+    </mat-expansion-panel>
+  </section>
+</section>

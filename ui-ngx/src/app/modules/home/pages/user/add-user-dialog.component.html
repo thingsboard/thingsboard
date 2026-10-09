@@ -1,62 +1,89 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<form (ngSubmit)="add()" style="min-width: 450px;">
-  <mat-toolbar color="primary">
-    <h2 translate>user.add</h2>
-    <span class="flex-1"></span>
-    <div [tb-help]="'users'"></div>
-    <button mat-icon-button
-            (click)="cancel()"
-            type="button">
-      <mat-icon class="material-icons">close</mat-icon>
-    </button>
-  </mat-toolbar>
-  @if (isLoading$ | async) {
-    <mat-progress-bar color="warn" mode="indeterminate">
-    </mat-progress-bar>
-  } @else {
-    <div style="height: 4px;"></div>
-  }
-  <div mat-dialog-content>
-    <tb-user></tb-user>
-    <mat-form-field class="mat-block" appearance="outline">
-      <mat-label translate>user.activation-method</mat-label>
-      <mat-select [ngModelOptions]="{standalone: true}" [(ngModel)]="activationMethod">
-        @for (activationMethod of activationMethods; track activationMethod) {
-          <mat-option [value]="activationMethod">
-            {{ activationMethodTranslations.get(activationMethodEnum[activationMethod]) | translate }}
-          </mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
+<mat-toolbar color="tb-primary" class="tb-bottom-border">
+  <h2 translate>user.add</h2>
+  <span class="flex-1"></span>
+  <div [tb-help]="'users'"></div>
+  <button mat-icon-button
+    (click)="cancel()"
+    type="button">
+    <mat-icon class="material-icons">close</mat-icon>
+  </button>
+</mat-toolbar>
+@if (isLoading$ | async) {
+  <mat-progress-bar color="warn" mode="indeterminate">
+  </mat-progress-bar>
+}
+@else {
+  <div style="height: 4px;"></div>
+  }<div mat-dialog-content>
+  <mat-horizontal-stepper [linear]="true" [labelPosition]="labelPosition" #addUserWizardStepper (selectionChange)="changeStep($event)">
+    <ng-template matStepperIcon="edit">
+      <mat-icon>check</mat-icon>
+    </ng-template>
+    <mat-step [stepControl]="detailsForm">
+      <ng-template matStepLabel>{{ 'user.user-details' | translate}}</ng-template>
+      <tb-user
+        [entitiesTableConfig]="entitiesTableConfig">
+      </tb-user>
+      <mat-form-field class="mat-block" appearance="outline">
+        <mat-label translate>user.activation-method</mat-label>
+        <mat-select [ngModelOptions]="{standalone: true}" [(ngModel)]="activationMethod">
+          @for (activationMethod of activationMethods; track activationMethod) {
+            <mat-option [value]="activationMethod">
+              {{ activationMethodTranslations.get(activationMethodEnum[activationMethod]) | translate }}
+            </mat-option>}
+          </mat-select>
+        </mat-form-field>
+      </mat-step>
+      @if (!isSysAdmin) {
+        <mat-step [stepControl]="ownerAndGroupsFormGroup" [optional]="true">
+          <ng-template matStepLabel>{{ 'entity-group.owner-and-groups' | translate }}</ng-template>
+          <form [formGroup]="ownerAndGroupsFormGroup">
+            <tb-owner-and-groups
+              [entityType]="entityType.USER"
+              [defaultOwnerId]="initialOwnerId"
+              [skipDefaultPermissionCheck]="true"
+              appearance="outline"
+              formControlName="ownerAndGroups">
+            </tb-owner-and-groups>
+          </form>
+        </mat-step>
+      }
+    </mat-horizontal-stepper>
   </div>
-  <div mat-dialog-actions class="flex items-center justify-end">
-    <button mat-button color="primary"
-            type="button"
-            cdkFocusInitial
+  <div mat-dialog-actions style="padding: 0">
+    @if (!isSysAdmin) {
+      <div class="dialog-actions-row flex flex-1 flex-row items-center justify-end">
+        @if (selectedIndex > 0) {
+          <button mat-stroked-button
             [disabled]="(isLoading$ | async)"
-            (click)="cancel()">
-      {{ 'action.cancel' | translate }}
-    </button>
-    <button mat-raised-button color="primary"
-            type="submit"
-            [disabled]="(isLoading$ | async) || detailsForm.invalid || !detailsForm.dirty">
-      {{ 'action.add' | translate }}
-    </button>
+          (click)="previousStep()">{{ 'action.back' | translate }}</button>
+        }
+        <span class="flex-1"></span>
+        @if (showNext) {
+          <button mat-stroked-button
+            color="primary"
+            [disabled]="(isLoading$ | async)"
+          (click)="nextStep()">{{ 'action.next-with-label' | translate:{label: (getFormLabel(selectedIndex+1) | translate)} }}</button>
+        }
+      </div>
+    }
+    @if (!isSysAdmin) {
+      <mat-divider style="width: 100%"></mat-divider>
+    }
+    <div class="dialog-actions-row flex flex-1 flex-row items-center justify-end gap-2">
+      <button mat-button
+        [disabled]="(isLoading$ | async)"
+      (click)="cancel()">{{ 'action.cancel' | translate }}</button>
+      <button mat-raised-button
+        [disabled]="(isLoading$ | async) || (isSysAdmin && (detailsForm.invalid || !detailsForm.dirty))"
+        color="primary"
+      (click)="add()">{{ 'action.add' | translate }}</button>
+    </div>
   </div>
-</form>

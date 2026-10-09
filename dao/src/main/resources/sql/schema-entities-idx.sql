@@ -1,17 +1,7 @@
 --
--- Copyright © 2016-2026 The Thingsboard Authors
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+-- SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+-- SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 --
 
 CREATE INDEX IF NOT EXISTS idx_alarm_originator_alarm_type ON alarm(originator_id, type, start_ts DESC);
@@ -71,13 +61,67 @@ CREATE INDEX IF NOT EXISTS idx_edge_event_tenant_id_edge_id_created_time ON edge
 
 CREATE INDEX IF NOT EXISTS idx_edge_event_id ON edge_event(id);
 
+CREATE INDEX IF NOT EXISTS idx_entity_group_by_type_name_and_owner_id ON entity_group(type, name, owner_id);
+
 CREATE INDEX IF NOT EXISTS idx_rpc_tenant_id_device_id ON rpc(tenant_id, device_id);
 
+CREATE INDEX IF NOT EXISTS idx_customer_tenant_id_parent_customer_id ON customer(tenant_id, parent_customer_id);
+
 CREATE INDEX IF NOT EXISTS idx_rule_node_external_id ON rule_node(rule_chain_id, external_id);
+
+CREATE INDEX IF NOT EXISTS idx_rule_node_type ON rule_node(type);
+
+CREATE INDEX IF NOT EXISTS idx_entity_group_external_id ON entity_group(external_id);
 
 CREATE INDEX IF NOT EXISTS idx_rule_node_type_id_configuration_version ON rule_node(type, id, configuration_version);
 
 CREATE INDEX IF NOT EXISTS idx_api_usage_state_entity_id ON api_usage_state(entity_id);
+
+CREATE INDEX IF NOT EXISTS idx_scheduler_event_originator_id ON scheduler_event(tenant_id, originator_id);
+
+CREATE INDEX IF NOT EXISTS idx_blob_entity_created_time ON blob_entity(tenant_id, created_time DESC);
+
+CREATE INDEX IF NOT EXISTS idx_blob_entity_id ON blob_entity(id);
+
+CREATE INDEX IF NOT EXISTS idx_agent_customer_id ON agent(tenant_id, customer_id);
+
+CREATE INDEX IF NOT EXISTS idx_agent_agent_profile_id ON agent(agent_profile_id);
+
+CREATE INDEX IF NOT EXISTS idx_agent_application_application_profile_id ON agent_application(application_profile_id);
+
+CREATE INDEX IF NOT EXISTS idx_agent_application_tenant_id ON agent_application(tenant_id);
+
+CREATE INDEX IF NOT EXISTS idx_agent_bulk_action_agent_profile_id ON agent_bulk_action(agent_profile_id, application_profile_id);
+
+CREATE INDEX IF NOT EXISTS idx_agent_bulk_action_application_profile_id ON agent_bulk_action(application_profile_id);
+
+CREATE INDEX IF NOT EXISTS idx_agent_bulk_action_created_time ON agent_bulk_action(created_time);
+
+CREATE INDEX IF NOT EXISTS idx_agent_bulk_action_stuck ON agent_bulk_action(status)
+    WHERE status IN ('QUEUED', 'IN_PROGRESS');
+
+CREATE INDEX IF NOT EXISTS idx_agent_app_event_app_start_status ON agent_app_event(application_id, start_status);
+
+CREATE INDEX IF NOT EXISTS idx_agent_app_event_bulk_action_processing_status ON agent_app_event(bulk_action_id, processing_status) WHERE bulk_action_id IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_agent_app_event_tenant_agent ON agent_app_event(tenant_id, agent_id);
+
+CREATE INDEX IF NOT EXISTS idx_agent_app_event_updated_time ON agent_app_event(updated_time);
+
+CREATE INDEX IF NOT EXISTS idx_agent_app_event_bulk_action_created_time ON agent_app_event(created_time) WHERE bulk_action_id IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_agent_app_event_agent_action_type ON agent_app_event(agent_id, action_type);
+
+CREATE INDEX IF NOT EXISTS idx_agent_app_event_stuck_agent_sweep ON agent_app_event(updated_time)
+    WHERE agent_scoped
+    AND start_status = 'DELIVERED'
+    AND (processing_status IS NULL OR processing_status NOT IN ('FINISHED', 'ERROR'));
+
+-- At most one active agent-scoped event per agent
+CREATE UNIQUE INDEX IF NOT EXISTS uq_agent_app_event_active_agent ON agent_app_event(agent_id)
+    WHERE agent_scoped
+    AND start_status IN ('PENDING', 'DELIVERED')
+    AND (processing_status IS NULL OR processing_status NOT IN ('FINISHED', 'ERROR', 'START_FAILED'));
 
 CREATE INDEX IF NOT EXISTS idx_alarm_comment_alarm_id ON alarm_comment(alarm_id);
 
@@ -110,10 +154,30 @@ CREATE INDEX IF NOT EXISTS idx_resource_etag ON resource(tenant_id, etag);
 
 CREATE INDEX IF NOT EXISTS idx_resource_type_public_resource_key ON resource(resource_type, public_resource_key);
 
+CREATE INDEX IF NOT EXISTS idx_group_permission_tenant_id ON group_permission(tenant_id);
+
+CREATE INDEX IF NOT EXISTS idx_custom_menu ON custom_menu(tenant_id, customer_id);
+
 CREATE INDEX IF NOT EXISTS mobile_app_bundle_tenant_id ON mobile_app_bundle(tenant_id);
 
 CREATE INDEX IF NOT EXISTS idx_job_tenant_id ON job(tenant_id);
 
+CREATE INDEX IF NOT EXISTS idx_encryption_key_tenant_id ON encryption_key(tenant_id);
+
+CREATE INDEX IF NOT EXISTS idx_report_tenant_id_created_time ON report(tenant_id, created_time DESC);
+
+CREATE INDEX IF NOT EXISTS idx_report_id ON report(id);
+
+CREATE INDEX IF NOT EXISTS idx_report_public_key ON report(public_key) WHERE public_key IS NOT NULL;
+
 CREATE INDEX IF NOT EXISTS idx_ai_model_tenant_id ON ai_model(tenant_id);
 
-CREATE INDEX IF NOT EXISTS idx_api_key_user_id ON api_key(user_id);
+CREATE INDEX IF NOT EXISTS idx_report_template_tenant_id ON report_template(tenant_id);
+
+CREATE INDEX IF NOT EXISTS idx_api_key_tenant_id_user_id ON api_key(tenant_id, user_id);
+
+CREATE INDEX IF NOT EXISTS idx_iot_hub_installed_item_tenant_id ON iot_hub_installed_item(tenant_id);
+
+CREATE INDEX IF NOT EXISTS idx_iot_hub_installed_item_item_type ON iot_hub_installed_item(tenant_id, item_type);
+
+CREATE INDEX IF NOT EXISTS idx_iot_hub_installed_item_item_id ON iot_hub_installed_item(tenant_id, item_id);

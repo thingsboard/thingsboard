@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.subscription;
 
 import jakarta.annotation.PostConstruct;
@@ -20,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -44,6 +33,8 @@ import org.thingsboard.server.queue.discovery.event.OtherServiceShutdownEvent;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.log.LogStreamDispatcher;
+import org.thingsboard.server.service.subscription.TbEntityRemoteSubsInfo.TbEntitySubsUpdateInfo;
 import org.thingsboard.server.service.ws.notification.sub.NotificationUpdate;
 import org.thingsboard.server.service.ws.notification.sub.NotificationsSubscriptionUpdate;
 
@@ -70,6 +61,8 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
     private final TbQueueProducerProvider producerProvider;
     private final TbLocalSubscriptionService localSubscriptionService;
     private final SubscriptionSchedulerComponent scheduler;
+    private final List<SubEventObserver> subEventObservers;
+    private final LogStreamDispatcher logStreamDispatcher;
 
     private final Lock subsLock = new ReentrantLock();
     private final ConcurrentMap<EntityId, TbEntityRemoteSubsInfo> entitySubscriptions = new ConcurrentHashMap<>();
@@ -77,12 +70,14 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
     private final ConcurrentMap<EntityId, TbEntityUpdatesInfo> entityUpdates = new ConcurrentHashMap<>();
 
     private String serviceId;
+    private Map<EntityType, List<SubEventObserver>> observersByEntityType = Map.of();
     private TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> toCoreNotificationsProducer;
 
     private long initTs;
 
     @PostConstruct
     public void initExecutor() {
+        observersByEntityType = subEventObservers.stream().collect(Collectors.groupingBy(SubEventObserver::entityType));
         serviceId = serviceInfoProvider.getServiceId();
         initTs = System.currentTimeMillis();
         toCoreNotificationsProducer = producerProvider.getTbCoreNotificationsMsgProducer();
@@ -96,15 +91,9 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
         log.trace("[{}][{}][{}] Processing subscription event {}", tenantId, entityId, serviceId, event);
         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
         if (tpi.isMyPartition()) {
-            subsLock.lock();
-            try {
-                var entitySubs = entitySubscriptions.computeIfAbsent(entityId, id -> new TbEntityRemoteSubsInfo(tenantId, entityId));
-                boolean empty = entitySubs.updateAndCheckIsEmpty(serviceId, event);
-                if (empty) {
-                    entitySubscriptions.remove(entityId);
-                }
-            } finally {
-                subsLock.unlock();
+            TbEntitySubsUpdateInfo subsUpdInfo = addOrRemoveEntitySubEvent(serviceId, event);
+            for (SubEventObserver o : observersByEntityType.getOrDefault(entityId.getEntityType(), List.of())) {
+                o.onSubEvent(event, subsUpdInfo, () -> findCommittedSubsInfo(entityId));
             }
             callback.onSuccess();
             if (event.hasTsOrAttrSub()) {
@@ -117,18 +106,64 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
         }
     }
 
+    private TbEntityRemoteSubsInfo findCommittedSubsInfo(EntityId entityId) {
+        subsLock.lock();
+        try {
+            return entitySubscriptions.get(entityId);
+        } finally {
+            subsLock.unlock();
+        }
+    }
+
+    private TbEntitySubsUpdateInfo addOrRemoveEntitySubEvent(String serviceId, TbEntitySubEvent event) {
+        subsLock.lock();
+        try {
+            EntityId entityId = event.getEntityId();
+            var entitySubs = entitySubscriptions.computeIfAbsent(entityId, _ -> initEntityRemoteSubsInfo(event));
+            var entitySubsInfo = entitySubs.updateAndCheckIsEmpty(serviceId, event);
+            if (entitySubsInfo.isEmpty()) {
+                entitySubscriptions.remove(entityId);
+            }
+            return entitySubsInfo;
+        } finally {
+            subsLock.unlock();
+        }
+    }
+
+    private TbEntityRemoteSubsInfo initEntityRemoteSubsInfo(TbEntitySubEvent event) {
+        EntityId entityId = event.getEntityId();
+        for (SubEventObserver o : observersByEntityType.getOrDefault(entityId.getEntityType(), List.of())) {
+            return o.createSubsInfo(event.getTenantId(), entityId);
+        }
+        return new TbEntityRemoteSubsInfo(event.getTenantId(), entityId);
+    }
+
     @Override
     @EventListener(OtherServiceShutdownEvent.class)
     public void onApplicationEvent(OtherServiceShutdownEvent event) {
         if (event.getServiceTypes() != null && event.getServiceTypes().contains(ServiceType.TB_CORE)) {
+            List<Runnable> notifications = new ArrayList<>();
             subsLock.lock();
             try {
                 int sizeBeforeCleanup = entitySubscriptions.size();
-                entitySubscriptions.entrySet().removeIf(kv -> kv.getValue().removeAndCheckIsEmpty(event.getServiceId()));
+                entitySubscriptions.entrySet().removeIf(kv -> {
+                    TbEntityRemoteSubsInfo subsInfo = kv.getValue();
+                    TbEntitySubsUpdateInfo updInfo = subsInfo.removeAndGetUpdateInfo(event.getServiceId());
+                    if (updInfo == null) {
+                        return false;
+                    }
+                    EntityId entityId = kv.getKey();
+                    for (SubEventObserver o : observersByEntityType.getOrDefault(entityId.getEntityType(), List.of())) {
+                        notifications.add(() -> o.onSubsRemoved(subsInfo.getTenantId(), entityId, updInfo,
+                                () -> findCommittedSubsInfo(entityId)));
+                    }
+                    return updInfo.isEmpty();
+                });
                 log.info("[{}][{}] Removed {} entity subscription records due to server shutdown.", serviceId, event.getServiceId(), entitySubscriptions.size() - sizeBeforeCleanup);
             } finally {
                 subsLock.unlock();
             }
+            notifications.forEach(Runnable::run);
         }
     }
 
@@ -188,6 +223,35 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
         } else {
             sendCoreNotification(targetId, entityId, TbSubscriptionUtils.toProto(entityId, update));
         }
+    }
+
+    @Override
+    public void onLogStreamUpdate(TenantId tenantId, EntityId entityId, long latestSeq, TbCallback callback) {
+        Set<String> targets;
+        subsLock.lock();
+        try {
+            TbEntityRemoteSubsInfo subInfo = entitySubscriptions.get(entityId);
+            if (subInfo == null) {
+                log.trace("[{}] No subscriptions for log stream update.", entityId);
+                callback.onSuccess();
+                return;
+            }
+            targets = subInfo.getSubs().entrySet().stream()
+                    .filter(e -> e.getValue().isLogs())
+                    .map(Map.Entry::getKey)
+                    .collect(Collectors.toSet());
+        } finally {
+            subsLock.unlock();
+        }
+        log.trace("[{}] Handling log stream update: latestSeq={}", entityId, latestSeq);
+        for (String targetId : targets) {
+            if (serviceId.equals(targetId)) {
+                logStreamDispatcher.onWatermark(tenantId, entityId, latestSeq, TbCallback.EMPTY);
+            } else {
+                sendCoreNotification(targetId, entityId, TbSubscriptionUtils.toLogStreamUpdateProtoNf(tenantId, entityId, latestSeq));
+            }
+        }
+        callback.onSuccess();
     }
 
     @Override

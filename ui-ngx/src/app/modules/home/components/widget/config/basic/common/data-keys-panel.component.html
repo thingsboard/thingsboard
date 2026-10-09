@@ -1,18 +1,8 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div class="tb-form-panel tb-data-keys-panel"
@@ -21,6 +11,7 @@
   @if (!hidePanel) {
     <div class="tb-form-panel-title">{{ panelTitle }}</div>
   }
+  <ng-content></ng-content>
   <div class="tb-form-table">
     <div class="tb-form-table-header no-padding-right">
       @if (hasAdditionalLatestDataKeys) {
@@ -50,7 +41,7 @@
            cdkDropList cdkDropListOrientation="vertical"
            [cdkDropListDisabled]="!dragEnabled"
            (cdkDropListDropped)="keyDrop($event)">
-        @for (keyControl of keysFormArray().controls; track trackByKey($index, keyControl)) {
+        @for (keyControl of keysFormArray().controls; track keyControl) {
           <div cdkDrag [cdkDragDisabled]="!dragEnabled"
                class="tb-draggable-form-table-row"
                >
@@ -60,6 +51,7 @@
                              [datasourceType]="datasourceType"
                              [deviceId]="deviceId"
                              [entityAliasId]="entityAliasId"
+                             [reportMode]="reportMode"
                              [hasAdditionalLatestDataKeys]="hasAdditionalLatestDataKeys"
                              [hideDataKeyColor]="hideDataKeyColor"
                              [hideDecimals]="hideDecimals"
@@ -81,6 +73,7 @@
                       cdkDragHandle
                       class="lt-lg:!hidden"
                       [class.tb-hidden]="!dragEnabled"
+                      [class.invisible]="disabled"
                       matTooltip="{{ 'action.drag' | translate }}"
                       matTooltipPosition="above">
                 <mat-icon>drag_indicator</mat-icon>
@@ -96,9 +89,11 @@
       <tb-error noMargin [error]="errorText" style="padding-left: 12px;"></tb-error>
     }
   </div>
-  <div>
-    <button type="button" mat-stroked-button color="primary" (click)="addKey()">
-      {{ addKeyTitle }}
-    </button>
-  </div>
+  @if (!disabled) {
+    <div>
+      <button type="button" mat-stroked-button color="primary" (click)="addKey()">
+        {{ addKeyTitle }}
+      </button>
+    </div>
+  }
 </div>

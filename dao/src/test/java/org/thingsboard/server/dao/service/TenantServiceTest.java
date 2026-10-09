@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.service;
 
 import org.junit.Assert;
@@ -20,7 +8,7 @@ import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.common.data.Customer;
@@ -42,10 +30,15 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantInfo;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.agent.Agent;
+import org.thingsboard.server.common.data.agent.AgentAppProfile;
+import org.thingsboard.server.common.data.agent.AgentInfo;
+import org.thingsboard.server.common.data.agent.AgentProfile;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.id.RpcId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -62,7 +55,6 @@ import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
-import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rpc.RpcService;
@@ -72,12 +64,15 @@ import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
+import org.thingsboard.server.exception.DataValidationException;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.Set;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -87,7 +82,7 @@ import static org.mockito.Mockito.verify;
 @DaoSqlTest
 public class TenantServiceTest extends AbstractServiceTest {
 
-    @SpyBean
+    @MockitoSpyBean
     TenantDao tenantDao;
 
     @Autowired
@@ -456,6 +451,37 @@ public class TenantServiceTest extends AbstractServiceTest {
     }
 
     @Test
+    public void testSaveTenantCreatesDefaultAgentProfile() {
+        TenantProfile profile = createAndSaveTenantProfile();
+        Tenant tenant = createAndSaveTenant(profile);
+        try {
+            AgentProfile defaultProfile = agentProfileService.findDefaultAgentProfile(tenant.getId());
+            Assert.assertNotNull(defaultProfile);
+            Assert.assertEquals(tenant.getId(), defaultProfile.getTenantId());
+            Assert.assertEquals("default", defaultProfile.getName());
+            Assert.assertTrue(defaultProfile.isDefault());
+        } finally {
+            tenantService.deleteTenant(tenant.getId());
+            tenantProfileService.deleteTenantProfile(TenantId.SYS_TENANT_ID, profile.getId());
+        }
+    }
+
+    @Test
+    public void testDeleteDefaultAgentProfileIsProhibited() {
+        TenantProfile profile = createAndSaveTenantProfile();
+        Tenant tenant = createAndSaveTenant(profile);
+        try {
+            AgentProfile defaultProfile = agentProfileService.findDefaultAgentProfile(tenant.getId());
+            Assert.assertNotNull(defaultProfile);
+            Assertions.assertThrows(DataValidationException.class,
+                    () -> agentProfileService.deleteProfile(tenant.getId(), defaultProfile.getId()));
+        } finally {
+            tenantService.deleteTenant(tenant.getId());
+            tenantProfileService.deleteTenantProfile(TenantId.SYS_TENANT_ID, profile.getId());
+        }
+    }
+
+    @Test
     public void testDeleteTenantDeletingAllRelatedEntities() throws Exception {
         TenantProfile profile = createAndSaveTenantProfile();
         Tenant tenant = createAndSaveTenant(profile);
@@ -472,6 +498,8 @@ public class TenantServiceTest extends AbstractServiceTest {
         OtaPackage otaPackage = createAndSaveOtaPackageFor(tenant, deviceProfile);
         TbResource resource = createAndSaveResourceFor(tenant);
         Rpc rpc = createAndSaveRpcFor(tenant, device);
+        Agent agent = createAndSaveAgentFor(tenant);
+        AgentAppProfile agentAppProfile = createAgentAppProfile(tenant.getId(), "Test Agent App Profile");
 
         tenantService.deleteTenant(tenant.getId());
 
@@ -491,8 +519,34 @@ public class TenantServiceTest extends AbstractServiceTest {
         assertResourceIsDeleted(tenant, resource);
         assertOtaPackageIsDeleted(tenant, otaPackage);
         Assert.assertNull(rpcService.findById(tenant.getId(), rpc.getId()));
+        assertAgentIsDeleted(tenant, agent);
+        assertAgentProfileIsDeleted(tenant);
+        assertAgentAppProfileIsDeleted(tenant, agentAppProfile);
 
         tenantProfileService.deleteTenantProfile(TenantId.SYS_TENANT_ID, profile.getId());
+    }
+
+    private void assertAgentAppProfileIsDeleted(Tenant tenant, AgentAppProfile agentAppProfile) {
+        assertThat(agentAppProfileService.findProfileById(tenant.getId(), agentAppProfile.getId()))
+                .as("agentAppProfile").isNull();
+        Assert.assertEquals(0, agentAppProfileService
+                .findProfilesByTenantId(tenant.getId(), new PageLink(1)).getTotalElements());
+    }
+
+    private void assertAgentProfileIsDeleted(Tenant tenant) {
+        PageData<AgentProfile> profiles =
+                agentProfileService.findAgentProfilesByTenantId(tenant.getId(), new PageLink(1));
+        Assert.assertEquals(0, profiles.getTotalElements());
+    }
+
+    private void assertAgentIsDeleted(Tenant tenant, Agent agent) {
+        assertThat(agentService.findAgentById(tenant.getId(), agent.getId()))
+                .as("agent").isNull();
+        PageLink pageLink = new PageLink(1);
+        PageData<AgentInfo> agents =
+                agentService.findAgentInfosByTenantId(tenant.getId(), pageLink);
+        Assert.assertEquals(0, agents.getTotalElements());
+
     }
 
     private void assertOtaPackageIsDeleted(Tenant tenant, OtaPackage otaPackage) {
@@ -600,13 +654,26 @@ public class TenantServiceTest extends AbstractServiceTest {
         Assert.assertEquals(0, pageDataCustomer.getTotalElements());
     }
 
-    private Rpc createAndSaveRpcFor(Tenant tenant, Device device) {
-        Rpc rpc = new Rpc();
+    private Rpc createAndSaveRpcFor(Tenant tenant, Device device) throws Exception {
+        // The create path is insert-if-absent and therefore needs the id up front - which is how it is used in
+        // production: the device actor builds the Rpc with the rpcId the request already carries.
+        Rpc rpc = new Rpc(new RpcId(UUID.randomUUID()));
+        rpc.setCreatedTime(System.currentTimeMillis());
         rpc.setTenantId(tenant.getId());
         rpc.setDeviceId(device.getId());
         rpc.setStatus(RpcStatus.QUEUED);
         rpc.setRequest(JacksonUtil.toJsonNode("{}"));
-        return rpcService.save(rpc);
+        assertThat(rpcService.createIfAbsentAsync(rpc).get(5, TimeUnit.SECONDS)).isTrue();
+        return rpc;
+    }
+
+    private Agent createAndSaveAgentFor(Tenant tenant) {
+        Agent agent = new Agent();
+        agent.setTenantId(tenant.getId());
+        agent.setName("Test Agent");
+        agent.setRoutingKey(StringUtils.randomAlphanumeric(15));
+        agent.setSecret(StringUtils.randomAlphanumeric(20));
+        return agentService.saveAgent(agent);
     }
 
     private TbResource createAndSaveResourceFor(Tenant tenant) {

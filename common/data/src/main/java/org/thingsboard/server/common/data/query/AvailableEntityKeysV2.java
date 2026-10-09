@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.query;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -35,21 +23,26 @@ import java.util.Set;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record AvailableEntityKeysV2(
         @Schema(
+                description = "Total number of entities that matched the query filter.",
+                example = "5",
+                requiredMode = Schema.RequiredMode.REQUIRED
+        )
+        @Nullable Integer totalEntities,
+
+        @Schema(
                 description = "Set of entity types found among the matched entities.",
                 example = "[\"DEVICE\", \"ASSET\"]",
                 requiredMode = Schema.RequiredMode.REQUIRED
         )
         Set<EntityType> entityTypes,
 
-        @ArraySchema(
-                arraySchema = @Schema(
-                        description = """
-                                List of unique time series keys available on the matched entities, sorted alphabetically.
-                                Omitted when timeseries keys were not requested.""",
-                        nullable = true
-                ),
-                schema = @Schema(implementation = KeyInfo.class)
+        @Schema(
+                description = """
+                        List of unique time series keys available on the matched entities, sorted alphabetically.
+                        Omitted when timeseries keys were not requested.""",
+                nullable = true
         )
+        @ArraySchema(schema = @Schema(implementation = KeyInfo.class))
         @Nullable List<KeyInfo> timeseries,
 
         @Schema(

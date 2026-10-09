@@ -1,0 +1,113 @@
+[
+  {
+    "name": "Clay mine site",
+    "type": "Mine site",
+    "label": "Clay mine site",
+    "group": "MineSites",
+    "attributes": {
+      "address": "Clay Deposit, Sample County",
+      "perimeter": [[36.216016537251114,-88.6686158125484],[36.21604250514161,-88.6660193904196],[36.21665274860512,-88.66603013294389],[36.21666573245689,-88.66511821199293],[36.21577416962498,-88.66511823389416],[36.215765513624426,-88.66110561088084],[36.21362745240411,-88.66102517883094],[36.21264929120469,-88.6629508830784],[36.212588696760925,-88.66585852495109],[36.211645149115064,-88.66586921409129],[36.21214722153981,-88.667135281081],[36.212588697118086,-88.66717277451663],[36.21353656161476,-88.66863728527757]]
+    },
+    "relations": [
+      {
+        "entityType": "ASSET",
+        "entityName": "Zone L1",
+        "direction": "TO",
+        "type": "MineSiteToLoadingZone"
+      },
+      {
+        "entityType": "ASSET",
+        "entityName": "Zone U1",
+        "direction": "TO",
+        "type": "MineSiteToUnloadingZone"
+      },
+      {
+        "entityType": "ASSET",
+        "entityName": "Zone R1",
+        "direction": "TO",
+        "type": "MineSiteToRestrictedZone"
+      },
+      {
+        "entityType": "ASSET",
+        "entityName": "Zone R2",
+        "direction": "TO",
+        "type": "MineSiteToRestrictedZone"
+      },
+      {
+        "entityType": "DEVICE",
+        "entityName": "Excavator A",
+        "direction": "TO",
+        "type": "MineSiteToMachine"
+      },
+      {
+        "entityType": "DEVICE",
+        "entityName": "Excavator B",
+        "direction": "TO",
+        "type": "MineSiteToMachine"
+      },
+      {
+        "entityType": "DEVICE",
+        "entityName": "Haul truck A",
+        "direction": "TO",
+        "type": "MineSiteToMachine"
+      },
+      {
+        "entityType": "DEVICE",
+        "entityName": "Haul truck B",
+        "direction": "TO",
+        "type": "MineSiteToMachine"
+      },
+      {
+        "entityType": "DEVICE",
+        "entityName": "Haul truck C",
+        "direction": "TO",
+        "type": "MineSiteToMachine"
+      }
+    ],
+    "jsonId": "d0e23905-8c79-4dd8-a765-289ba27bd4fa"
+  },
+  {
+    "name": "Zone L1",
+    "type": "Mine site zone",
+    "label": "Zone L1",
+    "group": "MineSiteZones",
+    "attributes": {
+      "type": "Loading",
+      "perimeter": [[36.21436322889415,-88.66686165332796],[36.21382221726431,-88.66670072078705],[36.21344134283319,-88.66692602634431],[36.21363178028049,-88.66560637950899],[36.21420741792828,-88.66574048995973],[36.2147787232862,-88.66594433784486],[36.21486961239034,-88.6660408973694],[36.21488259653945,-88.66616427898408],[36.21434591657992,-88.66641640663148]]
+    },
+    "relations": []
+  },
+  {
+    "name": "Zone U1",
+    "type": "Mine site zone",
+    "label": "Zone U1",
+    "group": "MineSiteZones",
+    "attributes": {
+      "type": "Unloading",
+      "perimeter": [[36.21346684787311,-88.66748929023744],[36.21354473516904,-88.66841197013856],[36.21542698791017,-88.66837978363037],[36.21568227847287,-88.66420626640321],[36.21489909630793,-88.66484999656677],[36.21495534722195,-88.66574048995973],[36.214968328196385,-88.6675751209259]]
+    },
+    "relations": []
+  },
+  {
+    "name": "Zone R1",
+    "type": "Mine site zone",
+    "label": "Zone R1",
+    "group": "MineSiteZones",
+    "attributes": {
+      "type": "Restricted",
+      "perimeter": [[36.21491722092656,-88.66572439670563],[36.21485662823907,-88.66479635238647],[36.215670297555356,-88.66416335105896],[36.21523316775112,-88.66333187447727],[36.215401960737275,-88.66244137971553],[36.21550150514812,-88.66203367710115],[36.215618361468835,-88.66157770156862],[36.21513362299886,-88.66126656532289],[36.214471430771226,-88.66121292114259],[36.21388713885741,-88.66362154483795],[36.21429397961429,-88.66431355476381],[36.21423338644414,-88.66469979286195],[36.21423771452927,-88.66510212421419],[36.21430696385892,-88.66546154022218]]
+    },
+    "relations": []
+  },
+  {
+    "name": "Zone R2",
+    "type": "Mine site zone",
+    "label": "Zone R2",
+    "group": "MineSiteZones",
+    "attributes": {
+      "type": "Restricted",
+      "perimeter": [[36.21493020506778,-88.66753220558168],[36.213475967858066,-88.66746783256532],[36.21345432721931,-88.66695821285249],[36.21383087347984,-88.66673290729523],[36.214389197358294,-88.6669045686722],[36.21438486928152,-88.66643249988556],[36.21491289287902,-88.66619646549226]]
+    },
+    "relations": []
+  }
+]

@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.resource;
 
 import org.springframework.data.domain.Page;
@@ -30,7 +18,7 @@ public interface TbResourceInfoRepository extends JpaRepository<TbResourceInfoEn
 
     @Query("SELECT tr FROM TbResourceInfoEntity tr WHERE " +
             "(:searchText IS NULL OR ilike(tr.title, CONCAT('%', :searchText, '%')) = true) " +
-            "AND (tr.tenantId = :tenantId " +
+            "AND ((tr.tenantId = :tenantId AND (tr.customerId IS NULL OR tr.customerId = org.thingsboard.server.common.data.id.EntityId.NULL_UUID))" +
             "OR (tr.tenantId = :systemTenantId " +
             "AND NOT EXISTS " +
             "(SELECT sr FROM TbResourceEntity sr " +
@@ -47,7 +35,7 @@ public interface TbResourceInfoRepository extends JpaRepository<TbResourceInfoEn
                                                                 Pageable pageable);
 
     @Query("SELECT ri FROM TbResourceInfoEntity ri WHERE " +
-            "ri.tenantId = :tenantId " +
+            "ri.tenantId = :tenantId AND (ri.customerId IS NULL OR ri.customerId = org.thingsboard.server.common.data.id.EntityId.NULL_UUID) " +
             "AND ri.resourceType IN :resourceTypes " +
             "AND (:resourceSubTypes IS NULL OR ri.resourceSubType IN :resourceSubTypes) " +
             "AND (:searchText IS NULL OR ilike(ri.title, CONCAT('%', :searchText, '%')) = true)")
@@ -57,7 +45,21 @@ public interface TbResourceInfoRepository extends JpaRepository<TbResourceInfoEn
                                                              @Param("searchText") String searchText,
                                                              Pageable pageable);
 
+    @Query("SELECT ri FROM TbResourceInfoEntity ri WHERE " +
+            "ri.tenantId = :tenantId AND ri.customerId = :customerId " +
+            "AND ri.resourceType IN :resourceTypes " +
+            "AND (:resourceSubTypes IS NULL OR ri.resourceSubType IN :resourceSubTypes) " +
+            "AND (:searchText IS NULL OR ilike(ri.title, CONCAT('%', :searchText, '%')) = true)")
+    Page<TbResourceInfoEntity> findTenantResourcesByCustomerId(@Param("tenantId") UUID tenantId,
+                                                               @Param("customerId") UUID customerId,
+                                                               @Param("resourceTypes") List<String> resourceTypes,
+                                                               @Param("resourceSubTypes") List<String> resourceSubTypes,
+                                                               @Param("searchText") String searchText,
+                                                               Pageable pageable);
+
     TbResourceInfoEntity findByTenantIdAndResourceTypeAndResourceKey(UUID tenantId, String resourceType, String resourceKey);
+
+    TbResourceInfoEntity findByTenantIdAndCustomerIdAndResourceTypeAndResourceKey(UUID tenantId, UUID customerId, String resourceType, String resourceKey);
 
     boolean existsByTenantIdAndResourceTypeAndResourceKey(UUID tenantId, String resourceType, String resourceKey);
 
@@ -74,6 +76,14 @@ public interface TbResourceInfoRepository extends JpaRepository<TbResourceInfoEn
     TbResourceInfoEntity findSystemOrTenantResourceByEtag(@Param("tenantId") UUID tenantId,
                                                           @Param("resourceType") String resourceType,
                                                           @Param("etag") String etag);
+
+    @Query(value = "SELECT * FROM resource r WHERE (r.tenant_id = '13814000-1dd2-11b2-8080-808080808080' " +
+            "OR (r.tenant_id = :tenantId AND r.customer_id = :customerId)) " +
+            "AND r.resource_type = :resourceType AND r.etag = :etag LIMIT 1", nativeQuery = true)
+    TbResourceInfoEntity findSystemOrCustomerImageByEtag(@Param("tenantId") UUID tenantId,
+                                                         @Param("customerId") UUID customerId,
+                                                         @Param("resourceType") String resourceType,
+                                                         @Param("etag") String etag);
 
     boolean existsByResourceTypeAndPublicResourceKey(String resourceType, String publicResourceKey);
 

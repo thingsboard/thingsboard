@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.cf;
 
 import lombok.AllArgsConstructor;
@@ -26,6 +14,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.action.TbAlarmResult;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
@@ -38,7 +27,7 @@ import org.thingsboard.server.common.data.alarm.rule.condition.RepeatingAlarmCon
 import org.thingsboard.server.common.data.alarm.rule.condition.SimpleAlarmCondition;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.AlarmConditionExpression;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.AlarmConditionFilter;
-import org.thingsboard.server.common.data.alarm.rule.condition.expression.ComplexOperation;
+import org.thingsboard.server.common.data.query.ComplexOperation;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.SimpleAlarmConditionExpression;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.TbelAlarmConditionExpression;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate.NoDataFilterPredicate;
@@ -58,6 +47,7 @@ import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.event.CalculatedFieldDebugEvent;
 import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EventId;
@@ -80,6 +70,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 
 @Slf4j
@@ -402,6 +393,57 @@ public class AlarmRulesTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testChangeDurationConditionFromStaticToDynamic() throws Exception {
+        Argument temperatureArgument = new Argument();
+        temperatureArgument.setRefEntityKey(new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null));
+        temperatureArgument.setDefaultValue("0");
+        Map<String, Argument> arguments = Map.of(
+                "temperature", temperatureArgument
+        );
+
+        long staticDurationMs = 5000L;
+        Map<AlarmSeverity, Condition> createRules = Map.of(
+                AlarmSeverity.CRITICAL, new Condition("return temperature >= 50;", null, staticDurationMs)
+        );
+
+        AlarmRuleDefinition alarmRule = createAlarmRule(deviceId, "High Temperature Alarm",
+                arguments, createRules, null);
+        CalculatedFieldId alarmRuleId = alarmRule.getId();
+
+        // post telemetry to trigger condition and wait for the static-phase eval to produce a debug event,
+        // which guarantees firstEventTs > 0 in AlarmRuleState before we trigger REINIT
+        postTelemetry(deviceId, "{\"temperature\":50}");
+        await().atMost(TIMEOUT, TimeUnit.SECONDS)
+                .until(() -> getDebugEvents(alarmRuleId, 1),
+                        events -> !events.isEmpty() && !events.get(0).getId().equals(latestEventId));
+
+        // update CF: add attribute argument and switch duration from static to dynamic
+        AlarmCalculatedFieldConfiguration configuration = alarmRule.getConfiguration();
+
+        Argument durationArgument = new Argument();
+        durationArgument.setRefEntityKey(new ReferencedEntityKey("durationThreshold",
+                ArgumentType.ATTRIBUTE, AttributeScope.SERVER_SCOPE));
+        durationArgument.setDefaultValue("-1");
+        configuration.getArguments().put("durationThreshold", durationArgument);
+
+        DurationAlarmCondition durationCondition = (DurationAlarmCondition)
+                configuration.getCreateRules().get(AlarmSeverity.CRITICAL).getCondition();
+        durationCondition.setValue(new AlarmConditionValue<>(null, "durationThreshold"));
+
+        alarmRule = saveAlarmRule(alarmRule);
+
+        long dynamicDurationMs = 3000L;
+        postAttributes(deviceId, AttributeScope.SERVER_SCOPE,
+                "{\"durationThreshold\":" + dynamicDurationMs + "}");
+
+        checkAlarmResult(alarmRule, alarmResult -> {
+            assertThat(alarmResult.isCreated()).isTrue();
+            assertThat(alarmResult.getAlarm().getSeverity()).isEqualTo(AlarmSeverity.CRITICAL);
+            assertThat(alarmResult.getAlarm().getStatus()).isEqualTo(AlarmStatus.ACTIVE_UNACK);
+        });
+    }
+
+    @Test
     public void testCreateAlarm_currentOwnerArgument() throws Exception {
         Argument temperatureArgument = new Argument();
         temperatureArgument.setRefEntityKey(new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null));
@@ -421,8 +463,7 @@ public class AlarmRulesTest extends AbstractControllerTest {
                 AlarmSeverity.CRITICAL, new Condition("return temperature >= temperatureThreshold;", null, null)
         );
 
-        device.setCustomerId(customerId);
-        device = doPost("/api/device", device, Device.class);
+        doPost("/api/owner/CUSTOMER/" + customerId + "/DEVICE/" + device.getId()).andExpect(status().isOk());
         AlarmRuleDefinition alarmRule = createAlarmRule(deviceId, "High Temperature Alarm",
                 arguments, createRules, null);
         postAttributes(customerId, AttributeScope.SERVER_SCOPE, "{\"temperatureThreshold\":50}");
@@ -479,6 +520,46 @@ public class AlarmRulesTest extends AbstractControllerTest {
             assertThat(alarmResult.isCleared()).isTrue();
             assertThat(alarmResult.getAlarm().getSeverity()).isEqualTo(AlarmSeverity.INDETERMINATE);
             assertThat(alarmResult.getAlarm().getStatus()).isEqualTo(AlarmStatus.CLEARED_UNACK);
+        });
+    }
+
+    @Test
+    public void testCreateAlarm_subCustomerAlarmRule_simpleExpression() throws Exception {
+        Argument locationArgument = new Argument();
+        locationArgument.setRefEntityKey(new ReferencedEntityKey("location", ArgumentType.ATTRIBUTE, AttributeScope.SERVER_SCOPE));
+        locationArgument.setDefaultValue("unknown");
+
+        Customer subCustomer = new Customer();
+        subCustomer.setTitle("Sub-customer");
+        subCustomer.setTenantId(tenantId);
+        subCustomer.setParentCustomerId(customerId);
+        CustomerId subCustomerId = doPost("/api/customer", subCustomer, Customer.class).getId();
+        originatorId = subCustomerId;
+
+        Argument locationFilterArgument = new Argument();
+        locationFilterArgument.setRefEntityKey(new ReferencedEntityKey("locationFilter", ArgumentType.ATTRIBUTE, AttributeScope.SERVER_SCOPE));
+        locationFilterArgument.setRefDynamicSourceConfiguration(new CurrentOwnerDynamicSourceConfiguration());
+        locationFilterArgument.setDefaultValue("None");
+
+        Map<String, Argument> arguments = Map.of(
+                "location", locationArgument,
+                "locationFilter", locationFilterArgument
+        );
+
+        Map<AlarmSeverity, Condition> createRules = Map.of(
+                AlarmSeverity.INDETERMINATE, new Condition(createSimpleExpression(
+                        "location", StringOperation.CONTAINS, new AlarmConditionValue<>(null, "locationFilter")
+                ), null, null)
+        );
+        AlarmRuleDefinition alarmRule = createAlarmRule(subCustomerId, "New resident",
+                arguments, createRules, null);
+
+        postAttributes(customerId, AttributeScope.SERVER_SCOPE, "{\"locationFilter\":\"Kyiv\"}");
+        postAttributes(subCustomerId, AttributeScope.SERVER_SCOPE, "{\"location\":\"Ukraine, Kyiv\"}");
+        checkAlarmResult(alarmRule, alarmResult -> {
+            assertThat(alarmResult.isCreated()).isTrue();
+            assertThat(alarmResult.getAlarm().getSeverity()).isEqualTo(AlarmSeverity.INDETERMINATE);
+            assertThat(alarmResult.getAlarm().getStatus()).isEqualTo(AlarmStatus.ACTIVE_UNACK);
         });
     }
 

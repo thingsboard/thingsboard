@@ -1,25 +1,15 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sqlts.insert.latest.sql;
 
 import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 import org.thingsboard.server.dao.AbstractVersionedInsertRepository;
 import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestEntity;
+import org.thingsboard.server.dao.sql.citus.CitusSettings;
 import org.thingsboard.server.dao.sqlts.insert.latest.InsertLatestTsRepository;
 import org.thingsboard.server.dao.util.SqlTsLatestAnyDao;
 
@@ -35,16 +25,21 @@ public class SqlLatestInsertTsRepository extends AbstractVersionedInsertReposito
     @Value("${sql.ts_latest.update_by_latest_ts:true}")
     private Boolean updateByLatestTs;
 
-    private static final String BATCH_UPDATE =
-            "UPDATE ts_kv_latest SET ts = ?, bool_v = ?, str_v = ?, long_v = ?, dbl_v = ?, json_v = cast(? AS json), version = nextval('ts_kv_latest_version_seq') WHERE entity_id = ? AND key = ?";
+    @Autowired
+    private CitusSettings citusSettings;
 
-    private static final String INSERT_OR_UPDATE =
-            "INSERT INTO ts_kv_latest (entity_id, key, ts, bool_v, str_v, long_v, dbl_v,  json_v, version) VALUES(?, ?, ?, ?, ?, ?, ?, cast(? AS json), nextval('ts_kv_latest_version_seq')) " +
-                    "ON CONFLICT (entity_id, key) DO UPDATE SET ts = ?, bool_v = ?, str_v = ?, long_v = ?, dbl_v = ?, json_v = cast(? AS json), version = nextval('ts_kv_latest_version_seq')";
+    private static final String SEQ_VERSION = "nextval('ts_kv_latest_version_seq')";
+    private static final String INCREMENT_VERSION = "ts_kv_latest.version + 1";
 
-    private static final String BATCH_UPDATE_BY_LATEST_TS = BATCH_UPDATE + " AND ts_kv_latest.ts <= ?";
+    // The *_TEMPLATE strings below are resolved via String.format in init(); any literal '%' added
+    // to this SQL must be escaped as '%%' or String.format will throw at startup.
+    private static final String BATCH_UPDATE_TEMPLATE =
+            "UPDATE ts_kv_latest SET ts = ?, bool_v = ?, str_v = ?, long_v = ?, dbl_v = ?, json_v = cast(? AS json), version = %s WHERE entity_id = ? AND key = ?";
 
-    private static final String INSERT_OR_UPDATE_BY_LATEST_TS = INSERT_OR_UPDATE + " WHERE ts_kv_latest.ts <= ?";
+    // %1$s = INSERT version; %2$s = ON CONFLICT update version
+    private static final String INSERT_OR_UPDATE_TEMPLATE =
+            "INSERT INTO ts_kv_latest (entity_id, key, ts, bool_v, str_v, long_v, dbl_v,  json_v, version) VALUES(?, ?, ?, ?, ?, ?, ?, cast(? AS json), %1$s) " +
+                    "ON CONFLICT (entity_id, key) DO UPDATE SET ts = ?, bool_v = ?, str_v = ?, long_v = ?, dbl_v = ?, json_v = cast(? AS json), version = %2$s";
 
     private static final String RETURNING = " RETURNING version";
 
@@ -53,8 +48,18 @@ public class SqlLatestInsertTsRepository extends AbstractVersionedInsertReposito
 
     @PostConstruct
     private void init() {
-        this.batchUpdateQuery = (updateByLatestTs ? BATCH_UPDATE_BY_LATEST_TS : BATCH_UPDATE) + RETURNING;
-        this.insertOrUpdateQuery = (updateByLatestTs ? INSERT_OR_UPDATE_BY_LATEST_TS : INSERT_OR_UPDATE) + RETURNING;
+        boolean citus = citusSettings.isEnabled();
+        String insertVersion = citus ? CITUS_INSERT_VERSION : SEQ_VERSION;
+        String updateVersion = citus ? INCREMENT_VERSION : SEQ_VERSION;
+
+        String batchUpdate = String.format(BATCH_UPDATE_TEMPLATE, updateVersion);
+        String insertOrUpdate = String.format(INSERT_OR_UPDATE_TEMPLATE, insertVersion, updateVersion);
+
+        String batchUpdateByLatest = batchUpdate + " AND ts_kv_latest.ts <= ?";
+        String insertOrUpdateByLatest = insertOrUpdate + " WHERE ts_kv_latest.ts <= ?";
+
+        this.batchUpdateQuery = (updateByLatestTs ? batchUpdateByLatest : batchUpdate) + RETURNING;
+        this.insertOrUpdateQuery = (updateByLatestTs ? insertOrUpdateByLatest : insertOrUpdate) + RETURNING;
     }
 
     @Override

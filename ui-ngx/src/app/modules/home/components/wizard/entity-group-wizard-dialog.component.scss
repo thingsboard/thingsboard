@@ -1,0 +1,59 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@import "../../../../../scss/constants";
+
+:host {
+  height: 100%;
+  display: grid;
+  grid-template-rows: min-content 4px minmax(auto, 1fr) min-content;
+
+  @media #{$mat-sm} {
+    min-width: 400px;
+  }
+
+  @media #{$mat-gt-sm} {
+    min-width: 500px;
+  }
+}
+
+:host-context(.mat-mdc-dialog-container) {
+  .mat-mdc-dialog-content {
+    grid-row: 3;
+    padding: 0;
+  }
+
+  .mat-mdc-dialog-actions {
+    grid-row: 4;
+    padding: 0;
+  }
+}
+
+:host ::ng-deep {
+  .mat-mdc-dialog-content {
+    .mat-stepper-horizontal {
+      display: flex;
+      height: 100%;
+      @media #{$mat-xs} {
+        .mat-step-label {
+          white-space: normal;
+          overflow: visible;
+          .mat-step-text-label {
+            overflow: visible;
+          }
+        }
+      }
+      .mat-horizontal-stepper-wrapper {
+        flex: 1;
+      }
+      .mat-horizontal-content-container {
+        height: 330px;
+        max-height: 100%;
+        overflow-y: auto;
+        padding-top: 4px;
+        @media #{$mat-xs} {
+          height: 600px;
+        }
+      }
+    }
+  }
+}

@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.device;
 
 import lombok.extern.slf4j.Slf4j;
@@ -45,12 +33,14 @@ public class DefaultNativeDeviceRepository extends AbstractNativeRepository impl
     @Override
     public PageData<DeviceIdInfo> findDeviceIdInfos(Pageable pageable) {
         String DEVICE_ID_INFO_QUERY = "SELECT tenant_id as tenantId, customer_id as customerId, id as id FROM device ORDER BY created_time ASC LIMIT %s OFFSET %s";
-        return find(COUNT_QUERY, DEVICE_ID_INFO_QUERY, pageable, row -> {
-            UUID id = (UUID) row.get("id");
-            var tenantIdObj = row.get("tenantId");
-            var customerIdObj = row.get("customerId");
-            return new DeviceIdInfo(tenantIdObj != null ? (UUID) tenantIdObj : TenantId.SYS_TENANT_ID.getId(), customerIdObj != null ? (UUID) customerIdObj : null, id);
-        });
+        return find(COUNT_QUERY, DEVICE_ID_INFO_QUERY, pageable, this::mapDeviceIdInfo);
+    }
+
+    private DeviceIdInfo mapDeviceIdInfo(Map<String, Object> row) {
+        UUID id = (UUID) row.get("id");
+        var tenantIdObj = row.get("tenantId");
+        var customerIdObj = row.get("customerId");
+        return new DeviceIdInfo(tenantIdObj != null ? (UUID) tenantIdObj : TenantId.SYS_TENANT_ID.getId(), customerIdObj != null ? (UUID) customerIdObj : null, id);
     }
 
     @Override

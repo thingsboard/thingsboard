@@ -1,22 +1,9 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, OnInit } from '@angular/core';
 import { UserService } from '@core/http/user.service';
-import { AuthUser, User } from '@shared/models/user.model';
+import { User } from '@shared/models/user.model';
 import { Authority } from '@shared/models/authority.enum';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
@@ -28,10 +15,12 @@ import { environment as env } from '@env/environment';
 import { ActionSettingsChangeLanguage } from '@core/settings/settings.actions';
 import { ActivatedRoute } from '@angular/router';
 import { isDefinedAndNotNull, isNotEmptyStr, validateEmail } from '@core/utils';
-import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { AuthService } from '@core/auth/auth.service';
 import { UnitSystem, UnitSystems } from '@shared/models/unit.models';
 import { UnitService } from '@core/services/unit.service';
+import { Operation, Resource } from '@shared/models/security.models';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
 
 @Component({
     selector: 'tb-profile',
@@ -44,22 +33,25 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
   authorities = Authority;
   profile: UntypedFormGroup;
   user: User;
-  languageList = env.supportedLangs;
+  languageList: [locelCode: string, localeLanguage: string];
   UnitSystems = UnitSystems;
-  private readonly authUser: AuthUser;
+  authState = getCurrentAuthState(this.store);
+  readonly = !this.userPermissionsService.hasGenericPermission(Resource.PROFILE, Operation.WRITE);
 
   constructor(protected store: Store<AppState>,
               private route: ActivatedRoute,
               private userService: UserService,
               private authService: AuthService,
               private unitService: UnitService,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private userPermissionsService: UserPermissionsService,
+            ) {
     super(store);
-    this.authUser = getCurrentAuthUser(this.store);
   }
 
   ngOnInit() {
     this.buildProfileForm();
+    this.languageList = this.route.snapshot.data.locales;
     this.userLoaded(this.route.snapshot.data.user);
   }
 
@@ -74,6 +66,9 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
       homeDashboardId: [null],
       homeDashboardHideToolbar: [true]
     });
+    if (this.readonly) {
+      this.profile.disable();
+    }
   }
 
   save(): void {
@@ -107,8 +102,9 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
             firstName: user.firstName,
             id: user.id,
             lastName: user.lastName,
+            customMenuId: user.customMenuId
           } }));
-        this.store.dispatch(new ActionSettingsChangeLanguage({ userLang: user.additionalInfo.lang || env.defaultLang }));
+        this.store.dispatch(new ActionSettingsChangeLanguage({ userLang: user.additionalInfo.lang || env.defaultLang, reload: false, ignoredLoad: false }));
         this.unitService.setUnitSystem(this.user.additionalInfo.unitSystem);
         this.authService.refreshJwtToken(false);
       }
@@ -142,9 +138,5 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
 
   confirmForm(): UntypedFormGroup {
     return this.profile;
-  }
-
-  isSysAdmin(): boolean {
-    return this.authUser.authority === Authority.SYS_ADMIN;
   }
 }

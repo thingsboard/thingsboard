@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable } from '@angular/core';
 import { UtilsService } from '@core/services/utils.service';
 import { TimeService } from '@core/services/time.service';
@@ -32,6 +19,8 @@ import {
   DashboardState,
   DashboardStateLayouts,
   GridSettings,
+  htmlPageDefaultConfig,
+  htmlPageWidgetId,
   LayoutType,
   WidgetLayout
 } from '@shared/models/dashboard.models';
@@ -42,8 +31,10 @@ import {
   isDefinedAndNotNull,
   isNotEmptyStr,
   isString,
-  isUndefined
+  isUndefined,
+  mergeDeep
 } from '@core/utils';
+import { htmlContainerDefaultSettings, HtmlContainerWidgetSettings } from '@shared/models/html-container.models';
 import {
   Datasource,
   datasourcesHasAggregation,
@@ -64,6 +55,9 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { AliasFilterType, EntityAlias, EntityAliasFilter } from '@app/shared/models/alias.models';
 import { EntityId } from '@app/shared/models/id/entity-id';
 import { initModelFromDefaultTimewindow } from '@shared/models/time/time.models';
+import { EntityGroupService } from '@core/http/entity-group.service';
+import { Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { AlarmSearchStatus } from '@shared/models/alarm.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { BackgroundType, colorBackground, isBackgroundSettings } from '@shared/models/widget-settings.models';
@@ -86,7 +80,8 @@ export class DashboardUtilsService {
 
   constructor(private utils: UtilsService,
               private timeService: TimeService,
-              private translate: TranslateService) {
+              private translate: TranslateService,
+              private entityGroupService: EntityGroupService) {
   }
 
   public validateAndUpdateDashboard(dashboard: Dashboard): Dashboard {
@@ -467,7 +462,7 @@ export class DashboardUtilsService {
     };
   }
 
-  private createDefaultGridSettings(): GridSettings {
+  public createDefaultGridSettings(): GridSettings {
     return {
       layoutType: LayoutType.default,
       backgroundColor: '#eeeeee',
@@ -492,12 +487,25 @@ export class DashboardUtilsService {
     };
   }
 
-  public createSingleEntityFilter(entityId: EntityId): EntityAliasFilter {
-    return {
-      type: AliasFilterType.singleEntity,
-      singleEntity: entityId,
-      resolveMultiple: false
-    };
+  public createSingleEntityFilter(entityId: EntityId): Observable<EntityAliasFilter> {
+    if (entityId.entityType === EntityType.ENTITY_GROUP) {
+      return this.entityGroupService.getEntityGroup(entityId.id).pipe(
+        map((entityGroup) => {
+          return {
+            type: AliasFilterType.entityGroupList,
+            groupType: entityGroup.type,
+            entityGroupList: [entityId.id],
+            resolveMultiple: false
+          };
+        })
+      );
+    } else {
+      return of({
+        type: AliasFilterType.singleEntity,
+        singleEntity: entityId,
+        resolveMultiple: false
+      });
+    }
   }
 
   public widgetConfigFromWidgetType(widgetTypeDescriptor: WidgetTypeDescriptor): WidgetConfig {
@@ -554,6 +562,9 @@ export class DashboardUtilsService {
   private validateAndUpdateLayout(layout: DashboardLayout) {
     if (!layout.gridSettings) {
       layout.gridSettings = this.createDefaultGridSettings();
+    }
+    if (!layout.widgets) {
+      layout.widgets = {};
     }
     if ((layout.gridSettings as any).margins && (layout.gridSettings as any).margins.length === 2) {
       layout.gridSettings.margin = (layout.gridSettings as any).margins[0];
@@ -646,11 +657,11 @@ export class DashboardUtilsService {
         const layout: DashboardLayout = state.layouts[l];
         if (layout) {
           result[l]= {
-            default: this.getBreakpointLayoutData(layout)
+            default: this.getBreakpointLayoutData(layout, targetState)
           };
           if (layout.breakpoints) {
             for (const breakpoint of Object.keys(layout.breakpoints)) {
-              result[l][breakpoint] = this.getBreakpointLayoutData(layout.breakpoints[breakpoint]);
+              result[l][breakpoint] = this.getBreakpointLayoutData(layout.breakpoints[breakpoint], targetState);
             }
           }
         }
@@ -661,17 +672,56 @@ export class DashboardUtilsService {
     }
   }
 
-  private getBreakpointLayoutData(layout: DashboardLayout): BreakpointLayoutInfo {
+  private getBreakpointLayoutData(layout: DashboardLayout, stateId: string): BreakpointLayoutInfo {
     const result: BreakpointLayoutInfo = {
       widgetIds: [],
       widgetLayouts: {},
       gridSettings: {}
     };
-    for (const id of Object.keys(layout.widgets)) {
-      result.widgetIds.push(id);
+    if (layout.gridSettings?.layoutType === LayoutType.html) {
+      result.gridSettings = {
+        layoutType: LayoutType.html,
+        autoFillHeight: true,
+        mobileAutoFillHeight: true,
+        columns: 1,
+        minColumns: 1,
+        margin: 0,
+        outerMargin: false
+      };
+      // Stable per state: an unchanged page keeps its rendered instance, a changed one is re-rendered.
+      const widgetId = htmlPageWidgetId(stateId);
+      const config = mergeDeep({},
+        htmlPageDefaultConfig,
+        {
+          settings: layout.gridSettings?.htmlPageConfig?.settings || mergeDeep({} as HtmlContainerWidgetSettings, htmlContainerDefaultSettings),
+          actions: layout.gridSettings?.htmlPageConfig?.actions
+        }
+      );
+      result.widget = {
+        id: widgetId,
+        col: 0,
+        row: 0,
+        sizeX: 1,
+        sizeY: 1,
+        typeFullFqn: 'system.html_container',
+        type: widgetType.static,
+        config
+      };
+      result.widgetLayouts[widgetId] = {
+        col: 0,
+        row: 0,
+        sizeX: 1,
+        sizeY: 1,
+        resizable: false,
+        mobileOrder: 0
+      };
+    } else {
+      for (const id of Object.keys(layout.widgets)) {
+        result.widgetIds.push(id);
+      }
+      result.widgetLayouts = layout.widgets;
+      result.gridSettings = layout.gridSettings;
     }
-    result.widgetLayouts = layout.widgets;
-    result.gridSettings = layout.gridSettings;
     return result;
   }
 
@@ -687,11 +737,16 @@ export class DashboardUtilsService {
   }
 
   public isEmptyDashboard(dashboard: Dashboard): boolean {
-    if (dashboard?.configuration?.widgets) {
-      return Object.keys(dashboard?.configuration?.widgets).length === 0;
-    } else {
-      return true;
+    if (dashboard?.configuration?.widgets && Object.keys(dashboard.configuration.widgets).length) {
+      return false;
     }
+    // An HTML page has content but no stored widgets: its widget is virtual.
+    return !Object.values(dashboard?.configuration?.states || {}).some(state => this.isHtmlPageState(state));
+  }
+
+  // A state whose widget grid is replaced by an HTML page: widgets cannot be added to it.
+  public isHtmlPageState(state: DashboardState): boolean {
+    return state?.layouts?.main?.gridSettings?.layoutType === LayoutType.html;
   }
 
   public addWidgetToLayout(dashboard: Dashboard,
@@ -1269,7 +1324,11 @@ export class DashboardUtilsService {
     if (layoutInfo.gridSettings) {
       layout.layoutCtx.gridSettings = layoutInfo.gridSettings;
     }
-    layout.layoutCtx.widgets.setWidgetIds(layoutInfo.widgetIds);
+    if (layoutInfo.widget) {
+      layout.layoutCtx.widgets.setWidget(layoutInfo.widget);
+    } else {
+      layout.layoutCtx.widgets.setWidgetIds(layoutInfo.widgetIds);
+    }
     layout.layoutCtx.widgetLayouts = layoutInfo.widgetLayouts;
     if (layout.show && layout.layoutCtx.ctrl) {
       layout.layoutCtx.ctrl.reload();

@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { HasEntityDebugSettings, HasTenantId, HasVersion } from '@shared/models/entity.models';
 import { BaseData, ExportableEntity } from '@shared/models/base-data';
 import { CalculatedFieldId } from '@shared/models/id/calculated-field-id';
@@ -33,6 +20,7 @@ import { EntitySearchDirection } from '@shared/models/relation.models';
 import { AbstractControl, FormControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { AlarmRule } from "@shared/models/alarm-rule.models";
 import { AlarmSeverity } from "@shared/models/alarm.models";
+import { JobStatus } from '@shared/models/job.models';
 
 export const FORBIDDEN_NAMES = ['ctx', 'e', 'pi'];
 
@@ -202,6 +190,7 @@ export interface CalculatedFieldAlarmRuleConfiguration {
   clearRule?: AlarmRule;
   propagate: boolean;
   propagateToOwner: boolean;
+  propagateToOwnerHierarchy: boolean;
   propagateToTenant: boolean;
   propagateRelationTypes?: Array<string>;
 }
@@ -577,6 +566,12 @@ export interface CalculatedFieldLatestTelemetryArgumentValue<ValueType = unknown
 export interface CalculatedFieldRollingTelemetryArgumentValue<ValueType = unknown> extends CalculatedFieldArgumentValueBase {
   timeWindow: { startTs: number; endTs: number; };
   values: CalculatedFieldSingleArgumentValue<ValueType>[];
+}
+
+export interface CalculatedFieldReprocessingValidation {
+  isValid: boolean;
+  message: string;
+  lastJobStatus: JobStatus;
 }
 
 export type CalculatedFieldSingleArgumentValue<ValueType = unknown> = CalculatedFieldAttributeArgumentValue<ValueType> & CalculatedFieldLatestTelemetryArgumentValue<ValueType>;

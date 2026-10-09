@@ -1,0 +1,60 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@import '../scss/constants';
+
+:host {
+  .mat-subhead {
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 130%;
+    letter-spacing: 0.25px;
+    margin: 0 0 8px;
+  }
+
+  .radio-box {
+    padding-bottom: 10px;
+  }
+
+  .checkbox {
+    padding-bottom: 8px;
+  }
+
+  .fields-group {
+    margin-top: 8px;
+
+    .same-width-component-row {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 16px;
+      @media #{$mat-xs} {
+        gap: 8px;
+      }
+
+      & > * {
+        flex: 1;
+      }
+    }
+
+    legend + * {
+      margin-top: 0;
+    }
+  }
+}
+
+:host ::ng-deep {
+  .toggle {
+    margin: 16px 0 8px;
+
+    &.block {
+      margin: 0 0 8px;
+
+      &_last {
+        margin: 0 0 16px;
+      }
+    }
+  }
+
+  .mat-mdc-radio-group {
+    font-size: 14px;
+  }
+}

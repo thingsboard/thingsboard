@@ -1,0 +1,142 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<form [formGroup]="settingsFormGroup" class="mat-content mat-padding flex flex-col">
+  <fieldset class="flex flex-col">
+    <mat-form-field class="mat-block" appearance="outline">
+      <mat-label translate>entity-group.group-table-title</mat-label>
+      <input matInput formControlName="groupTableTitle">
+    </mat-form-field>
+    <mat-checkbox class="flex-1" formControlName="enableSearch">
+      {{ 'entity-group.enable-search' | translate }}
+    </mat-checkbox>
+    <mat-checkbox class="flex-1" formControlName="enableAdd">
+      {{ 'entity-group.enable-add' | translate }}
+    </mat-checkbox>
+    <mat-checkbox class="flex-1" formControlName="enableDelete">
+      {{ 'entity-group.enable-delete' | translate }}
+    </mat-checkbox>
+    <mat-checkbox class="flex-1" formControlName="enableSelection">
+      {{ 'entity-group.enable-selection' | translate }}
+    </mat-checkbox>
+    <mat-checkbox class="flex-1" formControlName="enableGroupTransfer">
+      {{ 'entity-group.enable-group-transfer' | translate }}
+    </mat-checkbox>
+    <mat-form-field class="mat-block" appearance="outline">
+      <mat-label translate>entity-group.open-details-on</mat-label>
+      <mat-select matInput formControlName="detailsMode">
+        @for (mode of entityGroupDetailsModes; track mode) {
+          <mat-option [value]="mode">
+            {{ entityGroupDetailsModeTranslations.get(mode) | translate }}
+          </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <mat-checkbox class="flex-1" formControlName="displayPagination">
+      {{ 'entity-group.display-pagination' | translate }}
+    </mat-checkbox>
+    <mat-form-field [class.!hidden]="!settingsFormGroup.get('displayPagination').value" class="mat-block" appearance="outline">
+      <mat-label translate>entity-group.page-step-increment</mat-label>
+      <input matInput formControlName="pageStepIncrement" type="number" min="1" step="1" required>
+      @if (settingsFormGroup.get('pageStepIncrement').hasError('required')) {
+        <mat-error translate>
+          widgets.value-source.value-required
+        </mat-error>
+      }
+      @if (settingsFormGroup.get('pageStepIncrement').hasError('min') ||
+        settingsFormGroup.get('pageStepIncrement').hasError('pattern')) {
+        <mat-error translate>
+          entity-group.page-step-increment-format-message
+        </mat-error>
+      }
+    </mat-form-field>
+    <mat-form-field [class.!hidden]="!settingsFormGroup.get('displayPagination').value" class="mat-block" appearance="outline">
+      <mat-label translate>entity-group.page-step-count</mat-label>
+      <input matInput formControlName="pageStepCount" type="number" min="1" max="100" step="1" required>
+      @if (settingsFormGroup.get('pageStepCount').hasError('required')) {
+        <mat-error translate>
+          widgets.value-source.value-required
+        </mat-error>
+      }
+      @if (settingsFormGroup.get('pageStepCount').hasError('min') ||
+        settingsFormGroup.get('pageStepCount').hasError('max') ||
+        settingsFormGroup.get('pageStepCount').hasError('pattern')) {
+        <mat-error translate>
+          entity-group.page-step-count-format-message
+        </mat-error>
+      }
+    </mat-form-field>
+    <mat-form-field [class.!hidden]="!settingsFormGroup.get('displayPagination').value" class="mat-block" appearance="outline">
+      <mat-label translate>entity-group.default-page-size</mat-label>
+      <mat-select formControlName="defaultPageSize">
+        @for (size of pageStepSizeValues; track size) {
+          <mat-option [value]="size">
+            {{ size }}
+          </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    @if (entityType === entityTypes.DEVICE) {
+      <mat-checkbox
+        class="flex-1" formControlName="enableCredentialsManagement">
+        {{ 'entity-group.enable-credentials-management' | translate }}
+      </mat-checkbox>
+    }
+    @if (entityType === entityTypes.USER) {
+      <mat-checkbox
+        class="flex-1" formControlName="enableLoginAsUser">
+        {{ 'entity-group.enable-login-as-user' | translate }}
+      </mat-checkbox>
+    }
+    @if (entityType === entityTypes.CUSTOMER) {
+      <section class="flex flex-col">
+        <mat-checkbox class="flex-1" formControlName="enableUsersManagement">
+          {{ 'entity-group.enable-users-management' | translate }}
+        </mat-checkbox>
+        <mat-checkbox class="flex-1" formControlName="enableCustomersManagement">
+          {{ 'entity-group.enable-customers-management' | translate }}
+        </mat-checkbox>
+        <mat-checkbox class="flex-1" formControlName="enableAssetsManagement">
+          {{ 'entity-group.enable-assets-management' | translate }}
+        </mat-checkbox>
+        <mat-checkbox class="flex-1" formControlName="enableDevicesManagement">
+          {{ 'entity-group.enable-devices-management' | translate }}
+        </mat-checkbox>
+        <mat-checkbox class="flex-1" formControlName="enableEntityViewsManagement">
+          {{ 'entity-group.enable-entity-views-management' | translate }}
+        </mat-checkbox>
+        <mat-checkbox class="flex-1" formControlName="enableEdgesManagement">
+          {{ 'entity-group.enable-edges-management' | translate }}
+        </mat-checkbox>
+        <mat-checkbox class="flex-1" formControlName="enableDashboardsManagement">
+          {{ 'entity-group.enable-dashboards-management' | translate }}
+        </mat-checkbox>
+      </section>
+    }
+    @if (entityType === entityTypes.EDGE) {
+      <section class="flex flex-col">
+        <mat-checkbox class="flex-1" formControlName="enableUsersManagement">
+          {{ 'entity-group.enable-users-management' | translate }}
+        </mat-checkbox>
+        <mat-checkbox class="flex-1" formControlName="enableAssetsManagement">
+          {{ 'entity-group.enable-assets-management' | translate }}
+        </mat-checkbox>
+        <mat-checkbox class="flex-1" formControlName="enableDevicesManagement">
+          {{ 'entity-group.enable-devices-management' | translate }}
+        </mat-checkbox>
+        <mat-checkbox class="flex-1" formControlName="enableEntityViewsManagement">
+          {{ 'entity-group.enable-entity-views-management' | translate }}
+        </mat-checkbox>
+        <mat-checkbox class="flex-1" formControlName="enableDashboardsManagement">
+          {{ 'entity-group.enable-dashboards-management' | translate }}
+        </mat-checkbox>
+        <mat-checkbox class="flex-1" formControlName="enableSchedulerEventsManagement">
+          {{ 'entity-group.enable-scheduler-events-management' | translate }}
+        </mat-checkbox>
+      </section>
+    }
+  </fieldset>
+</form>

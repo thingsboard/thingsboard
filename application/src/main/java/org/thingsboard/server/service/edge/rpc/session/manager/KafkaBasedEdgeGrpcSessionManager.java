@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.edge.rpc.session.manager;
 
 import lombok.Getter;
@@ -35,7 +22,6 @@ import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.kafka.KafkaAdmin;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.util.TbKafkaComponent;
-
 import org.thingsboard.server.service.edge.rpc.EdgeSessionState;
 import org.thingsboard.server.service.edge.rpc.processor.PostgresGeneralEdgeEventsDispatcher;
 import org.thingsboard.server.service.edge.rpc.session.EdgeSessionsHolder;
@@ -143,8 +129,7 @@ public class KafkaBasedEdgeGrpcSessionManager extends AbstractEdgeGrpcSessionMan
                 }
             } catch (Exception e) {
                 log.warn("[{}] Failed to process edge events for edge [{}]!", tenantId, edgeId, e);
-            }
-            finally {
+            } finally {
                 initLock.unlock();
             }
         }, ctx.getEdgeEventStorageSettings().getNoRecordsSleepInterval(), TimeUnit.MILLISECONDS);
@@ -176,7 +161,7 @@ public class KafkaBasedEdgeGrpcSessionManager extends AbstractEdgeGrpcSessionMan
     }
 
     private boolean initAndLaunchConsumer(TenantId tenantId, EdgeId edgeId, EdgeSessionState state) {
-        if (!state.isConnected() || state.isSyncInProgress() || isHighPriorityProcessing) {
+        if (!isSessionReady(state)) {
             log.warn("[{}][{}] Session is not ready (connected={}, syncInProgress={}, highPriority={}), skip starting edge event consumer",
                     tenantId, edgeId, state.isConnected(), state.isSyncInProgress(), isHighPriorityProcessing);
             return false;
@@ -205,6 +190,7 @@ public class KafkaBasedEdgeGrpcSessionManager extends AbstractEdgeGrpcSessionMan
                     .consumerCreator(() -> tbCoreQueueFactory.createEdgeEventMsgConsumer(tenantId, edgeId))
                     .consumerExecutor(consumerExecutor)
                     .threadPrefix("edge-events-" + edgeId)
+                    .readinessCheck(this::isReadyToProcessGeneralEvents)
                     .build();
             consumer.subscribe();
             consumer.launch();
@@ -224,7 +210,9 @@ public class KafkaBasedEdgeGrpcSessionManager extends AbstractEdgeGrpcSessionMan
         EdgeId edgeId = state.getEdgeId();
 
         log.trace("[{}][{}] starting processing edge events", tenantId, edgeId);
-        if (!state.isConnected() || state.isSyncInProgress() || isHighPriorityProcessing) {
+        // Defensive backstop: the loop already gates polling on readiness; this only fires on the narrow race
+        // where readiness flips during poll(), and that already-polled batch is dropped here (can't rewind).
+        if (!isSessionReady(state)) {
             log.debug("[{}][{}] edge not connected, edge sync is not completed or high priority processing in progress, " +
                             "connected = {}, sync in progress = {}, high priority in progress = {}. Skipping iteration",
                     tenantId, edgeId, state.isConnected(), state.isSyncInProgress(), isHighPriorityProcessing);
@@ -248,6 +236,15 @@ public class KafkaBasedEdgeGrpcSessionManager extends AbstractEdgeGrpcSessionMan
         if (!isInterrupted) {
             consumer.commit();
         }
+    }
+
+    private boolean isReadyToProcessGeneralEvents() {
+        return isSessionReady(getState());
+    }
+
+    /** Single source of truth for "the session may process general edge events" - see {@link #isReadyToProcessGeneralEvents}. */
+    private boolean isSessionReady(EdgeSessionState state) {
+        return state != null && state.isConnected() && !state.isSyncInProgress() && !isHighPriorityProcessing;
     }
 
     private void cancelMigrationAndProcessingInit() {
@@ -299,4 +296,5 @@ public class KafkaBasedEdgeGrpcSessionManager extends AbstractEdgeGrpcSessionMan
             Thread.currentThread().interrupt();
         }
     }
+
 }

@@ -1,18 +1,8 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <ng-container [formGroup]="valueStepperWidgetSettingsForm">
@@ -139,6 +129,7 @@
         </mat-form-field>
         <tb-color-input asBoxInput
                         colorClearButton
+                        useThemePalette
                         formControlName="borderColor">
         </tb-color-input>
       </div>
@@ -177,6 +168,7 @@
           <div class="flex flex-row items-center justify-start gap-2">
             <div translate>widgets.power-button.main</div>
             <tb-color-input asBoxInput
+                            useThemePalette
                             formControlName="mainColorOn">
             </tb-color-input>
           </div>
@@ -184,6 +176,7 @@
           <div class="flex flex-row items-center justify-start gap-2">
             <div translate>widgets.power-button.background</div>
             <tb-color-input asBoxInput
+                            useThemePalette
                             formControlName="backgroundColorOn">
             </tb-color-input>
           </div>
@@ -195,6 +188,7 @@
           <div class="flex flex-row items-center justify-start gap-2">
             <div translate>widgets.power-button.main</div>
             <tb-color-input asBoxInput
+                            useThemePalette
                             formControlName="mainColorDisabled">
             </tb-color-input>
           </div>
@@ -202,6 +196,7 @@
           <div class="flex flex-row items-center justify-start gap-2">
             <div translate>widgets.power-button.background</div>
             <tb-color-input asBoxInput
+                            useThemePalette
                             formControlName="backgroundColorDisabled">
             </tb-color-input>
           </div>
@@ -233,6 +228,7 @@
           <div class="flex flex-row items-center justify-start gap-2">
             <div translate>widgets.power-button.main</div>
             <tb-color-input asBoxInput
+                            useThemePalette
                             formControlName="mainColorOn">
             </tb-color-input>
           </div>
@@ -240,6 +236,7 @@
           <div class="flex flex-row items-center justify-start gap-2">
             <div translate>widgets.power-button.background</div>
             <tb-color-input asBoxInput
+                            useThemePalette
                             formControlName="backgroundColorOn">
             </tb-color-input>
           </div>
@@ -251,6 +248,7 @@
           <div class="flex flex-row items-center justify-start gap-2">
             <div translate>widgets.power-button.main</div>
             <tb-color-input asBoxInput
+                            useThemePalette
                             formControlName="mainColorDisabled">
             </tb-color-input>
           </div>
@@ -258,6 +256,7 @@
           <div class="flex flex-row items-center justify-start gap-2">
             <div translate>widgets.power-button.background</div>
             <tb-color-input asBoxInput
+                            useThemePalette
                             formControlName="backgroundColorDisabled">
             </tb-color-input>
           </div>

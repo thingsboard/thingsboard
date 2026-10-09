@@ -1,41 +1,48 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
+
+<ng-template #widgetTitleTpl>
+  <div [class.tb-dark]="wl.isPrimaryColorPanels$() | async" class="flex flex-row items-center justify-start gap-2">
+    @if ((breadcrumbs$ | async).length > 1) {
+      <span class='tb-breadcrumb-divider'> > </span>
+    }
+    <mat-form-field class="tb-widget-title tb-appearance-transparent flex-1 gt-xmd:flex-initial">
+      <input [disabled]="isReadOnly" matInput required maxlength="255"
+             [(ngModel)]="widget.widgetName" (ngModelChange)="isDirty = true"
+             placeholder="{{ 'widget.widget-title' | translate }}"/>
+    </mat-form-field>
+    <mat-form-field class="tb-appearance-transparent flex-1 gt-xmd:flex-initial">
+      <mat-select [disabled]="isReadOnly" placeholder="{{ 'widget.type' | translate }}"
+                  [(ngModel)]="widget.type" (ngModelChange)="widgetTypeChanged()">
+        @for (type of allWidgetTypes; track type) {
+          <mat-option [value]="type">
+            {{ widgetTypesDataMap.get(widgetTypes[type]).name | translate }}
+          </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </div>
+</ng-template>
+
 <div class="flex flex-1 flex-col">
   <div class="flex flex-1 flex-col" tb-fullscreen [fullscreen]="fullscreen" [tb-hotkeys]="hotKeys" [cheatSheet]="cheatSheetComponent">
     <tb-hotkeys-cheatsheet #cheatSheetComponent></tb-hotkeys-cheatsheet>
-    <mat-toolbar class="mat-elevation-z1 tb-edit-toolbar mat-hue-3 gap-4 lt-xl:gap-2">
-      <mat-form-field class="tb-widget-title tb-appearance-transparent">
-        <input [disabled]="isReadOnly" matInput required maxlength="255"
-               [(ngModel)]="widget.widgetName" (ngModelChange)="isDirty = true"
-               placeholder="{{ 'widget.widget-title' | translate }}"/>
-      </mat-form-field>
-      <mat-form-field class="tb-appearance-transparent">
-        <mat-select [disabled]="isReadOnly" placeholder="{{ 'widget.type' | translate }}"
-                    [(ngModel)]="widget.type" (ngModelChange)="widgetTypeChanged()">
-          @for (type of allWidgetTypes; track type) {
-            <mat-option [value]="type">
-              {{ widgetTypesDataMap.get(widgetTypes[type]).name | translate }}
-            </mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-      <span class="flex-1"></span>
-      <button mat-button class="lt-md:!hidden" [disabled]="!iframeWidgetEditModeInited"
+    <mat-toolbar color="tb-primary" class="tb-edit-toolbar tb-bottom-border gap-4 lt-xl:gap-2">
+      <button mat-icon-button
+              [class.!hidden]="fullscreen"
+              class="-ml-2 -mr-2 gt-sm:!hidden" (click)="toggleSidenav()">
+        <mat-icon class="material-icons">menu</mat-icon>
+      </button>
+      <div class="flex flex-1 flex-row items-center overflow-hidden">
+        <tb-breadcrumb class="mat-toolbar-tools" [componentBreadcrumbsTpl]="widgetTitleTpl"></tb-breadcrumb>
+      </div>
+      <!--tb-github-badge class="lt-lg:!hidden"></tb-github-badge-->
+      <button mat-button class="lt-lg:!hidden" [disabled]="!iframeWidgetEditModeInited"
               (click)="applyWidgetScript()"
               matTooltip="{{ 'widget.run' | translate }} (CTRL + Return)"
               matTooltipPosition="below">
@@ -43,7 +50,7 @@
         <span translate>action.run</span>
       </button>
       <button mat-raised-button
-              class="lt-md:!hidden" [disabled]="(isLoading$ | async) || undoDisabled()"
+              class="lt-lg:!hidden" [disabled]="(isLoading$ | async) || undoDisabled()"
               (click)="undoWidget()"
               matTooltip="{{ 'widget.undo' | translate }} (CTRL + Q)"
               matTooltipPosition="below">
@@ -52,7 +59,7 @@
       </button>
       @if (!isReadOnly) {
         <button mat-raised-button
-                class="lt-md:!hidden" [disabled]="(isLoading$ | async) || saveDisabled()"
+                class="lt-lg:!hidden" [disabled]="(isLoading$ | async) || saveDisabled()"
                 (click)="saveWidget()"
                 [tb-circular-progress]="saveWidgetPending"
                 matTooltip="{{ 'widget.save' | translate }} (CTRL + S)"
@@ -62,7 +69,7 @@
         </button>
       }
       <button mat-raised-button
-              class="lt-md:!hidden" [disabled]="(isLoading$ | async) || saveAsDisabled()"
+              class="lt-lg:!hidden" [disabled]="(isLoading$ | async) || saveAsDisabled()"
               (click)="saveWidgetAs()"
               [tb-circular-progress]="saveWidgetAsPending"
               matTooltip="{{ 'widget.saveAs' | translate }} (Shift + CTRL + S)"
@@ -70,24 +77,20 @@
         <mat-icon>save_as</mat-icon>
         <span translate>action.saveAs</span>
       </button>
-      <button mat-button
-              class="lt-lg:!hidden"
-              (click)="fullscreen = !fullscreen"
-              matTooltip="{{ 'widget.toggle-fullscreen' | translate }} (Shift + CTRL + F)"
-              matTooltipPosition="below">
-        <mat-icon>{{ fullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
-        <span translate>widget.toggle-fullscreen</span>
-      </button>
-      <button mat-icon-button class="lt-md:!hidden gt-md:!hidden"
-              (click)="fullscreen = !fullscreen"
-              matTooltip="{{ 'widget.toggle-fullscreen' | translate }} (Shift + CTRL + F)"
-              matTooltipPosition="below">
-        <mat-icon>{{ fullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
-      </button>
       <button mat-icon-button class="gt-md:!hidden"
               [matMenuTriggerFor]="widgetEditMenu">
         <mat-icon>more_vert</mat-icon>
       </button>
+      <div class="flex flex-row items-center">
+        <mat-divider vertical></mat-divider>
+        <button mat-icon-button class="lt-md:!hidden"
+                matTooltip="{{ 'widget.toggle-fullscreen' | translate }} (Shift + CTRL + F)"
+                matTooltipPosition="below"
+                (click)="fullscreen = !fullscreen">
+          <mat-icon>{{ fullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+        </button>
+        <tb-notification-bell></tb-notification-bell>
+      </div>
       <mat-menu #widgetEditMenu="matMenu" xPosition="before">
         <button mat-menu-item
                 [disabled]="!iframeWidgetEditModeInited"
@@ -117,7 +120,12 @@
         </button>
       </mat-menu>
     </mat-toolbar>
-    <div class="flex-1" style="position: relative;">
+    @if ((homeService.hideLoadingBar$ | async) === false && (isLoading$ | async)) {
+      <mat-progress-bar color="warn" style="z-index: 10; margin-bottom: -4px; width: 100%;" mode="indeterminate"
+      >
+      </mat-progress-bar>
+    }
+    <div class="flex-1 mt-2" style="position: relative;">
       <div class="tb-editor tb-absolute-fill">
         <div #topPanel class="tb-split tb-split-vertical">
           <div #topLeftPanel class="tb-split tb-content">
@@ -236,16 +244,9 @@
                                             [(ngModel)]="widget.image"
                                             (ngModelChange)="isDirty = true" >
                     </tb-gallery-image-input>
-                    <mat-form-field class="mat-block">
-                      <mat-label translate>widget.description</mat-label>
-                      <textarea matInput #descriptionInput
-                                [(ngModel)]="widget.description"
-                                (ngModelChange)="isDirty = true"
-                      rows="2" maxlength="1024"></textarea>
-                      <mat-hint align="end">{{descriptionInput.value?.length || 0}}/1024</mat-hint>
-                    </mat-form-field>
                     <tb-string-items-list
                       label="{{ 'widget.tags' | translate }}"
+                      appearance="outline"
                       [(ngModel)]="widget.tags"
                       (ngModelChange)="isDirty = true">
                     </tb-string-items-list>
@@ -261,20 +262,20 @@
                         {{ 'widget.deprecated' | translate }}
                       </mat-slide-toggle>
                     </div>
-                    <mat-form-field class="mat-block">
+                    <mat-form-field class="mat-block" appearance="outline">
                       <mat-label translate>widget.settings-form-selector</mat-label>
                       <input matInput
                              [(ngModel)]="widget.settingsDirective"
                              (ngModelChange)="isDirty = true"/>
                     </mat-form-field>
-                    <mat-form-field class="mat-block">
+                    <mat-form-field class="mat-block" appearance="outline">
                       <mat-label translate>widget.data-key-settings-form-selector</mat-label>
                       <input matInput
                              [(ngModel)]="widget.dataKeySettingsDirective"
                              (ngModelChange)="isDirty = true"/>
                     </mat-form-field>
                     @if (widget.type === widgetTypes.timeseries) {
-                      <mat-form-field class="mat-block">
+                      <mat-form-field class="mat-block" appearance="outline">
                         <mat-label translate>widget.latest-data-key-settings-form-selector</mat-label>
                         <input matInput
                                [(ngModel)]="widget.latestDataKeySettingsDirective"
@@ -287,13 +288,21 @@
                       {{ 'widget.has-basic-mode' | translate }}
                     </mat-slide-toggle>
                     @if (widget.hasBasicMode) {
-                      <mat-form-field class="mat-block">
+                      <mat-form-field class="mat-block" appearance="outline">
                         <mat-label translate>widget.basic-mode-form-selector</mat-label>
                         <input matInput
                                [(ngModel)]="widget.basicModeDirective"
                                (ngModelChange)="isDirty = true"/>
                       </mat-form-field>
                     }
+                    <mat-form-field class="mat-block" appearance="outline">
+                      <mat-label translate>widget.description</mat-label>
+                      <textarea matInput #descriptionInput
+                                [(ngModel)]="widget.description"
+                                (ngModelChange)="isDirty = true"
+                                cdkTextareaAutosize cdkAutosizeMinRows="1" rows="1" maxlength="1024"></textarea>
+                      <mat-hint align="end">{{descriptionInput.value?.length || 0}}/1024</mat-hint>
+                    </mat-form-field>
                   </div>
                 </div>
               </mat-tab>

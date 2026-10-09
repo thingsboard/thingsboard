@@ -1,0 +1,15 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="integrationDownlinkConfigForm" class="flex flex-col">
+  <tb-entity-autocomplete
+    required
+    appearance="outline"
+    [entityType]="entityType.INTEGRATION"
+    [entitySubtype]="ruleChainType"
+    formControlName="integrationId">
+  </tb-entity-autocomplete>
+</section>

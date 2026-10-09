@@ -1,0 +1,395 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "org.thingsboard.server.gen.integration";
+option java_outer_classname = "IntegrationProtos";
+
+import "queue.proto";
+import "tbmsg.proto";
+
+package integration;
+
+// Interface exported by the ThingsBoard Integration Transport.
+service IntegrationTransport {
+
+  rpc handleMsgs(stream RequestMsg) returns (stream ResponseMsg) {}
+
+}
+
+/**
+ * Data Structures;
+ */
+message RequestMsg {
+  MessageType messageType = 1;
+  ConnectRequestMsg connectRequestMsg = 2;
+  UplinkMsg uplinkMsg = 3;
+}
+
+message ResponseMsg {
+  ConnectResponseMsg connectResponseMsg = 1;
+  UplinkResponseMsg uplinkResponseMsg = 2;
+  DownlinkMsg downlinkMsg = 3;
+  IntegrationUpdateMsg integrationUpdateMsg = 4;
+  ConverterUpdateMsg converterUpdateMsg = 5;
+}
+
+enum MessageType {
+  CONNECT_RPC_MESSAGE = 0;
+  UPLINK_RPC_MESSAGE = 1;
+}
+
+message IntegrationUpdateMsg {
+  IntegrationConfigurationProto configuration = 1;
+}
+
+message ConverterUpdateMsg {
+  ConverterConfigurationProto configuration = 1;
+}
+
+message ConnectRequestMsg {
+  string integrationRoutingKey = 1;
+  string integrationSecret = 2;
+  string serviceId = 3;
+}
+
+enum ConnectResponseCode {
+  ACCEPTED = 0;
+  BAD_CREDENTIALS = 1;
+  SERVER_UNAVAILABLE = 2;
+}
+
+message ConnectResponseMsg {
+  ConnectResponseCode responseCode = 1;
+  string errorMsg = 2;
+  IntegrationConfigurationProto configuration = 3;
+}
+
+message DeviceUplinkDataProto {
+  string deviceName = 1;
+  string deviceType = 2;
+  string customerName = 3;
+  string groupName = 4;
+  transport.PostTelemetryMsg postTelemetryMsg = 5;
+  transport.PostAttributeMsg postAttributesMsg = 6;
+  string deviceLabel = 7;
+}
+
+message AssetUplinkDataProto {
+  string assetName = 1;
+  string assetType = 2;
+  string customerName = 3;
+  string groupName = 4;
+  transport.PostTelemetryMsg postTelemetryMsg = 5;
+  transport.PostAttributeMsg postAttributesMsg = 6;
+  string assetLabel = 7;
+}
+
+message EntityViewDataProto {
+  string deviceName = 1;
+  string deviceType = 2;
+  string viewName = 3;
+  string viewType = 4;
+  repeated string telemetryKeys = 5;
+}
+
+message IntegrationStatisticsProto {
+  transport.PostTelemetryMsg postTelemetryMsg = 1;
+}
+
+message DeviceDownlinkDataProto {
+  string deviceName = 1;
+  string deviceType = 2;
+  bytes tbMsg = 3 [deprecated = true]; // for removal in 4.2
+  msgqueue.TbMsgProto tbMsgProto = 4;
+}
+
+enum TbEventSource {
+  INTEGRATION = 0;
+  UPLINK_CONVERTER = 1;
+  DOWNLINK_CONVERTER = 2;
+  DEVICE = 3;
+}
+
+message TbEventProto {
+  TbEventSource source = 1;
+  string type = 2;
+  string uid = 3;
+  string data = 4;
+  string deviceName = 5;
+  bytes event = 6;
+}
+
+message IntegrationConfigurationProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  ConverterConfigurationProto uplinkConverter = 3;
+  ConverterConfigurationProto downlinkConverter = 4;
+  string name = 5;
+  string routingKey = 6;
+  string type = 7;
+  bool debugMode = 8 [deprecated = true];
+  string configuration = 9;
+  string additionalInfo = 10;
+  bool enabled = 11;
+  int64 integrationIdMSB = 12;
+  int64 integrationIdLSB = 13;
+  optional string debugSettings = 14;
+}
+
+message UplinkProcessingResultProto {
+  int32 uplinkMsgId = 1;
+  bool success = 2;
+  string errorMsg = 3;
+}
+
+message ConverterConfigurationProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 converterIdMSB = 3;
+  int64 converterIdLSB = 4;
+  string name = 5;
+  bool debugMode = 6 [deprecated = true];
+  string configuration = 7;
+  string additionalInfo = 8;
+  optional string debugSettings = 9;
+  optional string integrationType = 10;
+  int32 converterVersion = 11;
+}
+
+/**
+ * Main Messages;
+ */
+
+message UplinkMsg {
+  int32 uplinkMsgId = 1;
+  repeated DeviceUplinkDataProto deviceData = 2;
+  repeated EntityViewDataProto entityViewData = 3;
+  repeated IntegrationStatisticsProto integrationStatistics = 4;
+  repeated TbEventProto eventsData = 5;
+  repeated AssetUplinkDataProto assetData = 7;
+  repeated msgqueue.TbMsgProto tbMsgProto = 8;
+}
+
+message UplinkResponseMsg {
+  bool success = 1;
+  string errorMsg = 2;
+}
+
+message DownlinkMsg {
+  DeviceDownlinkDataProto deviceData = 1;
+}
+
+message IntegrationInfoProto {
+  int64 integrationIdMSB = 1;
+  int64 integrationIdLSB = 2;
+  int64 tenantIdMSB = 3;
+  int64 tenantIdLSB = 4;
+  string type = 5;
+  string name = 6;
+  bool enabled = 7;
+  bool remote = 8;
+  bool allowCreateDevicesOrAssets = 9;
+}
+
+message IntegrationProto {
+  int64 integrationIdMSB = 1;
+  int64 integrationIdLSB = 2;
+  int64 createdTime = 3;
+  int64 tenantIdMSB = 4;
+  int64 tenantIdLSB = 5;
+  string type = 6;
+  string name = 7;
+  bool debugMode = 8 [deprecated = true];
+  bool enabled = 9;
+  bool remote = 10;
+  bool allowCreateDevicesOrAssets = 11;
+  bool isEdgeTemplate = 12;
+  int64 defaultConverterIdMSB = 13;
+  int64 defaultConverterIdLSB = 14;
+  optional int64 downlinkConverterIdMSB = 15;
+  optional int64 downlinkConverterIdLSB = 16;
+  string routingKey = 17;
+  optional string secret = 18;
+  string configuration = 19;
+  optional string additionalInfo = 20;
+  optional int64 externalIdMSB = 21;
+  optional int64 externalIdLSB = 22;
+  optional int64 version = 23;
+  optional string debugSettings = 24;
+}
+
+message ConverterProto {
+  int64 converterIdMSB = 1;
+  int64 converterIdLSB = 2;
+  int64 createdTime = 3;
+  int64 tenantIdMSB = 4;
+  int64 tenantIdLSB = 5;
+  string type = 6;
+  string name = 7;
+  bool debugMode = 8 [deprecated = true];
+  string configuration = 9;
+  optional string additionalInfo = 10;
+  bool isEdgeTemplate = 11;
+  optional int64 externalIdMSB = 12;
+  optional int64 externalIdLSB = 13;
+  optional int64 version = 14;
+  optional string debugSettings = 15;
+  optional string integrationType = 16;
+  int32 converterVersion = 17;
+}
+
+message IntegrationInfoListRequestProto {
+  string type = 1;
+  bool enabled = 2;
+  bool remote = 3;
+}
+
+message IntegrationInfoListResponseProto {
+  repeated IntegrationInfoProto integrationInfoList = 1;
+}
+
+message IntegrationRequestProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 integrationIdMSB = 3;
+  int64 integrationIdLSB = 4;
+  string routingKey = 5;
+}
+
+message ConverterRequestProto {
+  int64 converterIdMSB = 1;
+  int64 converterIdLSB = 2;
+  int64 tenantIdMSB = 3;
+  int64 tenantIdLSB = 4;
+}
+
+message TenantProfileRequestProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+}
+
+message ProfileRequestProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  string name = 3;
+  transport.EntityTypeProto entityType = 4;
+}
+
+message EntityRequestProto {
+  string name = 1;
+  string type = 2;
+  string label = 3;
+  string customerName = 4;
+  string groupName = 5;
+  transport.EntityTypeProto entityType = 6;
+  IntegrationInfoProto integration = 7;
+}
+
+message GetAllProfilesRequestProto {
+  transport.EntityTypeProto entityType = 1;
+  int64 idMSB = 2;
+  int64 idLSB = 3;
+  int32 batchSize = 4;
+}
+
+message GetAllProfilesResponseProto {
+  repeated transport.DeviceProfileCacheInfoProto deviceProfiles = 1;
+  repeated transport.AssetProfileCacheInfoProto assetProfiles = 2;
+}
+
+message GetEntitiesByRelationRequestProto {
+  transport.EntityTypeProto entityType = 1;
+  string relationType = 2;
+  int64 idMSB = 3;
+  int64 idLSB = 4;
+  int32 batchSize = 5;
+}
+
+message GetEntitiesByRelationResponseProto {
+  repeated transport.DeviceCacheInfoProto devices = 1;
+  repeated transport.AssetCacheInfoProto assets = 2;
+}
+
+/* Request from Integration Executor Service to ThingsBoard Core Service */
+message IntegrationApiRequestMsg {
+  IntegrationInfoListRequestProto integrationListRequest = 1;
+  IntegrationRequestProto integrationRequest = 2;
+  ConverterRequestProto converterRequest = 3;
+  TenantProfileRequestProto tenantProfileRequest = 4;
+  ProfileRequestProto profileRequest = 5;
+  EntityRequestProto entityRequest = 6;
+  transport.GetAllQueueRoutingInfoRequestMsg getAllQueueRoutingInfoRequest = 7;
+  GetAllProfilesRequestProto getAllProfilesRequest = 8;
+  GetEntitiesByRelationRequestProto getEntitiesByRelationRequest = 9;
+}
+
+/* Response from ThingsBoard Core Service to Integration Executor Service */
+message IntegrationApiResponseMsg {
+  IntegrationInfoListResponseProto integrationListResponse = 1;
+  IntegrationProto integrationResponse = 2;
+  ConverterProto converterResponse = 3;
+  transport.TenantProfileProto tenantProfileResponse = 4;
+  transport.DeviceProfileCacheInfoProto deviceProfileResponse = 5;
+  transport.AssetProfileCacheInfoProto assetProfileResponse = 6;
+  transport.DeviceCacheInfoProto deviceResponse = 7;
+  transport.AssetCacheInfoProto assetResponse = 8;
+  repeated transport.GetQueueRoutingInfoResponseMsg getQueueRoutingInfoResponse = 9;
+  GetAllProfilesResponseProto getAllProfilesResponse = 10;
+  GetEntitiesByRelationResponseProto getEntitiesByRelationResponse = 11;
+}
+
+/* High priority messages with low latency are handled by ThingsBoard Integration Executor Service separately */
+message ToIntegrationExecutorNotificationMsg {
+  transport.ComponentLifecycleMsgProto componentLifecycle = 1;
+}
+
+message IntegrationValidationRequestProto {
+  int64 idMSB = 1;
+  int64 idLSB = 2;
+  string serviceId = 3;
+  IntegrationProto configuration = 4;
+  string type = 5;
+  int64 tenantIdMSB = 6;
+  int64 tenantIdLSB = 7;
+  int64 timestamp = 8; // timestamp
+  int64 deadline = 9; // deadline timestamp. after deadline the response is not expected anymore
+}
+
+message ToIntegrationExecutorDownlinkMsg {
+  transport.IntegrationDownlinkMsgProto downlinkMsg = 1;
+  IntegrationValidationRequestProto validationRequestMsg = 2;
+}
+
+message TbIntegrationEventProto {
+  TbEventSource source = 1;
+  int64 tenantIdMSB = 2;
+  int64 tenantIdLSB = 3;
+  int64 eventSourceIdMSB = 4;
+  int64 eventSourceIdLSB = 5;
+  bytes event = 6;
+  string deviceName = 7;
+}
+
+message TbIntegrationTsDataProto {
+  TbEventSource source = 1;
+  int64 tenantIdMSB = 2;
+  int64 tenantIdLSB = 3;
+  int64 entityIdMSB = 4;
+  int64 entityIdLSB = 5;
+  repeated transport.TsKvProto tsData = 6;
+}
+
+message ToCoreIntegrationMsg {
+  reserved 5;
+  reserved "customTbMsg";
+  IntegrationInfoProto integration = 1;
+  DeviceUplinkDataProto deviceUplinkProto = 2 [deprecated = true]; // for removal in 4.5 - IE sends directly to RE
+  AssetUplinkDataProto assetUplinkProto = 3 [deprecated = true]; // for removal in 4.5 - IE sends directly to RE
+  EntityViewDataProto entityViewDataProto = 4 [deprecated = true]; // for removal in 4.5
+  TbIntegrationEventProto eventProto = 6;
+  TbIntegrationTsDataProto tsDataProto = 7;
+  msgqueue.TbMsgProto customTbMsgProto = 8;
+  transport.DeviceActivityProto activityProto = 9;
+}

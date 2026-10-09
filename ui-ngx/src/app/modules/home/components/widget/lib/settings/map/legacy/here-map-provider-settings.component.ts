@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
@@ -30,11 +16,11 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import {
+  defaultHereMapProviderSettings,
   HereMapProvider,
   HereMapProviderSettings,
   hereMapProviderTranslationMap
 } from '@home/components/widget/lib/maps-legacy/map-models';
-import { isDefinedAndNotNull } from '@core/utils';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
@@ -81,24 +67,8 @@ export class HereMapProviderSettingsComponent extends PageComponent implements O
     this.providerSettingsFormGroup = this.fb.group({
       mapProviderHere: [null, [Validators.required]],
       credentials: this.fb.group({
-        useV3: [true],
-        app_id: [null, [Validators.required]],
-        app_code: [null, [Validators.required]],
         apiKey: [null, [Validators.required]]
       })
-    });
-    this.providerSettingsFormGroup.get('credentials.useV3').valueChanges.pipe(
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe(value => {
-      if (value) {
-        this.providerSettingsFormGroup.get('credentials.apiKey').enable({emitEvent: false});
-        this.providerSettingsFormGroup.get('credentials.app_id').disable({emitEvent: false});
-        this.providerSettingsFormGroup.get('credentials.app_code').disable({emitEvent: false});
-      } else {
-        this.providerSettingsFormGroup.get('credentials.apiKey').disable({emitEvent: false});
-        this.providerSettingsFormGroup.get('credentials.app_id').enable({emitEvent: false});
-        this.providerSettingsFormGroup.get('credentials.app_code').enable({emitEvent: false});
-      }
     });
     this.providerSettingsFormGroup.valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
@@ -120,21 +90,17 @@ export class HereMapProviderSettingsComponent extends PageComponent implements O
       this.providerSettingsFormGroup.disable({emitEvent: false});
     } else {
       this.providerSettingsFormGroup.enable({emitEvent: false});
-      this.providerSettingsFormGroup.get('credentials.useV3').updateValueAndValidity({onlySelf: true});
     }
   }
 
   writeValue(value: HereMapProviderSettings): void {
-    if (!isDefinedAndNotNull(value.credentials.useV3)) {
-      if (isDefinedAndNotNull(value.credentials.app_id) && isDefinedAndNotNull(value.credentials.app_code)) {
-        value.credentials.useV3 = false;
-      }
-    }
     this.modelValue = value;
-    this.providerSettingsFormGroup.patchValue(
-      value, {emitEvent: false}
-    );
-    this.providerSettingsFormGroup.get('credentials.useV3').updateValueAndValidity({onlySelf: true});
+    this.providerSettingsFormGroup.patchValue({
+      mapProviderHere: value?.mapProviderHere,
+      credentials: {
+        apiKey: value?.credentials?.apiKey || defaultHereMapProviderSettings.credentials.apiKey
+      }
+    }, {emitEvent: false});
   }
 
   public validate(c: FormControl) {

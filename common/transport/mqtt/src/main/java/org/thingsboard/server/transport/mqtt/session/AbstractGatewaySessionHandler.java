@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.mqtt.session;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -27,7 +15,6 @@ import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.google.protobuf.ProtocolStringList;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
@@ -50,6 +37,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.gateway.metrics.GatewayMetadata;
 import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
@@ -68,6 +56,7 @@ import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 import org.thingsboard.server.transport.mqtt.adaptors.ProtoMqttAdaptor;
 import org.thingsboard.server.transport.mqtt.gateway.GatewayMetricsService;
 import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugConnectionState;
+import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopic;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -80,6 +69,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
@@ -122,6 +112,10 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
     protected final ChannelHandlerContext channel;
     protected final DeviceSessionCtx deviceSessionCtx;
     protected final GatewayMetricsService gatewayMetricsService;
+
+    private final ConcurrentMap<Integer, RpcAwaitingAck> rpcAwaitingAck = new ConcurrentHashMap<>();
+
+    private record RpcAwaitingAck(SessionInfoProto deviceSessionInfo, TransportProtos.ToDeviceRpcRequestMsg rpc) {}
 
     @Getter
     @Setter
@@ -201,6 +195,10 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
 
     public void onDevicesDisconnect() {
         log.debug("[{}] Gateway disconnect [{}]", gateway.getTenantId(), gateway.getDeviceId());
+        if (!rpcAwaitingAck.isEmpty()) {
+            log.debug("[{}] Cleanup gateway RPC awaiting ack map due to session close!", sessionId);
+            rpcAwaitingAck.clear();
+        }
         try {
             deviceFutures.forEach((name, future) -> {
                 Futures.addCallback(future, new FutureCallback<T>() {
@@ -252,6 +250,28 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
         return deviceSessionCtx.nextMsgId();
     }
 
+    void registerRpcAwaitingAck(int msgId, SessionInfoProto deviceSessionInfo, TransportProtos.ToDeviceRpcRequestMsg rpc) {
+        rpcAwaitingAck.put(msgId, new RpcAwaitingAck(deviceSessionInfo, rpc));
+        long delay = Math.max(0, Math.min(deviceSessionCtx.getContext().getTimeout(),
+                rpc.getExpirationTime() - System.currentTimeMillis()));
+        context.getScheduler().schedule(() -> {
+            RpcAwaitingAck pending = rpcAwaitingAck.remove(msgId);
+            if (pending != null) {
+                log.trace("[{}] Gateway RPC [{}] PUBACK timeout, sending TIMEOUT status", sessionId, rpc.getRequestId());
+                transportService.process(pending.deviceSessionInfo(), pending.rpc(), RpcStatus.TIMEOUT, TransportServiceCallback.EMPTY);
+            }
+        }, delay, TimeUnit.MILLISECONDS);
+    }
+
+    public void onPubAck(int msgId) {
+        RpcAwaitingAck pending = rpcAwaitingAck.remove(msgId);
+        if (pending == null) {
+            return;
+        }
+        log.trace("[{}] Gateway RPC [{}] PUBACK received, sending DELIVERED status", sessionId, pending.rpc().getRequestId());
+        transportService.process(pending.deviceSessionInfo(), pending.rpc(), RpcStatus.DELIVERED, true, TransportServiceCallback.EMPTY);
+    }
+
     protected boolean isJsonPayloadType() {
         return deviceSessionCtx.isJsonPayloadType();
     }
@@ -276,7 +296,11 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
         }
     }
 
-    ListenableFuture<T> onDeviceConnect(String deviceName, String deviceType) {
+    ListenableFuture<T> onDeviceConnect(String deviceName, String deviceType, String... entityGroup) {
+        return onDeviceConnect(deviceName, deviceType, false, entityGroup);
+    }
+
+    ListenableFuture<T> onDeviceConnect(String deviceName, String deviceType, boolean isSparkplug, String... entityGroup) {
         T result = devices.get(deviceName);
         if (result == null) {
             Lock deviceCreationLock = deviceCreationLockMap.computeIfAbsent(deviceName, s -> new ReentrantLock());
@@ -284,7 +308,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
             try {
                 result = devices.get(deviceName);
                 if (result == null) {
-                    return getDeviceCreationFuture(deviceName, deviceType);
+                    return getDeviceCreationFuture(deviceName, deviceType, isSparkplug, entityGroup);
                 } else {
                     return Futures.immediateFuture(result);
                 }
@@ -296,7 +320,27 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
         }
     }
 
-    private ListenableFuture<T> getDeviceCreationFuture(String deviceName, String deviceType) {
+    ListenableFuture<T> onDeviceConnectSparkplug(SparkplugTopic topic, String deviceType) {
+        String fullPath = topic.getNodeDeviceNameAllPath();
+        // Primary lookup: try to find the device by its full-path name (standard for new devices)
+        T result = devices.get(fullPath);
+
+        if (result == null) {
+            // Secondary lookup (Legacy Fallback): check for the short name if full path is not found.
+            // This supports devices migrated from older versions.
+            String shortName = topic.getNodeDeviceName();
+            result = devices.get(shortName);
+        }
+
+        if (result != null) {
+            return Futures.immediateFuture(result);
+        } else {
+            // If not found in cache at all, proceed with connection/creation using full path
+            return onDeviceConnect(fullPath, deviceType, true,  topic.getGroupId());
+        }
+    }
+
+    private ListenableFuture<T> getDeviceCreationFuture(String deviceName, String deviceType, boolean isSparkplug, String... entityGroup) {
         final SettableFuture<T> futureToSet = SettableFuture.create();
         ListenableFuture<T> future = deviceFutures.putIfAbsent(deviceName, futureToSet);
         if (future != null) {
@@ -309,6 +353,8 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
                             .setDeviceType(deviceType)
                             .setGatewayIdMSB(gateway.getDeviceId().getId().getMostSignificantBits())
                             .setGatewayIdLSB(gateway.getDeviceId().getId().getLeastSignificantBits())
+                            .setIsSparkplug(isSparkplug)
+                            .setEntityGroup(entityGroup.length == 0 ? "" : entityGroup[0])
                             .build(),
                     new TransportServiceCallback<>() {
                         @Override
@@ -654,34 +700,72 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
         JsonObject jsonObj = json.getAsJsonObject();
         int requestId = jsonObj.get("id").getAsInt();
         String deviceName = jsonObj.get(DEVICE_PROPERTY).getAsString();
-        boolean clientScope = jsonObj.get("client").getAsBoolean();
-        Set<String> keys;
-        if (jsonObj.has("key")) {
-            keys = Collections.singleton(jsonObj.get("key").getAsString());
-        } else {
-            JsonArray keysArray = jsonObj.get("keys").getAsJsonArray();
-            keys = new HashSet<>();
-            for (JsonElement keyObj : keysArray) {
-                keys.add(keyObj.getAsString());
+        TransportProtos.GetAttributeRequestMsg requestMsg;
+        if (jsonObj.has("clientKeys") || jsonObj.has("sharedKeys")) {
+            // new unified format: clientKeys/sharedKeys + empty-value="all"; emit the separated response
+            TransportProtos.GetAttributeRequestMsg.Builder requestBuilder = TransportProtos.GetAttributeRequestMsg.newBuilder()
+                    .setRequestId(requestId).setSeparateScopesResponse(true);
+            JsonConverter.parseAttributeScope(jsonObj, "clientKeys", () -> requestBuilder.setAllClientAttributes(true), requestBuilder::addAllClientAttributeNames);
+            JsonConverter.parseAttributeScope(jsonObj, "sharedKeys", () -> requestBuilder.setAllSharedAttributes(true), requestBuilder::addAllSharedAttributeNames);
+            requestMsg = requestBuilder.build();
+        } else if (jsonObj.has("client")) {
+            // legacy format: client boolean + key/keys; keep the legacy value/values response
+            boolean clientScope = jsonObj.get("client").getAsBoolean();
+            Set<String> keys;
+            if (jsonObj.has("key")) {
+                keys = Collections.singleton(jsonObj.get("key").getAsString());
+            } else {
+                JsonArray keysArray = jsonObj.get("keys").getAsJsonArray();
+                keys = new HashSet<>();
+                for (JsonElement keyObj : keysArray) {
+                    keys.add(keyObj.getAsString());
+                }
             }
+            requestMsg = toGetAttributeRequestMsg(requestId, clientScope, keys);
+        } else {
+            // neither marker present: fetch everything, separated response
+            requestMsg = TransportProtos.GetAttributeRequestMsg.newBuilder()
+                    .setRequestId(requestId).setSeparateScopesResponse(true).build();
         }
-        TransportProtos.GetAttributeRequestMsg requestMsg = toGetAttributeRequestMsg(requestId, clientScope, keys);
         processGetAttributeRequestMessage(msg, deviceName, requestMsg);
     }
 
     private void onDeviceAttributesRequestProto(MqttPublishMessage mqttMsg) throws AdaptorException {
         try {
-            TransportApiProtos.GatewayAttributesRequestMsg gatewayAttributesRequestMsg = TransportApiProtos.GatewayAttributesRequestMsg.parseFrom(getBytes(mqttMsg.payload()));
-            String deviceName = checkDeviceName(gatewayAttributesRequestMsg.getDeviceName());
-            int requestId = gatewayAttributesRequestMsg.getId();
-            boolean clientScope = gatewayAttributesRequestMsg.getClient();
-            ProtocolStringList keysList = gatewayAttributesRequestMsg.getKeysList();
-            Set<String> keys = new HashSet<>(keysList);
-            TransportProtos.GetAttributeRequestMsg requestMsg = toGetAttributeRequestMsg(requestId, clientScope, keys);
+            TransportApiProtos.GatewayAttributesRequestMsg gw = TransportApiProtos.GatewayAttributesRequestMsg.parseFrom(getBytes(mqttMsg.payload()));
+            String deviceName = checkDeviceName(gw.getDeviceName());
+            int requestId = gw.getId();
+            boolean newFormat = gw.getAllClientKeys() || gw.getAllSharedKeys()
+                    || gw.getClientKeysCount() > 0 || gw.getSharedKeysCount() > 0;
+            TransportProtos.GetAttributeRequestMsg requestMsg;
+            if (newFormat) {
+                TransportProtos.GetAttributeRequestMsg.Builder b = TransportProtos.GetAttributeRequestMsg.newBuilder()
+                        .setRequestId(requestId).setSeparateScopesResponse(true);
+                if (gw.getAllClientKeys()) {
+                    b.setAllClientAttributes(true);
+                } else {
+                    b.addAllClientAttributeNames(gw.getClientKeysList());
+                }
+                if (gw.getAllSharedKeys()) {
+                    b.setAllSharedAttributes(true);
+                } else {
+                    b.addAllSharedAttributeNames(gw.getSharedKeysList());
+                }
+                requestMsg = b.build();
+            } else {
+                requestMsg = toLegacyGatewayRequestMsg(requestId, gw);
+            }
             processGetAttributeRequestMessage(mqttMsg, deviceName, requestMsg);
         } catch (RuntimeException | InvalidProtocolBufferException e) {
             throw new AdaptorException(e);
         }
+    }
+
+    @SuppressWarnings("deprecation") // gw.getClient()/getKeysList() retained for the legacy single-scope gateway request
+    private TransportProtos.GetAttributeRequestMsg toLegacyGatewayRequestMsg(int requestId, TransportApiProtos.GatewayAttributesRequestMsg gw) {
+        boolean clientScope = gw.getClient();
+        Set<String> keys = new HashSet<>(gw.getKeysList());
+        return toGetAttributeRequestMsg(requestId, clientScope, keys);
     }
 
     private void onDeviceRpcResponseJson(int msgId, ByteBuf payload) throws AdaptorException {
@@ -844,8 +928,16 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
                                 deviceSessionCtx, msgId, MqttReasonCodes.PubAck.UNSPECIFIED_ERROR.byteValue()));
                     }
                 }
+                // Check for malformed packets (msgId <= 0)
                 if (msgId <= 0) {
-                    closeDeviceSession(deviceName, MqttReasonCodes.Disconnect.MALFORMED_PACKET);
+                    if (deviceSessionCtx.isSparkplug()) {
+                        // Sparkplug devices may use msgId = 0 during the initial connection or for QoS 0 messages.
+                        // We bypass the MALFORMED_PACKET check to allow these sessions to proceed.
+                        log.trace("[{}] Sparkplug session: allowed msgId [{}] for device: [{}]", sessionId, msgId, deviceName);
+                    } else {
+                        // Standard MQTT defense: close session for invalid message IDs
+                        closeDeviceSession(deviceName, MqttReasonCodes.Disconnect.MALFORMED_PACKET);
+                    }
                 }
             }
 

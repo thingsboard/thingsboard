@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -35,6 +23,7 @@ import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.util.mapping.JsonConverter;
 
 import java.util.Arrays;
+import java.util.Collections;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -78,6 +67,10 @@ public class OAuth2ClientRegistrationTemplateEntity extends BaseSqlEntity<OAuth2
     private String defaultDashboardName;
     @Column(name = ModelConstants.OAUTH2_ALWAYS_FULL_SCREEN_PROPERTY)
     private Boolean alwaysFullScreen;
+    @Column(name = ModelConstants.OAUTH2_PARENT_CUSTOMER_NAME_PATTERN_PROPERTY)
+    private String parentCustomerNamePattern;
+    @Column(name = ModelConstants.OAUTH2_USER_GROUPS_NAME_PATTERN_PROPERTY)
+    private String userGroupsNamePattern;
     @Column(name = ModelConstants.OAUTH2_TEMPLATE_COMMENT_PROPERTY)
     private String comment;
     @Column(name = ModelConstants.OAUTH2_TEMPLATE_LOGIN_BUTTON_ICON_PROPERTY)
@@ -125,6 +118,11 @@ public class OAuth2ClientRegistrationTemplateEntity extends BaseSqlEntity<OAuth2
                 this.customerNamePattern = basicConfig.getCustomerNamePattern();
                 this.defaultDashboardName = basicConfig.getDefaultDashboardName();
                 this.alwaysFullScreen = basicConfig.isAlwaysFullScreen();
+                this.parentCustomerNamePattern = basicConfig.getParentCustomerNamePattern();
+                if (basicConfig.getUserGroupsNamePattern() != null && !basicConfig.getUserGroupsNamePattern().isEmpty()) {
+                    this.userGroupsNamePattern = basicConfig.getUserGroupsNamePattern().stream()
+                            .reduce((result, element) -> result + "," + element).orElse(null);
+                }
             }
         }
     }
@@ -149,6 +147,8 @@ public class OAuth2ClientRegistrationTemplateEntity extends BaseSqlEntity<OAuth2
                                 .customerNamePattern(customerNamePattern)
                                 .defaultDashboardName(defaultDashboardName)
                                 .alwaysFullScreen(alwaysFullScreen)
+                                .parentCustomerNamePattern(parentCustomerNamePattern)
+                                .userGroupsNamePattern(userGroupsNamePattern != null ? Arrays.asList(userGroupsNamePattern.split(",")) : Collections.emptyList())
                                 .build()
                         )
                         .build()

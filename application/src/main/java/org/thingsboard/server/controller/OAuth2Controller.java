@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import io.swagger.v3.oas.annotations.Hidden;
@@ -35,32 +23,30 @@ import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.OAuth2ClientId;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientLoginInfo;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.permission.Operation;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.oauth2.OAuth2Configuration;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.oauth2client.TbOauth2ClientService;
-import org.thingsboard.server.service.security.permission.Operation;
-import org.thingsboard.server.service.security.permission.Resource;
+import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.utils.MiscUtils;
 
-import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.UUID;
 
+import static org.thingsboard.server.common.data.permission.Resource.OAUTH2_CLIENT;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_AUTHORITY_PARAGRAPH;
-import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_OR_TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
 
 @RestController
 @TbCoreComponent
@@ -106,54 +92,56 @@ public class OAuth2Controller extends BaseController {
         }
     }
 
-    @ApiOperation(value = "Save OAuth2 Client (saveOAuth2Client)", notes = SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @ApiOperation(value = "Save OAuth2 Client (saveOAuth2Client)", notes = SYSTEM_OR_TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @PostMapping(value = "/oauth2/client")
     public OAuth2Client saveOAuth2Client(@RequestBody @Valid OAuth2Client oAuth2Client) throws Exception {
-        TenantId tenantId = getTenantId();
-        oAuth2Client.setTenantId(tenantId);
-        checkEntity(oAuth2Client.getId(), oAuth2Client, Resource.OAUTH2_CLIENT);
-        return tbOauth2ClientService.save(oAuth2Client, getCurrentUser());
+        SecurityUser currentUser = getCurrentUser();
+        oAuth2Client.setTenantId(currentUser.getTenantId());
+        oAuth2Client.setCustomerId(currentUser.getCustomerId());
+        checkEntity(oAuth2Client.getId(), oAuth2Client, OAUTH2_CLIENT);
+        return tbOauth2ClientService.save(oAuth2Client, currentUser);
     }
 
-    @ApiOperation(value = "Get OAuth2 Client infos (findTenantOAuth2ClientInfos)", notes = SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @ApiOperation(value = "Get OAuth2 Client infos (findOAuth2ClientInfos)", notes = SYSTEM_OR_TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/oauth2/client/infos")
-    public PageData<OAuth2ClientInfo> findTenantOAuth2ClientInfos(@Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
-                                                                  @RequestParam int pageSize,
-                                                                  @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
-                                                                  @RequestParam int page,
-                                                                  @Parameter(description = "Case-insensitive 'substring' filter based on client's title")
-                                                                  @RequestParam(required = false) String textSearch,
-                                                                  @Parameter(description = SORT_PROPERTY_DESCRIPTION)
-                                                                  @RequestParam(required = false) String sortProperty,
-                                                                  @Parameter(description = SORT_ORDER_DESCRIPTION)
-                                                                  @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+    public PageData<OAuth2ClientInfo> findOAuth2ClientInfos(@Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
+                                                            @RequestParam int pageSize,
+                                                            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
+                                                            @RequestParam int page,
+                                                            @Parameter(description = "Case-insensitive 'substring' filter based on client's title")
+                                                            @RequestParam(required = false) String textSearch,
+                                                            @Parameter(description = SORT_PROPERTY_DESCRIPTION)
+                                                            @RequestParam(required = false) String sortProperty,
+                                                            @Parameter(description = SORT_ORDER_DESCRIPTION)
+                                                            @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        accessControlService.checkPermission(getCurrentUser(), OAUTH2_CLIENT, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        return oAuth2ClientService.findOAuth2ClientInfosByTenantId(getTenantId(), pageLink);
+        return oAuth2ClientService.findOAuth2ClientInfosByTenantIdAndCustomerId(getTenantId(), getCurrentUser().getCustomerId(), pageLink);
     }
 
     @Hidden
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/oauth2/client/infos", params = {"clientIds"})
-    public List<OAuth2ClientInfo> findTenantOAuth2ClientInfosByIdsV1(
+    public List<OAuth2ClientInfo> findOAuth2ClientInfosByIdsV1(
             @RequestParam("clientIds") UUID[] clientIds) throws ThingsboardException {
         List<OAuth2ClientId> oAuth2ClientIds = getOAuth2ClientIds(clientIds);
         return oAuth2ClientService.findOAuth2ClientInfosByIds(getTenantId(), oAuth2ClientIds);
     }
 
     @ApiOperation(value = "Get OAuth2 Client infos By Ids (findTenantOAuth2ClientInfosByIds)",
-            notes = "Fetch OAuth2 Client info objects based on the provided ids. " + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+            notes = "Fetch OAuth2 Client info objects based on the provided ids. " + SYSTEM_OR_TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/oauth2/client/list")
     public List<OAuth2ClientInfo> findTenantOAuth2ClientInfosByIds(
             @Parameter(description = "A list of oauth2 ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
             @RequestParam("clientIds") UUID[] clientIds) throws ThingsboardException {
-        return findTenantOAuth2ClientInfosByIdsV1(clientIds);
+        return findOAuth2ClientInfosByIdsV1(clientIds);
     }
 
-    @ApiOperation(value = "Get OAuth2 Client by id (getOAuth2ClientById)", notes = SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @ApiOperation(value = "Get OAuth2 Client by id (getOAuth2ClientById)", notes = SYSTEM_OR_TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/oauth2/client/{id}")
     public OAuth2Client getOAuth2ClientById(@PathVariable UUID id) throws ThingsboardException {
         OAuth2ClientId oAuth2ClientId = new OAuth2ClientId(id);
@@ -161,8 +149,8 @@ public class OAuth2Controller extends BaseController {
     }
 
     @ApiOperation(value = "Delete oauth2 client (deleteOauth2Client)",
-            notes = "Deletes the oauth2 client. Referencing non-existing oauth2 client Id will cause an error." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+            notes = "Deletes the oauth2 client. Referencing non-existing oauth2 client Id will cause an error." + SYSTEM_OR_TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @DeleteMapping(value = "/oauth2/client/{id}")
     public void deleteOauth2Client(@PathVariable UUID id) throws Exception {
         OAuth2ClientId oAuth2ClientId = new OAuth2ClientId(id);
@@ -173,8 +161,8 @@ public class OAuth2Controller extends BaseController {
     @ApiOperation(value = "Get OAuth2 log in processing URL (getLoginProcessingUrl)", notes = "Returns the URL enclosed in " +
             "double quotes. After successful authentication with OAuth2 provider, it makes a redirect to this path so that the platform can do " +
             "further log in processing. This URL may be configured as 'security.oauth2.loginProcessingUrl' property in yml configuration file, or " +
-            "as 'SECURITY_OAUTH2_LOGIN_PROCESSING_URL' env variable. By default it is '/login/oauth2/code/'" + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+            "as 'SECURITY_OAUTH2_LOGIN_PROCESSING_URL' env variable. By default it is '/login/oauth2/code/'" + SYSTEM_OR_TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/oauth2/loginProcessingUrl")
     public String getLoginProcessingUrl() {
         return "\"" + oAuth2Configuration.getLoginProcessingUrl() + "\"";

@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.rule.engine.rest;
 
 import io.netty.channel.EventLoopGroup;
@@ -28,6 +15,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
 import org.springframework.util.LinkedMultiValueMap;
+import org.thingsboard.common.util.DirectListeningExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -210,6 +198,7 @@ public class TbHttpClientTest {
     private void processMessageAndWait(TbRestApiCallNodeConfiguration config, TbMsg msg) throws Exception {
         var httpClient = new TbHttpClient(config, eventLoop);
         var ctx = mock(TbContext.class);
+        when(ctx.getExternalCallExecutor()).thenReturn(DirectListeningExecutor.INSTANCE);
         when(ctx.transformMsg(eq(msg), any(), any())).thenReturn(msg);
 
         var latch = new CountDownLatch(1);
@@ -569,8 +558,8 @@ public class TbHttpClientTest {
         Map<String, String> data = metaData.getData();
 
         Assertions.assertEquals(2, data.size());
-        Assertions.assertEquals(data.get("Content-Type"), "binary");
-        Assertions.assertEquals(data.get("Set-Cookie"), "[\"sap-context=sap-client=075; path=/\",\"sap-token=sap-client=075; path=/\"]");
+        Assertions.assertEquals("binary", data.get("Content-Type"));
+        Assertions.assertEquals("[\"sap-context=sap-client=075; path=/\",\"sap-token=sap-client=075; path=/\"]", data.get("Set-Cookie"));
     }
 
 }

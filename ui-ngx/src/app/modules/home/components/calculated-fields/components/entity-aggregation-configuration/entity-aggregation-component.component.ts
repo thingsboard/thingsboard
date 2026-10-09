@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { booleanAttribute, Component, forwardRef, Input } from '@angular/core';
 import {
   ControlValueAccessor,
@@ -37,7 +24,7 @@ import {
 } from '@shared/models/calculated-field.models';
 import { filter, map } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { AVG_MONTH, AVG_QUARTER, DAY, HOUR, MINUTE, SECOND, WEEK, YEAR } from '@shared/models/time/time.models';
+import { AVG_MONTH, AVG_QUARTER, DAY, getDefaultTimezone, HOUR, MINUTE, SECOND, WEEK, YEAR } from '@shared/models/time/time.models';
 import { deepClone, isDefinedAndNotNull } from '@core/utils';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { Store } from '@ngrx/store';
@@ -90,6 +77,9 @@ export class EntityAggregationComponentComponent implements ControlValueAccessor
 
   @Input({transform: booleanAttribute}) isEditValue = true;
 
+  @Input({ transform: booleanAttribute })
+  readonly: boolean;
+
   readonly minAllowedAggregationIntervalInSecForCF = getCurrentAuthState(this.store).minAllowedAggregationIntervalInSecForCF;
   readonly intermediateAggregationIntervalInSecForCF = getCurrentAuthState(this.store).intermediateAggregationIntervalInSecForCF;
   readonly DayInSec = DAY / SECOND;
@@ -99,7 +89,7 @@ export class EntityAggregationComponentComponent implements ControlValueAccessor
     metrics: this.fb.control({}, notEmptyObjectValidator()),
     interval: this.fb.group({
       type: [AggIntervalType.HOUR],
-      tz: ['', Validators.required],
+      tz: [getDefaultTimezone(), Validators.required],
       durationSec: [this.minAllowedAggregationIntervalInSecForCF, Validators.required],
       allowOffsetSec: [false],
       offsetSec: [this.minAllowedAggregationIntervalInSecForCF > 60 ? MINUTE / SECOND : 1, Validators.required],

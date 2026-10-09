@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, Inject, OnInit, SkipSelf } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
@@ -22,7 +9,7 @@ import { AppState } from '@core/core.state';
 import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
 import { DeviceService } from '@core/http/device.service';
 import { EntityType } from '@shared/models/entity-type.models';
-import { forkJoin, Observable } from 'rxjs';
+import { forkJoin, Observable, of } from 'rxjs';
 import { AssetService } from '@core/http/asset.service';
 import { EntityViewService } from '@core/http/entity-view.service';
 import { DashboardService } from '@core/http/dashboard.service';
@@ -82,10 +69,6 @@ export class AddEntitiesToCustomerDialogComponent extends
         this.assignToCustomerTitle = 'asset.assign-asset-to-customer';
         this.assignToCustomerText = 'asset.assign-asset-to-customer-text';
         break;
-      case EntityType.EDGE:
-        this.assignToCustomerTitle = 'edge.assign-edge-to-customer';
-        this.assignToCustomerText = 'edge.assign-edge-to-customer-text';
-        break;
       case EntityType.ENTITY_VIEW:
         this.assignToCustomerTitle = 'entity-view.assign-entity-view-to-customer';
         this.assignToCustomerText = 'entity-view.assign-entity-view-to-customer-text';
@@ -93,6 +76,10 @@ export class AddEntitiesToCustomerDialogComponent extends
       case EntityType.DASHBOARD:
         this.assignToCustomerTitle = 'dashboard.assign-dashboard-to-customer';
         this.assignToCustomerText = 'dashboard.assign-dashboard-to-customer-text';
+        break;
+      case EntityType.EDGE:
+        this.assignToCustomerTitle = 'edge.assign-edge-to-customer';
+        this.assignToCustomerText = 'edge.assign-edge-to-customer-text';
         break;
     }
   }
@@ -124,7 +111,7 @@ export class AddEntitiesToCustomerDialogComponent extends
   }
 
   private getAssignToCustomerTask(customerId: string, entityId: string): Observable<any> {
-    switch (this.data.entityType) {
+    /*switch (this.data.entityType) {
       case EntityType.DEVICE:
         return this.deviceService.assignDeviceToCustomer(customerId, entityId);
       case EntityType.ASSET:
@@ -135,7 +122,9 @@ export class AddEntitiesToCustomerDialogComponent extends
         return this.entityViewService.assignEntityViewToCustomer(customerId, entityId);
       case EntityType.DASHBOARD:
         return this.dashboardService.assignDashboardToCustomer(customerId, entityId);
-    }
+        break;
+    }*/
+    return of(null);
   }
 
 }

@@ -1,0 +1,77 @@
+#
+# SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+# SPDX-License-Identifier: BUSL-1.1
+#
+
+# Shared blocks for the four tb-* services below: every core / rule-engine node carries the identical Citus
+# environment knobs and worker dependency list, so they are defined once here and referenced via YAML anchors.
+x-citus-env: &citus-env
+  DATABASE_CITUS_ENABLED: "true"
+  DATABASE_CITUS_SHARD_COUNT: "8"
+x-citus-deps: &citus-deps
+  - citus-worker1
+  - citus-worker2
+
+services:
+  postgres:
+    # Keep this tag in sync with CitusClusterSupport.CITUS_IMAGE
+    # (dao/src/test/java/org/thingsboard/server/dao/sql/citus/CitusClusterSupport.java) — the single source of
+    # truth for the Citus image used by the Java test harnesses. YAML cannot reference the Java constant, so
+    # the tag is pinned here by hand and must be bumped in both places together.
+    image: "citusdata/citus:12.1"
+    environment:
+      POSTGRES_DB: thingsboard
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      # Credentials libpq uses for Citus node-to-node connections (coordinator->worker,
+      # worker->worker). Without these the maintenance daemon / distributed executor connects
+      # with no password and fails with "fe_sendauth: no password supplied" once queries run
+      # on the workers.
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    volumes:
+      - ../citus-register.sh:/citus-register.sh:ro
+  citus-worker1:
+    restart: always
+    # Same image as the coordinator above; keep in sync with CitusClusterSupport.CITUS_IMAGE.
+    image: "citusdata/citus:12.1"
+    environment:
+      POSTGRES_DB: thingsboard
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    volumes:
+      - citus-worker1-db-volume:/var/lib/postgresql/data
+  citus-worker2:
+    restart: always
+    # Same image as the coordinator above; keep in sync with CitusClusterSupport.CITUS_IMAGE.
+    image: "citusdata/citus:12.1"
+    environment:
+      POSTGRES_DB: thingsboard
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    volumes:
+      - citus-worker2-db-volume:/var/lib/postgresql/data
+  tb-core1:
+    environment: *citus-env
+    depends_on: *citus-deps
+  tb-core2:
+    environment: *citus-env
+    depends_on: *citus-deps
+  tb-rule-engine1:
+    environment: *citus-env
+    depends_on: *citus-deps
+  tb-rule-engine2:
+    environment: *citus-env
+    depends_on: *citus-deps
+
+volumes:
+  citus-worker1-db-volume:
+    external:
+      name: ${CITUS_WORKER1_DATA_VOLUME}
+  citus-worker2-db-volume:
+    external:
+      name: ${CITUS_WORKER2_DATA_VOLUME}

@@ -1,0 +1,45 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@use './agent-shared' as *;
+
+.tb-agent-autocomplete-panel {
+  .mdc-list-item__primary-text:has(> .tb-agent-option) {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .tb-agent-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    width: 100%;
+    > span:not(.tb-agent-option-status) {
+      flex: 1 1 auto;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .tb-agent-option-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      flex: 0 0 auto;
+      min-width: 72px;
+      color: $agent-color-error;
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex: 0 0 8px;
+        background: $agent-color-error;
+      }
+      &.online {
+        color: $agent-color-success;
+        .dot {
+          background: $agent-color-success;
+        }
+      }
+    }
+  }
+}

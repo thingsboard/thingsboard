@@ -1,0 +1,184 @@
+{
+  "entityId": {
+    "entityType": "DEVICE_PROFILE",
+    "id": "4a7f5378-170a-4d1d-873c-444d3c0f7a0b"
+  },
+  "type": "ALARM",
+  "name": "Battery",
+  "debugSettings": {
+    "failuresEnabled": true,
+    "allEnabled": false,
+    "allEnabledUntil": 0
+  },
+  "configurationVersion": 0,
+  "configuration": {
+    "type": "ALARM",
+    "arguments": {
+      "minCriticalBatteryLevelThreshold": {
+        "refDynamicSourceConfiguration": {
+          "type": "CURRENT_OWNER"
+        },
+        "refEntityKey": {
+          "key": "minCriticalBatteryLevelThreshold",
+          "type": "ATTRIBUTE",
+          "scope": "SERVER_SCOPE"
+        },
+        "defaultValue": "15.0"
+      },
+      "minMajorBatteryLevelThreshold": {
+        "refDynamicSourceConfiguration": {
+          "type": "CURRENT_OWNER"
+        },
+        "refEntityKey": {
+          "key": "minMajorBatteryLevelThreshold",
+          "type": "ATTRIBUTE",
+          "scope": "SERVER_SCOPE"
+        },
+        "defaultValue": "25.0"
+      },
+      "battery": {
+        "refEntityKey": {
+          "key": "battery",
+          "type": "TS_LATEST"
+        }
+      },
+      "batteryLevelAlarmEnabled": {
+        "refDynamicSourceConfiguration": {
+          "type": "CURRENT_OWNER"
+        },
+        "refEntityKey": {
+          "key": "batteryLevelAlarmEnabled",
+          "type": "ATTRIBUTE",
+          "scope": "SERVER_SCOPE"
+        },
+        "defaultValue": "false"
+      }
+    },
+    "createRules": {
+      "CRITICAL": {
+        "condition": {
+          "type": "SIMPLE",
+          "expression": {
+            "type": "SIMPLE",
+            "filters": [
+              {
+                "argument": "battery",
+                "valueType": "NUMERIC",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "NUMERIC",
+                    "operation": "LESS_OR_EQUAL",
+                    "value": {
+                      "staticValue": null,
+                      "dynamicValueArgument": "minCriticalBatteryLevelThreshold"
+                    }
+                  }
+                ]
+              },
+              {
+                "argument": "batteryLevelAlarmEnabled",
+                "valueType": "BOOLEAN",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "BOOLEAN",
+                    "operation": "EQUAL",
+                    "value": {
+                      "staticValue": true,
+                      "dynamicValueArgument": null
+                    }
+                  }
+                ]
+              }
+            ],
+            "operation": "AND"
+          },
+          "schedule": null
+        },
+        "alarmDetails": null,
+        "dashboardId": null
+      },
+      "MAJOR": {
+        "condition": {
+          "type": "SIMPLE",
+          "expression": {
+            "type": "SIMPLE",
+            "filters": [
+              {
+                "argument": "battery",
+                "valueType": "NUMERIC",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "NUMERIC",
+                    "operation": "LESS_OR_EQUAL",
+                    "value": {
+                      "staticValue": null,
+                      "dynamicValueArgument": "minMajorBatteryLevelThreshold"
+                    }
+                  }
+                ]
+              },
+              {
+                "argument": "batteryLevelAlarmEnabled",
+                "valueType": "BOOLEAN",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "BOOLEAN",
+                    "operation": "EQUAL",
+                    "value": {
+                      "staticValue": true,
+                      "dynamicValueArgument": null
+                    }
+                  }
+                ]
+              }
+            ],
+            "operation": "AND"
+          },
+          "schedule": null
+        },
+        "alarmDetails": null,
+        "dashboardId": null
+      }
+    },
+    "clearRule": {
+      "condition": {
+        "type": "SIMPLE",
+        "expression": {
+          "type": "SIMPLE",
+          "filters": [
+            {
+              "argument": "battery",
+              "valueType": "NUMERIC",
+              "operation": "AND",
+              "predicates": [
+                {
+                  "type": "NUMERIC",
+                  "operation": "GREATER",
+                  "value": {
+                    "staticValue": null,
+                    "dynamicValueArgument": "minMajorBatteryLevelThreshold"
+                  }
+                }
+              ]
+            }
+          ],
+          "operation": "AND"
+        },
+        "schedule": null
+      },
+      "alarmDetails": null,
+      "dashboardId": null
+    },
+    "propagate": true,
+    "propagateToOwner": false,
+    "propagateToTenant": false,
+    "propagateRelationTypes": [
+      "Contains"
+    ],
+    "output": null
+  }
+}

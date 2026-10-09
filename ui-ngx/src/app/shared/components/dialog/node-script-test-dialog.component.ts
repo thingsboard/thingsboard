@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   AfterViewInit,
   Component,
@@ -42,6 +29,7 @@ import { RuleChainService } from '@core/http/rule-chain.service';
 import { mergeMap } from 'rxjs/operators';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { beautifyJs } from '@shared/models/beautify.models';
+import { WhiteLabelingService } from '@core/http/white-labeling.service';
 
 export interface NodeScriptTestDialogData {
   script: string;
@@ -109,6 +97,7 @@ export class NodeScriptTestDialogComponent extends DialogComponent<NodeScriptTes
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<NodeScriptTestDialogComponent, string>,
               public fb: UntypedFormBuilder,
+              public wl: WhiteLabelingService,
               private ruleChainService: RuleChainService) {
     super(store, router, dialogRef);
     this.functionTitle = this.data.functionTitle;

@@ -1,0 +1,48 @@
+{
+  "type": "PROPAGATION",
+  "name": "Propagate thresholds to AQI Sensors",
+  "entityId": {
+    "entityType": "ASSET_PROFILE",
+    "id": "6fa4e7a9-5645-45ca-b91c-ce5ae27ed4ee"
+  },
+  "debugSettings": {
+    "failuresEnabled": true,
+    "allEnabled": false,
+    "allEnabledUntil": 0
+  },
+  "configurationVersion": 0,
+  "configuration": {
+    "type": "PROPAGATION",
+    "arguments": {
+      "batteryLevelThreshold": {
+        "refEntityKey": {
+          "key": "batteryLevelThreshold",
+          "type": "ATTRIBUTE",
+          "scope": "SERVER_SCOPE"
+        },
+        "defaultValue": ""
+      },
+      "inactivityTimeout": {
+        "refEntityKey": {
+          "key": "inactivityTimeout",
+          "type": "ATTRIBUTE",
+          "scope": "SERVER_SCOPE"
+        },
+        "defaultValue": ""
+      }
+    },
+    "expression": null,
+    "output": {
+      "type": "ATTRIBUTES",
+      "scope": "SERVER_SCOPE",
+      "strategy": {
+        "type": "RULE_CHAIN"
+      }
+    },
+    "relation": {
+      "direction": "FROM",
+      "relationType": "Contains"
+    },
+    "applyExpressionToResolvedArguments": false
+  }
+}

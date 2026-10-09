@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable, Type } from '@angular/core';
 import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
 import { forkJoin, Observable, of } from 'rxjs';
@@ -45,6 +32,7 @@ import { deepClone, snakeCase } from '@core/utils';
 import { DebugRuleNodeEventBody } from '@app/shared/models/event.models';
 import { Edge } from '@shared/models/edge.models';
 import { IModulesMap } from '@modules/common/modules-map.models';
+import { sortEntitiesByIds } from '@shared/models/base-data';
 
 @Injectable({
   providedIn: 'root'
@@ -69,8 +57,10 @@ export class RuleChainService {
   }
 
   public getRuleChainsByIds(ruleChainIds: Array<string>, config?: RequestConfig): Observable<Array<RuleChain>> {
-    return this.http.get<Array<RuleChain>>(`/api/ruleChains?&ruleChainIds=${ruleChainIds.join(',')}`,
-      defaultHttpOptionsFromConfig(config));
+    return this.http.get<Array<RuleChain>>(`/api/ruleChains?ruleChainIds=${ruleChainIds.join(',')}`,
+      defaultHttpOptionsFromConfig(config)).pipe(
+      map((converters) => sortEntitiesByIds(converters, ruleChainIds))
+    );
   }
 
   public getRuleChain(ruleChainId: string, config?: RequestConfig): Observable<RuleChain> {
@@ -112,7 +102,7 @@ export class RuleChainService {
      if (this.ruleNodeComponentsMap.get(ruleChainType)) {
        return of(this.ruleNodeComponentsMap.get(ruleChainType));
      } else {
-      return this.loadRuleNodeComponents(ruleChainType, config).pipe(
+       return this.loadRuleNodeComponents(ruleChainType, config).pipe(
         mergeMap((components) => {
           return this.resolveRuleNodeComponentsUiResources(components, modulesMap).pipe(
             map((ruleNodeComponents) => {

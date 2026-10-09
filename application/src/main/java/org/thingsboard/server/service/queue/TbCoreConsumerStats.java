@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.queue;
 
 import lombok.extern.slf4j.Slf4j;
@@ -36,11 +24,18 @@ public class TbCoreConsumerStats {
     public static final String DEVICE_CLAIMS = "claimDevice";
     public static final String DEVICE_STATES = "deviceState";
     public static final String SUBSCRIPTION_MSGS = "subMsgs";
+    public static final String SCHEDULER = "scheduler";
     public static final String DEVICE_CONNECTS = "deviceConnect";
     public static final String DEVICE_ACTIVITIES = "deviceActivity";
     public static final String DEVICE_DISCONNECTS = "deviceDisconnect";
     public static final String DEVICE_INACTIVITIES = "deviceInactivity";
     public static final String DEVICE_INACTIVITY_TIMEOUT_UPDATES = "deviceInactivityTimeoutUpdate";
+
+    // PE
+    public static final String TO_CORE_NF_INTEGRATION_DOWNLINK = "coreNfIntDlnk";
+    public static final String TO_CORE_NF_INTEGRATION_VALIDATION_RESPONSE = "coreNfIntValRsp";
+    public static final String TO_CORE_NF_REST_API_CALL_RESPONSE = "coreNfRestRsp";
+    // ...PE
 
     public static final String TO_CORE_NF_OTHER = "coreNfOther"; // normally, there is no messages when codebase is fine
     public static final String TO_CORE_NF_COMPONENT_LIFECYCLE = "coreNfCompLfcl";
@@ -60,6 +55,7 @@ public class TbCoreConsumerStats {
     private final StatsCounter toDeviceRPCCallResponseCounter;
     private final StatsCounter subscriptionInfoCounter;
     private final StatsCounter claimDeviceCounter;
+
     private final StatsCounter deviceStateCounter;
     private final StatsCounter subscriptionMsgCounter;
     private final StatsCounter deviceConnectsCounter;
@@ -67,6 +63,13 @@ public class TbCoreConsumerStats {
     private final StatsCounter deviceDisconnectsCounter;
     private final StatsCounter deviceInactivitiesCounter;
     private final StatsCounter deviceInactivityTimeoutUpdatesCounter;
+
+    // PE
+    private final StatsCounter schedulerMsgCounter;
+    private final StatsCounter integrationDownlinkCounter;
+    private final StatsCounter IntegartionValidationCounter;
+    private final StatsCounter RestApiCallResponseCounter;
+    // ...PE
 
     private final StatsCounter toCoreNfOtherCounter;
     private final StatsCounter toCoreNfComponentLifecycleCounter;
@@ -78,7 +81,7 @@ public class TbCoreConsumerStats {
     private final StatsCounter toCoreNfSubscriptionManagerCounter;
     private final StatsCounter toCoreNfVersionControlResponseCounter;
 
-    private final List<StatsCounter> counters = new ArrayList<>(23);
+    private final List<StatsCounter> counters = new ArrayList<>(23 + 4); //CE + PE
 
     public TbCoreConsumerStats(StatsFactory statsFactory) {
         String statsKey = StatsType.CORE.getName();
@@ -98,6 +101,13 @@ public class TbCoreConsumerStats {
         this.deviceDisconnectsCounter = register(statsFactory.createStatsCounter(statsKey, DEVICE_DISCONNECTS));
         this.deviceInactivitiesCounter = register(statsFactory.createStatsCounter(statsKey, DEVICE_INACTIVITIES));
         this.deviceInactivityTimeoutUpdatesCounter = register(statsFactory.createStatsCounter(statsKey, DEVICE_INACTIVITY_TIMEOUT_UPDATES));
+
+        // PE
+        this.schedulerMsgCounter = register(statsFactory.createStatsCounter(statsKey, SCHEDULER));
+        this.integrationDownlinkCounter = register(statsFactory.createStatsCounter(statsKey, TO_CORE_NF_INTEGRATION_DOWNLINK));
+        this.IntegartionValidationCounter = register(statsFactory.createStatsCounter(statsKey, TO_CORE_NF_INTEGRATION_VALIDATION_RESPONSE));
+        this.RestApiCallResponseCounter = register(statsFactory.createStatsCounter(statsKey, TO_CORE_NF_REST_API_CALL_RESPONSE));
+        // ...PE
 
         // Core notification counters
         this.toCoreNfOtherCounter = register(statsFactory.createStatsCounter(statsKey, TO_CORE_NF_OTHER));
@@ -146,6 +156,11 @@ public class TbCoreConsumerStats {
         deviceStateCounter.increment();
     }
 
+    public void log(TransportProtos.SchedulerServiceMsgProto schedulerServiceMsg) {
+        totalCounter.increment();
+        schedulerMsgCounter.increment();
+    }
+
     public void log(TransportProtos.DeviceConnectProto msg) {
         totalCounter.increment();
         deviceConnectsCounter.increment();
@@ -182,6 +197,16 @@ public class TbCoreConsumerStats {
             toCoreNfSubscriptionServiceCounter.increment();
         } else if (msg.hasFromDeviceRpcResponse()) {
             toCoreNfDeviceRpcResponseCounter.increment();
+
+            // PE
+        } else if (msg.hasIntegrationDownlinkMsg()) {
+            this.integrationDownlinkCounter.increment();
+        } else if (msg.hasIntegrationValidationResponseMsg()) {
+            this.IntegartionValidationCounter.increment();
+        } else if (msg.hasRestApiCallResponseMsg()) {
+            this.RestApiCallResponseCounter.increment();
+            // ...PE
+
         } else if (msg.hasComponentLifecycle()) {
             toCoreNfComponentLifecycleCounter.increment();
         } else if (msg.getQueueUpdateMsgsCount() > 0) {

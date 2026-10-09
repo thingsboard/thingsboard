@@ -1,0 +1,5 @@
+/*
+By default, we receive a message that is already correctly formatted.
+But you can change the code for your purposes.
+*/
+return decodeToJson(payload);

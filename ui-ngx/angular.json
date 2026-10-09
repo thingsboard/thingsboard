@@ -74,8 +74,18 @@
               },
               {
                 "glob": "**/*",
-                "input": "node_modules/tinymce",
-                "output": "/assets/tinymce/"
+                "input": "node_modules/hugerte",
+                "output": "/assets/hugerte/"
+              },
+              {
+                "glob": "maplibre-gl-worker.mjs",
+                "input": "node_modules/maplibre-gl/dist/",
+                "output": "/assets/maplibre-gl/"
+              },
+              {
+                "glob": "maplibre-gl-shared.mjs",
+                "input": "node_modules/maplibre-gl/dist/",
+                "output": "/assets/maplibre-gl/"
               },
               {
                 "glob": "marker-icon-2x.png",
@@ -91,9 +101,26 @@
                 "glob": "marker-shadow.png",
                 "input": "node_modules/leaflet/dist/images/",
                 "output": "/"
+              },
+              {
+                "glob": "*.svg",
+                "input": "./node_modules/flag-icons/flags/4x3/",
+                "output": "/assets/flags/"
               }
             ],
             "styles": [
+              {
+                "input": "src/theme/app-theme.scss",
+                "bundleName": "app-theme"
+              },
+              {
+                "input": "src/theme/login-theme.scss",
+                "bundleName": "login-theme"
+              },
+              {
+                "input": "src/app/modules/home/pages/reporting/template/components/report-component-style.scss",
+                "bundleName": "report-component"
+              },
               "src/styles.scss",
               "src/form.scss",
               "node_modules/jquery.terminal/css/jquery.terminal.min.css",
@@ -109,11 +136,13 @@
               "node_modules/@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css",
               "node_modules/prismjs/themes/prism.css",
               "node_modules/prismjs/plugins/line-numbers/prism-line-numbers.css",
-              "node_modules/ace-diff/dist/ace-diff.min.css"
+              "node_modules/ace-diff/dist/ace-diff.min.css",
+              "node_modules/photoswipe/dist/photoswipe.css"
             ],
             "stylePreprocessorOptions": {
               "includePaths": [
-                "src/scss"
+                "src/scss",
+                "node_modules"
               ],
               "sass": {
                 "silenceDeprecations": ["mixed-decls", "color-functions", "global-builtin", "import"]
@@ -130,6 +159,9 @@
               "node_modules/prismjs/components/prism-json.min.js",
               "node_modules/prismjs/components/prism-javascript.min.js",
               "node_modules/prismjs/components/prism-typescript.min.js",
+              "node_modules/prismjs/components/prism-python.min.js",
+              "node_modules/prismjs/components/prism-c.min.js",
+              "node_modules/prismjs/components/prism-cpp.min.js",
               "node_modules/prismjs/plugins/line-numbers/prism-line-numbers.min.js"
             ],
             "allowedCommonJsDependencies": [

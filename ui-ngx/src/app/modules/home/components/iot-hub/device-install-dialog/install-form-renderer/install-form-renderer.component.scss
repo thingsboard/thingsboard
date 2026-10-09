@@ -1,0 +1,29 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+:host {
+  display: block;
+}
+
+.tb-install-form-group-header {
+  margin: 16px 0 8px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.tb-install-form-secret-toggle {
+  margin-left: 4px;
+  align-self: center;
+}
+
+.tb-install-form-field-help {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.6);
+  margin-top: 4px;
+}
+
+.tb-install-form-field-help-image {
+  max-width: 100%;
+  margin-top: 8px;
+}

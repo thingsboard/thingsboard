@@ -1,22 +1,11 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -49,6 +38,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EdgeUpgradeInfo;
 import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
@@ -56,40 +46,63 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.domain.Domain;
+import org.thingsboard.server.common.data.domain.DomainInfo;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
+import org.thingsboard.server.common.data.encryptionkey.EncryptionKey;
+import org.thingsboard.server.common.data.group.EntityGroup;
+import org.thingsboard.server.common.data.group.EntityGroupInfo;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.EntityGroupId;
+import org.thingsboard.server.common.data.id.RoleId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.menu.CustomMenu;
+import org.thingsboard.server.common.data.menu.CustomMenuConfig;
+import org.thingsboard.server.common.data.menu.CustomMenuItem;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.permission.GroupPermission;
 import org.thingsboard.server.common.data.queue.Queue;
+import org.thingsboard.server.common.data.role.Role;
+import org.thingsboard.server.common.data.role.RoleType;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.model.JwtSettings;
+import org.thingsboard.server.common.data.translation.CustomTranslation;
+import org.thingsboard.server.common.data.wl.WhiteLabeling;
+import org.thingsboard.server.common.data.wl.WhiteLabelingType;
 import org.thingsboard.server.dao.edge.EdgeDao;
-import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.edge.imitator.EdgeImitator;
+import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.gen.edge.v1.AdminSettingsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AssetProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AssetUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.CustomTranslationUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.CustomerUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.EdgeConfiguration;
 import org.thingsboard.server.gen.edge.v1.EdgeVersion;
+import org.thingsboard.server.gen.edge.v1.EncryptionKeyUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.EntityGroupUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.GroupPermissionProto;
 import org.thingsboard.server.gen.edge.v1.OAuth2ClientUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.OAuth2DomainUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.QueueUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.RoleProto;
 import org.thingsboard.server.gen.edge.v1.RuleChainMetadataUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RuleChainUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.SyncCompletedMsg;
@@ -98,6 +111,7 @@ import org.thingsboard.server.gen.edge.v1.TenantUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.UserCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.WhiteLabelingProto;
 import org.thingsboard.server.service.edge.instructions.EdgeUpgradeInstructionsService;
 
 import java.util.ArrayList;
@@ -110,8 +124,12 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.dao.customer.CustomerServiceImpl.PUBLIC_CUSTOMER_SUFFIX;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 import static org.thingsboard.server.edge.AbstractEdgeTest.CONNECT_MESSAGE_COUNT;
 
@@ -132,7 +150,14 @@ public class EdgeControllerTest extends AbstractControllerTest {
         registry.add("edges.rpc.port", () -> EDGE_PORT);
     }
 
-    private IdComparator<Edge> idComparator = new IdComparator<>();
+    private static final String SYSADMIN_EDGE_DOMAIN = "sysadmin.edge.domain";
+    private static final String TENANT_EDGE_DOMAIN = "tenant.edge.domain";
+    private static final String CUSTOMER_EDGE_DOMAIN = "customer.edge.domain";
+
+    private Domain sysAdminDomain;
+    private Domain tenantDomain;
+
+    private final IdComparator<Edge> idComparator = new IdComparator<>();
 
     ListeningExecutorService executor;
 
@@ -179,6 +204,8 @@ public class EdgeControllerTest extends AbstractControllerTest {
         Assert.assertNotNull(savedEdge.getCustomerId());
         Assert.assertEquals(NULL_UUID, savedEdge.getCustomerId().getId());
         Assert.assertEquals(edge.getName(), savedEdge.getName());
+        Assert.assertTrue(StringUtils.isNoneBlank(savedEdge.getEdgeLicenseKey()));
+        Assert.assertTrue(StringUtils.isNoneBlank(savedEdge.getCloudEndpoint()));
 
         testNotifyEdgeStateChangeEventManyTimeMsgToEdgeServiceNever(savedEdge, savedEdge.getId(), savedEdge.getId(),
                 tenantId, tenantAdminUser.getCustomerId(), tenantAdminUser.getId(), tenantAdminUser.getEmail(),
@@ -324,7 +351,8 @@ public class EdgeControllerTest extends AbstractControllerTest {
                 tenantAdminUser.getId(), tenantAdminUser.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
     }
 
-    @Test
+    // keeping CE test for merge compatibility
+    // @Test
     public void testAssignUnassignEdgeToCustomer() throws Exception {
         Edge edge = constructEdge("My edge", "default");
         Edge savedEdge = doPost("/api/edge", edge, Edge.class);
@@ -358,7 +386,8 @@ public class EdgeControllerTest extends AbstractControllerTest {
         Assert.assertEquals(ModelConstants.NULL_UUID, foundEdge.getCustomerId().getId());
     }
 
-    @Test
+    // keeping CE test for merge compatibility
+    // @Test
     public void testAssignEdgeToNonExistentCustomer() throws Exception {
         Edge edge = constructEdge("My edge", "default");
         Edge savedEdge = doPost("/api/edge", edge, Edge.class);
@@ -377,7 +406,8 @@ public class EdgeControllerTest extends AbstractControllerTest {
         testNotifyEntityNever(customerId, new Customer());
     }
 
-    @Test
+    // keeping CE test for merge compatibility
+    // @Test
     public void testAssignEdgeToCustomerFromDifferentTenant() throws Exception {
         loginSysAdmin();
 
@@ -409,7 +439,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
         doPost("/api/customer/" + savedCustomer.getId().getId().toString()
                 + "/edge/" + savedEdge.getId().getId().toString())
                 .andExpect(status().isForbidden())
-                .andExpect(statusReason(containsString(msgErrorPermission)));
+                .andExpect(statusReason(containsString("msgErrorPermission")));
 
         testNotifyEntityNever(savedEdge.getId(), savedEdge);
         testNotifyEntityNever(savedCustomer.getId(), savedCustomer);
@@ -442,8 +472,8 @@ public class EdgeControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Collections.sort(edges, idComparator);
-        Collections.sort(loadedEdges, idComparator);
+        edges.sort(idComparator);
+        loadedEdges.sort(idComparator);
 
         Assert.assertEquals(edges, loadedEdges);
     }
@@ -489,8 +519,8 @@ public class EdgeControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Collections.sort(edgesTitle1, idComparator);
-        Collections.sort(loadedEdgesTitle1, idComparator);
+        edgesTitle1.sort(idComparator);
+        loadedEdgesTitle1.sort(idComparator);
 
         Assert.assertEquals(edgesTitle1, loadedEdgesTitle1);
 
@@ -506,8 +536,8 @@ public class EdgeControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Collections.sort(edgesTitle2, idComparator);
-        Collections.sort(loadedEdgesTitle2, idComparator);
+        edgesTitle2.sort(idComparator);
+        loadedEdgesTitle2.sort(idComparator);
 
         Assert.assertEquals(edgesTitle2, loadedEdgesTitle2);
 
@@ -579,8 +609,8 @@ public class EdgeControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Collections.sort(edgesType1, idComparator);
-        Collections.sort(loadedEdgesType1, idComparator);
+        edgesType1.sort(idComparator);
+        loadedEdgesType1.sort(idComparator);
 
         Assert.assertEquals(edgesType1, loadedEdgesType1);
 
@@ -596,8 +626,8 @@ public class EdgeControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Collections.sort(edgesType2, idComparator);
-        Collections.sort(loadedEdgesType2, idComparator);
+        edgesType2.sort(idComparator);
+        loadedEdgesType2.sort(idComparator);
 
         Assert.assertEquals(edgesType2, loadedEdgesType2);
 
@@ -626,7 +656,8 @@ public class EdgeControllerTest extends AbstractControllerTest {
         Assert.assertEquals(0, pageData.getData().size());
     }
 
-    @Test
+    // keeping CE test for merge compatibility
+    // @Test
     public void testFindCustomerEdges() throws Exception {
         Customer customer = new Customer();
         customer.setTitle("Test customer");
@@ -664,13 +695,14 @@ public class EdgeControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Collections.sort(edges, idComparator);
-        Collections.sort(loadedEdges, idComparator);
+        edges.sort(idComparator);
+        loadedEdges.sort(idComparator);
 
         Assert.assertEquals(edges, loadedEdges);
     }
 
-    @Test
+    // keeping CE test for merge compatibility
+    // @Test
     public void testFindCustomerEdgesByName() throws Exception {
         Customer customer = new Customer();
         customer.setTitle("Test customer");
@@ -722,8 +754,8 @@ public class EdgeControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Collections.sort(edgesTitle1, idComparator);
-        Collections.sort(loadedEdgesTitle1, idComparator);
+        edgesTitle1.sort(idComparator);
+        loadedEdgesTitle1.sort(idComparator);
 
         Assert.assertEquals(edgesTitle1, loadedEdgesTitle1);
 
@@ -776,7 +808,8 @@ public class EdgeControllerTest extends AbstractControllerTest {
         Assert.assertEquals(0, pageData.getData().size());
     }
 
-    @Test
+    // keeping CE test for merge compatibility
+    // @Test
     public void testFindCustomerEdgesByType() throws Exception {
         Customer customer = new Customer();
         customer.setTitle("Test customer");
@@ -830,8 +863,8 @@ public class EdgeControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Collections.sort(edgesType1, idComparator);
-        Collections.sort(loadedEdgesType1, idComparator);
+        edgesType1.sort(idComparator);
+        loadedEdgesType1.sort(idComparator);
 
         Assert.assertEquals(edgesType1, loadedEdgesType1);
 
@@ -847,8 +880,8 @@ public class EdgeControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Collections.sort(edgesType2, idComparator);
-        Collections.sort(loadedEdgesType2, idComparator);
+        edgesType2.sort(idComparator);
+        loadedEdgesType2.sort(idComparator);
 
         Assert.assertEquals(edgesType2, loadedEdgesType2);
 
@@ -877,7 +910,8 @@ public class EdgeControllerTest extends AbstractControllerTest {
         Assert.assertEquals(0, pageData.getData().size());
     }
 
-    @Test
+    // keeping CE test for merge compatibility
+    // @Test
     public void testSyncEdge() throws Exception {
         loginSysAdmin();
         // get jwt settings from yaml config
@@ -915,7 +949,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
         edgeImitator.ignoreType(OAuth2ClientUpdateMsg.class);
         edgeImitator.ignoreType(OAuth2DomainUpdateMsg.class);
 
-        // 17 connect message
+        // 27 connect message
         // + 1 Customer
         // + 5 fetchers messages (DeviceProfile, Device, DeviceCredentials, AssetProfile, Asset) in sync process
         // + 5 queue messages the same
@@ -932,8 +966,8 @@ public class EdgeControllerTest extends AbstractControllerTest {
         Assert.assertTrue(popAssetMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Test Sync Edge Asset 1"));
         printQueueMsgsIfNotEmpty(edgeImitator);
 
-        // 17 connect messages
-        // + 1 Customer
+        // 27 connect messages
+        // +1 Customer
         // + 5 fetchers messages (DeviceProfile, Device, DeviceCredentials, AssetProfile, Asset) in sync process
         edgeImitator.expectMessageAmount(CONNECT_MESSAGE_COUNT + 6);
         doPost("/api/edge/sync/" + edge.getId()).andExpect(status().isOk());
@@ -1212,13 +1246,151 @@ public class EdgeControllerTest extends AbstractControllerTest {
         return false;
     }
 
-    private boolean popTenantMsg(Deque<AbstractMessage> messages, TenantId tenantId1) {
+    private boolean popCustomerMsg(Deque<AbstractMessage> messages, UpdateMsgType msgType, String title, String ownerType, UUID ownerUUID) {
         for (AbstractMessage message : messages) {
-            if (message instanceof TenantUpdateMsg tenantUpdateMsg) {
-                Tenant tenant = JacksonUtil.fromString(tenantUpdateMsg.getEntity(), Tenant.class, true);
-                Assert.assertNotNull(tenant);
-                if (UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE.equals(tenantUpdateMsg.getMsgType())
-                        && tenantId1.equals(tenant.getId())) {
+            if (message instanceof CustomerUpdateMsg customerUpdateMsg) {
+                Customer customer = JacksonUtil.fromString(customerUpdateMsg.getEntity(), Customer.class, true);
+                Assert.assertNotNull(customer);
+                if (msgType.equals(customerUpdateMsg.getMsgType())
+                        && title.equals(customer.getTitle())
+                        && ownerType.equals(customer.getOwnerId().getEntityType().name())
+                        && ownerUUID.getMostSignificantBits() == customer.getOwnerId().getId().getMostSignificantBits()
+                        && ownerUUID.getLeastSignificantBits() == customer.getOwnerId().getId().getLeastSignificantBits()) {
+                    messages.remove(message);
+                    return true;
+                }
+            }
+        }
+        return false;
+
+    }
+
+    private boolean popRoleMsg(Deque<AbstractMessage> messages, UpdateMsgType msgType, String name, RoleType type) {
+        for (AbstractMessage message : messages) {
+            if (message instanceof RoleProto roleProto) {
+                Role role = JacksonUtil.fromString(roleProto.getEntity(), Role.class, true);
+                Assert.assertNotNull(role);
+                if (msgType.equals(roleProto.getMsgType())
+                        && name.equals(role.getName())
+                        && type.equals(role.getType())) {
+                    messages.remove(message);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private RoleId findRoleId(List<AbstractMessage> messages, UpdateMsgType msgType, String name, RoleType type) {
+        for (AbstractMessage message : messages) {
+            if (message instanceof RoleProto roleProto) {
+                Role role = JacksonUtil.fromString(roleProto.getEntity(), Role.class, true);
+                Assert.assertNotNull(role);
+                if (msgType.equals(roleProto.getMsgType())
+                        && name.equals(role.getName())
+                        && type.equals(role.getType())) {
+                    return role.getId();
+                }
+            }
+        }
+        return null;
+    }
+
+    private boolean popDomainMsg(Deque<AbstractMessage> messages, UpdateMsgType msgType, String name, TenantId tenantId, CustomerId customerId) {
+        for (AbstractMessage message : messages) {
+            if (message instanceof OAuth2DomainUpdateMsg oAuth2DomainUpdateMsg) {
+                DomainInfo domainInfo = JacksonUtil.fromString(oAuth2DomainUpdateMsg.getEntity(), DomainInfo.class, true);
+                Assert.assertNotNull(domainInfo);
+                if (msgType.equals(oAuth2DomainUpdateMsg.getMsgType())
+                        && name.equals(domainInfo.getName())
+                        && tenantId.equals(domainInfo.getTenantId())
+                        && customerId.equals(domainInfo.getCustomerId())) {
+                    messages.remove(message);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean popSyncCompletedMsg(Deque<AbstractMessage> messages) {
+        for (AbstractMessage message : messages) {
+            if (message instanceof SyncCompletedMsg) {
+                messages.remove(message);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean popEntityGroupMsg(Deque<AbstractMessage> messages, UpdateMsgType msgType, String name, EntityType type, EntityType ownerType) {
+        for (AbstractMessage message : messages) {
+            if (message instanceof EntityGroupUpdateMsg entityGroupUpdateMsg) {
+                EntityGroup entityGroup = JacksonUtil.fromString(entityGroupUpdateMsg.getEntity(), EntityGroup.class, true);
+                Assert.assertNotNull(entityGroup);
+                if (msgType.equals(entityGroupUpdateMsg.getMsgType())
+                        && name.equals(entityGroup.getName())
+                        && type.equals(entityGroup.getType())
+                        && ownerType.equals(entityGroup.getOwnerId().getEntityType())) {
+                    messages.remove(message);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private EntityGroupId findEntityGroupId(List<AbstractMessage> messages, UpdateMsgType msgType, String name, EntityType type, EntityType ownerType) {
+        for (AbstractMessage message : messages) {
+            if (message instanceof EntityGroupUpdateMsg entityGroupUpdateMsg) {
+                EntityGroup entityGroup = JacksonUtil.fromString(entityGroupUpdateMsg.getEntity(), EntityGroup.class, true);
+                Assert.assertNotNull(entityGroup);
+                if (msgType.equals(entityGroupUpdateMsg.getMsgType())
+                        && name.equals(entityGroup.getName())
+                        && type.equals(entityGroup.getType())
+                        && ownerType.equals(entityGroup.getOwnerId().getEntityType())) {
+                    return entityGroup.getId();
+                }
+            }
+        }
+        return null;
+    }
+
+    private boolean popGroupPermissionMsg(Deque<AbstractMessage> messages, UpdateMsgType msgType, EntityGroupId userGroupId, RoleId roleId) {
+        for (AbstractMessage message : messages) {
+            if (message instanceof GroupPermissionProto groupPermissionProto) {
+                GroupPermission groupPermission = JacksonUtil.fromString(groupPermissionProto.getEntity(), GroupPermission.class, true);
+                Assert.assertNotNull(groupPermission);
+                if (msgType.equals(groupPermissionProto.getMsgType())
+                        && userGroupId.equals(groupPermission.getUserGroupId())
+                        && roleId.equals(groupPermission.getRoleId())) {
+                    messages.remove(message);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean popEncryptionKeyUpdateMsg(Deque<AbstractMessage> messages, UpdateMsgType msgType, TenantId tenantId) {
+        for (AbstractMessage message : messages) {
+            if (message instanceof EncryptionKeyUpdateMsg encryptionKeyUpdateMsg) {
+                EncryptionKey encryptionKey = JacksonUtil.fromString(encryptionKeyUpdateMsg.getEntity(), EncryptionKey.class, true);
+                Assert.assertNotNull(encryptionKey);
+                if (msgType.equals(encryptionKeyUpdateMsg.getMsgType())
+                        && tenantId.equals(encryptionKey.getTenantId())) {
+                    messages.remove(message);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean popEdgeConfigurationMsg(Deque<AbstractMessage> messages, String name) {
+        for (AbstractMessage message : messages) {
+            if (message instanceof EdgeConfiguration edgeConfiguration) {
+                if (name.equals(edgeConfiguration.getName())) {
                     messages.remove(message);
                     return true;
                 }
@@ -1242,14 +1414,394 @@ public class EdgeControllerTest extends AbstractControllerTest {
         return false;
     }
 
-    private boolean popSyncCompletedMsg(Deque<AbstractMessage> messages) {
+    private boolean popTenantMsg(Deque<AbstractMessage> messages, TenantId tenantId1) {
         for (AbstractMessage message : messages) {
-            if (message instanceof SyncCompletedMsg) {
-                messages.remove(message);
-                return true;
+            if (message instanceof TenantUpdateMsg tenantUpdateMsg) {
+                Tenant tenant = JacksonUtil.fromString(tenantUpdateMsg.getEntity(), Tenant.class, true);
+                Assert.assertNotNull(tenant);
+                if (UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE.equals(tenantUpdateMsg.getMsgType())
+                        && tenantId1.equals(tenant.getId())) {
+                    messages.remove(message);
+                    return true;
+                }
             }
         }
         return false;
+    }
+
+    private boolean popWhiteLabeling(Deque<AbstractMessage> messages, WhiteLabelingType type) {
+        for (AbstractMessage message : messages) {
+            if (message instanceof WhiteLabelingProto whiteLabelingProto) {
+                WhiteLabeling whiteLabeling = JacksonUtil.fromString(whiteLabelingProto.getEntity(), WhiteLabeling.class, true);
+                Assert.assertNotNull(whiteLabeling);
+                if (type.equals(whiteLabeling.getType())) {
+                    messages.remove(message);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean popCustomTranslation(Deque<AbstractMessage> messages, String locale) {
+        for (AbstractMessage message : messages) {
+            if (message instanceof CustomTranslationUpdateMsg customTranslationUpdateMsg) {
+                CustomTranslation customTranslation = JacksonUtil.fromString(customTranslationUpdateMsg.getEntity(), CustomTranslation.class, true);
+                Assert.assertNotNull(customTranslation);
+                if (locale.equals(customTranslation.getLocaleCode())) {
+                    messages.remove(message);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    @Test
+    public void testSyncEdge_tenantLevel() throws Exception {
+        createAdminSettings();
+        createSysAdminAndTenantDomains();
+        resetSysAdminWhiteLabelingSettings();
+        loginTenantAdmin();
+        createPublicCustomerOnTenantLevel();
+
+        EntityGroup savedDeviceGroup = new EntityGroup();
+        savedDeviceGroup.setType(EntityType.DEVICE);
+        savedDeviceGroup.setName("DeviceGroup");
+        savedDeviceGroup = doPost("/api/entityGroup", savedDeviceGroup, EntityGroup.class);
+
+        Device device = new Device();
+        device.setName("Sync Test EG Edge Device 1");
+        device.setType("default");
+        Device savedDevice = doPost("/api/device?entityGroupId={entityGroupId}", device, Device.class, savedDeviceGroup.getId().getId().toString());
+
+        EntityGroup savedAssetGroup = new EntityGroup();
+        savedAssetGroup.setType(EntityType.ASSET);
+        savedAssetGroup.setName("AssetGroup");
+        savedAssetGroup = doPost("/api/entityGroup", savedAssetGroup, EntityGroup.class);
+
+        Asset asset = new Asset();
+        asset.setName("Sync Test EG Edge Asset 1");
+        asset.setType("test");
+        Asset savedAsset = doPost("/api/asset?entityGroupId={entityGroupId}", asset, Asset.class, savedAssetGroup.getId().getId().toString());
+
+        Edge edge = doPost("/api/edge", constructEdge("Sync Test EG Edge", "test"), Edge.class);
+
+        verifyEdgeUserGroups(edge, 2);
+
+        simulateEdgeActivation(edge);
+
+        doPost("/api/edge/" + edge.getId().getId().toString()
+                + "/entityGroup/" + savedDeviceGroup.getId().getId().toString() + "/DEVICE", EntityGroup.class);
+
+        doPost("/api/edge/" + edge.getId().getId().toString()
+                + "/entityGroup/" + savedAssetGroup.getId().getId().toString() + "/ASSET", EntityGroup.class);
+
+        EdgeImitator edgeImitator = new EdgeImitator(EDGE_HOST, EDGE_PORT, edge.getRoutingKey(), edge.getSecret());
+
+        // 30 connect message
+        // + 13 fetchers messages in sync process
+        // + 2 queue messages (DeviceGroup, AssetGroup)
+        edgeImitator.expectMessageAmount(CONNECT_MESSAGE_COUNT + 15);
+        edgeImitator.connect();
+        edgeImitator.waitForMessages();
+
+        verifyFetchersMsgs_tenantLevel(edgeImitator, savedDevice);
+        // verify queue msgs
+        Assert.assertTrue(popEntityGroupMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "DeviceGroup", EntityType.DEVICE, EntityType.TENANT));
+        Assert.assertTrue(popEntityGroupMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "AssetGroup", EntityType.ASSET, EntityType.TENANT));
+        Assert.assertTrue("There are some messages: " + edgeImitator.getDownlinkMsgs(), edgeImitator.getDownlinkMsgs().isEmpty());
+
+        // 30 connect messages
+        // + 13 fetchers messages in sync process
+        edgeImitator.expectMessageAmount(CONNECT_MESSAGE_COUNT + 13);
+
+        doPost("/api/edge/sync/" + edge.getId());
+        edgeImitator.waitForMessages();
+
+        verifyFetchersMsgs_tenantLevel(edgeImitator, savedDevice);
+        Assert.assertTrue(edgeImitator.getDownlinkMsgs().isEmpty());
+
+        edgeImitator.allowIgnoredTypes();
+        try {
+            edgeImitator.disconnect();
+        } catch (Exception ignored) {
+        }
+
+        doDelete("/api/device/" + savedDevice.getId().getId().toString())
+                .andExpect(status().isOk());
+        doDelete("/api/asset/" + savedAsset.getId().getId().toString())
+                .andExpect(status().isOk());
+        doDelete("/api/edge/" + edge.getId().getId().toString())
+                .andExpect(status().isOk());
+
+        cleanupDomains();
+    }
+
+    private void createAdminSettings() throws Exception {
+        loginSysAdmin();
+        // get jwt settings from yaml config
+        JwtSettings settings = doGet("/api/admin/jwtSettings", JwtSettings.class);
+        // save jwt settings into db
+        doPost("/api/admin/jwtSettings", settings).andExpect(status().isOk());
+
+        CustomMenu sysMenu = new CustomMenu();
+
+        CustomMenuItem sysItem = new CustomMenuItem();
+        sysItem.setName("System Menu");
+        sysMenu.setConfig(new CustomMenuConfig(new ArrayList<>(List.of(sysItem))));
+
+        doPost("/api/customMenu/customMenu", sysMenu);
+
+        // create sysadmin custom translation
+        String localeCode = "en_US";
+        createCustomTranslation(localeCode);
+
+        // create tenant custom translation
+        loginTenantAdmin();
+        localeCode = "es_ES";
+        createCustomTranslation(localeCode);
+    }
+
+    private void createSysAdminAndTenantDomains() throws Exception {
+        loginSysAdmin();
+        sysAdminDomain = doPost("/api/domain", constructDomain(TenantId.SYS_TENANT_ID, new CustomerId(CustomerId.NULL_UUID), SYSADMIN_EDGE_DOMAIN), Domain.class);
+
+        loginTenantAdmin();
+        tenantDomain = doPost("/api/domain", constructDomain(tenantId, new CustomerId(CustomerId.NULL_UUID), TENANT_EDGE_DOMAIN), Domain.class);
+    }
+
+    private void createCustomerDomain(Customer customer) throws Exception {
+        User customerAUser = new User();
+        customerAUser.setAuthority(Authority.CUSTOMER_USER);
+        customerAUser.setTenantId(tenantId);
+        customerAUser.setCustomerId(customer.getId());
+        customerAUser.setEmail("edgetestcustomeradmin@thingsboard.org");
+        EntityGroupInfo customerAdminsGroup = findCustomerAdminsGroup(customerId);
+        createUser(customerAUser, "customer", customerAdminsGroup.getId()).getId();
+
+        login("edgetestcustomeradmin@thingsboard.org", "customer");
+
+        doPost("/api/domain", constructDomain(tenantId, customer.getId(), CUSTOMER_EDGE_DOMAIN), Domain.class);
+
+        loginTenantAdmin();
+    }
+
+    private void cleanupDomains() throws Exception {
+        loginSysAdmin();
+        doDelete("/api/domain/" + sysAdminDomain.getId().getId());
+
+        loginTenantAdmin();
+        doDelete("/api/domain/" + tenantDomain.getId().getId());
+    }
+
+    private Domain constructDomain(TenantId tenantId, CustomerId customerId, String name) {
+        Domain domain = new Domain();
+        domain.setTenantId(tenantId);
+        domain.setCustomerId(customerId);
+        domain.setName(name);
+        domain.setOauth2Enabled(true);
+        domain.setPropagateToEdge(true);
+        return domain;
+    }
+
+    @Test
+    public void testSyncEdge_customerLevel() throws Exception {
+        createAdminSettings();
+        createSysAdminAndTenantDomains();
+        resetSysAdminWhiteLabelingSettings();
+        loginTenantAdmin();
+        createPublicCustomerOnTenantLevel();
+
+        // create customer
+        Customer customer = new Customer();
+        customer.setTitle("Edge Customer");
+        Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
+
+        createPublicCustomerOnCustomerLevel(savedCustomer);
+
+        createCustomerDomain(savedCustomer);
+
+        EntityGroup savedCustomerDeviceGroup = new EntityGroup();
+        savedCustomerDeviceGroup.setType(EntityType.DEVICE);
+        savedCustomerDeviceGroup.setName("CustomerDeviceGroup");
+        savedCustomerDeviceGroup.setOwnerId(savedCustomer.getId());
+        savedCustomerDeviceGroup = doPost("/api/entityGroup", savedCustomerDeviceGroup, EntityGroup.class);
+
+        Device customerDevice = new Device();
+        customerDevice.setName("Sync Test EG Edge Customer Device 1");
+        customerDevice.setType("default");
+        customerDevice.setOwnerId(savedCustomer.getId());
+        Device savedDevice = doPost("/api/device?entityGroupId={entityGroupId}", customerDevice, Device.class, savedCustomerDeviceGroup.getId().getId().toString());
+
+        EntityGroup savedCustomerAssetGroup = new EntityGroup();
+        savedCustomerAssetGroup.setType(EntityType.ASSET);
+        savedCustomerAssetGroup.setName("CustomerAssetGroup");
+        savedCustomerAssetGroup.setOwnerId(savedCustomer.getId());
+        savedCustomerAssetGroup = doPost("/api/entityGroup", savedCustomerAssetGroup, EntityGroup.class);
+
+        Asset customerAsset = new Asset();
+        customerAsset.setName("Sync Test EG Edge Customer Asset 1");
+        customerAsset.setType("test");
+        customerAsset.setOwnerId(savedCustomer.getId());
+        Asset savedAsset = doPost("/api/asset?entityGroupId={entityGroupId}", customerAsset, Asset.class, savedCustomerAssetGroup.getId().getId().toString());
+
+        Edge edge = doPost("/api/edge", constructEdge("Sync Test EG Edge", "test"), Edge.class);
+
+        verifyEdgeUserGroups(edge, 2);
+
+        simulateEdgeActivation(edge);
+
+        doPost("/api/owner/CUSTOMER/" + savedCustomer.getId().getId() + "/EDGE/" + edge.getId().getId());
+
+        doPost("/api/edge/" + edge.getId().getId().toString()
+                + "/entityGroup/" + savedCustomerDeviceGroup.getId().getId().toString() + "/DEVICE", EntityGroup.class);
+
+        doPost("/api/edge/" + edge.getId().getId().toString()
+                + "/entityGroup/" + savedCustomerAssetGroup.getId().getId().toString() + "/ASSET", EntityGroup.class);
+
+        verifyEdgeUserGroups(edge, 4);
+
+        EdgeImitator edgeImitator = new EdgeImitator(EDGE_HOST, EDGE_PORT, edge.getRoutingKey(), edge.getSecret());
+
+        // 30 connect message
+        // + 23 fetchers messages in sync process
+        // + 6 queue messages
+        edgeImitator.expectMessageAmount(CONNECT_MESSAGE_COUNT + 29);
+        edgeImitator.connect();
+        edgeImitator.waitForMessages();
+
+        verifyFetchersMsgs_customerLevel(edgeImitator, savedCustomer.getId(), savedDevice);
+        // verify queue msgs
+        Assert.assertTrue(popCustomerMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Edge Customer", "TENANT", tenantId.getId()));
+        Assert.assertTrue(popEdgeConfigurationMsg(edgeImitator.getDownlinkMsgsDeque(), edge.getName()));
+        Assert.assertTrue(popEntityGroupMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Customer Users", EntityType.USER, EntityType.CUSTOMER));
+        Assert.assertTrue(popEntityGroupMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Customer Administrators", EntityType.USER, EntityType.CUSTOMER));
+        Assert.assertTrue(popEntityGroupMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "CustomerDeviceGroup", EntityType.DEVICE, EntityType.CUSTOMER));
+        Assert.assertTrue(popEntityGroupMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "CustomerAssetGroup", EntityType.ASSET, EntityType.CUSTOMER));
+        Assert.assertTrue("There are some messages: " + edgeImitator.getDownlinkMsgs(), edgeImitator.getDownlinkMsgs().isEmpty());
+
+        // 30 connect messages
+        // + 23 fetchers messages in sync process
+        edgeImitator.expectMessageAmount(CONNECT_MESSAGE_COUNT + 23);
+        doPost("/api/edge/sync/" + edge.getId());
+        edgeImitator.waitForMessages();
+
+        verifyFetchersMsgs_customerLevel(edgeImitator, savedCustomer.getId(), savedDevice);
+        Assert.assertTrue("There are some messages: " + edgeImitator.getDownlinkMsgs(), edgeImitator.getDownlinkMsgs().isEmpty());
+
+        edgeImitator.allowIgnoredTypes();
+        try {
+            edgeImitator.disconnect();
+        } catch (Exception ignored) {
+        }
+
+        doDelete("/api/device/" + savedDevice.getId().getId().toString())
+                .andExpect(status().isOk());
+        doDelete("/api/asset/" + savedAsset.getId().getId().toString())
+                .andExpect(status().isOk());
+        doDelete("/api/edge/" + edge.getId().getId().toString())
+                .andExpect(status().isOk());
+        doDelete("/api/customer/" + savedCustomer.getId().getId().toString())
+                .andExpect(status().isOk());
+
+        cleanupDomains();
+    }
+
+    private void verifyEdgeUserGroups(Edge edge, int expectedGroupNumber) {
+        Awaitility.await()
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .until(() -> {
+                    PageData<EntityGroupInfo> pageData = doGetTypedWithPageLink("/api/entityGroups/edge/" + edge.getId().getId() + "/USER?",
+                            new TypeReference<>() {}, new PageLink(1024));
+                    if (pageData.getData().isEmpty()) {
+                        return false;
+                    }
+                    return pageData.getTotalElements() == expectedGroupNumber;
+                });
+    }
+
+    private void verifyFetchersMsgs_tenantLevel(EdgeImitator edgeImitator, Device savedDevice) {
+        verifyFetchersMsgs_bothLevels(edgeImitator);
+        Assert.assertTrue(popEntityGroupMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "DeviceGroup", EntityType.DEVICE, EntityType.TENANT));
+        Assert.assertTrue(popEntityGroupMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "AssetGroup", EntityType.ASSET, EntityType.TENANT));
+        Assert.assertTrue(popAssetProfileMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "test"));
+        Assert.assertTrue(popAssetMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Sync Test EG Edge Asset 1"));
+        Assert.assertTrue(popDeviceProfileMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
+        Assert.assertTrue(popDeviceProfileMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
+        Assert.assertTrue(popDeviceMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Sync Test EG Edge Device 1"));
+        Assert.assertTrue(popDeviceCredentialsMsg(edgeImitator.getDownlinkMsgsDeque(), savedDevice.getId()));
+    }
+
+    private void verifyFetchersMsgs_customerLevel(EdgeImitator edgeImitator, CustomerId edgeCustomerId, Device savedDevice) {
+        RoleId customerUserRoleId = findRoleId(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Customer User", RoleType.GENERIC);
+        RoleId customerAdministratorRoleId = findRoleId(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Customer Administrator", RoleType.GENERIC);
+        EntityGroupId customerUsersGroupId = findEntityGroupId(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Customer Users", EntityType.USER, EntityType.CUSTOMER);
+        EntityGroupId customerAdministratorsGroupId = findEntityGroupId(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Customer Administrators", EntityType.USER, EntityType.CUSTOMER);
+
+        verifyFetchersMsgs_bothLevels(edgeImitator);
+        Assert.assertTrue(popDomainMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, CUSTOMER_EDGE_DOMAIN, tenantId, edgeCustomerId));
+        Assert.assertTrue(popCustomerMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Edge Customer", "TENANT", tenantId.getId()));
+        Assert.assertTrue(popCustomerMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "[Edge Customer] " + PUBLIC_CUSTOMER_SUFFIX, "CUSTOMER", edgeCustomerId.getId()));
+        Assert.assertTrue(popRoleMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Entity Group Public User", RoleType.GROUP));
+        Assert.assertTrue(popRoleMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Public User", RoleType.GENERIC));
+        Assert.assertTrue(popEntityGroupMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Public Users", EntityType.USER, EntityType.CUSTOMER));
+        Assert.assertTrue(popEntityGroupMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "CustomerDeviceGroup", EntityType.DEVICE, EntityType.CUSTOMER));
+        Assert.assertTrue(popEntityGroupMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "CustomerAssetGroup", EntityType.ASSET, EntityType.CUSTOMER));
+        Assert.assertTrue(popEntityGroupMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Customer Users", EntityType.USER, EntityType.CUSTOMER));
+        Assert.assertTrue(popEntityGroupMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Customer Administrators", EntityType.USER, EntityType.CUSTOMER));
+        Assert.assertTrue(popGroupPermissionMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, customerUsersGroupId, customerUserRoleId));
+        Assert.assertTrue(popGroupPermissionMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, customerAdministratorsGroupId, customerAdministratorRoleId));
+        Assert.assertTrue(popAssetProfileMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "test"));
+        Assert.assertTrue(popAssetMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Sync Test EG Edge Customer Asset 1"));
+        Assert.assertTrue(popDeviceProfileMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
+        Assert.assertTrue(popDeviceProfileMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
+        Assert.assertTrue(popDeviceMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Sync Test EG Edge Customer Device 1"));
+        Assert.assertTrue(popDeviceCredentialsMsg(edgeImitator.getDownlinkMsgsDeque(), savedDevice.getId()));
+    }
+
+    private void verifyFetchersMsgs_bothLevels(EdgeImitator edgeImitator) {
+        RoleId tenantUserRoleId = findRoleId(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Tenant User", RoleType.GENERIC);
+        RoleId tenantAdministratorRoleId = findRoleId(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Tenant Administrator", RoleType.GENERIC);
+        EntityGroupId tenantUsersGroupId = findEntityGroupId(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Tenant Users", EntityType.USER, EntityType.TENANT);
+        EntityGroupId tenantAdministratorsGroupId = findEntityGroupId(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Tenant Administrators", EntityType.USER, EntityType.TENANT);
+
+        Assert.assertTrue(popTenantMsg(edgeImitator.getDownlinkMsgsDeque(), tenantId));
+        Assert.assertTrue(popTenantProfileMsg(edgeImitator.getDownlinkMsgsDeque(), tenantProfileId));
+        Assert.assertTrue(popQueueMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Main"));
+        Assert.assertTrue(popAdminSettingsMsg(edgeImitator.getDownlinkMsgsDeque(), "general"));
+        Assert.assertTrue(popAdminSettingsMsg(edgeImitator.getDownlinkMsgsDeque(), "mail"));
+        Assert.assertTrue(popAdminSettingsMsg(edgeImitator.getDownlinkMsgsDeque(), "connectivity"));
+        Assert.assertTrue(popAdminSettingsMsg(edgeImitator.getDownlinkMsgsDeque(), "jwt"));
+        Assert.assertTrue(popRuleChainMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Edge Root Rule Chain"));
+        Assert.assertTrue(popRuleChainMetadataMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, getEdgeRootRuleChainId(edgeImitator)));
+        Assert.assertTrue(popRoleMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Tenant User", RoleType.GENERIC));
+        Assert.assertTrue(popRoleMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Tenant Administrator", RoleType.GENERIC));
+        Assert.assertTrue(popRoleMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Customer User", RoleType.GENERIC));
+        Assert.assertTrue(popRoleMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Customer Administrator", RoleType.GENERIC));
+        Assert.assertTrue(popDomainMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, SYSADMIN_EDGE_DOMAIN, TenantId.SYS_TENANT_ID, new CustomerId(CustomerId.NULL_UUID)));
+        Assert.assertTrue(popDomainMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, TENANT_EDGE_DOMAIN, tenantId, new CustomerId(CustomerId.NULL_UUID)));
+        Assert.assertTrue(popWhiteLabeling(edgeImitator.getDownlinkMsgsDeque(), WhiteLabelingType.GENERAL));
+        Assert.assertTrue(popWhiteLabeling(edgeImitator.getDownlinkMsgsDeque(), WhiteLabelingType.LOGIN));
+        Assert.assertTrue(popCustomerMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Public", "TENANT", tenantId.getId()));
+        Assert.assertTrue(popRoleMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Entity Group Public User", RoleType.GROUP));
+        Assert.assertTrue(popRoleMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Public User", RoleType.GENERIC));
+        Assert.assertTrue(popEntityGroupMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Public Users", EntityType.USER, EntityType.CUSTOMER));
+        Assert.assertTrue(popDeviceProfileMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
+        Assert.assertTrue(popAssetProfileMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
+        Assert.assertTrue(popDeviceProfileMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
+        Assert.assertTrue(popAssetProfileMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
+        Assert.assertTrue(popAssetProfileMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "test"));
+        Assert.assertTrue(popEntityGroupMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Tenant Users", EntityType.USER, EntityType.TENANT));
+        Assert.assertTrue(popEntityGroupMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Tenant Administrators", EntityType.USER, EntityType.TENANT));
+        Assert.assertTrue(popGroupPermissionMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, tenantUsersGroupId, tenantUserRoleId));
+        Assert.assertTrue(popGroupPermissionMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, tenantAdministratorsGroupId, tenantAdministratorRoleId));
+        Assert.assertTrue(popEncryptionKeyUpdateMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, tenantId));
+        Assert.assertTrue(popUserCredentialsMsg(edgeImitator.getDownlinkMsgsDeque(), currentUserId));
+        Assert.assertTrue(popUserMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, TENANT_ADMIN_EMAIL, Authority.TENANT_ADMIN));
+        Assert.assertTrue(popCustomTranslation(edgeImitator.getDownlinkMsgsDeque(), "en_US")); // sysadmin custom translation
+        Assert.assertTrue(popCustomTranslation(edgeImitator.getDownlinkMsgsDeque(), "es_ES")); // tenant custom translation
+        Assert.assertTrue(popSyncCompletedMsg(edgeImitator.getDownlinkMsgsDeque()));
     }
 
     @Test
@@ -1287,12 +1839,16 @@ public class EdgeControllerTest extends AbstractControllerTest {
 
     @Test
     public void testGetEdgeUpgradeInstructions() throws Exception {
-        // UpdateInfo config is updating from the Thingsboard Update server
-        HashMap<String, EdgeUpgradeInfo> upgradeInfoHashMap = new HashMap<>();
-        upgradeInfoHashMap.put("3.6.0", new EdgeUpgradeInfo(true, "3.6.1"));
-        upgradeInfoHashMap.put("3.6.1", new EdgeUpgradeInfo(true, "3.6.2"));
-        upgradeInfoHashMap.put("3.6.2", new EdgeUpgradeInfo(true, null));
-        edgeUpgradeInstructionsService.updateInstructionMap(upgradeInfoHashMap);
+        // Version graph is fetched from the Thingsboard Update server and resolved against the platform edge version
+        HashMap<String, List<EdgeUpgradeInfo>> versionGraph = new HashMap<>();
+        versionGraph.put("3.6.0", List.of(new EdgeUpgradeInfo(true, "3.6.1")));
+        versionGraph.put("3.6.1", List.of(new EdgeUpgradeInfo(true, "3.6.2")));
+        // branch: resolver must keep the highest nextEdgeVersion <= platform version (3.6.4), not the newer 3.7.0 line
+        versionGraph.put("3.6.2", List.of(new EdgeUpgradeInfo(false, "3.6.4"), new EdgeUpgradeInfo(true, "3.7.0")));
+        versionGraph.put("3.6.4", List.of(new EdgeUpgradeInfo(true, null)));
+        versionGraph.put("3.7.0", List.of(new EdgeUpgradeInfo(true, null)));
+        edgeUpgradeInstructionsService.setPlatformEdgeVersion("3.6.4");
+        edgeUpgradeInstructionsService.updateVersionGraph(versionGraph);
         Edge edge = constructEdge("Edge for Test Docker Upgrade Instructions", "default");
         Edge savedEdge = doPost("/api/edge", edge, Edge.class);
         String body = "{\"edgeVersion\": \"V_3_6_0\"}";
@@ -1300,6 +1856,9 @@ public class EdgeControllerTest extends AbstractControllerTest {
         String upgradeInstructions = doGet("/api/edge/instructions/upgrade/" + EdgeVersion.V_3_6_0.name() + "/docker", String.class);
         Assert.assertTrue(upgradeInstructions.contains("Upgrading to 3.6.1EDGE"));
         Assert.assertTrue(upgradeInstructions.contains("Upgrading to 3.6.2EDGE"));
+        Assert.assertTrue(upgradeInstructions.contains("Upgrading to 3.6.4EDGE"));
+        // 3.7.0 is newer than the platform edge version, so the resolver must not include it in the path
+        Assert.assertFalse(upgradeInstructions.contains("3.7.0EDGE"));
     }
 
     @Test
@@ -1336,6 +1895,33 @@ public class EdgeControllerTest extends AbstractControllerTest {
         Assert.assertTrue(edgeUpgradeInstructionsService.isUpgradeAvailable(savedEdge.getTenantId(), savedEdge.getId()));
         edgeUpgradeInstructionsService.setPlatformEdgeVersion("3.6.2.6");
         Assert.assertTrue(edgeUpgradeInstructionsService.isUpgradeAvailable(savedEdge.getTenantId(), savedEdge.getId()));
+    }
+
+    private void createCustomTranslation(String localeCode) throws Exception {
+        JsonNode esCustomTranslation = JacksonUtil.toJsonNode("{\"save\":\"" + StringUtils.randomAlphabetic(10) + "\"}");
+        doPost("/api/translation/custom/" + localeCode, esCustomTranslation);
+
+        JsonNode savedCT = doGet("/api/translation/custom/" + localeCode, JsonNode.class);
+        assertThat(savedCT).isEqualTo(esCustomTranslation);
+    }
+
+    @Test
+    public void testSaveEntityGroup_noNotificationOnAdded_notificationOnlyOnUpdated() {
+        Mockito.reset(tbClusterService);
+        EntityGroup entityGroup = new EntityGroup();
+        entityGroup.setName("Edge - No Notification On Added");
+        entityGroup.setType(EntityType.DEVICE);
+        EntityGroup savedEntityGroup = doPost("/api/entityGroup", entityGroup, EntityGroup.class);
+        Mockito.verify(tbClusterService, never()).sendNotificationMsgToEdge(Mockito.eq(tenantId),
+                Mockito.isNull(), Mockito.eq(savedEntityGroup.getId()), Mockito.isNull(), Mockito.isNull(),
+                Mockito.eq(EdgeEventActionType.ADDED), Mockito.any());
+
+        Mockito.reset(tbClusterService);
+        savedEntityGroup.setName("Edge - Notification On Updated");
+        doPost("/api/entityGroup", savedEntityGroup, EntityGroup.class);
+        Mockito.verify(tbClusterService, times(1)).sendNotificationMsgToEdge(Mockito.eq(tenantId),
+                Mockito.isNull(), Mockito.eq(savedEntityGroup.getId()), Mockito.isNull(), Mockito.isNull(),
+                Mockito.eq(EdgeEventActionType.UPDATED), Mockito.any());
     }
 
 }

@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { BackgroundSettings, BackgroundType } from '@shared/models/widget-settings.models';
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import {
@@ -28,7 +15,8 @@ import { Circle, Effect, Element, G, Gradient, Path, Runner, Svg, Text, Timeline
 import '@svgdotjs/svg.filter.js';
 import tinycolor from 'tinycolor2';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { Observable, of, shareReplay } from 'rxjs';
+import { plainColorFromVariable } from '@core/utils';
+import { from, Observable, of, shareReplay } from 'rxjs';
 import { isSvgIcon, splitIconName } from '@shared/models/icon.models';
 import { catchError, map, take } from 'rxjs/operators';
 import { MatIconRegistry } from '@angular/material/icon';
@@ -203,7 +191,7 @@ export const powerButtonDefaultSettings: PowerButtonWidgetSettings = {
     iconSizeUnit: 'px',
     icon: 'power_settings_new'
   },
-  mainColorOn: '#3F52DD',
+  mainColorOn: 'var(--tb-primary-500)',
   backgroundColorOn: '#FFFFFF',
   mainColorOff: '#A2A2A2',
   backgroundColorOff: '#FFFFFF',
@@ -241,12 +229,12 @@ interface ButtonsIconSettings {
 type PowerButtonShapeColors = Record<PowerButtonState, PowerButtonColorState>;
 
 const createPowerButtonShapeColors = (settings: PowerButtonWidgetSettings): PowerButtonShapeColors => {
-  const mainColorOn = tinycolor(settings.mainColorOn);
-  const backgroundColorOn = tinycolor(settings.backgroundColorOn);
-  const mainColorOff = tinycolor(settings.mainColorOff);
-  const backgroundColorOff = tinycolor(settings.backgroundColorOff);
-  const mainColorDisabled = tinycolor(settings.mainColorDisabled);
-  const backgroundColorDisabled = tinycolor(settings.backgroundColorDisabled);
+  const mainColorOn = tinycolor(plainColorFromVariable(settings.mainColorOn));
+  const backgroundColorOn = tinycolor(plainColorFromVariable(settings.backgroundColorOn));
+  const mainColorOff = tinycolor(plainColorFromVariable(settings.mainColorOff));
+  const backgroundColorOff = tinycolor(plainColorFromVariable(settings.backgroundColorOff));
+  const mainColorDisabled = tinycolor(plainColorFromVariable(settings.mainColorDisabled));
+  const backgroundColorDisabled = tinycolor(plainColorFromVariable(settings.backgroundColorDisabled));
   return {
     on: {
       mainColor: {hex: mainColorOn.toHexString(), opacity: mainColorOn.getAlpha()},
@@ -392,7 +380,15 @@ export abstract class PowerButtonShape {
       tspan.attr({
         'dominant-baseline': 'hanging'
       });
-      return of(textElement);
+      return from(document.fonts.ready).pipe(
+        map(() => {
+          const iconGroup = this.svgShape.group();
+          textElement.addTo(iconGroup);
+          const box = iconGroup.bbox();
+          iconGroup.translate(-box.cx, -box.cy);
+          return iconGroup;
+        })
+      );
     }
   }
 

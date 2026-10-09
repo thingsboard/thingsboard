@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Inject, Injectable, NgZone, Renderer2, DOCUMENT } from '@angular/core';
 import { WINDOW } from '@core/services/window.service';
 import { ExceptionData, parseException } from '@app/shared/models/error.models';
@@ -90,6 +77,8 @@ export class UtilsService {
   widgetEditMode = false;
   editWidgetInfo: WidgetInfo = null;
 
+  stateSelectView = false;
+
   defaultDataKey: DataKey = {
     name: 'f(x)',
     type: DataKeyType.function,
@@ -124,6 +113,10 @@ export class UtilsService {
       if (dataWidgetAttr && dataWidgetAttr.length) {
         this.editWidgetInfo = JSON.parse(dataWidgetAttr);
         this.widgetEditMode = true;
+      }
+      const stateSelectViewAttr = frame.getAttribute('state-select-view');
+      if (stateSelectViewAttr) {
+        this.stateSelectView = true;
       }
     }
   }
@@ -301,7 +294,6 @@ export class UtilsService {
         .reduce((previousValue, currentValue) => previousValue + currentValue, 0);
       additionalDataKey.color = this.getMaterialColor(index + additionalKeysNumber);
     }
-    additionalDataKey._hash = Math.random();
     return additionalDataKey;
   }*/
 
@@ -415,6 +407,14 @@ export class UtilsService {
     }
   }
 
+  public translateText(text: string): string {
+    if (text.startsWith('${') && text.endsWith('}')) {
+      return this.translate.instant(text.substring(2, text.length - 1));
+    } else {
+      return text;
+    }
+  }
+
   private getEntityIdFromDatasource(dataSource: Datasource): EntityId {
     return {id: dataSource.entityId, entityType: dataSource.entityType};
   }
@@ -473,5 +473,4 @@ export class UtilsService {
       el.parentNode.removeChild(el);
     }
   }
-
 }

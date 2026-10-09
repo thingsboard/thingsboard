@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.monitoring.service;
 
 import com.fasterxml.jackson.databind.node.DoubleNode;
@@ -25,7 +12,6 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.monitoring.client.TbClient;
 import org.thingsboard.monitoring.data.Latency;
-import org.thingsboard.monitoring.data.MonitoredServiceKey;
 import org.thingsboard.monitoring.data.notification.HighLatencyNotification;
 import org.thingsboard.monitoring.data.notification.ServiceFailureNotification;
 import org.thingsboard.monitoring.data.notification.ServiceRecoveryNotification;
@@ -119,9 +105,7 @@ public class MonitoringReporter {
 
     public void serviceIsOk(Object serviceKey) {
         ServiceRecoveryNotification notification = new ServiceRecoveryNotification(serviceKey);
-        if (!serviceKey.equals(MonitoredServiceKey.GENERAL)) {
-            log.info(notification.getText());
-        }
+        log.info(notification.getText());
         AtomicInteger failuresCounter = failuresCounters.get(serviceKey);
         if (failuresCounter != null) {
             if (failuresCounter.get() >= failuresThreshold) {

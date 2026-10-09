@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.notification;
 
 import com.google.common.util.concurrent.FutureCallback;
@@ -20,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.thingsboard.rule.engine.api.JobManager;
 import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.server.cache.limits.RateLimitService;
 import org.thingsboard.server.common.data.EntityType;
@@ -31,6 +20,7 @@ import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.job.Job;
 import org.thingsboard.server.common.data.limit.LimitedApi;
 import org.thingsboard.server.common.data.notification.AlreadySentException;
 import org.thingsboard.server.common.data.notification.Notification;
@@ -54,6 +44,7 @@ import org.thingsboard.server.common.data.notification.targets.platform.UsersFil
 import org.thingsboard.server.common.data.notification.targets.slack.SlackNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
+import org.thingsboard.server.common.data.notification.template.NotificationTemplateConfig;
 import org.thingsboard.server.common.data.notification.template.WebDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.msg.queue.ServiceType;
@@ -65,6 +56,7 @@ import org.thingsboard.server.dao.notification.NotificationService;
 import org.thingsboard.server.dao.notification.NotificationSettingsService;
 import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.dao.notification.NotificationTemplateService;
+import org.thingsboard.server.dao.secret.SecretConfigurationService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.TopicService;
@@ -73,6 +65,7 @@ import org.thingsboard.server.service.executors.NotificationExecutorService;
 import org.thingsboard.server.service.notification.channels.NotificationChannel;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
 import org.thingsboard.server.service.telemetry.AbstractSubscriptionService;
+import org.thingsboard.server.service.translation.TranslationService;
 import org.thingsboard.server.service.ws.notification.sub.NotificationRequestUpdate;
 import org.thingsboard.server.service.ws.notification.sub.NotificationUpdate;
 
@@ -81,8 +74,10 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.notification.NotificationDeliveryMethod.WEB;
@@ -102,6 +97,9 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
     private final TopicService topicService;
     private final TbQueueProducerProvider producerProvider;
     private final RateLimitService rateLimitService;
+    private final TranslationService translationService;
+    private final SecretConfigurationService secretConfigurationService;
+    private final JobManager jobManager;
 
     private Map<NotificationDeliveryMethod, NotificationChannel> channels;
 
@@ -139,7 +137,9 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
         }
 
         NotificationRuleId ruleId = request.getRuleId();
-        notificationTemplate.getConfiguration().getDeliveryMethodsTemplates().forEach((deliveryMethod, template) -> {
+        NotificationRequestConfig requestConfig = request.getAdditionalConfig();
+        NotificationTemplateConfig templateConfig = notificationTemplate.getConfiguration();
+        templateConfig.getDeliveryMethodsTemplates().forEach((deliveryMethod, template) -> {
             if (!template.isEnabled()) return;
             try {
                 channels.get(deliveryMethod).check(tenantId);
@@ -150,7 +150,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
                     return; // if originated by rule or notification type is system - just ignore delivery method
                 }
             }
-            if (ruleId == null && !notificationType.isSystem()) {
+            if (ruleId == null && !notificationType.isSystem() && Optional.ofNullable(requestConfig).map(NotificationRequestConfig::getReports).isEmpty()) {
                 if (targets.stream().noneMatch(target -> target.getConfiguration().getType().getSupportedDeliveryMethods().contains(deliveryMethod))) {
                     throw new IllegalArgumentException("Recipients for " + deliveryMethod.getName() + " delivery method not chosen");
                 }
@@ -161,12 +161,33 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
             throw new IllegalArgumentException("No delivery methods to send notification with");
         }
 
-        if (request.getAdditionalConfig() != null) {
-            NotificationRequestConfig config = request.getAdditionalConfig();
-            if (config.getSendingDelayInSec() > 0 && request.getId() == null) {
+        NotificationRequestStats stats = request.getStats();
+        if (stats == null) {
+            stats = new NotificationRequestStats();
+            for (NotificationDeliveryMethod deliveryMethod : deliveryMethods) {
+                stats.getSent().put(deliveryMethod, new AtomicInteger(0));
+            }
+            request.setStats(stats);
+        }
+
+        if (requestConfig != null) {
+            if (requestConfig.getSendingDelayInSec() > 0 && request.getId() == null) {
                 request.setStatus(NotificationRequestStatus.SCHEDULED);
                 request = notificationRequestService.saveNotificationRequest(tenantId, request);
                 forwardToNotificationSchedulerService(tenantId, request.getId());
+                return request;
+            } else if (templateConfig.isAttachReport() && requestConfig.getReports() == null) {
+                request.setStatus(NotificationRequestStatus.PROCESSING);
+                request = notificationRequestService.saveNotificationRequest(tenantId, request);
+                jobManager.submitJob(Job.newReportJob()
+                        .tenantId(tenantId)
+                        .reportTemplateId(templateConfig.getReportTemplateId())
+                        .originator(Optional.ofNullable(request.getInfo()).map(NotificationInfo::getStateEntityId).orElse(null))
+                        .userId(templateConfig.getUserId())
+                        .timezone(templateConfig.getTimezone())
+                        .makePublic(templateConfig.isMakePublic())
+                        .notificationRequests(List.of(request))
+                        .build());
                 return request;
             }
         }
@@ -184,6 +205,8 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
                 .template(notificationTemplate)
                 .settings(settings)
                 .systemSettings(systemSettings)
+                .translationProvider(locale -> translationService.getFullTranslation(tenantId, null, locale))
+                .secretConfigurationService(secretConfigurationService)
                 .build();
 
         processNotificationRequestAsync(ctx, targets, callback);
@@ -244,7 +267,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
                     processForTarget(target, ctx);
                 } catch (Exception e) {
                     log.error("[{}] Failed to process notification request for target {}", requestId, target.getId(), e);
-                    ctx.getStats().setError(e.getMessage());
+                    ctx.getStats().reportGeneralError(e);
                     updateRequestStats(ctx, requestId, ctx.getStats());
 
                     if (callback != null) {
@@ -256,7 +279,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
 
             NotificationRequestStats stats = ctx.getStats();
             long time = System.currentTimeMillis() - startTs;
-            int sent = stats.getTotalSent().get();
+            int sent = stats.getTotalSent();
             int errors = stats.getTotalErrors().get();
             if (errors > 0) {
                 log.debug("[{}][{}] Notification request processing finished in {} ms (sent: {}, errors: {})", ctx.getTenantId(), requestId, time, sent, errors);

@@ -1,0 +1,126 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@import "../../../../../scss/constants";
+
+:host {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.cards-wrapper {
+  width: 100%;
+  height: 100%;
+  padding: 12px;
+}
+
+.cards-grid {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-auto-rows: 1fr;
+  gap: 12px;
+  @media #{$mat-gt-xs} {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  @media #{$mat-gt-xmd} {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .card {
+    min-height: 300px;
+    border-radius: 12px;
+    box-shadow: 0px 5px 16px 0px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+  }
+
+  .card-header {
+    width: 100%;
+    padding-bottom: 12px;
+    gap: 8px;
+  }
+
+  .card-title-container {
+    overflow: hidden;
+  }
+
+  .title-container {
+    width: 100%;
+    padding-bottom: 12px;
+    gap: 8px;
+  }
+
+  .card-title {
+    gap: 8px;
+    color: rgba(0, 0, 0, 0.54);
+    font-weight: 500;
+    letter-spacing: 0.25px;
+  }
+
+  .card-subtitle {
+    font-size: 12px;
+    line-height: 24px;
+    letter-spacing: 0.4px;
+    color: rgba(0, 0, 0, 0.54);
+  }
+
+  .card-content {
+    min-height: 0;
+  }
+}
+
+.entities-table {
+  overflow-y: auto;
+
+  .entity-item {
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+
+    &:hover {
+      background-color: var(--tb-hover-color, #f4f4f4);
+    }
+  }
+
+  .entity-name {
+    font-size: 14px;
+    line-height: 30px;
+    letter-spacing: 0.2px;
+    color: rgba(0, 0, 0, 0.76);
+    cursor: pointer;
+    border-bottom: none;
+  }
+
+  .entity-status {
+    padding: 0 12px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 30px;
+    color: rgba(0, 0, 0, 0.54);
+    background-color: rgba(0, 0, 0, 0.06);
+
+    &.active {
+      color: #198038;
+      background-color: rgba(25, 128, 56, 0.06);
+    }
+  }
+}
+
+.trendz-unavailable {
+  width: 100%;
+  height: 100%;
+  color: var(--tb-primary-500);
+
+  svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    filter: blur(4px);
+  }
+}
+
+::ng-deep {
+  a.mat-mdc-menu-item.view-item {
+    border-bottom: none;
+  }
+}

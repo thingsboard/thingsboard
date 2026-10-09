@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -72,12 +60,15 @@ import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseDeleteTsKvQuery;
+import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.IntervalType;
 import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.data.kv.ReadTsKvQueryResult;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.permission.Operation;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.msg.rule.engine.DeviceAttributesEventNotificationMsg;
 import org.thingsboard.server.config.annotations.ApiOperation;
@@ -85,7 +76,6 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.AccessValidator;
 import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.telemetry.AttributeData;
 import org.thingsboard.server.service.telemetry.TbTelemetryService;
 import org.thingsboard.server.service.telemetry.TsData;
@@ -117,6 +107,7 @@ import static org.thingsboard.server.controller.ControllerConstants.LATEST_TS_NO
 import static org.thingsboard.server.controller.ControllerConstants.LATEST_TS_STRICT_DATA_EXAMPLE;
 import static org.thingsboard.server.controller.ControllerConstants.MARKDOWN_CODE_BLOCK_END;
 import static org.thingsboard.server.controller.ControllerConstants.MARKDOWN_CODE_BLOCK_START;
+import static org.thingsboard.server.controller.ControllerConstants.READ_TS_KV_QUERY_RESULT_EXAMPLE;
 import static org.thingsboard.server.controller.ControllerConstants.SAVE_ATTIRIBUTES_STATUS_BAD_REQUEST;
 import static org.thingsboard.server.controller.ControllerConstants.SAVE_ATTIRIBUTES_STATUS_OK;
 import static org.thingsboard.server.controller.ControllerConstants.SAVE_ATTRIBUTES_REQUEST_PAYLOAD;
@@ -233,7 +224,7 @@ public class TelemetryController extends BaseController {
                     + ATTRIBUTE_DATA_EXAMPLE
                     + MARKDOWN_CODE_BLOCK_END
                     + "\n\n " + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
-            responses = @ApiResponse(content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = AttributeData.class)))))
+            responses = @ApiResponse(responseCode = "200", description = "OK",  content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = AttributeData.class)))))
     @Parameters({
             @Parameter(name = "key", description = "Repeatable key query parameter (alternative to comma-separated 'keys')", in = ParameterIn.QUERY, required = false, array = @ArraySchema(schema = @Schema(type = "string")))
     })
@@ -365,6 +356,26 @@ public class TelemetryController extends BaseController {
             @Parameter(hidden = true)
             @RequestParam MultiValueMap<String, String> params) throws ThingsboardException {
         return getTimeseries(entityType, entityIdStr, keysStr, startTs, endTs, intervalType, interval, timeZone, limit, aggStr, orderBy, useStrictDataTypes, params);
+    }
+
+    @ApiOperation(value = "Get time series data by read queries (getTimeseriesByReadTsKvQueries)",
+            notes = "Returns aggregated time series values according to queries for specified entity. "
+                    + MARKDOWN_CODE_BLOCK_START
+                    + READ_TS_KV_QUERY_RESULT_EXAMPLE
+                    + MARKDOWN_CODE_BLOCK_END
+                    + "\n\n" + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
+            responses = @ApiResponse(responseCode = "200", description = "OK", content = @Content(array = @ArraySchema(schema = @Schema(implementation = ReadTsKvQueryResult.class)))))
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PostMapping(value = "/{entityType}/{entityId}/values/timeseries")
+    public DeferredResult<ResponseEntity> getTimeseriesByReadTsKvQueries(
+            @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "DEVICE")) @PathVariable("entityType") String entityType,
+            @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true) @PathVariable("entityId") String entityIdStr,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON array of time series read queries.", content = @Content(array = @ArraySchema(schema = @Schema(implementation = BaseReadTsKvQuery.class))))
+            @RequestBody List<BaseReadTsKvQuery> queries) throws ThingsboardException {
+        DeferredResult<ResponseEntity> response = new DeferredResult<>();
+        Futures.addCallback(tbTelemetryService.getTimeseriesByReadQueries(EntityIdFactory.getByTypeAndId(entityType, entityIdStr), queries, getCurrentUser()),
+                getReadTsKvQueryResult(response), MoreExecutors.directExecutor());
+        return response;
     }
 
     @ApiOperation(value = "Save device attributes (saveDeviceAttributes)",
@@ -891,6 +902,21 @@ public class TelemetryController extends BaseController {
                     result.computeIfAbsent(entry.getKey(), k -> new ArrayList<>()).add(new TsData(entry.getTs(), value));
                 }
                 response.setResult(new ResponseEntity<>(result, HttpStatus.OK));
+            }
+
+            @Override
+            public void onFailure(Throwable e) {
+                log.error("Failed to fetch historical data", e);
+                AccessValidator.handleError(e, response, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        };
+    }
+
+    private FutureCallback<List<ReadTsKvQueryResult>> getReadTsKvQueryResult(final DeferredResult<ResponseEntity> response) {
+        return new FutureCallback<>() {
+            @Override
+            public void onSuccess(List<ReadTsKvQueryResult> data) {
+                response.setResult(new ResponseEntity<>(data, HttpStatus.OK));
             }
 
             @Override

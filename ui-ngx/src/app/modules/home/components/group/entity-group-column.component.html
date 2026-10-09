@@ -1,0 +1,79 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div [formGroup]="columnFormGroup" class="tb-entity-group-column flex flex-1 flex-row items-center justify-start"
+  style="padding: 0 0 0 10px; margin: 5px;">
+  <div class="tb-column-type flex flex-col lt-xl:flex-1">
+    <mat-form-field subscriptSizing="dynamic" appearance="outline">
+      <mat-select required formControlName="type">
+        @for (type of columnTypes; track type) {
+          <mat-option [value]="type">
+            {{ entityGroupColumnTypeTranslations.get(type) | translate }}
+          </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </div>
+  <div style="padding-left: 5px;"
+    class="tb-column-value flex flex-col lt-xl:flex-1">
+    @if (columnFormGroup.get('type').value === columnType.ENTITY_FIELD) {
+      <mat-form-field subscriptSizing="dynamic" appearance="outline">
+        <mat-select required formControlName="key">
+          @for (field of entityFieldKeys; track field) {
+            <mat-option [value]="field">
+              {{ entityFields[field].name | translate }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    }
+    @if (columnFormGroup.get('type').value !== columnType.ENTITY_FIELD) {
+      <mat-form-field subscriptSizing="dynamic" appearance="outline">
+        <input matInput required
+          formControlName="key"
+          placeholder="{{ 'entity-group.column-value' | translate }}"/>
+      </mat-form-field>
+    }
+  </div>
+  <div class="flex flex-1 flex-col lt-xl:!hidden" style="padding-left: 5px;">
+    <mat-form-field subscriptSizing="dynamic" appearance="outline">
+      <input matInput
+        formControlName="title"
+        placeholder="{{ 'entity-group.column-title' | translate }}"/>
+    </mat-form-field>
+  </div>
+  <div style="padding-left: 5px;" class="tb-column-sort-order flex flex-col lt-xl:flex-1 lt-lg:!hidden">
+    <mat-form-field subscriptSizing="dynamic" appearance="outline">
+      <mat-select required formControlName="sortOrder">
+        @for (sortOrder of sortOrders; track sortOrder) {
+          <mat-option [value]="sortOrder">
+            {{ entityGroupSortOrderTranslations.get(sortOrder) | translate }}
+          </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </div>
+  <div class="flex flex-col items-center justify-start xs:!hidden" style="padding-left: 5px; min-width: 48px; max-width: 48px;">
+    <mat-checkbox formControlName="mobileHide"></mat-checkbox>
+  </div>
+  @if (disabled) {
+    <span style="padding-left: 5px; min-width: 48px; min-height: 48px;">&nbsp;</span>
+  }
+  <button mat-icon-button color="primary"
+    (click)="openColumn($event)"
+    matTooltip="{{ (disabled ? 'action.view' : 'action.edit') | translate }}"
+    matTooltipPosition="above">
+    <mat-icon>{{ disabled ? 'more_vert' : 'edit' }}</mat-icon>
+  </button>
+  @if (!disabled) {
+    <button mat-icon-button color="primary"
+      (click)="removeColumn.emit()"
+      matTooltip="{{ 'action.remove' | translate }}"
+      matTooltipPosition="above">
+      <mat-icon>close</mat-icon>
+    </button>
+  }
+</div>

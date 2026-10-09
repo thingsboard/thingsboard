@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.tenant;
 
 import org.springframework.data.domain.Limit;
@@ -40,6 +28,8 @@ public interface TenantRepository extends JpaRepository<TenantEntity, UUID> {
     Page<TenantEntity> findTenantsNextPage(@Param("textSearch") String textSearch,
                                            Pageable pageable);
 
+    List<TenantEntity> findTenantsByIdIn(List<UUID> tenantIds);
+
     @Query("SELECT new org.thingsboard.server.dao.model.sql.TenantInfoEntity(t, p.name) " +
             "FROM TenantEntity t " +
             "LEFT JOIN TenantProfileEntity p on p.id = t.tenantProfileId " +
@@ -58,7 +48,5 @@ public interface TenantRepository extends JpaRepository<TenantEntity, UUID> {
     List<TenantFields> findNextBatch(@Param("id") UUID id, Limit limit);
 
     TenantEntity findFirstByTitle(String name);
-
-    List<TenantEntity> findTenantsByIdIn(List<UUID> tenantIds);
 
 }

@@ -1,28 +1,19 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.edge.rpc.processor.device;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
@@ -31,13 +22,18 @@ import org.thingsboard.server.gen.edge.v1.DeviceCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceUpdateMsg;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
+import java.util.UUID;
+
 @Slf4j
 public abstract class BaseDeviceProcessor extends BaseEdgeProcessor {
 
     @Autowired
+    private TbClusterService tbClusterService;
+
+    @Autowired
     private DataValidator<Device> deviceValidator;
 
-    protected Pair<Boolean, Boolean> saveOrUpdateDevice(TenantId tenantId, DeviceId deviceId, DeviceUpdateMsg deviceUpdateMsg) {
+    protected Pair<Boolean, Boolean> saveOrUpdateDevice(TenantId tenantId, DeviceId deviceId, DeviceUpdateMsg deviceUpdateMsg) throws ThingsboardException {
         boolean created = false;
         boolean deviceNameUpdated = false;
         deviceCreationLock.lock();
@@ -51,6 +47,7 @@ public abstract class BaseDeviceProcessor extends BaseEdgeProcessor {
                 created = true;
                 device.setId(null);
             } else {
+                changeOwnerIfRequired(tenantId, device.getCustomerId(), deviceId);
                 device.setId(deviceId);
             }
             if (isSaveRequired(deviceById, device)) {
@@ -62,8 +59,12 @@ public abstract class BaseDeviceProcessor extends BaseEdgeProcessor {
                     device.setId(deviceId);
                 }
                 Device savedDevice = edgeCtx.getDeviceService().saveDevice(device, false);
-                edgeCtx.getClusterService().onDeviceUpdated(savedDevice, created ? null : device);
+                if (created) {
+                    edgeCtx.getEntityGroupService().addEntityToEntityGroupAll(savedDevice.getTenantId(), savedDevice.getOwnerId(), savedDevice.getId());
+                }
+                tbClusterService.onDeviceUpdated(savedDevice, created ? null : device);
             }
+            safeAddToEntityGroup(tenantId, deviceUpdateMsg, deviceId);
         } catch (Exception e) {
             log.error("[{}] Failed to process device update msg [{}]", tenantId, deviceUpdateMsg, e);
             throw e;
@@ -71,6 +72,14 @@ public abstract class BaseDeviceProcessor extends BaseEdgeProcessor {
             deviceCreationLock.unlock();
         }
         return Pair.of(created, deviceNameUpdated);
+    }
+
+    private void safeAddToEntityGroup(TenantId tenantId, DeviceUpdateMsg deviceUpdateMsg, DeviceId deviceId) {
+        if (deviceUpdateMsg.hasEntityGroupIdMSB() && deviceUpdateMsg.hasEntityGroupIdLSB()) {
+            UUID entityGroupUUID = safeGetUUID(deviceUpdateMsg.getEntityGroupIdMSB(),
+                    deviceUpdateMsg.getEntityGroupIdLSB());
+            safeAddEntityToGroup(tenantId, new EntityGroupId(entityGroupUUID), deviceId);
+        }
     }
 
     private boolean updateDeviceNameIfDuplicateExists(TenantId tenantId, DeviceId deviceId, Device device) {

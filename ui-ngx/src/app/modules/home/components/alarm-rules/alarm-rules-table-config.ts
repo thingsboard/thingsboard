@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   checkBoxCell,
   DateEntityTableColumn,
@@ -36,6 +23,7 @@ import { DestroyRef, Renderer2 } from '@angular/core';
 import { EntityDebugSettings } from '@shared/models/entity.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AlarmRulesService } from '@core/http/alarm-rules.service';
+import { AiAssistantViewType } from '@shared/models/ai-chat.models';
 import { catchError, filter, first, switchMap, tap } from 'rxjs/operators';
 import {
   ArgumentEntityType,
@@ -70,6 +58,11 @@ import { AlarmRulesTabsComponent } from '@home/pages/alarm/alarm-rules-tabs.comp
 import { Router } from '@angular/router';
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import { AlarmRulesComponent } from '@home/components/alarm-rules/alarm-rules.component';
+import { Operation, Resource } from "@shared/models/security.models";
+import { alarmRuleEntityTypeList } from "@shared/models/alarm-rule.models";
+import { UserPermissionsService } from "@core/http/user-permissions.service";
+import { ItemType } from '@shared/models/iot-hub/iot-hub-item.models';
+import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
 
 export type AlarmRuleTableEntity = CalculatedFieldAlarmRule | CalculatedFieldAlarmRuleInfo;
 
@@ -97,6 +90,10 @@ export class AlarmRulesTableConfig extends EntityTableConfig<AlarmRuleTableEntit
               private entityDebugSettingsService: EntityDebugSettingsService,
               private utilsService: UtilsService,
               private router: Router,
+              private readonly: boolean = false,
+              private hideClearEventAction: boolean = false,
+              private userPermissionsService: UserPermissionsService,
+              private iotHubActions: IotHubActionsService,
               public pageMode: boolean = false,
   ) {
     super();
@@ -105,6 +102,8 @@ export class AlarmRulesTableConfig extends EntityTableConfig<AlarmRuleTableEntit
       this.entityComponent = AlarmRulesComponent;
       this.entityTabsComponent = AlarmRulesTabsComponent;
       this.rowPointer = true;
+
+      this.readonly = !alarmRuleEntityTypeList.some(entityType => this.userPermissionsService.hasGenericPermissionByEntityGroupType(Operation.WRITE_CALCULATED_FIELD, entityType));
     } else {
       this.addAsTextButton = false;
     }
@@ -125,15 +124,41 @@ export class AlarmRulesTableConfig extends EntityTableConfig<AlarmRuleTableEntit
       selectedEntities: 'alarm-rule.selected-fields'
     };
 
+    if (this.userPermissionsService.hasGenericPermission(Resource.AI, Operation.ALL)) {
+      this.aiAssistantConfig = {
+        view: {
+          entityView: AiAssistantViewType.ALARM_RULE,
+          listView: AiAssistantViewType.ALARM_RULE_LIST
+        },
+        initialPromptPlaceholder: this.translate.instant('alarm-rule.ai-assistant-initial-prompt-placeholder'),
+        promptExamples: [
+          {
+            label: this.translate.instant('alarm-rule.ai-assistant-example-suggest-rules-label'),
+            message: this.translate.instant('alarm-rule.ai-assistant-example-suggest-rules-message')
+          },
+          {
+            label: this.translate.instant('alarm-rule.ai-assistant-example-inactivity-label'),
+            message: this.translate.instant('alarm-rule.ai-assistant-example-inactivity-message')
+          }
+        ],
+        pageUrl: '/alarms/alarm-rules',
+        showButton: !this.pageMode,
+      };
+    }
+
+    this.entityTitle = (alarmRule) => alarmRule ? this.utilsService.customTranslation(alarmRule.name) : '';
     this.entitiesFetchFunction = (pageLink: PageLink) => this.fetchCalculatedFields(pageLink);
     this.addEntity = this.getCalculatedAlarmDialog.bind(this);
     this.loadEntity = id => this.alarmRulesService.getAlarmRuleById(id.id);
     this.saveEntity = (alarmRule) => this.alarmRulesService.saveAlarmRule(alarmRule);
-
+    this.addEnabled = !this.readonly;
+    this.entitiesDeleteEnabled = !this.readonly;
+    this.detailsReadonly = (field) => this.readonly || !this.allowWritePermission(field);
     this.deleteEntityTitle = (field) => this.translate.instant('alarm-rule.delete-title', {title: field.name});
     this.deleteEntityContent = () => this.translate.instant('alarm-rule.delete-text');
     this.deleteEntitiesTitle = count => this.translate.instant('alarm-rule.delete-multiple-title', {count});
     this.deleteEntitiesContent = () => this.translate.instant('alarm-rule.delete-multiple-text');
+    this.deleteEnabled = (field: CalculatedFieldAlarmRule) => this.allowWritePermission(field);
     this.deleteEntity = id => this.alarmRulesService.deleteAlarmRule(id.id);
 
     this.onEntityAction = action => this.onCFAction(action);
@@ -153,6 +178,17 @@ export class AlarmRulesTableConfig extends EntityTableConfig<AlarmRuleTableEntit
       }
     ];
 
+    if (this.userPermissionsService.hasGenericPermission(Resource.ALL, Operation.ALL)) {
+      this.addActionDescriptors.push(
+        {
+          name: this.translate.instant('iot-hub.add-from-iot-hub'),
+          icon: 'hub',
+          isEnabled: () => true,
+          onAction: () => this.addAlarmRuleFromIotHub()
+        }
+      );
+    }
+
     this.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
     this.columns.push(new DateEntityTableColumn<CalculatedFieldAlarmRule>('createdTime', 'common.created-time', this.datePipe, '150px'));
     this.columns.push(new EntityTableColumn<CalculatedFieldAlarmRule>('name', 'alarm-rule.alarm-type', '33%',
@@ -170,23 +206,25 @@ export class AlarmRulesTableConfig extends EntityTableConfig<AlarmRuleTableEntit
     this.columns.push(new EntityTableColumn<CalculatedFieldAlarmRule>('clearRule', 'alarm-rule.cleared', '90px',
       entity => checkBoxCell(!!entity.configuration.clearRule), ()=> { return {padding: 0, textAlign: 'center'}}, false));
 
-    this.cellActionDescriptors.push(
-      {
-        name: '',
-        nameFunction: (entity) =>
-          this.translate.instant(entity.enabled ? 'calculated-fields.disable' : 'calculated-fields.enable'),
-        icon: 'mdi:toggle-switch',
-        isEnabled: () => true,
-        iconFunction: (entity) => entity.enabled ? 'mdi:toggle-switch' : 'mdi:toggle-switch-off-outline',
-        onAction: ($event, entity) => this.toggleEnabled($event, entity),
-      },
-      {
-        name: this.translate.instant('alarm-rule.copy'),
-        icon: 'content_copy',
-        isEnabled: () => true,
-        onAction: ($event, entity) => this.copyCalculatedField($event, entity)
-      }
-    );
+    if (!this.readonly) {
+      this.cellActionDescriptors.push(
+        {
+          name: '',
+          nameFunction: (entity) =>
+            this.translate.instant(entity.enabled ? 'calculated-fields.disable' : 'calculated-fields.enable'),
+          icon: 'mdi:toggle-switch',
+          isEnabled: (entity) => this.allowWritePermission(entity),
+          iconFunction: (entity) => entity.enabled ? 'mdi:toggle-switch' : 'mdi:toggle-switch-off-outline',
+          onAction: ($event, entity) => this.toggleEnabled($event, entity),
+        },
+        {
+          name: this.translate.instant('alarm-rule.copy'),
+          icon: 'content_copy',
+          isEnabled: () => true,
+          onAction: ($event, entity) => this.copyCalculatedField($event, entity)
+        }
+      );
+    }
     this.cellActionDescriptors.push(
       {
         name: this.translate.instant('action.export'),
@@ -201,24 +239,26 @@ export class AlarmRulesTableConfig extends EntityTableConfig<AlarmRuleTableEntit
         onAction: ($event, entity) =>
           this.pageMode ? this.openDebugTab($event, entity) : this.openDebugEventsDialog($event, entity),
       },
-      {
+    );
+    if (!this.readonly) {
+      this.cellActionDescriptors.push({
         name: '',
         nameFunction: entity => this.entityDebugSettingsService.getDebugConfigLabel(entity?.debugSettings),
         icon: 'mdi:bug',
-        isEnabled: () => true,
+        isEnabled: (entity) => this.allowWritePermission(entity),
         iconFunction: ({ debugSettings }) => this.entityDebugSettingsService.isDebugActive(debugSettings?.allEnabledUntil) || debugSettings?.failuresEnabled ? 'mdi:bug' : 'mdi:bug-outline',
         onAction: ($event, entity) => this.onOpenDebugConfig($event, entity),
-      }
-    );
+      });
+    }
     if (!this.pageMode) {
-      this.cellActionDescriptors.push(
-        {
-          name: this.translate.instant('action.edit'),
-          icon: 'edit',
-          isEnabled: () => true,
-          onAction: ($event, entity) => this.editCalculatedField($event, entity),
-        }
-      )
+      this.cellActionDescriptors.push({
+        name: this.translate.instant('action.edit'),
+        nameFunction: entity => this.translate.instant((this.readonly || !this.allowWritePermission(entity)) ? 'action.view' : 'action.edit'),
+        icon: 'edit',
+        iconFunction: entity => (this.readonly || !this.allowWritePermission(entity)) ? 'visibility' : 'edit',
+        isEnabled: () => true,
+        onAction: ($event, entity) => this.editCalculatedField($event, entity),
+      });
     }
   }
 
@@ -226,6 +266,10 @@ export class AlarmRulesTableConfig extends EntityTableConfig<AlarmRuleTableEntit
     return this.pageMode ?
       this.alarmRulesService.getAlarmRules(pageLink, this.alarmRuleFilterConfig) :
       this.alarmRulesService.getAlarmRulesByEntityId(this.entityId, pageLink);
+  }
+
+  private allowWritePermission(entity?: CalculatedFieldAlarmRule): boolean {
+    return this.pageMode ? this.userPermissionsService.hasGenericPermissionByEntityGroupType(Operation.WRITE_CALCULATED_FIELD, entity?.entityId?.entityType as EntityType) : true;
   }
 
   onOpenDebugConfig($event: Event, calculatedField: AlarmRuleTableEntity): void {
@@ -291,9 +335,10 @@ export class AlarmRulesTableConfig extends EntityTableConfig<AlarmRuleTableEntit
         entityId,
         entityName,
         tenantId: this.tenantId,
-        ownerId: this.ownerId ?? {entityType: EntityType.TENANT, id: this.tenantId},
+        ownerId: this.ownerId,
         additionalDebugActionConfig: this.additionalDebugActionConfig,
         isDirty,
+        readonly: this.readonly || entityId?.entityType && !this.userPermissionsService.hasGenericPermissionByEntityGroupType(Operation.WRITE_CALCULATED_FIELD, entityId.entityType as EntityType),
         getTestScriptDialogFn: this.getTestScriptDialog.bind(this),
       },
       enterAnimationDuration: isDirty ? 0 : null,
@@ -314,7 +359,8 @@ export class AlarmRulesTableConfig extends EntityTableConfig<AlarmRuleTableEntit
         debugEventTypes:[DebugEventType.DEBUG_CALCULATED_FIELD],
         disabledEventTypes:[EventType.LC_EVENT, EventType.ERROR, EventType.STATS],
         defaultEventType: DebugEventType.DEBUG_CALCULATED_FIELD,
-        debugActionDisabled: true
+        debugActionDisabled: true,
+        hideClearEventAction: this.hideClearEventAction
       }
     })
       .afterClosed()
@@ -340,6 +386,14 @@ export class AlarmRulesTableConfig extends EntityTableConfig<AlarmRuleTableEntit
   private exportAlarmRule($event: Event, calculatedField: AlarmRuleTableEntity): void {
     $event?.stopPropagation();
     this.importExportService.exportCalculatedField(calculatedField.id.id);
+  }
+
+  private addAlarmRuleFromIotHub(): void {
+    this.iotHubActions.addItem(ItemType.ALARM_RULE, { entityId: this.entityId }).subscribe(result => {
+      if (result?.descriptor) {
+        this.updateData();
+      }
+    });
   }
 
   private importCalculatedField(): void {
@@ -421,7 +475,8 @@ export class AlarmRulesTableConfig extends EntityTableConfig<AlarmRuleTableEntit
           expression,
           argumentsEditorCompleter: getCalculatedFieldArgumentsEditorCompleter(calculatedField.configuration.arguments),
           argumentsHighlightRules: getCalculatedFieldArgumentsHighlights(calculatedField.configuration.arguments),
-          openCalculatedFieldEdit
+          openCalculatedFieldEdit,
+          readonly: this.readonly || !this.allowWritePermission(calculatedField)
         }
       }).afterClosed()
       .pipe(

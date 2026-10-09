@@ -1,18 +1,8 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <section [formGroup]="aiConfigForm" class="flex flex-col gap-4">
@@ -22,6 +12,7 @@
     </div>
     <section class="flex flex-col">
       <tb-entity-autocomplete
+        [allowCreateNew]="resource.AI_MODEL | hasGenericPermission: operation.CREATE"
         allowCreateNew
         useFullEntityId
         required
@@ -82,12 +73,13 @@
         </mat-form-field>
         <tb-entity-list
           class="flex-1"
+          appearance="outline"
           syncIdsWithDB
           allowCreateNew
           placeholderText="{{ 'rule-node-config.ai.ai-resources' | translate }}"
           [inlineField]="true"
           [entityType]="EntityType.TB_RESOURCE"
-          [subType]="ResourceType.GENERAL"
+          [entitySubType]="ResourceType.GENERAL"
           (createNew)="createAiResources($event, 'resourceIds')"
           formControlName="resourceIds">
         </tb-entity-list>
@@ -101,9 +93,15 @@
         {{ 'rule-node-config.ai.response-format' | translate }}
       </div>
       <tb-toggle-select formControlName="type">
-        <tb-toggle-option [value]="responseFormat.TEXT">{{ 'rule-node-config.ai.response-text' | translate }}</tb-toggle-option>
-        <tb-toggle-option [value]="responseFormat.JSON">{{ 'rule-node-config.ai.response-json' | translate }}</tb-toggle-option>
-        <tb-toggle-option [value]="responseFormat.JSON_SCHEMA">{{ 'rule-node-config.ai.response-json-schema' | translate }}</tb-toggle-option>
+        @if (allowedResponseFormats.includes(responseFormat.TEXT)) {
+          <tb-toggle-option [value]="responseFormat.TEXT">{{ 'rule-node-config.ai.response-text' | translate }}</tb-toggle-option>
+        }
+        @if (allowedResponseFormats.includes(responseFormat.JSON)) {
+          <tb-toggle-option [value]="responseFormat.JSON">{{ 'rule-node-config.ai.response-json' | translate }}</tb-toggle-option>
+        }
+        @if (allowedResponseFormats.includes(responseFormat.JSON_SCHEMA)) {
+          <tb-toggle-option [value]="responseFormat.JSON_SCHEMA">{{ 'rule-node-config.ai.response-json-schema' | translate }}</tb-toggle-option>
+        }
       </tb-toggle-select>
     </div>
     <tb-json-object-edit
@@ -133,6 +131,7 @@
               <tb-time-unit-input
                 required
                 inlineField
+                appearance="outline"
                 requiredText="{{ 'rule-node-config.ai.timeout-required' | translate }}"
                 minErrorText="{{ 'rule-node-config.ai.timeout-validation' | translate }}"
                 maxErrorText="{{ 'rule-node-config.ai.timeout-validation' | translate }}"

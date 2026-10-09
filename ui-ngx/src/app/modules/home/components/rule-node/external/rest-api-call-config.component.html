@@ -1,24 +1,14 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <section [formGroup]="restApiCallConfigForm" class="flex flex-col gap-4">
   <div class="tb-form-panel stroked">
     <div class="tb-form-panel-title" translate>rule-node-config.request-url</div>
-    <mat-form-field class="mat-block" subscriptSizing="dynamic">
+    <mat-form-field class="mat-block" subscriptSizing="dynamic" appearance="outline">
       <mat-label translate>rule-node-config.url</mat-label>
       <input required matInput formControlName="restEndpointUrlPattern">
       @if (restApiCallConfigForm.get('restEndpointUrlPattern').hasError('required')) {
@@ -45,7 +35,7 @@
       </ng-template>
     </mat-expansion-panel>
   </div>
-  <mat-form-field class="mat-block">
+  <mat-form-field class="mat-block" appearance="outline">
     <mat-label translate>rule-node-config.request-method</mat-label>
     <mat-select formControlName="requestMethod">
       @for (requestType of httpRequestTypes; track requestType) {
@@ -61,15 +51,16 @@
         {{ 'rule-node-config.headers' | translate }}
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
-        <tb-kv-map-config-old
+        <div class="tb-form-hint tb-primary-fill mb-4" [innerHTML]="'rule-node-config.headers-hint' | translate | safe: 'html'"></div>
+        <tb-kv-map-config
+          required="false"
           formControlName="headers"
-          keyText="rule-node-config.header"
-          keyRequiredText="rule-node-config.header-required"
-          valText="rule-node-config.value"
-          valRequiredText="rule-node-config.value-required"
-          description="rule-node-config.headers-hint"
-          emptyText="rule-node-config.headers-empty">
-        </tb-kv-map-config-old>
+          [keyText]="'rule-node-config.header' | translate"
+          [keyRequiredText]="'rule-node-config.header-required' | translate"
+          [valText]="'rule-node-config.value' | translate"
+          [valRequiredText]="'rule-node-config.value-required' | translate"
+          [emptyText]="'rule-node-config.headers-empty' | translate">
+        </tb-kv-map-config>
       </ng-template>
     </mat-expansion-panel>
   </div>
@@ -92,7 +83,7 @@
               @if (!restApiCallConfigForm.get('useSystemProxyProperties').value) {
                 <div>
                   <div class="gt-sm:flex gt-sm:flex-row gt-sm:gap-2">
-                    <mat-form-field class="md-block gt-sm:max-w-50% gt-sm:flex-full">
+                    <mat-form-field class="md-block gt-sm:max-w-50% gt-sm:flex-full" appearance="outline">
                       <mat-label translate>rule-node-config.proxy-host</mat-label>
                       <input matInput required formControlName="proxyHost">
                       @if (restApiCallConfigForm.get('proxyHost').hasError('required')) {
@@ -101,7 +92,7 @@
                         </mat-error>
                       }
                     </mat-form-field>
-                    <mat-form-field class="mat-block gt-sm:max-w-50% gt-sm:flex-full">
+                    <mat-form-field class="mat-block gt-sm:max-w-50% gt-sm:flex-full" appearance="outline">
                       <mat-label translate>rule-node-config.proxy-port</mat-label>
                       <input matInput required formControlName="proxyPort" type="number" step="1">
                       @if (restApiCallConfigForm.get('proxyPort').hasError('required')) {
@@ -116,15 +107,13 @@
                       }
                     </mat-form-field>
                   </div>
-                  <mat-form-field class="mat-block">
+                  <mat-form-field class="mat-block" appearance="outline">
                     <mat-label translate>rule-node-config.proxy-user</mat-label>
                     <input matInput formControlName="proxyUser">
                   </mat-form-field>
-                  <mat-form-field class="mat-block">
-                    <mat-label translate>rule-node-config.proxy-password</mat-label>
-                    <input matInput type="password" formControlName="proxyPassword">
-                    <tb-toggle-password matSuffix></tb-toggle-password>
-                  </mat-form-field>
+                  <tb-secret-key-input formControlName="proxyPassword" class="mat-block flex-1" appearance="outline"
+                                   label="{{ 'rule-node-config.proxy-password' | translate }}">
+              </tb-secret-key-input>
                 </div>
               }
             </div>
@@ -137,12 +126,23 @@
             </div>
           </mat-slide-toggle>
         </div>
-        <div class="tb-form-row">
+        <div class="tb-form-panel stroked column">
           <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="ignoreRequestBody">
             {{ 'rule-node-config.ignore-request-body' | translate }}
           </mat-slide-toggle>
+          @if(!restApiCallConfigForm.get('ignoreRequestBody').value) {
+            <div class="tb-form-hint tb-primary-fill mb-4" [innerHTML]="'rule-node-config.request-body-template-hint' | translate | safe: 'html'"></div>
+            <mat-form-field class="mat-block" subscriptSizing="dynamic" appearance="outline" floatLabel="always">
+              <mat-label translate>rule-node-config.request-body-template</mat-label>
+              <textarea matInput
+                        formControlName="requestBodyTemplate"
+                        class="tb-enable-vertical-resize"
+                        cdkTextareaAutosize
+                        cdkAutosizeMinRows="3"></textarea>
+            </mat-form-field>
+          }
         </div>
-        <mat-form-field class="mat-block" subscriptSizing="dynamic">
+        <mat-form-field class="mat-block" subscriptSizing="dynamic" appearance="outline">
           <mat-label translate>rule-node-config.read-timeout</mat-label>
           <input type="text" min="0" [max]="IntLimit" inputmode="numeric" pattern="[0-9]*" matInput formControlName="readTimeoutMs">
           <mat-hint translate>rule-node-config.read-timeout-hint</mat-hint>
@@ -152,7 +152,7 @@
             </mat-error>
           }
         </mat-form-field>
-        <mat-form-field class="mat-block" subscriptSizing="dynamic">
+        <mat-form-field class="mat-block" subscriptSizing="dynamic" appearance="outline">
           <mat-label translate>rule-node-config.max-parallel-requests-count</mat-label>
           <input type="text" min="0" [max]="IntLimit" inputmode="numeric" pattern="[0-9]*" matInput formControlName="maxParallelRequestsCount">
           <mat-hint translate>rule-node-config.max-parallel-requests-count-hint</mat-hint>
@@ -162,7 +162,7 @@
             </mat-error>
           }
         </mat-form-field>
-        <mat-form-field class="mat-block" subscriptSizing="dynamic">
+        <mat-form-field class="mat-block" subscriptSizing="dynamic" appearance="outline">
           <mat-label translate>rule-node-config.max-response-size</mat-label>
           <input type="text" min="1" [max]="MemoryBufferSizeInKbLimit" inputmode="numeric" pattern="[0-9]*" matInput formControlName="maxInMemoryBufferSizeInKb">
           <mat-hint translate>rule-node-config.max-response-size-hint</mat-hint>

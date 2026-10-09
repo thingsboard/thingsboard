@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -44,6 +32,9 @@ public class QrCodeSettingsEntity extends BaseSqlEntity<QrCodeSettings> {
     @Column(name = ModelConstants.TENANT_ID_COLUMN, columnDefinition = "uuid")
     protected UUID tenantId;
 
+    @Column(name = ModelConstants.QR_CODE_SETTINGS_USE_SYSTEM_SETTINGS_PROPERTY)
+    private boolean useSystemSettings;
+
     @Column(name = ModelConstants.QR_CODE_SETTINGS_USE_DEFAULT_APP_PROPERTY)
     private boolean useDefaultApp;
 
@@ -64,6 +55,7 @@ public class QrCodeSettingsEntity extends BaseSqlEntity<QrCodeSettings> {
         this.setId(qrCodeSettings.getUuidId());
         this.setCreatedTime(qrCodeSettings.getCreatedTime());
         this.tenantId = qrCodeSettings.getTenantId().getId();
+        this.useSystemSettings = qrCodeSettings.isUseSystemSettings();
         this.useDefaultApp = qrCodeSettings.isUseDefaultApp();
         this.androidEnabled = qrCodeSettings.isAndroidEnabled();
         this.iosEnabled = qrCodeSettings.isIosEnabled();
@@ -78,6 +70,7 @@ public class QrCodeSettingsEntity extends BaseSqlEntity<QrCodeSettings> {
         QrCodeSettings qrCodeSettings = new QrCodeSettings(new QrCodeSettingsId(getUuid()));
         qrCodeSettings.setCreatedTime(createdTime);
         qrCodeSettings.setTenantId(TenantId.fromUUID(tenantId));
+        qrCodeSettings.setUseSystemSettings(useSystemSettings);
         qrCodeSettings.setUseDefaultApp(useDefaultApp);
         qrCodeSettings.setAndroidEnabled(androidEnabled);
         qrCodeSettings.setIosEnabled(iosEnabled);

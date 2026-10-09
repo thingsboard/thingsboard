@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import io.swagger.v3.oas.annotations.Parameter;
@@ -38,15 +26,17 @@ import org.thingsboard.server.common.data.mobile.bundle.MobileAppBundle;
 import org.thingsboard.server.common.data.mobile.bundle.MobileAppBundleInfo;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.mobile.TbMobileAppBundleService;
-import org.thingsboard.server.service.security.permission.Operation;
-import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.List;
 import java.util.UUID;
 
+import static org.thingsboard.server.common.data.permission.Resource.MOBILE_APP;
+import static org.thingsboard.server.common.data.permission.Resource.MOBILE_APP_BUNDLE;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
@@ -106,6 +96,7 @@ public class MobileAppBundleController extends BaseController {
                                                                        @RequestParam(required = false) String sortProperty,
                                                                        @Parameter(description = SORT_ORDER_DESCRIPTION)
                                                                        @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        accessControlService.checkPermission(getCurrentUser(), MOBILE_APP_BUNDLE, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         return mobileAppBundleService.findMobileAppBundleInfosByTenantId(getTenantId(), pageLink);
     }

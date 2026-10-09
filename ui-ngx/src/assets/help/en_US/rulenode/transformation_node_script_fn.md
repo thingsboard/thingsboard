@@ -80,10 +80,9 @@ return [
 
 <br>
 
-You can see real life example, how to use this node in those tutorials:
+You can see real life example, how to use this node in this tutorial:
 
-- [Transform incoming telemetry{:target="_blank"}](${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/tutorials/transform-incoming-telemetry/)
-- [Reply to RPC Calls{:target="_blank"}](${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/tutorials/rpc-reply-tutorial#add-transform-script-node)
+- [Reply to RPC Calls{:target="_blank"}](${siteBaseUrl}/docs${docPlatformPrefix}/recipes/rpc-reply-with-related-telemetry/#step-32-script-transformation-node)
 
 <br>
 <br>

@@ -1,0 +1,71 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-mail-template-settings">
+  <mat-card appearance="outlined" class="settings-card">
+    <mat-card-header>
+      <mat-card-title>
+        <span class="mat-headline-5" translate>admin.mail-template-settings</span>
+      </mat-card-title>
+      <span class="flex-1"></span>
+      <div tb-help="mailTemplates"></div>
+    </mat-card-header>
+    @if (isLoading$ | async) {
+      <mat-progress-bar color="warn" mode="indeterminate">
+      </mat-progress-bar>
+    } @else {
+      <div style="height: 4px;"></div>
+    }
+    <mat-card-content style="padding-top: 16px;">
+      <form #mailTemplatesForm="ngForm" (ngSubmit)="save()">
+        @if (isTenantAdmin()) {
+          <mat-checkbox [disabled]="(isLoading$ | async) || readonly"
+            [(ngModel)]="useSystemMailSettings" [ngModelOptions]="{standalone: true}"
+            (ngModelChange)="isDirty = true">
+            {{ 'admin.use-system-mail-template-settings' | translate }}
+          </mat-checkbox>
+        }
+        @if (!useSystemMailSettings) {
+          <fieldset>
+            <div style="padding-top: 20px;"></div>
+            <mat-form-field class="mat-block" appearance="outline">
+              <mat-label translate>admin.mail-template.mail-template</mat-label>
+              <mat-select  [disabled]="(isLoading$ | async)" [(ngModel)]="mailTemplate"
+                [ngModelOptions]="{standalone: true}">
+                @for (template of mailTemplateTypes; track template) {
+                  <mat-option [value]="template">
+                    {{mailTemplateTranslationsMap.get(template) | translate}}
+                  </mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field class="mat-block" appearance="outline">
+              <mat-label translate>admin.mail-subject</mat-label>
+              <input matInput [disabled]="(isLoading$ | async) || readonly"
+                [(ngModel)]="mailTemplatesSettings[mailTemplate].subject"
+                (ngModelChange)="isDirty = true"
+                [ngModelOptions]="{standalone: true}"/>
+            </mat-form-field>
+            <div class="tb-container tb-mail-body">
+              <mat-label class="tb-title" translate>admin.mail-body</mat-label>
+              <editor [init]="hugeRteOptions" [(ngModel)]="mailTemplatesSettings[mailTemplate].body"
+                (ngModelChange)="isDirty = true"
+              [ngModelOptions]="{standalone: true}"></editor>
+            </div>
+          </fieldset>
+        }
+        <div class="flex w-full flex-row flex-wrap items-center justify-end">
+          @if (!readonly) {
+            <button mat-raised-button color="primary"
+              [disabled]="(isLoading$ | async) || mailTemplatesForm.invalid || !isDirty"
+              type="submit">{{'action.save' | translate}}
+            </button>
+          }
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

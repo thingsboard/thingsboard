@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.edge.rpc;
 
 import io.grpc.ManagedChannel;
@@ -32,6 +20,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.beans.factory.ObjectProvider;
+import org.thingsboard.server.gen.agent.v1.AgentRpcServiceGrpc;
 import org.thingsboard.server.gen.edge.v1.EdgeRpcServiceGrpc;
 
 import java.io.ByteArrayInputStream;
@@ -178,7 +168,9 @@ class EdgeGrpcSslTest {
     // --- Server startup using production EdgeGrpcService.setupSsl() ---
 
     private Server startServer(String certFileResource, String privateKeyResource, String keyPassword) throws Exception {
-        GrpcServer edgeGrpcService = new GrpcServer(new EdgeRpcServiceGrpc.EdgeRpcServiceImplBase() {});
+        GrpcServer edgeGrpcService = new GrpcServer(
+                singletonProvider(new EdgeRpcServiceGrpc.EdgeRpcServiceImplBase() {}),
+                singletonProvider(new AgentRpcServiceGrpc.AgentRpcServiceImplBase() {}));
         ReflectionTestUtils.setField(edgeGrpcService, "certFileResource", certFileResource);
         ReflectionTestUtils.setField(edgeGrpcService, "privateKeyResource", privateKeyResource);
         ReflectionTestUtils.setField(edgeGrpcService, "keyPassword", keyPassword != null ? keyPassword : "");
@@ -270,5 +262,14 @@ class EdgeGrpcSslTest {
             return new PemObject("PRIVATE KEY", pk.getEncoded());
         }
         return o;
+    }
+
+    private static <T> ObjectProvider<T> singletonProvider(T instance) {
+        return new ObjectProvider<>() {
+            @Override
+            public T getObject() {
+                return instance;
+            }
+        };
     }
 }

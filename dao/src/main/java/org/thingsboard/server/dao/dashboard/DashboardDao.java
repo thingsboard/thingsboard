@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.dashboard;
 
 import org.thingsboard.server.common.data.Dashboard;
@@ -21,7 +9,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.Dao;
-import org.thingsboard.server.dao.ExportableEntityDao;
+import org.thingsboard.server.dao.ExportableCustomerEntityDao;
 import org.thingsboard.server.dao.TenantEntityDao;
 
 import java.util.List;
@@ -30,7 +18,7 @@ import java.util.UUID;
 /**
  * The Interface DashboardDao.
  */
-public interface DashboardDao extends Dao<Dashboard>, TenantEntityDao<Dashboard>, ExportableEntityDao<DashboardId, Dashboard> {
+public interface DashboardDao extends Dao<Dashboard>, TenantEntityDao<Dashboard>, ExportableCustomerEntityDao<Dashboard, DashboardId> {
 
     /**
      * Save or update dashboard object
@@ -44,6 +32,16 @@ public interface DashboardDao extends Dao<Dashboard>, TenantEntityDao<Dashboard>
 
     PageData<DashboardId> findIdsByTenantId(TenantId tenantId, PageLink pageLink);
 
+    Long countDashboards();
+
     PageData<DashboardId> findAllIds(PageLink pageLink);
+
+    void replacePatternInAllDashboardsConfigurations(String pattern, String replacement);
+
+    Long countScadaDashboards();
+
+    void replaceWidgetTypeFullFqn(String oldLink, String newLink);
+
+    void setTrendzWidgetsTypeLatestBySystemFqn(String systemFqn);
 
 }

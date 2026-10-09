@@ -1,29 +1,18 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.sync.vc.data;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.sync.ie.EntityExportSettings;
 import org.thingsboard.server.common.data.sync.vc.request.create.VersionCreateConfig;
 import org.thingsboard.server.common.data.sync.vc.request.create.VersionCreateRequest;
+import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,18 +23,23 @@ import java.util.Map;
 @Data
 public abstract class EntitiesExportCtx<R extends VersionCreateRequest> {
 
-    protected final User user;
+    protected final SecurityUser user;
     protected final CommitGitRequest commit;
     protected final R request;
     private final List<ListenableFuture<Void>> futures;
     private final Map<EntityId, EntityId> externalIdMap;
+    private final boolean exportRelatedCustomers;
+    private final boolean exportRelatedEntities;
 
-    public EntitiesExportCtx(User user, CommitGitRequest commit, R request) {
+
+    public EntitiesExportCtx(SecurityUser user, CommitGitRequest commit, R request, boolean exportRelatedCustomers, boolean exportRelatedEntities) {
         this.user = user;
         this.commit = commit;
         this.request = request;
         this.futures = new ArrayList<>();
         this.externalIdMap = new HashMap<>();
+        this.exportRelatedCustomers = exportRelatedCustomers;
+        this.exportRelatedEntities = exportRelatedEntities;
     }
 
     protected <T extends R> EntitiesExportCtx(EntitiesExportCtx<T> other) {
@@ -54,6 +48,8 @@ public abstract class EntitiesExportCtx<R extends VersionCreateRequest> {
         this.request = other.getRequest();
         this.futures = other.getFutures();
         this.externalIdMap = other.getExternalIdMap();
+        this.exportRelatedCustomers = other.isExportRelatedCustomers();
+        this.exportRelatedEntities = other.isExportRelatedEntities();
     }
 
     public void add(ListenableFuture<Void> future) {
@@ -70,6 +66,8 @@ public abstract class EntitiesExportCtx<R extends VersionCreateRequest> {
                 .exportAttributes(config.isSaveAttributes())
                 .exportCredentials(config.isSaveCredentials())
                 .exportCalculatedFields(config.isSaveCalculatedFields())
+                .exportGroupEntities(config.isSaveGroupEntities())
+                .exportPermissions(config.isSavePermissions())
                 .build();
     }
 
@@ -85,6 +83,10 @@ public abstract class EntitiesExportCtx<R extends VersionCreateRequest> {
     public void putExternalId(EntityId internalId, EntityId externalId) {
         log.debug("[{}][{}] Local cache put: {}", internalId.getEntityType(), internalId.getId(), externalId);
         externalIdMap.put(internalId, externalId != null ? externalId : internalId);
+    }
+
+    public boolean shouldExportEntities(EntityType entityType) {
+        return entityType != EntityType.USER;
     }
 
 }

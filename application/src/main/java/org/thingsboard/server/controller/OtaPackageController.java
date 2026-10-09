@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import io.swagger.v3.oas.annotations.Parameter;
@@ -39,19 +27,21 @@ import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.SaveOtaPackageInfoRequest;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.ota.TbOtaPackageService;
-import org.thingsboard.server.service.security.permission.Operation;
-import org.thingsboard.server.service.security.permission.Resource;
 
 import static org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE;
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_PROFILE_ID_PARAM_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.ENTITY_GROUP_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.OTA_PACKAGE_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.OTA_PACKAGE_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.OTA_PACKAGE_INFO_DESCRIPTION;
@@ -108,7 +98,7 @@ public class OtaPackageController extends BaseController {
                                                 @PathVariable(OTA_PACKAGE_ID) String strOtaPackageId) throws ThingsboardException {
         checkParameter(OTA_PACKAGE_ID, strOtaPackageId);
         OtaPackageId otaPackageId = new OtaPackageId(toUUID(strOtaPackageId));
-        return checkNotNull(otaPackageService.findOtaPackageInfoById(getTenantId(), otaPackageId));
+        return checkNotNull(checkOtaPackageInfoId(otaPackageId, Operation.READ));
     }
 
     @ApiOperation(value = "Get OTA Package (getOtaPackageById)",
@@ -177,11 +167,12 @@ public class OtaPackageController extends BaseController {
                                                    @RequestParam(required = false) String sortProperty,
                                                    @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
                                                    @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        accessControlService.checkPermission(getCurrentUser(), Resource.OTA_PACKAGE, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         return checkNotNull(otaPackageService.findTenantOtaPackagesByTenantId(getTenantId(), pageLink));
     }
 
-    @ApiOperation(value = "Get OTA Package Infos by device profile and type (getOtaPackagesByDeviceProfileAndType)",
+    @ApiOperation(value = "Get OTA Package Infos by Device Profile and Type (getOtaPackagesByDeviceProfileAndType)",
             notes = "Returns a page of OTA Package Info objects owned by tenant. " +
                     PAGE_DATA_PARAMETERS + OTA_PACKAGE_INFO_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
@@ -200,6 +191,7 @@ public class OtaPackageController extends BaseController {
                                                                          @RequestParam(required = false) String sortProperty,
                                                                          @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
                                                                          @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        accessControlService.checkPermission(getCurrentUser(), Resource.OTA_PACKAGE, Operation.READ);
         checkParameter("deviceProfileId", strDeviceProfileId);
         checkParameter("type", strType);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
@@ -218,6 +210,33 @@ public class OtaPackageController extends BaseController {
         OtaPackageId otaPackageId = new OtaPackageId(toUUID(strOtaPackageId));
         OtaPackageInfo otaPackageInfo = checkOtaPackageInfoId(otaPackageId, Operation.DELETE);
         tbOtaPackageService.delete(otaPackageInfo, getCurrentUser());
+    }
+
+    @ApiOperation(value = "Get group OTA Package Infos (getGroupOtaPackages)",
+            notes = "Returns a page of OTA Package Info objects owned by tenant, and by entity group. " +
+                    PAGE_DATA_PARAMETERS + OTA_PACKAGE_INFO_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @GetMapping(value = "/otaPackages/group/{groupId}/{type}")
+    public PageData<OtaPackageInfo> getGroupOtaPackages(@Parameter(description = ENTITY_GROUP_ID_PARAM_DESCRIPTION)
+                                                        @PathVariable("groupId") String strGroupId,
+                                                        @Parameter(description = "OTA Package type.", schema = @Schema(allowableValues = {"FIRMWARE", "SOFTWARE"}))
+                                                        @PathVariable("type") String strType,
+                                                        @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
+                                                        @RequestParam int pageSize,
+                                                        @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
+                                                        @RequestParam int page,
+                                                        @Parameter(description = OTA_PACKAGE_TEXT_SEARCH_DESCRIPTION)
+                                                        @RequestParam(required = false) String textSearch,
+                                                        @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = {"createdTime", "type", "title", "version", "tag", "url", "fileName", "dataSize", "checksum"}))
+                                                        @RequestParam(required = false) String sortProperty,
+                                                        @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
+                                                        @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        checkParameter("groupId", strGroupId);
+        checkParameter("type", strType);
+        EntityGroupId groupId = new EntityGroupId(toUUID(strGroupId));
+        checkEntityGroupId(groupId, Operation.READ);
+        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+        return checkNotNull(otaPackageService.findOtaPackageInfosByGroupIdAndHasData(groupId, OtaPackageType.valueOf(strType), pageLink));
     }
 
 }

@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.sync.ie.importing.impl;
 
 import lombok.RequiredArgsConstructor;
@@ -22,6 +10,7 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.IntegrationId;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.RuleChainId;
@@ -34,6 +23,7 @@ import org.thingsboard.server.common.data.notification.rule.NotificationRuleReci
 import org.thingsboard.server.common.data.notification.rule.trigger.config.DeviceActivityNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.EdgeCommunicationFailureNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.EdgeConnectionNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.IntegrationLifecycleEventNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.RuleEngineComponentLifecycleEventNotificationRuleTriggerConfig;
@@ -91,6 +81,16 @@ public class NotificationRuleImportService extends BaseEntityImportService<Notif
                 Set<UUID> ruleChains = triggerConfig.getRuleChains();
                 if (ruleChains != null) {
                     triggerConfig.setRuleChains(ruleChains.stream().map(RuleChainId::new)
+                            .map(idProvider::getInternalId).map(UUIDBased::getId)
+                            .collect(Collectors.toSet()));
+                }
+                break;
+            }
+            case INTEGRATION_LIFECYCLE_EVENT: {
+                IntegrationLifecycleEventNotificationRuleTriggerConfig triggerConfig = (IntegrationLifecycleEventNotificationRuleTriggerConfig) ruleTriggerConfig;
+                Set<UUID> integrations = triggerConfig.getIntegrations();
+                if (integrations != null) {
+                    triggerConfig.setIntegrations(integrations.stream().map(IntegrationId::new)
                             .map(idProvider::getInternalId).map(UUIDBased::getId)
                             .collect(Collectors.toSet()));
                 }

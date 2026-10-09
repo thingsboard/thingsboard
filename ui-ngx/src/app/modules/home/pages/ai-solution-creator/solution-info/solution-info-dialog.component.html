@@ -1,0 +1,241 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<mat-toolbar color="tb-primary" class="tb-bottom-border overflow-hidden">
+  <h2 tbTruncateWithTooltip>{{ 'solution-creator.solution-info-with-name' | translate: {name: solution.data.solutionTitle} }}</h2>
+  <span class="flex-1"></span>
+  <button mat-icon-button (click)="close()" type="button">
+    <mat-icon class="material-icons">close</mat-icon>
+  </button>
+</mat-toolbar>
+<div mat-dialog-content class="relative flex flex-col gap-2">
+  <div class="text-justify">
+    <tb-markdown usePlainMarkdown [data]=solution.data.solutionDescription></tb-markdown>
+  </div>
+  @let dashboardEntries = aggregatedFor(EntityType.DASHBOARD);
+  @if (dashboardEntries.length > 0) {
+    <section>
+      <h6 class="font-medium">{{ entityTypeTranslations.get(EntityType.DASHBOARD).typePlural | translate }}</h6>
+      <div class="dashboard-infos">
+        @for (entry of dashboardEntries; track entry.key) {
+          <div class="card flex flex-col gap-4">
+            <div class="flex justify-between gap-2">
+              @if (entry.primary.additionalData?.userId) {
+                <div class="flex flex-1 items-center justify-between gap-2">
+                  <div class="flex w-0 flex-auto flex-col">
+                    <div class="text-base font-medium">{{ entry.primary.additionalData?.name }}</div>
+                    <div class="person-info flex items-center gap-1" >
+                      <tb-icon class="tb-mat-18">person</tb-icon>
+                      {{ getUserName(entry.primary.additionalData.userId) }} ({{ getUserAuthority(entry.primary.additionalData.userId) | translate }})
+                    </div>
+                  </div>
+                </div>
+              } @else {
+                <div class="text-base font-medium">
+                  {{ entry.primary.additionalData?.name }}
+                </div>
+              }
+              @if (solution.metadata.installed) {
+                <div><ng-container *ngTemplateOutlet="statusChip; context: { entry: entry }"></ng-container></div>
+              }
+            </div>
+            <div class="flex-1">{{ entry.primary.additionalData?.description ?? '' }}</div>
+            @if (entry.primary.additionalData?.userId && solution.metadata.installed && entry.status !== 'ERROR') {
+              <button mat-flat-button
+                      color="primary"
+                      class="max-w-max"
+                      (click)="openDashboard(entry.primary)">
+                <div tbTruncateWithTooltip>{{ 'solution-creator.view-as' | translate : {name: getUserName(entry.primary.additionalData.userId)} }}</div>
+              </button>
+            } @else if (entry.primary.id && currentUrl !== entityLink(entry.primary.id)) {
+              <a mat-stroked-button
+                 [routerLink]="entityLink(entry.primary.id)"
+                 target="_blank"
+                 color="primary"
+                 class="max-w-max">
+                <div tbTruncateWithTooltip>{{ 'action.view' | translate }}</div>
+              </a>
+            }
+          </div>
+        }
+      </div>
+    </section>
+  }
+  @for (entityType of entityTypes; track entityType) {
+    @let entries = aggregatedFor(entityType);
+    @if (entries.length > 0 && entityType !== EntityType.DASHBOARD) {
+      <section>
+        <h6 class="font-medium">{{ entityTypeTranslations.get(entityType).typePlural | translate }}</h6>
+        <div class="tb-markdown-view">
+          <table>
+            <thead>
+            <tr>
+              @switch (entityType) {
+                @case (EntityType.DEVICE) {
+                  <th scope="col" class="w-72">{{ entityTypeTranslations.get(entityType).type | translate }}</th>
+                  <th scope="col">{{ 'entity.entity-type' | translate }}</th>
+                }
+                @case (EntityType.ASSET) {
+                  <th scope="col" class="w-72">{{ entityTypeTranslations.get(entityType).type | translate }}</th>
+                  <th scope="col">{{ 'entity.entity-type' | translate }}</th>
+                }
+                @case (EntityType.ALARM) {
+                  <th scope="col" class="w-72">{{ entityTypeTranslations.get(entityType).type | translate }}</th>
+                  <th scope="col">{{ 'solution-creator.condition' | translate }}</th>
+                  <th scope="col">{{ 'alarm-rule.severities' | translate }}</th>
+                }
+                @case (EntityType.USER) {
+                  <th scope="col" class="w-72">{{ 'common.username' | translate }}</th>
+                  <th scope="col">{{ 'entity-group.entity-field.authority' | translate }}</th>
+                  <th scope="col">{{ 'login.login' | translate }}</th>
+                  <th scope="col">{{ 'common.password' | translate }}</th>
+                  <th scope="col">{{ 'entity.customer-name' | translate }}</th>
+                }
+                @case (EntityType.ENTITY_GROUP) {
+                  <th scope="col" class="w-72">{{ entityTypeTranslations.get(entityType).type | translate }}</th>
+                  <th scope="col" class="w-48">{{ 'entity.entity-type' | translate }}</th>
+                  <th scope="col">{{ 'solution-creator.description' | translate }}</th>
+                }
+                @default {
+                  <th scope="col" class="w-72">{{ entityTypeTranslations.get(entityType).type | translate }}</th>
+                  <th scope="col">{{ 'solution-creator.description' | translate }}</th>
+                }
+              }
+              @if (solution.metadata.installed) {
+                <th scope="col" class="w-48">{{ 'solution-creator.status' | translate }}</th>
+              }
+            </tr>
+            </thead>
+            <tbody>
+              @for (entry of entries; track entry.key) {
+                <tr>
+                  @switch (entityType) {
+                    @case (EntityType.DEVICE) {
+                      <td><ng-container *ngTemplateOutlet="nameCol; context: { entity: entry.primary }"></ng-container></td>
+                      <td>{{ entry.primary.additionalData?.type }}</td>
+                    }
+                    @case (EntityType.ASSET) {
+                      <td><ng-container *ngTemplateOutlet="nameCol; context: { entity: entry.primary }"></ng-container></td>
+                      <td>{{ entry.primary.additionalData?.type }}</td>
+                    }
+                    @case (EntityType.CALCULATED_FIELD) {
+                      <td><ng-container *ngTemplateOutlet="nameCol; context: { entity: entry.primary }"></ng-container></td>
+                      <td>{{ entry.primary.additionalData?.description ?? '' }}</td>
+                    }
+                    @case (EntityType.ALARM) {
+                      <td>
+                        @if (entry.primary.id) {
+                          <a [routerLink]="'/alarms/alarm-rules/' + entry.primary.id.id" target="_blank">{{ entry.primary.additionalData?.name }}</a>
+                        } @else {
+                          {{ entry.primary.additionalData?.name }}
+                        }
+                      </td>
+                      <td>{{ entry.primary.additionalData?.condition ?? '' }}</td>
+                      <td>
+                        <div class="severities-container">
+                          @for (key of entry.primary.additionalData?.severities ?? []; track key) {
+                            <span class="severity-chip"
+                                  [style.background-color]="getAlarmSeverityBackgroundColors(key)"
+                                  [style.color]="getAlarmSeverityColor(key)">
+                              {{ key }}
+                            </span>
+                          }
+                        </div>
+                      </td>
+                    }
+                    @case (EntityType.USER) {
+                      <td>
+                        <div class="flex items-center justify-between gap-2">
+                          @if (entry.primary.id) {
+                            <a [routerLink]="entityLink(entry.primary.id)" target="_blank" tbTruncateWithTooltip
+                               class="block">{{ entry.primary.additionalData?.name }}</a>
+                            <button mat-icon-button
+                                    class="tb-mat-24"
+                                    [matTooltip]="(!entry.primary.additionalData?.customer ? 'user.login-as-tenant-admin' : 'user.login-as-customer-user') | translate"
+                                    matTooltipPosition="above"
+                                    (click)="loginAsUser(entry.primary.id.id)">
+                              <mat-icon svgIcon="mdi:login"></mat-icon>
+                            </button>
+                          } @else {
+                            <div tbTruncateWithTooltip>{{ entry.primary.additionalData?.name }}</div>
+                          }
+                        </div>
+                      </td>
+                      <td>{{ (entry.primary.additionalData?.customer ? 'user.customer' : 'tenant.tenant') | translate }}</td>
+                      <td>{{ entry.primary.additionalData?.email }}</td>
+                      <td>{{ entry.primary.additionalData?.password }}</td>
+                      <td>{{ entry.primary.additionalData?.customer }}</td>
+                    }
+                    @case (EntityType.ENTITY_GROUP) {
+                      <td>
+                        @if (entry.primary.id && entityGroupLink(entry.primary)) {
+                          <a [routerLink]="entityGroupLink(entry.primary)" target="_blank">{{ entry.primary.additionalData?.name }}</a>
+                        } @else {
+                          {{ entry.primary.additionalData?.name }}
+                        }
+                      </td>
+                      <td>{{ entry.primary.additionalData?.groupType }}</td>
+                      <td>{{ entry.primary.additionalData?.description ?? '' }}</td>
+                    }
+                    @default {
+                      <td><ng-container *ngTemplateOutlet="nameCol; context: { entity: entry.primary }"></ng-container></td>
+                      <td>{{ entry.primary.additionalData?.description ?? '' }}</td>
+                    }
+                  }
+                  @if (solution.metadata.installed) {
+                    <td><ng-container *ngTemplateOutlet="statusChip; context: { entry: entry }"></ng-container></td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    }
+  }
+</div>
+<div mat-dialog-actions class="tb-dialog-actions justify-end">
+  <button mat-button color="primary" type="button" (click)="close()">
+    {{ 'action.close' | translate }}
+  </button>
+</div>
+<ng-template #nameCol let-entity="entity">
+  @if (entity.id) {
+    <a [routerLink]="entityLink(entity.id)" target="_blank">{{ entity.additionalData?.name }}</a>
+  } @else {
+    {{ entity.additionalData?.name }}
+  }
+</ng-template>
+<ng-template #statusChip let-entry="entry">
+  <div class="status-chip flex h-7 w-fit items-center gap-2 rounded-2xl leading-5 tracking-wide"
+       cdkOverlayOrigin
+       #chipOrigin="cdkOverlayOrigin"
+       matTooltipPosition="above"
+       [matTooltipClass]="entry.status === issueStatus.WARN ? 'tb-warning-tooltip' : 'tb-error-tooltip'"
+       [matTooltip]="totalIssues(entry) > 1 ? issuesCountSummary(entry) : null"
+       [class.error]="entry.status === issueStatus.ERROR"
+       [class.warn]="entry.status === issueStatus.WARN"
+       [class.clickable]="totalIssues(entry) > 0"
+       (click)="$event.stopPropagation(); openPopover($event, entry, chipOrigin.elementRef)">
+    @switch (entry.status) {
+      @case (issueStatus.OK) {
+        <span>{{ 'event.success' | translate }}</span>
+      }
+      @case (issueStatus.WARN) {
+        <span [matBadge]="totalIssues(entry)"
+              [matBadgeHidden]="totalIssues(entry) <= 1"
+              matBadgeOverlap="false"
+              matBadgeSize="small">{{ 'event.warning' | translate }}</span>
+      }
+      @case (issueStatus.ERROR) {
+        <span [matBadge]="totalIssues(entry)"
+              [matBadgeHidden]="totalIssues(entry) <= 1"
+              matBadgeOverlap="false"
+              matBadgeSize="small">{{ 'event.error' | translate }}</span>
+      }
+    }
+  </div>
+</ng-template>

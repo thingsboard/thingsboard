@@ -1,25 +1,12 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 import { TbEditorCompletion, TbEditorCompletions } from '@shared/models/ace/completion.models';
 import { deepClone, isDefinedAndNotNull, isEmptyStr, isString, isUndefinedOrNull } from '@core/utils';
 import { JsonFormData, JsonSchema, JsonSettingsSchema, KeyLabelItem } from '@shared/legacy/json-form.models';
 import JsonFormUtils from '@shared/legacy/json-form-utils';
-import { constantColor, Font } from '@shared/models/widget-settings.models';
+import { constantColor, cssUnit, Font, fontStyle, fontWeight } from '@shared/models/widget-settings.models';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 export enum FormPropertyType {
@@ -42,6 +29,7 @@ export enum FormPropertyType {
   font = 'font',
   units = 'units',
   icon = 'icon',
+  cssSize = 'cssSize',
   fieldset = 'fieldset',
   array = 'array',
   htmlSection = 'htmlSection'
@@ -70,6 +58,7 @@ export const formPropertyTypeTranslations = new Map<FormPropertyType, string>(
     [FormPropertyType.font, 'dynamic-form.property.type-font'],
     [FormPropertyType.units, 'dynamic-form.property.type-units'],
     [FormPropertyType.icon, 'dynamic-form.property.type-icon'],
+    [FormPropertyType.cssSize, 'dynamic-form.property.type-css-size'],
     [FormPropertyType.fieldset, 'dynamic-form.property.type-fieldset'],
     [FormPropertyType.array, 'dynamic-form.property.type-array'],
     [FormPropertyType.htmlSection, 'dynamic-form.property.type-html-section']
@@ -112,6 +101,12 @@ export interface FormNumberProperty extends FormPropertyBase {
   min?: number;
   max?: number;
   step?: number;
+}
+
+export interface FormFontProperty extends FormPropertyBase {
+  forceSizeUnit?: cssUnit;
+  allowedFontWeights?: fontWeight[];
+  allowedFontStyles?: fontStyle[];
 }
 
 export interface FormFieldSetProperty extends FormPropertyBase {
@@ -167,9 +162,13 @@ export interface FormUnitProperty extends FormPropertyBase {
   supportsUnitConversion?: boolean;
 }
 
-export type FormProperty = FormPropertyBase & FormTextareaProperty & FormNumberProperty & FormSelectProperty & FormRadiosProperty
+export interface FormCssSizeProperty extends FormPropertyBase {
+  allowedCssUnits?: cssUnit[];
+}
+
+export type FormProperty = FormPropertyBase & FormTextareaProperty & FormNumberProperty & FormFontProperty & FormSelectProperty & FormRadiosProperty
   & FormDateTimeProperty & FormJavascriptProperty & FormMarkdownProperty & FormFieldSetProperty & FormArrayProperty & FormHtmlSection
-  & FormUnitProperty;
+  & FormUnitProperty & FormCssSizeProperty;
 
 export const cleanupFormProperties = (properties: FormProperty[]): FormProperty[] => {
   for (const property of properties) {
@@ -242,11 +241,11 @@ export enum FormPropertyContainerType {
 export interface FormPropertyContainerBase {
   type: FormPropertyContainerType;
   label: string;
+  hint?: string;
   visible: boolean;
 }
 
 export interface FormPropertyRow extends FormPropertyContainerBase {
-  hint?: string;
   properties?: FormProperty[];
   switch?: FormProperty;
   rowClass?: string;
@@ -326,6 +325,7 @@ const toPropertyContainers = (properties: FormProperty[],
       const propertyArray: FormPropertyArray = {
         property,
         label: property.name,
+        hint: property.hint,
         type: FormPropertyContainerType.array,
         visible: true
       };
@@ -337,12 +337,14 @@ const toPropertyContainers = (properties: FormProperty[],
       delete arrayItemProperty.condition;
       delete arrayItemProperty.conditionFunction;
       delete arrayItemProperty.group;
+      delete arrayItemProperty.hint;
       propertyArray.arrayItemProperty = arrayItemProperty;
       result.push(propertyArray);
     } else if (property.type === FormPropertyType.fieldset) {
       const propertyFieldset: FormPropertyFieldset = {
         property,
         label: property.name,
+        hint: property.hint,
         type: FormPropertyContainerType.fieldset,
         properties: property.properties,
         visible: true

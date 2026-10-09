@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.subscription;
 
 import lombok.Getter;
@@ -88,7 +76,7 @@ public class TbAlarmCountSubCtx extends TbAbstractEntityQuerySubCtx<AlarmCountQu
         if (query.getEntityFilter() != null) {
             entitiesIds = new LinkedHashSet<>();
             log.trace("[{}] Fetching data: {}", cmdId, alarmCountInvocationAttempts);
-            PageData<EntityData> data = entityService.findEntityDataByQuery(getTenantId(), getCustomerId(), buildEntityDataQuery());
+            PageData<EntityData> data = entityService.findEntityDataByQuery(getTenantId(), getCustomerId(), getMergedUserPermissions(), buildEntityDataQuery());
             entitiesIds.clear();
             tooManyEntities = data.hasNext();
             for (EntityData entityData : data.getData()) {
@@ -112,7 +100,7 @@ public class TbAlarmCountSubCtx extends TbAbstractEntityQuerySubCtx<AlarmCountQu
         alarmCountInvocationAttempts++;
         log.trace("[{}] Fetching alarms: {}", cmdId, alarmCountInvocationAttempts);
         if (alarmCountInvocationAttempts <= maxAlarmQueriesPerRefreshInterval) {
-            int newCount = (int) alarmService.countAlarmsByQuery(getTenantId(), getCustomerId(), query, entitiesIds);
+            int newCount = (int) alarmService.countAlarmsByQuery(getTenantId(), getCustomerId(), getMergedUserPermissions(), query, entitiesIds);
             if (newCount != result) {
                 result = newCount;
                 sendWsMsg(new AlarmCountUpdate(cmdId, result));
@@ -123,14 +111,14 @@ public class TbAlarmCountSubCtx extends TbAbstractEntityQuerySubCtx<AlarmCountQu
     }
 
     public void doFetchAlarmCount() {
-        result = (int) alarmService.countAlarmsByQuery(getTenantId(), getCustomerId(), query, entitiesIds);
+        result = (int) alarmService.countAlarmsByQuery(getTenantId(), getCustomerId(), getMergedUserPermissions(), query, entitiesIds);
         sendWsMsg(new AlarmCountUpdate(cmdId, result));
     }
 
     private EntityDataQuery buildEntityDataQuery() {
         EntityDataPageLink edpl = new EntityDataPageLink(maxEntitiesPerAlarmSubscription, 0, null,
                 new EntityDataSortOrder(new EntityKey(EntityKeyType.ENTITY_FIELD, ModelConstants.CREATED_TIME_PROPERTY)));
-        return new EntityDataQuery(query.getEntityFilter(), edpl, null, null, query.getKeyFilters());
+        return new EntityDataQuery(query.getEntityFilter(), edpl, null, null, query.getKeyFilters(), query.getKeyFiltersOperationOrDefault());
     }
 
     private void resetInvocationCounter() {

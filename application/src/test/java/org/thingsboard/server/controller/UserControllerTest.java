@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -34,6 +22,8 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.ShortEntityView;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
@@ -41,31 +31,37 @@ import org.thingsboard.server.common.data.UserEmailInfo;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.group.EntityGroup;
+import org.thingsboard.server.common.data.group.EntityGroupInfo;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.permission.GroupPermission;
+import org.thingsboard.server.common.data.role.Role;
+import org.thingsboard.server.common.data.role.RoleType;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.settings.StarredDashboardInfo;
 import org.thingsboard.server.common.data.settings.UserDashboardsInfo;
 import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.user.UserDao;
+import org.thingsboard.server.exception.DataValidationException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -121,8 +117,9 @@ public class UserControllerTest extends AbstractControllerTest {
         Assert.assertEquals(foundUser, savedUser);
 
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(user.getTenantId(), foundUser, foundUser,
-                SYSTEM_TENANT, customerNUULId, null, SYS_ADMIN_EMAIL,
-                ActionType.ADDED, 1, 1, 1);
+                SYSTEM_TENANT, customerNUULId, null, SYS_ADMIN_EMAIL, ActionType.ADDED_TO_ENTITY_GROUP, 1, 0, 2);
+        testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(user.getTenantId(), foundUser, foundUser,
+                SYSTEM_TENANT, customerNUULId, null, SYS_ADMIN_EMAIL, ActionType.ADDED, 1, 1, 2);
         Mockito.reset(tbClusterService, auditLogService);
 
         resetTokens();
@@ -159,9 +156,73 @@ public class UserControllerTest extends AbstractControllerTest {
         doDelete("/api/user/" + savedUser.getId().getId().toString())
                 .andExpect(status().isOk());
 
-        testNotifyEntityAllOneTimeLogEntityActionEntityEqClass(user.getTenantId(), foundUser, foundUser.getId(), foundUser.getId(),
+        testNotifyEntityAllNTimeLogEntityActionEntityEqClass(user.getTenantId(), foundUser, foundUser.getId(), foundUser.getId(),
                 SYSTEM_TENANT, customerNUULId, null, SYS_ADMIN_EMAIL,
-                ActionType.DELETED, ActionType.DELETED, SYSTEM_TENANT.getId().toString());
+                ActionType.DELETED, ActionType.DELETED, 1, 1, SYSTEM_TENANT.getId().toString());
+    }
+
+    @Test
+    public void testShouldForbidUserCreationAcrossCustomerBoundaries() throws Exception {
+        loginDifferentCustomerAdmin();
+
+        User user = new User();
+        user.setAuthority(Authority.CUSTOMER_USER);
+        user.setTenantId(tenantId);
+        user.setCustomerId(customerId);
+        user.setEmail("testUser123@thingsboard.org");
+
+        doPost("/api/user", user)
+                .andExpect(status().isForbidden())
+                .andExpect(statusReason(containsString(msgErrorPermissionCreate + "USER" + " '" + user.getEmail() + "'!")));
+
+        user.setCustomerId(subCustomerId);
+        doPost("/api/user", user)
+                .andExpect(status().isForbidden())
+                .andExpect(statusReason(containsString(msgErrorPermissionCreate + "USER" + " '" + user.getEmail() + "'!")));
+
+        //create valid user
+        loginCustomerAdminUser();
+        User savedUser = doPost("/api/user", user, User.class);
+
+        // try to update user under first customer
+        loginDifferentCustomerAdmin();
+        savedUser.setPhone("1111111111");
+
+        doPost("/api/user", savedUser)
+                .andExpect(status().isForbidden())
+                .andExpect(statusReason(containsString(msgErrorPermissionWrite + "USER" + " '" + user.getEmail() + "'!")));
+    }
+
+    @Test
+    public void testShouldForbidAddingUserToOtherCustomerGroup() throws Exception {
+        loginTenantAdmin();
+        EntityGroupInfo customerAdminsGroup = findCustomerAdminsGroup(customerId);
+        UUID adminGroupId = customerAdminsGroup.getId().getId();
+
+        PageData<ShortEntityView> shortEntityViewPageData = doGetTypedWithTimePageLink("/api/entityGroup/" + adminGroupId + "/entities?",
+                new TypeReference<PageData<ShortEntityView>>() {
+                }, new TimePageLink(10));
+        long initialGroupEntities = shortEntityViewPageData.getTotalElements();
+
+        loginDifferentCustomerAdmin();
+
+        User user = new User();
+        user.setAuthority(Authority.CUSTOMER_USER);
+        user.setTenantId(tenantId);
+        user.setCustomerId(differentCustomerId);
+        user.setEmail("testUser123@thingsboard.org");
+
+        doPost("/api/user?entityGroupIds=" + adminGroupId, user)
+                .andExpect(status().isForbidden())
+                .andExpect(statusReason(containsString(msgErrorPermissionRead + "USER group" + " 'Customer Administrators'!")));
+
+        // check user was not added to group
+        loginTenantAdmin();
+        PageData<ShortEntityView> shortEntityViewPageData1 = doGetTypedWithTimePageLink("/api/entityGroup/" + adminGroupId + "/entities?",
+                new TypeReference<PageData<ShortEntityView>>() {
+                }, new TimePageLink(10));
+        long groupEntities = shortEntityViewPageData1.getTotalElements();
+        assertThat(groupEntities).isEqualTo(initialGroupEntities);
     }
 
     @Test
@@ -194,6 +255,48 @@ public class UserControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testCreateSysAdmin() throws Exception {
+        loginSysAdmin();
+
+        String email = "sysadmin2@thingsboard.org";
+        User user = new User();
+        user.setAuthority(Authority.SYS_ADMIN);
+        user.setTenantId(TenantId.SYS_TENANT_ID);
+        user.setEmail(email);
+        user.setFirstName("Joe");
+        user.setLastName("Downs");
+        User savedUser = doPost("/api/user", user, User.class);
+        Assert.assertNotNull(savedUser);
+        Assert.assertNotNull(savedUser.getId());
+        Assert.assertTrue(savedUser.getCreatedTime() > 0);
+        Assert.assertEquals(user.getEmail(), savedUser.getEmail());
+
+        User foundUser = doGet("/api/user/" + savedUser.getId().getId().toString(), User.class);
+        foundUser.setAdditionalInfo(savedUser.getAdditionalInfo());
+        Assert.assertEquals(foundUser, savedUser);
+
+        resetTokens();
+
+        loginSysAdmin();
+        doDelete("/api/user/" + savedUser.getId().getId().toString())
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void testTryCreateSysAdminByUserWithNoAuthority() throws Exception {
+        loginTenantAdmin();
+
+        String email = "sysadmin2@thingsboard.org";
+        User user = new User();
+        user.setAuthority(Authority.SYS_ADMIN);
+        user.setTenantId(TenantId.SYS_TENANT_ID);
+        user.setEmail(email);
+        user.setFirstName("Joe");
+        user.setLastName("Downs");
+        doPost("/api/user", user).andExpect(status().is4xxClientError());
+    }
+
+    @Test
     public void testUpdateUserFromDifferentTenant() throws Exception {
         loginSysAdmin();
 
@@ -206,7 +309,7 @@ public class UserControllerTest extends AbstractControllerTest {
 
         doPost("/api/user", tenantAdmin)
                 .andExpect(status().isForbidden())
-                .andExpect(statusReason(containsString(msgErrorPermission)));
+                .andExpect(statusReason(containsString(msgErrorPermissionWrite + "USER" + " '" + tenantAdmin.getEmail() + "'!")));
 
         testNotifyEntityNever(tenantAdmin.getId(), tenantAdmin);
 
@@ -236,10 +339,10 @@ public class UserControllerTest extends AbstractControllerTest {
                 .put("resetToken", this.currentResetPasswordToken)
                 .put("password", "testPassword2");
 
-        Mockito.doNothing().when(mailService).sendPasswordWasResetEmail(anyString(), anyString());
+        Mockito.doNothing().when(mailService).sendPasswordWasResetEmail(any(), anyString(), anyString());
         doPost("/api/noauth/resetPassword", resetPasswordRequest)
                 .andExpect(status().isOk());
-        Mockito.verify(mailService).sendPasswordWasResetEmail(anyString(), anyString());
+        Mockito.verify(mailService).sendPasswordWasResetEmail(any(), anyString(), anyString());
 
         resetTokens();
 
@@ -451,7 +554,7 @@ public class UserControllerTest extends AbstractControllerTest {
         testManyUser.setTenantId(tenantId);
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(tenantId, testManyUser, testManyUser,
                 SYSTEM_TENANT, customerNUULId, null, SYS_ADMIN_EMAIL,
-                ActionType.ADDED, cntEntity, cntEntity, cntEntity);
+                ActionType.ADDED, cntEntity, cntEntity, cntEntity * 2);
 
         List<User> loadedTenantAdmins = new ArrayList<>();
         PageLink pageLink = new PageLink(33);
@@ -466,8 +569,8 @@ public class UserControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Collections.sort(tenantAdmins, idComparator);
-        Collections.sort(loadedTenantAdmins, idComparator);
+        tenantAdmins.sort(idComparator);
+        loadedTenantAdmins.sort(idComparator);
 
         assertThat(tenantAdmins).as("admins list size").hasSameSizeAs(loadedTenantAdmins);
         assertThat(tenantAdmins).as("admins list content").isEqualTo(loadedTenantAdmins);
@@ -530,8 +633,8 @@ public class UserControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Collections.sort(tenantAdminsEmail1, idComparator);
-        Collections.sort(loadedTenantAdminsEmail1, idComparator);
+        tenantAdminsEmail1.sort(idComparator);
+        loadedTenantAdminsEmail1.sort(idComparator);
 
         Assert.assertEquals(tenantAdminsEmail1, loadedTenantAdminsEmail1);
 
@@ -547,8 +650,8 @@ public class UserControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Collections.sort(tenantAdminsEmail2, idComparator);
-        Collections.sort(loadedTenantAdminsEmail2, idComparator);
+        tenantAdminsEmail2.sort(idComparator);
+        loadedTenantAdminsEmail2.sort(idComparator);
 
         Assert.assertEquals(tenantAdminsEmail2, loadedTenantAdminsEmail2);
 
@@ -616,8 +719,8 @@ public class UserControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Collections.sort(customerUsers, idComparator);
-        Collections.sort(loadedCustomerUsers, idComparator);
+        customerUsers.sort(idComparator);
+        loadedCustomerUsers.sort(idComparator);
 
         Assert.assertEquals(customerUsers, loadedCustomerUsers);
 
@@ -660,8 +763,8 @@ public class UserControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Collections.sort(customerUsersEmail1, idComparator);
-        Collections.sort(loadedCustomerUsersEmail1, idComparator);
+        customerUsersEmail1.sort(idComparator);
+        loadedCustomerUsersEmail1.sort(idComparator);
 
         Assert.assertEquals(customerUsersEmail1, loadedCustomerUsersEmail1);
 
@@ -677,8 +780,8 @@ public class UserControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Collections.sort(customerUsersEmail2, idComparator);
-        Collections.sort(loadedCustomerUsersEmail2, idComparator);
+        customerUsersEmail2.sort(idComparator);
+        loadedCustomerUsersEmail2.sort(idComparator);
 
         Assert.assertEquals(customerUsersEmail2, loadedCustomerUsersEmail2);
 
@@ -715,8 +818,12 @@ public class UserControllerTest extends AbstractControllerTest {
         loginTenantAdmin();
 
         String email = "testEmail1";
+        String password = "testPassword";
+        User customerAdminUser = createCustomerAdminWithAllPermission(customerId, password);
         List<UserId> expectedCustomerUserIds = new ArrayList<>();
+        expectedCustomerUserIds.add(customerAdminUser.getId());
         expectedCustomerUserIds.add(customerUserId);
+        expectedCustomerUserIds.add(customerAdminUserId);
         for (int i = 0; i < 45; i++) {
             User customerUser = createCustomerUser(customerId);
             customerUser.setEmail(email + StringUtils.randomAlphanumeric((int) (5 + Math.random() * 10)) + "@thingsboard.org");
@@ -750,12 +857,11 @@ public class UserControllerTest extends AbstractControllerTest {
 
         doDelete("/api/alarm/" + alarm.getId().getId().toString());
 
-        savedDevice.setCustomerId(customerId);
-        savedDevice = doPost("/api/customer/" + customerId.getId()
-                + "/device/" + savedDevice.getId().getId(), Device.class);
+        //change device owner
+        doPost("/api/owner/CUSTOMER/" + customerId.getId() + "/DEVICE/" + savedDevice.getId().getId());
+        savedDevice = doGet("/api/device/" + savedDevice.getId().getId(), Device.class);
 
         alarm = createTestAlarm(savedDevice);
-
         List<UserId> loadedUserIds = new ArrayList<>();
         pageLink = new PageLink(16, 0);
         do {
@@ -773,7 +879,7 @@ public class UserControllerTest extends AbstractControllerTest {
 
         Assert.assertEquals(expectedTenantUserIds, loadedUserIds);
 
-        loginCustomerUser();
+        login(customerAdminUser.getEmail(), password);
 
         loadedUserIds = new ArrayList<>();
         pageLink = new PageLink(16, 0);
@@ -848,12 +954,50 @@ public class UserControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testEnableDisableUser() throws Exception {
+        loginSysAdmin();
+
+        User tenantUser = new User();
+        tenantUser.setAuthority(Authority.TENANT_ADMIN);
+        tenantUser.setTenantId(tenantId);
+        tenantUser.setEmail("tenant2@thingsboard.org");
+        tenantUser.setFirstName("Joe");
+        tenantUser.setLastName("Downs");
+
+        tenantUser = createUser(tenantUser, "testPassword1");
+
+        doPost("/api/user/" + tenantUser.getUuidId() + "/userCredentialsEnabled?userCredentialsEnabled=true")
+                .andExpect(status().isOk());
+
+        loginTenantAdmin();
+        doPost("/api/user/" + tenantUser.getUuidId() + "/userCredentialsEnabled?userCredentialsEnabled=true")
+                .andExpect(status().isOk());
+
+        User customerAdmin = createCustomerAdminWithAllPermission(customerId, "testPassword1");
+
+        User customerUser = new User();
+        customerUser.setAuthority(Authority.CUSTOMER_USER);
+        customerUser.setTenantId(tenantId);
+        customerUser.setCustomerId(customerId);
+        customerUser.setEmail("customer2@thingsboard.org");
+        customerUser = createUser(customerUser, "testPassword1");
+
+        login(customerAdmin.getEmail(), "testPassword1");
+        doPost("/api/user/" + customerUser.getUuidId() + "/userCredentialsEnabled?userCredentialsEnabled=true")
+                .andExpect(status().isOk());
+
+        login(customerUser.getEmail(), "testPassword1");
+        doPost("/api/user/" + customerAdmin.getUuidId() + "/userCredentialsEnabled?userCredentialsEnabled=true")
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     public void givenInvalidPageLink_thenReturnError() throws Exception {
         loginTenantAdmin();
 
         String invalidSortProperty = "abc(abc)";
 
-        ResultActions result = doGet("/api/users?page={page}&pageSize={pageSize}&sortProperty={sortProperty}", 0, 100, invalidSortProperty)
+        ResultActions result = doGet("/api/user/users?page={page}&pageSize={pageSize}&sortProperty={sortProperty}", 0, 100, invalidSortProperty)
                 .andExpect(status().isBadRequest());
         assertThat(getErrorMessage(result)).containsIgnoringCase("invalid sort property");
     }
@@ -992,8 +1136,8 @@ public class UserControllerTest extends AbstractControllerTest {
         doPost("/api/user", user, User.class);
 
         CustomerId customerId3 = postCustomer();
-        User user2 = createCustomerUser(customerId3);
-        createUserAndLogin(user2, "testPassword2");
+        User customerAdmin = createCustomerAdminWithAllPermission(customerId, "testPassword2");
+        login(customerAdmin.getEmail(), "testPassword2");
 
         PageLink pageLink = new PageLink(10, 0, searchText);
         List<UserEmailInfo> usersInfo = getUsersInfo(pageLink);
@@ -1022,12 +1166,12 @@ public class UserControllerTest extends AbstractControllerTest {
         CustomerId customerId = postCustomer();
         CustomerId customerId2 = postCustomer();
 
-        List<User> customerUsersContainingWord = new ArrayList<>();
+        List<User> customerUsersContainingText = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
             String suffix = StringUtils.randomAlphabetic((int) (5 + Math.random() * 10));
 
-            customerUsersContainingWord.add(doPost("/api/user", createCustomerUser(searchText + i, "Last" + i, customerId), User.class));
-            customerUsersContainingWord.add(doPost("/api/user", createCustomerUser(null, null, searchText + suffix + "@thingsboard.org", customerId), User.class));
+            customerUsersContainingText.add(doPost("/api/user", createCustomerUser(searchText + i, "Last" + i, customerId), User.class));
+            customerUsersContainingText.add(doPost("/api/user", createCustomerUser(null, null, searchText + suffix + "@thingsboard.org", customerId), User.class));
             doPost("/api/user", createCustomerUser(null, null, customerId), User.class);
 
             suffix = StringUtils.randomAlphabetic((int) (5 + Math.random() * 10));
@@ -1035,13 +1179,14 @@ public class UserControllerTest extends AbstractControllerTest {
             doPost("/api/user", createCustomerUser(null, null, searchText + suffix + "@thingsboard.org", customerId2), User.class);
         }
 
-        createUserAndLogin(createCustomerUser(customerId), "testPassword2");
+        User customerAdmin = createCustomerAdminWithAllPermission(customerId, "testPassword2");
+        login(customerAdmin.getEmail(), "testPassword2");
 
         // find users by search text
         PageLink pageLink = new PageLink(10, 0, searchText);
         List<UserEmailInfo> usersInfo = getUsersInfo(pageLink);
 
-        List<UserEmailInfo> expectedUserInfos = customerUsersContainingWord.stream().map(customerUser -> new UserEmailInfo(customerUser.getId(),
+        List<UserEmailInfo> expectedUserInfos = customerUsersContainingText.stream().map(customerUser -> new UserEmailInfo(customerUser.getId(),
                         customerUser.getEmail(), customerUser.getFirstName() == null ? "" : customerUser.getFirstName(),
                         customerUser.getLastName() == null ? "" : customerUser.getLastName()))
                 .sorted(userDataIdComparator).collect(Collectors.toList());
@@ -1049,7 +1194,7 @@ public class UserControllerTest extends AbstractControllerTest {
 
         Assert.assertEquals(expectedUserInfos, usersInfo);
 
-        // find user by full name
+        // find user by full first name
         pageLink = new PageLink(10, 0, searchText + "5");
         usersInfo = getUsersInfo(pageLink);
         Assert.assertEquals(1, usersInfo.size());
@@ -1073,16 +1218,16 @@ public class UserControllerTest extends AbstractControllerTest {
 
         String searchText = "Brown";
 
-        List<User> usersContainingWord = new ArrayList<>();
+        List<User> usersContainingText = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
             String suffix = StringUtils.randomAlphabetic((int) (5 + Math.random() * 10));
-            usersContainingWord.add(doPost("/api/user", createCustomerUser("First" + i, searchText + i, customerId), User.class));
-            usersContainingWord.add(doPost("/api/user", createCustomerUser(null, null, searchText + suffix + "@thingsboard.org", customerId), User.class));
+            usersContainingText.add(doPost("/api/user", createCustomerUser("First" + i, searchText + i, customerId), User.class));
+            usersContainingText.add(doPost("/api/user", createCustomerUser(null, null, searchText + suffix + "@thingsboard.org", customerId), User.class));
             doPost("/api/user", createCustomerUser(null, null, customerId), User.class);
 
             suffix = StringUtils.randomAlphabetic((int) (5 + Math.random() * 10));
-            usersContainingWord.add(doPost("/api/user", createCustomerUser("First" + i, searchText + i, customerId2), User.class));
-            usersContainingWord.add(doPost("/api/user", createCustomerUser(null, null, searchText + suffix + "@thingsboard.org", customerId2), User.class));
+            usersContainingText.add(doPost("/api/user", createCustomerUser("First" + i, searchText + i, customerId2), User.class));
+            usersContainingText.add(doPost("/api/user", createCustomerUser(null, null, searchText + suffix + "@thingsboard.org", customerId2), User.class));
         }
 
         loginDifferentTenant();
@@ -1094,7 +1239,7 @@ public class UserControllerTest extends AbstractControllerTest {
         PageLink pageLink = new PageLink(10, 0, searchText);
         List<UserEmailInfo> usersInfo = getUsersInfo(pageLink);
 
-        List<UserEmailInfo> expectedUserInfos = usersContainingWord.stream().map(customerUser -> new UserEmailInfo(customerUser.getId(),
+        List<UserEmailInfo> expectedUserInfos = usersContainingText.stream().map(customerUser -> new UserEmailInfo(customerUser.getId(),
                         customerUser.getEmail(), customerUser.getFirstName() == null ? "" : customerUser.getFirstName(),
                         customerUser.getLastName() == null ? "" : customerUser.getLastName()))
                 .sorted(userDataIdComparator).collect(Collectors.toList());
@@ -1150,7 +1295,7 @@ public class UserControllerTest extends AbstractControllerTest {
         User tenantAdmin = new User();
         tenantAdmin.setAuthority(Authority.TENANT_ADMIN);
         tenantAdmin.setTenantId(tenantId);
-        tenantAdmin.setEmail("testEmail" + suffix + "@thingsbord.org");
+        tenantAdmin.setEmail("testEmail" + suffix + "@thingsboard.org");
         tenantAdmin.setFirstName(firstName);
         tenantAdmin.setLastName(lastName);
         return tenantAdmin;
@@ -1169,6 +1314,37 @@ public class UserControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
         return loadedCustomerUsers;
+    }
+
+    private User createCustomerAdminWithAllPermission(CustomerId customerId, String testPassword2) throws Exception {
+        Role role = new Role();
+        role.setTenantId(tenantId);
+        role.setCustomerId(customerId);
+        role.setType(RoleType.GENERIC);
+        role.setName("Test customer administrator");
+        role.setPermissions(JacksonUtil.toJsonNode("{\"ALL\":[\"ALL\"]}"));
+        role = doPost("/api/role", role, Role.class);
+
+        EntityGroup entityGroup = new EntityGroup();
+        entityGroup.setName("Test customer administrators");
+        entityGroup.setType(EntityType.USER);
+        entityGroup.setOwnerId(customerId);
+        entityGroup = doPost("/api/entityGroup", entityGroup, EntityGroup.class);
+
+        GroupPermission groupPermission = new GroupPermission(tenantId, entityGroup.getId(), role.getId(),
+                null, null, false
+        );
+        doPost("/api/groupPermission", groupPermission, GroupPermission.class);
+
+        User customerAdmin = new User();
+        customerAdmin.setEmail("customer1@thingsboard.org");
+        customerAdmin.setTenantId(tenantId);
+        customerAdmin.setCustomerId(customerId);
+        customerAdmin.setFirstName("customer");
+        customerAdmin.setLastName("admin");
+        customerAdmin.setAuthority(Authority.CUSTOMER_USER);
+        customerAdmin = createUser(customerAdmin, testPassword2, entityGroup.getId());
+        return customerAdmin;
     }
 
     private Alarm createTestAlarm(Device device) {
@@ -1296,9 +1472,9 @@ public class UserControllerTest extends AbstractControllerTest {
         Assert.assertEquals(savedDashboard2.getTitle(), starred.getTitle());
 
         //TEST renaming in the cache.
-        savedDashboard1.setTitle(RandomStringUtils.randomAlphanumeric(10));
+        savedDashboard1.setTitle(RandomStringUtils.secure().nextAlphanumeric(10));
         savedDashboard1 = doPost("/api/dashboard", savedDashboard1, Dashboard.class);
-        savedDashboard2.setTitle(RandomStringUtils.randomAlphanumeric(10));
+        savedDashboard2.setTitle(RandomStringUtils.secure().nextAlphanumeric(10));
         savedDashboard2 = doPost("/api/dashboard", savedDashboard2, Dashboard.class);
 
         newSettings = doGet("/api/user/dashboards/" + savedDashboard1.getId().getId() + "/unstar", UserDashboardsInfo.class);

@@ -1,21 +1,11 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<mat-toolbar class="flex flex-row" color="primary">
+<mat-toolbar color="tb-primary" class="tb-bottom-border flex flex-row">
   <h2 translate>security.2fa.dialog.enable-sms-title</h2>
   <span class="flex-1"></span>
   <button mat-icon-button
@@ -42,6 +32,7 @@
         <div class="flex flex-row items-center justify-between gap-3.75">
           <tb-phone-input class="flex-1"
                           formControlName="phone"
+                          appearance="outline"
                           [floatLabel]="'never'"
                           placeholder="{{ 'security.2fa.dialog.sms-step-label' | translate }}">
           </tb-phone-input>
@@ -61,7 +52,7 @@
           {{ 'security.2fa.dialog.verification-step-description' | translate : {address: smsConfigForm.get('phone').value} }}
         </p>
         <div class="flex flex-row items-center justify-between xs:flex-col xs:items-end xs:justify-start">
-          <mat-form-field class="mat-block code-container full-width-xs flex-1">
+          <mat-form-field class="mat-block code-container full-width-xs flex-1" appearance="outline">
             <input matInput formControlName="verificationCode"
                    maxlength="6" type="text" required
                    inputmode="numeric" pattern="[0-9]*"

@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.alarm;
 
 import org.springframework.data.domain.Page;
@@ -30,7 +18,28 @@ import java.util.UUID;
 
 public interface EntityAlarmRepository extends JpaRepository<EntityAlarmEntity, EntityAlarmCompositeKey> {
 
-    List<EntityAlarmEntity> findAllByAlarmId(UUID alarmId);
+    // No conflict target so the clause matches both primary key shapes: (entity_id, alarm_id) on plain PostgreSQL
+    // and (originator_id, entity_id, alarm_id) on Citus. DO NOTHING is safe because entity alarm records are
+    // immutable for a given (entity_id, alarm_id): re-saves on propagation changes always carry identical values.
+    @Transactional
+    @Modifying
+    @Query(value = "INSERT INTO entity_alarm (tenant_id, entity_type, entity_id, originator_id, created_time, alarm_type, customer_id, alarm_id) " +
+            "VALUES (cast(:tenantId as uuid), :entityType, cast(:entityId as uuid), cast(:originatorId as uuid), :createdTime, :alarmType, cast(:customerId as uuid), cast(:alarmId as uuid)) " +
+            "ON CONFLICT DO NOTHING", nativeQuery = true)
+    void insert(@Param("tenantId") UUID tenantId,
+                @Param("entityType") String entityType,
+                @Param("entityId") UUID entityId,
+                @Param("originatorId") UUID originatorId,
+                @Param("createdTime") long createdTime,
+                @Param("alarmType") String alarmType,
+                @Param("customerId") UUID customerId,
+                @Param("alarmId") UUID alarmId);
+
+    // entity_alarm is distributed on originator_id under Citus, so the originator predicate prunes the read to the
+    // single shard co-located with the alarm; filtering on alarm_id alone would fan out to every shard.
+    List<EntityAlarmEntity> findAllByOriginatorIdAndAlarmId(UUID originatorId, UUID alarmId);
+
+    List<EntityAlarmEntity> findAllByOriginatorIdAndAlarmIdAndEntityTypeIn(UUID originatorId, UUID alarmId, List<String> entityTypes);
 
     @Transactional
     @Modifying

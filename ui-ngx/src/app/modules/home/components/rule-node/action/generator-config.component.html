@@ -1,25 +1,15 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <section [formGroup]="generatorConfigForm" class="tb-form-panel no-border no-padding">
   <div class="tb-form-panel no-padding-bottom stroked">
     <div class="tb-form-panel-title" translate>rule-node-config.generation-parameters</div>
     <div class="tb-form-row no-border no-padding tb-standard-fields column-xs">
-      <mat-form-field class="flex">
+      <mat-form-field class="flex" appearance="outline">
         <mat-label translate>rule-node-config.message-count</mat-label>
         <input required type="number" min="0" step="1" matInput formControlName="msgCount">
         @if (generatorConfigForm.get('msgCount').hasError('required')) {
@@ -33,7 +23,7 @@
           </mat-error>
         }
       </mat-form-field>
-      <mat-form-field class="flex">
+      <mat-form-field class="flex" appearance="outline">
         <mat-label translate>rule-node-config.generation-frequency-seconds</mat-label>
         <input required type="number" min="1" step="1" matInput formControlName="periodInSeconds">
         @if (generatorConfigForm.get('periodInSeconds').hasError('required')) {
@@ -51,14 +41,27 @@
   </div>
 
   <div class="tb-form-panel no-padding-bottom stroked">
-    <div class="tb-form-panel-title" translate>rule-node-config.originator</div>
-    <tb-entity-select class="flex-1"
-                      required="true"
-                      useAliasEntityTypes="true"
-                      [allowedEntityTypes]="allowedEntityTypes"
-                      [additionEntityTypes]="additionEntityTypes"
-                      formControlName="originator">
-    </tb-entity-select>
+    <div class="flex flex-row items-center justify-between">
+      <div class="tb-form-panel-title" translate>rule-node-config.originator</div>
+      <tb-toggle-select appearance="fill" formControlName="isEntityGroup">
+        <tb-toggle-option [value]="false">{{ 'rule-node-config.single-entity' | translate }}</tb-toggle-option>
+        <tb-toggle-option [value]="true">{{ 'rule-node-config.entity-group' | translate }}</tb-toggle-option>
+      </tb-toggle-select>
+    </div>
+    @if (!generatorConfigForm.get('isEntityGroup').value) {
+      <tb-entity-select class="flex-1"
+        appearance="outline" required="true"
+        useAliasEntityTypes="true"
+        [allowedEntityTypes]="allowedEntityTypes"
+        [additionEntityTypes]="additionEntityTypes"
+        formControlName="originator">
+      </tb-entity-select>
+    }
+    @if (generatorConfigForm.get('isEntityGroup').value) {
+      <tb-target-entity
+        [allowedGroupTypes]="entityGroupTypes"
+      formControlName="originator"></tb-target-entity>
+    }
   </div>
   <div class="tb-form-panel stroked">
     <mat-expansion-panel class="tb-settings" expanded>
@@ -84,11 +87,11 @@
             </tb-toggle-select>
           }
           <button toolbarSuffixButton
-                  mat-icon-button
-                  matTooltip="{{ testScriptLabel | translate }}"
-                  matTooltipPosition="above"
-                  class="tb-mat-32"
-                  (click)="testScript()">
+            mat-icon-button
+            matTooltip="{{ testScriptLabel | translate }}"
+            matTooltipPosition="above"
+            class="tb-mat-32"
+            (click)="testScript()">
             <mat-icon class="material-icons" color="primary">bug_report</mat-icon>
           </button>
         </tb-js-func>
@@ -112,11 +115,11 @@
             </tb-toggle-option>
           </tb-toggle-select>
           <button toolbarSuffixButton
-                  mat-icon-button
-                  matTooltip="{{ testScriptLabel | translate }}"
-                  matTooltipPosition="above"
-                  class="tb-mat-32"
-                  (click)="testScript()">
+            mat-icon-button
+            matTooltip="{{ testScriptLabel | translate }}"
+            matTooltipPosition="above"
+            class="tb-mat-32"
+            (click)="testScript()">
             <mat-icon class="material-icons" color="primary">bug_report</mat-icon>
           </button>
         </tb-js-func>

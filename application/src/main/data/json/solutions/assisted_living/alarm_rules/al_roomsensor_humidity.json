@@ -1,0 +1,242 @@
+{
+  "entityId": {
+    "entityType": "DEVICE_PROFILE",
+    "id": "10bf1fd8-5a05-4eee-9344-4956b3c6695f"
+  },
+  "type": "ALARM",
+  "name": "Humidity",
+  "debugSettings": {
+    "failuresEnabled": true,
+    "allEnabled": false,
+    "allEnabledUntil": 0
+  },
+  "configurationVersion": 0,
+  "configuration": {
+    "type": "ALARM",
+    "arguments": {
+      "roomHumidityAlarmEnabled": {
+        "refDynamicSourceConfiguration": {
+          "type": "CURRENT_OWNER"
+        },
+        "refEntityKey": {
+          "key": "roomHumidityAlarmEnabled",
+          "type": "ATTRIBUTE",
+          "scope": "SERVER_SCOPE"
+        },
+        "defaultValue": "false"
+      },
+      "maxCriticalRoomHumidityThreshold": {
+        "refDynamicSourceConfiguration": {
+          "type": "CURRENT_OWNER"
+        },
+        "refEntityKey": {
+          "key": "maxCriticalRoomHumidityThreshold",
+          "type": "ATTRIBUTE",
+          "scope": "SERVER_SCOPE"
+        },
+        "defaultValue": "75.0"
+      },
+      "maxMajorRoomHumidityThreshold": {
+        "refDynamicSourceConfiguration": {
+          "type": "CURRENT_OWNER"
+        },
+        "refEntityKey": {
+          "key": "maxMajorRoomHumidityThreshold",
+          "type": "ATTRIBUTE",
+          "scope": "SERVER_SCOPE"
+        },
+        "defaultValue": "30.0"
+      },
+      "humidity": {
+        "refEntityKey": {
+          "key": "humidity",
+          "type": "TS_LATEST"
+        }
+      },
+      "minCriticalRoomHumidityThreshold": {
+        "refDynamicSourceConfiguration": {
+          "type": "CURRENT_OWNER"
+        },
+        "refEntityKey": {
+          "key": "minCriticalRoomHumidityThreshold",
+          "type": "ATTRIBUTE",
+          "scope": "SERVER_SCOPE"
+        },
+        "defaultValue": "25.0"
+      },
+      "minMajorRoomHumidityThreshold": {
+        "refDynamicSourceConfiguration": {
+          "type": "CURRENT_OWNER"
+        },
+        "refEntityKey": {
+          "key": "minMajorRoomHumidityThreshold",
+          "type": "ATTRIBUTE",
+          "scope": "SERVER_SCOPE"
+        },
+        "defaultValue": "70.0"
+      }
+    },
+    "createRules": {
+      "CRITICAL": {
+        "condition": {
+          "type": "SIMPLE",
+          "expression": {
+            "type": "SIMPLE",
+            "filters": [
+              {
+                "argument": "roomHumidityAlarmEnabled",
+                "valueType": "BOOLEAN",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "BOOLEAN",
+                    "operation": "EQUAL",
+                    "value": {
+                      "staticValue": true,
+                      "dynamicValueArgument": null
+                    }
+                  }
+                ]
+              },
+              {
+                "argument": "humidity",
+                "valueType": "NUMERIC",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "COMPLEX",
+                    "operation": "OR",
+                    "predicates": [
+                      {
+                        "type": "NUMERIC",
+                        "operation": "GREATER_OR_EQUAL",
+                        "value": {
+                          "staticValue": null,
+                          "dynamicValueArgument": "maxCriticalRoomHumidityThreshold"
+                        }
+                      },
+                      {
+                        "type": "NUMERIC",
+                        "operation": "LESS_OR_EQUAL",
+                        "value": {
+                          "staticValue": null,
+                          "dynamicValueArgument": "minCriticalRoomHumidityThreshold"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "operation": "AND"
+          },
+          "schedule": null
+        },
+        "alarmDetails": null,
+        "dashboardId": null
+      },
+      "MAJOR": {
+        "condition": {
+          "type": "SIMPLE",
+          "expression": {
+            "type": "SIMPLE",
+            "filters": [
+              {
+                "argument": "roomHumidityAlarmEnabled",
+                "valueType": "BOOLEAN",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "BOOLEAN",
+                    "operation": "EQUAL",
+                    "value": {
+                      "staticValue": true,
+                      "dynamicValueArgument": null
+                    }
+                  }
+                ]
+              },
+              {
+                "argument": "humidity",
+                "valueType": "NUMERIC",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "COMPLEX",
+                    "operation": "OR",
+                    "predicates": [
+                      {
+                        "type": "NUMERIC",
+                        "operation": "GREATER_OR_EQUAL",
+                        "value": {
+                          "staticValue": null,
+                          "dynamicValueArgument": "maxMajorRoomHumidityThreshold"
+                        }
+                      },
+                      {
+                        "type": "NUMERIC",
+                        "operation": "LESS_OR_EQUAL",
+                        "value": {
+                          "staticValue": null,
+                          "dynamicValueArgument": "minMajorRoomHumidityThreshold"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "operation": "AND"
+          },
+          "schedule": null
+        },
+        "alarmDetails": null,
+        "dashboardId": null
+      }
+    },
+    "clearRule": {
+      "condition": {
+        "type": "SIMPLE",
+        "expression": {
+          "type": "SIMPLE",
+          "filters": [
+            {
+              "argument": "humidity",
+              "valueType": "NUMERIC",
+              "operation": "AND",
+              "predicates": [
+                {
+                  "type": "NUMERIC",
+                  "operation": "GREATER",
+                  "value": {
+                    "staticValue": null,
+                    "dynamicValueArgument": "minMajorRoomHumidityThreshold"
+                  }
+                },
+                {
+                  "type": "NUMERIC",
+                  "operation": "LESS",
+                  "value": {
+                    "staticValue": null,
+                    "dynamicValueArgument": "maxMajorRoomHumidityThreshold"
+                  }
+                }
+              ]
+            }
+          ],
+          "operation": "AND"
+        },
+        "schedule": null
+      },
+      "alarmDetails": null,
+      "dashboardId": null
+    },
+    "propagate": true,
+    "propagateToOwner": false,
+    "propagateToTenant": false,
+    "propagateRelationTypes": [
+      "Contains"
+    ],
+    "output": null
+  }
+}

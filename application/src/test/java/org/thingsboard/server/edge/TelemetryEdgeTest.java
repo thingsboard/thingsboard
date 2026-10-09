@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.edge;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -25,6 +13,7 @@ import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
@@ -54,7 +43,7 @@ public class TelemetryEdgeTest extends AbstractEdgeTest {
         int numberOfHighPriorityRpcRequests = 13;
         int frequencyOfRpcRequestsPerTimeseries = 25;
 
-        Device device = findDeviceByName("Edge Device 1");
+        Device device = saveDeviceOnCloudAndVerifyDeliveryToEdge();
 
         edgeImitator.setRandomFailuresOnTimeseriesDownlink(true);
         // imitator will generate failure in 5% of cases
@@ -97,7 +86,7 @@ public class TelemetryEdgeTest extends AbstractEdgeTest {
 
     @Test
     public void testAttributes() throws Exception {
-        Device device = findDeviceByName("Edge Device 1");
+        Device device = saveDeviceOnCloudAndVerifyDeliveryToEdge();
 
         testAttributesUpdatedMsg(device.getId());
         testPostAttributesMsg(device);
@@ -155,7 +144,7 @@ public class TelemetryEdgeTest extends AbstractEdgeTest {
 
     @Test
     public void testTimeseries() throws Exception {
-        Device device = findDeviceByName("Edge Device 1");
+        Device device = saveDeviceOnCloudAndVerifyDeliveryToEdge();
         String timeseriesData = "{\"data\":{\"temperature\":25},\"ts\":" + System.currentTimeMillis() + "}";
         JsonNode timeseriesEntityData = JacksonUtil.toJsonNode(timeseriesData);
         edgeImitator.expectMessageAmount(1);
@@ -210,14 +199,14 @@ public class TelemetryEdgeTest extends AbstractEdgeTest {
     public void testTimeseriesDeliveryFailuresForever_deliverOnlyDeviceUpdateMsgs() throws Exception {
         int numberOfMsgsToSend = 100;
 
-        Device device = findDeviceByName("Edge Device 1");
+        Device device = saveDevice(StringUtils.randomAlphanumeric(15), THERMOSTAT_DEVICE_PROFILE_NAME);
 
         edgeImitator.setRandomFailuresOnTimeseriesDownlink(true);
         // imitator will generate failure in 100% of timeseries cases
         edgeImitator.setFailureProbability(100);
         edgeImitator.expectMessageAmount(numberOfMsgsToSend * 2);
         for (int idx = 1; idx <= numberOfMsgsToSend; idx++) {
-            String timeseriesData = "{\"data\":{\"idx\":" + idx + "},\"ts\":" + System.currentTimeMillis() + "}";
+            String timeseriesData = "{\"data\":{\"idx2\":" + idx + "},\"ts\":" + System.currentTimeMillis() + "}";
             JsonNode timeseriesEntityData = JacksonUtil.toJsonNode(timeseriesData);
             EdgeEvent failedEdgeEvent = constructEdgeEvent(tenantId, edge.getId(), EdgeEventActionType.TIMESERIES_UPDATED,
                     device.getId().getId(), EdgeEventType.DEVICE, timeseriesEntityData);
@@ -230,7 +219,7 @@ public class TelemetryEdgeTest extends AbstractEdgeTest {
             edgeEventService.saveAsync(successEdgeEvent).get();
         }
 
-        Assert.assertTrue(edgeImitator.waitForMessages(120));
+        Assert.assertTrue(edgeImitator.waitForMessages(180));
 
         List<EntityDataProto> allTelemetryMsgs = edgeImitator.findAllMessagesByType(EntityDataProto.class);
         Assert.assertTrue(allTelemetryMsgs.isEmpty());
@@ -275,10 +264,7 @@ public class TelemetryEdgeTest extends AbstractEdgeTest {
 
     @Test
     public void testSendAttributesDeleteRequestToCloud_nonDeviceEntity() throws Exception {
-        edgeImitator.expectMessageAmount(2);
-        Asset savedAsset = saveAsset("Delete Attribute Test");
-        doPost("/api/edge/" + edge.getUuidId() + "/asset/" + savedAsset.getUuidId(), Asset.class);
-        Assert.assertTrue(edgeImitator.waitForMessages());
+        Asset savedAsset = saveAssetOnCloudAndVerifyDeliveryToEdge();
 
         final String attributeKey = "key1";
         ObjectNode attributesData = JacksonUtil.newObjectNode();
@@ -287,7 +273,7 @@ public class TelemetryEdgeTest extends AbstractEdgeTest {
 
         // Wait before device attributes saved to database before deleting them
         Awaitility.await()
-                .atMost(10, TimeUnit.SECONDS)
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
                 .until(() -> {
                     String urlTemplate = "/api/plugins/telemetry/ASSET/" + savedAsset.getId() + "/keys/attributes/" + DataConstants.SERVER_SCOPE;
                     List<String> actualKeys = doGetAsyncTyped(urlTemplate, new TypeReference<>() {});
@@ -311,7 +297,7 @@ public class TelemetryEdgeTest extends AbstractEdgeTest {
         Assert.assertTrue(edgeImitator.waitForResponses());
 
         Awaitility.await()
-                .atMost(10, TimeUnit.SECONDS)
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
                 .until(() -> {
                     String urlTemplate = "/api/plugins/telemetry/ASSET/" + savedAsset.getId() + "/keys/attributes/" + DataConstants.SERVER_SCOPE;
                     List<String> actualKeys = doGetAsyncTyped(urlTemplate, new TypeReference<>() {});

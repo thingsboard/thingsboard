@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -20,17 +8,28 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.mobile.app.MobileApp;
 import org.thingsboard.server.common.data.mobile.app.MobileAppStatus;
 import org.thingsboard.server.common.data.mobile.bundle.MobileAppBundle;
 import org.thingsboard.server.common.data.mobile.bundle.MobileAppBundleInfo;
+import org.thingsboard.server.common.data.mobile.layout.CustomMobilePage;
+import org.thingsboard.server.common.data.mobile.layout.DashboardPage;
+import org.thingsboard.server.common.data.mobile.layout.DefaultMobilePage;
+import org.thingsboard.server.common.data.mobile.layout.DefaultPageId;
+import org.thingsboard.server.common.data.mobile.layout.MobileLayoutConfig;
 import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.selfregistration.V2CaptchaParams;
+import org.thingsboard.server.common.data.selfregistration.MobileRedirectParams;
+import org.thingsboard.server.common.data.selfregistration.MobileSelfRegistrationParams;
+import org.thingsboard.server.common.data.selfregistration.SignUpField;
+import org.thingsboard.server.common.data.selfregistration.SignUpFieldId;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.Collections;
@@ -58,12 +57,12 @@ public class MobileAppBundleControllerTest extends AbstractControllerTest {
 
     @Before
     public void setUp() throws Exception {
-        loginSysAdmin();
+        loginTenantAdmin();
 
-        androidApp = validMobileApp(TenantId.SYS_TENANT_ID, "my.android.package", PlatformType.ANDROID);
+        androidApp = validMobileApp( "my.android.package", PlatformType.ANDROID);
         androidApp = doPost("/api/mobile/app", androidApp, MobileApp.class);
 
-        iosApp = validMobileApp(TenantId.SYS_TENANT_ID, "my.ios.package", PlatformType.IOS);
+        iosApp = validMobileApp("my.ios.package", PlatformType.IOS);
         iosApp = doPost("/api/mobile/app", iosApp, MobileApp.class);
     }
 
@@ -94,10 +93,16 @@ public class MobileAppBundleControllerTest extends AbstractControllerTest {
         mobileAppBundle.setTitle("Test bundle");
         mobileAppBundle.setAndroidAppId(androidApp.getId());
         mobileAppBundle.setIosAppId(iosApp.getId());
+        MobileSelfRegistrationParams selfRegistrationParams = createMobileSelfRegistrationParams();
+        mobileAppBundle.setSelfRegistrationParams(selfRegistrationParams);
+        MobileLayoutConfig layoutConfig = createMobileLayoutConfig();
+        mobileAppBundle.setLayoutConfig(layoutConfig);
 
         MobileAppBundle createdMobileAppBundle = doPost("/api/mobile/bundle", mobileAppBundle, MobileAppBundle.class);
         assertThat(createdMobileAppBundle.getAndroidAppId()).isEqualTo(androidApp.getId());
         assertThat(createdMobileAppBundle.getIosAppId()).isEqualTo(iosApp.getId());
+        assertThat(createdMobileAppBundle.getSelfRegistrationParams()).isEqualTo(selfRegistrationParams);
+        assertThat(createdMobileAppBundle.getLayoutConfig()).isEqualTo(layoutConfig);
     }
 
     @Test
@@ -110,7 +115,6 @@ public class MobileAppBundleControllerTest extends AbstractControllerTest {
         assertThat(retrievedMobileAppBundleInfo).isEqualTo(new MobileAppBundleInfo(savedAppBundle, null, null, false,
                 Collections.emptyList()));
     }
-
 
     @Test
     public void testUpdateMobileAppBundleOauth2Clients() throws Exception {
@@ -130,14 +134,13 @@ public class MobileAppBundleControllerTest extends AbstractControllerTest {
         doPut("/api/mobile/bundle/" + savedAppBundle.getId() + "/oauth2Clients", List.of(savedOAuth2Client.getId().getId(), savedOAuth2Client2.getId().getId()));
 
         MobileAppBundleInfo retrievedMobileAppBundleInfo = doGet("/api/mobile/bundle/info/{id}", MobileAppBundleInfo.class, savedAppBundle.getId().getId());
-        assertThat(retrievedMobileAppBundleInfo).isEqualTo(new MobileAppBundleInfo(savedAppBundle, androidApp.getPkgName(), iosApp.getPkgName(), false,
-                Stream.of(new OAuth2ClientInfo(savedOAuth2Client), new OAuth2ClientInfo(savedOAuth2Client2))
+        assertThat(retrievedMobileAppBundleInfo).isEqualTo(new MobileAppBundleInfo(savedAppBundle, Stream.of(new OAuth2ClientInfo(savedOAuth2Client), new OAuth2ClientInfo(savedOAuth2Client2))
                         .sorted(Comparator.comparing(OAuth2ClientInfo::getTitle)).collect(Collectors.toList())
         ));
 
         doPut("/api/mobile/bundle/" + savedAppBundle.getId() + "/oauth2Clients", List.of(savedOAuth2Client2.getId().getId()));
         MobileAppBundleInfo retrievedMobileAppInfo2 = doGet("/api/mobile/bundle/info/{id}", MobileAppBundleInfo.class, savedAppBundle.getId().getId());
-        assertThat(retrievedMobileAppInfo2).isEqualTo(new MobileAppBundleInfo(savedAppBundle, androidApp.getPkgName(), iosApp.getPkgName(), false, List.of(new OAuth2ClientInfo(savedOAuth2Client2))));
+        assertThat(retrievedMobileAppInfo2).isEqualTo(new MobileAppBundleInfo(savedAppBundle, List.of(new OAuth2ClientInfo(savedOAuth2Client2))));
     }
 
     @Test
@@ -153,17 +156,50 @@ public class MobileAppBundleControllerTest extends AbstractControllerTest {
         MobileAppBundle savedMobileAppBundle = doPost("/api/mobile/bundle?oauth2ClientIds=" + savedOAuth2Client.getId().getId(), mobileAppBundle, MobileAppBundle.class);
 
         MobileAppBundleInfo retrievedMobileAppInfo = doGet("/api/mobile/bundle/info/{id}", MobileAppBundleInfo.class, savedMobileAppBundle.getId().getId());
-        assertThat(retrievedMobileAppInfo).isEqualTo(new MobileAppBundleInfo(savedMobileAppBundle, androidApp.getPkgName(), iosApp.getPkgName(), false, List.of(new OAuth2ClientInfo(savedOAuth2Client))));
+        assertThat(retrievedMobileAppInfo).isEqualTo(new MobileAppBundleInfo(savedMobileAppBundle, List.of(new OAuth2ClientInfo(savedOAuth2Client))));
     }
 
-    private MobileApp validMobileApp(TenantId tenantId, String mobileAppName, PlatformType platformType) {
+    private MobileApp validMobileApp(String mobileAppName, PlatformType platformType) {
         MobileApp mobileApp = new MobileApp();
-        mobileApp.setTenantId(tenantId);
         mobileApp.setStatus(MobileAppStatus.DRAFT);
         mobileApp.setPkgName(mobileAppName);
         mobileApp.setPlatformType(platformType);
         mobileApp.setAppSecret(StringUtils.randomAlphanumeric(24));
         return mobileApp;
+    }
+
+    private MobileSelfRegistrationParams createMobileSelfRegistrationParams() {
+        MobileSelfRegistrationParams selfRegistrationParams = new MobileSelfRegistrationParams();
+        selfRegistrationParams.setTitle("Please sign up");
+        V2CaptchaParams captcha = new V2CaptchaParams();
+        captcha.setSecretKey("secretKey");
+        captcha.setSiteKey("siteKey");
+        captcha.setLogActionName("sign_up");
+        selfRegistrationParams.setCaptcha(captcha);
+        selfRegistrationParams.setShowPrivacyPolicy(true);
+        selfRegistrationParams.setShowTermsOfUse(true);
+        selfRegistrationParams.setEnabled(true);
+        selfRegistrationParams.setNotificationRecipient(createNotificationTarget(customerUserId).getId());
+        selfRegistrationParams.setTermsOfUse("My terms of use");
+        selfRegistrationParams.setPrivacyPolicy("My privacy policy");
+        selfRegistrationParams.setPermissions(Collections.emptyList());
+        MobileRedirectParams redirect = new MobileRedirectParams();
+        redirect.setHost("test");
+        redirect.setScheme("scheme");
+        selfRegistrationParams.setRedirect(redirect);
+        selfRegistrationParams.setSignUpFields(List.of(new SignUpField(SignUpFieldId.EMAIL, "email",true)));
+        return selfRegistrationParams;
+    }
+
+    private MobileLayoutConfig createMobileLayoutConfig() {
+        Dashboard dashboard = new Dashboard();
+        dashboard.setTitle("My dashboard");
+        Dashboard savedDashboard = doPost("/api/dashboard", dashboard, Dashboard.class);
+
+        MobileLayoutConfig layoutConfig = new MobileLayoutConfig();
+        layoutConfig.setPages(List.of(new DefaultMobilePage(DefaultPageId.HOME), new DefaultMobilePage(DefaultPageId.ALARMS),
+                new DashboardPage(savedDashboard.getId().getId().toString()), new CustomMobilePage("/test/path")));
+        return layoutConfig;
     }
 
 }

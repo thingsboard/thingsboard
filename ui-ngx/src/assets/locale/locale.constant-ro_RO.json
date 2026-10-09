@@ -109,6 +109,44 @@
         "minimum-max-failed-login-attempts-range": "Numărul maxim de încercări eşuate de accesare a paginii nu poate fi negativ",
         "user-lockout-notification-email": "În Cazul Blocării Contului, Trimite eMail De Notificare"
     },
+    "ai-assistant": {
+        "configure-with-ai": "Configurează cu IA",
+        "follow-up-prompt-placeholder": "Răspunde...",
+        "sub-title": "Vă pot ajuta să configurați și să gestionați dispozitivele, tablourile de bord, câmpurile calculate, regulile de alarmă și notificările — descrieți doar ce aveți nevoie, iar eu mă ocup de rest.",
+        "new-chat": "Conversație nouă",
+        "no-chats": "Încă nu există conversații",
+        "today": "Astăzi",
+        "yesterday": "Ieri",
+        "last-7-days": "Ultimele 7 zile",
+        "older": "Mai vechi",
+        "delete-chat-title": "Sigur vrei să ștergi '{{name}}'?",
+        "delete-chat-text": "Toate mesajele din conversație vor fi pierdute",
+        "delete-chat-confirm": "Da, șterge",
+        "action-approval-required": "Este necesară aprobarea acțiunii",
+        "approve": "Aprobă",
+        "deny": "Refuză",
+        "processing": "Procesare...",
+        "approved": "Terminat",
+        "denied": "Refuzat",
+        "error": "Eșuat",
+        "thinking": "Mă gândesc...",
+        "rename-chat-title": "Redenumește această conversație",
+        "main-title": "Bună! Sunt asistentul tău IA"
+    },
+    "alarm-rule": {
+        "ai-assistant-example-suggest-rules-label": "Sugerează reguli de alarmă",
+        "ai-assistant-example-suggest-rules-message": "Examinează dispozitivele mele și sugerează reguli de alarmă care merită configurate.",
+        "ai-assistant-example-inactivity-label": "Alarmă de inactivitate a dispozitivului",
+        "ai-assistant-example-inactivity-message": "Creează o regulă de alarmă care declanșează un avertisment când un dispozitiv nu mai trimite telemetrie mai mult de 10 minute.",
+        "ai-assistant-initial-prompt-placeholder": "Descrieți ce doriți să configurați..."
+    },
+    "calculated-fields": {
+        "ai-assistant-example-suggest-fields-label": "Sugerează câmpuri calculate",
+        "ai-assistant-example-suggest-fields-message": "Examinează dispozitivele mele și sugerează câmpuri calculate care merită configurate.",
+        "ai-assistant-example-aggregate-label": "Agregă telemetria",
+        "ai-assistant-example-aggregate-message": "Alege unul dintre dispozitivele mele și configurează un câmp calculat care agregă câteva dintre cheile sale de telemetrie. Descrie ce vei crea și cere-mi mai întâi confirmarea.",
+        "ai-assistant-initial-prompt-placeholder": "Descrieți ce doriți să configurați..."
+    },
     "alarm": {
         "alarm": "Alarmă",
         "alarms": "Alarme",
@@ -434,6 +472,11 @@
         "time-to": "Oră sfârșit:"
     },
     "dashboard": {
+        "ai-assistant-initial-prompt-placeholder": "Descrieți ce doriți să configurați...",
+        "ai-assistant-example-monitor-device-label": "Monitorizează un dispozitiv",
+        "ai-assistant-example-monitor-device-message": "Dispozitivul este ... Vreau să configurez acest tablou de bord ca o vizualizare cu o singură stare a acestui dispozitiv, afișând cea mai recentă telemetrie a sa sub formă de carduri de valoare în partea de sus, un grafic de serii temporale al acelei telemetrii dedesubt și un tabel cu alarmele sale active în partea de jos.",
+        "ai-assistant-example-monitor-fleet-label": "Monitorizează o flotă de dispozitive",
+        "ai-assistant-example-monitor-fleet-message": "Tipul de dispozitiv este ... Vreau să configurez acest tablou de bord cu două stări pentru acest tip. Starea de prezentare generală ar trebui să listeze toate dispozitivele de acest tip într-un tabel de entități, cu un tabel al alarmelor active ale acelor dispozitive dedesubt. Selectarea unui dispozitiv deschide o stare de detalii care afișează cea mai recentă telemetrie a acelui dispozitiv sub formă de carduri de valoare în partea de sus, un grafic de serii temporale al acelei telemetrii dedesubt și un tabel cu alarmele sale active în partea de jos.",
         "dashboard": "Panou",
         "dashboards": "Panouri",
         "management": "Administrare Panouri",
@@ -611,6 +654,9 @@
         "toggle-edit-mode": "Schimbă Mod Editare"
     },
     "device": {
+        "ai-assistant-initial-prompt-placeholder": "Descrieți ce doriți să configurați...",
+        "ai-assistant-example-connect-label": "Conectează dispozitivul meu",
+        "ai-assistant-example-connect-message": "Ajutați-mă să conectez unul dintre dispozitivele mele la platformă, astfel încât să înceapă să trimită telemetrie reală.",
         "device": "Dispozitiv",
         "device-required": "Dispozitivul este obligatoriu",
         "devices": "Dispozitive",
@@ -1399,7 +1445,7 @@
         "metadata-required": "Intrările metadata nu pot fi vide",
         "output": "Ieşire",
         "test": "Test",
-        "help": "Ajutor",
+        "help": "Ajutor"
     },
     "tenant": {
         "tenant": "Locatar",

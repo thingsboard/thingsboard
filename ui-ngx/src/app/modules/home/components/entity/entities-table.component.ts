@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
@@ -26,9 +13,10 @@ import {
   OnChanges,
   OnDestroy,
   OnInit,
-  SimpleChanges,
+  Renderer2,
+  SimpleChanges, Type,
   ViewChild,
-  ViewContainerRef,
+  ViewContainerRef
 } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
@@ -38,7 +26,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort, SortDirection } from '@angular/material/sort';
 import { EntitiesDataSource } from '@home/models/datasource/entity-datasource';
-import { catchError, debounceTime, distinctUntilChanged, map, skip, takeUntil } from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged, filter, map, skip, takeUntil } from 'rxjs/operators';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { forkJoin, merge, Observable, of, Subject, Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
@@ -47,6 +35,7 @@ import { ActivatedRoute, QueryParamsHandling, Router } from '@angular/router';
 import {
   CellActionDescriptor,
   CellActionDescriptorType,
+  ChartEntityTableColumn,
   EntityActionTableColumn,
   EntityChipsEntityTableColumn,
   EntityColumn, EntityColumnsType, EntityColumnType,
@@ -54,21 +43,26 @@ import {
   EntityTableColumn,
   EntityTableConfig,
   GroupActionDescriptor,
-  HeaderActionDescriptor
+  HeaderActionDescriptor,
+  ProgressBarEntityTableColumn
 } from '@home/models/entity/entities-table-config.models';
-import { EntityTypeTranslation } from '@shared/models/entity-type.models';
+import { baseDetailsPageByEntityType, EntityTypeTranslation } from '@shared/models/entity-type.models';
 import { DialogService } from '@core/services/dialog.service';
 import { AddEntityDialogComponent } from './add-entity-dialog.component';
 import { AddEntityDialogData, EntityAction } from '@home/models/entity/entity-component.models';
 import { getTimePageLinkInterval, Timewindow } from '@shared/models/time/time.models';
+import { EntityId } from '@shared/models/id/entity-id';
+import { AiChatView } from '@shared/models/ai-chat.models';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
-import { isDefined, isEqual, isNotEmptyStr, isUndefined } from '@core/utils';
+import { isDefined, isDefinedAndNotNull, isEqual, isNotEmptyStr, isNumber, isUndefined } from '@core/utils';
 import { HasUUID } from '@shared/models/id/has-uuid';
 import { hidePageSizePixelValue } from '@shared/models/constants';
 import { EntitiesTableAction, IEntitiesTableComponent } from '@home/models/entity/entity-table-component.models';
 import { EntityDetailsPanelComponent } from '@home/components/entity/entity-details-panel.component';
 import { FormBuilder } from '@angular/forms';
+import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
 
 @Component({
     selector: 'tb-entities-table',
@@ -101,10 +95,10 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
 
   selectionEnabled;
 
-  defaultPageSize = 10;
+  defaultPageSize;
   displayPagination = true;
   hidePageSize = false;
-  pageSizeOptions;
+  pageSizeOptions = [];
   pageLink: PageLink;
   pageMode = true;
   textSearchMode = false;
@@ -115,6 +109,15 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
 
   isDetailsOpen = false;
   detailsPanelOpened = new EventEmitter<boolean>();
+
+  get isAiAssistantOpen() { return this.panelService.open(); }
+  aiEnabled = getCurrentAuthState(this.store).aiEnabled;
+
+  configureWithAiButton: HeaderActionDescriptor;
+
+  replaceComponent: Type<any>;
+
+  @ViewChild('replaceComponentAnchor', {static: true}) replaceComponentAnchor: TbAnchorComponent;
 
   @ViewChild('entityTableHeader', {static: true}) entityTableHeaderAnchor: TbAnchorComponent;
 
@@ -132,6 +135,7 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
 
   private widgetResize$: ResizeObserver;
   private destroy$ = new Subject<void>();
+  private aiUpdatedData$: Subscription;
 
   constructor(protected store: Store<AppState>,
               public route: ActivatedRoute,
@@ -144,7 +148,9 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
               private elementRef: ElementRef,
               private fb: FormBuilder,
               private zone: NgZone,
-              public viewContainerRef: ViewContainerRef) {
+              public viewContainerRef: ViewContainerRef,
+              public renderer: Renderer2,
+              public panelService: AiAssistantPanelService) {
     super(store);
   }
 
@@ -155,25 +161,32 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
       this.route.data.pipe(
         takeUntil(this.destroy$)
       ).subscribe((data) => {
-          this.init(data.entitiesTableConfig);
+        this.init(data.entitiesTableConfig);
       });
     }
-    this.widgetResize$ = new ResizeObserver(() => {
-      this.zone.run(() => {
+    // Observed outside the zone so a width change does not trigger change detection on every frame.
+    this.zone.runOutsideAngular(() => {
+      this.widgetResize$ = new ResizeObserver(() => {
         const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
         if (showHidePageSize !== this.hidePageSize) {
-          this.hidePageSize = showHidePageSize;
-          this.cd.markForCheck();
+          this.zone.run(() => {
+            this.hidePageSize = showHidePageSize;
+            this.cd.markForCheck();
+          });
         }
       });
+      this.widgetResize$.observe(this.elementRef.nativeElement);
     });
-    this.widgetResize$.observe(this.elementRef.nativeElement);
   }
 
   ngOnDestroy() {
     if (this.widgetResize$) {
       this.widgetResize$.disconnect();
     }
+    if (this.entitiesTableConfig?.aiAssistantConfig) {
+      this.panelService.teardown();
+    }
+    this.entitiesTableConfig?.onDestroy();
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -189,9 +202,47 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
     }
   }
 
+  goBack(): void {
+    this.router.navigate(this.entitiesTableConfig.backNavigationCommands, { relativeTo: this.route });
+  }
+
   private init(entitiesTableConfig: EntityTableConfig<BaseData<HasId>>) {
+
+    if (this.route.snapshot.data.replaceComponent) {
+      this.replaceComponent = this.route.snapshot.data.replaceComponent(this.store);
+    }
+
+    const viewContainerRef = this.replaceComponentAnchor.viewContainerRef;
+    viewContainerRef.clear();
+    if (this.replaceComponent) {
+      viewContainerRef.createComponent(this.replaceComponent);
+    }
+
     this.isDetailsOpen = false;
     this.entitiesTableConfig = entitiesTableConfig;
+    const aiConfig = entitiesTableConfig.aiAssistantConfig;
+    if (aiConfig) {
+      this.panelService.setEnabled(true);
+      this.panelService.setConfig(aiConfig);
+      this.configureWithAiButton = {
+        name: this.translate.instant('ai-assistant.configure-with-ai'),
+        icon: 'mdi:creation',
+        isEnabled: () => this.aiEnabled && aiConfig.showButton !== false && !this.isAiAssistantOpen,
+        onAction: ($event) => this.toggleAiAssistant($event)
+      };
+      this.updateAiClientContext();
+      this.aiUpdatedData$?.unsubscribe();
+      if (entitiesTableConfig.entityType) {
+        this.aiUpdatedData$ = this.panelService.updatedData$.pipe(
+          filter(affectedEntities =>
+            affectedEntities.some(entityId => entityId.entityType === entitiesTableConfig.entityType)),
+          takeUntil(this.destroy$)
+        ).subscribe(() => {
+          this.updateData();
+        });
+      }
+    }
+
     this.pageMode = this.entitiesTableConfig.pageMode;
     if (this.entitiesTableConfig.headerComponent) {
       const viewContainerRef = this.entityTableHeaderAnchor.viewContainerRef;
@@ -255,8 +306,26 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
     }
 
     this.displayPagination = this.entitiesTableConfig.displayPagination;
-    this.defaultPageSize = this.entitiesTableConfig.defaultPageSize;
-    this.pageSizeOptions = [this.defaultPageSize, this.defaultPageSize * 2, this.defaultPageSize * 3];
+    const pageSize = this.entitiesTableConfig.defaultPageSize;
+    let pageStepIncrement = this.entitiesTableConfig.pageStepIncrement;
+    let pageStepCount = this.entitiesTableConfig.pageStepCount;
+
+    if (isDefined(pageSize) && isNumber(pageSize) && pageSize > 0) {
+      this.defaultPageSize = pageSize;
+    }
+
+    if (!this.defaultPageSize) {
+      this.defaultPageSize = pageStepIncrement ?? 10;
+    }
+
+    if (!isDefinedAndNotNull(pageStepIncrement) || !isDefinedAndNotNull(pageStepCount)) {
+      pageStepIncrement = this.defaultPageSize;
+      pageStepCount = 3;
+    }
+
+    for (let i = 1; i <= pageStepCount; i++) {
+      this.pageSizeOptions.push(pageStepIncrement * i);
+    }
 
     if (this.entitiesTableConfig.useTimePageLink) {
       this.timewindow = this.entitiesTableConfig.defaultTimewindowInterval;
@@ -307,6 +376,11 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
       if (initialAction === 'add') {
         setTimeout(() => {
           this.addEntity(null);
+        }, 0);
+      }
+      if (initialAction === 'aiAssistant' && this.entitiesTableConfig.aiAssistantConfig) {
+        setTimeout(() => {
+          this.toggleAiAssistant(null);
         }, 0);
       }
     }
@@ -407,7 +481,7 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
 
   updateData(closeDetails: boolean = true, reloadEntity: boolean = true) {
     if (closeDetails) {
-      this.isDetailsOpen = false;
+      this.setEntityDetailsOpen(false);
     }
     if (this.displayPagination) {
       this.pageLink.page = this.paginator.pageIndex;
@@ -455,13 +529,54 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
   toggleEntityDetails($event: Event, entity) {
     if ($event) {
       $event.stopPropagation();
+      if (($event as MouseEvent).detail > 1) {
+        return;
+      }
     }
-    if (this.dataSource.toggleCurrentEntity(entity)) {
-      this.isDetailsOpen = true;
+    const open = this.dataSource.toggleCurrentEntity(entity) ? true : !this.isDetailsOpen;
+    this.setEntityDetailsOpen(open);
+  }
+
+  onCloseEntityDetails(): void {
+    this.setEntityDetailsOpen(false);
+  }
+
+  onDetailsDrawerOpenedChange(opened: boolean): void {
+    if (opened !== this.isDetailsOpen) {
+      this.setEntityDetailsOpen(opened);
+    }
+  }
+
+  private setEntityDetailsOpen(open: boolean): void {
+    this.isDetailsOpen = open;
+    if (this.entitiesTableConfig.detailsPanelEnabled) {
+      this.panelService.setDetailsOpen(open);
+    }
+    this.updateAiClientContext();
+    this.detailsPanelOpened.emit(open);
+  }
+
+  private updateAiClientContext(): void {
+    const viewConfig = this.entitiesTableConfig?.aiAssistantConfig?.view;
+    if (!viewConfig) {
+      return;
+    }
+    const entity = this.isDetailsOpen ? this.dataSource.currentEntity : null;
+    const view: AiChatView = (viewConfig.entityView && entity?.id)
+      ? {type: viewConfig.entityView, entityId: entity.id as EntityId}
+      : {type: viewConfig.listView, entityId: viewConfig.listEntityId};
+    this.panelService.setClientContextForView(view);
+  }
+
+  toggleAiAssistant($event: Event) {
+    $event?.stopPropagation();
+    if (this.pageMode) {
+      this.panelService.toggle();
+    } else if (this.entitiesTableConfig.aiAssistantConfig?.pageUrl) {
+      window.open(`${this.entitiesTableConfig.aiAssistantConfig.pageUrl}?action=aiAssistant`, '_blank');
     } else {
-      this.isDetailsOpen = !this.isDetailsOpen;
+      window.open(`${baseDetailsPageByEntityType.get(this.entitiesTableConfig.entityType)}?action=aiAssistant`, '_blank');
     }
-    this.detailsPanelOpened.emit(this.isDetailsOpen);
   }
 
   addEntity($event: Event) {
@@ -593,7 +708,7 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
   columnsUpdated(resetData: boolean = false) {
     this.entityColumns = this.entitiesTableConfig.columns.filter(
       (column) => column instanceof EntityTableColumn || column instanceof EntityLinkTableColumn ||
-        column instanceof EntityChipsEntityTableColumn);
+        column instanceof ChartEntityTableColumn || column instanceof ProgressBarEntityTableColumn || column instanceof EntityChipsEntityTableColumn);
     this.actionColumns = this.entitiesTableConfig.columns.filter(
       (column) => column instanceof EntityActionTableColumn)
       .map(column => column as EntityActionTableColumn<BaseData<HasId>>);
@@ -648,7 +763,7 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
     this.cellStyleCache[index] = undefined;
   }
 
-  cellContent(entity: BaseData<HasId>, column: EntityColumnType, row: number) {
+  cellContent(entity: BaseData<HasId>, column: EntityColumnType, row: number): any {
     if (column instanceof EntityTableColumn || column instanceof EntityLinkTableColumn) {
       const col = this.entitiesTableConfig.columns.indexOf(column);
       const index = row * this.entitiesTableConfig.columns.length + col;
@@ -658,9 +773,12 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
         this.cellContentCache[index] = res;
       }
       return res;
-    } else {
-      return '';
+    } else if (column instanceof ChartEntityTableColumn) {
+      return column.cellContentFunction(entity, column.key);
+    } else if (column instanceof ProgressBarEntityTableColumn) {
+      return column.cellContentFunction(entity, column.key);
     }
+    return '';
   }
 
   cellTooltip(entity: BaseData<HasId>, column: EntityColumnType, row: number) {
@@ -690,7 +808,7 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
         widthStyle.minWidth = column.width;
         widthStyle.maxWidth = column.width;
       }
-      if (column instanceof EntityTableColumn) {
+      if (column instanceof EntityTableColumn || column instanceof ProgressBarEntityTableColumn) {
         res = {...column.cellStyleFunction(entity, column.key), ...widthStyle};
       } else {
         res = widthStyle;
@@ -700,8 +818,15 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
     return res;
   }
 
-  trackByColumnKey(index, column: EntityTableColumn<BaseData<HasId>> | EntityActionTableColumn<BaseData<HasId>>) {
-    return column.key;
+  cellChartStyle(entity: BaseData<HasId>, column: EntityColumnType, row: number) {
+    let res;
+    if (column instanceof ChartEntityTableColumn) {
+      res = column.chartStyleFunction(entity, column.key);
+    }
+    if (column instanceof ProgressBarEntityTableColumn) {
+      res = column.progressBarStyleFunction(entity, column.key);
+    }
+    return res;
   }
 
   trackByEntityId(index: number, entity: BaseData<HasId>) {

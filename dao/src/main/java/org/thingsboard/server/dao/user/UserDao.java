@@ -1,35 +1,29 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.user;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.UserAuthDetails;
+import org.thingsboard.server.common.data.id.CustomMenuId;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityGroupId;
+import org.thingsboard.server.common.data.id.RoleId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.Dao;
+import org.thingsboard.server.dao.ExportableEntityDao;
 import org.thingsboard.server.dao.TenantEntityDao;
 
 import java.util.List;
 import java.util.UUID;
 
-public interface UserDao extends Dao<User>, TenantEntityDao<User> {
+public interface UserDao extends Dao<User>, TenantEntityDao<User>, ExportableEntityDao<UserId, User> {
 
     /**
      * Save or update user object
@@ -94,18 +88,62 @@ public interface UserDao extends Dao<User>, TenantEntityDao<User> {
      */
     PageData<User> findUsersByCustomerIds(UUID tenantId, List<CustomerId> customerIds, PageLink pageLink);
 
+    /**
+     * Find all customer users by tenantId and page link.
+     *
+     * @param tenantId the tenantId
+     * @param pageLink the page link
+     * @return the list of user entities
+     */
+    PageData<User> findAllCustomerUsers(UUID tenantId, PageLink pageLink);
+
+    /**
+     * Find users by tenantId and user Ids.
+     *
+     * @param tenantId the tenantId
+     * @param userIds the user Ids
+     * @return the list of user objects
+     */
+    ListenableFuture<List<User>> findUsersByTenantIdAndIdsAsync(UUID tenantId, List<UUID> userIds);
+
+    List<User> findUsersByTenantIdAndIds(UUID tenantId, List<UUID> userIds);
+
+    PageData<User> findUsersByEntityGroupId(UUID groupId, PageLink pageLink);
+
+    PageData<User> findUsersByEntityGroupIds(List<UUID> groupIds, PageLink pageLink);
+
+    PageData<User> findUsersByTenantIdAndRolesIds(TenantId tenantId, List<RoleId> rolesIds, PageLink pageLink);
+
+    PageData<User> findUsersByTenantsIdsAndRoleId(List<TenantId> tenantsIds, RoleId roleId, PageLink pageLink);
+
+    boolean existsByTenantsIdsAndRoleIdAndUserId(List<TenantId> tenantsIds, RoleId roleId, UserId userId);
+
+    PageData<User> findUsersByTenantProfilesIdsAndRoleId(List<TenantProfileId> tenantProfilesIds, RoleId roleId, PageLink pageLink);
+
+    boolean existsByTenantProfilesIdsAndRoleIdAndUserId(List<TenantProfileId> tenantProfilesIds, RoleId roleId, UserId userId);
+
+    PageData<User> findAllUsersByRoleId(RoleId roleId, PageLink pageLink);
+
+    boolean existsByRoleIdAndUserId(RoleId roleId, UserId userId);
+
+    int countUsersByTenantIdAndRoleIdAndIdNotIn(TenantId tenantId, RoleId roleId, List<UserId> userIds);
+
     PageData<User> findAll(PageLink pageLink);
 
     PageData<User> findAllByAuthority(Authority authority, PageLink pageLink);
+
+    boolean existsByAuthority(Authority authority);
 
     PageData<User> findByAuthorityAndTenantsIds(Authority authority, List<TenantId> tenantsIds, PageLink pageLink);
 
     PageData<User> findByAuthorityAndTenantProfilesIds(Authority authority, List<TenantProfileId> tenantProfilesIds, PageLink pageLink);
 
-    int countTenantAdmins(UUID tenantId);
+    List<User> findUsersByCustomMenuId(CustomMenuId id);
+
+    void updateUsersCustomMenuId(List<UserId> ids, CustomMenuId customMenuId);
+
+    boolean existsInEntityGroup(UserId id, EntityGroupId entityGroupId);
 
     UserAuthDetails findUserAuthDetailsByUserId(UUID tenantId, UUID userId);
-
-    List<User> findUsersByTenantIdAndIds(UUID tenantId, List<UUID> userIds);
 
 }

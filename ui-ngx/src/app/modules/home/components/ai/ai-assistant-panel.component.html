@@ -1,0 +1,107 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="ai-assistant-container relative"
+     [class.fill]="panelService.detailsOpen() || !!panelService.config()?.fill"
+     [class.details-open]="panelService.detailsOpen()">
+  <div class="ai-assistant-header">
+    <button mat-button [matMenuTriggerFor]="chatMenu" #chatTriggerEl class="chat-selector"
+            (menuOpened)="setMenuWidth(chatTriggerEl)">
+      {{ selectedChatTitle() || ('ai-assistant.new-chat' | translate) }}
+      <mat-icon iconPositionEnd>keyboard_arrow_down</mat-icon>
+    </button>
+    <mat-menu #chatMenu="matMenu" class="ai-chat-list-menu">
+      <ng-template matMenuContent>
+        @for (group of groupedChats(); track group.label) {
+          <div class="chat-group-label">{{ group.label | translate }}</div>
+          @for (chat of group.chats; track chat.id) {
+            <button mat-menu-item class="chat-item" [class.selected]="chat.id === chatId()" (click)="selectChat(chat)">
+              {{ chat.title }}
+            </button>
+          }
+        } @empty {
+          <div class="chat-group-empty">{{ 'ai-assistant.no-chats' | translate }}</div>
+        }
+      </ng-template>
+    </mat-menu>
+    <div class="flex items-center">
+      <button mat-icon-button [matMenuTriggerFor]="chatActionsMenu" [class.invisible]="!chatId()"
+              matTooltip="{{ 'action.more' | translate }}"
+              matTooltipPosition="above">
+        <mat-icon>more_vert</mat-icon>
+      </button>
+      <mat-menu #chatActionsMenu="matMenu" class="ai-chat-action-menu">
+        <button mat-menu-item (click)="renameChat()">
+          <mat-icon>edit</mat-icon>
+          <span>{{ 'action.rename' | translate }}</span>
+        </button>
+        <button mat-menu-item class="delete" (click)="deleteChat()">
+          <mat-icon>delete</mat-icon>
+          <span>{{ 'action.delete' | translate }}</span>
+        </button>
+      </mat-menu>
+      <tb-ai-credits [asButton]="true" [active]="slideDone()"></tb-ai-credits>
+      <button mat-icon-button (click)="reset(true)"
+              matTooltip="{{ 'ai-assistant.new-chat' | translate }}"
+              matTooltipPosition="above">
+        <tb-icon>mdi:square-edit-outline</tb-icon>
+      </button>
+      <button mat-icon-button (click)="close()"
+              matTooltip="{{ 'action.close' | translate }}"
+              matTooltipPosition="above">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+  </div>
+  <div class="ai-assistant-content">
+    @if (messages().length) {
+      <div class="chat-messages-container">
+        <div tb-toast toastTarget="aiAssistant" class="pointer-events-none absolute inset-0"></div>
+        <tb-ai-chat-messages
+          class="ai-chat-messages"
+          [messages]="messages()"
+          [loading]="loading()"
+          [completedExecutions]="completedExecutions()"
+          [autoApprove]="autoApprove()"
+          [additionalStyles]="['.tb-markdown-view p, .tb-markdown-view h2, .tb-markdown-view h3, .tb-markdown-view h4, .tb-markdown-view h5, .tb-markdown-view h6, .tb-markdown-view div.code-wrapper {padding-left: 0 !important;}' +
+            '.tb-markdown-view ol {padding-inline-start: 30px;} .tb-markdown-view ul{padding-left: 28px;padding-right:0}'
+           ]"
+          (approvalAction)="onApprovalAction($event)">
+        </tb-ai-chat-messages>
+      </div>
+    } @else {
+      <div class="relative flex flex-auto justify-center">
+        <div tb-toast toastTarget="aiAssistant" class="pointer-events-none absolute inset-0"></div>
+        <div class="flex flex-col items-center justify-center gap-6">
+          <svg class="image-main-color" preserveAspectRatio="xMidYMid meet" viewBox="0 0 42 48" width="70px">
+            <use [attr.xlink:href]="'/assets/solution-creator/iot-assistant.svg#iot-assistant'"></use>
+          </svg>
+          <div class="flex flex-col gap-1">
+            <div class="whitespace-pre-line text-center text-xl font-semibold" translate>ai-assistant.main-title</div>
+            <div class="whitespace-pre-line text-center leading-6">{{ subTitle() }}</div>
+          </div>
+        </div>
+      </div>
+    }
+    <div class="flex w-full flex-col items-center gap-3">
+      @if (!messages().length && promptExamples().length) {
+        <div class="example-chips">
+          @for (example of promptExamples(); track example.message) {
+            <button type="button" mat-stroked-button class="example-chip" (click)="useExample(example)">
+              {{ example.label }}
+            </button>
+          }
+        </div>
+      }
+      <tb-ai-prompt-input
+        class="flex"
+        [placeholder]="activePlaceholder()"
+        [loading]="loading()"
+        (messageSent)="sendMsgFromUser($event)">
+      </tb-ai-prompt-input>
+    </div>
+  </div>
+</div>

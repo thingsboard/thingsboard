@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { ResourcesService } from '@core/services/resources.service';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -63,6 +50,13 @@ export const svgIcons: {[key: string]: string} = {
     '0 14.659287,2.6765011 Z m -5.332255,4.0079963 1.999613,2.003945 -7.99844,8.0158157 -1.9996133,-2.004017 z m 1.676684,4.3522483 ' +
     '1.999613,2.0039454 -6.6654242,6.679793 -1.9996133,-2.003874 z m 2.988987,7.0033574 -1.999544,-2.003945 -4.6658108,4.675848 ' +
     '1.9996128,2.004015 z"/></svg>',
+  'file-pdf': '<svg id="file-pdf" viewBox="0 0 24 24"><path d="M13,9H18.5L13,3.5V9M6,2H14L20,8V20A2,2 0 0,1 ' +
+    '18,22H6A2,2 0 0,1 4,20V4A2,2 0 0,1 6,2M10.1,11.4C10.08,11.44 9.81,13.16 8,16.09C8,16.09 4.5,17.91 5.33,19.27C6,20.35 ' +
+    '7.65,19.23 9.07,16.59C9.07,16.59 10.89,15.95 13.31,15.77C13.31,15.77 17.17,17.5 17.7,15.66C18.22,13.8 14.64,14.22 ' +
+    '14,14.41C14,14.41 12,13.06 11.5,11.2C11.5,11.2 12.64,7.25 10.89,7.3C9.14,7.35 9.8,10.43 10.1,11.4M10.91,12.44C10.94,12.45 ' +
+    '11.38,13.65 12.8,14.9C12.8,14.9 10.47,15.36 9.41,15.8C9.41,15.8 10.41,14.07 10.91,12.44M14.84,15.16C15.42,15 17.17,15.31 ' +
+    '17.1,15.64C17.04,15.97 14.84,15.16 14.84,15.16M7.77,17C7.24,18.24 6.33,19 6.1,19C5.87,19 6.8,17.4 7.77,17M10.91,10.07C10.91,10 ' +
+    '10.55,7.87 10.91,7.92C11.45,8 10.91,10 10.91,10.07Z" /></svg>',
   'trendz-settings': '<svg viewBox="0 0 25 17"><path fill-rule="evenodd" clip-rule="evenodd" d="M7.04334 0.28949H12.2804V5.7615L11.5894 ' +
     '6.4537L10.4605 5.32674L7.04334 8.73801V0.28949ZM7.04334 10.0127V11.0075L7.54073 10.5093L7.04334 10.0127ZM7.04334 ' +
     '12.2649V13.2424L7.53209 12.7545L7.04334 12.2649ZM18.3903 13.243V12.2646L17.901 12.7546L18.3903 13.243ZM18.3903 ' +
@@ -74,7 +68,7 @@ export const svgIcons: {[key: string]: string} = {
     '14.7267L9.61134 13.5985L8.48664 14.7213L7.64059 13.8767L8.76673 12.7525L7.64928 11.6331L8.77533 10.5051L7.64059 9.37227L8.48664 ' +
     '8.52767L9.61993 9.65905L10.7461 8.53103L9.61465 7.40158L10.4607 6.55697L11.5907 7.68499L12.7169 6.55688L13.843 7.68494L14.9729 ' +
     '6.55688ZM12.7169 8.24609L13.5629 9.0907L10.1787 12.4691L9.33268 11.6245L12.7169 8.24609ZM13.4262 10.0805L14.2723 10.9251L11.4521 ' +
-    '13.7404L10.6061 12.8958L13.4262 10.0805ZM14.6909 13.0321L13.8449 12.1875L11.8708 14.1583L12.7168 15.0029L14.6909 13.0321Z"/></svg>'
+    '13.7404L10.6061 12.8958L13.4262 10.0805ZM14.6909 13.0321L13.8449 12.1875L11.8708 14.1583L12.7168 15.0029L14.6909 13.0321Z"/></svg>',
 };
 
 export const svgIconsUrl: { [key: string]: string } = {

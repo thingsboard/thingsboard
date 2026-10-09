@@ -1,37 +1,34 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
 import { CustomerComponent } from '@modules/home/pages/customer/customer.component';
-import { CustomerRoutingModule } from './customer-routing.module';
 import { HomeComponentsModule } from '@modules/home/components/home-components.module';
-import { CustomerTabsComponent } from '@home/pages/customer/customer-tabs.component';
+import { CUSTOMER_GROUP_CONFIG_FACTORY } from '@home/models/group/group-entities-table-config.models';
+import { CustomerGroupConfigFactory } from '@home/pages/customer/customer-group-config.factory';
+import { CustomerRoutingModule } from '@home/pages/customer/customer-routing.module';
+import { CustomerTableHeaderComponent } from '@home/pages/customer/customer-table-header.component';
+import { CustomersHierarchyComponent } from '@home/pages/customer/customers-hierarchy.component';
 
 @NgModule({
   declarations: [
     CustomerComponent,
-    CustomerTabsComponent
+    CustomerTableHeaderComponent,
+    CustomersHierarchyComponent
   ],
   imports: [
     CommonModule,
     SharedModule,
     HomeComponentsModule,
     CustomerRoutingModule
+  ],
+  providers: [
+    {
+      provide: CUSTOMER_GROUP_CONFIG_FACTORY,
+      useClass: CustomerGroupConfigFactory
+    }
   ]
 })
 export class CustomerModule { }

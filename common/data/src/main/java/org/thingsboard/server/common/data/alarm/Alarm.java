@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.alarm;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -25,9 +13,10 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.BaseData;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasCustomerId;
 import org.thingsboard.server.common.data.HasName;
-import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.TenantEntity;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
@@ -48,7 +37,7 @@ import java.util.UUID;
 @Builder
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Alarm extends BaseData<AlarmId> implements HasName, HasTenantId, HasCustomerId {
+public class Alarm extends BaseData<AlarmId> implements HasName, TenantEntity, HasCustomerId {
 
     @Serial
     private static final long serialVersionUID = -1935800187424953611L;
@@ -56,7 +45,7 @@ public class Alarm extends BaseData<AlarmId> implements HasName, HasTenantId, Ha
     @Schema(description = "JSON object with Tenant Id", accessMode = Schema.AccessMode.READ_ONLY)
     private TenantId tenantId;
 
-    @Schema(description = "JSON object with Customer Id", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(description = "JSON object with Customer Id. Derived from the originator entity owner and cannot be set independently; any value supplied in the request body must match the originator's customer or the request is rejected.", accessMode = Schema.AccessMode.READ_ONLY)
     private CustomerId customerId;
 
     @NoXss
@@ -90,6 +79,8 @@ public class Alarm extends BaseData<AlarmId> implements HasName, HasTenantId, Ha
     private boolean propagate;
     @Schema(description = "Propagation flag to specify if alarm should be propagated to the owner (tenant or customer) of alarm originator", example = "true")
     private boolean propagateToOwner;
+    @Schema(description = "Propagation flag to specify if alarm should be propagated to the owner (tenant or customer) and all parent owners in the customer hierarchy", example = "true")
+    private boolean propagateToOwnerHierarchy;
     @Schema(description = "Propagation flag to specify if alarm should be propagated to the tenant entity", example = "true")
     private boolean propagateToTenant;
     @Schema(description = "JSON array of relation types that should be used for propagation. " +
@@ -124,6 +115,7 @@ public class Alarm extends BaseData<AlarmId> implements HasName, HasTenantId, Ha
         this.details = alarm.getDetails();
         this.propagate = alarm.isPropagate();
         this.propagateToOwner = alarm.isPropagateToOwner();
+        this.propagateToOwnerHierarchy = alarm.isPropagateToOwnerHierarchy();
         this.propagateToTenant = alarm.isPropagateToTenant();
         this.propagateRelationTypes = alarm.getPropagateRelationTypes();
     }
@@ -133,6 +125,12 @@ public class Alarm extends BaseData<AlarmId> implements HasName, HasTenantId, Ha
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "representing type of the Alarm", example = "High Temperature Alarm")
     public String getName() {
         return type;
+    }
+
+    @Override
+    @JsonIgnore
+    public EntityType getEntityType() {
+        return EntityType.ALARM;
     }
 
     @Schema(description = "JSON object with the alarm Id. " +

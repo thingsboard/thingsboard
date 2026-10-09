@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.ota;
 
 import com.google.common.hash.HashFunction;
@@ -29,7 +17,9 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
@@ -38,14 +28,17 @@ import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
-import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
+import org.thingsboard.server.exception.DataValidationException;
 
 import java.nio.ByteBuffer;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
@@ -202,15 +195,17 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
             publishEvictEvent(new OtaPackageCacheEvictEvent(otaPackageId));
             eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(otaPackageId).build());
         } catch (Exception t) {
-            ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
-            if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("fk_firmware_device")) {
+            ConstraintViolationException e = DaoUtil.extractConstraintViolationException(t).orElse(null);
+            if (e != null && DaoUtil.constraintNameMatches(e.getConstraintName(), "fk_firmware_device")) {
                 throw new DataValidationException("The otaPackage referenced by the devices cannot be deleted!");
-            } else if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("fk_firmware_device_profile")) {
+            } else if (e != null && DaoUtil.constraintNameMatches(e.getConstraintName(), "fk_firmware_device_profile")) {
                 throw new DataValidationException("The otaPackage referenced by the device profile cannot be deleted!");
-            } else if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("fk_software_device")) {
+            } else if (e != null && DaoUtil.constraintNameMatches(e.getConstraintName(), "fk_software_device")) {
                 throw new DataValidationException("The software referenced by the devices cannot be deleted!");
-            } else if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("fk_software_device_profile")) {
+            } else if (e != null && DaoUtil.constraintNameMatches(e.getConstraintName(), "fk_software_device_profile")) {
                 throw new DataValidationException("The software referenced by the device profile cannot be deleted!");
+            } else if (e != null && DaoUtil.constraintNameMatches(e.getConstraintName(), "fk_ota_package_device_group_ota_package")) {
+                throw new DataValidationException("The firmware referenced by the device group cannot be deleted!");
             } else {
                 throw t;
             }
@@ -247,6 +242,21 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
     }
 
     @Override
+    public OtaPackageInfo findOtaPackageInfoByDeviceIdAndType(DeviceId deviceId, OtaPackageType type) {
+        log.trace("Executing findOtaPackageInfoByDeviceIdAndType [{}] [{}]", deviceId, type);
+        validateId(deviceId, id -> "Incorrect deviceId " + id);
+        return otaPackageInfoDao.findOtaPackageInfoByDeviceIdAndType(deviceId.getId(), type);
+    }
+
+    @Override
+    public PageData<OtaPackageInfo> findOtaPackageInfosByGroupIdAndHasData(EntityGroupId deviceGroupId, OtaPackageType type, PageLink pageLink) {
+        log.trace("Executing findOtaPackagesByGroupIdAndHasData, groupId [{}], pageLink [{}]", deviceGroupId, pageLink);
+        validateId(deviceGroupId, id -> "Incorrect deviceGroupId " + id);
+        validatePageLink(pageLink);
+        return otaPackageInfoDao.findOtaPackageInfosByGroupIdAndHasData(deviceGroupId.getId(), type, pageLink);
+    }
+
+    @Override
     public long sumDataSizeByTenantId(TenantId tenantId) {
         return otaPackageDao.sumDataSizeByTenantId(tenantId);
     }
@@ -274,6 +284,10 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
             deleteOtaPackage(tenantId, entity.getId());
         }
     };
+
+    private static List<OtaPackageId> toOtaPackageInfoKey(OtaPackageId otaPackageId) {
+        return Collections.singletonList(otaPackageId);
+    }
 
     @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {

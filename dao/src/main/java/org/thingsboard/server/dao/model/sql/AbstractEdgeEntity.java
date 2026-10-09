@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -32,8 +20,10 @@ import org.thingsboard.server.dao.util.mapping.JsonConverter;
 
 import java.util.UUID;
 
+import static org.thingsboard.server.dao.model.ModelConstants.EDGE_CLOUD_ENDPOINT_KEY_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_CUSTOMER_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_LABEL_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.EDGE_LICENSE_KEY_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_NAME_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_ROOT_RULE_CHAIN_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_ROUTING_KEY_PROPERTY;
@@ -70,6 +60,12 @@ public abstract class AbstractEdgeEntity<T extends Edge> extends BaseVersionedEn
     @Column(name = EDGE_SECRET_PROPERTY)
     private String secret;
 
+    @Column(name = EDGE_LICENSE_KEY_PROPERTY)
+    private String edgeLicenseKey;
+
+    @Column(name = EDGE_CLOUD_ENDPOINT_KEY_PROPERTY)
+    private String cloudEndpoint;
+
     @Convert(converter = JsonConverter.class)
     @Column(name = ModelConstants.EDGE_ADDITIONAL_INFO_PROPERTY)
     private JsonNode additionalInfo;
@@ -94,6 +90,8 @@ public abstract class AbstractEdgeEntity<T extends Edge> extends BaseVersionedEn
         this.label = edge.getLabel();
         this.routingKey = edge.getRoutingKey();
         this.secret = edge.getSecret();
+        this.edgeLicenseKey = edge.getEdgeLicenseKey();
+        this.cloudEndpoint = edge.getCloudEndpoint();
         this.additionalInfo = edge.getAdditionalInfo();
     }
 
@@ -107,6 +105,8 @@ public abstract class AbstractEdgeEntity<T extends Edge> extends BaseVersionedEn
         this.label = edgeEntity.getLabel();
         this.routingKey = edgeEntity.getRoutingKey();
         this.secret = edgeEntity.getSecret();
+        this.edgeLicenseKey = edgeEntity.getEdgeLicenseKey();
+        this.cloudEndpoint = edgeEntity.getCloudEndpoint();
         this.additionalInfo = edgeEntity.getAdditionalInfo();
     }
 
@@ -128,6 +128,8 @@ public abstract class AbstractEdgeEntity<T extends Edge> extends BaseVersionedEn
         edge.setLabel(label);
         edge.setRoutingKey(routingKey);
         edge.setSecret(secret);
+        edge.setEdgeLicenseKey(edgeLicenseKey);
+        edge.setCloudEndpoint(cloudEndpoint);
         edge.setAdditionalInfo(additionalInfo);
         return edge;
     }

@@ -1,19 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <!DOCTYPE configuration>
@@ -34,6 +24,43 @@
         </encoder>
     </appender>
 
+    <appender name="licenseLogAppender"
+              class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${pkg.logFolder}/tb-license.log</file>
+        <rollingPolicy
+                class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${pkg.logFolder}/tb-license.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>100MB</maxFileSize>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>3GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{ISO8601} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="licenseOutputLogAppender" class="ch.qos.logback.core.ConsoleAppender">
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>INFO</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+        <encoder>
+            <pattern>%msg %nopex %n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="licenseErrorLogAppender" class="ch.qos.logback.core.ConsoleAppender">
+        <target>System.err</target>
+        <withJansi>true</withJansi>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>WARN</level>
+        </filter>
+        <encoder>
+            <pattern>%highlight([%-5level] %msg %n) %nopex</pattern>
+        </encoder>
+    </appender>
+
     <logger name="org.thingsboard.server" level="INFO" />
     <logger name="com.microsoft.azure.servicebus.primitives.CoreMessageReceiver" level="OFF" />
     <logger name="org.apache.kafka.common.utils.AppInfoParser" level="WARN"/>
@@ -42,5 +69,17 @@
     <root level="INFO">
         <appender-ref ref="fileLogAppender"/>
     </root>
+
+    <logger name="org.thingsboard.license.client" level="INFO">
+        <appender-ref ref="licenseLogAppender" />
+        <appender-ref ref="licenseOutputLogAppender" />
+        <appender-ref ref="licenseErrorLogAppender" />
+    </logger>
+
+    <logger name="org.thingsboard.server.dao.subscription" level="INFO">
+        <appender-ref ref="licenseLogAppender" />
+        <appender-ref ref="licenseOutputLogAppender" />
+        <appender-ref ref="licenseErrorLogAppender" />
+    </logger>
 
 </configuration>

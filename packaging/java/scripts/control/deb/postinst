@@ -5,6 +5,12 @@ set -e
 mkdir -m 0755 -p ${pkg.logFolder}
 chown -R ${pkg.user}: ${pkg.logFolder}
 chown -R ${pkg.user}: ${pkg.installFolder}
+
+# 4.4 folded the twilio rule nodes into the boot jar; the leftover extension jar is an unrelocated
+# fat jar that shadows core libraries JVM-wide through LOADER_PATH. Packages without an extensions/
+# directory are unaffected.
+rm -f ${pkg.installFolder}/extensions/rule-node-twilio-sms*.jar
+
 systemctl --no-reload enable ${pkg.name}.service >/dev/null 2>&1 || :
 
 exit 0

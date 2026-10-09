@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { NgModule, SecurityContext } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FooterComponent } from '@shared/components/footer.component';
@@ -64,10 +51,13 @@ import { ShareButtonDirective } from 'ngx-sharebuttons';
 import { HotkeyModule } from 'angular2-hotkeys';
 import { ColorPickerModule } from '@iplab/ngx-color-picker';
 import { NgxHmCarouselComponent, NgxHmCarouselDynamicDirective, NgxHmCarouselItemDirective } from 'ngx-hm-carousel';
-import { EditorModule, TINYMCE_SCRIPT_SRC } from '@tinymce/tinymce-angular';
+import { EditorModule, HUGERTE_SCRIPT_SRC } from '@hugerte/hugerte-angular';
+import { HUGERTE_ASSETS_PATH } from '@shared/models/hugerte/hugerte.models';
 import { UserMenuComponent } from '@shared/components/user-menu.component';
+import { AutofocusDirective } from '@shared/directives/auto-focus.directive';
 import { TruncateWithTooltipDirective } from '@shared/directives/truncate-with-tooltip.directive';
 import { ContextMenuDirective } from '@shared/directives/context-menu.directive';
+import { ChipOverflowDirective } from '@shared/directives/chip-overflow.directive';
 import { NospacePipe } from '@shared/pipe/nospace.pipe';
 import { TranslateModule } from '@ngx-translate/core';
 import { TbCheckboxComponent } from '@shared/components/tb-checkbox.component';
@@ -94,7 +84,12 @@ import { EntityAutocompleteComponent } from '@shared/components/entity/entity-au
 import { EntityListComponent } from '@shared/components/entity/entity-list.component';
 import { EntityTypeSelectComponent } from '@shared/components/entity/entity-type-select.component';
 import { EntitySelectComponent } from '@shared/components/entity/entity-select.component';
+import { EntityGroupAutocompleteComponent } from '@shared/components/group/entity-group-autocomplete.component';
+import { OwnerAutocompleteComponent } from '@shared/components/group/owner-autocomplete.component';
+import { EntityGroupSelectComponent } from '@shared/components/group/entity-group-select.component';
+import { EntityGroupListComponent } from '@shared/components/group/entity-group-list.component';
 import { DatetimeComponent } from '@shared/components/time/datetime.component';
+import { TimezoneSelectComponent } from '@shared/components/time/timezone-select.component';
 import { EntityKeysListComponent } from '@shared/components/entity/entity-keys-list.component';
 import { SocialSharePanelComponent } from '@shared/components/socialshare-panel.component';
 import { StringItemsListComponent } from '@shared/components/string-items-list.component';
@@ -141,14 +136,26 @@ import { TbJsonToStringDirective } from '@shared/components/directives/tb-json-t
 import { JsonObjectEditDialogComponent } from '@shared/components/dialog/json-object-edit-dialog.component';
 import { HistorySelectorComponent } from '@shared/components/time/history-selector/history-selector.component';
 import { EntityGatewaySelectComponent } from '@shared/components/entity/entity-gateway-select.component';
+import {
+  HasEntityGroupPermissionPipe,
+  HasGenericPermissionPipe,
+  HasGroupEntityOrGenericPermissionPipe,
+  HasGroupEntityPermissionPipe
+} from '@shared/pipe/permission.pipes';
+import { OriginatorSelectComponent } from '@shared/components/originator-select.component';
+import { ProgressDialogComponent } from '@shared/components/dialog/progress-dialog.component';
+import { FullCalendarModule } from '@fullcalendar/angular';
 import { DndModule } from 'ngx-drag-drop';
 import { QueueAutocompleteComponent } from '@shared/components/queue/queue-autocomplete.component';
 import { ContactComponent } from '@shared/components/contact.component';
-import { TimezoneSelectComponent } from '@shared/components/time/timezone-select.component';
 import { FileSizePipe } from '@shared/pipe/file-size.pipe';
-import { WidgetsBundleSearchComponent } from '@shared/components/widgets-bundle-search.component';
 import { SelectableColumnsPipe } from '@shared/pipe/selectable-columns.pipe';
 import { QuickTimeIntervalComponent } from '@shared/components/time/quick-time-interval.component';
+import { GroupPermissionsComponent } from '@shared/components/role/group-permissions.component';
+import { GroupPermissionDialogComponent } from '@shared/components/role/group-permission-dialog.component';
+import { ShareEntityGroupComponent } from '@shared/components/group/share-entity-group.component';
+import { EntityLimitDialogComponent } from '@shared/components/dialog/entity-limit-dialog.component';
+import { EdgeEntityGroupListComponent } from '@shared/components/group/edge-entity-group-list.component';
 import { OtaPackageAutocompleteComponent } from '@shared/components/ota-package/ota-package-autocomplete.component';
 import { MAT_DATE_LOCALE } from '@angular/material/core';
 import { CopyButtonComponent } from '@shared/components/button/copy-button.component';
@@ -171,6 +178,7 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
 import { MultipleImageInputComponent } from '@shared/components/multiple-image-input.component';
 import { BranchAutocompleteComponent } from '@shared/components/vc/branch-autocomplete.component';
 import { PhoneInputComponent } from '@shared/components/phone-input.component';
+import { TbSparkLineComponent } from './components/spark-line/tb-spark-line.component';
 import { CustomDateAdapter } from '@shared/adapter/custom-datatime-adapter';
 import { CustomPaginatorIntl } from '@shared/services/custom-paginator-intl';
 import { TbScriptLangComponent } from '@shared/components/script-lang.component';
@@ -179,6 +187,7 @@ import { TemplateAutocompleteComponent } from '@shared/components/notification/t
 import { SlackConversationAutocompleteComponent } from '@shared/components/slack-conversation-autocomplete.component';
 import { DateAgoPipe } from '@shared/pipe/date-ago.pipe';
 import { ColorPickerComponent } from '@shared/components/color-picker/color-picker.component';
+import { ThemeColorSelectComponent } from '@shared/components/theme-color-select.component';
 import { ResourceAutocompleteComponent } from '@shared/components/resource/resource-autocomplete.component';
 import { ShortNumberPipe } from '@shared/pipe/short-number.pipe';
 import { ToggleHeaderComponent, ToggleOption } from '@shared/components/toggle-header.component';
@@ -190,6 +199,7 @@ import { MaterialIconsComponent } from '@shared/components/material-icons.compon
 import { ColorPickerPanelComponent } from '@shared/components/color-picker/color-picker-panel.component';
 import { TbIconComponent } from '@shared/components/icon.component';
 import { HintTooltipIconComponent } from '@shared/components/hint-tooltip-icon.component';
+import { StringPatternAutocompleteComponent } from '@shared/components/string-pattern-autocomplete.component';
 import { StringAutocompleteComponent } from '@shared/components/string-autocomplete.component';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { ImportExportService } from '@shared/import-export/import-export.service';
@@ -218,6 +228,7 @@ import { ScadaSymbolInputComponent } from '@shared/components/image/scada-symbol
 import { CountryAutocompleteComponent } from '@shared/components/country-autocomplete.component';
 import { CountryData } from '@shared/models/country.models';
 import { SvgXmlComponent } from '@shared/components/svg-xml.component';
+import { CustomMenuAutocompleteComponent } from '@shared/components/custom-menu-autocomplete.component';
 import { DatapointsLimitComponent } from '@shared/components/time/datapoints-limit.component';
 import { AggregationTypeSelectComponent } from '@shared/components/time/aggregation/aggregation-type-select.component';
 import {
@@ -231,17 +242,39 @@ import { JsFuncModulesComponent } from '@shared/components/js-func-modules.compo
 import { JsFuncModuleRowComponent } from '@shared/components/js-func-module-row.component';
 import { EntityKeyAutocompleteComponent } from '@shared/components/entity/entity-key-autocomplete.component';
 import { DurationLeftPipe } from '@shared/pipe/duration-left.pipe';
+import { HtmlWithImagePipe } from '@shared/pipe/html-with-image.pipe';
 import { MqttVersionSelectComponent } from '@shared/components/mqtt-version-select.component';
-import { PasswordRequirementsTooltipComponent } from '@shared/components/password-requirements-tooltip.component';
-import { StringPatternAutocompleteComponent } from '@shared/components/string-pattern-autocomplete.component';
+import { SecretKeyInputComponent } from '@shared/components/secret-storage/secret-key-input.component';
+import { SecretFileInputComponent } from '@shared/components/secret-storage/secret-file-input.component';
+import { SecretStorageDialogComponent } from '@shared/components/secret-storage/secret-storage-dialog.component';
+import { SecretAutocompleteComponent } from '@shared/components/secret-storage/secret-autocomplete.component';
+import { ReportTemplateAutocompleteComponent } from '@shared/components/report/report-template-autocomplete.component';
+import { FormRowDirective } from '@shared/directives/form-row.directive';
 import { TimeUnitInputComponent } from '@shared/components/time-unit-input.component';
+import { DistanceUnitInputComponent } from '@shared/components/distance-unit-input.component';
 import { DateExpirationPipe } from '@shared/pipe/date-expiration.pipe';
 import { EntityLimitExceededDialogComponent } from '@shared/components/dialog/entity-limit-exceeded-dialog.component';
+import { PasswordRequirementsTooltipComponent } from '@shared/components/password-requirements-tooltip.component';
+import { TbCurrencyPipe } from '@shared/pipe/currency.pipe';
 import { DynamicMatDialogModule } from '@shared/components/dialog/dynamic/dynamic-dialog.module';
+import { RequestEdgeDialogComponent } from '@shared/components/dialog/request-edge-dialog.component';
+import { RequestWhiteLabelingDialogComponent } from '@shared/components/dialog/request-white-labeling-dialog.component';
+import { RequestTrendzDialogComponent } from '@shared/components/dialog/request-trendz-dialog.component';
 import { MAT_BUTTON_TOGGLE_DEFAULT_OPTIONS } from '@angular/material/button-toggle';
 import { RgbaInputComponent } from '@shared/components/color-picker/rgba-input.component';
 import { HslaInputComponent } from '@shared/components/color-picker/hsla-input.component';
 import { InputChangeDirective } from '@shared/components/color-picker/input-change.directive';
+import { PhotoSwipeGalleryDirective } from '@shared/directives/photoswipe-gallery.directive';
+import {
+  AutocompleteAutoScrollRepositionDirective
+} from '@shared/directives/autocomplete-auto-scroll-reposition.directive';
+import { SafeSvgPipe } from '@shared/pipe/safe-svg.pipe';
+import {
+  RequestPackWhiteLabelingDialogComponent
+} from '@shared/components/dialog/request-pack-white-labeling-dialog.component';
+import {
+  PePackOfferCardsComponent
+} from '@shared/components/license/pe-pack-offer-cards/pe-pack-offer-cards.component';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -259,17 +292,24 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     FileSizePipe,
     DateAgoPipe,
     SafePipe,
+    HasGenericPermissionPipe,
+    HasEntityGroupPermissionPipe,
+    HasGroupEntityPermissionPipe,
+    HasGroupEntityOrGenericPermissionPipe,
     ShortNumberPipe,
     ImagePipe,
+    HtmlWithImagePipe,
+    SafeSvgPipe,
     CustomTranslatePipe,
     DurationLeftPipe,
+    TbCurrencyPipe,
     {
       provide: FlowInjectionToken,
       useValue: Flow
     },
     {
-      provide: TINYMCE_SCRIPT_SRC,
-      useValue: 'assets/tinymce/tinymce.min.js'
+      provide: HUGERTE_SCRIPT_SRC,
+      useValue: `${HUGERTE_ASSETS_PATH}/hugerte.min.js`
     },
     {
       provide: MAT_DATE_LOCALE,
@@ -291,8 +331,6 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     {
       provide: MAT_AUTOCOMPLETE_DEFAULT_OPTIONS,
       useValue: {
-        hasBackdrop: true,
-        backdropClass: 'cdk-overlay-transparent-backdrop',
         hideSingleSelectionIndicator: true
       }
     },
@@ -361,6 +399,12 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     EntityListComponent,
     EntityTypeSelectComponent,
     EntitySelectComponent,
+    EntityGroupAutocompleteComponent,
+    OwnerAutocompleteComponent,
+    EntityGroupSelectComponent,
+    EntityGroupListComponent,
+    EdgeEntityGroupListComponent,
+    OriginatorSelectComponent,
     EntityKeysListComponent,
     EntityListSelectComponent,
     EntityTypeListComponent,
@@ -384,10 +428,17 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ConfirmDialogComponent,
     AlertDialogComponent,
     ErrorAlertDialogComponent,
+    ProgressDialogComponent,
     TodoDialogComponent,
     ColorPickerDialogComponent,
     MaterialIconsDialogComponent,
+    EntityLimitDialogComponent,
     EntityLimitExceededDialogComponent,
+    RequestEdgeDialogComponent,
+    RequestWhiteLabelingDialogComponent,
+    RequestPackWhiteLabelingDialogComponent,
+    PePackOfferCardsComponent,
+    RequestTrendzDialogComponent,
     ColorInputComponent,
     MaterialIconSelectComponent,
     NodeScriptTestDialogComponent,
@@ -399,8 +450,13 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     NavTreeComponent,
     LedLightComponent,
     MarkdownEditorComponent,
+    AutofocusDirective,
     TruncateWithTooltipDirective,
+    FormRowDirective,
     ContextMenuDirective,
+    ChipOverflowDirective,
+    PhotoSwipeGalleryDirective,
+    AutocompleteAutoScrollRepositionDirective,
     NospacePipe,
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,
@@ -410,19 +466,28 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     FileSizePipe,
     DateAgoPipe,
     ImagePipe,
+    HtmlWithImagePipe,
+    SafeSvgPipe,
     CustomTranslatePipe,
+    TbCurrencyPipe,
     SafePipe,
     ShortNumberPipe,
     SelectableColumnsPipe,
     KeyboardShortcutPipe,
+    HasGenericPermissionPipe,
+    HasEntityGroupPermissionPipe,
+    HasGroupEntityPermissionPipe,
+    HasGroupEntityOrGenericPermissionPipe,
     DateExpirationPipe,
     TbJsonToStringDirective,
     JsonObjectEditDialogComponent,
     HistorySelectorComponent,
     EntityGatewaySelectComponent,
     ContactComponent,
+    GroupPermissionsComponent,
+    GroupPermissionDialogComponent,
+    ShareEntityGroupComponent,
     OtaPackageAutocompleteComponent,
-    WidgetsBundleSearchComponent,
     CopyButtonComponent,
     TogglePasswordComponent,
     WidgetButtonToggleComponent,
@@ -430,10 +495,12 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     BranchAutocompleteComponent,
     CountryAutocompleteComponent,
     PhoneInputComponent,
+    TbSparkLineComponent,
     TbScriptLangComponent,
     NotificationComponent,
     TemplateAutocompleteComponent,
     SlackConversationAutocompleteComponent,
+    ThemeColorSelectComponent,
     ColorPickerComponent,
     ColorPickerPanelComponent,
     ResourceAutocompleteComponent,
@@ -442,6 +509,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ToggleSelectComponent,
     UnitInputComponent,
     UnitSettingsPanelComponent,
+    StringPatternAutocompleteComponent,
     StringAutocompleteComponent,
     MaterialIconsComponent,
     RuleChainSelectComponent,
@@ -465,11 +533,17 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     WidgetButtonComponent,
     HexInputComponent,
     ScadaSymbolInputComponent,
+    CustomMenuAutocompleteComponent,
     EntityKeyAutocompleteComponent,
     MqttVersionSelectComponent,
-    PasswordRequirementsTooltipComponent,
+    SecretKeyInputComponent,
+    SecretFileInputComponent,
+    SecretStorageDialogComponent,
+    SecretAutocompleteComponent,
+    ReportTemplateAutocompleteComponent,
     TimeUnitInputComponent,
-    StringPatternAutocompleteComponent,
+    PasswordRequirementsTooltipComponent,
+    DistanceUnitInputComponent,
     RgbaInputComponent,
     HslaInputComponent,
     InputChangeDirective
@@ -521,6 +595,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ShareButtonDirective,
     HotkeyModule,
     ColorPickerModule,
+    FullCalendarModule,
     NgxHmCarouselComponent,
     NgxHmCarouselDynamicDirective,
     NgxHmCarouselItemDirective,
@@ -584,6 +659,12 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     EntityListComponent,
     EntityTypeSelectComponent,
     EntitySelectComponent,
+    EntityGroupAutocompleteComponent,
+    OwnerAutocompleteComponent,
+    EntityGroupSelectComponent,
+    EntityGroupListComponent,
+    EdgeEntityGroupListComponent,
+    OriginatorSelectComponent,
     EntityKeysListComponent,
     EntityListSelectComponent,
     EntityTypeListComponent,
@@ -652,16 +733,24 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     NgxHmCarouselDynamicDirective,
     NgxHmCarouselItemDirective,
     EditorModule,
+    FullCalendarModule,
     DndModule,
     NgxFlowchartModule,
     MarkdownModule,
     ConfirmDialogComponent,
     AlertDialogComponent,
     ErrorAlertDialogComponent,
+    ProgressDialogComponent,
     TodoDialogComponent,
     ColorPickerDialogComponent,
     MaterialIconsDialogComponent,
+    EntityLimitDialogComponent,
     EntityLimitExceededDialogComponent,
+    RequestEdgeDialogComponent,
+    RequestWhiteLabelingDialogComponent,
+    RequestPackWhiteLabelingDialogComponent,
+    PePackOfferCardsComponent,
+    RequestTrendzDialogComponent,
     ColorInputComponent,
     MaterialIconSelectComponent,
     NodeScriptTestDialogComponent,
@@ -673,8 +762,13 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     NavTreeComponent,
     LedLightComponent,
     MarkdownEditorComponent,
+    AutofocusDirective,
     TruncateWithTooltipDirective,
+    FormRowDirective,
     ContextMenuDirective,
+    ChipOverflowDirective,
+    PhotoSwipeGalleryDirective,
+    AutocompleteAutoScrollRepositionDirective,
     NospacePipe,
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,
@@ -685,19 +779,28 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     FileSizePipe,
     DateAgoPipe,
     ImagePipe,
+    HtmlWithImagePipe,
+    SafeSvgPipe,
     CustomTranslatePipe,
+    TbCurrencyPipe,
     SafePipe,
     ShortNumberPipe,
     SelectableColumnsPipe,
     DateExpirationPipe,
     RouterModule,
+    HasGenericPermissionPipe,
+    HasEntityGroupPermissionPipe,
+    HasGroupEntityPermissionPipe,
+    HasGroupEntityOrGenericPermissionPipe,
     TranslateModule,
     JsonObjectEditDialogComponent,
     HistorySelectorComponent,
     EntityGatewaySelectComponent,
     ContactComponent,
+    GroupPermissionsComponent,
+    GroupPermissionDialogComponent,
+    ShareEntityGroupComponent,
     OtaPackageAutocompleteComponent,
-    WidgetsBundleSearchComponent,
     CopyButtonComponent,
     TogglePasswordComponent,
     WidgetButtonToggleComponent,
@@ -705,10 +808,12 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     BranchAutocompleteComponent,
     CountryAutocompleteComponent,
     PhoneInputComponent,
+    TbSparkLineComponent,
     TbScriptLangComponent,
     NotificationComponent,
     TemplateAutocompleteComponent,
     SlackConversationAutocompleteComponent,
+    ThemeColorSelectComponent,
     ColorPickerComponent,
     ColorPickerPanelComponent,
     ResourceAutocompleteComponent,
@@ -716,6 +821,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ToggleOption,
     ToggleSelectComponent,
     UnitInputComponent,
+    StringPatternAutocompleteComponent,
     StringAutocompleteComponent,
     MaterialIconsComponent,
     RuleChainSelectComponent,
@@ -738,11 +844,17 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ImageGalleryDialogComponent,
     WidgetButtonComponent,
     ScadaSymbolInputComponent,
+    CustomMenuAutocompleteComponent,
     EntityKeyAutocompleteComponent,
     MqttVersionSelectComponent,
-    PasswordRequirementsTooltipComponent,
+    SecretKeyInputComponent,
+    SecretFileInputComponent,
+    SecretStorageDialogComponent,
+    SecretAutocompleteComponent,
+    ReportTemplateAutocompleteComponent,
     TimeUnitInputComponent,
-    StringPatternAutocompleteComponent,
+    PasswordRequirementsTooltipComponent,
+    DistanceUnitInputComponent,
     DynamicMatDialogModule
   ]
 })

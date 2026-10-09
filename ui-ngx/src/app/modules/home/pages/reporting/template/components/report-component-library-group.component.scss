@@ -1,0 +1,11 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+.tb-report-component-library-group.tb-form-panel {
+  width: 234px;
+  padding: 12px 8px;
+  .mat-expansion-panel.tb-settings > {
+    .mat-expansion-panel-header {
+      padding-right: 6px;
+    }
+  }
+}

@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.entitiy;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -33,25 +21,31 @@ import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.converter.Converter;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.integration.Integration;
 import org.thingsboard.server.common.data.job.Job;
 import org.thingsboard.server.common.data.job.JobStatus;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
+import org.thingsboard.server.common.data.pat.ApiKey;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainType;
+import org.thingsboard.server.common.data.scheduler.SchedulerEvent;
+import org.thingsboard.server.common.data.secret.Secret;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
@@ -65,13 +59,20 @@ import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.RelationActionEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
+import org.thingsboard.server.dao.secret.SecretService;
 import org.thingsboard.server.dao.tenant.TenantService;
+import org.thingsboard.server.dao.trendz.TrendzSyncService;
 import org.thingsboard.server.gen.transport.TransportProtos.EntityActionEventProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldMsg;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.service.cf.CalculatedFieldCache;
+import org.thingsboard.server.service.scheduler.SchedulerService;
+import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
+import org.thingsboard.server.service.sync.vc.GitVersionControlQueueService;
+import org.thingsboard.server.service.sync.vc.repository.DefaultTbRepositorySettingsService;
 
+import java.util.Optional;
 import java.util.Set;
 
 @Slf4j
@@ -83,7 +84,12 @@ public class EntityStateSourcingListener {
     private final TbClusterService tbClusterService;
     private final EdgeSynchronizationManager edgeSynchronizationManager;
     private final JobManager jobManager;
+    private final SecretService secretService;
+    private final Optional<SchedulerService> schedulerService;
+    private final Optional<GitVersionControlQueueService> gitServiceQueue;
+    private final Optional<EntitiesVersionControlService> versionControlService;
     private final CalculatedFieldCache calculatedFieldCache;
+    private final Optional<TrendzSyncService> trendzSyncService;
 
     @PostConstruct
     public void init() {
@@ -111,7 +117,7 @@ public class EntityStateSourcingListener {
             case ASSET -> {
                 onAssetUpdate(event.getEntity(), event.getOldEntity());
             }
-            case ASSET_PROFILE, ENTITY_VIEW, NOTIFICATION_RULE, USER -> {
+            case ASSET_PROFILE, ENTITY_VIEW, NOTIFICATION_RULE -> {
                 tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityId, lifecycleEvent);
             }
             case RULE_CHAIN -> {
@@ -146,17 +152,67 @@ public class EntityStateSourcingListener {
                 ApiUsageState apiUsageState = (ApiUsageState) event.getEntity();
                 tbClusterService.onApiStateChange(apiUsageState, null);
             }
+            case INTEGRATION -> {
+                Integration integration = (Integration) event.getEntity();
+                if (!integration.isEdgeTemplate()) {
+                    tbClusterService.broadcastEntityStateChangeEvent(tenantId, integration.getId(), lifecycleEvent);
+                }
+            }
+            case CONVERTER -> {
+                Converter converter = (Converter) event.getEntity();
+                if (!converter.isEdgeTemplate()) {
+                    tbClusterService.broadcastEntityStateChangeEvent(tenantId, converter.getId(), lifecycleEvent);
+                }
+            }
+            case CUSTOMER -> {
+                tbClusterService.onCustomerUpdated((Customer) event.getEntity(), (Customer) event.getOldEntity());
+            }
+            case USER -> {
+                if (!isCreated) {
+                    tbClusterService.onUserUpdated((User) event.getEntity(), (User) event.getOldEntity());
+                }
+                tbClusterService.broadcastEntityStateChangeEvent(event.getTenantId(), event.getEntityId(), lifecycleEvent);
+            }
             case CALCULATED_FIELD -> {
                 onCalculatedFieldUpdate(event.getEntity(), event.getOldEntity());
             }
             case JOB -> {
                 onJobUpdate((Job) event.getEntity());
             }
-            case CUSTOMER -> {
-                tbClusterService.onCustomerUpdated((Customer) event.getEntity(), (Customer) event.getOldEntity());
+            case SECRET -> {
+                if (isCreated) {
+                    break;
+                }
+                Secret secret = (Secret) event.getEntity();
+                var entities = secretService.findEntitiesBySecret(tenantId, secret);
+                entities.forEach((type, entityInfos) -> {
+                    if (type == EntityType.RULE_CHAIN || type == EntityType.INTEGRATION) {
+                        entityInfos.forEach(entityInfo -> tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityInfo.getId(), lifecycleEvent));
+                    } else if (type == EntityType.ADMIN_SETTINGS && gitServiceQueue.isPresent() && versionControlService.isPresent()) {
+                        entityInfos.stream()
+                                .filter(entityInfo -> DefaultTbRepositorySettingsService.SETTINGS_KEY.equals(entityInfo.getName())).findFirst()
+                                .ifPresent(entityInfo -> {
+                                    var vcSettings = versionControlService.get().getVersionControlSettings(tenantId);
+                                    gitServiceQueue.get().initRepository(tenantId, vcSettings);
+                                });
+                    }
+                });
             }
-            default -> {
+            case SCHEDULER_EVENT -> {
+                SchedulerEvent schedulerEvent = (SchedulerEvent) event.getEntity();
+                if (isCreated) {
+                    schedulerService.ifPresent(service -> service.onSchedulerEventAdded(schedulerEvent));
+                } else {
+                    schedulerService.ifPresent(service -> service.onSchedulerEventUpdated(schedulerEvent));
+                }
             }
+            case API_KEY -> {
+                if (!isCreated) {
+                    trendzSyncService.ifPresent(service ->
+                            service.performApiKeyRotationSync((ApiKey) event.getEntity(), (ApiKey) event.getOldEntity()));
+                }
+            }
+            default -> {}
         }
     }
 
@@ -224,8 +280,22 @@ public class EntityStateSourcingListener {
                 CalculatedField calculatedField = (CalculatedField) event.getEntity();
                 tbClusterService.onCalculatedFieldDeleted(calculatedField, TbQueueCallback.EMPTY);
             }
-            default -> {
+            case INTEGRATION -> {
+                Integration integration = (Integration) event.getEntity();
+                if (!integration.isEdgeTemplate()) {
+                    tbClusterService.broadcastEntityStateChangeEvent(integration.getTenantId(), integration.getId(), ComponentLifecycleEvent.DELETED);
+                }
             }
+            case CONVERTER -> {
+                Converter converter = (Converter) event.getEntity();
+                if (!converter.isEdgeTemplate()) {
+                    tbClusterService.broadcastEntityStateChangeEvent(tenantId, converter.getId(), ComponentLifecycleEvent.DELETED);
+                }
+            }
+            case SCHEDULER_EVENT -> {
+                schedulerService.ifPresent(service -> service.onSchedulerEventDeleted((SchedulerEvent) event.getEntity()));
+            }
+            default -> {}
         }
     }
 

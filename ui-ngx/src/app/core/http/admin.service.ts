@@ -1,28 +1,16 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable } from '@angular/core';
 import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
-import { Observable } from 'rxjs';
+import { finalize, Observable, shareReplay } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import {
   AdminSettings,
   AutoCommitSettings,
   FeaturesInfo,
   JwtSettings,
+  LicenseUsageInfo,
   MailConfigTemplate,
   MailServerSettings,
   RepositorySettings,
@@ -34,6 +22,7 @@ import {
 import { EntitiesVersionControlService } from '@core/http/entities-version-control.service';
 import { tap } from 'rxjs/operators';
 import { LoginResponse } from '@shared/models/login.models';
+import { SubscriptionInfo } from '@shared/models/subscription.models';
 
 @Injectable({
   providedIn: 'root'
@@ -45,8 +34,9 @@ export class AdminService {
     private entitiesVersionControlService: EntitiesVersionControlService
   ) { }
 
-  public getAdminSettings<T>(key: string, config?: RequestConfig): Observable<AdminSettings<T>> {
-    return this.http.get<AdminSettings<T>>(`/api/admin/settings/${key}`, defaultHttpOptionsFromConfig(config));
+  public getAdminSettings<T>(key: string, systemByDefault?: boolean, config?: RequestConfig): Observable<AdminSettings<T>> {
+    return this.http.get<AdminSettings<T>>(`/api/admin/settings/${key}?systemByDefault=${systemByDefault ? 'true': 'false'}`,
+      defaultHttpOptionsFromConfig(config));
   }
 
   public saveAdminSettings<T>(adminSettings: AdminSettings<T>,
@@ -137,6 +127,35 @@ export class AdminService {
   public getFeaturesInfo(config?: RequestConfig): Observable<FeaturesInfo> {
     return this.http.get<FeaturesInfo>('/api/admin/featuresInfo', defaultHttpOptionsFromConfig(config));
   }
+
+  public getLicenseUsageInfo(config?: RequestConfig): Observable<LicenseUsageInfo> {
+    return this.http.get<LicenseUsageInfo>('/api/admin/licenseUsageInfo', defaultHttpOptionsFromConfig(config));
+  }
+
+  public getSubscriptionInfo(config?: RequestConfig): Observable<SubscriptionInfo> {
+    return this.http.get<SubscriptionInfo>('/api/admin/subscriptionInfo', defaultHttpOptionsFromConfig(config));
+  }
+
+  /**
+   * Coalesces concurrent callers onto a single in-flight request. Two overlapping refreshes (router
+   * resolver + a manual "refresh" click ~60 ms apart is enough) would race the license client's monotonic
+   * request-sequence number and one of them would come back 403 "License required: the instance is not
+   * activated" over a licence that is fine, locking the management plane on the backend. Sharing the same
+   * observable and clearing the reference on completion keeps subsequent callers free to trigger a fresh
+   * refresh.
+   */
+  public refreshLicense(config?: RequestConfig): Observable<SubscriptionInfo> {
+    if (!this.refreshLicenseInFlight$) {
+      this.refreshLicenseInFlight$ = this.http.post<SubscriptionInfo>('/api/admin/refreshLicense', null,
+        defaultHttpOptionsFromConfig(config)).pipe(
+        finalize(() => this.refreshLicenseInFlight$ = null),
+        shareReplay({ bufferSize: 1, refCount: false })
+      );
+    }
+    return this.refreshLicenseInFlight$;
+  }
+
+  private refreshLicenseInFlight$: Observable<SubscriptionInfo> | null = null;
 
   public getLoginProcessingUrl(config?: RequestConfig): Observable<string> {
     return this.http.get<string>(`/api/admin/mail/oauth2/loginProcessingUrl`, defaultHttpOptionsFromConfig(config));

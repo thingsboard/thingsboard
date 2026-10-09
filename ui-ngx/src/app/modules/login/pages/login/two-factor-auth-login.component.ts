@@ -1,20 +1,7 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { Component, OnDestroy, OnInit } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { Component, HostBinding, OnDestroy, OnInit } from '@angular/core';
 import { AuthService } from '@core/auth/auth.service';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -30,6 +17,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { interval, Subscription } from 'rxjs';
 import { isEqual } from '@core/utils';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
+import { WhiteLabelingService } from '@core/http/white-labeling.service';
 
 @Component({
     selector: 'tb-two-factor-auth-login',
@@ -38,6 +26,8 @@ import { ActionNotificationShow } from '@core/notification/notification.actions'
     standalone: false
 })
 export class TwoFactorAuthLoginComponent extends PageComponent implements OnInit, OnDestroy {
+
+  @HostBinding('class') class = 'tb-custom-css';
 
   private providersInfo: TwoFaProviderInfo[];
   private prevProvider: TwoFactorAuthProviderType;
@@ -71,7 +61,8 @@ export class TwoFactorAuthLoginComponent extends PageComponent implements OnInit
               private twoFactorAuthService: TwoFactorAuthenticationService,
               private authService: AuthService,
               private translate: TranslateService,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              public wl: WhiteLabelingService) {
     super(store);
   }
 

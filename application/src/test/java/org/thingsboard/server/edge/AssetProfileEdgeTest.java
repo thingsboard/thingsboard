@@ -1,26 +1,16 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.edge;
 
 import com.google.protobuf.AbstractMessage;
 import org.junit.Assert;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.asset.AssetProfile;
+import org.thingsboard.server.common.data.group.EntityGroup;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.RuleChainId;
@@ -89,7 +79,11 @@ public class AssetProfileEdgeTest extends AbstractEdgeTest {
     @Test
     public void testSendAssetProfileToCloud() throws Exception {
         RuleChainId edgeRuleChainId = createEdgeRuleChainAndAssignToEdge("Asset Profile Rule Chain");
-        DashboardId dashboardId = createDashboardAndAssignToEdge("Asset Profile Dashboard");
+
+        EntityGroup dashboardEntityGroup = createEntityGroupAndAssignToEdge(EntityType.DASHBOARD, "DashboardGroup", tenantId);
+        edgeImitator.expectMessageAmount(1);
+        DashboardId dashboardId = saveDashboard("Edge Dashboard", dashboardEntityGroup.getId()).getId();
+        Assert.assertTrue(edgeImitator.waitForMessages());
 
         AssetProfile assetProfileOnEdge = buildAssetProfileForUplinkMsg("Asset Profile On Edge");
         assetProfileOnEdge.setDefaultRuleChainId(edgeRuleChainId);
@@ -134,7 +128,7 @@ public class AssetProfileEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(assetProfile.getUuidId().getLeastSignificantBits(), assetProfileUpdateMsg.getIdLSB());
 
         // cleanup
-        unAssignFromEdgeAndDeleteDashboard(dashboardId);
+        unAssignEntityGroupFromEdge(dashboardEntityGroup);
         unAssignFromEdgeAndDeleteRuleChain(edgeRuleChainId);
     }
 

@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { CmdWrapper, WsService, WsSubscriber } from '@shared/models/websocket/websocket.models';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -30,6 +17,7 @@ import {
 } from '@shared/models/telemetry/telemetry.models';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { NotificationType } from '@core/notification/notification.models';
+import { DashboardReportService } from '@core/http/dashboard-report.service';
 import Timeout = NodeJS.Timeout;
 
 const RECONNECT_INTERVAL = 2000;
@@ -74,7 +62,8 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
                         protected ngZone: NgZone,
                         protected apiEndpoint: string,
                         protected cmdWrapper: CmdWrapper,
-                        protected window: Window) {
+                        protected window: Window,
+                        protected reportService?: DashboardReportService) {
     this.store.pipe(select(selectIsAuthenticated)).subscribe(
       () => {
         this.reset(true);
@@ -96,13 +85,26 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
     this.wsUri += `//${this.window.location.hostname}:${port}/${apiEndpoint}`;
   }
 
-  abstract subscribe(subscriber: WsSubscriber);
+  abstract subscribe(subscriber: WsSubscriber, skipPublish?: boolean);
 
   abstract update(subscriber: T);
 
-  abstract unsubscribe(subscriber: T);
+  abstract unsubscribe(subscriber: T, skipPublish?: boolean);
 
   abstract processOnMessage(message: WebsocketDataMsg);
+
+  public batchSubscribe(subscribers: T[]) {
+    subscribers.forEach((subscriber) => {
+      this.subscribe(subscriber, true);
+    });
+  }
+
+  public batchUnsubscribe(subscribers: T[]) {
+    subscribers.forEach((subscriber) => {
+      this.unsubscribe(subscriber, true);
+      subscriber.complete();
+    });
+  }
 
   protected nextCmdId(): number {
     this.lastCmdId++;
@@ -111,7 +113,11 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
 
   protected publishCommands() {
     while (this.isOpened && this.cmdWrapper.hasCommands()) {
-      this.dataStream.next(this.cmdWrapper.preparePublishCommands(MAX_PUBLISH_COMMANDS));
+      const cmds = this.cmdWrapper.preparePublishCommands(MAX_PUBLISH_COMMANDS);
+      if (this.reportService?.reportView) {
+        this.reportService.onSendWsCommands(cmds);
+      }
+      this.dataStream.next(cmds);
       this.checkToClose();
     }
     if (this.subscribersCount > 0) {
@@ -229,6 +235,9 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
   }
 
   private onMessage(message: CmdUpdateMsg) {
+    if (this.reportService?.reportView) {
+      this.reportService.onWsCmdUpdateMessage(message);
+    }
     if (message.errorCode) {
       this.showWsError(message.errorCode, message.errorMsg);
     } else {

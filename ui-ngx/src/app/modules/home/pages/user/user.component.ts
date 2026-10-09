@@ -1,32 +1,22 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { ChangeDetectorRef, Component, Inject, Optional } from '@angular/core';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { EntityComponent } from '../../components/entity/entity.component';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
-import { User } from '@shared/models/user.model';
-import { selectAuth } from '@core/auth/auth.selectors';
+import { UserInfo } from '@shared/models/user.model';
+import { getCurrentAuthUser, selectAuth, selectAuthUser } from '@core/auth/auth.selectors';
 import { map } from 'rxjs/operators';
 import { Authority } from '@shared/models/authority.enum';
 import { isDefinedAndNotNull, validateEmail } from '@core/utils';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 import { ActionNotificationShow } from '@app/core/notification/notification.actions';
 import { TranslateService } from '@ngx-translate/core';
+import { GroupEntityComponent } from '@home/components/group/group-entity.component';
+import { GroupEntityTableConfig } from '@home/models/group/group-entities-table-config.models';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { CMAssigneeType, CMScope } from '@shared/models/custom-menu.models';
 import { environment as env } from '@env/environment';
 import { UnitSystems } from '@shared/models/unit.models';
 
@@ -36,7 +26,11 @@ import { UnitSystems } from '@shared/models/unit.models';
     styleUrls: ['./user.component.scss'],
     standalone: false
 })
-export class UserComponent extends EntityComponent<User>{
+export class UserComponent extends GroupEntityComponent<UserInfo>{
+
+  CMScope = CMScope;
+
+  CMAssigneeType = CMAssigneeType;
 
   authority = Authority;
   languageList = env.supportedLangs;
@@ -47,13 +41,27 @@ export class UserComponent extends EntityComponent<User>{
     map((auth) => auth.userTokenAccessEnabled)
   );
 
+  whiteLabelingAllowed$ = this.store.pipe(
+    select(selectAuth),
+    map((auth) => auth.whiteLabelingAllowed)
+  );
+
+  isSysAdmin$ = this.store.pipe(
+    select(selectAuthUser),
+    map((auth) => auth?.authority === Authority.SYS_ADMIN)
+  );
+
+  private authUser = getCurrentAuthUser(this.store);
+
   constructor(protected store: Store<AppState>,
-              @Optional() @Inject('entity') protected entityValue: User,
-              @Optional() @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<User>,
-              public fb: UntypedFormBuilder,
+              @Optional() @Inject('entity') protected entityValue: UserInfo,
+              @Optional() @Inject('entitiesTableConfig')
+              protected entitiesTableConfigValue: EntityTableConfig<UserInfo> | GroupEntityTableConfig<UserInfo>,
+              protected fb: UntypedFormBuilder,
               protected cd: ChangeDetectorRef,
-              protected translate: TranslateService) {
-    super(store, fb, entityValue, entitiesTableConfigValue, cd);
+              protected translate: TranslateService,
+              protected userPermissionsService: UserPermissionsService) {
+       super(store, fb, entityValue, entitiesTableConfigValue, cd, userPermissionsService);
   }
 
   hideDelete() {
@@ -64,6 +72,14 @@ export class UserComponent extends EntityComponent<User>{
     }
   }
 
+  isCurrentUser(): boolean {
+    return this.authUser.userId === this.entity?.id?.id;
+  }
+
+  isUserTenantAdmin(): boolean {
+    return this.entity?.authority === Authority.TENANT_ADMIN;
+  }
+
   isUserCredentialsEnabled(): boolean {
       return this.entity?.additionalInfo?.userCredentialsEnabled === true;
   }
@@ -72,7 +88,7 @@ export class UserComponent extends EntityComponent<User>{
     return this.entity?.additionalInfo?.userActivated === true;
   }
 
-  buildForm(entity: User): UntypedFormGroup {
+  buildForm(entity: UserInfo): UntypedFormGroup {
     return this.fb.group(
       {
         email: [entity ? entity.email : '', [Validators.required, validateEmail]],
@@ -90,12 +106,13 @@ export class UserComponent extends EntityComponent<User>{
             homeDashboardHideToolbar: [entity && entity.additionalInfo &&
             isDefinedAndNotNull(entity.additionalInfo.homeDashboardHideToolbar) ? entity.additionalInfo.homeDashboardHideToolbar : true]
           }
-        )
+        ),
+        customMenuId: [entity?.customMenuId]
       }
     );
   }
 
-  updateForm(entity: User) {
+  updateForm(entity: UserInfo) {
     this.entityForm.patchValue({email: entity.email});
     this.entityForm.patchValue({firstName: entity.firstName});
     this.entityForm.patchValue({lastName: entity.lastName});
@@ -114,6 +131,7 @@ export class UserComponent extends EntityComponent<User>{
     this.entityForm.patchValue({additionalInfo:
         {homeDashboardHideToolbar: entity.additionalInfo &&
           isDefinedAndNotNull(entity.additionalInfo.homeDashboardHideToolbar) ? entity.additionalInfo.homeDashboardHideToolbar : true}});
+    this.entityForm.patchValue({customMenuId: entity.customMenuId});
   }
 
   onUserIdCopied($event) {

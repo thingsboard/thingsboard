@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.security.auth.pat;
 
 import org.springframework.security.authentication.BadCredentialsException;
@@ -22,11 +10,16 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.pat.ApiKey;
+import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.pat.ApiKeyService;
 import org.thingsboard.server.service.security.auth.AbstractAuthenticationProvider;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.token.ApiKeyAuthRequest;
+import org.thingsboard.server.service.security.permission.UserPermissionsService;
 import org.thingsboard.server.service.user.cache.UserAuthDetailsCache;
 
 @Component
@@ -34,19 +27,24 @@ public class ApiKeyAuthenticationProvider extends AbstractAuthenticationProvider
 
     private final ApiKeyService apiKeyService;
 
-    public ApiKeyAuthenticationProvider(ApiKeyService apiKeyService, UserAuthDetailsCache userAuthDetailsCache) {
-        super(null, userAuthDetailsCache);
+    public ApiKeyAuthenticationProvider(ApiKeyService apiKeyService, UserAuthDetailsCache userAuthDetailsCache,
+                                        UserPermissionsService userPermissionsService, CustomerService customerService) {
+        super(customerService, userAuthDetailsCache, userPermissionsService);
         this.apiKeyService = apiKeyService;
     }
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         ApiKeyAuthRequest apiKeyAuthRequest = (ApiKeyAuthRequest) authentication.getCredentials();
-        SecurityUser securityUser = authenticate(apiKeyAuthRequest.apiKey());
+        SecurityUser securityUser = authenticate(apiKeyAuthRequest.apiKey(), apiKeyAuthRequest.userId(), apiKeyAuthRequest.customerId());
         return new ApiKeyAuthenticationToken(securityUser);
     }
 
     public SecurityUser authenticate(String key) {
+        return authenticate(key, null, null);
+    }
+
+    private SecurityUser authenticate(String key, UserId userIdInternal, CustomerId customerIdInternal) {
         if (StringUtils.isEmpty(key)) {
             throw new BadCredentialsException("Empty API key");
         }
@@ -60,8 +58,34 @@ public class ApiKeyAuthenticationProvider extends AbstractAuthenticationProvider
         if (apiKey.getExpirationTime() != 0 && apiKey.getExpirationTime() < System.currentTimeMillis()) {
             throw new CredentialsExpiredException("API key is expired");
         }
-        return super.authenticateByUserId(apiKey.getTenantId(), apiKey.getUserId());
+
+        ResolvedUser resolvedUser = resolveUser(apiKey, userIdInternal, customerIdInternal);
+
+        SecurityUser securityUser;
+
+        if (resolvedUser.isPublicCustomer()) {
+            securityUser = super.authenticateByPublicId(resolvedUser.customerId().toString(), "Internal API key", null);
+        } else {
+            securityUser = authenticateByUserId(resolvedUser.tenantId(), resolvedUser.userId(), apiKey.isInternal() ? apiKey.getPermissions() : null, apiKey.isInternal());
+        }
+
+        return securityUser;
     }
+
+    private ResolvedUser resolveUser(ApiKey apiKey, UserId userIdInternal, CustomerId customerIdInternal) {
+        if (apiKey.isInternal()) {
+            if (userIdInternal != null && !userIdInternal.isNullUid()) {
+                return new ResolvedUser(TenantId.SYS_TENANT_ID, userIdInternal, null, false);
+            } else if (customerIdInternal != null && !customerIdInternal.isNullUid()) {
+                return new ResolvedUser(TenantId.SYS_TENANT_ID, null, customerIdInternal, true);
+            }
+        }
+
+        // Use API key's user (for regular keys or internal without additional headers)
+        return new ResolvedUser(apiKey.getTenantId(), apiKey.getUserId(), null, false);
+    }
+
+    private record ResolvedUser(TenantId tenantId, UserId userId, CustomerId customerId, boolean isPublicCustomer) {}
 
     @Override
     public boolean supports(Class<?> authentication) {

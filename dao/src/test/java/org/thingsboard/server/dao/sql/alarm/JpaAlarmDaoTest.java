@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.alarm;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -135,7 +123,7 @@ public class JpaAlarmDaoTest extends AbstractJpaDaoTest {
         afterSave = alarmDao.findAlarmInfoById(tenantId, newAlarmId);
         assertEquals(afterSave, result.getAlarm());
 
-        alarmDao.clearAlarm(tenantId, result.getAlarm().getId(), System.currentTimeMillis(), result.getAlarm().getDetails());
+        alarmDao.clearAlarm(tenantId, result.getAlarm().getOriginator(), result.getAlarm().getId(), System.currentTimeMillis(), result.getAlarm().getDetails());
 
         request = AlarmCreateOrUpdateActiveRequest.builder()
                 .tenantId(tenantId)
@@ -153,7 +141,7 @@ public class JpaAlarmDaoTest extends AbstractJpaDaoTest {
         afterSave = alarmDao.findAlarmInfoById(tenantId, result.getAlarm().getUuidId());
         assertEquals(afterSave, result.getAlarm());
 
-        alarmDao.clearAlarm(tenantId, result.getAlarm().getId(), System.currentTimeMillis(), result.getAlarm().getDetails());
+        alarmDao.clearAlarm(tenantId, result.getAlarm().getOriginator(), result.getAlarm().getId(), System.currentTimeMillis(), result.getAlarm().getDetails());
 
         request = AlarmCreateOrUpdateActiveRequest.builder()
                 .tenantId(tenantId)
@@ -195,7 +183,7 @@ public class JpaAlarmDaoTest extends AbstractJpaDaoTest {
         UUID alarm1Id = UUID.fromString("d4b68f43-3e96-11e7-a884-898080180d6b");
         Alarm alarm = saveAlarm(alarm1Id, tenantId, originator1Id, "TEST_ALARM");
         long ackTs = System.currentTimeMillis();
-        AlarmApiCallResult result = alarmDao.acknowledgeAlarm(alarm.getTenantId(), alarm.getId(), ackTs);
+        AlarmApiCallResult result = alarmDao.acknowledgeAlarm(alarm.getTenantId(), alarm.getOriginator(), alarm.getId(), ackTs);
         AlarmInfo afterSave = alarmDao.findAlarmInfoById(alarm.getTenantId(), alarm.getUuidId());
         assertNotNull(result);
         assertTrue(result.isSuccessful());
@@ -204,7 +192,7 @@ public class JpaAlarmDaoTest extends AbstractJpaDaoTest {
         assertEquals(afterSave, result.getAlarm());
         assertEquals(ackTs, result.getAlarm().getAckTs());
         assertTrue(result.getAlarm().isAcknowledged());
-        result = alarmDao.acknowledgeAlarm(alarm.getTenantId(), alarm.getId(), ackTs + 1);
+        result = alarmDao.acknowledgeAlarm(alarm.getTenantId(), alarm.getOriginator(), alarm.getId(), ackTs + 1);
         assertNotNull(result);
         assertNotNull(result.getAlarm());
         assertEquals(afterSave, result.getAlarm());
@@ -222,7 +210,7 @@ public class JpaAlarmDaoTest extends AbstractJpaDaoTest {
         Alarm alarm = saveAlarm(alarm1Id, tenantId, originator1Id, "TEST_ALARM");
         long clearTs = System.currentTimeMillis();
         var details = JacksonUtil.newObjectNode().put("test", 123);
-        AlarmApiCallResult result = alarmDao.clearAlarm(alarm.getTenantId(), alarm.getId(), clearTs, details);
+        AlarmApiCallResult result = alarmDao.clearAlarm(alarm.getTenantId(), alarm.getOriginator(), alarm.getId(), clearTs, details);
         AlarmInfo afterSave = alarmDao.findAlarmInfoById(alarm.getTenantId(), alarm.getUuidId());
         assertNotNull(result);
         assertTrue(result.isSuccessful());
@@ -232,7 +220,7 @@ public class JpaAlarmDaoTest extends AbstractJpaDaoTest {
         assertEquals(clearTs, result.getAlarm().getClearTs());
         assertTrue(result.getAlarm().isCleared());
         assertEquals(details, result.getAlarm().getDetails());
-        result = alarmDao.clearAlarm(alarm.getTenantId(), alarm.getId(), clearTs + 1, JacksonUtil.newObjectNode());
+        result = alarmDao.clearAlarm(alarm.getTenantId(), alarm.getOriginator(), alarm.getId(), clearTs + 1, JacksonUtil.newObjectNode());
         assertNotNull(result);
         assertNotNull(result.getAlarm());
         assertEquals(afterSave, result.getAlarm());
@@ -249,7 +237,7 @@ public class JpaAlarmDaoTest extends AbstractJpaDaoTest {
         UUID alarm1Id = UUID.fromString("d4b68f43-3e96-11e7-a884-898080180d6b");
         Alarm alarm = saveAlarm(alarm1Id, tenantId, originator1Id, "TEST_ALARM");
         long clearTs = System.currentTimeMillis();
-        AlarmApiCallResult result = alarmDao.clearAlarm(alarm.getTenantId(), alarm.getId(), clearTs, null);
+        AlarmApiCallResult result = alarmDao.clearAlarm(alarm.getTenantId(), alarm.getOriginator(), alarm.getId(), clearTs, null);
         AlarmInfo afterSave = alarmDao.findAlarmInfoById(alarm.getTenantId(), alarm.getUuidId());
         assertNotNull(result);
         assertTrue(result.isSuccessful());
@@ -259,7 +247,7 @@ public class JpaAlarmDaoTest extends AbstractJpaDaoTest {
         assertEquals(clearTs, result.getAlarm().getClearTs());
         assertTrue(result.getAlarm().isCleared());
         assertEquals(alarm.getDetails(), result.getAlarm().getDetails());
-        result = alarmDao.clearAlarm(alarm.getTenantId(), alarm.getId(), clearTs + 1, JacksonUtil.newObjectNode());
+        result = alarmDao.clearAlarm(alarm.getTenantId(), alarm.getOriginator(), alarm.getId(), clearTs + 1, JacksonUtil.newObjectNode());
         assertNotNull(result);
         assertNotNull(result.getAlarm());
         assertEquals(afterSave, result.getAlarm());
@@ -279,7 +267,7 @@ public class JpaAlarmDaoTest extends AbstractJpaDaoTest {
         UserId userId2 = new UserId(UUID.fromString("d4b68f43-3e96-11e7-a884-898080180d8b"));
         Alarm alarm = saveAlarm(alarmId, tenantId, originator1Id, "TEST_ALARM");
         long assignTs = System.currentTimeMillis();
-        AlarmApiCallResult result = alarmDao.assignAlarm(alarm.getTenantId(), alarm.getId(), userId1, assignTs);
+        AlarmApiCallResult result = alarmDao.assignAlarm(alarm.getTenantId(), alarm.getOriginator(), alarm.getId(), userId1, assignTs);
         AlarmInfo afterSave = alarmDao.findAlarmInfoById(alarm.getTenantId(), alarm.getUuidId());
         assertNotNull(result);
         assertTrue(result.isSuccessful());
@@ -289,7 +277,7 @@ public class JpaAlarmDaoTest extends AbstractJpaDaoTest {
         assertEquals(assignTs, result.getAlarm().getAssignTs());
         assertNotNull(result.getAlarm().getAssigneeId());
         assertEquals(userId1, result.getAlarm().getAssigneeId());
-        result = alarmDao.assignAlarm(alarm.getTenantId(), alarm.getId(), userId1, assignTs + 1);
+        result = alarmDao.assignAlarm(alarm.getTenantId(), alarm.getOriginator(), alarm.getId(), userId1, assignTs + 1);
         afterSave = alarmDao.findAlarmInfoById(alarm.getTenantId(), alarm.getUuidId());
         assertNotNull(result);
         assertNotNull(result.getAlarm());
@@ -299,7 +287,7 @@ public class JpaAlarmDaoTest extends AbstractJpaDaoTest {
         assertEquals(assignTs, result.getAlarm().getAssignTs());
         assertNotNull(result.getAlarm().getAssigneeId());
         assertEquals(userId1, result.getAlarm().getAssigneeId());
-        result = alarmDao.assignAlarm(alarm.getTenantId(), alarm.getId(), userId2, assignTs + 1);
+        result = alarmDao.assignAlarm(alarm.getTenantId(), alarm.getOriginator(), alarm.getId(), userId2, assignTs + 1);
         afterSave = alarmDao.findAlarmInfoById(alarm.getTenantId(), alarm.getUuidId());
         assertNotNull(result);
         assertTrue(result.isSuccessful());
@@ -310,7 +298,7 @@ public class JpaAlarmDaoTest extends AbstractJpaDaoTest {
         assertNotNull(result.getAlarm().getAssigneeId());
         assertEquals(userId2, result.getAlarm().getAssigneeId());
 
-        result = alarmDao.unassignAlarm(alarm.getTenantId(), alarm.getId(), assignTs + 1);
+        result = alarmDao.unassignAlarm(alarm.getTenantId(), alarm.getOriginator(), alarm.getId(), assignTs + 1);
         afterSave = alarmDao.findAlarmInfoById(alarm.getTenantId(), alarm.getUuidId());
         assertNotNull(result);
         assertTrue(result.isSuccessful());
@@ -319,7 +307,7 @@ public class JpaAlarmDaoTest extends AbstractJpaDaoTest {
         assertEquals(afterSave, result.getAlarm());
         assertNull(result.getAlarm().getAssigneeId());
 
-        result = alarmDao.unassignAlarm(alarm.getTenantId(), alarm.getId(), assignTs + 1);
+        result = alarmDao.unassignAlarm(alarm.getTenantId(), alarm.getOriginator(), alarm.getId(), assignTs + 1);
         afterSave = alarmDao.findAlarmInfoById(alarm.getTenantId(), alarm.getUuidId());
         assertNotNull(result);
         assertTrue(result.isSuccessful());

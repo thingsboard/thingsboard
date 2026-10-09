@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component } from '@angular/core';
 import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
@@ -46,9 +33,11 @@ export class AlarmsTableKeySettingsComponent extends WidgetSettingsComponent {
       useCellStyleFunction: false,
       cellStyleFunction: '',
       useCellContentFunction: false,
+      useCellContentFunctionOnExport: true,
       cellContentFunction: '',
       defaultColumnVisibility: 'visible',
       columnSelectionToDisplay: 'enabled',
+      columnExportOption: 'onlyVisible',
       disableSorting: false
     };
   }
@@ -60,9 +49,11 @@ export class AlarmsTableKeySettingsComponent extends WidgetSettingsComponent {
       useCellStyleFunction: [settings.useCellStyleFunction, []],
       cellStyleFunction: [settings.cellStyleFunction, [Validators.required]],
       useCellContentFunction: [settings.useCellContentFunction, []],
+      useCellContentFunctionOnExport: [settings.useCellContentFunctionOnExport, []],
       cellContentFunction: [settings.cellContentFunction, [Validators.required]],
       defaultColumnVisibility: [settings.defaultColumnVisibility, []],
       columnSelectionToDisplay: [settings.columnSelectionToDisplay, []],
+      columnExportOption: [settings.columnExportOption, []],
       disableSorting: [settings.disableSorting, []]
     });
   }
@@ -81,8 +72,10 @@ export class AlarmsTableKeySettingsComponent extends WidgetSettingsComponent {
     }
     if (useCellContentFunction) {
       this.alarmsTableKeySettingsForm.get('cellContentFunction').enable();
+      this.alarmsTableKeySettingsForm.get('useCellContentFunctionOnExport').enable();
     } else {
       this.alarmsTableKeySettingsForm.get('cellContentFunction').disable();
+      this.alarmsTableKeySettingsForm.get('useCellContentFunctionOnExport').disable();
     }
     this.alarmsTableKeySettingsForm.get('cellStyleFunction').updateValueAndValidity({emitEvent});
     this.alarmsTableKeySettingsForm.get('cellContentFunction').updateValueAndValidity({emitEvent});

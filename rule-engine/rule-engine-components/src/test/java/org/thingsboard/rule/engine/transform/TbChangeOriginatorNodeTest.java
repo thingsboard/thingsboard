@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.rule.engine.transform;
 
 import com.google.common.util.concurrent.FluentFuture;
@@ -31,8 +19,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.common.util.DirectListeningExecutor;
+import org.thingsboard.rule.engine.AbstractRuleNodeUpgradeTest;
 import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
@@ -73,6 +63,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.never;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.lenient;
 import static org.thingsboard.rule.engine.transform.OriginatorSource.ALARM_ORIGINATOR;
@@ -82,7 +73,7 @@ import static org.thingsboard.rule.engine.transform.OriginatorSource.RELATED;
 import static org.thingsboard.rule.engine.transform.OriginatorSource.TENANT;
 
 @ExtendWith(MockitoExtension.class)
-public class TbChangeOriginatorNodeTest {
+public class TbChangeOriginatorNodeTest extends AbstractRuleNodeUpgradeTest {
 
     private final TenantId TENANT_ID = TenantId.fromUUID(UUID.fromString("79830b6d-4f93-49bd-9b5b-d31ce51da77b"));
     private final CustomerId CUSTOMER_ID = new CustomerId(UUID.fromString("c6b2c94b-5517-4f20-bf8e-ae9407eb8a7a"));
@@ -229,6 +220,8 @@ public class TbChangeOriginatorNodeTest {
             then should keep the customer as originator""")
     public void givenCustomerAsOriginator_whenProcessingMessage_thenKeepsCustomerAsOriginator() throws TbNodeException {
         // GIVEN
+        config.setPreserveOriginatorIfCustomer(true);
+
         var customer = new Customer(CUSTOMER_ID);
 
         var msg = TbMsg.newMsg()
@@ -238,22 +231,89 @@ public class TbChangeOriginatorNodeTest {
                 .data(TbMsg.EMPTY_JSON_OBJECT)
                 .build();
 
-        var expectedMsg = msg.transform()
-                .originator(CUSTOMER_ID)
-                .build();
-
-        given(ctxMock.transformMsgOriginator(any(TbMsg.class), any(EntityId.class))).willReturn(expectedMsg);
-
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
 
         // WHEN
         node.onMsg(ctxMock, msg);
 
         // THEN
-        then(ctxMock).should().transformMsgOriginator(msg, CUSTOMER_ID);
+        var actualMsg = ArgumentCaptor.forClass(TbMsg.class);
+        then(ctxMock).should().tellSuccess(actualMsg.capture());
+
+        assertThat(actualMsg.getValue().getOriginator()).isEqualTo(msg.getOriginator());
+    }
+
+    @Test
+    public void givenOriginatorSourceIsCustomerAndParentCustomerExists_whenOnMsg_thenTransformMsgOriginatorToParentCustomerAndTellSuccess() throws TbNodeException {
+        Customer customer = new Customer(CUSTOMER_ID);
+        CustomerId parentCustomerId = new CustomerId(UUID.fromString("21ea2aae-c733-4ed1-bfa6-01a2977e8d30"));
+        customer.setParentCustomerId(parentCustomerId);
+
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(CUSTOMER_ID)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
+        TbMsg expectedMsg = msg.transform()
+                .originator(parentCustomerId)
+                .build();
+
+        given(entityServiceMock.fetchEntityCustomerIdAsync(TENANT_ID, customer.getId())).willReturn(
+                FluentFuture.from(immediateFuture(Optional.of(customer.getParentCustomerId())))
+        );
+
+        given(ctxMock.transformMsgOriginator(any(TbMsg.class), any(EntityId.class))).willReturn(expectedMsg);
+
+        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+        node.onMsg(ctxMock, msg);
+
+        then(ctxMock).should().transformMsgOriginator(msg, parentCustomerId);
         ArgumentCaptor<TbMsg> actualMsg = ArgumentCaptor.forClass(TbMsg.class);
         then(ctxMock).should().tellSuccess(actualMsg.capture());
         assertThat(actualMsg.getValue()).usingRecursiveComparison().ignoringFields("ctx").isEqualTo(expectedMsg);
+    }
+
+    @Test
+    public void givenOriginatorSourceIsCustomerAndParentCustomerDoesNotExist_whenOnMsg_thenTellFailure() throws TbNodeException {
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(CUSTOMER_ID)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
+
+        given(entityServiceMock.fetchEntityCustomerIdAsync(TENANT_ID, CUSTOMER_ID)).willReturn(
+                FluentFuture.from(immediateFuture(Optional.of(new CustomerId(EntityId.NULL_UUID))))
+        );
+
+        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+        node.onMsg(ctxMock, msg);
+
+        ArgumentCaptor<Throwable> throwable = ArgumentCaptor.forClass(Throwable.class);
+        then(ctxMock).should().tellFailure(eq(msg), throwable.capture());
+        assertThat(throwable.getValue()).isInstanceOf(NoSuchElementException.class).hasMessage("Failed to find new originator!");
+    }
+
+    @Test
+    public void givenOriginatorSourceIsCustomerAndPreserveOriginatorIfCustomerIsTrue_whenOnMsg_thenPreserveMsgOriginatorAndTellSuccess() throws TbNodeException {
+        config.setPreserveOriginatorIfCustomer(true);
+        Customer customer = new Customer(CUSTOMER_ID);
+        CustomerId parentCustomerId = new CustomerId(UUID.fromString("21ea2aae-c733-4ed1-bfa6-01a2977e8d30"));
+        customer.setParentCustomerId(parentCustomerId);
+
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(CUSTOMER_ID)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
+
+        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+        node.onMsg(ctxMock, msg);
+
+        then(ctxMock).should(never()).transformMsgOriginator(any(TbMsg.class), any(EntityId.class));
+        then(ctxMock).should().tellSuccess(msg);
     }
 
     @Test
@@ -406,6 +466,26 @@ public class TbChangeOriginatorNodeTest {
         ArgumentCaptor<Throwable> throwable = ArgumentCaptor.forClass(Throwable.class);
         then(ctxMock).should().tellFailure(eq(msg), throwable.capture());
         assertThat(throwable.getValue()).isInstanceOf(IllegalStateException.class).hasMessage("Failed to find asset with name 'test-asset'!");
+    }
+
+    private static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig() {
+        return Stream.of(
+                // default config for version 0
+                Arguments.of(0,
+                        "{\"relationsQuery\": {\"direction\": \"FROM\",\"maxLevel\": 1,\"filters\": [{\"relationType\": \"Contains\",\"entityTypes\": []}],\"fetchLastLevelOnly\": false},\"originatorSource\": \"CUSTOMER\"}",
+                        true,
+                        "{\"relationsQuery\": {\"direction\": \"FROM\",\"maxLevel\": 1,\"filters\": [{\"relationType\": \"Contains\",\"entityTypes\": []}],\"fetchLastLevelOnly\": false},\"originatorSource\": \"CUSTOMER\",\"preserveOriginatorIfCustomer\": true}"),
+                // default config for version 1 with upgrade from version 0
+                Arguments.of(0,
+                        "{\"relationsQuery\": {\"direction\": \"FROM\",\"maxLevel\": 1,\"filters\": [{\"relationType\": \"Contains\",\"entityTypes\": []}],\"fetchLastLevelOnly\": false},\"originatorSource\": \"CUSTOMER\",\"preserveOriginatorIfCustomer\": false}",
+                        false,
+                        "{\"relationsQuery\": {\"direction\": \"FROM\",\"maxLevel\": 1,\"filters\": [{\"relationType\": \"Contains\",\"entityTypes\": []}],\"fetchLastLevelOnly\": false},\"originatorSource\": \"CUSTOMER\",\"preserveOriginatorIfCustomer\": false}")
+        );
+    }
+
+    @Override
+    protected TbNode getTestNode() {
+        return this.node;
     }
 
 }

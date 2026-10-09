@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   Component,
   DestroyRef,
@@ -27,11 +14,11 @@ import {
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormControl } from '@angular/forms';
 import {
   AutoDateFormatSettings,
-  compareDateFormats,
+  compareDateFormats, dateFormatPreview,
   dateFormats,
   DateFormatSettings,
   dateFormatsWithAuto,
-  defaultAutoDateFormatSettings
+  defaultAutoDateFormatSettings, millisecondsDateFormat, toDateFormatSettings
 } from '@shared/models/widget-settings.models';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
@@ -76,6 +63,14 @@ export class DateFormatSelectComponent implements OnInit, ControlValueAccessor {
   @coerceBoolean()
   includeAuto = false;
 
+  @Input()
+  @coerceBoolean()
+  includeMilliseconds = false;
+
+  @Input()
+  @coerceBoolean()
+  asStringFormat = false;
+
   dateFormatList: DateFormatSettings[];
 
   dateFormatsCompare = compareDateFormats;
@@ -96,9 +91,14 @@ export class DateFormatSelectComponent implements OnInit, ControlValueAccessor {
               private destroyRef: DestroyRef) {}
 
   ngOnInit(): void {
-    const targetDateFormats = this.includeAuto ? dateFormatsWithAuto : dateFormats;
-    this.dateFormatList = this.excludeLastUpdateAgo ?
-      targetDateFormats.filter(format => !format.lastUpdateAgo) : dateFormats;
+    let targetDateFormats = this.includeAuto ? dateFormatsWithAuto : dateFormats;
+    if (this.includeMilliseconds) {
+      targetDateFormats = [millisecondsDateFormat(), ...targetDateFormats];
+    }
+    if (this.excludeLastUpdateAgo) {
+      targetDateFormats = targetDateFormats.filter(format => !format.lastUpdateAgo);
+    }
+    this.dateFormatList = targetDateFormats;
     this.dateFormatFormControl = new UntypedFormControl();
     this.dateFormatFormControl.valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
@@ -128,15 +128,25 @@ export class DateFormatSelectComponent implements OnInit, ControlValueAccessor {
     }
   }
 
-  writeValue(value: DateFormatSettings): void {
-    this.modelValue = value;
+  writeValue(value: DateFormatSettings | string): void {
+    let dateFormat: DateFormatSettings;
+    if (typeof value === 'string') {
+      dateFormat = toDateFormatSettings(value);
+    } else {
+      dateFormat = value;
+    }
+    this.modelValue = dateFormat;
     this.dateFormatFormControl.patchValue(this.modelValue, {emitEvent: false});
   }
 
   updateModel(value: DateFormatSettings): void {
     if (!compareDateFormats(this.modelValue, value)) {
       this.modelValue = value;
-      this.propagateChange(this.modelValue);
+      if (this.asStringFormat) {
+        this.propagateChange(this.modelValue.format);
+      } else {
+        this.propagateChange(this.modelValue);
+      }
     }
   }
 
@@ -149,7 +159,7 @@ export class DateFormatSelectComponent implements OnInit, ControlValueAccessor {
       return this.translate.instant('date.auto');
     } else {
       if (!this.formatCache[value.format]) {
-        this.formatCache[value.format] = this.date.transform(Date.now(), value.format);
+        this.formatCache[value.format] = dateFormatPreview(this.date, value.format);
       }
       return this.formatCache[value.format];
     }
@@ -177,7 +187,11 @@ export class DateFormatSelectComponent implements OnInit, ControlValueAccessor {
       dateFormatSettingsPanelPopover.tbComponentRef.instance.dateFormatApplied.subscribe((dateFormat) => {
         dateFormatSettingsPanelPopover.hide();
         this.modelValue = dateFormat;
-        this.propagateChange(this.modelValue);
+        if (this.asStringFormat) {
+          this.propagateChange(this.modelValue.format);
+        } else {
+          this.propagateChange(this.modelValue);
+        }
       });
     }
   }

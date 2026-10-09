@@ -1,0 +1,12 @@
+{
+  "name": "City",
+  "description": "Represents a city-level administrative area that groups multiple locations for aggregated water consumption monitoring, analytics, and tenant-level insights.",
+  "image": null,
+  "defaultRuleChainId": null,
+  "defaultEdgeRuleChainId": null,
+  "defaultDashboardId": null,
+  "defaultQueueName": null,
+  "externalId": null,
+  "default": false,
+  "jsonId": "72f0ad58-5a8d-4c98-817e-6c9062c57bbf"
+}

@@ -1,42 +1,34 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { ChangeDetectorRef, Component, DestroyRef, Inject } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { EntityComponent } from '../../components/entity/entity.component';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { DeviceInfo } from '@shared/models/device.models';
 import {
   createDeviceConfiguration,
   createDeviceTransportConfiguration, DeviceCredentials,
   DeviceData,
-  DeviceInfo,
   DeviceProfileInfo,
   DeviceProfileType,
   DeviceTransportType
 } from '@shared/models/device.models';
 import { EntityType } from '@shared/models/entity-type.models';
-import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { TranslateService } from '@ngx-translate/core';
-import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
+import { DeviceService } from '@core/http/device.service';
+import { ClipboardService } from 'ngx-clipboard';
+import { GroupEntityTableConfig } from '@home/models/group/group-entities-table-config.models';
+import { GroupEntityComponent } from '@home/components/group/group-entity.component';
 import { Subject } from 'rxjs';
 import { OtaUpdateType } from '@shared/models/ota-package.models';
 import { distinctUntilChanged } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { WhiteLabelingService } from '@core/http/white-labeling.service';
+import { AiDashboardGenerationService } from '@home/components/ai/ai-dashboard-generation.service';
 
 @Component({
     selector: 'tb-device',
@@ -44,28 +36,34 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
     styleUrls: ['./device.component.scss'],
     standalone: false
 })
-export class DeviceComponent extends EntityComponent<DeviceInfo> {
+export class DeviceComponent extends GroupEntityComponent<DeviceInfo> {
 
   entityType = EntityType;
 
   deviceCredentials$: Subject<DeviceCredentials>;
 
-  deviceScope: 'tenant' | 'customer' | 'customer_user' | 'edge' | 'edge_customer_user';
+//  deviceScope: 'tenant' | 'customer' | 'customer_user' | 'edge';
 
   otaUpdateType = OtaUpdateType;
 
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
+              private deviceService: DeviceService,
+              private clipboardService: ClipboardService,
               @Inject('entity') protected entityValue: DeviceInfo,
-              @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<DeviceInfo>,
-              public fb: UntypedFormBuilder,
+              @Inject('entitiesTableConfig')
+              protected entitiesTableConfigValue: EntityTableConfig<DeviceInfo> | GroupEntityTableConfig<DeviceInfo>,
+              protected fb: UntypedFormBuilder,
               protected cd: ChangeDetectorRef,
-              private destroyRef: DestroyRef) {
-    super(store, fb, entityValue, entitiesTableConfigValue, cd);
+              protected userPermissionsService: UserPermissionsService,
+              private destroyRef: DestroyRef,
+              private wl: WhiteLabelingService,
+              private aiDashboardGenerationService: AiDashboardGenerationService) {
+    super(store, fb, entityValue, entitiesTableConfigValue, cd, userPermissionsService);
   }
 
   ngOnInit() {
-    this.deviceScope = this.entitiesTableConfig.componentsData.deviceScope;
+    // this.deviceScope = this.entitiesTableConfig.componentsData.deviceScope;
     this.deviceCredentials$ = this.entitiesTableConfigValue.componentsData.deviceCredentials$;
     super.ngOnInit();
   }
@@ -78,9 +76,21 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
     }
   }
 
-  isAssignedToCustomer(entity: DeviceInfo): boolean {
-    return entity && entity.customerId && entity.customerId.id !== NULL_UUID;
+  showConnectivityDialog(): boolean {
+    return !this.wl.getHideConnectivityDialog();
   }
+
+  hideManageCredentials() {
+    if (this.isGroupMode()) {
+      return !this.groupEntitiesTableConfig.manageCredentialsEnabled(this.entity);
+    } else {
+      return false;
+    }
+  }
+
+  /* isAssignedToCustomer(entity: Device): boolean {
+    return entity && entity.customerId && entity.customerId.id !== NULL_UUID;
+  } */
 
   buildForm(entity: DeviceInfo): UntypedFormGroup {
     const form = this.fb.group(
@@ -174,5 +184,21 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
         }
       }
     }
+  }
+
+  generateDashboard($event: Event) {
+    $event.stopPropagation();
+    this.aiDashboardGenerationService.generateWithTelemetryCheck({
+      deviceId: this.entity.id.id,
+      destroyRef: this.destroyRef,
+      noTelemetry: { checkConnectivity: () => this.onEntityAction($event, 'checkConnectivity') }
+    });
+  }
+
+  isAllowedDashboardGenerate(): boolean {
+    return this.aiDashboardGenerationService.isAllowedDashboardGenerate({
+      entityGroup: this.entityGroup,
+      requireTelemetry: true
+    });
   }
 }

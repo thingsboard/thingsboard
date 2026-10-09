@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.service;
 
 import org.apache.commons.lang3.StringUtils;
@@ -61,6 +49,12 @@ public final class Validator {
     public static void validateEntityId(EntityId entityId, Function<EntityId, String> errorMessageFunction) {
         if (entityId == null || entityId.getId() == null) {
             throw new IncorrectParameterException(errorMessageFunction.apply(entityId));
+        }
+    }
+
+    static void validateEntityId(EntityId entityId, List<EntityId> ids, Function<List<EntityId>, String> errorMessageFunction) {
+        if (entityId == null || entityId.getId() == null) {
+            throw new IncorrectParameterException(errorMessageFunction.apply(ids));
         }
     }
 
@@ -185,6 +179,27 @@ public final class Validator {
         } else {
             for (UUIDBased id : ids) {
                 validateId(id, errorMessage);
+            }
+        }
+    }
+
+    @Deprecated
+    public static void validateEntityIds(List<EntityId> ids, String errorMessage) {
+        if (ids == null || ids.isEmpty()) {
+            throw new IncorrectParameterException(errorMessage);
+        } else {
+            for (EntityId id : ids) {
+                validateEntityId(id, errorMessage);
+            }
+        }
+    }
+
+    public static void validateEntityIds(List<EntityId> ids, Function<List<EntityId>, String> errorMessageFunction) {
+        if (ids == null || ids.isEmpty()) {
+            throw new IncorrectParameterException(errorMessageFunction.apply(ids));
+        } else {
+            for (EntityId id : ids) {
+                validateEntityId(id, ids, errorMessageFunction);
             }
         }
     }

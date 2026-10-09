@@ -86,6 +86,44 @@
         "tls-version": "نسخه TLS",
         "send-test-mail": "ارسال پيام آزمايشي"
     },
+    "ai-assistant": {
+        "configure-with-ai": "پیکربندی با هوش مصنوعی",
+        "follow-up-prompt-placeholder": "پاسخ...",
+        "sub-title": "می‌توانم در راه‌اندازی و مدیریت دستگاه‌ها، داشبوردها، فیلدهای محاسبه‌شده، قوانین هشدار و اعلان‌های شما کمک کنم — کافی است آنچه نیاز دارید را توضیح دهید و بقیه را به من بسپارید.",
+        "new-chat": "گفت‌وگوی جدید",
+        "no-chats": "هنوز گفت‌وگویی وجود ندارد",
+        "today": "امروز",
+        "yesterday": "دیروز",
+        "last-7-days": "7 روز گذشته",
+        "older": "قدیمی‌تر",
+        "delete-chat-title": "آیا مطمئن هستید که می‌خواهید '{{name}}' را حذف کنید؟",
+        "delete-chat-text": "همه پیام‌های گفت‌وگو از دست خواهند رفت",
+        "delete-chat-confirm": "بله، حذف کن",
+        "action-approval-required": "تأیید اقدام لازم است",
+        "approve": "تأیید",
+        "deny": "رد",
+        "processing": "در حال پردازش...",
+        "approved": "انجام شد",
+        "denied": "رد شد",
+        "error": "ناموفق",
+        "thinking": "در حال فکر کردن...",
+        "rename-chat-title": "تغییر نام این گفت‌وگو",
+        "main-title": "سلام! من دستیار هوش مصنوعی شما هستم"
+    },
+    "alarm-rule": {
+        "ai-assistant-example-suggest-rules-label": "پیشنهاد قوانین هشدار",
+        "ai-assistant-example-suggest-rules-message": "دستگاه‌های من را بررسی کن و قوانین هشداری را که ارزش راه‌اندازی دارند پیشنهاد بده.",
+        "ai-assistant-example-inactivity-label": "هشدار غیرفعال بودن دستگاه",
+        "ai-assistant-example-inactivity-message": "یک قانون هشدار ایجاد کن که وقتی یک دستگاه بیش از ۱۰ دقیقه ارسال تله‌متری را متوقف کند، یک اخطار را فعال کند.",
+        "ai-assistant-initial-prompt-placeholder": "آنچه را که می‌خواهید راه‌اندازی کنید توضیح دهید..."
+    },
+    "calculated-fields": {
+        "ai-assistant-example-suggest-fields-label": "پیشنهاد فیلدهای محاسبه‌شده",
+        "ai-assistant-example-suggest-fields-message": "دستگاه‌های من را بررسی کن و فیلدهای محاسبه‌شده‌ای را که ارزش راه‌اندازی دارند پیشنهاد بده.",
+        "ai-assistant-example-aggregate-label": "تجمیع تله‌متری",
+        "ai-assistant-example-aggregate-message": "یکی از دستگاه‌های من را انتخاب کن و یک فیلد محاسبه‌شده راه‌اندازی کن که چند کلید تله‌متری آن را تجمیع کند. توضیح بده چه چیزی ایجاد خواهی کرد و ابتدا از من تأیید بخواه.",
+        "ai-assistant-initial-prompt-placeholder": "آنچه را که می‌خواهید راه‌اندازی کنید توضیح دهید..."
+    },
     "alarm": {
         "alarm": "هشدار",
         "alarms": "هشدارها",
@@ -400,6 +438,11 @@
         "time-to": "زمان تا"
     },
     "dashboard": {
+        "ai-assistant-initial-prompt-placeholder": "آنچه را که می‌خواهید راه‌اندازی کنید توضیح دهید...",
+        "ai-assistant-example-monitor-device-label": "نظارت بر یک دستگاه",
+        "ai-assistant-example-monitor-device-message": "دستگاه ... است. می‌خواهم این داشبورد را به‌عنوان نمای تک‌حالته این دستگاه راه‌اندازی کنم که جدیدترین تله‌متری آن را به‌صورت کارت‌های مقدار در بالا، نمودار سری زمانی آن تله‌متری در زیر آن‌ها، و جدولی از هشدارهای فعال آن در پایین نمایش دهد.",
+        "ai-assistant-example-monitor-fleet-label": "نظارت بر ناوگان دستگاه‌ها",
+        "ai-assistant-example-monitor-fleet-message": "نوع دستگاه ... است. می‌خواهم این داشبورد را با دو حالت برای این نوع راه‌اندازی کنم. حالت نمای کلی باید همه دستگاه‌های این نوع را در یک جدول موجودیت‌ها فهرست کند و در زیر آن جدولی از هشدارهای فعال آن دستگاه‌ها قرار دهد. انتخاب یک دستگاه یک حالت جزئیات را باز می‌کند که جدیدترین تله‌متری آن دستگاه را به‌صورت کارت‌های مقدار در بالا، نمودار سری زمانی آن تله‌متری در زیر آن‌ها، و جدولی از هشدارهای فعال آن در پایین نمایش می‌دهد.",
         "dashboard": "داشبورد",
         "dashboards": "داشبوردها",
         "management": "مديريت داشبورد",
@@ -576,6 +619,9 @@
         "toggle-edit-mode": "حالت ويرايش را تغيير دهيد"
     },
     "device": {
+        "ai-assistant-initial-prompt-placeholder": "آنچه را که می‌خواهید راه‌اندازی کنید توضیح دهید...",
+        "ai-assistant-example-connect-label": "اتصال دستگاه من",
+        "ai-assistant-example-connect-message": "کمکم کن یکی از دستگاه‌هایم را به پلتفرم متصل کنم تا شروع به ارسال داده واقعی کند.",
         "device": "دستگاه",
         "device-required": ".دستگاه مورد نياز است",
         "devices": "دستگاه ها",

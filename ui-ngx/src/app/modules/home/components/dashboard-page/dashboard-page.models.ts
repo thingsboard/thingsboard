@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   BreakpointId,
   Dashboard,
@@ -28,6 +15,7 @@ import { IAliasController, IStateController } from '@core/api/widget-api.models'
 import { ILayoutController } from './layout/layout.models';
 import { DashboardContextMenuItem, WidgetContextMenuItem } from '@home/models/dashboard-component.models';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { EntityGroupInfo } from '@shared/models/entity-group.models';
 import { ElementRef } from '@angular/core';
 
 export declare type DashboardPageScope = 'tenant' | 'customer';
@@ -37,6 +25,8 @@ export interface DashboardPageInitData {
   currentDashboardId?: string;
   widgetEditMode?: boolean;
   singlePageMode?: boolean;
+  entityGroup?: EntityGroupInfo;
+  customerId?: string;
 }
 
 export interface DashboardContext {
@@ -58,9 +48,11 @@ export interface IDashboardController {
   dashboardContainer: ElementRef;
   dashboardContent: ElementRef;
   elRef: ElementRef;
+  aiConfigurableForDashboard: boolean;
   openRightLayout();
   openDashboardState(stateId: string, openRightLayout: boolean);
   addWidget($event: Event, layoutCtx: DashboardPageLayoutContext);
+  configureWithAi($event: Event);
   editWidget($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget);
   replaceReferenceWithWidgetCopy($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget);
   exportWidget($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget, widgetTitle: string);
@@ -101,6 +93,8 @@ export class LayoutWidgetsArray implements Iterable<Widget> {
 
   private widgetIds: string[] = [];
 
+  private widget: Widget;
+
   private loaded = false;
 
   constructor(private dashboardCtx: DashboardContext) {
@@ -120,6 +114,13 @@ export class LayoutWidgetsArray implements Iterable<Widget> {
 
   setWidgetIds(widgetIds: string[]) {
     this.widgetIds = widgetIds;
+    this.widget = null;
+    this.loaded = true;
+  }
+
+  setWidget(widget: Widget) {
+    this.widget = widget;
+    this.widgetIds = [this.widget.id];
     this.loaded = true;
   }
 
@@ -138,13 +139,19 @@ export class LayoutWidgetsArray implements Iterable<Widget> {
 
   [Symbol.iterator](): Iterator<Widget> {
     let pointer = 0;
+    const oneWidget = this.widget;
     const widgetIds = this.widgetIds;
     const dashboard = this.dashboardCtx.getDashboard();
     return {
       next(value?: any): IteratorResult<Widget> {
         if (pointer < widgetIds.length) {
           const widgetId = widgetIds[pointer++];
-          const widget = dashboard.configuration.widgets[widgetId];
+          let widget: Widget;
+          if (oneWidget && oneWidget.id === widgetId) {
+            widget = oneWidget;
+          } else {
+            widget = dashboard.configuration.widgets[widgetId];
+          }
           return {
             done: false,
             value: widget
@@ -169,7 +176,11 @@ export class LayoutWidgetsArray implements Iterable<Widget> {
   }
 
   private widgetById(widgetId: string): Widget {
-    return this.dashboardCtx.getDashboard().configuration.widgets[widgetId];
+    if (this.widget && this.widget.id === widgetId) {
+      return this.widget;
+    } else {
+      return this.dashboardCtx.getDashboard().configuration.widgets[widgetId];
+    }
   }
 
 }

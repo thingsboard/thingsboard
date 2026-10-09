@@ -1,0 +1,14 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+.tb-report-components-container {
+  min-height: 84px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  .tb-report-components-container-title {
+    user-select: none;
+    font-size: 18px;
+    font-weight: 500;
+    color: rgba(0,0,0,0.57);
+  }
+}

@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.lwm2m.rpc.sql;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -135,7 +123,7 @@ public class RpcLwm2MIntegrationObserveCompositeTest extends AbstractRpcLwM2MInt
      * @throws Exception
      */
     @Test
-    public void  testObserveComposite_IfLeastOneResourceIsAlreadyRegistered_return_BadRequest() throws Exception {
+    public void testObserveComposite_IfLeastOneResourceIsAlreadyRegistered_return_BadRequest() throws Exception {
         // Verify after start
         String actualResultReadAll = sendCompositeRPCByKeys("ObserveReadAll", null);
         ObjectNode rpcActualResultReadAll = JacksonUtil.fromString(actualResultReadAll, ObjectNode.class);
@@ -159,6 +147,7 @@ public class RpcLwm2MIntegrationObserveCompositeTest extends AbstractRpcLwM2MInt
         actualValues = rpcActualResultReadAll.get("value").asText();
         assertTrue(actualValues.contains("SingleObservation:" + fromVersionedIdToObjectId(idVer_3_0_9)));
     }
+
     /**
      *  Previous -> ["5/0/7", "5/0/5", "5/0/3"], CompositeObservation     *
      *  if the resource SingleObservation is already registered in CompositeObservation - return BAD REQUEST
@@ -375,7 +364,6 @@ public class RpcLwm2MIntegrationObserveCompositeTest extends AbstractRpcLwM2MInt
         String actualValues = rpcActualResultReadAll.get("value").asText();
         assertTrue(actualValues.contains("CompositeObservation:"));
     }
-
 
     @Test
     public void testObserveCompositeResource_Update_After_Registration_UpdateRegistration() throws Exception {

@@ -1,0 +1,166 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { BaseData } from '@shared/models/base-data';
+import { EntityType } from '@shared/models/entity-type.models';
+import { getEntityDetailsPageURL } from '@core/utils';
+
+export interface WidgetInstalledItemDescriptor {
+  type: 'WIDGET';
+  widgetTypeId: { id: string };
+}
+
+export interface CalculatedFieldInstalledItemDescriptor {
+  type: 'CALCULATED_FIELD';
+  calculatedFieldId: { id: string };
+  entityId: { entityType: string; id: string };
+}
+
+export interface AlarmRuleInstalledItemDescriptor {
+  type: 'ALARM_RULE';
+  calculatedFieldId: { id: string };
+  entityId: { entityType: string; id: string };
+}
+
+export interface RuleChainInstalledItemDescriptor {
+  type: 'RULE_CHAIN';
+  ruleChainId: { id: string };
+}
+
+export interface DeviceInstalledItemDescriptor {
+  type: 'DEVICE';
+  createdEntityIds?: { entityType: string; id: string }[];
+  dashboardId?: { id: string };
+  selectedInstallMethod?: string;
+  installState?: Record<string, any>;
+}
+
+export interface SolutionTemplateInstalledItemDescriptor {
+  type: 'SOLUTION_TEMPLATE';
+  createdEntityIds: { entityType: string; id: string }[];
+  dashboardGroupId: { id: string };
+  dashboardId: { id: string };
+  publicId: { id: string };
+  mainDashboardPublic: boolean;
+  details: string;
+}
+
+export type IotHubInstalledItemDescriptor =
+  | WidgetInstalledItemDescriptor
+  | CalculatedFieldInstalledItemDescriptor
+  | AlarmRuleInstalledItemDescriptor
+  | RuleChainInstalledItemDescriptor
+  | DeviceInstalledItemDescriptor
+  | SolutionTemplateInstalledItemDescriptor;
+
+export interface InstallItemVersionResult {
+  success: boolean;
+  errorMessage: string;
+  descriptor: IotHubInstalledItemDescriptor;
+}
+
+export enum InstallPlanEntryStatus {
+  WILL_INSTALL = 'WILL_INSTALL',
+  ALREADY_INSTALLED = 'ALREADY_INSTALLED',
+  MISSING = 'MISSING'
+}
+
+export interface InstallPlanEntry {
+  itemId: string;
+  versionId: string;
+  name: string;
+  type: string;
+  version: string;
+  status: InstallPlanEntryStatus;
+  root: boolean;
+  errorMessage?: string;
+}
+
+export interface InstallPlan {
+  rootVersionId: string;
+  entries: InstallPlanEntry[];
+}
+
+export interface InstallPlanResult {
+  success: boolean;
+  rolledBack: boolean;
+  errorMessage?: string;
+  rootDescriptor?: IotHubInstalledItemDescriptor;
+  entries: InstallPlanEntry[];
+  missingItemIds: string[];
+}
+
+export interface UpdateItemVersionResult {
+  success: boolean;
+  entityModified: boolean;
+  errorMessage: string;
+  descriptor: IotHubInstalledItemDescriptor;
+}
+
+export interface ItemPublishedVersionInfo {
+  itemId: string;
+  publishedVersionId: string;
+  publishedVersion: string;
+}
+
+export interface IotHubInstalledItem extends BaseData<{id: string}> {
+  itemId: string;
+  itemVersionId: string;
+  itemName: string;
+  itemType: string;
+  version: string;
+  descriptor: IotHubInstalledItemDescriptor;
+}
+
+export const getInstalledItemUrl = (descriptor?: IotHubInstalledItemDescriptor): string | null => {
+  if (!descriptor) {
+    return null;
+  }
+  let entityId: string | null = null;
+  let entityType: EntityType | null = null;
+  let entityGroupId: string | null = null;
+  switch (descriptor.type) {
+    case 'DEVICE':
+      if (descriptor.dashboardId) {
+        entityId = descriptor.dashboardId?.id;
+        entityType = EntityType.DASHBOARD;
+      } else if (descriptor.createdEntityIds) {
+        const found = descriptor.createdEntityIds.find(id => id.entityType === EntityType.DEVICE);
+        if (found) {
+          entityId = found.id;
+          entityType = EntityType.DEVICE;
+        }
+      }
+      break;
+    case 'WIDGET':
+      entityId = descriptor.widgetTypeId?.id;
+      entityType = EntityType.WIDGET_TYPE;
+      break;
+    case 'CALCULATED_FIELD':
+    case 'ALARM_RULE':
+      entityId = descriptor.calculatedFieldId?.id;
+      entityType = EntityType.CALCULATED_FIELD;
+      break;
+    case 'RULE_CHAIN':
+      entityId = descriptor.ruleChainId?.id;
+      entityType = EntityType.RULE_CHAIN;
+      break;
+    case 'SOLUTION_TEMPLATE':
+      entityId = descriptor.dashboardId?.id;
+      entityType = EntityType.DASHBOARD;
+      entityGroupId = descriptor.dashboardGroupId?.id;
+      break;
+  }
+  if (entityType && entityId) {
+    let url: string | null;
+    if (descriptor.type === 'ALARM_RULE') {
+      url = `/alarms/alarm-rules/${entityId}`;
+    } else if (descriptor.type === 'SOLUTION_TEMPLATE' && entityGroupId) {
+       url = `/dashboards/groups/${entityGroupId}/${entityId}`;
+    } else {
+       url = getEntityDetailsPageURL(entityId, entityType);
+    }
+    return url;
+  }
+  return null;
+}

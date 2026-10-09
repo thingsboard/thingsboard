@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.query;
 
 import org.apache.commons.lang3.math.NumberUtils;
@@ -51,12 +39,15 @@ public class EntityDataAdapter {
     }
 
     private static EntityData toEntityData(Map<String, Object> row, List<EntityKeyMapping> selectionMapping) {
-        UUID id = (UUID)row.get("id");
+        UUID id = (UUID) row.get("id");
         EntityType entityType = EntityType.valueOf((String) row.get("entity_type"));
         EntityId entityId = EntityIdFactory.getByTypeAndUuid(entityType, id);
         Map<EntityKeyType, Map<String, TsValue>> latest = new HashMap<>();
         //Maybe avoid empty hashmaps?
-        EntityData entityData = new EntityData(entityId, latest, new HashMap<>(), new HashMap<>());
+        EntityData entityData = new EntityData(entityId,
+                ((int) row.getOrDefault(DefaultEntityQueryRepository.ATTR_READ_FLAG, 1)) > 0,
+                ((int) row.getOrDefault(DefaultEntityQueryRepository.TS_READ_FLAG, 1)) > 0,
+                latest, new HashMap<>(), new HashMap<>());
         for (EntityKeyMapping mapping : selectionMapping) {
             if (!mapping.isIgnore()) {
                 EntityKey entityKey = mapping.getEntityKey();

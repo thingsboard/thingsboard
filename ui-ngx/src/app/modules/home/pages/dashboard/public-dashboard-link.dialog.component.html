@@ -1,0 +1,56 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div style="min-width: 400px;">
+  <mat-toolbar color="tb-primary" class="tb-bottom-border flex flex-row">
+    <h2>{{ 'dashboard.public-dashboard-link' | translate }}</h2>
+    <span class="flex-1"></span>
+    <button mat-icon-button
+      (click)="close()"
+      type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  @if (isLoading$ | async) {
+    <mat-progress-bar color="warn" mode="indeterminate">
+    </mat-progress-bar>
+  } @else {
+    <div style="height: 4px;"></div>
+  }
+  <div mat-dialog-content tb-toast toastTarget="publicDashboardLinkDialogContent">
+    <span
+      innerHTML="{{ translate.get('dashboard.public-dashboard-link-text', {dashboardTitle: dashboard.title, publicLink: publicLink}) | async }}">
+    </span>
+    <div class="flex flex-row items-center justify-start">
+      <pre class="tb-highlight flex-1"><code>{{ publicLink }}</code></pre>
+      <button mat-icon-button
+        ngxClipboard
+        (cbOnSuccess)="onPublicLinkCopied($event)"
+        cbContent="{{publicLink}}"
+        matTooltipPosition="above"
+        matTooltip="{{ 'dashboard.copy-public-link' | translate }}">
+        <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
+      </button>
+    </div>
+    <div class="tb-notice" innerHTML="{{'dashboard.public-dashboard-link-notice' | translate}}"></div>
+    <tb-social-share-panel style="padding-top: 15px;"
+      shareTitle="{{ 'dashboard.socialshare-title' | translate:{dashboardTitle: dashboard.title} }}"
+      shareText="{{ 'dashboard.socialshare-text' | translate:{dashboardTitle: dashboard.title} }}"
+      shareLink="{{ publicLink }}"
+      shareHashTags="thingsboard, iot">
+    </tb-social-share-panel>
+  </div>
+  <div mat-dialog-actions class="flex flex-row">
+    <span class="flex-1"></span>
+    <button mat-button color="primary"
+      style="margin-right: 20px;"
+      type="button"
+      [disabled]="(isLoading$ | async)"
+      (click)="close()" cdkFocusInitial>
+      {{ 'action.ok' | translate }}
+    </button>
+  </div>
+</div>

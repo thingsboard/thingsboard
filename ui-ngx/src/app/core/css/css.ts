@@ -1,34 +1,23 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 interface CSSRule {
   directive: string;
   value: string;
   defective?: boolean;
   type?: string;
+  nested?: CSSRule[];
 }
 
 interface CSSObject {
   selector: string;
-  type?: 'media' | 'keyframes' | 'imports' | 'font-face';
+  type?: 'media' | 'keyframes' | 'imports' | 'font-face' | 'at-rule';
   rules?: CSSRule[];
   subStyles?: CSSObject[];
   styles?: string;
-  comments?: string;
 }
+
+type CSSBlock = { prelude: string; body: string } | { text: string };
 
 export default class CSSParser {
   cssPreviewNamespace: string = '';
@@ -36,19 +25,40 @@ export default class CSSParser {
 
   cssImportStatements: string[] = [];
 
-  private readonly cssKeyframeRegex: string = '((@.*?keyframes [\\s\\S]*?){([\\s\\S]*?}\\s*?)})';
-  private readonly combinedCSSRegex: string = '((\\s*?@media[\\s\\S]*?){([\\s\\S]*?)}\\s*?})|(([\\s\\S]*?){([\\s\\S]*?)})';
-  private readonly cssCommentsRegex: string = '(\\/\\*[\\s\\S]*?\\*\\/)';
-  private readonly cssImportStatementRegex: RegExp = /@import .*?;/gi;
+  private readonly groupingAtRuleRegex: RegExp = /^@(media|container|supports|layer|scope|document|starting-style)\b/i;
+  private readonly keyframesRegex: RegExp = /^@(-[a-z]+-)?keyframes\b/i;
+  private readonly scopeRegex: RegExp = /^@scope\b/i;
+  private readonly importStatementRegex: RegExp = /^@import\b/i;
+  private readonly hoistedStatementRegex: RegExp = /^@(import|charset)\b/i;
 
   /**
-   * Removes CSS comments from the provided CSS string.
+   * Removes CSS comments from the provided CSS string, leaving comment-like text inside strings intact.
    * @param cssString - The CSS string to strip comments from.
    * @returns The CSS string with comments removed.
    */
   stripComments(cssString: string): string {
-    const regex = new RegExp(this.cssCommentsRegex, 'gi');
-    return cssString.replace(regex, '');
+    let result = '';
+    let start = 0;
+    let i = 0;
+    while (i < cssString.length) {
+      const ch = cssString[i];
+      if (ch === '\\') {
+        i += 2;
+      } else if (ch === '"' || ch === '\'') {
+        i++;
+        while (i < cssString.length && cssString[i] !== ch && cssString[i] !== '\n') {
+          i += cssString[i] === '\\' ? 2 : 1;
+        }
+        i++;
+      } else if (ch === '/' && cssString[i + 1] === '*') {
+        const end = cssString.indexOf('*/', i + 2);
+        result += cssString.slice(start, i);
+        i = start = end === -1 ? cssString.length : end + 2;
+      } else {
+        i++;
+      }
+    }
+    return result + cssString.slice(start);
   }
 
   /**
@@ -62,47 +72,50 @@ export default class CSSParser {
     }
 
     const css: CSSObject[] = [];
-    let cssSource = source;
+    let leading = true;
 
-    const importStatementRegex = new RegExp(this.cssImportStatementRegex.source, this.cssImportStatementRegex.flags);
-    cssSource = cssSource.replace(importStatementRegex, (match) => {
-      this.cssImportStatements.push(match);
-      css.push({ selector: '@imports', type: 'imports', styles: match });
-      return '';
-    });
+    for (const block of this.splitBlocks(this.stripComments(source))) {
+      if ('text' in block) {
+        const statement = block.text.trim();
+        if (!statement.startsWith('@')) {
+          continue;
+        }
+        const styles = statement.endsWith(';') ? statement : `${statement};`;
+        if (this.importStatementRegex.test(styles)) {
+          this.cssImportStatements.push(styles);
+        }
+        // statements before the first block, @import and @charset go first; the rest keep source order (e.g. @layer a;)
+        if (leading || this.hoistedStatementRegex.test(styles)) {
+          css.push({ selector: '@imports', type: 'imports', styles });
+        } else {
+          css.push({ selector: styles, type: 'at-rule', styles });
+        }
+        continue;
+      }
+      leading = false;
+      const cleanSelector = block.prelude.replace(/\r\n/g, '\n').trim();
 
-    // Extract keyframe statements
-    const keyframesRegex = new RegExp(this.cssKeyframeRegex, 'gi');
-    cssSource = cssSource.replace(keyframesRegex, (match) => {
-      css.push({ selector: '@keyframes', type: 'keyframes', styles: match });
-      return '';
-    });
-
-    // Parse remaining CSS
-    const unifiedRegex = new RegExp(this.combinedCSSRegex, 'gi');
-    let match: RegExpExecArray | null;
-    while ((match = unifiedRegex.exec(cssSource)) !== null) {
-      const selector = (match[2] ?? match[5]).replace(/\r\n/g, '\n').trim();
-
-      // Extract comments
-      const commentsRegex = new RegExp(this.cssCommentsRegex, 'gi');
-      const comments = commentsRegex.exec(selector);
-      const cleanSelector = comments ? selector.replace(commentsRegex, '').trim() : selector;
-
-      if (cleanSelector.includes('@media')) {
+      if (this.keyframesRegex.test(cleanSelector)) {
+        css.push({ selector: '@keyframes', type: 'keyframes', styles: `${cleanSelector} {${block.body}}` });
+      } else if (this.groupingAtRuleRegex.test(cleanSelector)) {
         css.push({
           selector: cleanSelector,
           type: 'media',
-          subStyles: this.parseCSS(match[3] + '\n}'),
-          ...(comments && {comments: comments[0]}),
+          subStyles: this.parseCSS(block.body),
+        });
+      } else if (cleanSelector.startsWith('@') && cleanSelector !== '@font-face') {
+        // descriptor at-rules (@property, @counter-style, @page, ...) have no selectors to namespace, keep them verbatim
+        css.push({
+          selector: cleanSelector,
+          type: 'at-rule',
+          styles: `${cleanSelector} {${block.body}}`,
         });
       } else {
-        const rules = this.parseRules(match[6]);
+        const rules = this.parseStyleBody(block.body);
         const style: CSSObject = {
           selector: cleanSelector,
           rules,
           ...(cleanSelector === '@font-face' && {type: 'font-face'}),
-          ...(comments && {comments: comments[0]}),
         };
         css.push(style);
       }
@@ -112,13 +125,146 @@ export default class CSSParser {
   }
 
   /**
+   * Splits comment-free CSS into top-level blocks by matching braces, skipping strings and escapes.
+   * @param source - The CSS string to split.
+   * @returns Top-level blocks with prelude and body, and the text between them split on top-level semicolons.
+   */
+  private splitBlocks(source: string): CSSBlock[] {
+    const blocks: CSSBlock[] = [];
+    let depth = 0;
+    let parens = 0;
+    let start = 0;
+    let bodyStart = 0;
+    let i = 0;
+    while (i < source.length) {
+      const ch = source[i];
+      if (ch === '\\') {
+        i += 2;
+        continue;
+      }
+      if (ch === '"' || ch === '\'') {
+        i++;
+        // an unescaped newline ends a string, so an unclosed quote doesn't swallow the rest of the CSS
+        while (i < source.length && source[i] !== ch && source[i] !== '\n') {
+          i += source[i] === '\\' ? 2 : 1;
+        }
+      } else if (ch === '(') {
+        parens++;
+      } else if (ch === ')') {
+        parens = Math.max(0, parens - 1);
+      } else if (ch === '{') {
+        parens = 0;
+        if (depth++ === 0) {
+          bodyStart = i + 1;
+        }
+      } else if (ch === '}') {
+        parens = 0;
+        if (depth === 0) {
+          start = i + 1;
+        } else if (--depth === 0) {
+          blocks.push({ prelude: source.slice(start, bodyStart - 1), body: source.slice(bodyStart, i) });
+          start = i + 1;
+        }
+      } else if (ch === ';' && depth === 0 && parens === 0) {
+        blocks.push({ text: source.slice(start, i + 1) });
+        start = i + 1;
+      }
+      i++;
+    }
+    if (depth > 0) {
+      blocks.push({ prelude: source.slice(start, bodyStart - 1), body: source.slice(bodyStart) });
+    } else if (start < source.length) {
+      blocks.push({ text: source.slice(start) });
+    }
+    return blocks;
+  }
+
+  /**
+   * Parses the body of a style rule: declarations plus nested rules (CSS Nesting), kept in source order.
+   * @param body - The style rule body.
+   * @returns An array of rule objects; nested rules carry their prelude as directive.
+   */
+  private parseStyleBody(body: string): CSSRule[] {
+    const rules: CSSRule[] = [];
+    let text = '';
+    for (const block of this.splitBlocks(body)) {
+      if ('text' in block) {
+        text += block.text;
+      } else {
+        rules.push(...this.parseRules(text));
+        text = '';
+        rules.push({ directive: block.prelude.trim(), value: '', nested: this.parseStyleBody(block.body) });
+      }
+    }
+    rules.push(...this.parseRules(text));
+    return rules;
+  }
+
+  /**
+   * Splits a selector list on top-level commas, keeping commas inside :is()/:has()/[attr] intact.
+   * @param selector - The selector list.
+   * @returns The complex selectors of the list.
+   */
+  private splitSelectorList(selector: string): string[] {
+    const parts: string[] = [];
+    let depth = 0;
+    let start = 0;
+    for (let i = 0; i < selector.length; i++) {
+      const ch = selector[i];
+      if (ch === '\\') {
+        i++;
+      } else if (ch === '(' || ch === '[') {
+        depth++;
+      } else if (ch === ')' || ch === ']') {
+        depth--;
+      } else if (ch === ',' && depth === 0) {
+        parts.push(selector.slice(start, i));
+        start = i + 1;
+      }
+    }
+    parts.push(selector.slice(start));
+    return parts;
+  }
+
+  private namespaceSelectorList(selector: string, namespaceClass: string): string {
+    return this.splitSelectorList(selector)
+      .map(sel => `${namespaceClass} ${sel}`)
+      .join(',');
+  }
+
+  /**
+   * Namespaces the scope root of an @scope prelude. Rules inside @scope are relative to the root,
+   * so namespacing them would require the namespace element to be inside the root.
+   * @param prelude - The @scope prelude, e.g. `@scope (.card) to (.content)`.
+   * @param namespaceClass - The namespace selector.
+   * @returns The prelude with the namespaced root; a missing root becomes the namespace itself.
+   */
+  private namespaceScope(prelude: string, namespaceClass: string): string {
+    const rest = prelude.replace(this.scopeRegex, '').trim();
+    if (!rest.startsWith('(')) {
+      return `@scope (${namespaceClass})${rest ? ` ${rest}` : ''}`;
+    }
+    let depth = 0;
+    let end = 0;
+    while (end < rest.length) {
+      if (rest[end] === '(') {
+        depth++;
+      } else if (rest[end] === ')' && --depth === 0) {
+        break;
+      }
+      end++;
+    }
+    return `@scope (${this.namespaceSelectorList(rest.slice(1, end), namespaceClass)})${rest.slice(end + 1)}`;
+  }
+
+  /**
    * Parses CSS rules into an array of rule objects.
    * @param rules - The CSS rules string.
    * @returns An array of rule objects with directive and value.
    */
   parseRules(rules: string): CSSRule[] {
     const normalizedRules = rules.replace(/\r\n/g, '\n');
-    const ruleList = normalizedRules.split(/;(?![^(]*\))/);
+    const ruleList = this.splitDeclarations(normalizedRules);
     const result: CSSRule[] = [];
 
     for (const line of ruleList) {
@@ -141,6 +287,37 @@ export default class CSSParser {
     }
 
     return result;
+  }
+
+  /**
+   * Splits declarations on semicolons outside strings and parentheses (e.g. `url(data:...;base64,...)`).
+   * @param rules - The declarations string.
+   * @returns The individual declarations.
+   */
+  private splitDeclarations(rules: string): string[] {
+    const parts: string[] = [];
+    let parens = 0;
+    let start = 0;
+    for (let i = 0; i < rules.length; i++) {
+      const ch = rules[i];
+      if (ch === '\\') {
+        i++;
+      } else if (ch === '"' || ch === '\'') {
+        i++;
+        while (i < rules.length && rules[i] !== ch && rules[i] !== '\n') {
+          i += rules[i] === '\\' ? 2 : 1;
+        }
+      } else if (ch === '(') {
+        parens++;
+      } else if (ch === ')') {
+        parens = Math.max(0, parens - 1);
+      } else if (ch === ';' && parens === 0) {
+        parts.push(rules.slice(start, i));
+        start = i + 1;
+      }
+    }
+    parts.push(rules.slice(start));
+    return parts;
   }
 
   /**
@@ -299,31 +476,32 @@ export default class CSSParser {
    */
   getCSSForEditor(cssBase?: CSSObject[], depth: number = 0): string {
     const css = cssBase ?? this.parseCSS('');
+    const spaces = this.getSpaces(depth);
     let result = '';
 
     // Append imports
     for (const obj of css) {
       if (obj.type === 'imports') {
-        result += `${obj.styles}\n\n`;
+        result += `${spaces}${obj.styles}\n\n`;
       }
     }
 
     // Append styles
     for (const obj of css) {
       if (!obj.selector) continue;
-      const comments = obj.comments ? `${obj.comments}\n` : '';
-
       if (obj.type === 'media') {
-        result += `${comments}${obj.selector} {\n${this.getCSSForEditor(obj.subStyles, depth + 1)}}\n\n`;
+        result += `${spaces}${obj.selector} {\n${this.getCSSForEditor(obj.subStyles, depth + 1)}${spaces}}\n\n`;
+      } else if (obj.type === 'at-rule') {
+        result += `${spaces}${obj.styles}\n\n`;
       } else if (obj.type !== 'keyframes' && obj.type !== 'imports') {
-        result += `${this.getSpaces(depth)}${comments}${obj.selector} {\n${this.getCSSOfRules(obj.rules ?? [], depth + 1)}${this.getSpaces(depth)}}\n\n`;
+        result += `${spaces}${obj.selector} {\n${this.getCSSOfRules(obj.rules ?? [], depth + 1)}${spaces}}\n\n`;
       }
     }
 
     // Append keyframes
     for (const obj of css) {
       if (obj.type === 'keyframes') {
-        result += `${obj.styles}\n\n`;
+        result += `${spaces}${obj.styles}\n\n`;
       }
     }
 
@@ -349,7 +527,9 @@ export default class CSSParser {
     let result = '';
     for (const rule of rules) {
       if (!rule) continue;
-      if (rule.defective) {
+      if (rule.nested) {
+        result += `${this.getSpaces(depth)}${rule.directive} {\n${this.getCSSOfRules(rule.nested, depth + 1)}${this.getSpaces(depth)}}\n`;
+      } else if (rule.defective) {
         result += `${this.getSpaces(depth)}${rule.value};\n`;
       } else {
         result += `${this.getSpaces(depth)}${rule.directive}: ${rule.value};\n`;
@@ -378,20 +558,24 @@ export default class CSSParser {
     const cssObjectArray = typeof css === 'string' ? this.parseCSS(css) : css;
 
     for (const obj of cssObjectArray) {
-      if (['@font-face', 'keyframes', '@import', '.form-all', '#stage'].some(s => obj.selector.includes(s))) {
+      if (this.isVerbatim(obj)) {
         continue;
       }
 
       if (obj.type !== 'media') {
-        obj.selector = obj.selector.split(',')
-          .map(sel => sel.includes('.supernova') ? sel : `${namespaceClass} ${sel}`)
-          .join(',');
+        obj.selector = this.namespaceSelectorList(obj.selector, namespaceClass);
+      } else if (this.scopeRegex.test(obj.selector)) {
+        obj.selector = this.namespaceScope(obj.selector, namespaceClass);
       } else {
         obj.subStyles = this.applyNamespacing(obj.subStyles ?? [], forcedNamespace);
       }
     }
 
     return cssObjectArray;
+  }
+
+  private isVerbatim(obj: CSSObject): boolean {
+    return obj.type === 'keyframes' || obj.type === 'imports' || obj.type === 'at-rule' || obj.type === 'font-face';
   }
 
   /**
@@ -405,11 +589,13 @@ export default class CSSParser {
     const cssObjectArray = typeof css === 'string' ? this.parseCSS(css) : css;
 
     for (const obj of cssObjectArray) {
+      if (this.isVerbatim(obj)) {
+        continue;
+      }
       if (obj.type !== 'media') {
-        obj.selector = obj.selector
-          .split(',')
-          .map(sel => sel.split(namespaceClass + ' ').join(''))
-          .join(',');
+        obj.selector = obj.selector.split(namespaceClass + ' ').join('');
+      } else if (this.scopeRegex.test(obj.selector)) {
+        obj.selector = obj.selector.replace(`@scope (${namespaceClass})`, '@scope').split(namespaceClass + ' ').join('');
       } else {
         obj.subStyles = this.clearNamespacing(obj.subStyles ?? [], true) as CSSObject[];
       }

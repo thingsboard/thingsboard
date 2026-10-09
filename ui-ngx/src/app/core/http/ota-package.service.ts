@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { PageLink } from '@shared/models/page/page-link';
@@ -22,6 +9,7 @@ import { forkJoin, Observable, of } from 'rxjs';
 import { PageData } from '@shared/models/page/page-data';
 import {
   ChecksumAlgorithm,
+  DeviceGroupOtaPackage,
   OtaPackage,
   OtaPackageInfo,
   OtaPagesIds,
@@ -34,6 +22,7 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from '@core/services/dialog.service';
 import { ResourcesService } from '@core/services/resources.service';
+import { EntityType } from '@shared/models/entity-type.models';
 
 @Injectable({
   providedIn: 'root'
@@ -110,20 +99,41 @@ export class OtaPackageService {
     return this.http.delete(`/api/otaPackage/${otaPackageId}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public countUpdateDeviceAfterChangePackage(type: OtaUpdateType, entityId: EntityId, config?: RequestConfig): Observable<number> {
-    return this.http.get<number>(`/api/devices/count/${type}/${entityId.id}`, defaultHttpOptionsFromConfig(config));
+  public getOtaPackageInfoByDeviceGroupId(deviceGroupId: string, type: OtaUpdateType,
+                                          config?: RequestConfig): Observable<DeviceGroupOtaPackage> {
+    const url = `/api/deviceGroupOtaPackage/${deviceGroupId}/${type}`;
+    return this.http.get<DeviceGroupOtaPackage>(url, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getOtaPackagesInfoByDeviceGroupId(pageLink: PageLink, deviceGroupId: string, type: OtaUpdateType,
+                                           config?: RequestConfig): Observable<PageData<OtaPackageInfo>> {
+    const url = `/api/otaPackages/group/${deviceGroupId}/${type}${pageLink.toQuery()}`;
+    return this.http.get<PageData<OtaPackageInfo>>(url, defaultHttpOptionsFromConfig(config));
+  }
+
+  public countUpdateDeviceAfterChangePackage(type: OtaUpdateType, entityId: EntityId,
+                                             packageId?: string, config?: RequestConfig): Observable<number> {
+    let url;
+    if (entityId.entityType === EntityType.ENTITY_GROUP) {
+      url = `/api/devices/count/${type}/${packageId}/${entityId.id}`;
+    } else {
+      url = `/api/devices/count/${type}/${entityId.id}`;
+    }
+    return this.http.get<number>(url, defaultHttpOptionsFromConfig(config));
   }
 
   public confirmDialogUpdatePackage(entity: BaseData<EntityId>&OtaPagesIds,
-                                    originEntity: BaseData<EntityId>&OtaPagesIds): Observable<boolean> {
+                                    originEntity?: BaseData<EntityId>&OtaPagesIds): Observable<boolean> {
     const tasks: Observable<number>[] = [];
     if (originEntity?.id?.id && originEntity.firmwareId?.id !== entity.firmwareId?.id) {
-      tasks.push(this.countUpdateDeviceAfterChangePackage(OtaUpdateType.FIRMWARE, entity.id));
+      const packageId = entity.firmwareId?.id || originEntity.firmwareId?.id;
+      tasks.push(this.countUpdateDeviceAfterChangePackage(OtaUpdateType.FIRMWARE, entity.id, packageId));
     } else {
       tasks.push(of(0));
     }
     if (originEntity?.id?.id && originEntity.softwareId?.id !== entity.softwareId?.id) {
-      tasks.push(this.countUpdateDeviceAfterChangePackage(OtaUpdateType.SOFTWARE, entity.id));
+      const packageId = entity.softwareId?.id || originEntity.softwareId?.id;
+      tasks.push(this.countUpdateDeviceAfterChangePackage(OtaUpdateType.SOFTWARE, entity.id, packageId));
     } else {
       tasks.push(of(0));
     }
@@ -142,5 +152,4 @@ export class OtaPackageService {
       })
     );
   }
-
 }

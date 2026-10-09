@@ -1,18 +1,8 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -20,10 +10,9 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>4.4.0-SNAPSHOT</version>
+        <version>4.4.0.1-SNAPSHOT</version>
         <artifactId>thingsboard</artifactId>
     </parent>
-    <groupId>org.thingsboard</groupId>
     <artifactId>ui-ngx</artifactId>
     <packaging>jar</packaging>
 
@@ -37,6 +26,15 @@
 
     <build>
         <resources>
+            <!-- The backend reads the locale files from the classpath (see DefaultTranslationService),
+                 so they must be packaged even when the UI is not built (-Dskip.yarn=true). The Angular
+                 build copies these very same sources verbatim to the same path under generated-resources,
+                 which is declared after this entry so that the built UI output is processed last. -->
+            <resource>
+                <directory>src/assets/locale</directory>
+                <targetPath>public/assets/locale</targetPath>
+                <filtering>false</filtering>
+            </resource>
             <resource>
                 <directory>${project.build.directory}/generated-resources</directory>
             </resource>
@@ -48,6 +46,9 @@
                 <configuration>
                     <installDirectory>target</installDirectory>
                     <workingDirectory>${basedir}</workingDirectory>
+                    <!-- Declared at plugin level so that it covers every execution of this plugin,
+                         including the ones contributed by the profiles below. -->
+                    <skip>${skip.ui.build}</skip>
                 </configuration>
                 <executions>
                     <execution>
@@ -71,6 +72,37 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-deploy-plugin</artifactId>
+              <configuration>
+                <skip>true</skip>
+              </configuration>
+            </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-resources-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>copy-resources</id>
+                <phase>generate-resources</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration>
+                  <outputDirectory>${project.build.outputDirectory}/converters</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>src/assets/converters</directory>
+                      <includes>
+                        <include>**/*.raw</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-clean-plugin</artifactId>
@@ -106,7 +138,7 @@
                                     <goal>yarn</goal>
                                 </goals>
                                 <configuration>
-                                    <arguments>run build:prod</arguments>
+                                    <arguments>--mutex network run build:prod</arguments>
                                 </configuration>
                             </execution>
                         </executions>

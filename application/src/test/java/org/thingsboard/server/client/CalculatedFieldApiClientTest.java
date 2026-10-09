@@ -1,26 +1,16 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.client;
 
 import org.junit.Test;
+import org.thingsboard.client.api.ThingsboardApi.DeleteCalculatedFieldArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetCalculatedFieldByIdArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetCalculatedFieldsByEntityIdArgs;
+import org.thingsboard.client.api.ThingsboardApi.SaveCalculatedFieldArgs;
+import org.thingsboard.client.api.ThingsboardApi.SaveDeviceArgs;
 import org.thingsboard.client.model.AlarmCalculatedFieldConfiguration;
-import org.thingsboard.client.model.AlarmConditionValueAlarmRuleSchedule;
-import org.thingsboard.client.model.AlarmRuleDefinition;
-import org.thingsboard.client.model.AlarmRuleSimpleCondition;
-import org.thingsboard.client.model.AlarmRuleSpecificTimeSchedule;
+import org.thingsboard.client.model.AlarmConditionValueAlarmSchedule;
+import org.thingsboard.client.model.AlarmRule;
 import org.thingsboard.client.model.AlarmSeverity;
 import org.thingsboard.client.model.Argument;
 import org.thingsboard.client.model.ArgumentType;
@@ -30,7 +20,9 @@ import org.thingsboard.client.model.Device;
 import org.thingsboard.client.model.EntityType;
 import org.thingsboard.client.model.PageDataCalculatedField;
 import org.thingsboard.client.model.ReferencedEntityKey;
+import org.thingsboard.client.model.SimpleAlarmCondition;
 import org.thingsboard.client.model.SimpleCalculatedFieldConfiguration;
+import org.thingsboard.client.model.SpecificTimeSchedule;
 import org.thingsboard.client.model.TbelAlarmConditionExpression;
 import org.thingsboard.client.model.TimeSeriesOutput;
 import org.thingsboard.server.dao.service.DaoSqlTest;
@@ -57,12 +49,16 @@ public class CalculatedFieldApiClientTest extends AbstractApiClientTest {
         Device device1 = new Device();
         device1.setName("CalcFieldDevice1_" + timestamp);
         device1.setType("default");
-        Device createdDevice1 = client.saveDevice(device1, null, null, null, null);
+        Device createdDevice1 = client.saveDevice(SaveDeviceArgs.builder()
+                .device(device1)
+                .build());
 
         Device device2 = new Device();
         device2.setName("CalcFieldDevice2_" + timestamp);
         device2.setType("default");
-        Device createdDevice2 = client.saveDevice(device2, null, null, null, null);
+        Device createdDevice2 = client.saveDevice(SaveDeviceArgs.builder()
+                .device(device2)
+                .build());
 
         // create calculated fields on device1
         for (int i = 0; i < 5; i++) {
@@ -89,7 +85,9 @@ public class CalculatedFieldApiClientTest extends AbstractApiClientTest {
 
             cf.setConfiguration(config);
 
-            CalculatedField created = client.saveCalculatedField(cf);
+            CalculatedField created = client.saveCalculatedField(SaveCalculatedFieldArgs.builder()
+                    .calculatedField(cf)
+                    .build());
             assertNotNull(created);
             assertNotNull(created.getId());
             assertEquals(cf.getName(), created.getName());
@@ -122,27 +120,39 @@ public class CalculatedFieldApiClientTest extends AbstractApiClientTest {
 
             cf.setConfiguration(config);
 
-            CalculatedField created = client.saveCalculatedField(cf);
+            CalculatedField created = client.saveCalculatedField(SaveCalculatedFieldArgs.builder()
+                    .calculatedField(cf)
+                    .build());
             assertNotNull(created);
             createdFields.add(created);
         }
 
         // get calculated fields by entity id for device1
-        PageDataCalculatedField device1Fields = client.getCalculatedFieldsByEntityId(
-                EntityType.DEVICE.toString(), createdDevice1.getId().getId().toString(),
-                100, 0, CalculatedFieldType.SIMPLE, null, null, null);
+        PageDataCalculatedField device1Fields = client.getCalculatedFieldsByEntityId(GetCalculatedFieldsByEntityIdArgs.builder()
+                .entityType(EntityType.DEVICE.toString())
+                .entityId(createdDevice1.getId().getId().toString())
+                .pageSize(100)
+                .page(0)
+                .type(CalculatedFieldType.SIMPLE)
+                .build());
         assertNotNull(device1Fields);
         assertEquals(5, device1Fields.getData().size());
 
         // get calculated fields by entity id for device2
-        PageDataCalculatedField device2Fields = client.getCalculatedFieldsByEntityId(
-                EntityType.DEVICE.toString(), createdDevice2.getId().getId().toString(),
-                100, 0, CalculatedFieldType.SIMPLE, null, null, null);
+        PageDataCalculatedField device2Fields = client.getCalculatedFieldsByEntityId(GetCalculatedFieldsByEntityIdArgs.builder()
+                .entityType(EntityType.DEVICE.toString())
+                .entityId(createdDevice2.getId().getId().toString())
+                .pageSize(100)
+                .page(0)
+                .type(CalculatedFieldType.SIMPLE)
+                .build());
         assertEquals(3, device2Fields.getData().size());
 
         // get by id
         CalculatedField searchField = createdFields.get(2);
-        CalculatedField fetchedField = client.getCalculatedFieldById(searchField.getId().getId().toString());
+        CalculatedField fetchedField = client.getCalculatedFieldById(GetCalculatedFieldByIdArgs.builder()
+                .calculatedFieldId(searchField.getId().getId().toString())
+                .build());
         assertEquals(searchField.getName(), fetchedField.getName());
         assertEquals(searchField.getType(), fetchedField.getType());
         assertNotNull(fetchedField.getConfiguration());
@@ -153,7 +163,9 @@ public class CalculatedFieldApiClientTest extends AbstractApiClientTest {
         // update calculated field
         fetchedField.setName(fetchedField.getName() + "_updated");
         fetchedConfig.setExpression("temp * 100");
-        CalculatedField updatedField = client.saveCalculatedField(fetchedField);
+        CalculatedField updatedField = client.saveCalculatedField(SaveCalculatedFieldArgs.builder()
+                .calculatedField(fetchedField)
+                .build());
         assertEquals(fetchedField.getName(), updatedField.getName());
         SimpleCalculatedFieldConfiguration updatedConfig =
                 (SimpleCalculatedFieldConfiguration) updatedField.getConfiguration();
@@ -161,16 +173,23 @@ public class CalculatedFieldApiClientTest extends AbstractApiClientTest {
 
         // delete calculated field
         UUID fieldToDeleteId = createdFields.get(0).getId().getId();
-        client.deleteCalculatedField(fieldToDeleteId.toString());
+        client.deleteCalculatedField(DeleteCalculatedFieldArgs.builder()
+                .calculatedFieldId(fieldToDeleteId.toString())
+                .build());
 
         // verify deletion
         assertReturns404(() ->
-                client.getCalculatedFieldById(fieldToDeleteId.toString())
+                client.getCalculatedFieldById(GetCalculatedFieldByIdArgs.builder()
+                        .calculatedFieldId(fieldToDeleteId.toString())
+                        .build())
         );
 
-        PageDataCalculatedField device1FieldsAfterDelete = client.getCalculatedFieldsByEntityId(
-                EntityType.DEVICE.toString(), createdDevice1.getId().getId().toString(),
-                100, 0, null, null, null, null);
+        PageDataCalculatedField device1FieldsAfterDelete = client.getCalculatedFieldsByEntityId(GetCalculatedFieldsByEntityIdArgs.builder()
+                .entityType(EntityType.DEVICE.toString())
+                .entityId(createdDevice1.getId().getId().toString())
+                .pageSize(100)
+                .page(0)
+                .build());
         assertEquals(4, device1FieldsAfterDelete.getData().size());
     }
 
@@ -182,7 +201,9 @@ public class CalculatedFieldApiClientTest extends AbstractApiClientTest {
         Device device = new Device();
         device.setName("AlarmCalcFieldDevice_" + timestamp);
         device.setType("default");
-        Device createdDevice = client.saveDevice(device, null, null, null, null);
+        Device createdDevice = client.saveDevice(SaveDeviceArgs.builder()
+                .device(device)
+                .build());
 
         // build the alarm calculated field configuration
         AlarmCalculatedFieldConfiguration config = new AlarmCalculatedFieldConfiguration();
@@ -198,12 +219,12 @@ public class CalculatedFieldApiClientTest extends AbstractApiClientTest {
         // create rule: HIGH_TEMPERATURE when temp > 50 (TBEL expression)
         TbelAlarmConditionExpression createExpression = new TbelAlarmConditionExpression();
         createExpression.setExpression("return temp > 50;");
-        AlarmRuleSimpleCondition createCondition = new AlarmRuleSimpleCondition();
+        SimpleAlarmCondition createCondition = new SimpleAlarmCondition();
         createCondition.setExpression(createExpression);
-        AlarmRuleSpecificTimeSchedule specificTimeSchedule = new AlarmRuleSpecificTimeSchedule().addDaysOfWeekItem(3);
-        AlarmConditionValueAlarmRuleSchedule schedule = new AlarmConditionValueAlarmRuleSchedule().staticValue(specificTimeSchedule);
+        SpecificTimeSchedule specificTimeSchedule = new SpecificTimeSchedule().addDaysOfWeekItem(3);
+        AlarmConditionValueAlarmSchedule schedule = new AlarmConditionValueAlarmSchedule().staticValue(specificTimeSchedule);
         createCondition.setSchedule(schedule);
-        AlarmRuleDefinition createRule = new AlarmRuleDefinition();
+        AlarmRule createRule = new AlarmRule();
         createRule.setCondition(createCondition);
         createRule.setAlarmDetails("Temperature is too high: ${temp}");
         config.setCreateRules(Map.of(
@@ -213,9 +234,9 @@ public class CalculatedFieldApiClientTest extends AbstractApiClientTest {
         // clear rule: when temp drops below 30
         TbelAlarmConditionExpression clearExpression = new TbelAlarmConditionExpression();
         clearExpression.setExpression("return temp < 30;");
-        AlarmRuleSimpleCondition clearCondition = new AlarmRuleSimpleCondition();
+        SimpleAlarmCondition clearCondition = new SimpleAlarmCondition();
         clearCondition.setExpression(clearExpression);
-        AlarmRuleDefinition clearRule = new AlarmRuleDefinition();
+        AlarmRule clearRule = new AlarmRule();
         clearRule.setCondition(clearCondition);
         config.setClearRule(clearRule);
 
@@ -230,18 +251,22 @@ public class CalculatedFieldApiClientTest extends AbstractApiClientTest {
         cf.setEntityId(createdDevice.getId());
         cf.setConfiguration(config);
 
-        CalculatedField created = client.saveCalculatedField(cf);
+        CalculatedField created = client.saveCalculatedField(SaveCalculatedFieldArgs.builder()
+                .calculatedField(cf)
+                .build());
         assertNotNull(created);
         assertNotNull(created.getId());
         assertEquals(cf.getName(), created.getName());
         assertEquals(CalculatedFieldType.ALARM, created.getType());
         AlarmCalculatedFieldConfiguration configuration = (AlarmCalculatedFieldConfiguration) created.getConfiguration();
-        AlarmConditionValueAlarmRuleSchedule createdSchedule = configuration.getCreateRules().get(AlarmSeverity.CRITICAL.name()).getCondition().getSchedule();
-        AlarmRuleSpecificTimeSchedule staticSchedule = (AlarmRuleSpecificTimeSchedule) createdSchedule.getStaticValue();
+        AlarmConditionValueAlarmSchedule createdSchedule = configuration.getCreateRules().get(AlarmSeverity.CRITICAL.name()).getCondition().getSchedule();
+        SpecificTimeSchedule staticSchedule = (SpecificTimeSchedule) createdSchedule.getStaticValue();
         assertEquals(Set.of(3), staticSchedule.getDaysOfWeek());
 
         // get by id and verify configuration
-        CalculatedField fetched = client.getCalculatedFieldById(created.getId().getId().toString());
+        CalculatedField fetched = client.getCalculatedFieldById(GetCalculatedFieldByIdArgs.builder()
+                .calculatedFieldId(created.getId().getId().toString())
+                .build());
         assertNotNull(fetched);
         assertEquals(created.getName(), fetched.getName());
         assertEquals(CalculatedFieldType.ALARM, fetched.getType());
@@ -257,30 +282,40 @@ public class CalculatedFieldApiClientTest extends AbstractApiClientTest {
         // update: add a second create rule for CRITICAL_TEMPERATURE
         TbelAlarmConditionExpression criticalExpression = new TbelAlarmConditionExpression();
         criticalExpression.setExpression("return temp > 80;");
-        AlarmRuleSimpleCondition criticalCondition = new AlarmRuleSimpleCondition();
+        SimpleAlarmCondition criticalCondition = new SimpleAlarmCondition();
         criticalCondition.setExpression(criticalExpression);
-        AlarmRuleDefinition criticalRule = new AlarmRuleDefinition();
+        AlarmRule criticalRule = new AlarmRule();
         criticalRule.setCondition(criticalCondition);
         fetchedConfig.putCreateRulesItem(AlarmSeverity.INDETERMINATE.name(), criticalRule);
         fetched.setConfiguration(fetchedConfig);
 
-        CalculatedField updated = client.saveCalculatedField(fetched);
+        CalculatedField updated = client.saveCalculatedField(SaveCalculatedFieldArgs.builder()
+                .calculatedField(fetched)
+                .build());
         AlarmCalculatedFieldConfiguration updatedConfig =
                 (AlarmCalculatedFieldConfiguration) updated.getConfiguration();
         assertEquals(2, updatedConfig.getCreateRules().size());
         assertTrue(updatedConfig.getCreateRules().containsKey("INDETERMINATE"));
 
         // filter by entity and ALARM type
-        PageDataCalculatedField deviceFields = client.getCalculatedFieldsByEntityId(
-                EntityType.DEVICE.toString(), createdDevice.getId().getId().toString(),
-                100, 0, CalculatedFieldType.ALARM, null, null, null);
+        PageDataCalculatedField deviceFields = client.getCalculatedFieldsByEntityId(GetCalculatedFieldsByEntityIdArgs.builder()
+                .entityType(EntityType.DEVICE.toString())
+                .entityId(createdDevice.getId().getId().toString())
+                .pageSize(100)
+                .page(0)
+                .type(CalculatedFieldType.ALARM)
+                .build());
         assertNotNull(deviceFields);
         assertEquals(1, deviceFields.getData().size());
 
         // delete and verify
         UUID fieldId = created.getId().getId();
-        client.deleteCalculatedField(fieldId.toString());
-        assertReturns404(() -> client.getCalculatedFieldById(fieldId.toString()));
+        client.deleteCalculatedField(DeleteCalculatedFieldArgs.builder()
+                .calculatedFieldId(fieldId.toString())
+                .build());
+        assertReturns404(() -> client.getCalculatedFieldById(GetCalculatedFieldByIdArgs.builder()
+                .calculatedFieldId(fieldId.toString())
+                .build()));
     }
 
 }

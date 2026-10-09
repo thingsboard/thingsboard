@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
@@ -39,8 +26,7 @@ export class ConfiguredFeaturesComponent extends PageComponent implements OnInit
   featuresInfo: FeaturesInfo;
   rowHeight = '50px';
   gutterSize = '12px';
-  bottomColspan = 2;
-  lastColspan = 2;
+  colspan = 2;
 
   private observeBreakpointSubscription: Subscription;
 
@@ -57,8 +43,7 @@ export class ConfiguredFeaturesComponent extends PageComponent implements OnInit
     const isLtMd = this.breakpointObserver.isMatched(MediaBreakpoints['lt-md']);
     this.rowHeight = isMdLg ? '22px' : '50px';
     this.gutterSize = isMdLg ? '8px' : '12px';
-    this.bottomColspan = isLtMd ? 3 : 2;
-    this.lastColspan = isLtMd ? 6 : 2;
+    this.colspan = isLtMd ? 3 : 2;
     this.observeBreakpointSubscription = this.breakpointObserver
       .observe([MediaBreakpoints['md-lg'], MediaBreakpoints['lt-md']])
       .subscribe((state: BreakpointState) => {
@@ -70,11 +55,9 @@ export class ConfiguredFeaturesComponent extends PageComponent implements OnInit
             this.gutterSize = '12px';
           }
           if (state.breakpoints[MediaBreakpoints['lt-md']]) {
-            this.bottomColspan = 3;
-            this.lastColspan = 6;
+            this.colspan = 3;
           } else {
-            this.bottomColspan = 2;
-            this.lastColspan = 2;
+            this.colspan = 2;
           }
           this.cd.markForCheck();
         }

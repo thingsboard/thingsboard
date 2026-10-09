@@ -1,40 +1,29 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.query;
 
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.id.UUIDBased;
 
 import java.util.UUID;
 
-class AliasEntityIdImpl implements AliasEntityId {
+public class AliasEntityIdImpl implements AliasEntityId {
 
     private UUID id;
     private EntityType entityType;
     private AliasEntityType aliasEntityType;
     private EntityId defaultEntityId;
 
-    protected AliasEntityIdImpl(EntityId entityId) {
+    public AliasEntityIdImpl(EntityId entityId) {
         this.id = entityId.getId();
         this.entityType = entityId.getEntityType();
     }
 
-    protected AliasEntityIdImpl(AliasEntityType aliasEntityType, UUID id) {
+    public AliasEntityIdImpl(AliasEntityType aliasEntityType, UUID id) {
         this.aliasEntityType = aliasEntityType;
         if (id != null) {
             switch (this.aliasEntityType) {

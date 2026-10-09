@@ -1,27 +1,15 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import _ from 'lodash';
+import { Type } from '@angular/core';
 import { from, isObservable, Observable, of, ReplaySubject, Subject } from 'rxjs';
 import { catchError, finalize, share } from 'rxjs/operators';
 import { DataKey, Datasource, DatasourceData, FormattedData, ReplaceInfo } from '@app/shared/models/widget.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { baseDetailsPageByEntityType, EntityType } from '@shared/models/entity-type.models';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { httpStatusMessageMap, serverErrorCodesTranslations } from '@shared/models/constants';
 import { SubscriptionEntityInfo } from '@core/api/widget-api.models';
@@ -138,6 +126,10 @@ export function isString(value: any): boolean {
   return typeof value === 'string';
 }
 
+export function isArray(value: any): boolean {
+  return Array.isArray(value);
+}
+
 export function isLiteralObject(value: any) {
   return (!!value) && (value.constructor === Object);
 }
@@ -226,24 +218,87 @@ export function objToBase64(obj: any): string {
     }));
 }
 
-export function base64toString(b64Encoded: string): string {
-  return decodeURIComponent(atob(b64Encoded).split('').map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+function utf8ToBinaryString(value: string): string {
+  return encodeURIComponent(value).replace(/%([0-9A-F]{2})/g,
+    function toSolidBytes(match, p1) {
+      return String.fromCharCode(Number('0x' + p1));
+    });
 }
+
+export function stringToBase64(value: string): string {
+  return btoa(utf8ToBinaryString(value));
+}
+
+function binaryStringToHex(binary: string): string {
+  let hex = '';
+  for (let i = 0; i < binary.length; i++) {
+    hex += ('0' + binary.charCodeAt(i).toString(16)).slice(-2);
+  }
+  return hex;
+}
+
+export const stringToHex = (value: string): string => binaryStringToHex(utf8ToBinaryString(value));
+
+function binaryStringToUtf8(binary: string): string {
+  return decodeURIComponent(binary.split('').map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+}
+
+const textDecoderUtf8 = new TextDecoder('UTF-8', { fatal: true });
+const textDecoderLatin1 = new TextDecoder('ISO-8859-1');
+
+export function bytesToString(bytes: Uint8Array): string {
+  try {
+    return textDecoderUtf8.decode(bytes);
+  } catch {
+    return textDecoderLatin1.decode(bytes);
+  }
+}
+
+export function base64toString(b64Encoded: string): string {
+  const binary = atob(b64Encoded);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytesToString(bytes);
+}
+
+function hexToBinaryString(hex: string): string {
+  // Accept hex with optional escape/prefix notations and separators, e.g. "534e", "\x53\x4e", "0x53 0x4e", "53:4e".
+  const cleaned = hex.replace(/0x/gi, '').replace(/[^0-9a-fA-F]/g, '');
+  if (!cleaned) {
+    return '';
+  }
+  // Pad an odd number of hex digits with a trailing zero so the final nibble isn't silently dropped.
+  const normalized = cleaned.length % 2 === 0 ? cleaned : cleaned + '0';
+  let binary = '';
+  for (let i = 0; i < normalized.length; i += 2) {
+    binary += String.fromCharCode(parseInt(normalized.substring(i, i + 2), 16));
+  }
+  return binary;
+}
+
+export function hexToBase64(hex: string): string {
+  return btoa(hexToBinaryString(hex));
+}
+
+export const hexToString = (hex: string): string => binaryStringToUtf8(hexToBinaryString(hex));
+
+export const base64ToHex = (b64Encoded: string): string => binaryStringToHex(atob(b64Encoded));
 
 export function objToBase64URI(obj: any): string {
   return encodeURIComponent(objToBase64(obj));
 }
 
 export function base64toObj(b64Encoded: string): any {
-  const json = decodeURIComponent(atob(b64Encoded).split('').map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
-  return JSON.parse(json);
+  return JSON.parse(base64toString(b64Encoded));
 }
 
-export function stringToBase64(value: string): string {
-  return btoa(encodeURIComponent(value).replace(/%([0-9A-F]{2})/g,
-    function toSolidBytes(match, p1) {
-      return String.fromCharCode(Number('0x' + p1));
-    }));
+export function checkNumericStringAndConvert(val: string): number | string {
+  if (val && isNumeric(val) && Number(val).toString() === val) {
+    return Number(val);
+  }
+  return val;
 }
 
 export const blobToBase64 = (blob: Blob): Observable<string> => from(new Promise<string>((resolve) => {
@@ -437,6 +492,21 @@ export function guid(): string {
   }
   return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
     s4() + '-' + s4() + s4() + s4();
+}
+
+const PROP_METADATA = '__prop__metadata__';
+
+export function cloneMetadata<S, T>(sourceType: Type<S>, targetType: Type<T>) {
+  const sourceMeta = sourceType.prototype.constructor[PROP_METADATA];
+  const targetMeta = Object.defineProperty(targetType.prototype.constructor,
+    PROP_METADATA, { value: {} })[PROP_METADATA];
+  if (isDefinedAndNotNull(sourceMeta)) {
+    for (const field of Object.keys(sourceMeta)) {
+      if (sourceMeta.hasOwnProperty(field)) {
+        targetMeta[field] = sourceMeta[field];
+      }
+    }
+  }
 }
 
 const SNAKE_CASE_REGEXP = /[A-Z]/g;
@@ -763,6 +833,24 @@ export function padValue(val: any, dec: number): string {
   return strVal;
 }
 
+export function removeEmptyObjects(obj: object): object {
+  for (const key of Object.keys(obj)) {
+    if (obj[key] === null || obj[key] === undefined) {
+      delete obj[key];
+    } else if (Array.isArray(obj[key])) {
+        obj[key] = obj[key].filter(el => !!removeEmptyObjects(el));
+    } else if (typeof (obj[key]) === 'object') {
+        removeEmptyObjects(obj[key]);
+    }
+  }
+  if (Object.keys(obj).length) {
+    return obj;
+  } else {
+    return null;
+  }
+}
+
+
 export function baseUrl(): string {
   let url = window.location.protocol + '//' + window.location.hostname;
   const port = window.location.port;
@@ -770,6 +858,24 @@ export function baseUrl(): string {
     url += ':' + port;
   }
   return url;
+}
+
+export function coapBaseUrl(dtlsEnabled: boolean): string {
+  if (dtlsEnabled) {
+    return 'coaps:' + '//' + window.location.hostname;
+  }
+  return 'coap:' + '//' + window.location.hostname;
+}
+
+export function generateId(length: number): string {
+  if (!length || isNaN(length)) {
+    length = 1;
+  }
+  const str = Math.random().toString(36).substr(2, length > 10 ? 10 : length);
+  if (str.length >= length) {
+    return str;
+  }
+  return str.concat(generateId(length - str.length));
 }
 
 export function sortObjectKeys<T>(obj: T): T {
@@ -961,6 +1067,29 @@ function isProxyError(errorResponse: HttpErrorResponse): boolean {
   return !error || typeof error === 'string' || (typeof error === 'object' && !error.message);
 }
 
+export async function resolveSendErrorMessage(err: any,
+                                              translate: TranslateService): Promise<string> {
+  let body = err?.error;
+  if (typeof body === 'string' && body.trim().length) {
+    return body;
+  }
+  // A blob error body carries JSON that has to be read out before it can be inspected - download responses
+  // arrive this way.
+  if (body?.type === 'application/json') {
+    try {
+      const text = await body.text();
+      body = JSON.parse(text);
+    } catch { /* empty */ }
+  }
+  if (body && typeof body.message === 'string' && body.message.trim().length) {
+    return body.message;
+  }
+  if (typeof err?.message === 'string' && err.message.trim().length) {
+    return err.message;
+  }
+  return translate.instant('setup.errors.request-failed');
+}
+
 export const genNextLabel = (name: string, datasources: Datasource[]): string => {
   let label = name;
   let i = 1;
@@ -1046,8 +1175,22 @@ export const isFirefox = (): boolean => {
   return /^((?!seamonkey).)*firefox/i.test(userAgent);
 };
 
+export const plainColorFromVariable = (variable: string): string => {
+  if (!variable || (!variable.startsWith('--') && !variable.startsWith('var('))) {
+    return variable;
+  }
+  if (variable.startsWith('var(')) {
+    variable = variable.substring(4, variable.length - 1);
+  }
+  return getComputedStyle(document.documentElement).getPropertyValue(variable);
+};
+
 export const camelCase = (str: string): string => {
   return _.camelCase(str);
+};
+
+export const capitalize = (str: string): string => {
+  return _.capitalize(str);
 };
 
 export const convertKeysToCamelCase = (obj: Record<string, any>): Record<string, any> => {
@@ -1085,6 +1228,43 @@ export const trimDefaultValues = (input: Record<string, any>, defaults: Record<s
   }
 
   return result;
+}
+
+export const getFilenameFromHttpHeader = (headers: HttpHeaders): string  => {
+  if (!headers) {
+    return '';
+  }
+  const header = headers.get('content-disposition');
+  if (header) {
+    const filenameStarMatch = /filename\*=UTF-8''([^;]+)/i.exec(header);
+    if (filenameStarMatch && filenameStarMatch[1]) {
+      return decodeURIComponent(filenameStarMatch[1]);
+    }
+    const filenameMatch = /filename="([^"]+)"/i.exec(header);
+    if (filenameMatch && filenameMatch[1]) {
+      return filenameMatch[1];
+    }
+  }
+  return headers.get('x-filename') ?? '';
+}
+
+export function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: ReturnType<typeof setTimeout> | null = null;
+
+  return function(...args: Parameters<T>) {
+    const later = () => {
+      timeout = null;
+      func(...args);
+    };
+
+    if (timeout !== null) {
+      clearTimeout(timeout);
+    }
+    timeout = setTimeout(later, wait);
+  };
 }
 
 export const validateEmail = (control: AbstractControl): ValidationErrors | null => {

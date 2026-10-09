@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   AfterViewInit,
   ChangeDetectorRef,
@@ -45,10 +32,12 @@ import {
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
 import {
+  deepClone,
   formattedDataFormDatasourceData,
   hashCode,
   isDefined,
   isDefinedAndNotNull,
+  isEmpty,
   isObject,
   isUndefined
 } from '@core/utils';
@@ -56,7 +45,7 @@ import cssjs from '@core/css/css';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction, SortOrder, sortOrderFromString } from '@shared/models/page/sort-order';
 import { CollectionViewer, DataSource } from '@angular/cdk/collections';
-import { BehaviorSubject, fromEvent, merge, Observable, of, Subject, Subscription } from 'rxjs';
+import { BehaviorSubject, forkJoin, fromEvent, merge, Observable, of, Subject, Subscription } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import {
   catchError,
@@ -73,9 +62,11 @@ import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import {
+  CellContentFunctionInfo,
   CellContentInfo,
   CellStyleInfo,
   checkHasActions,
+  columnExportOptions,
   constructTableCssString,
   DisplayColumn,
   getCellContentFunctionInfo,
@@ -107,12 +98,14 @@ import { FormBuilder } from '@angular/forms';
 import { DEFAULT_OVERLAY_POSITIONS } from '@shared/models/overlay.models';
 import { DateFormatSettings, ValueFormatProcessor } from '@shared/models/widget-settings.models';
 import { entityFields } from '@shared/models/entity.models';
+import { toUtcDate } from '@shared/models/time/time.models';
 
 export interface TimeseriesTableWidgetSettings extends TableWidgetSettings {
   showTimestamp: boolean;
   showMilliseconds: boolean;
   hideEmptyLines: boolean;
   dateFormat: DateFormatSettings;
+  timestampExportOption: columnExportOptions;
   sortOrder: SortOrder;
 }
 
@@ -203,6 +196,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
   public showTimestamp = true;
   private useEntityLabel = false;
   private dateFormatFilter: string;
+  private exportTimestampColumn: columnExportOptions = columnExportOptions.onlyVisible;
 
   private displayedColumns: Array<DisplayColumn[]> = [];
 
@@ -335,6 +329,8 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
   private initialize() {
     this.ctx.widgetActions = [this.searchAction, this.columnDisplayAction];
 
+    this.ctx.customDataExport = this.customDataExport.bind(this);
+
     this.setCellButtonAction = !!this.ctx.actionsApi.getActionDescriptors('actionCellButton').length;
     this.hasRowAction = !!this.ctx.actionsApi.getActionDescriptors('rowClick').length;
 
@@ -353,6 +349,10 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     } else {
       this.dateFormatFilter = isDefined(this.settings.dateFormat?.format) ? this.settings.dateFormat?.format : 'yyyy-MM-dd HH:mm:ss';
     }
+    this.ctx.exportDateFormat = this.dateFormatFilter;
+
+    this.exportTimestampColumn = isDefined(this.settings?.timestampExportOption) ?
+      this.settings.timestampExportOption : columnExportOptions.onlyVisible;
 
     this.rowStylesInfo = getRowStyleInfo(this.ctx, this.settings, 'rowData, ctx');
 
@@ -543,19 +543,24 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     if (!this.displayedColumns[index]) {
       this.displayedColumns[index] = this.sources[index].displayedColumns.map(value => {
         let title = '';
+        let includeToExport: columnExportOptions;
         const header = this.sources[index].header.find(column => column.index.toString() === value);
         if (value === '0') {
           title = this.translate.instant('widgets.table.timestamp-column-name');
+          includeToExport = this.exportTimestampColumn;
         } else if (value === 'actions') {
           title = 'Actions';
+          includeToExport = columnExportOptions.never;
         } else {
           title = header.dataKey.label;
+          includeToExport = header.dataKey.settings?.columnExportOption ?? columnExportOptions.onlyVisible;
         }
         return {
           title,
           def: value,
           display: header?.columnDefaultVisibility ?? true,
-          selectable: header?.columnSelectionAvailability ?? true
+          selectable: header?.columnSelectionAvailability ?? true,
+          includeToExport
         };
       });
     }
@@ -701,20 +706,8 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     this.ctx.detectChanges();
   }
 
-  public trackByColumnIndex(index, header: TimeseriesHeader) {
-    return header.index;
-  }
-
   public trackByRowTimestamp(index: number) {
     return index;
-  }
-
-  public trackByActionCellDescriptionId(index: number, action: WidgetActionDescriptor) {
-    return action.id;
-  }
-
-  public trackBySourcesIndex(index: number, source: TimeseriesTableSource) {
-    return source.datasource.entityId;
   }
 
   public rowStyle(source: TimeseriesTableSource, row: TimeseriesRow, index: number): Observable<any> {
@@ -912,6 +905,203 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     this.cellContentCache.length = 0;
     this.cellStyleCache.length = 0;
     this.rowStyleCache.length = 0;
+  }
+
+  private includeColumnInExport(column: DisplayColumn): boolean {
+    switch (column.includeToExport) {
+      case columnExportOptions.always:
+        return true;
+      case columnExportOptions.never:
+        return false;
+      default:
+        return column.display;
+    }
+  }
+
+  customDataExport(): Observable<Map<string, any>[]> {
+    let columnsToExport = [];
+    if (this.datasources.length) {
+      this.datasources.forEach((datasource, index) => {
+        columnsToExport.push(
+          this.displayedColumns[index].filter(column => this.includeColumnInExport(column)).map(column => column.title)
+        );
+      });
+      if (this.datasources.length > 1) {
+        columnsToExport[0].unshift('Entity Name');
+      }
+    }
+    columnsToExport = [...new Set(columnsToExport.flat())];
+    const timestampFieldName = this.translate.instant('widgets.table.timestamp-column-name');
+    const timestampColumIndex = columnsToExport.indexOf(timestampFieldName);
+    if (timestampColumIndex > 0) {
+      columnsToExport.splice(timestampColumIndex, 1);
+      columnsToExport.unshift(timestampFieldName);
+    }
+    const sourcesLatest: {[datasourceName: string]: {[key: string]: any}} = {};
+    const sourcesLatestContentFunc:
+      {[datasourceName: string]: {[key: string]: {value: any; contentFunction: Observable<CellContentFunctionInfo>}}} = {};
+    const sourcesTsRows: {[ts: string]: {[key: string]: any}} = {};
+    const sourcesTsRowsContentFunc:
+      {[ts: string]: {[key: string]: {value: any; contentFunction: Observable<CellContentFunctionInfo>}}} = {};
+    if (this.sources.length) {
+      this.sources.forEach((source, index) => {
+        source.latestRawData.forEach(latestRow => {
+          if (!sourcesLatest[latestRow.datasource.name]) {
+            sourcesLatest[latestRow.datasource.name] = {};
+          }
+          sourcesLatest[latestRow.datasource.name][latestRow.dataKey.label] = latestRow.data[0][1];
+          const header = source.header.find(value => value.dataKey.label === latestRow.dataKey.label);
+          if (!sourcesLatestContentFunc[latestRow.datasource.name]) {
+            sourcesLatestContentFunc[latestRow.datasource.name] = {};
+          }
+          sourcesLatestContentFunc[latestRow.datasource.name][latestRow.dataKey.label] = {
+            value: latestRow.data[0][1],
+            contentFunction: header.contentInfo.contentFunction
+          };
+        });
+        source.rawData.forEach(datasourceData => {
+          datasourceData.data.forEach(row => {
+            let key = datasourceData.dataKey.label;
+            const ts = row[0];
+            let tsKey = ts.toString();
+            if (this.datasources.length > 1) {
+              tsKey += '_' + datasourceData.datasource.entityType + '_' + datasourceData.datasource.entityName;
+            }
+            const value = row[1];
+            let tsRow = sourcesTsRows[tsKey];
+            if (!tsRow) {
+              tsRow = isDefined(sourcesLatest[datasourceData.datasource.name])
+                ? deepClone(sourcesLatest[datasourceData.datasource.name]) : {};
+              if (columnsToExport.includes(timestampFieldName)) {
+                tsRow[timestampFieldName] = toUtcDate(ts);
+              }
+              tsRow['Entity Name'] = this.useEntityLabel ? datasourceData.datasource.entityLabel : datasourceData.datasource.entityName;
+              sourcesTsRows[tsKey] = tsRow;
+              if (!isEmpty(sourcesLatestContentFunc)) {
+                sourcesTsRowsContentFunc[tsKey] = {};
+                for (const key in sourcesLatestContentFunc[datasourceData.datasource.name]) {
+                  sourcesTsRowsContentFunc[tsKey][key] = {
+                    value: deepClone(sourcesLatestContentFunc[datasourceData.datasource.name][key].value),
+                    contentFunction: sourcesLatestContentFunc[datasourceData.datasource.name][key].contentFunction
+                  };
+                }
+              }
+            }
+            const header = source.header.find(headerValue => headerValue.dataKey.label === key);
+            if (!sourcesTsRowsContentFunc[tsKey]) {
+              sourcesTsRowsContentFunc[tsKey] = {};
+            }
+            sourcesTsRowsContentFunc[tsKey][key] = {
+              value: deepClone(value),
+              contentFunction: header.contentInfo.contentFunction
+            };
+            key = this.checkProperty(tsRow, key);
+            tsRow[key] = value;
+          });
+        });
+      });
+    }
+    const exportedData: Observable<Map<string, any>>[] = [];
+    const outputTsRows: {[ts: string]: {[key: string]: Observable<any>}} = {};
+
+    if (this.data.length) {
+      const timestampsContentFunc = Object.keys(sourcesTsRowsContentFunc);
+      if (timestampsContentFunc.length) {
+        timestampsContentFunc.forEach(timestamp => {
+          outputTsRows[timestamp] = {};
+          for (const key in sourcesTsRows[timestamp]) {
+            outputTsRows[timestamp][key] = of(sourcesTsRows[timestamp][key]);
+          }
+          const tsRowContentFuncKeys = Object.keys(sourcesTsRowsContentFunc[timestamp]);
+          tsRowContentFuncKeys.forEach(key => {
+            outputTsRows[timestamp][key] = sourcesTsRowsContentFunc[timestamp][key].contentFunction.pipe(
+              map(contentFunction => {
+                if (contentFunction.useCellContentFunctionOnExport) {
+                  const div = document.createElement('div');
+                  try {
+                    div.innerHTML = contentFunction.cellContentFunction.execute(sourcesTsRowsContentFunc[timestamp][key].value, sourcesTsRows[timestamp], this.ctx);
+                  } catch (e) {
+                    div.innerText = sourcesTsRowsContentFunc[timestamp][key].value;
+                  }
+                  return div.textContent;
+                } else {
+                  return sourcesTsRowsContentFunc[timestamp][key].value;
+                }
+              })
+            );
+          });
+        });
+      }
+      const timestamps = Object.keys(sourcesTsRows);
+      timestamps.sort();
+      timestamps.forEach(timestamp => {
+        const tsRow = outputTsRows[timestamp];
+        const dataMap = new Map<string, Observable<any>>();
+        columnsToExport.forEach(key => {
+          dataMap.set(key, isDefined(tsRow[key]) ? tsRow[key] : of(null));
+        });
+        if (dataMap.size > 0) {
+          const orderedKeys = Array.from(dataMap.keys());
+          const orderedObservables = Array.from(dataMap.values());
+
+          exportedData.push(
+            forkJoin(orderedObservables).pipe(
+              map(resolvedValues => {
+                const orderedRow = new Map<string, any>();
+                orderedKeys.forEach((key, index) => {
+                  orderedRow.set(key, resolvedValues[index]);
+                });
+                return orderedRow;
+              })
+            )
+          );
+        } else {
+          exportedData.push(of(new Map<string, any>()));
+        }
+      });
+
+      if (!exportedData.length) {
+        const dataMap = new Map<string, Observable<any>>();
+        dataMap.set(this.translate.instant('widgets.table.timestamp-column-name') || 'Timestamp', of(null));
+        this.data.forEach((datasourceData) => {
+          const key = datasourceData.dataKey.label;
+          dataMap.set(key, of(null));
+        });
+
+        if (dataMap.size > 0) {
+          const orderedKeys = Array.from(dataMap.keys());
+          const orderedObservables = Array.from(dataMap.values());
+          exportedData.push(
+            forkJoin(orderedObservables).pipe(
+              map(resolvedValues => {
+                const orderedRow = new Map<string, any>();
+                orderedKeys.forEach((key, index) => {
+                  orderedRow.set(key, resolvedValues[index]);
+                });
+                return orderedRow;
+              })
+            )
+          );
+        } else {
+          exportedData.push(of(new Map<string, any>()));
+        }
+      }
+    }
+    if (exportedData.length) {
+      return forkJoin(exportedData);
+    } else {
+      return of([]);
+    }
+  }
+
+  private checkProperty(dataObj: any, key: string): string {
+    let toCheck = key;
+    let count = 1;
+    while (Object.prototype.hasOwnProperty.call(dataObj, toCheck)) {
+      count++;
+      toCheck = key + count;
+    }
+    return toCheck;
   }
 }
 

@@ -1,0 +1,39 @@
+// Encode downlink data from incoming Rule Engine message
+
+// msg - JSON message payload downlink message json
+// msgType - type of message, for ex. 'ATTRIBUTES_UPDATED', 'POST_TELEMETRY_REQUEST', etc.
+// metadata - list of key-value pairs with additional data about the message
+// integrationMetadata - list of key-value pairs with additional data defined in Integration executing this converter
+
+/** Encoder **/
+
+var data = {
+    writeValues: [],
+    callMethods: []
+};
+
+if (msgType === 'RPC_CALL_FROM_SERVER_TO_DEVICE') {
+    if (msg.method === 'setState') {
+        var targetMethod = msg.params === 'true' ? 'Start' : 'Stop';
+        var writeValue = {
+            nodeId: 'ns=3;i=1009',    // OPC UA NodeId of the target node (namespace=3, identifier=1009)
+            value: 54,               // Value to write 
+            type: "Int16"           // OPC UA data type of the value (e.g., "Int16")
+        };
+        data.writeValues.push(writeValue);
+        var callMethod = {
+              objectId: 'ns=' + metadata['cs_namespaceIndex'] +';s=' + metadata['deviceName'],
+              methodId: 'ns=' + metadata['cs_namespaceIndex'] +';s=' + metadata['deviceName']+'.'+targetMethod,
+              args: []
+        };
+        data.callMethods.push(callMethod);
+    }
+}
+
+var result = {
+    contentType: "JSON",
+    data: JSON.stringify(data),
+    metadata: {}
+};
+
+return result;

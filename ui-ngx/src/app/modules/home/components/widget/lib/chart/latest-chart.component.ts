@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   AfterViewInit,
   ChangeDetectorRef,
@@ -21,7 +8,7 @@ import {
   ElementRef,
   Input,
   OnDestroy,
-  OnInit,
+  OnInit, Optional,
   Renderer2,
   TemplateRef,
   ViewChild,
@@ -42,6 +29,7 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { WidgetComponent } from '@home/components/widget/widget.component';
 import { TranslateService } from '@ngx-translate/core';
 import { LegendPosition } from '@shared/models/widget.models';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 export interface LatestChartComponentCallbacks {
   createChart: (chartShape: ElementRef<HTMLElement>, renderer: Renderer2) => TbLatestChart<LatestChartSettings>;
@@ -70,6 +58,10 @@ export class LatestChartComponent implements OnInit, OnDestroy, AfterViewInit {
   ctx: WidgetContext;
 
   @Input()
+  @coerceBoolean()
+  reportMode = false;
+
+  @Input()
   callbacks: LatestChartComponentCallbacks;
 
   @Input()
@@ -96,7 +88,7 @@ export class LatestChartComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private latestChart: TbLatestChart<LatestChartSettings>;
 
-  constructor(public widgetComponent: WidgetComponent,
+  constructor(@Optional() public widgetComponent: WidgetComponent,
               private imagePipe: ImagePipe,
               private sanitizer: DomSanitizer,
               private renderer: Renderer2,

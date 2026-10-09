@@ -1,0 +1,18 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+@if (entity) {
+  <mat-tab
+    label="{{ 'agent.application-profiles-and-bulk-actions' | translate }}" #mergedTab="matTab">
+    <tb-agent-profile-merged-profiles [agentProfile]="entity" [active]="mergedTab.isActive"></tb-agent-profile-merged-profiles>
+  </mat-tab>
+}
+@if (entity && authUser.authority === authorities.TENANT_ADMIN) {
+  <mat-tab
+    label="{{ 'audit-log.audit-logs' | translate }}" #auditLogsTab="matTab">
+    <tb-audit-log-table detailsMode="true" [active]="auditLogsTab.isActive" [auditLogMode]="auditLogModes.ENTITY" [entityId]="entity.id"></tb-audit-log-table>
+  </mat-tab>
+}

@@ -1,0 +1,623 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@import 'constants';
+@import 'mixins';
+
+:host {
+  width: 100%;
+  height: 100%;
+  background: var(--mat-app-background-color);
+  overflow: auto;
+  scrollbar-gutter: stable;
+  color: var(--mat-app-text-color);
+  font-size: 14px;
+  line-height: 1.55;
+
+  --tb-canvas-max: 1920px;
+  --tb-content-col: 600px;
+  --tb-form-col: 480px;
+
+  --tb-header-size: 38px;
+  --tb-header-weight: 700;
+
+  p, h1, h2 {
+    line-height: 1.55;
+    letter-spacing: normal;
+  }
+
+  .mdc-button {
+    line-height: normal;
+  }
+
+  .tb-setup-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    max-width: var(--tb-canvas-max);
+    min-height: 100vh;
+    margin: 0 auto;
+    background-color: #fff;
+    background-repeat: no-repeat;
+    box-shadow: var(--tb-elev-card);
+    &.tb-initial, &.tb-waiting, &.tb-key, &.tb-offline, &.tb-setup-account, &.tb-demo-tenant {
+      background-image:
+        radial-gradient(closest-side,
+        rgba(0, 51, 202, 0.25) 0%, rgba(0, 88, 196, 0) 100%),
+        radial-gradient(closest-side,
+        rgba(0, 105, 92, 0.25) 0%, rgba(0, 105, 92, 0) 100%);
+      background-size:
+        min(44vw, 560px) min(44vw, 560px),
+        min(48vw, 620px) min(48vw, 620px);
+      background-position:
+        calc(min(44vw, 560px) * -0.5) calc(50% - min(9vw, 112px)),
+        calc(min(48vw, 620px) * -0.55) calc(50% + min(9vw, 112px));
+    }
+    @media #{$mat-gt-md} {
+      grid-template-columns: minmax(auto, var(--tb-content-col)) 1fr;
+      column-gap: clamp(48px, 5vw, 96px);
+      padding-left: clamp(48px, 8.5vw, 120px);
+    }
+  }
+  .tb-setup-visual {
+    position: relative;
+    display: none;
+    align-items: center;
+    justify-content: flex-start;
+    min-width: 0;
+    overflow: hidden;
+    pointer-events: none;
+    @media #{$mat-gt-md} {
+      display: flex;
+      grid-row: 1;
+      grid-column: 2;
+      position: sticky;
+      top: 0;
+      align-self: start;
+      width: 100%;
+      height: 100vh;
+    }
+    img {
+      display: block;
+      flex: none;
+      width: auto;
+      height: min(calc(100vh - 72px), 1240px);
+      margin-left: auto;
+      margin-right: calc(-1 * min(11vw, 150px));
+    }
+    &:after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to right,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.75) 100%);
+    }
+  }
+  .tb-setup-content {
+    grid-row: 1;
+    grid-column: 1;
+    width: min(640px, 100%);
+    justify-self: center;
+    padding: 56px 24px 140px;
+    @media #{$mat-gt-xs} {
+      padding: 72px 32px 140px;
+    }
+    @media #{$mat-gt-md} {
+      width: 100%;
+      justify-self: start;
+      align-self: center;
+      padding: 48px 0 64px;
+    }
+  }
+  .tb-applogo {
+    display: block;
+    width: 136px;
+    height: 136px;
+    margin: 0 0 8px -8px;
+  }
+  .tb-welcome {
+    margin: 0 0 14px;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--tb-brand-ink);
+    &.tb-live {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      .tb-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--tb-brand);
+        animation: tb-setup-pulse 1.6s ease-in-out infinite;
+      }
+    }
+    &.tb-icon {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    &.tb-warn {
+      color: #d84315;
+    }
+    @keyframes tb-setup-pulse {
+      0%, 100% { opacity: 1; }
+      50%      { opacity: .3; }
+    }
+  }
+  .tb-setup-mark {
+    width: 40px;
+    height: 40px;
+    margin: 0 0 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--tb-brand);
+    .mat-icon {
+      color: #fff;
+    }
+    &.tb-setup-mark-ok {
+      box-shadow: 0 0 0 8px rgba(23, 104, 90, 0.08), 0 0 0 16px rgba(23, 104, 90, 0.04);
+    }
+    // Same disc, no halo: the wash suits a mark above a heading, not one beside a sentence.
+    &.tb-setup-mark-plain {
+      flex: none;
+      margin: 0;
+    }
+  }
+
+  // A disc and a sentence, no container: a box would make the page two cards for one job.
+  .tb-setup-scope {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 0 22px;
+    max-width: 52ch;
+    p {
+      margin: 0;
+      font-size: 13.5px;
+      line-height: 1.6;
+      color: var(--tb-ink-2);
+      text-wrap: pretty;
+    }
+  }
+
+  // ::ng-deep because the <b> arrives from a translation through [innerHTML] and carries no scope attribute.
+  .tb-setup-scope, .tb-setup-list {
+    ::ng-deep b {
+      font-weight: 500;
+      color: var(--tb-ink);
+    }
+  }
+
+  .tb-setup-list {
+    margin: 22px 0 0;
+    padding: 0;
+    list-style: none;
+    max-width: 52ch;
+    li {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 6px 0;
+      font-size: 15px;
+      line-height: 1.6;
+      color: var(--tb-ink-2);
+    }
+    // Ink, not brand: the glyphs name things rather than decorate, and teal here competes with the CTA.
+    .mat-icon {
+      @include tb-mat-icon-size(22);
+      flex: none;
+      margin-top: 1px;
+      color: var(--tb-ink);
+    }
+  }
+  .tb-setup-header {
+    margin: 0 0 16px;
+    font-size: var(--tb-header-size);
+    font-weight: var(--tb-header-weight);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+    &.tb-setup-header--sm {
+      font-size: 32px;
+    }
+  }
+  .tb-setup-desc {
+    margin: 0;
+    max-width: 52ch;
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--tb-ink-2);
+    text-wrap: pretty;
+  }
+  .tb-setup-section {
+    margin: 40px 0 0;
+    & + .tb-setup-section {
+      margin-top: 28px;
+    }
+  }
+  .tb-setup-card-head {
+    text-wrap: balance;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 0 0 10px;
+    font-size: 18px;
+    font-weight: 500;
+    letter-spacing: -0.005em;
+    line-height: 1.35;
+    color: var(--tb-ink);
+    .tb-number {
+      flex: none;
+      width: 24px;
+      height: 24px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: var(--tb-brand);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 500;
+    }
+    b {
+      font-size: 16px;
+      font-weight: 500;
+      letter-spacing: 0.005em;
+    }
+    & + .tb-setup-form-row {
+      margin-top: 14px;
+    }
+  }
+  .tb-setup-card-note {
+    text-wrap: pretty;
+    margin: 0 0 12px;
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--tb-ink-2);
+    & + .tb-setup-form-row {
+      margin-top: 0;
+    }
+    & + .tb-setup-account-form {
+      margin-top: 16px;
+    }
+  }
+  ::ng-deep .tb-host {
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.055);
+    font-family: "Roboto Mono", ui-monospace, monospace;
+    font-size: 0.92em;
+    white-space: nowrap;
+  }
+  .tb-setup-card {
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    border-radius: var(--tb-radius-card);
+    background: #fff;
+    box-shadow: var(--tb-elev-card);
+    padding: 24px;
+    & + .tb-setup-card, & + .tb-setup-handoff {
+      margin-top: 16px;
+    }
+    &.tb-setup-card-ac {
+      margin-top: 32px;
+    }
+    // The form carries the gap under the card note, so its stack starts flush.
+    .tb-setup-account-form > .tb-setup-form-stack {
+      margin-top: 0;
+    }
+    .tb-setup-form-stack, .tb-setup-option {
+      max-width: none;
+    }
+    .tb-setup-option {
+      margin-left: -11px;
+    }
+  }
+  .tb-setup-handoff {
+    margin: 10px 0 0;
+    padding: 16px 18px;
+    border-radius: var(--tb-radius-card);
+    background: #fff;
+    box-shadow: var(--tb-elev-card);
+    & + .tb-setup-card, & + .tb-setup-handoff {
+      margin-top: 16px;
+    }
+  }
+  ::ng-deep .mat-mdc-tab-group.tb-setup-handoff-tabs {
+    .mat-mdc-tab-header {
+      margin: 0 -18px 16px;
+    }
+  }
+  ::ng-deep .tabs-icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 8px;
+    fill: currentColor;
+  }
+  .tb-setup-handoff-panel {
+    padding: 0;
+  }
+  .tb-setup-value {
+    max-height: calc(4.5em + 24px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 12px 14px;
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.03);
+    code {
+      display: block;
+      font-family: "Roboto Mono", ui-monospace, monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--tb-ink);
+      word-break: break-all;
+    }
+  }
+  .tb-setup-link-acts {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 12px;
+    overflow: hidden;
+  }
+  .tb-setup-qr {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 4px 0 2px;
+    text-align: center;
+    .tb-qr-code {
+      flex: none;
+      padding: 6px;
+      border-radius: 6px;
+      background: #fff;
+      width: 264px;
+      height: 264px;
+    }
+    .tb-setup-hint {
+      margin: 0;
+      max-width: 46ch;
+    }
+  }
+  .tb-setup-exit {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 28px 0 0;
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--tb-ink-2);
+  }
+  button {
+    .mat-icon.tb-chevron {
+      @include tb-mat-icon-size(24);
+      --mat-button-outlined-icon-spacing: 0;
+      &.tb-chevron-right {
+        margin-right: 0;
+      }
+      &.tb-chevron-left {
+        margin-left: -8px;
+      }
+    }
+  }
+
+  .tb-setup-btn-blue {
+    --mat-button-filled-label-text-color: #fff;
+    --mat-button-filled-container-color: var(--tb-link);
+  }
+
+  .tb-setup-form-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin: 24px 0 0;
+    --mat-form-field-leading-icon-color: var(--tb-ink-2);
+    --mat-form-field-trailing-icon-color: var(--tb-ink-2);
+    @media #{$mat-lt-sm} {
+      flex-wrap: wrap;
+      button {
+        width: 100%;
+      }
+    }
+  }
+  .tb-spin {
+    display: none;
+    vertical-align: bottom;
+    width: 16px;
+    height: 16px;
+    margin-right: 8px;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: tb-spin 0.7s linear infinite;
+  }
+
+  @keyframes tb-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  button.tb-load {
+    .tb-spin {
+      display: inline-block;
+    }
+    opacity: 0.9;
+  }
+
+  .mat-mdc-form-field-error {
+    button {
+      padding: 0;
+      border: 0;
+      background: none;
+      font: inherit;
+      color: inherit;
+      font-weight: 500;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      cursor: pointer;
+    }
+  }
+
+  .tb-setup-btn-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    & + .tb-setup-hint {
+      margin-top: 12px;
+    }
+  }
+
+  // One declaration of its own; the class also names the row for the note rule below.
+  .tb-setup-answers {
+    margin-top: 28px;
+  }
+  // A step below .tb-setup-hint: it explains a control rather than qualifying a field.
+  .tb-setup-answers + .tb-setup-hint {
+    margin-top: 14px;
+    font-size: 13px;
+  }
+
+  .tb-setup-hint {
+    margin: 14px 0 0;
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--tb-ink-2);
+    max-width: 56ch;
+  }
+
+  .tb-setup-form-stack {
+    display: grid;
+    gap: 8px;
+    max-width: var(--tb-form-col);
+    margin: 28px 0 0;
+    --mat-form-field-leading-icon-color: var(--tb-ink-2);
+    --mat-form-field-trailing-icon-color: var(--tb-ink-2);
+  }
+  .mat-mdc-form-field {
+    & + .tb-setup-option {
+      margin-top: -10px;
+    }
+    &.tb-setup-key-input {
+      input {
+        font-family: "Roboto Mono", ui-monospace, monospace;
+        font-size: 14px;
+        letter-spacing: 0.01em;
+        text-transform: none;
+        &::placeholder {
+          color: var(--tb-ink-3);
+          opacity: 1;
+        }
+      }
+    }
+  }
+  .tb-setup-option {
+    max-width: var(--tb-form-col);
+    margin: 0 0 12px;
+    ::ng-deep .mdc-form-field {
+      align-items: start;
+      .mdc-label {
+        margin-top: 10px;
+      }
+    }
+    .tb-setup-option-label {
+      font-size: 13.5px;
+      line-height: 1.55;
+      color: var(--tb-ink-2);
+      b {
+        font-size: 15px;
+        font-weight: 500;
+        color: var(--tb-ink);
+        letter-spacing: normal;
+      }
+      small {
+        display: block;
+        margin-top: 4px;
+        font-size: 13.5px;
+        letter-spacing: normal;
+      }
+    }
+  }
+  .tb-setup-creds {
+    margin: 22px 0 24px;
+    padding: 12px 14px;
+    border: 1px solid var(--tb-line);
+    border-radius: 8px;
+    .tb-setup-creds-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+      .tb-setup-creds-title {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--tb-ink);
+      }
+    }
+    .tb-setup-creds-lede {
+      margin: 0 0 10px;
+      font-size: 12.5px;
+      line-height: 1.5;
+      color: var(--tb-ink-2);
+      text-wrap: pretty;
+    }
+    .tb-setup-creds-value {
+      margin: 0;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 4px 14px;
+      align-items: baseline;
+      dt {
+        font-size: 12.5px;
+        color: var(--tb-ink-2);
+      }
+      dd {
+        margin: 0;
+      }
+      code {
+        font-family: "Roboto Mono", ui-monospace, monospace;
+        font-size: 14px;
+        color: var(--tb-ink);
+        overflow-wrap: anywhere;
+      }
+    }
+  }
+  .tb-setup-foot {
+    margin: 44px 0 0;
+    padding-top: 16px;
+    border-top: 1px solid var(--tb-line);
+    font-size: 12.5px;
+    color: var(--tb-ink-2);
+    & + .tb-setup-foot {
+      margin-top: 10px;
+      padding-top: 0;
+      border-top: 0;
+    }
+    svg {
+      vertical-align: -1px;
+    }
+  }
+  .tb-setup-foot, .tb-setup-hint {
+    a {
+      color: var(--tb-ink-2);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      border-bottom: none;
+      white-space: nowrap;
+      &:hover {
+        color: var(--tb-brand-ink);
+      }
+    }
+  }
+}

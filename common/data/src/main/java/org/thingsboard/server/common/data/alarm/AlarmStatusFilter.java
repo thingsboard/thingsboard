@@ -1,22 +1,12 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.alarm;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 public class AlarmStatusFilter {
 
@@ -107,6 +97,26 @@ public class AlarmStatusFilter {
 
         boolean ackFilter = statuses.contains(AlarmSearchStatus.ACK);
         boolean unackFilter = statuses.contains(AlarmSearchStatus.UNACK);
+        Optional<Boolean> ack = Optional.empty();
+        if (ackFilter && !unackFilter || !ackFilter && unackFilter) {
+            ack = Optional.of(ackFilter);
+        }
+        return new AlarmStatusFilter(clear, ack);
+    }
+
+    public static AlarmStatusFilter from(List<AlarmStatus> filter) {
+        if (filter == null || filter.isEmpty()) {
+            return AlarmStatusFilter.EMPTY;
+        }
+        boolean clearFilter = filter.stream().anyMatch(AlarmStatus::isCleared);
+        boolean activeFilter = filter.stream().anyMatch(Predicate.not(AlarmStatus::isCleared));
+        Optional<Boolean> clear = Optional.empty();
+        if (clearFilter && !activeFilter || !clearFilter && activeFilter) {
+            clear = Optional.of(clearFilter);
+        }
+
+        boolean ackFilter = filter.stream().anyMatch(AlarmStatus::isAck);
+        boolean unackFilter = filter.stream().anyMatch(Predicate.not(AlarmStatus::isAck));
         Optional<Boolean> ack = Optional.empty();
         if (ackFilter && !unackFilter || !ackFilter && unackFilter) {
             ack = Optional.of(ackFilter);

@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data;
 
 import java.util.EnumSet;
@@ -28,13 +16,23 @@ public enum ObjectType {
     RULE_CHAIN,
     OTA_PACKAGE,
     RESOURCE,
+    ROLE,
+    ENTITY_GROUP,
+    DEVICE_GROUP_OTA_PACKAGE,
+    GROUP_PERMISSION,
+    BLOB_ENTITY,
+    SCHEDULER_EVENT,
     EVENT,
     RULE_NODE,
+    CONVERTER,
+    INTEGRATION,
     USER,
     EDGE,
     WIDGETS_BUNDLE,
     WIDGET_TYPE,
     DASHBOARD,
+    REPORT_TEMPLATE,
+    REPORT,
     DEVICE_PROFILE,
     DEVICE,
     DEVICE_CREDENTIALS,
@@ -50,6 +48,8 @@ public enum ObjectType {
     NOTIFICATION_TARGET,
     NOTIFICATION_TEMPLATE,
     NOTIFICATION_RULE,
+    WHITE_LABELING,
+    CUSTOM_TRANSLATION,
     ALARM_COMMENT,
     API_USAGE_STATE,
     QUEUE_STATS,
@@ -61,17 +61,20 @@ public enum ObjectType {
 
     public static final Set<ObjectType> edqsTenantTypes = EnumSet.of(
             TENANT, CUSTOMER, DEVICE_PROFILE, DEVICE, ASSET_PROFILE, ASSET, EDGE, ENTITY_VIEW, USER, DASHBOARD,
-            RULE_CHAIN, WIDGET_TYPE, WIDGETS_BUNDLE, API_USAGE_STATE, QUEUE_STATS
+            RULE_CHAIN, WIDGET_TYPE, WIDGETS_BUNDLE, CONVERTER, INTEGRATION, SCHEDULER_EVENT, ROLE,
+            BLOB_ENTITY, API_USAGE_STATE, QUEUE_STATS, REPORT_TEMPLATE, REPORT
     );
-    public static final Set<ObjectType> edqsTypes =  EnumSet.copyOf(edqsTenantTypes);
+    public static final Set<ObjectType> edqsTypes = EnumSet.copyOf(edqsTenantTypes);
     public static final Set<ObjectType> edqsSystemTypes = EnumSet.of(TENANT, USER, DASHBOARD,
             API_USAGE_STATE, ATTRIBUTE_KV, LATEST_TS_KV);
     public static final Set<ObjectType> unversionedTypes = EnumSet.of(
-            QUEUE_STATS // created once, never updated
+            QUEUE_STATS, // created once, never updated
+            BLOB_ENTITY, // created once, never updated
+            REPORT // created once, never updated
     );
 
     static {
-        edqsTypes.addAll(List.of(RELATION, ATTRIBUTE_KV, LATEST_TS_KV));
+        edqsTypes.addAll(List.of(ENTITY_GROUP, RELATION, ATTRIBUTE_KV, LATEST_TS_KV));
     }
 
     public EntityType toEntityType() {

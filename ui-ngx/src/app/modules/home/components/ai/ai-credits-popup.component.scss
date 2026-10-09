@@ -1,0 +1,30 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host {
+  display: block;
+
+  .ai-credits-popup-content {
+    width: 268px;
+  }
+
+  .popup-title {
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 24px;
+    letter-spacing: 0.25px;
+    color: rgba(0, 0, 0, 0.87);
+  }
+
+  .popup-description {
+    font-size: 14px;
+    line-height: 20px;
+    letter-spacing: 0.2px;
+    color: rgba(0, 0, 0, 0.76);
+    margin: 0;
+
+    strong {
+      font-weight: 500;
+      letter-spacing: 0.25px;
+    }
+  }
+}

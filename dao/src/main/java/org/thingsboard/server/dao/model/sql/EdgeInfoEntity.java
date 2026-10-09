@@ -1,59 +1,45 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.model.sql;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.extern.slf4j.Slf4j;
+import org.hibernate.annotations.Immutable;
+import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.edge.EdgeInfo;
+import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.util.mapping.EntityInfosConverter;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 @Data
+@Slf4j
 @EqualsAndHashCode(callSuper = true)
+@Entity
+@Immutable
+@Table(name = ModelConstants.EDGE_INFO_VIEW_TABLE_NAME)
 public class EdgeInfoEntity extends AbstractEdgeEntity<EdgeInfo> {
 
-    public static final Map<String,String> edgeInfoColumnMap = new HashMap<>();
-    static {
-        edgeInfoColumnMap.put("customerTitle", "c.title");
-    }
+    @Column(name = ModelConstants.OWNER_NAME_COLUMN)
+    private String ownerName;
 
-    private String customerTitle;
-    private boolean customerIsPublic;
+    @Convert(converter = EntityInfosConverter.class)
+    @Column(name = ModelConstants.GROUPS_COLUMN)
+    private List<EntityInfo> groups;
 
     public EdgeInfoEntity() {
         super();
     }
 
-    public EdgeInfoEntity(EdgeEntity edgeEntity,
-                          String customerTitle,
-                          Object customerAdditionalInfo) {
-        super(edgeEntity);
-        this.customerTitle = customerTitle;
-        if (customerAdditionalInfo != null && ((JsonNode)customerAdditionalInfo).has("isPublic")) {
-            this.customerIsPublic = ((JsonNode)customerAdditionalInfo).get("isPublic").asBoolean();
-        } else {
-            this.customerIsPublic = false;
-        }
-    }
-
     @Override
     public EdgeInfo toData() {
-        return new EdgeInfo(super.toEdge(), customerTitle, customerIsPublic);
+        return new EdgeInfo(super.toEdge(), this.ownerName, this.groups);
     }
 
 }

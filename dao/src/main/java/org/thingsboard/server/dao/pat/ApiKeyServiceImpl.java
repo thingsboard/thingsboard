@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.pat;
 
 import com.google.common.util.concurrent.FluentFuture;
@@ -24,7 +12,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.common.data.id.ApiKeyId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
@@ -38,8 +25,10 @@ import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.service.validator.ApiKeyDataValidator;
+import org.thingsboard.server.exception.DataValidationException;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -84,6 +73,10 @@ public class ApiKeyServiceImpl extends AbstractCachedEntityService<ApiKeyCacheKe
         log.trace("Executing saveApiKey [{}]", apiKeyInfo);
         try {
             var apiKey = new ApiKey(apiKeyInfo);
+            if (!TenantId.SYS_TENANT_ID.equals(apiKey.getTenantId()) || !apiKey.isInternal()) {
+                apiKey.setInternal(false);
+                apiKey.setPermissions(null);
+            }
             ApiKey old = doValidate ? apiKeyValidator.validate(apiKey, ApiKeyInfo::getTenantId) :
                     (apiKey.getId() != null ? apiKeyDao.findById(tenantId, apiKey.getUuidId()) : null);
             if (value != null) {
@@ -93,12 +86,34 @@ public class ApiKeyServiceImpl extends AbstractCachedEntityService<ApiKeyCacheKe
             } else {
                 apiKey.setValue(old.getValue());
             }
+
             var savedApiKey = apiKeyDao.save(tenantId, apiKey);
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entityId(savedApiKey.getId()).entity(savedApiKey).created(apiKey.getId() == null).build());
-            if (old != null && old.isEnabled() != apiKey.isEnabled()) {
+            if (isPublishEvictRequired(old, apiKey)) {
                 publishEvictEvent(new ApiKeyEvictEvent(apiKey.getValue()));
             }
             return savedApiKey;
+        } catch (Exception e) {
+            checkConstraintViolation(e, "api_key_value_unq_key", "API Key with such value already exists!");
+            throw e;
+        }
+    }
+
+    @Override
+    public ApiKey rotateInternalApiKey(TenantId tenantId, ApiKeyInfo apiKeyInfo) {
+        log.trace("Executing rotateInternalApiKey [{}]", apiKeyInfo);
+        var apiKey = new ApiKey(apiKeyInfo);
+        var old = apiKeyValidator.validate(apiKey, ApiKey::getTenantId);
+        if (!old.isInternal()) {
+            throw new IllegalArgumentException("Can't rotate non-internal API Key!");
+        }
+        String value = generateApiKeySecret();
+        apiKey.setValue(value);
+        try {
+            var rotatedApiKey = apiKeyDao.save(tenantId, apiKey);
+            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entityId(rotatedApiKey.getId()).entity(rotatedApiKey).oldEntity(old).created(false).build());
+            publishEvictEvent(new ApiKeyEvictEvent(apiKey.getValue()));
+            return rotatedApiKey;
         } catch (Exception e) {
             checkConstraintViolation(e, "api_key_value_unq_key", "API Key with such value already exists!");
             throw e;
@@ -113,17 +128,16 @@ public class ApiKeyServiceImpl extends AbstractCachedEntityService<ApiKeyCacheKe
     }
 
     @Override
+    public ApiKey findInternalApiKeyByDescription(TenantId tenantId, String description) {
+        log.trace("Executing findApiKeyByDescription [{}] [{}]", tenantId, description);
+        return apiKeyDao.findInternalByDescription(tenantId, description);
+    }
+
+    @Override
     public PageData<ApiKeyInfo> findApiKeysByUserId(TenantId tenantId, UserId userId, PageLink pageLink) {
         log.trace("Executing findApiKeysByUserId [{}][{}]", tenantId, userId);
         validateId(userId, id -> INCORRECT_USER_ID + id);
         return apiKeyInfoDao.findByUserId(tenantId, userId, pageLink);
-    }
-
-    @Override
-    public List<ApiKey> findApiKeysByUserId(TenantId tenantId, UserId userId) {
-        log.trace("Executing findApiKeysByUserId [{}][{}]", tenantId, userId);
-        validateId(userId, id -> INCORRECT_USER_ID + id);
-        return apiKeyDao.findByTenantIdAndUserId(tenantId, userId);
     }
 
     @Override
@@ -138,9 +152,26 @@ public class ApiKeyServiceImpl extends AbstractCachedEntityService<ApiKeyCacheKe
     }
 
     @Override
+    public List<ApiKey> findApiKeysByUserId(TenantId tenantId, UserId userId) {
+        log.trace("Executing findApiKeysByUserId [{}][{}]", tenantId, userId);
+        validateId(userId, id -> INCORRECT_USER_ID + id);
+        return apiKeyDao.findByTenantIdAndUserId(tenantId, userId);
+    }
+
+    @Override
+    public PageData<ApiKey> findApiKeysByTenantId(TenantId tenantId, PageLink pageLink) {
+        log.trace("Executing findApiKeysByTenantId [{}]", tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        return apiKeyDao.findByTenantId(tenantId, pageLink);
+    }
+
+    @Override
     public void deleteApiKey(TenantId tenantId, ApiKey apiKey, boolean force) {
         UUID apiKeyId = apiKey.getUuidId();
         validateId(apiKeyId, id -> INCORRECT_API_KEY_ID + id);
+        if (apiKey.isInternal() && !force) {
+            throw new DataValidationException("Cannot delete internal API Key!");
+        }
         apiKeyDao.removeById(tenantId, apiKeyId);
         publishEvictEvent(new ApiKeyEvictEvent(apiKey.getValue()));
         eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(apiKey.getId()).build());
@@ -176,13 +207,6 @@ public class ApiKeyServiceImpl extends AbstractCachedEntityService<ApiKeyCacheKe
     }
 
     @Override
-    public PageData<ApiKey> findApiKeysByTenantId(TenantId tenantId, PageLink pageLink) {
-        log.trace("Executing findApiKeysByTenantId [{}]", tenantId);
-        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
-        return apiKeyDao.findByTenantId(tenantId, pageLink);
-    }
-
-    @Override
     public ApiKey findApiKeyByValue(String value) {
         log.trace("Executing findApiKeyByValue [{}]", value);
         var cacheKey = ApiKeyCacheKey.of(value);
@@ -191,6 +215,20 @@ public class ApiKeyServiceImpl extends AbstractCachedEntityService<ApiKeyCacheKe
 
     private String generateApiKeySecret() {
         return prefix + StringUtils.generateSafeToken(Math.min(valueBytesSize, MAX_API_KEY_VALUE_LENGTH));
+    }
+
+    /**
+     * Whether an update changed anything the cached copy of the key is read for. A newly created key has nothing
+     * cached yet, hence the null check on the previous state.
+     * <p>
+     * Authentication resolves a key by value straight from the cache and builds the caller's effective permissions
+     * from the cached instance, so both the enabled flag and the permissions must trigger an eviction. The value
+     * itself is not compared: an update preserves it, and a rotation evicts unconditionally.
+     */
+    private static boolean isPublishEvictRequired(ApiKey old, ApiKey apiKey) {
+        return old != null
+               && (old.isEnabled() != apiKey.isEnabled()
+                   || !Objects.equals(old.getPermissions(), apiKey.getPermissions()));
     }
 
     @Override

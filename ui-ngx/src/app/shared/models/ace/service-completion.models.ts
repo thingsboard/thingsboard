@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { FunctionArg, FunctionArgType, TbEditorCompletions } from '@shared/models/ace/completion.models';
 
 export const entityIdHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/id/entity-id.ts#L20" target="_blank">EntityId</a>';
@@ -175,7 +162,7 @@ export const serviceCompletions: TbEditorCompletions = {
     meta: 'service',
     type: '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/http/device.service.ts#L37" target="_blank">DeviceService</a>',
     children: {
-      getTenantDeviceInfos: {
+      getTenantDevices: {
         description: 'Get tenant devices',
         meta: 'function',
         args: [
@@ -183,9 +170,9 @@ export const serviceCompletions: TbEditorCompletions = {
           { name: 'type', type: 'string', optional: true, description: 'Device type'},
           requestConfigArg
         ],
-        return: observablePageDataReturnType(deviceInfoHref)
+        return: observablePageDataReturnType(deviceHref)
       },
-      getCustomerDeviceInfos: {
+      getCustomerDevices: {
         description: 'Get customer devices',
         meta: 'function',
         args: [
@@ -194,7 +181,17 @@ export const serviceCompletions: TbEditorCompletions = {
           { name: 'type', type: 'string', optional: true, description: 'Device type'},
           requestConfigArg
         ],
-        return: observablePageDataReturnType(deviceInfoHref)
+        return: observablePageDataReturnType(deviceHref)
+      },
+      getUserDevices: {
+        description: 'Get devices available for current user',
+        meta: 'function',
+        args: [
+          pageLinkArg,
+          { name: 'type', type: 'string', optional: true, description: 'Device type'},
+          requestConfigArg
+        ],
+        return: observablePageDataReturnType(deviceHref)
       },
       getDevice: {
         description: 'Get device by id',
@@ -214,20 +211,13 @@ export const serviceCompletions: TbEditorCompletions = {
         ],
         return: observableArrayReturnType(deviceHref)
       },
-      getDeviceInfo: {
-        description: 'Get device info by id',
-        meta: 'function',
-        args: [
-          { name: 'deviceId', type: 'string', description: 'Id of the device'},
-          requestConfigArg
-        ],
-        return: observableReturnType(deviceInfoHref)
-      },
       saveDevice: {
         description: 'Save device',
         meta: 'function',
         args: [
           { name: 'device', type: deviceHref, description: 'Device object to save'},
+          { name: 'entityGroupId', type: 'string', optional: true,
+            description: 'Id of target entity group to add when create new device'},
           requestConfigArg
         ],
         return: observableReturnType(deviceHref)
@@ -267,34 +257,6 @@ export const serviceCompletions: TbEditorCompletions = {
           requestConfigArg
         ],
         return: observableReturnType(deviceCredentialsHref)
-      },
-      makeDevicePublic: {
-        description: 'Make device public (available from public dashboard)',
-        meta: 'function',
-        args: [
-          { name: 'deviceId', type: 'string', description: 'Id of the device'},
-          requestConfigArg
-        ],
-        return: observableReturnType(deviceHref)
-      },
-      assignDeviceToCustomer: {
-        description: 'Assign device to specific customer',
-        meta: 'function',
-        args: [
-          { name: 'customerId', type: 'string', description: 'Id of the customer'},
-          { name: 'deviceId', type: 'string', description: 'Id of the device'},
-          requestConfigArg
-        ],
-        return: observableReturnType(deviceHref)
-      },
-      unassignDeviceFromCustomer: {
-        description: 'Unassign device from any customer',
-        meta: 'function',
-        args: [
-          { name: 'deviceId', type: 'string', description: 'Id of the device'},
-          requestConfigArg
-        ],
-        return: observableVoid()
       },
       sendOneWayRpcCommand: {
         description: 'Send one way (without response) RPC command to the device.',
@@ -370,23 +332,14 @@ export const serviceCompletions: TbEditorCompletions = {
     meta: 'service',
     type: '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/http/asset.service.ts#L29" target="_blank">AssetService</a>',
     children: {
-      getTenantAssetInfos: {
-        description: 'Get tenant assets',
-        meta: 'function',
-        args: [
-          pageLinkArg,
-          {name: 'type', type: 'string', optional: true, description: 'Asset type'},
-          requestConfigArg
-        ],
-        return: observablePageDataReturnType(assetInfoHref)
-      },
       getCustomerAssetInfos: {
-        description: 'Get customer assets',
+        description: 'Get customer asset information with optional customer inclusion',
         meta: 'function',
         args: [
-          {name: 'customerId', type: 'string', description: 'Id of the customer'},
+          { name: 'includeCustomers', type: 'boolean', description: 'Whether to include customers in the result' },
+          { name: 'customerId', type: 'string', description: 'Customer ID' },
           pageLinkArg,
-          {name: 'type', type: 'string', optional: true, description: 'Asset type'},
+          { name: 'assetProfileId', type: 'string', description: 'Optional asset profile ID' },
           requestConfigArg
         ],
         return: observablePageDataReturnType(assetInfoHref)
@@ -505,33 +458,26 @@ export const serviceCompletions: TbEditorCompletions = {
         ],
         return: observableArrayReturnType('<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/entity-type.models.ts#L295" target="_blank">EntitySubtype</a>')
       },
-      makeAssetPublic: {
-        description: 'Make asset public (available from public dashboard)',
+      getUserAssets: {
+        description: 'Get assets associated with the user, filtered by type if provided',
         meta: 'function',
         args: [
-          {name: 'assetId', type: 'string', description: 'Id of the asset'},
+          pageLinkArg,
+          { name: 'type', type: 'string', description: 'Optional asset type filter' },
           requestConfigArg
         ],
-        return: observableReturnType(assetHref)
+        return: observablePageDataReturnType(assetHref)
       },
-      assignAssetToCustomer: {
-        description: 'Assign asset to specific customer',
+      getAllAssetInfos: {
+        description: 'Get all asset information with optional customer inclusion',
         meta: 'function',
         args: [
-          {name: 'customerId', type: 'string', description: 'Id of the customer'},
-          {name: 'assetId', type: 'string', description: 'Id of the asset'},
+          { name: 'includeCustomers', type: 'boolean', description: 'Whether to include customers in the result' },
+          pageLinkArg,
+          { name: 'assetProfileId', type: 'string', description: 'Optional asset profile ID' },
           requestConfigArg
         ],
-        return: observableReturnType(assetHref)
-      },
-      unassignAssetFromCustomer: {
-        description: 'Unassign asset from any customer',
-        meta: 'function',
-        args: [
-          {name: 'assetId', type: 'string', description: 'Id of the asset'},
-          requestConfigArg
-        ],
-        return: observableVoid()
+        return: observablePageDataReturnType(assetInfoHref)
       },
       findByQuery: {
         description: 'Find assets by search query',
@@ -1171,6 +1117,12 @@ export const serviceCompletions: TbEditorCompletions = {
         return: observableReturnTypeVariable(timeseriesDataHref)
       },
     }
+  },
+  entityGroupService: {
+    description: 'Entity Group Service API<br>' +
+      'Provides API for EntityGroup entities.',
+    meta: 'service',
+    type: 'EntityGroupService'
   },
   entityService: {
     description: 'Entity Service API<br>' +

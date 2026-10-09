@@ -1,18 +1,8 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <section [formGroup]="createAlarmConfigForm" class="flex flex-col">
@@ -77,7 +67,7 @@
   }
   @if (createAlarmConfigForm.get('useMessageAlarmData').value === false) {
     <section class="flex flex-col">
-      <mat-form-field class="flex-1" subscriptSizing="dynamic">
+      <mat-form-field class="flex-1" subscriptSizing="dynamic" appearance="outline">
         <mat-label translate>rule-node-config.alarm-type</mat-label>
         <input required matInput formControlName="alarmType">
         @if (createAlarmConfigForm.get('alarmType').hasError('required')) {
@@ -91,7 +81,7 @@
         {{ 'rule-node-config.use-alarm-severity-pattern' | translate }}
       </mat-checkbox>
       @if (!createAlarmConfigForm.get('dynamicSeverity').value) {
-        <mat-form-field class="flex-1">
+        <mat-form-field class="flex-1" appearance="outline">
           <mat-label translate>rule-node-config.alarm-severity</mat-label>
           <mat-select formControlName="severity" required>
             @for (severity of alarmSeverities; track severity) {
@@ -108,7 +98,7 @@
         </mat-form-field>
       }
       @if (createAlarmConfigForm.get('dynamicSeverity').value) {
-        <mat-form-field class="flex-1" subscriptSizing="dynamic">
+        <mat-form-field class="flex-1" subscriptSizing="dynamic" appearance="outline">
           <mat-label translate>rule-node-config.alarm-severity-pattern</mat-label>
           <input matInput formControlName="severity" required>
           @if (createAlarmConfigForm.get('severity').hasError('required')) {
@@ -124,7 +114,7 @@
       </mat-checkbox>
       @if (createAlarmConfigForm.get('propagate').value === true) {
         <section>
-          <mat-form-field floatLabel="always" class="mat-block" subscriptSizing="dynamic">
+          <mat-form-field floatLabel="always" class="mat-block" subscriptSizing="dynamic" appearance="outline">
             <mat-label translate>rule-node-config.relation-types-list</mat-label>
             <mat-chip-grid #relationTypesChipList>
               @for (key of createAlarmConfigForm.get('relationTypes').value; track key) {
@@ -147,7 +137,10 @@
       <mat-checkbox formControlName="propagateToOwner">
         {{ 'rule-node-config.propagate-to-owner' | translate }}
       </mat-checkbox>
-      <mat-checkbox formControlName="propagateToTenant">
+      <mat-checkbox formControlName="propagateToOwnerHierarchy">
+      {{ 'rule-node-config.propagate-to-owner-hierarchy' | translate }}
+    </mat-checkbox>
+    <mat-checkbox formControlName="propagateToTenant">
         {{ 'rule-node-config.propagate-to-tenant' | translate }}
       </mat-checkbox>
     </section>

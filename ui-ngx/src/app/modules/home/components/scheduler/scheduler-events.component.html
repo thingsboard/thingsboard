@@ -1,0 +1,374 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<tb-anchor #replaceComponentAnchor></tb-anchor>
+@if (!replaceComponent) {
+  <div #schedulerEventWidgetContainer class="mat-padding tb-scheduler-events tb-absolute-fill" [class.mat-padding]="!widgetMode">
+    @if (showData) {
+      <div class="tb-scheduler-events-content flex flex-col" [class.tb-outlined-border]="!widgetMode">
+        <mat-toolbar class="mat-mdc-table-toolbar" [class.!hidden]="textSearchMode || !dataSource.selection.isEmpty()">
+          <div class="mat-toolbar-tools">
+            @if (widgetMode) {
+              <span class="tb-scheduler-events-title">{{ctx.widgetTitle}}</span>
+            } @else {
+              @if (displayBackButton()) {
+                <button mat-icon-button
+                        matTooltip="{{ 'action.back' | translate }}"
+                        matTooltipPosition="above"
+                        (click)="goBack()"
+                        style="margin-right: 8px;">
+                  <mat-icon>arrow_back</mat-icon>
+                </button>
+              }
+              <span class="tb-scheduler-events-title" translate>scheduler.scheduler-events</span>
+            }
+            @if (!widgetMode || enabledViews === 'both') {
+              <div class="tb-scheduler-events-view-type-toolbar flex flex-row items-center justify-start">
+                <div class="tb-toolbar-button" [class.tb-selected]="mode === 'list'">
+                  <button mat-icon-button
+                          (click)="updateMode('list')"
+                          matTooltip="{{'scheduler.list-mode' | translate }}"
+                          matTooltipPosition="below">
+                    <mat-icon>view_list</mat-icon>
+                  </button>
+                </div>
+                <div class="tb-toolbar-button" [class.tb-selected]="mode === 'calendar'">
+                  <button mat-icon-button
+                          (click)="updateMode('calendar')"
+                          matTooltip="{{'scheduler.calendar-mode' | translate }}"
+                          matTooltipPosition="below">
+                    <mat-icon>event</mat-icon>
+                  </button>
+                </div>
+              </div>
+            }
+            <span class="flex-1"></span>
+            @if (widgetMode) {
+              <ng-container *ngTemplateOutlet="ctx.widgetHeaderActionsPanel"></ng-container>
+            } @else {
+              <section class="flex items-center">
+                @if (assignEnabled) {
+                  <button
+                    [disabled]="isLoading$ | async"
+                    mat-icon-button
+                    (click)="assignToEdgeSchedulerEvent($event)"
+                    matTooltip="{{'edge.assign-to-edge' | translate }}"
+                    matTooltipPosition="above">
+                    <mat-icon>add</mat-icon>
+                  </button>
+                }
+                <button [disabled]="isLoading$ | async"
+                        mat-icon-button
+                        (click)="enterFilterMode()"
+                        matTooltip="{{'action.search' | translate }}"
+                        matTooltipPosition="above">
+                  <mat-icon>search</mat-icon>
+                </button>
+                <button [disabled]="isLoading$ | async"
+                        mat-icon-button
+                        (click)="reloadSchedulerEvents()"
+                        matTooltip="{{'action.refresh' | translate }}"
+                        matTooltipPosition="above">
+                  <mat-icon>refresh</mat-icon>
+                </button>
+                @if (addEnabled) {
+                  <button class="ml-3 lt-sm:!hidden"
+                          mat-flat-button color="primary"
+                          [disabled]="isLoading$ | async"
+                          (click)="addSchedulerEvent($event)">
+                    <mat-icon>add</mat-icon>
+                    {{ 'scheduler.add-scheduler-event' | translate }}
+                  </button>
+                  <button class="ml-3 gt-xs:!hidden"
+                          style="--mat-fab-small-container-elevation-shadow: none;"
+                          mat-mini-fab color="primary"
+                          [disabled]="isLoading$ | async"
+                          (click)="addSchedulerEvent($event)"
+                          matTooltip="{{ 'scheduler.add-scheduler-event' | translate }}"
+                          matTooltipPosition="above">
+                    <mat-icon>add</mat-icon>
+                  </button>
+                }
+              </section>
+            }
+          </div>
+        </mat-toolbar>
+        <mat-toolbar class="mat-mdc-table-toolbar" [class.!hidden]="!textSearchMode || !dataSource.selection.isEmpty()">
+          <div class="mat-toolbar-tools">
+            <button mat-icon-button
+                    matTooltip="{{ 'scheduler.search-scheduler-events' | translate }}"
+                    matTooltipPosition="above">
+              <mat-icon>search</mat-icon>
+            </button>
+            <mat-form-field class="flex-1">
+              <mat-label>&nbsp;</mat-label>
+              <input #searchInput matInput
+                     [formControl]="textSearch"
+                     placeholder="{{ 'scheduler.search-scheduler-events' | translate }}"/>
+            </mat-form-field>
+            <button mat-icon-button (click)="exitFilterMode()"
+                    matTooltip="{{ 'action.close' | translate }}"
+                    matTooltipPosition="above">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+        </mat-toolbar>
+        <mat-toolbar class="mat-mdc-table-toolbar" color="primary" [class.!hidden]="dataSource.selection.isEmpty()">
+          <div class="mat-toolbar-tools">
+          <span>
+            {{ 'scheduler.selected-scheduler-events' | translate : {count: dataSource.selection.selected.length} }}
+          </span>
+            <span class="flex-1"></span>
+            @if (deleteEnabled) {
+              <button
+                [disabled]="isLoading$ | async"
+                mat-icon-button
+                matTooltip="{{ 'action.delete' | translate }}"
+                matTooltipPosition="above"
+                (click)="deleteSchedulerEvents($event)">
+                <mat-icon>delete</mat-icon>
+              </button>
+            }
+            @if (assignEnabled) {
+              <button
+                [disabled]="isLoading$ | async"
+                mat-icon-button
+                matTooltip="{{ 'edge.unassign-scheduler-events-from-edge' | translate }}"
+                matTooltipPosition="above"
+                (click)="unassignFromEdgeSchedulerEvents($event)">
+                <mat-icon>assignment_return</mat-icon>
+              </button>
+            }
+          </div>
+        </mat-toolbar>
+        <div class="flex flex-1 flex-col" [class.!hidden]="mode !== 'list'">
+          <div class="table-container">
+            <table mat-table [dataSource]="dataSource"
+                   matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
+              <ng-container matColumnDef="select" sticky>
+                <mat-header-cell *matHeaderCellDef style="width: 30px;">
+                  <mat-checkbox (change)="$event ? dataSource.masterToggle() : null"
+                                [checked]="dataSource.selection.hasValue() && (dataSource.isAllSelected() | async)"
+                                [indeterminate]="dataSource.selection.hasValue() && !(dataSource.isAllSelected() | async)">
+                  </mat-checkbox>
+                </mat-header-cell>
+                <mat-cell *matCellDef="let relation">
+                  <mat-checkbox (click)="$event.stopPropagation()"
+                                (change)="$event ? dataSource.selection.toggle(relation) : null"
+                                [checked]="dataSource.selection.isSelected(relation)">
+                  </mat-checkbox>
+                </mat-cell>
+              </ng-container>
+              <ng-container matColumnDef="createdTime">
+                <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 20%"> {{ 'scheduler.created-time' | translate }} </mat-header-cell>
+                <mat-cell *matCellDef="let schedulerEvent">
+                  {{ schedulerEvent.createdTime | date:'yyyy-MM-dd HH:mm:ss' }}
+                </mat-cell>
+              </ng-container>
+              <ng-container matColumnDef="name">
+                <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 20%"> {{ 'scheduler.name' | translate }} </mat-header-cell>
+                <mat-cell *matCellDef="let schedulerEvent">
+                  {{ schedulerEvent.name }}
+                </mat-cell>
+              </ng-container>
+              <ng-container matColumnDef="type">
+                <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 20%"> {{ 'scheduler.type' | translate }} </mat-header-cell>
+                <mat-cell *matCellDef="let schedulerEvent">
+                  {{ schedulerEvent.typeName }}
+                </mat-cell>
+              </ng-container>
+              <ng-container matColumnDef="customerTitle">
+                <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 20%"> {{ 'scheduler.created_customer' | translate }} </mat-header-cell>
+                <mat-cell *matCellDef="let schedulerEvent">
+                  {{ schedulerEvent.customerTitle }}
+                </mat-cell>
+              </ng-container>
+              <ng-container matColumnDef="schedule">
+                <mat-header-cell *matHeaderCellDef style="width: 20%">{{ 'scheduler.schedule' | translate }}</mat-header-cell>
+                <mat-cell *matCellDef="let schedulerEvent" [innerHTML]="eventInfo(schedulerEvent) | safe:'html'"></mat-cell>
+              </ng-container>
+              <ng-container matColumnDef="actions" stickyEnd>
+                <mat-header-cell *matHeaderCellDef style="min-width: 100px; max-width: 100px; width: 100px">
+                </mat-header-cell>
+                <mat-cell *matCellDef="let schedulerEvent">
+                  <div class="flex flex-1 flex-row items-stretch justify-end">
+                    @if (editEnabled) {
+                      <button
+                        mat-icon-button [disabled]="isLoading$ | async"
+                        [matTooltip]="(isEnabled(schedulerEvent) ? 'scheduler.disable' : 'scheduler.enable') | translate"
+                        matTooltipPosition="above"
+                        (click)="enableSchedulerEvent($event, schedulerEvent)">
+                        <tb-icon matButtonIcon>
+                          {{isEnabled(schedulerEvent) ? 'mdi:toggle-switch' : 'mdi:toggle-switch-off-outline'}}
+                        </tb-icon>
+                      </button>
+                    }
+                    @if (editEnabled) {
+                      <button
+                        mat-icon-button [disabled]="isLoading$ | async"
+                        matTooltip="{{ 'scheduler.edit-scheduler-event' | translate }}"
+                        matTooltipPosition="above"
+                        (click)="editSchedulerEvent($event, schedulerEvent)">
+                        <mat-icon>edit</mat-icon>
+                      </button>
+                    }
+                    @if (!editEnabled) {
+                      <button
+                        mat-icon-button [disabled]="isLoading$ | async"
+                        matTooltip="{{ 'scheduler.view-scheduler-event' | translate }}"
+                        matTooltipPosition="above"
+                        (click)="viewSchedulerEvent($event, schedulerEvent)">
+                        <mat-icon>more_horiz</mat-icon>
+                      </button>
+                    }
+                    @if (assignEnabled) {
+                      <button
+                        mat-icon-button [disabled]="isLoading$ | async"
+                        matTooltip="{{ 'edge.unassign-from-edge' | translate }}"
+                        matTooltipPosition="above"
+                        (click)="unassignFromEdge($event, schedulerEvent)">
+                        <mat-icon>assignment_return</mat-icon>
+                      </button>
+                    }
+                    @if (vcEnabled) {
+                      <button #versionControlButton
+                              mat-icon-button [disabled]="isLoading$ | async"
+                              matTooltip="{{ 'version-control.version-control' | translate }}"
+                              matTooltipPosition="above"
+                              (click)="toggleVersionControl($event, schedulerEvent, versionControlButton)">
+                        <mat-icon>history</mat-icon>
+                      </button>
+                    }
+                    @if (deleteEnabled) {
+                      <button
+                        mat-icon-button [disabled]="isLoading$ | async"
+                        matTooltip="{{ 'scheduler.delete-scheduler-event' | translate }}"
+                        matTooltipPosition="above"
+                        (click)="deleteSchedulerEvent($event, schedulerEvent)">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    }
+                  </div>
+                </mat-cell>
+              </ng-container>
+              <mat-header-row class="mat-row-select" *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
+              <mat-row [class.!hidden]="dataSource.dataLoading"
+                       class="mat-row-select"
+                       [class.mat-selected]="dataSource.selection.isSelected(schedulerEvent)"
+                       *matRowDef="let schedulerEvent; columns: displayedColumns;" (click)="dataSource.selection.toggle(schedulerEvent)"></mat-row>
+            </table>
+            <span [class.!hidden]="(dataSource.isEmpty() | async) === false || dataSource.dataLoading" class="no-data-found flex items-center justify-center">{{ noDataDisplayMessageText }}</span>
+            <span [class.!hidden]="!dataSource.dataLoading" class="no-data-found flex items-center justify-center">{{ 'common.loading' | translate }}</span>
+          </div>
+          @if (displayPagination) {
+            <mat-divider></mat-divider>
+          }
+          @if (displayPagination) {
+            <mat-paginator
+              showFirstLastButtons
+              [length]="dataSource.total() | async"
+              [pageIndex]="pageLink.page"
+              [pageSize]="pageLink.pageSize"
+              [pageSizeOptions]="pageSizeOptions"
+              [hidePageSize]="hidePageSize"></mat-paginator>
+          }
+        </div>
+        <div class="mat-padding flex flex-1 flex-col" [class.!hidden]="mode !== 'calendar'">
+          <div class="flex flex-row gap-2">
+            <div class="flex flex-1 flex-row gap-2 xs:pb-1">
+              <h2 class="mat-headline-5 xs:text-base">
+                {{ calendarViewTitle() }}
+              </h2>
+              <mat-form-field class="mat-block flex-1" subscriptSizing="dynamic" appearance="outline">
+                <mat-label translate>scheduler.calendar-view-type</mat-label>
+                <mat-select [(ngModel)]="currentCalendarView" (ngModelChange)="changeCalendarView()">
+                  @for (viewType of schedulerCalendarViews; track viewType) {
+                    <mat-option [value]="viewType">
+                      {{ schedulerCalendarViewTranslations.get(viewType) | translate }}
+                    </mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            </div>
+            <div class="flex flex-row items-center justify-start gap-2">
+              <button mat-button mat-raised-button [disabled]="isCalendarToday()" (click)="gotoCalendarToday()">
+                {{'scheduler.today' | translate}}
+              </button>
+              <button mat-mini-fab class="tb-scheduler-nav-button" (click)="gotoCalendarPrev()"
+                      matTooltip="{{'scheduler.navigate-before' | translate}}"
+                      matTooltipPosition="above">
+                <mat-icon>navigate_before</mat-icon>
+              </button>
+              <button mat-mini-fab class="tb-scheduler-nav-button" (click)="gotoCalendarNext()"
+                      matTooltip="{{'scheduler.navigate-next' | translate}}"
+                      matTooltipPosition="above">
+                <mat-icon>navigate_next</mat-icon>
+              </button>
+            </div>
+          </div>
+          <div #calendarContainer class="calendar-container flex-1">
+            <div #schedulerEventMenuTrigger="matMenuTrigger" style="visibility: hidden; position: absolute"
+                 [style.left]="schedulerEventMenuPosition.x"
+                 [style.top]="schedulerEventMenuPosition.y"
+                 [matMenuTriggerFor]="schedulerEventMenu">
+            </div>
+            <mat-menu #schedulerEventMenu="matMenu" class="tb-event-schedule-calendar-menu"
+                      [overlapTrigger]="true">
+              <ng-template matMenuContent let-schedulerEvent="schedulerEvent">
+                <div class="tb-event-schedule-context-menu-container" (mouseleave)="onSchedulerEventContextMenuMouseLeave()">
+                  <div class="tb-context-menu-header">
+                    <div class="tb-context-menu-title">{{schedulerEvent.name}}</div>
+                    <div class="tb-context-menu-subtitle">{{schedulerEvent.typeName}}</div>
+                  </div>
+                  @if (editEnabled) {
+                    <button mat-menu-item
+                            (click)="editSchedulerEvent(schedulerContextMenuEvent, schedulerEvent)">
+                      <mat-icon>edit</mat-icon>
+                      <span translate>action.edit</span>
+                    </button>
+                  }
+                  @if (!editEnabled) {
+                    <button mat-menu-item
+                            (click)="viewSchedulerEvent(schedulerContextMenuEvent, schedulerEvent)">
+                      <mat-icon>visibility</mat-icon>
+                      <span translate>action.view</span>
+                    </button>
+                  }
+                  @if (deleteEnabled) {
+                    <button mat-menu-item
+                            (click)="deleteSchedulerEvent(schedulerContextMenuEvent, schedulerEvent)">
+                      <mat-icon>delete</mat-icon>
+                      <span translate>action.delete</span>
+                    </button>
+                  }
+                </div>
+              </ng-template>
+            </mat-menu>
+            @if (mode === 'calendar' || (isCalendarInitialized | async)) {
+              <full-calendar #calendar [options]="calendarOptions">
+                <ng-template #eventContent let-arg>
+                  <div class="fc-event-main-frame">
+                    <div class="fc-event-time">
+                      {{ arg.timeText }}
+                    </div>
+                    <div class="fc-event-title-container">
+                      @if (arg.event.extendedProps.repeatInterval) {
+                        <b class="fc-event-title fc-sticky">{{ arg.event.extendedProps.repeatInterval }}&nbsp;</b>
+                      }
+                      <div class="fc-event-title fc-sticky">{{ arg.event.title }}</div>
+                    </div>
+                  </div>
+                </ng-template>
+              </full-calendar>
+            }
+          </div>
+        </div>
+      </div>
+    } @else {
+      <span class="tb-absolute-fill flex items-center justify-center" translate>entity.no-data</span>
+    }
+  </div>
+}

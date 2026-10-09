@@ -1,0 +1,50 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<form [formGroup]="ownerAndGroupsFormGroup" (ngSubmit)="update()" style="width: 800px;">
+  <mat-toolbar color="tb-primary" class="tb-bottom-border">
+    <h2>{{ 'entity-group.manage-owner-and-groups' | translate }}</h2>
+    <span class="flex-1"></span>
+    <button mat-icon-button
+      (click)="cancel()"
+      type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  @if (isLoading$ | async) {
+    <mat-progress-bar color="warn" mode="indeterminate">
+    </mat-progress-bar>
+  } @else {
+    <div style="height: 4px;"></div>
+  }
+  <div mat-dialog-content>
+    <fieldset [disabled]="isLoading$ | async">
+      <section class="flex flex-1 flex-col">
+        <tb-owner-and-groups
+          [entityType]="entityType"
+          appearance="outline"
+          formControlName="ownerAndGroups">
+        </tb-owner-and-groups>
+      </section>
+    </fieldset>
+  </div>
+  <div mat-dialog-actions class="flex flex-row items-center justify-end">
+    <button mat-button color="primary"
+      type="button"
+      [disabled]="(isLoading$ | async)"
+      (click)="cancel()" cdkFocusInitial>
+      {{ (readonly ? 'action.close' : 'action.cancel') | translate }}
+    </button>
+    @if (!readonly) {
+      <button mat-raised-button color="primary"
+        type="submit"
+            [disabled]="(isLoading$ | async) || ownerAndGroupsFormGroup.invalid
+            || !ownerAndGroupsFormGroup.dirty">
+        {{ 'action.update' | translate }}
+      </button>
+    }
+  </div>
+</form>

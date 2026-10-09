@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   ChangeDetectorRef,
   Component,
@@ -79,6 +66,8 @@ import {
   SaveWidgetTypeAsDialogResult
 } from '@home/pages/widget/save-widget-type-as-dialog.component';
 import { WidgetService } from '@core/http/widget.service';
+import { Operation, Resource } from '@shared/models/security.models';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 
 @Component({
@@ -149,6 +138,8 @@ export class ScadaSymbolComponent extends PageComponent
 
   showHiddenElements = false;
 
+  showCreateWidgetButton = true;
+
   get isDirty(): boolean {
     return (this.scadaSymbolFormGroup.dirty || this.symbolEditorDirty) && !this.forcePristine;
   }
@@ -166,8 +157,16 @@ export class ScadaSymbolComponent extends PageComponent
               private translate: TranslateService,
               private imageService: ImageService,
               private widgetService: WidgetService,
+              private userPermissionsService: UserPermissionsService,
               private dialog: MatDialog) {
     super(store);
+
+    const authUser = getCurrentAuthUser(store);
+    if (authUser.authority === Authority.CUSTOMER_USER) {
+      this.showCreateWidgetButton = false;
+    } else {
+      this.showCreateWidgetButton = this.userPermissionsService.hasGenericPermission(Resource.WIDGET_TYPE, Operation.CREATE);
+    }
   }
 
   ngOnInit(): void {
@@ -483,11 +482,7 @@ export class ScadaSymbolComponent extends PageComponent
   }
 
   private init(data: ScadaSymbolData) {
-    if (this.authUser.authority === Authority.TENANT_ADMIN) {
-      this.readonly = data.imageResource.tenantId.id === NULL_UUID;
-    } else {
-      this.readonly = this.authUser.authority !== Authority.SYS_ADMIN;
-    }
+    this.readonly = this.authUser.authority !== Authority.SYS_ADMIN && data.imageResource.tenantId.id === NULL_UUID;
     this.origSymbolData = data;
     this.symbolData = deepClone(data);
     this.symbolEditorData = {

@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -21,7 +8,8 @@ import {
   HostBinding,
   Injector,
   OnDestroy,
-  OnInit
+  OnInit,
+  TemplateRef
 } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -30,10 +18,11 @@ import { BaseData, HasId } from '@shared/models/base-data';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UntypedFormGroup } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
-import { deepClone } from '@core/utils';
+import { deepClone, isDefined, isDefinedAndNotNull, isUndefined, isUndefinedOrNull } from '@core/utils';
 import { BroadcastService } from '@core/services/broadcast.service';
 import { EntityDetailsPanelComponent } from '@home/components/entity/entity-details-panel.component';
 import { DialogService } from '@core/services/dialog.service';
+import { EntityGroupStateInfo } from '@home/models/group/group-entities-table-config.models';
 import { IEntityDetailsPageComponent } from '@home/models/entity/entity-details-page-component.models';
 
 @Component({
@@ -49,6 +38,8 @@ export class EntityDetailsPageComponent extends EntityDetailsPanelComponent impl
   headerSubtitle: string;
 
   isReadOnly = false;
+
+  entityGroup: EntityGroupStateInfo<BaseData<HasId>>;
 
   backNavigationCommands?: any[];
 
@@ -67,6 +58,10 @@ export class EntityDetailsPageComponent extends EntityDetailsPanelComponent impl
     return this.entitiesTableConfigValue;
   }
 
+  get headerExtensionTemplate(): TemplateRef<unknown> | null {
+    return this.entityComponent?.headerExtensionTemplate ?? null;
+  }
+
   @HostBinding('class') 'tb-absolute-fill';
 
   constructor(private route: ActivatedRoute,
@@ -78,7 +73,12 @@ export class EntityDetailsPageComponent extends EntityDetailsPanelComponent impl
               private dialogService: DialogService,
               protected store: Store<AppState>) {
     super(store, injector, cd);
-    this.entitiesTableConfig = this.route.snapshot.data.entitiesTableConfig;
+    if (isDefinedAndNotNull(this.route.snapshot.data.entityGroup) && isUndefinedOrNull(this.route.snapshot.data.entitiesTableConfig)) {
+      this.entityGroup = this.route.snapshot.data.entityGroup;
+      this.entitiesTableConfig = this.entityGroup.entityGroupConfig;
+    } else {
+      this.entitiesTableConfig = this.route.snapshot.data.entitiesTableConfig;
+    }
     this.backNavigationCommands = this.route.snapshot.data.backNavigationCommands;
   }
 
@@ -90,6 +90,8 @@ export class EntityDetailsPageComponent extends EntityDetailsPanelComponent impl
     this.subscriptions.push(this.entityAction.subscribe((action) => {
       if (action.action === 'delete') {
         this.deleteEntity(action.event, action.entity);
+      } else if (action.action === 'reload') {
+        this.reload();
       }
     }));
     this.subscriptions.push(this.route.paramMap.subscribe( paramMap => {
@@ -98,7 +100,24 @@ export class EntityDetailsPageComponent extends EntityDetailsPanelComponent impl
         const id = paramMap.get('entityId');
         this.currentEntityId = { id, entityType };
         this.reload();
-        this.selectedTab = 0;
+        const queryParams = this.route.snapshot.queryParams;
+        let selectedTabIndex = 0;
+        if (queryParams['selectedTab']) {
+          this.router.navigate([], {
+            queryParams: {
+              selectedTab: null
+            },
+            queryParamsHandling: 'merge',
+            replaceUrl: true
+          });
+          if (this.entityTabsComponent) {
+            const selectedTab: string = queryParams['selectedTab'];
+            if (selectedTab) {
+              selectedTabIndex = this.entityTabsComponent.resolveTabIndex(selectedTab);
+            }
+          }
+        }
+        this.selectedTab = selectedTabIndex;
       }
     }));
   }

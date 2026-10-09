@@ -1,0 +1,40 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+@for (msg of messages; track $index) {
+  @if (msg.from === 'USER') {
+    <div class="user">
+      <div class="msg">{{ msg.content }}</div>
+    </div>
+  } @else {
+    <div class="ai">
+      @if (msg.from === 'APPROVAL') {
+        <tb-ai-approval-card
+          [data]="getApprovalData(msg)"
+          [completedExecution]="getCompletedExecution(msg)"
+          [autoApprove]="autoApprove"
+          (approvalAction)="approval($event)">
+        </tb-ai-approval-card>
+      } @else {
+        <tb-markdown usePlainMarkdown [additionalStyles]="additionalStyles" [data]="parseResult(msg.content)"></tb-markdown>
+      }
+    </div>
+  }
+}
+@if (loading && !waitApproval) {
+  <div class="generating flex items-center gap-4">
+    @if (loadingLongTime) {
+      <ng-content select="[loadingLongTime]"></ng-content>
+    } @else {
+      <svg class="image-main-color w-6" preserveAspectRatio="xMidYMid meet" viewBox="0 0 42 48">
+        <use [attr.xlink:href]="'/assets/solution-creator/iot-assistant.svg#iot-assistant'"></use>
+      </svg>
+      <div class="glow-container">
+        {{ 'ai-assistant.thinking' | translate }}
+      </div>
+    }
+  </div>
+}

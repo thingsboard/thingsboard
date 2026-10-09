@@ -1,25 +1,12 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.msa;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class TestProperties {
-
     private static final String HTTPS_URL = "https://localhost";
 
     private static final String WSS_URL = "wss://localhost";
@@ -49,12 +36,44 @@ public class TestProperties {
         return System.getProperty("tb.wsUrl", "ws://localhost:8080");
     }
 
-    public static String getMqttBrokerUrl() {
+    public static String getRemoteHttpUrl(){
+        if (instance.isActive()) {
+            String host = instance.getTestContainer().getServiceHost("tb-http-integration", 8082);
+            Integer port = instance.getTestContainer().getServicePort("tb-http-integration", 8082);
+            return "http://" + host + ":" + port;
+        }
+        return System.getProperty("remote.httpUrl", "http://localhost:8082");
+    }
+
+    public static String getIntegrationExecutorHttpUrl() {
+        if (instance.isActive()) {
+            String host = instance.getTestContainer().getServiceHost("tb-integration-executor1", 8082);
+            Integer port = instance.getTestContainer().getServicePort("tb-integration-executor1", 8082);
+            return "http://" + host + ":" + port;
+        }
+        return System.getProperty("integrationExecutor.httpUrl", "http://localhost:8082");
+    }
+
+    public static String getMqttBrokerUrl(){
         if (instance.isActive()) {
             String host = instance.getTestContainer().getServiceHost("broker", 1883);
             Integer port = instance.getTestContainer().getServicePort("broker", 1883);
             return "tcp://" + host + ":" + port;
         }
         return System.getProperty("mqtt.broker", "tcp://localhost:1883");
+    }
+
+    public static String getRemoteCoapHost(){
+        if (instance.isActive()) {
+            return "localhost";
+        }
+        return System.getProperty("remote.coap.host", "localhost");
+    }
+
+    public static int getRemoteCoapPort(){
+        if (instance.isActive()) {
+            return 15683;
+        }
+        return Integer.parseInt(System.getProperty("remote.coap.port", "15683"));
     }
 }

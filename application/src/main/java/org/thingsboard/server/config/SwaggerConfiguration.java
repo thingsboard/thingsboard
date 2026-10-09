@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.config;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -23,6 +11,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.swagger.v3.core.converter.AnnotatedType;
 import io.swagger.v3.core.converter.ModelConverter;
 import io.swagger.v3.core.converter.ModelConverters;
+import io.swagger.v3.core.converter.ResolvedSchema;
 import io.swagger.v3.core.jackson.ModelResolver;
 import io.swagger.v3.core.util.Json;
 import io.swagger.v3.oas.models.Components;
@@ -49,10 +38,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springdoc.core.customizers.OperationCustomizer;
 import org.springdoc.core.discoverer.SpringDocParameterNameDiscoverer;
-import org.springdoc.core.utils.SpringDocUtils;
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springdoc.core.properties.SpringDocConfigProperties;
 import org.springdoc.core.properties.SwaggerUiConfigProperties;
+import org.springdoc.core.utils.SpringDocUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
@@ -119,9 +108,13 @@ public class SwaggerConfiguration {
     // Keyed by the schema name that swagger-core generates (see resolveSchemaName).
     private final Map<String, List<String>> schemaPropertyOrders = new ConcurrentHashMap<>();
     private final Map<String, Set<String>> schemaOwnProps = new ConcurrentHashMap<>();
+    // Tracks schema name → fully-qualified class names to detect collisions.
+    private final Map<String, Set<String>> schemaNameToClasses = new ConcurrentHashMap<>();
 
     @Value("${swagger.api_path:/api/**}")
     private String apiPath;
+    @Value("${swagger.exclude_api_path:/api/v1/integrations/**}")
+    private String excludeApiPath;
     @Value("${swagger.security_path_regex}")
     private String securityPathRegex;
     @Value("${swagger.non_security_path_regex}")
@@ -163,6 +156,9 @@ public class SwaggerConfiguration {
         String apiVersion = version;
         if (StringUtils.isEmpty(apiVersion)) {
             apiVersion = appVersion;
+        }
+        if (apiVersion != null && apiVersion.endsWith("-SNAPSHOT")) {
+            apiVersion = apiVersion.substring(0, apiVersion.length() - "-SNAPSHOT".length());
         }
 
         Info info = new Info()
@@ -289,6 +285,7 @@ public class SwaggerConfiguration {
         return GroupedOpenApi.builder()
                 .group(groupName)
                 .pathsToMatch(apiPath)
+                .pathsToExclude(excludeApiPath)
                 .addOperationCustomizer(operationCustomizer())
                 .addOpenApiCustomizer(customOpenApiCustomizer())
                 .build();
@@ -343,6 +340,10 @@ public class SwaggerConfiguration {
                         try {
                             var beanDesc = Json.mapper().getSerializationConfig().introspect(javaType);
                             String schemaName = resolveSchemaName(javaType);
+                            Set<String> classes = schemaNameToClasses.computeIfAbsent(schemaName, k -> ConcurrentHashMap.newKeySet());
+                            if (classes.add(cls.getName()) && classes.size() > 1) {
+                                log.error("Duplicate OpenAPI schema name '{}' mapped by: {}. Use @Schema(name = ...) to disambiguate.", schemaName, classes);
+                            }
                             schemaPropertyOrders.put(schemaName, resolvePropertyOrder(cls, beanDesc));
                             Set<String> ownProps = computeOwnPropNames(cls, beanDesc);
                             if (!ownProps.isEmpty()) {
@@ -367,13 +368,26 @@ public class SwaggerConfiguration {
                 ._enum(Arrays.stream(ThingsboardErrorCode.values())
                         .map(ThingsboardErrorCode::getErrorCode)
                         .collect(Collectors.toList()));
-        openAPI.getComponents()
-                .addSchemas("LoginRequest", ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(LoginRequest.class)).schema)
-                .addSchemas("LoginResponse", ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(LoginResponse.class)).schema)
-                .addSchemas("ThingsboardErrorResponse", ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(ThingsboardErrorResponse.class)).schema)
-                .addSchemas("ThingsboardCredentialsExpiredResponse", ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(ThingsboardCredentialsExpiredResponse.class)).schema)
-                .addSchemas("ThingsboardErrorCode", errorCodeSchema)
-                .addSchemas("AiChatModelConfig", ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(AiChatModelConfig.class)).schema);
+        Components components = openAPI.getComponents();
+        registerSchema(components, "LoginRequest", LoginRequest.class);
+        registerSchema(components, "LoginResponse", LoginResponse.class);
+        registerSchema(components, "ThingsboardErrorResponse", ThingsboardErrorResponse.class);
+        registerSchema(components, "ThingsboardCredentialsExpiredResponse", ThingsboardCredentialsExpiredResponse.class);
+        components.addSchemas("ThingsboardErrorCode", errorCodeSchema);
+        registerSchema(components, "AiChatModelConfig", AiChatModelConfig.class);
+    }
+
+    private static void registerSchema(Components components, String name, Class<?> cls) {
+        ResolvedSchema resolved = ModelConverters.getInstance()
+                .readAllAsResolvedSchema(new AnnotatedType().type(cls));
+        components.addSchemas(name, resolved.schema);
+        if (resolved.referencedSchemas != null) {
+            resolved.referencedSchemas.forEach((refName, refSchema) -> {
+                if (components.getSchemas() == null || !components.getSchemas().containsKey(refName)) {
+                    components.addSchemas(refName, refSchema);
+                }
+            });
+        }
     }
 
     private OperationCustomizer operationCustomizer() {
@@ -390,6 +404,19 @@ public class SwaggerConfiguration {
         var apiKeyRequirement = createSecurityRequirement(API_KEY_SCHEME);
 
         return openAPI -> {
+            // Fail fast on duplicate schema names — two different classes resolving to the same
+            // OpenAPI schema name causes one to silently overwrite the other.
+            List<String> duplicates = schemaNameToClasses.entrySet().stream()
+                    .filter(e -> e.getValue().size() > 1)
+                    .map(e -> "'" + e.getKey() + "' mapped by: " + e.getValue())
+                    .sorted()
+                    .toList();
+            if (!duplicates.isEmpty()) {
+                throw new IllegalStateException(
+                        "Duplicate OpenAPI schema names detected. Use @Schema(name = ...) to disambiguate:\n  "
+                                + String.join("\n  ", duplicates));
+            }
+
             var paths = openAPI.getPaths();
             paths.entrySet().stream()
                     .peek(entry -> {
@@ -509,6 +536,12 @@ public class SwaggerConfiguration {
                     reorderSchemaProperties(schema, propOrder);
                 });
 
+                // Synthesize a request-body example for every schema that uses a discriminator.
+                // Without this, Swagger UI shows only the discriminator-property field for
+                // polymorphic types (the parent schema doesn't know which oneOf branch to pick).
+                // We resolve the first declared subtype and inline its full property tree.
+                schemas.forEach((schemaName, schema) -> fillDiscriminatorExample(schema, schemas));
+
                 // Fix polymorphic request/response bodies: replace inline oneOf with base type $ref
                 paths.values().stream()
                         .flatMap(pathItem -> pathItem.readOperationsMap().values().stream())
@@ -580,6 +613,22 @@ public class SwaggerConfiguration {
 
             if (baseType != null) {
                 return baseType;
+            }
+
+            // Check if other oneOf items extend this candidate via allOf (parent-child without discriminator)
+            if (candidate != null) {
+                boolean isParent = oneOfSchemas.stream()
+                        .filter(s -> s.get$ref() != null && !s.get$ref().equals(ref))
+                        .anyMatch(s -> {
+                            String otherName = s.get$ref().substring(s.get$ref().lastIndexOf('/') + 1);
+                            Schema<?> otherSchema = schemas.get(otherName);
+                            return otherSchema != null && otherSchema.getAllOf() != null &&
+                                    otherSchema.getAllOf().stream().anyMatch(
+                                            a -> a.get$ref() != null && a.get$ref().endsWith("/" + refName));
+                        });
+                if (isParent) {
+                    return refName;
+                }
             }
         }
         return null;
@@ -823,6 +872,145 @@ public class SwaggerConfiguration {
         }
     }
 
+    private static final int MAX_EXAMPLE_DEPTH = 4;
+
+    /**
+     * If {@code schema} has a discriminator, populate examples for the parent and every
+     * concrete subtype it maps to. Each subtype gets its own example with the discriminator
+     * field set to the mapping value that points at it, so fields typed as a specific
+     * subtype (e.g. {@code EntityView.id} → {@code EntityViewId}) resolve to a correct
+     * example without falling back to the parent's.
+     */
+    @SuppressWarnings("unchecked")
+    private void fillDiscriminatorExample(Schema<?> schema, Map<String, Schema> allSchemas) {
+        var discriminator = schema.getDiscriminator();
+        if (discriminator == null || discriminator.getMapping() == null || discriminator.getMapping().isEmpty()) {
+            return;
+        }
+        // 1. Populate an example on each mapped subtype.
+        for (var entry : discriminator.getMapping().entrySet()) {
+            String discriminatorValue = entry.getKey();
+            String subtypeRef = entry.getValue();
+            String subtypeName = subtypeRef.substring(subtypeRef.lastIndexOf('/') + 1);
+            Schema<?> subtype = allSchemas.get(subtypeName);
+            if (subtype == null || subtype.getExample() != null) {
+                continue;
+            }
+            Map<String, Object> example = new LinkedHashMap<>();
+            buildSchemaExample(subtypeName, allSchemas, example, new HashSet<>(), 0);
+            if (example.isEmpty()) {
+                continue;
+            }
+            example.put(discriminator.getPropertyName(), discriminatorValue);
+            subtype.setExample(example);
+        }
+        // 2. Mirror a subtype's example onto the parent so a field typed as the parent
+        //    interface still gets a complete example. Prefer the subtype whose mapping key
+        //    matches the example declared on the discriminator property itself
+        //    (e.g. EntityId.getEntityType() has example = "DEVICE" → mirror DeviceId, not
+        //    the alphabetically first AdminSettingsId). Fall back to the first mapping entry.
+        if (schema.getExample() == null) {
+            String preferredValue = null;
+            if (schema.getProperties() != null) {
+                Schema<?> discProp = (Schema<?>) schema.getProperties().get(discriminator.getPropertyName());
+                if (discProp != null && discProp.getExample() != null) {
+                    preferredValue = discProp.getExample().toString();
+                }
+            }
+            String chosenRef = preferredValue != null ? discriminator.getMapping().get(preferredValue) : null;
+            if (chosenRef == null) {
+                chosenRef = discriminator.getMapping().values().iterator().next();
+            }
+            String chosenSubtypeName = chosenRef.substring(chosenRef.lastIndexOf('/') + 1);
+            Schema<?> chosenSubtype = allSchemas.get(chosenSubtypeName);
+            if (chosenSubtype != null && chosenSubtype.getExample() != null) {
+                schema.setExample(chosenSubtype.getExample());
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void buildSchemaExample(String schemaName, Map<String, Schema> allSchemas,
+                                    Map<String, Object> result, Set<String> visited, int depth) {
+        if (depth > MAX_EXAMPLE_DEPTH || !visited.add(schemaName)) {
+            return;
+        }
+        Schema<?> schema = allSchemas.get(schemaName);
+        if (schema == null) {
+            return;
+        }
+        // Walk parents first so own properties (added later) override inherited entries.
+        if (schema.getAllOf() != null) {
+            String selfRef = "#/components/schemas/" + schemaName;
+            for (Schema<?> allOfElement : schema.getAllOf()) {
+                String ref = allOfElement.get$ref();
+                if (ref != null) {
+                    String refName = ref.substring(ref.lastIndexOf('/') + 1);
+                    buildSchemaExample(refName, allSchemas, result, visited, depth);
+                    // If the parent uses a discriminator, this schema is one of its mapping
+                    // targets — override the discriminator field with the value that points
+                    // back at us (e.g. EntityViewId → entityType: "ENTITY_VIEW", not "ADMIN_SETTINGS").
+                    Schema<?> parentSchema = allSchemas.get(refName);
+                    if (parentSchema != null && parentSchema.getDiscriminator() != null
+                            && parentSchema.getDiscriminator().getMapping() != null) {
+                        parentSchema.getDiscriminator().getMapping().entrySet().stream()
+                                .filter(e -> selfRef.equals(e.getValue()))
+                                .map(Map.Entry::getKey)
+                                .findFirst()
+                                .ifPresent(value -> result.put(parentSchema.getDiscriminator().getPropertyName(), value));
+                    }
+                } else if (allOfElement.getProperties() != null) {
+                    allOfElement.getProperties().forEach((k, v) ->
+                            result.put(k, sampleValue((Schema<?>) v, allSchemas, visited, depth + 1)));
+                }
+            }
+        }
+        if (schema.getProperties() != null) {
+            schema.getProperties().forEach((k, v) ->
+                    result.put(k, sampleValue((Schema<?>) v, allSchemas, visited, depth + 1)));
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Object sampleValue(Schema<?> propSchema, Map<String, Schema> allSchemas,
+                               Set<String> visited, int depth) {
+        if (propSchema == null) {
+            return null;
+        }
+        if (propSchema.getExample() != null) {
+            return propSchema.getExample();
+        }
+        String ref = propSchema.get$ref();
+        if (ref != null) {
+            String refName = ref.substring(ref.lastIndexOf('/') + 1);
+            Schema<?> refSchema = allSchemas.get(refName);
+            if (refSchema != null && refSchema.getExample() != null) {
+                return refSchema.getExample();
+            }
+            if (depth >= MAX_EXAMPLE_DEPTH) {
+                return Map.of();
+            }
+            Map<String, Object> nested = new LinkedHashMap<>();
+            buildSchemaExample(refName, allSchemas, nested, new HashSet<>(visited), depth + 1);
+            return nested;
+        }
+        if (propSchema.getEnum() != null && !propSchema.getEnum().isEmpty()) {
+            return propSchema.getEnum().get(0);
+        }
+        String type = propSchema.getType();
+        if (type == null) {
+            return null;
+        }
+        return switch (type) {
+            case "string" -> "string";
+            case "integer", "number" -> 0;
+            case "boolean" -> false;
+            case "array" -> List.of();
+            case "object" -> Map.of();
+            default -> null;
+        };
+    }
+
     @SuppressWarnings("unchecked")
     private void deduplicateAllOfProperties(Schema<?> schema, Map<String, Schema> allSchemas, Set<String> ownProps) {
         if (schema.getAllOf() == null) {
@@ -885,7 +1073,13 @@ public class SwaggerConfiguration {
      * This matches the naming convention used by swagger-core's {@code TypeNameResolver}.
      */
     private static String resolveSchemaName(JavaType javaType) {
-        StringBuilder sb = new StringBuilder(javaType.getRawClass().getSimpleName());
+        Class<?> cls = javaType.getRawClass();
+        io.swagger.v3.oas.annotations.media.Schema schemaAnnotation =
+                cls.getAnnotation(io.swagger.v3.oas.annotations.media.Schema.class);
+        if (schemaAnnotation != null && !schemaAnnotation.name().isEmpty()) {
+            return schemaAnnotation.name();
+        }
+        StringBuilder sb = new StringBuilder(cls.getSimpleName());
         if (javaType.hasGenericTypes()) {
             for (int i = 0; i < javaType.containedTypeCount(); i++) {
                 JavaType param = javaType.containedType(i);
@@ -990,8 +1184,14 @@ public class SwaggerConfiguration {
         // Map backing field names to their JSON property names (respects @JsonProperty)
         Map<String, String> fieldToJsonName = new LinkedHashMap<>();
         for (var prop : beanDesc.findProperties()) {
-            if (prop.getField() != null && prop.couldSerialize()) {
-                fieldToJsonName.put(prop.getField().getName(), prop.getName());
+            if (prop.couldSerialize()) {
+                if (prop.getField() != null) {
+                    fieldToJsonName.put(prop.getField().getName(), prop.getName());
+                } else {
+                    // For transient fields, Jackson may not associate the field with the property.
+                    // Fall back to using the property name as the field name key.
+                    fieldToJsonName.putIfAbsent(prop.getName(), prop.getName());
+                }
             }
         }
 

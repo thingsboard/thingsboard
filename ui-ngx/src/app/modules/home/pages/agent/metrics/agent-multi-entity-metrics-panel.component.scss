@@ -1,0 +1,24 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host { display: block; height: 100%; }
+.tb-multi-entity-metrics-panel {
+  display: flex; flex-direction: column; height: 100%; min-height: 400px;
+}
+.tb-multi-entity-metrics-panel-header {
+  display: flex; align-items: center; padding: 8px 8px 4px 16px; gap: 12px;
+}
+.tb-multi-entity-metrics-panel-title {
+  font-size: 14px; font-weight: 600; color: rgba(0,0,0,0.78);
+}
+.tb-multi-entity-metrics-panel-window {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; color: rgba(0,0,0,0.5);
+}
+.tb-multi-entity-metrics-panel-spacer { flex: 1; }
+.tb-multi-entity-metrics-panel-section {
+  display: flex; flex-direction: column; flex: 1 1 0; min-height: 180px;
+}
+.tb-multi-entity-metrics-panel-label {
+  padding: 8px 16px 0; font-size: 11px; font-weight: 700; letter-spacing: 0.6px;
+  text-transform: uppercase; color: rgba(0,0,0,0.62);
+}
+.tb-multi-entity-metrics-panel-chart { flex: 1 1 0; min-height: 160px; width: 100%; }

@@ -39,7 +39,7 @@
     },
     {
       "tag": "firstPhaseValue",
-      "stateRenderFunction": "if (ctx.values.running) {\n    element.show();\n    ctx.api.font(element, ctx.properties.currentVoltageFont, ctx.properties.currentVoltageColor);\n    ctx.api.text(element, ctx.api.formatValue(ctx.values.firstPhaseVoltage, {units: ctx.properties.units, decimals: 0, ignoreUnitSymbol: true}));\n} else {\n    element.hide();\n}",
+      "stateRenderFunction": "if (ctx.values.running) {\n    element.show();\n    ctx.api.font(element, ctx.properties.currentVoltageFont, ctx.properties.currentVoltageColor);\n    ctx.api.text(element, ctx.api.formatValue(ctx.values.firstPhaseVoltage, {units: ctx.properties.units, decimals: ctx.properties.currentVoltageDecimals, ignoreUnitSymbol: true}));\n} else {\n    element.hide();\n}",
       "actions": null
     },
     {
@@ -49,7 +49,7 @@
     },
     {
       "tag": "secondPhaseValue",
-      "stateRenderFunction": "if (ctx.values.running) {\n    element.show();\n    ctx.api.font(element, ctx.properties.currentVoltageFont, ctx.properties.currentVoltageColor);\n    ctx.api.text(element, ctx.api.formatValue(ctx.values.secondPhaseVoltage, {units: ctx.properties.units, decimals: 0, ignoreUnitSymbol: true}));\n} else {\n    element.hide();\n}",
+      "stateRenderFunction": "if (ctx.values.running) {\n    element.show();\n    ctx.api.font(element, ctx.properties.currentVoltageFont, ctx.properties.currentVoltageColor);\n    ctx.api.text(element, ctx.api.formatValue(ctx.values.secondPhaseVoltage, {units: ctx.properties.units, decimals: ctx.properties.currentVoltageDecimals, ignoreUnitSymbol: true}));\n} else {\n    element.hide();\n}",
       "actions": null
     },
     {
@@ -59,7 +59,7 @@
     },
     {
       "tag": "thirdPhaseValue",
-      "stateRenderFunction": "if (ctx.values.running) {\n    element.show();\n    ctx.api.font(element, ctx.properties.currentVoltageFont, ctx.properties.currentVoltageColor);\n    ctx.api.text(element, ctx.api.formatValue(ctx.values.thirdPhaseVoltage, {units: ctx.properties.units, decimals: 0, ignoreUnitSymbol: true}));\n} else {\n    element.hide();\n}",
+      "stateRenderFunction": "if (ctx.values.running) {\n    element.show();\n    ctx.api.font(element, ctx.properties.currentVoltageFont, ctx.properties.currentVoltageColor);\n    ctx.api.text(element, ctx.api.formatValue(ctx.values.thirdPhaseVoltage, {units: ctx.properties.units, decimals: ctx.properties.currentVoltageDecimals, ignoreUnitSymbol: true}));\n} else {\n    element.hide();\n}",
       "actions": null
     },
     {
@@ -454,8 +454,20 @@
       "visible": true
     },
     {
+      "id": "currentVoltageDecimals",
+      "name": "{i18n:scada.symbol.current-voltage}",
+      "type": "number",
+      "default": 0,
+      "subLabel": "{i18n:scada.symbol.decimals}",
+      "min": 0,
+      "max": 10,
+      "step": 1,
+      "disabled": false,
+      "visible": true
+    },
+    {
       "id": "currentVoltageFont",
-      "name": "{i18n:scada.symbol.current-voltage-color}",
+      "name": "{i18n:scada.symbol.current-voltage}",
       "type": "font",
       "default": {
         "size": 32,
@@ -469,7 +481,7 @@
     },
     {
       "id": "currentVoltageColor",
-      "name": "{i18n:scada.symbol.current-voltage-color}",
+      "name": "{i18n:scada.symbol.current-voltage}",
       "type": "color",
       "default": "#002878",
       "disabled": false,

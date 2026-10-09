@@ -1,0 +1,55 @@
+[
+  {
+    "name": "Location A",
+    "type": "Location",
+    "customer": "Water Metering Customer A",
+    "relations": [
+      {
+        "entityType": "CUSTOMER",
+        "entityName": "Water Metering Customer A",
+        "direction": "FROM",
+        "type": "Owns"
+      },
+      {
+        "entityType": "ASSET",
+        "entityName": "Los Angeles",
+        "direction": "FROM",
+        "type": "Contains"
+      }
+    ],
+    "jsonId": "feb03612-07de-4a38-ac2d-158b9592a89d"
+  },
+  {
+    "name": "Location B",
+    "type": "Location",
+    "customer": "Water Metering Customer B",
+    "relations": [
+      {
+        "entityType": "CUSTOMER",
+        "entityName": "Water Metering Customer B",
+        "direction": "FROM",
+        "type": "Owns"
+      },
+      {
+        "entityType": "ASSET",
+        "entityName": "Los Angeles",
+        "direction": "FROM",
+        "type": "Contains"
+      }
+    ],
+    "jsonId": "99c2376c-dfe9-49f7-99f9-e0c3f1dcbf72"
+  },
+  {
+    "name": "Los Angeles",
+    "type": "City",
+    "relations": [
+      {
+        "entityType": "TENANT",
+        "entityName": "Tenant",
+        "direction": "FROM",
+        "type": "Owns"
+      }
+    ],
+    "jsonId": "90bd76d0-e2a3-4f5b-b85e-cd59386f2f44"
+  }
+]

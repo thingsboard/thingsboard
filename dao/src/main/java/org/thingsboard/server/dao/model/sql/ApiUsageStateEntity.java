@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.model.sql;
 
 import jakarta.persistence.Column;
@@ -70,6 +58,14 @@ public class ApiUsageStateEntity extends BaseVersionedEntity<ApiUsageState> impl
     @Column(name = ModelConstants.API_USAGE_STATE_ALARM_EXEC_COLUMN)
     private ApiUsageStateValue alarmExecState = ApiUsageStateValue.ENABLED;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = ModelConstants.API_USAGE_STATE_REPORT_EXEC_COLUMN)
+    private ApiUsageStateValue reportExecState = ApiUsageStateValue.ENABLED;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = ModelConstants.API_USAGE_STATE_AI_COLUMN)
+    private ApiUsageStateValue aiState = ApiUsageStateValue.ENABLED;
+
     public ApiUsageStateEntity() {
     }
 
@@ -90,6 +86,8 @@ public class ApiUsageStateEntity extends BaseVersionedEntity<ApiUsageState> impl
         this.emailExecState = ur.getEmailExecState();
         this.smsExecState = ur.getSmsExecState();
         this.alarmExecState = ur.getAlarmExecState();
+        this.reportExecState = ur.getReportExecState();
+        this.aiState = ur.getAiState();
     }
 
     @Override
@@ -110,6 +108,8 @@ public class ApiUsageStateEntity extends BaseVersionedEntity<ApiUsageState> impl
         ur.setEmailExecState(emailExecState);
         ur.setSmsExecState(smsExecState);
         ur.setAlarmExecState(alarmExecState);
+        ur.setReportExecState(reportExecState);
+        ur.setAiState(aiState);
         ur.setVersion(version);
         return ur;
     }

@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.telemetry;
 
 import com.google.common.util.concurrent.FutureCallback;
@@ -29,13 +17,15 @@ import org.thingsboard.server.common.data.kv.AggregationParams;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.IntervalType;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
+import org.thingsboard.server.common.data.kv.ReadTsKvQueryResult;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.permission.Operation;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.service.security.AccessValidator;
 import org.thingsboard.server.service.security.ValidationResult;
 import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.service.security.permission.Operation;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -68,6 +58,37 @@ public class DefaultTbTelemetryService implements TbTelemetryService {
                     Futures.addCallback(tsService.findAll(currentUser.getTenantId(), entityId, queries), new FutureCallback<>() {
                         @Override
                         public void onSuccess(List<TsKvEntry> result) {
+                            future.set(result);
+                        }
+
+                        @Override
+                        public void onFailure(Throwable t) {
+                            future.setException(t);
+                        }
+                    }, MoreExecutors.directExecutor());
+                } catch (Throwable e) {
+                    onFailure(e);
+                }
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                future.setException(t);
+            }
+        });
+        return future;
+    }
+
+    @Override
+    public ListenableFuture<List<ReadTsKvQueryResult>> getTimeseriesByReadQueries(EntityId entityId, List<BaseReadTsKvQuery> queries, SecurityUser currentUser) {
+        SettableFuture<List<ReadTsKvQueryResult>> future = SettableFuture.create();
+        accessValidator.validate(currentUser, Operation.READ_TELEMETRY, entityId, new FutureCallback<>() {
+            @Override
+            public void onSuccess(ValidationResult validationResult) {
+                try {
+                    Futures.addCallback(tsService.findAllByQueries(currentUser.getTenantId(), entityId, new ArrayList<>(queries)), new FutureCallback<>() {
+                        @Override
+                        public void onSuccess(List<ReadTsKvQueryResult> result) {
                             future.set(result);
                         }
 

@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.rule.engine.action;
 
 import com.google.common.util.concurrent.Futures;
@@ -53,7 +41,9 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
                 "When selected, rule node allows us to use advanced mode to enable customer creation if it doesn't exist.</li>" +
                 "<li><strong>Dashboard</strong> - use a dashboard with the specified title as the target entity to create a relation with.</li>" +
                 "<li><strong>User</strong> - use a user with the specified email as the target entity to create a relation with.</li>" +
-                "<li><strong>Edge</strong> - use an edge with the specified name as the target entity to create a relation with.</li></ul>" +
+                "<li><strong>Edge</strong> - use an edge with the specified name as the target entity to create a relation with.</li>" +
+                "<li><strong>Data Converter</strong> - use data converter with the specified name as the target entity to create a relation with.</li>" +
+                "<li><strong>Role</strong> - use role with the specified name as the target entity to create a relation with.</li></ul>" +
                 "Advanced settings: " +
                 "<ul><li><strong>Remove current relations</strong> - removes current relations with originator of the incoming message based on direction and type. " +
                 "Useful in GPS tracking use cases where relation acts as a temporary indicator of a tracker presence in specific geofence.</li>" +
@@ -129,8 +119,8 @@ public class TbCreateRelationNode extends TbAbstractRelationActionNode<TbCreateR
         return Futures.transformAsync(checkRelationFuture, relationExists ->
                         relationExists ?
                                 Futures.immediateFuture(true) :
-                                ctx.getRelationService().
-                                        saveRelationAsync(ctx.getTenantId(), new EntityRelation(fromId, toId, relationType, RelationTypeGroup.COMMON)),
+                                ctx.getRelationService()
+                                        .saveRelationAsync(ctx.getTenantId(), new EntityRelation(fromId, toId, relationType, RelationTypeGroup.COMMON)),
                 MoreExecutors.directExecutor());
     }
 

@@ -1,0 +1,148 @@
+{
+  "entityId": {
+    "entityType": "DEVICE_PROFILE",
+    "id": "a6410322-1264-4a1a-9254-c0b21df9f43d"
+  },
+  "type": "ALARM",
+  "name": "Door left open",
+  "debugSettings": {
+    "failuresEnabled": true,
+    "allEnabled": false,
+    "allEnabledUntil": 0
+  },
+  "configurationVersion": 0,
+  "configuration": {
+    "type": "ALARM",
+    "arguments": {
+      "maxDoorOpenDurationMajorThreshold": {
+        "refEntityKey": {
+          "key": "maxDoorOpenDurationMajorThreshold",
+          "type": "ATTRIBUTE",
+          "scope": "SERVER_SCOPE"
+        },
+        "defaultValue": "30"
+      },
+      "maxDoorOpenDurationCriticalThreshold": {
+        "refEntityKey": {
+          "key": "maxDoorOpenDurationCriticalThreshold",
+          "type": "ATTRIBUTE",
+          "scope": "SERVER_SCOPE"
+        },
+        "defaultValue": "60"
+      },
+      "open": {
+        "refEntityKey": {
+          "key": "open",
+          "type": "TS_LATEST"
+        }
+      }
+    },
+    "createRules": {
+      "CRITICAL": {
+        "condition": {
+          "type": "DURATION",
+          "expression": {
+            "type": "SIMPLE",
+            "filters": [
+              {
+                "argument": "open",
+                "valueType": "BOOLEAN",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "BOOLEAN",
+                    "operation": "EQUAL",
+                    "value": {
+                      "staticValue": true,
+                      "dynamicValueArgument": null
+                    }
+                  }
+                ]
+              }
+            ],
+            "operation": "AND"
+          },
+          "schedule": null,
+          "unit": "MINUTES",
+          "value": {
+            "staticValue": null,
+            "dynamicValueArgument": "maxDoorOpenDurationCriticalThreshold"
+          }
+        },
+        "alarmDetails": null,
+        "dashboardId": null
+      },
+      "MAJOR": {
+        "condition": {
+          "type": "DURATION",
+          "expression": {
+            "type": "SIMPLE",
+            "filters": [
+              {
+                "argument": "open",
+                "valueType": "BOOLEAN",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "BOOLEAN",
+                    "operation": "EQUAL",
+                    "value": {
+                      "staticValue": true,
+                      "dynamicValueArgument": null
+                    }
+                  }
+                ]
+              }
+            ],
+            "operation": "AND"
+          },
+          "schedule": null,
+          "unit": "MINUTES",
+          "value": {
+            "staticValue": null,
+            "dynamicValueArgument": "maxDoorOpenDurationMajorThreshold"
+          }
+        },
+        "alarmDetails": null,
+        "dashboardId": null
+      }
+    },
+    "clearRule": {
+      "condition": {
+        "type": "SIMPLE",
+        "expression": {
+          "type": "SIMPLE",
+          "filters": [
+            {
+              "argument": "open",
+              "valueType": "BOOLEAN",
+              "operation": "AND",
+              "predicates": [
+                {
+                  "type": "BOOLEAN",
+                  "operation": "EQUAL",
+                  "value": {
+                    "staticValue": false,
+                    "dynamicValueArgument": null
+                  }
+                }
+              ]
+            }
+          ],
+          "operation": "AND"
+        },
+        "schedule": null
+      },
+      "alarmDetails": null,
+      "dashboardId": null
+    },
+    "propagate": true,
+    "propagateToOwner": false,
+    "propagateToOwnerHierarchy": true,
+    "propagateToTenant": false,
+    "propagateRelationTypes": [
+      "Contains"
+    ],
+    "output": null
+  }
+}

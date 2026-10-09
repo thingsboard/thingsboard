@@ -1,27 +1,17 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.asset;
 
 import com.google.common.util.concurrent.FluentFuture;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
+import org.thingsboard.server.common.data.AssetProfileCacheInfo;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
@@ -34,25 +24,28 @@ import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.entity.CachedVersionedEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
-import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
+import org.thingsboard.server.exception.DataValidationException;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
 import static org.thingsboard.server.dao.service.Validator.validateId;
+import static org.thingsboard.server.dao.service.Validator.validateIds;
 
 @Service("AssetProfileDaoService")
 @Slf4j
@@ -208,8 +201,8 @@ public class AssetProfileServiceImpl extends CachedVersionedEntityService<AssetP
                     null, assetProfile.getId(), assetProfile.isDefault()));
             eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(assetProfileId).build());
         } catch (Exception t) {
-            ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
-            if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("fk_asset_profile")) {
+            ConstraintViolationException e = DaoUtil.extractConstraintViolationException(t).orElse(null);
+            if (e != null && DaoUtil.constraintNameMatches(e.getConstraintName(), "fk_asset_profile")) {
                 throw new DataValidationException("The asset profile referenced by the assets cannot be deleted!");
             } else {
                 throw t;
@@ -231,6 +224,20 @@ public class AssetProfileServiceImpl extends CachedVersionedEntityService<AssetP
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         Validator.validatePageLink(pageLink);
         return assetProfileDao.findAssetProfileInfos(tenantId, pageLink);
+    }
+
+    @Override
+    public ListenableFuture<List<AssetProfileInfo>> findAssetProfilesByIdsAsync(TenantId tenantId, List<AssetProfileId> assetProfileIds) {
+        log.trace("Executing findAssetProfilesByIdsAsync, tenantId [{}], assetProfileIds [{}]", tenantId, assetProfileIds);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validateIds(assetProfileIds, ids -> "Incorrect assetProfileIds " + ids);
+        return assetProfileDao.findAssetProfilesByTenantIdAndIdsAsync(tenantId.getId(), toUUIDs(assetProfileIds));
+    }
+
+    @Override
+    public List<AssetProfileInfo> findAssetProfilesByIds(TenantId tenantId, List<AssetProfileId> assetProfileIds) {
+        log.trace("Executing findAssetProfilesByIds, tenantId [{}], assetProfileIds [{}]", tenantId, assetProfileIds);
+        return assetProfileDao.findAssetProfilesByTenantIdAndIds(tenantId.getId(), toUUIDs(assetProfileIds));
     }
 
     @Override
@@ -281,6 +288,12 @@ public class AssetProfileServiceImpl extends CachedVersionedEntityService<AssetP
         log.trace("Executing findDefaultAssetProfileInfo tenantId [{}]", tenantId);
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         return toAssetProfileInfo(findDefaultAssetProfile(tenantId));
+    }
+
+    @Override
+    public List<AssetProfileCacheInfo> findAssetProfileCacheInfos(UUID id, int batchSize) {
+        log.trace("Executing findAssetProfileCacheInfos [{}] [{}]", id, batchSize);
+        return assetProfileDao.findAssetProfileCacheInfos(id, batchSize);
     }
 
     @Override
@@ -344,12 +357,6 @@ public class AssetProfileServiceImpl extends CachedVersionedEntityService<AssetP
         return assetProfileDao.findTenantAssetProfileNames(tenantId.getId(), activeOnly)
                 .stream().sorted(Comparator.comparing(EntityInfo::getName))
                 .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<AssetProfileInfo> findAssetProfilesByIds(TenantId tenantId, List<AssetProfileId> assetProfileIds) {
-        log.trace("Executing findAssetProfilesByIds, tenantId [{}], assetProfileIds [{}]", tenantId, assetProfileIds);
-        return assetProfileDao.findAssetProfilesByTenantIdAndIds(tenantId.getId(), toUUIDs(assetProfileIds));
     }
 
     private final PaginatedRemover<TenantId, AssetProfile> tenantAssetProfilesRemover =

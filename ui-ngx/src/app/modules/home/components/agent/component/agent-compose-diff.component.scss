@@ -1,0 +1,82 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@use '../agent-shared' as *;
+
+tb-agent-compose-diff {
+  display: block;
+
+  .diff-viewer {
+    position: relative;
+    overflow: hidden;
+    height: clamp(220px, calc(85vh - 280px), 520px);
+    width: 100%;
+
+    .acediff__wrap {
+      overflow: hidden !important;
+    }
+    border: 1px solid $agent-divider;
+    border-bottom-left-radius: 4px; border-bottom-right-radius: 4px;
+    background: $agent-surface-muted;
+
+    .acediff__gutter {
+      flex: 0 0 40px !important;
+      width: 40px !important;
+      background: #ffffff !important;
+      border-left: 1px solid $agent-divider-light !important;
+      border-right: 1px solid $agent-divider-light !important;
+      overflow: visible !important;
+      contain: layout paint style;
+      will-change: transform;
+      svg { width: 40px !important; background: transparent !important; }
+    }
+    .ace_editor {
+      font-family: $agent-mono-font !important;
+    }
+    .ace_gutter { width: 44px !important; background: #f5f5f5; color: rgba(0, 0, 0, 0.42); }
+    .ace_gutter-layer { width: 44px !important; }
+
+    .acediff__right .ace_gutter {
+      left: auto !important;
+      right: 0 !important;
+      border-left: 1px solid $agent-divider-light;
+    }
+    .acediff__right .ace_scroller {
+      left: 0 !important;
+      right: 44px !important;
+    }
+    .acediff__right .ace_scrollbar-v {
+      right: 44px !important;
+    }
+
+    .acediff__left .ace_scrollbar,
+    .acediff__left .ace_scrollbar-v {
+      display: none !important;
+      width: 0 !important;
+    }
+    .acediff__left .ace_scroller {
+      right: 0 !important;
+    }
+    .acediff__gutter {
+      z-index: 10;
+    }
+    .acediff__gutter svg,
+    .acediff__copy {
+      z-index: 11;
+      position: relative;
+    }
+    .acediff__gutter svg { pointer-events: none !important; }
+    &.readonly {
+      .ace_editor { background-color: #f7f9fa !important; }
+      .ace_gutter { background: #eef1f2; }
+      .acediff__gutter { background: #f7f9fa !important; }
+    }
+    .acediff__copy,
+    .acediff__copy--left,
+    .acediff__copy--right,
+    .acediff__copy--left div,
+    .acediff__copy--right div {
+      pointer-events: auto !important;
+      z-index: 12 !important;
+    }
+  }
+}

@@ -1,0 +1,12 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div #reportComponentElement class="tb-report-component">
+  @if (!typeData) {
+    {{ reportComponent | json }}
+  }
+  <tb-anchor #reportPreviewContainer></tb-anchor>
+</div>

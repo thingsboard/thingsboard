@@ -1,0 +1,59 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<mat-form-field [formGroup]="operationTypeListFormGroup" class="mat-block tb-chip-list" [appearance]="appearance" [floatLabel]="floatLabel" [subscriptSizing]="subscriptSizing">
+  @if (label) {
+    <mat-label translate>{{label}}</mat-label>
+  }
+  <mat-chip-grid #chipList formControlName="operationTypeList">
+    @for (operationType of operationTypeList; track operationType) {
+      <mat-chip-row
+        class="tb-chip-row-ellipsis"
+        [removable]="!disabled"
+        (removed)="remove(operationType)">
+        {{operationType.name}}
+        @if (!disabled) {
+          <mat-icon matChipRemove>close</mat-icon>
+        }
+      </mat-chip-row>
+    }
+    <input matInput type="text"
+      [class.!hidden]="disabled && operationTypeList?.length"
+      placeholder="{{ disabled && !label && !operationTypeList?.length ? (emptyPlaceholder || '') : ((!disabled || !label) ? (operationTypeList?.length ? secondaryPlaceholder : placeholder) : '') }}"
+      style="max-width: 200px;"
+      #operationTypeInput
+      (focusin)="onFocus()"
+           (focusout)="onBlur()"
+      formControlName="operationType"
+      matAutocompleteOrigin
+      #origin="matAutocompleteOrigin"
+      [matAutocompleteConnectedTo]="origin"
+      [matAutocomplete]="operationTypeAutocomplete"
+      [matChipInputFor]="chipList">
+  </mat-chip-grid>
+  <mat-autocomplete #operationTypeAutocomplete="matAutocomplete"
+    class="tb-autocomplete"
+    [displayWith]="displayOperationTypeFn"
+    (closed)="onAutocompleteClosed()">
+    @for (operationType of filteredOperationTypeList | async; track operationType) {
+      <mat-option [value]="operationType">
+        <span [innerHTML]="operationType.name | highlight:searchText:true"></span>
+      </mat-option>
+    }
+    @if (!(filteredOperationTypeList | async)?.length) {
+      <mat-option [value]="null">
+        <span>
+          {{ translate.get('permission.operation.no-operations-matching', {operation: searchText}) | async }}
+        </span>
+      </mat-option>
+    }
+  </mat-autocomplete>
+  @if (operationTypeListFormGroup.get('operationTypeList').hasError('required')) {
+    <mat-error>
+      {{ 'permission.operation.operations-required' | translate }}
+    </mat-error>
+  }
+</mat-form-field>

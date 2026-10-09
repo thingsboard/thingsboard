@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.mobile.app;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -25,8 +13,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.thingsboard.server.common.data.BaseData;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasName;
-import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.TenantEntity;
 import org.thingsboard.server.common.data.id.MobileAppId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
@@ -35,7 +24,7 @@ import org.thingsboard.server.common.data.validation.Length;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @ToString
-public class MobileApp extends BaseData<MobileAppId> implements HasTenantId, HasName {
+public class MobileApp extends BaseData<MobileAppId> implements HasName, TenantEntity {
 
     @Schema(description = "JSON object with Tenant Id")
     private TenantId tenantId;
@@ -89,4 +78,10 @@ public class MobileApp extends BaseData<MobileAppId> implements HasTenantId, Has
     public String getName() {
         return pkgName;
     }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.MOBILE_APP;
+    }
+
 }

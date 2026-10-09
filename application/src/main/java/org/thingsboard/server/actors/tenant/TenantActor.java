@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.actors.tenant;
 
 import lombok.extern.slf4j.Slf4j;
@@ -123,6 +111,8 @@ public class TenantActor extends RuleChainManagerActor {
             }
         } catch (Exception e) {
             log.warn("[{}] Unknown failure", tenantId, e);
+//            TODO: throw this in 3.1?
+//            throw new TbActorException("Failed to init actor", e);
         }
     }
 
@@ -325,7 +315,8 @@ public class TenantActor extends RuleChainManagerActor {
     }
 
     private void onComponentLifecycleMsg(ComponentLifecycleMsg msg) {
-        if (msg.getEntityId().getEntityType().equals(EntityType.API_USAGE_STATE)) {
+        EntityType entityType = msg.getEntityId().getEntityType();
+        if (entityType.equals(EntityType.API_USAGE_STATE)) {
             ApiUsageState old = getApiUsageState();
             apiUsageState = new ApiUsageState(systemContext.getApiUsageStateService().getApiUsageState(tenantId));
             if (old.isReExecEnabled() && !apiUsageState.isReExecEnabled()) {
@@ -342,10 +333,10 @@ public class TenantActor extends RuleChainManagerActor {
             deletedDevices.add(deviceId);
         }
         if (isRuleEngine) {
-            if (ruleChainsInitialized) {
+            if (ruleChainsInitialized && !(entityType.equals(EntityType.INTEGRATION) || entityType.equals(EntityType.CONVERTER))) {
                 TbActorRef target = getEntityActorRef(msg.getEntityId());
                 if (target != null) {
-                    if (msg.getEntityId().getEntityType() == EntityType.RULE_CHAIN) {
+                    if (entityType == EntityType.RULE_CHAIN) {
                         RuleChain ruleChain = systemContext.getRuleChainService().
                                 findRuleChainById(tenantId, new RuleChainId(msg.getEntityId().getId()));
                         if (ruleChain != null && RuleChainType.CORE.equals(ruleChain.getType())) {

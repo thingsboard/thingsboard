@@ -1,21 +1,8 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { GridsterComponent, GridsterConfig, GridsterItem, GridsterItemComponentInterface } from 'angular-gridster2';
-import { FormattedData, Widget, WidgetPosition, widgetType } from '@app/shared/models/widget.models';
+import { FormattedData, Widget, WidgetExportType, WidgetPosition, widgetType } from '@app/shared/models/widget.models';
 import { WidgetLayout, WidgetLayouts } from '@app/shared/models/dashboard.models';
 import { IDashboardWidget, WidgetAction, WidgetContext, WidgetHeaderAction } from './widget-component.models';
 import { Timewindow } from '@shared/models/time/time.models';
@@ -368,6 +355,7 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
 
   dropShadow: boolean;
   enableFullscreen: boolean;
+  enableDataExport: boolean;
 
   hasTimewindow: boolean;
 
@@ -613,6 +601,12 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
     }
     this.dropShadow = isDefined(this.widget.config.dropShadow) ? this.widget.config.dropShadow : true;
     this.enableFullscreen = isDefined(this.widget.config.enableFullscreen) ? this.widget.config.enableFullscreen : true;
+    if (this.widget.type === widgetType.timeseries || this.widget.type === widgetType.latest ||
+        this.widget.type === widgetType.alarm) {
+      this.enableDataExport = isDefined(this.widget.config.enableDataExport) ? this.widget.config.enableDataExport : true;
+    } else {
+      this.enableDataExport = false;
+    }
 
     const canHaveTimewindow = widgetHasTimewindow(this.widget);
     let onlyQuickInterval = false;
@@ -655,6 +649,10 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
     if (detectChanges) {
       this.widgetContext.detectContainerChanges();
     }
+  }
+
+  exportWidgetData($event: Event, widgetExportType: WidgetExportType) {
+    this.widgetContext.exportWidgetData(widgetExportType);
   }
 
   updateParamsFromData(detectChanges = false) {

@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   Component,
   ElementRef,
@@ -35,7 +22,7 @@ import {
   ValidationErrors,
   Validators
 } from '@angular/forms';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { filter, map, mergeMap, share, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityType } from '@shared/models/entity-type.models';
@@ -47,6 +34,7 @@ import { MatChipGrid } from '@angular/material/chips';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { EntityInfoData } from '@shared/models/entity.models';
 import { isArray } from 'lodash';
 
 @Component({
@@ -74,10 +62,28 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, OnChan
   private modelValue: Array<string> | null;
 
   @Input()
+  fetchEntitiesFunction: (searchText?: string) => Observable<Array<BaseData<EntityId>>>;
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
+
+  @Input()
   entityType: EntityType;
 
   @Input()
-  subType: string;
+  entitySubType = '';
+
+  @Input()
+  entityListText = 'entity.entity-list';
+
+  @Input()
+  noEntitiesText = 'entity.no-entities-matching';
+
+  @Input()
+  entitiesRequiredText = 'entity.entity-list-empty';
+
+  // @Input()
+  // subType: string;
 
   @Input()
   labelText: string;
@@ -87,9 +93,6 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, OnChan
 
   @Input()
   requiredText = this.translate.instant('entity.entity-list-empty');
-
-  @Input()
-  appearance: MatFormFieldAppearance = 'fill';
 
   private requiredValue: boolean;
   get required(): boolean {
@@ -210,13 +213,22 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, OnChan
     }
   }
 
-  writeValue(value: Array<string> | null): void {
+  writeValue(value: Array<string> | Array<EntityInfoData> | null): void {
     this.searchText = '';
-    if (value != null && value.length > 0) {
-      this.modelValue = [...value];
-      this.entityService.getEntities(this.entityType, value)
-        .subscribe(resolvedEntities => {
-          this.entities = resolvedEntities;
+    if (value?.length > 0) {
+      let entitiesObservable: Observable<Array<BaseData<EntityId>>>;
+      if (typeof value[0] === 'string') {
+        const entityIds = value as Array<string>;
+        this.modelValue = [...entityIds];
+        entitiesObservable = this.entityService.getEntities(this.entityType, entityIds);
+      } else {
+        const entities = value as Array<EntityInfoData>;
+        this.modelValue = entities.map(entity => entity.id.id);
+        entitiesObservable = of(entities);
+      }
+      entitiesObservable.subscribe(
+        (entities) => {
+          this.entities = entities;
           this.entityListFormGroup.get('entities').setValue(this.entities);
           if (this.syncIdsWithDB && this.modelValue.length !== this.entities.length) {
             this.modelValue = this.entities.map(entity => entity.id.id);
@@ -289,10 +301,14 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, OnChan
 
   private fetchEntities(searchText?: string): Observable<Array<BaseData<EntityId>>> {
     this.searchText = searchText;
-
-    return this.entityService.getEntitiesByNameFilter(this.entityType, searchText,
-      50, this.subType ? this.subType : '', {ignoreLoading: true}).pipe(
-      map((data) => data ? data : []));
+    if (this.fetchEntitiesFunction) {
+      return this.fetchEntitiesFunction(searchText).pipe(
+        map((data) => data ? data : []));
+    } else {
+      return this.entityService.getEntitiesByNameFilter(this.entityType, searchText,
+        50, this.entitySubType, {ignoreLoading: true}).pipe(
+        map((data) => data ? data : []));
+    }
   }
 
   public onFocus() {
@@ -309,6 +325,15 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, OnChan
       this.entityInput.nativeElement.blur();
       this.entityInput.nativeElement.focus();
     }, 0);
+  }
+
+  get placeholder(): string {
+    return this.placeholderText ? this.placeholderText : (this.entityListText ? this.translate.instant(this.entityListText): undefined);
+  }
+
+  get requiredLabel(): string {
+    return this.requiredText ? this.requiredText :
+      (this.entitiesRequiredText ? this.translate.instant(this.entitiesRequiredText): undefined);
   }
 
   public textIsNotEmpty(text: string): boolean {

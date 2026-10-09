@@ -1,23 +1,11 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-$mainColor: var(--tb-slider-main-color, #5469FF);
-$hoverRippleColor: var(--tb-slider-hover-ripple-color, rgba(84, 105, 255, 0.05));
-$focusRippleColor: var(--tb-slider-focus-ripple-color, rgba(84, 105, 255, 0.2));
-$backgroundColor: var(--tb-slider-background-color, #CCD2FF);
-$tickMarksColor: var(--tb-slider-tick-marks-color, #5469FF);
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+$mainColor: var(--tb-slider-main-color, var(--tb-primary-500));
+$hoverRippleColor: var(--tb-slider-hover-ripple-color, rgba(0, 105, 92, 0.05));
+$focusRippleColor: var(--tb-slider-focus-ripple-color, rgba(0, 105, 92, 0.2));
+$backgroundColor: var(--tb-slider-background-color, var(--tb-primary-100));
+$tickMarksColor: var(--tb-slider-tick-marks-color, var(--tb-primary-500));
 
 $mainColorDisabled: var(--tb-slider-main-color-disabled, #9BA2B0);
 $backgroundColorDisabled: var(--tb-slider-background-color-disabled, #D5D7E5);

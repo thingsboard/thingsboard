@@ -1,0 +1,390 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<ng-template #itemRow let-itemType="itemType"
+                                        let-max="max" let-count="count"
+                                        let-shortNumberFormat="shortNumberFormat"
+                                        let-hasAction="hasAction"
+                                        let-addEnabled="addEnabled">
+  <!-- A negative max is the unlimited sentinel: nothing to meter and no limit to warn about, so the
+       row and its warnings are left out entirely. -->
+  @if (max >= 0) {
+    @if (itemType === UsageItemType.DEVICES) {
+      @if (itemLimitCritical(count, max)) {
+        <div class="item-panel item-panel-crit">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"></path></svg>
+          <span>{{ 'subscription.device-limit-critical' | translate }}</span>
+        </div>
+      } @else if (itemLimitWarn(count, max)) {
+        <div class="item-panel item-panel-warn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"></path></svg>
+          <span [innerHTML]="('subscription.device-limit-warn' | translate: {percent: (count / max) | percent}) | safe: 'html'"></span>
+        </div>
+      }
+    }
+    <div class="item-row" [class]="itemLimitClass(itemType, count, max)">
+      <span class="item-name">{{ usageItemTypeTranslationMap.get(itemType) | translate }}</span>
+      <span class="item-meter">
+        <i [style.width.%]="max > 0 ? (count / max) * 100 : 0"></i>
+      </span>
+      <span class="item-value">
+        @if (max !== 0) {
+          <b>{{ shortNumberFormat ?  (count  | shortNumber : {roundDown: true}) : (count | number) }}</b>
+        }
+        <span class="lim">{{ (max === 0 ? ('subscription.not-included' | translate) : (' / ' + (shortNumberFormat ? (max  | shortNumber : {roundDown: true}) : (max | number)))) }}</span>
+      </span>
+      <span class="item-act">
+        @if (hasAction) {
+          @if (addEnabled) {
+            <button mat-button color="primary" (click)="addItems($event, itemType)">
+              <mat-icon>add</mat-icon>
+              {{ usageAddItemTypeTranslationMap.get(itemType) | translate }}
+            </button>
+          } @else if (!subscriptionInfo.perpetual) {
+            <button mat-button color="primary" (click)="upgradePlanForItems($event, itemType)">
+              <mat-icon>arrow_upward</mat-icon>
+              {{ 'subscription.upgrade-plan' | translate }}
+            </button>
+          }
+        }
+      </span>
+    </div>
+  }
+</ng-template>
+
+<ng-template #addonRow let-addonType="addonType"
+             let-enabled="enabled" let-addEnabled="addEnabled" let-pePack="pePack">
+  <div class="item-row" [class.is-pe-pack-item]="pePack">
+    <span class="item-name">{{ addonTypeTranslationMap.get(addonType) | translate }}</span>
+    <span class="item-end">
+      @if (enabled) {
+        <span class="item-status-included">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path></svg>
+          {{ 'subscription.included' | translate }}
+        </span>
+      } @else if (subscriptionInfo.offline) {
+        <span class="item-none">
+          {{ 'subscription.not-included' | translate }}
+        </span>
+      } @else if (addEnabled) {
+        <button mat-button color="primary" (click)="addAddOn($event, addonType)">
+            <mat-icon>add</mat-icon>
+          {{ 'subscription.add-to-license' | translate }}
+        </button>
+      } @else if (!subscriptionInfo.perpetual) {
+        <button mat-button color="primary" (click)="upgradePlanForAddon($event, addonType)">
+            <mat-icon>arrow_upward</mat-icon>
+          {{ 'subscription.upgrade-plan' | translate }}
+        </button>
+      }
+    </span>
+    @if (pePack) {
+      <span class="item-sub">{{ 'subscription.pe-pack-note' | translate }}</span>
+    }
+  </div>
+</ng-template>
+
+<ng-template #licenseSwapCard let-current="current" let-subscription="subscription">
+  <div class="license-swap-col">
+    <p class="swap-lab">
+      <b>{{ (current ? 'subscription.current' : 'subscription.this-key') | translate }}</b>
+      <span>{{ (subscription.perpetual ? 'subscription.perpetual' : 'subscription.subscription') | translate }}</span>
+    </p>
+    <p class="swap-name">{{ subscription.subscriptionPlanName }}</p>
+    <ul class="swap-facts">
+      <li>{{ (subscription.maxDevices === -1 ? 'subscription.unlimited-devices' : 'subscription.number-of-devices') | translate : {count: subscription.maxDevices} }}</li>
+      <li>{{ enabledAddOnsText(subscription) }}</li>
+    </ul>
+    @if (!current) {
+      <button mat-flat-button
+              class="mt-4.5 h-14 w-full px-6"
+              [class.tb-load]="submittingKey"
+              color="primary"
+              [disabled]="submittingKey"
+              (click)="changeKey()">
+        <span class="tb-spin"></span>
+        <span>{{ 'subscription.replace-license' | translate }}</span>
+      </button>
+    }
+  </div>
+</ng-template>
+
+@switch (manageLicenseState) {
+  @case (ManageLicenseState.MANAGE) {
+    @if (newLicenseApplied) {
+      <mat-card appearance="outlined" class="license-management applied">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path></svg>
+        <span>{{ 'subscription.new-license-applied' | translate }}</span>
+        <button mat-icon-button class="tb-mat-32" (click)="newLicenseApplied = false" style="color: var(--tb-ink-3);">
+          <mat-icon class="tb-mat-20">close</mat-icon>
+        </button>
+      </mat-card>
+    }
+    <mat-card appearance="outlined" class="license-management">
+      <div class="license-header">
+        <span class="license-mark" [class.with-hue]="planWithHue" [class]="planHueClass">
+          <img src="/assets/license/tb-license-mark.svg" alt width="84" height="84">
+          @if (subscriptionInfo.offline) {
+            <i class="offline-mark" matTooltip="{{ 'subscription.offline-mode' | translate }}" matTooltipPosition="after">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4c-1.48 0-2.85.43-4.01 1.17l1.46 1.46C10.21 6.23 11.08 6 12 6c3.04 0 5.5 2.46 5.5 5.5v.5H19c1.66 0 3 1.34 3 3 0 1.13-.64 2.11-1.56 2.62l1.45 1.45C23.16 18.16 24 16.68 24 15c0-2.64-2.05-4.78-4.65-4.96zM3 5.27l2.75 2.74C2.56 8.15 0 10.77 0 14c0 3.31 2.69 6 6 6h11.73l2 2L21 20.73 4.27 4 3 5.27zM7.73 10l8 8H6c-2.21 0-4-1.79-4-4s1.79-4 4-4h1.73z"></path></svg>
+            </i>
+          }
+        </span>
+        <div class="license-heading">
+          <p class="license-type">
+            {{  (subscriptionInfo.perpetual ? 'subscription.perpetual-license' : 'subscription.subscription') | translate }}
+          </p>
+          <h1>{{ subscriptionInfo.subscriptionPlanName }}</h1>
+        </div>
+      </div>
+      @if (!subscriptionInfo.offline && !subscriptionInfo.development) {
+        <div class="license-header-sub">
+          @if (subscriptionInfo.perpetual) {
+            @if (subscriptionInfo.endTs) {
+              <p class="license-header-terms">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"></path></svg>
+                <span>{{ 'subscription.updates-and-support-until' | translate: {date: subscriptionInfo.endTs | date: 'dd MMMM yyyy' } }}</span>
+              </p>
+            }
+          } @else {
+            @if (subscriptionInfo.upcomingInvoiceDate) {
+              <p class="license-header-terms">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"></path></svg>
+                <span [innerHTML]="('subscription.next-charge-and-due-date' | translate: {
+                            total: subscriptionInfo.upcomingInvoiceAmountDue | tbCurrency: {short: true},
+                            date: subscriptionInfo.upcomingInvoiceDate | date: 'dd MMMM',
+                            dueDate: subscriptionInfo.endTs | date: 'dd MMMM'
+                }) | safe: 'html'"></span>
+              </p>
+            }
+          }
+          <div class="license-header-acts">
+            <button [disabled]="isLoading$ | async" mat-flat-button color="primary" (click)="manageSubscription($event)">
+              <mat-icon matButtonIcon>edit</mat-icon>
+              {{ 'subscription.manage-license' | translate }}
+            </button>
+            <div class="update-section">
+              <button [disabled]="isLoading$ | async" mat-stroked-button (click)="refreshLicenseInfo($event)">
+                <tb-icon matButtonIcon>refresh</tb-icon>
+                {{ 'action.update' | translate }}
+              </button>
+              <span class="updated-ago-text" title="{{ subscriptionInfo.dataTs | date: 'yyyy-MM-dd HH:mm:ss' }}">
+                {{ 'subscription.updated-ago' | translate: {ago: updatedAgo } }}
+              </span>
+            </div>
+          </div>
+          @if (licenseError) {
+            <div class="tb-error-messages -ml-2 mb-4 mt-1" role="alert">
+              <div class="tb-error-message">
+                @if (licenseNetworkError) {
+                  {{ 'setup.errors.no-connection' | translate }}
+                } @else {
+                  {{ licenseErrorMessage }}
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+      <div class="rule-line"></div>
+      @if (subscriptionInfo.development) {
+        <div class="empty-block">
+          <p class="heading" translate>subscription.non-production-mode</p>
+          <p translate>subscription.non-production-mode-details</p>
+        </div>
+      } @else {
+        <div class="group">
+          <p class="grouplab">{{'subscription.usage-and-limits' | translate}}</p>
+          <ng-container *ngTemplateOutlet="itemRow; context: {itemType: UsageItemType.DEVICES, max: subscriptionInfo.maxDevices,
+                                                              count: subscriptionInfo.devicesCount,
+                                                              hasAction:  !subscriptionInfo.offline,
+                                                              addEnabled: subscriptionInfo.planExtraDeviceEnabled}"></ng-container>
+          <ng-container *ngTemplateOutlet="itemRow; context: {itemType: UsageItemType.ASSETS, max: subscriptionInfo.maxAssets,
+                                                              count: subscriptionInfo.assetsCount, hasAction: false}"></ng-container>
+          @if (subscriptionInfo.maxInstances > 0) {
+            <ng-container *ngTemplateOutlet="itemRow; context: {itemType: UsageItemType.PROD_INSTANCES, max: subscriptionInfo.maxInstances,
+                                                                count: subscriptionInfo.instancesCount,
+                                                                hasAction:  !subscriptionInfo.offline,
+                                                                addEnabled: subscriptionInfo.planExtraInstanceEnabled}"></ng-container>
+          }
+          @if (aiEnabled && !subscriptionInfo.offline && subscriptionInfo.maxAiCredits > 0) {
+            <ng-container *ngTemplateOutlet="itemRow; context: {itemType: UsageItemType.AI_CREDITS, max: subscriptionInfo.maxAiCredits,
+                                                                count: subscriptionInfo.usedAiCredits,
+                                                                shortNumberFormat: true,
+                                                                hasAction:  !subscriptionInfo.offline,
+                                                                addEnabled: subscriptionInfo.planExtraAiCreditsEnabled}"></ng-container>
+          }
+          @if (subscriptionInfo.edgeEnabled) {
+            <ng-container *ngTemplateOutlet="itemRow; context: {itemType: UsageItemType.EDGES, max: subscriptionInfo.maxEdges,
+                                                              count: subscriptionInfo.edgesCount,
+                                                              hasAction:  !subscriptionInfo.offline,
+                                                              addEnabled: subscriptionInfo.planExtraEdgeEnabled}"></ng-container>
+          }
+          <!-- Also rendered when the plan includes no agents but sells them: putQuota drops maxagents at a
+               count of 0, so "0 included, purchasable as an add-on" arrives here as max 0, and gating on the
+               count alone would hide the Add action for exactly the plans that want it. itemRow renders a
+               max of 0 as "Not included" and keeps the button. -->
+          @if (subscriptionInfo.maxAgents > 0 || subscriptionInfo.planExtraAgentEnabled) {
+            <ng-container *ngTemplateOutlet="itemRow; context: {itemType: UsageItemType.AGENTS, max: subscriptionInfo.maxAgents,
+                                                                count: subscriptionInfo.agentsCount,
+                                                                hasAction:  !subscriptionInfo.offline,
+                                                                addEnabled: subscriptionInfo.planExtraAgentEnabled}"></ng-container>
+          }
+        </div>
+        <div class="group">
+          <p class="grouplab">{{'subscription.add-ons' | translate}}</p>
+          @if (!isCeGrant || subscriptionInfo.whiteLabelingEnabled) {
+            <ng-container *ngTemplateOutlet="addonRow; context: {addonType: AddonType.WHITE_LABELING,
+                                                                 enabled: subscriptionInfo.whiteLabelingEnabled, addEnabled: false}"></ng-container>
+          }
+          @if (!subscriptionInfo.perpetual || subscriptionInfo.planEdgeEnabled) {
+            <ng-container *ngTemplateOutlet="addonRow; context: {addonType: AddonType.EDGE,
+                                                                 enabled: subscriptionInfo.edgeEnabled, addEnabled: subscriptionInfo.planEdgeEnabled}"></ng-container>
+          }
+          @if (!subscriptionInfo.perpetual || subscriptionInfo.planTrendzEnabled) {
+            <ng-container *ngTemplateOutlet="addonRow; context: {addonType: AddonType.TRENDZ,
+                                                                 enabled: subscriptionInfo.trendzEnabled, addEnabled: subscriptionInfo.planTrendzEnabled}"></ng-container>
+          }
+          @if (isCeGrant) {
+            @if (subscriptionInfo.whiteLabelingEnabled) {
+              <ng-container *ngTemplateOutlet="addonRow; context: {addonType: AddonType.PROFESSIONAL_UPGRADE,
+                                                                   enabled: true, pePack: true}"></ng-container>
+            } @else {
+              <div class="pe-pack">
+                <div class="pe-pack-head">
+                  <img src="/assets/license/tb-pro-mark.svg" alt width="72" height="72">
+                  <div class="text-block">
+                    <h3>{{ 'subscription.pe-pack' | translate }}</h3>
+                    <p class="pe-pack-sub">{{ 'subscription.pe-pack-desc' | translate }}</p>
+                  </div>
+                  <button mat-flat-button color="primary" (click)="addAddOn($event, AddonType.PROFESSIONAL_UPGRADE)">
+                    {{ 'subscription.add-to-license' | translate }}
+                  </button>
+                </div>
+                <div class="pe-pack-grid">
+                  @for (offer of pePackOffers; track offer) {
+                    @let info = pePackOfferInfoMap.get(offer);
+                    <div class="pe-pack-card">
+                      <span class="offer-svg" [innerHTML]="info.svg | safe: 'html'"></span>
+                      <div class="text-block">
+                        <b>{{ info.title | translate }}</b>
+                        <span>{{ info.promo | translate }}</span>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+
+          }
+        </div>
+      }
+    </mat-card>
+
+    <mat-card appearance="outlined" class="license-management keycard">
+      <span class="keydisc">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"></path></svg>
+      </span>
+      <div class="key-text-section">
+        <b>{{ 'subscription.change-key-title' | translate }}</b>
+        <p>{{ 'subscription.change-key-text' | translate }}</p>
+      </div>
+      @if (subscriptionInfo.offline) {
+        <button mat-flat-button color="primary" (click)="gotoEnterKey()">{{ 'subscription.enter-key' | translate }}</button>
+      } @else {
+        <button mat-stroked-button (click)="gotoEnterKey()">{{ 'subscription.enter-key' | translate }}</button>
+      }
+    </mat-card>
+  }
+  @case (ManageLicenseState.ENTER_KEY) {
+    <mat-card appearance="outlined" class="license-management">
+      <button mat-stroked-button class="mb-4.5 self-start" (click)="gotoManageLicense()">
+        <mat-icon>chevron_left</mat-icon>
+        {{ 'action.back' | translate }}
+      </button>
+      <span class="keymark">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"></path></svg>
+      </span>
+      <h1>{{ 'subscription.enter-license-key' | translate }}</h1>
+      <p class="desc">{{ 'subscription.applying-key-text' | translate }}</p>
+      <p class="desc desc-2" [innerHTML]="('subscription.keys-issued-text' | translate: {licensePortal: `<a href='${subscriptionInfo.licenseServerEndpoint}' target='_blank'>License Portal</a>`}) | safe: 'html'"></p>
+      <div class="license-form-row">
+        <mat-form-field class="license-key-input flex-1" appearance="outline" subscriptSizing="dynamic" floatLabel="always">
+          <input matInput
+                 type="text"
+                 placeholder="XXXXXXXXXXXXXXXXXXXXXXXX"
+                 [disabled]="submittingKey"
+                 [(ngModel)]="keyInput"
+                 #keyControlInput="ngModel"
+                 [errorStateMatcher]="keyErrorStateMatcher"
+                 (ngModelChange)="onKeyChange()"
+                 (keydown.enter)="checkKey(keyControlInput.control)"/>
+          <mat-icon matPrefix>key</mat-icon>
+          <button mat-icon-button
+                  matSuffix
+                  matTooltip="{{'action.paste' | translate}}"
+                  matTooltipPosition="above"
+                  (click)="pasteKey()">
+            <mat-icon>content_paste</mat-icon>
+          </button>
+          @if (keyError) {
+            <mat-error>
+              {{ 'setup.key-form.invalid' | translate }}
+            </mat-error>
+          }
+          @if (keySendError) {
+            <mat-error>
+              @if (keySendNetworkError) {
+                {{ 'setup.errors.no-connection' | translate }}
+              } @else {
+                {{ keySendErrorMessage }}
+              }
+            </mat-error>
+          }
+        </mat-form-field>
+        @if (!subscriptionPreview) {
+          <button mat-flat-button
+                  class="h-14 px-6"
+                  [class.tb-load]="submittingKey"
+                  color="primary"
+                  [disabled]="submittingKey || (keyInput || '').trim().length < 8"
+                  (click)="checkKey(keyControlInput.control)">
+            <span class="tb-spin"></span>
+            <span>{{ 'subscription.check-key' | translate }}</span>
+          </button>
+        } @else {
+          <button mat-stroked-button
+                  class="h-14 px-6"
+                  (click)="checkKey(keyControlInput.control)">
+            <span>{{ 'subscription.check-key' | translate }}</span>
+          </button>
+        }
+      </div>
+      @if (subscriptionPreview) {
+        <div class="license-swap">
+          <div class="license-swap-cols">
+            <ng-container *ngTemplateOutlet="licenseSwapCard; context: {subscription: subscriptionInfo, current: true}"></ng-container>
+            <span class="license-swap-arrow">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"></path></svg>
+            </span>
+            <ng-container *ngTemplateOutlet="licenseSwapCard; context: {subscription: subscriptionPreview, current: false}"></ng-container>
+          </div>
+        </div>
+        @if (keySendError) {
+          <mat-error class="mt-4">
+            @if (keySendNetworkError) {
+              {{ 'setup.errors.no-connection' | translate }}
+            } @else {
+              {{ keySendErrorMessage }}
+            }
+          </mat-error>
+        }
+      } @else if (submittingKey) {
+        <p class="checking-key">{{ 'subscription.checking-key' | translate }}</p>
+      }
+    </mat-card>
+  }
+}

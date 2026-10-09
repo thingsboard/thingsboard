@@ -1,0 +1,22 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+.tb-page-break-preview {
+  height: 100%;
+  min-height: 40px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+  background: #eee;
+
+  .tb-page-break-line {
+    flex: 1;
+    border-bottom: 2px solid rgba(0,0,0,0.76);
+  }
+
+  .tb-page-break-title {
+    font-weight: 500;
+    font-size: 16px;
+    color: rgba(0,0,0,0.76);
+  }
+}

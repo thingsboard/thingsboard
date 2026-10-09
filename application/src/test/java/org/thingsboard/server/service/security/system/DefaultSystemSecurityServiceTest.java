@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.security.system;
 
 import org.junit.Before;
@@ -32,9 +20,13 @@ import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.model.SecuritySettings;
 import org.thingsboard.server.common.data.security.model.UserPasswordPolicy;
 import org.thingsboard.server.dao.audit.AuditLogService;
+import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.settings.SecuritySettingsService;
 import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.dao.wl.WhiteLabelingService;
+import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
+import org.thingsboard.server.service.security.permission.UserPermissionsService;
 
 import java.util.UUID;
 
@@ -60,6 +52,14 @@ public class DefaultSystemSecurityServiceTest {
     private AuditLogService auditLogService;
     @Mock
     private SecuritySettingsService securitySettingsService;
+    @Mock
+    private JwtTokenFactory tokenFactory;
+    @Mock
+    private UserPermissionsService userPermissionsService;
+    @Mock
+    private CustomerService customerService;
+    @Mock
+    private WhiteLabelingService whiteLabelingService;
 
     private DefaultSystemSecurityService systemSecurityService;
 
@@ -73,7 +73,7 @@ public class DefaultSystemSecurityServiceTest {
 
     @Before
     public void setUp() {
-        systemSecurityService = new DefaultSystemSecurityService(adminSettingsService, encoder, userService, mailService, auditLogService, securitySettingsService);
+        systemSecurityService = new DefaultSystemSecurityService(adminSettingsService, encoder, tokenFactory, userService, userPermissionsService, customerService, mailService, auditLogService, whiteLabelingService, securitySettingsService);
 
         tenantId = TenantId.fromUUID(UUID.randomUUID());
         userId = new UserId(UUID.randomUUID());
@@ -198,7 +198,7 @@ public class DefaultSystemSecurityServiceTest {
                 .isInstanceOf(LockedException.class);
 
         verify(userService).setUserCredentialsEnabled(TenantId.SYS_TENANT_ID, userId, false);
-        verify(mailService).sendAccountLockoutEmail(eq(username), eq(notificationEmail), eq(5));
+        verify(mailService).sendAccountLockoutEmail(eq(tenantId), eq(username), eq(notificationEmail), eq(5));
     }
 
 }

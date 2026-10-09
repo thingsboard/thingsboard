@@ -1,18 +1,8 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div class="color-input-container">
@@ -21,31 +11,35 @@
   <div class="control-input-container">
     <div class="control-component">
       <indicator-component class="indicator-component"
-                           [colorType]="presentations[presentationControl.value]"
-                           [color]="control.value">
+        [colorType]="presentations[presentationControl.value]"
+        [color]="control.value">
       </indicator-component>
-      <div class="hue-alpha-range">
+      <div class="hue-alpha-range" [class.single-item]="disableAlpha">
         <hue-component [(color)]="control.value"></hue-component>
-        <alpha-component [(color)]="control.value"></alpha-component>
+        @if (!disableAlpha) {
+          <alpha-component [(color)]="control.value"></alpha-component>
+        }
       </div>
     </div>
 
     <div class="color-input-block">
       <mat-select class="presentation-select" [formControl]="presentationControl">
         <mat-option [value]="0">HEX</mat-option>
-        <mat-option [value]="1">RGBA</mat-option>
-        <mat-option [value]="2">HSLA</mat-option>
+        <mat-option [value]="1">{{ disableAlpha ? 'RGB' : 'RGBA' }}</mat-option>
+        <mat-option [value]="2">{{ disableAlpha ? 'HSL' : 'HSLA' }}</mat-option>
       </mat-select>
       <div class="color-input">
         @switch (presentations[presentationControl.value]) {
           @case ('rgba') {
-            <tb-rgba-input labelVisible [(color)]="control.value"></tb-rgba-input>
+            <tb-rgba-input labelVisible [alpha]="!disableAlpha"
+            [(color)]="control.value"></tb-rgba-input>
           }
           @case ('hsla') {
-            <tb-hsla-input labelVisible [(color)]="control.value"></tb-hsla-input>
+            <tb-hsla-input labelVisible [alpha]="!disableAlpha"
+            [(color)]="control.value"></tb-hsla-input>
           }
           @case ('hex') {
-            <tb-hex-input [(color)]="control.value"></tb-hex-input>
+            <tb-hex-input [alpha]="!disableAlpha" [(color)]="control.value"></tb-hex-input>
           }
         }
       </div>

@@ -1,26 +1,16 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 @import "../../../../../../../scss/constants";
 
 $enabled-color: #198038;
 $disabled-color: #D12730;
 $warning-color: #FAA405;
 
+$main-color: var(--tb-primary-500);
+
 .tb-no-notification-svg-color {
-  color: $tb-primary-color;
+  color: $main-color
 }
 
 .tb-api-usage-panel {
@@ -77,14 +67,25 @@ $warning-color: #FAA405;
           background-color: rgba(0, 0, 0, 0.06);
         }
         &.active {
-          background-color: rgba($tb-primary-color, 0.06);
+          position: relative;
+          &:before {
+            content: "";
+            display: block;
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            left: 0;
+            top: 0;
+            background-color: $main-color;
+            opacity: 0.06;
+          }
           .mat-divider {
-            --mat-divider-color: #{$tb-primary-color};
+            --mat-divider-color: #{$main-color};
           }
           .api-item-content {
             .api-item-title {
               font-weight: 500;
-              color: $tb-primary-color;
+              color: $main-color;
             }
           }
         }

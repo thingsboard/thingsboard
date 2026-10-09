@@ -1,0 +1,85 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@import '../scss/constants';
+
+.tb-entity-info-panel {
+  width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
+  max-height: calc(100vh - 24px);
+  @media #{$mat-xs} {
+    width: 80vw;
+  }
+  .tb-entity-info-title {
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 24px;
+    letter-spacing: 0.25px;
+    color: rgba(0, 0, 0, 0.87);
+  }
+  .tb-entity-info-panel-content {
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+    margin: -8px;
+    padding: 8px;
+    --mat-divider-color: rgba(0, 0, 0, 0.1);
+
+    .property {
+      font-size: 14px;
+      line-height: 20px;
+      letter-spacing: 0.25px;
+      margin: 12px 0;
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+
+      span:first-child {
+        font-weight: 500;
+        white-space: nowrap;
+        min-width: 120px;
+        tb-icon {
+          vertical-align: text-bottom;
+          color: rgba(0, 0, 0, 0.54);
+        }
+        span {
+          font-weight: 400;
+          color: rgba(0, 0, 0, 0.54);
+        }
+      }
+
+      span:last-child {
+        span {
+          font-style: italic;
+          color: rgba(0, 0, 0, 0.54);
+        }
+      }
+
+      &.column {
+        flex-direction: column;
+        gap: 8px;
+
+        .condition-text {
+          padding: 8px 12px;
+          background: rgba(0, 0, 0, 0.04);
+          border-radius: 6px;
+          font-size: 13px;
+          line-height: 18px;
+          color: rgba(0, 0, 0, 0.76);
+          white-space: pre-wrap;
+          word-break: break-word;
+        }
+
+        .description-text {
+          font-size: 13px;
+          line-height: 18px;
+          color: rgba(0, 0, 0, 0.54);
+          white-space: pre-wrap;
+          word-break: break-word;
+        }
+      }
+    }
+  }
+}

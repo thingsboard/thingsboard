@@ -1,24 +1,11 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.sync.vc.data;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -26,6 +13,7 @@ import org.thingsboard.server.common.data.sync.ie.EntityImportResult;
 import org.thingsboard.server.common.data.sync.ie.EntityImportSettings;
 import org.thingsboard.server.common.data.sync.vc.EntityTypeLoadResult;
 import org.thingsboard.server.common.data.util.ThrowingRunnable;
+import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -37,14 +25,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-@Slf4j
 @Data
+@Slf4j
 public class EntitiesImportCtx {
 
     private final UUID requestId;
-    private final User user;
+    private final SecurityUser user;
     private final String versionId;
-
     private final Map<EntityType, EntityTypeLoadResult> results = new HashMap<>();
     private final Map<EntityType, Set<EntityId>> importedEntities = new HashMap<>();
     private final Map<EntityId, ReimportTask> toReimport = new HashMap<>();
@@ -60,11 +47,11 @@ public class EntitiesImportCtx {
     private EntityImportResult<?> currentImportResult;
     private boolean rollbackOnError;
 
-    public EntitiesImportCtx(UUID requestId, User user, String versionId) {
+    public EntitiesImportCtx(UUID requestId, SecurityUser user, String versionId) {
         this(requestId, user, versionId, null);
     }
 
-    public EntitiesImportCtx(UUID requestId, User user, String versionId, EntityImportSettings settings) {
+    public EntitiesImportCtx(UUID requestId, SecurityUser user, String versionId, EntityImportSettings settings) {
         this.requestId = requestId;
         this.user = user;
         this.versionId = versionId;
@@ -95,9 +82,17 @@ public class EntitiesImportCtx {
         return getSettings().isSaveCalculatedFields();
     }
 
+    public boolean isSaveUserGroupPermissions() {
+        return getSettings().isSaveUserGroupPermissions();
+    }
+
+    public boolean isAutoGenerateIntegrationKey() {
+        return getSettings().isAutoGenerateIntegrationKey();
+    }
+
     public EntityId getInternalId(EntityId externalId) {
         var result = externalToInternalIdMap.get(externalId);
-        log.debug("[{}][{}] Local cache {} for id", externalId.getEntityType(), externalId.getId(), result != null ? "hit" : "miss");
+        log.debug("[{}][{}] Local internal id cache {} for id", externalId.getEntityType(), externalId.getId(), result != null ? "hit" : "miss");
         return result;
     }
 
@@ -106,18 +101,30 @@ public class EntitiesImportCtx {
         externalToInternalIdMap.put(externalId, internalId);
     }
 
-    public void registerResult(EntityType entityType, boolean created) {
+    public void registerResult(EntityType entityType, boolean isGroup, boolean created) {
         EntityTypeLoadResult result = results.computeIfAbsent(entityType, EntityTypeLoadResult::new);
-        if (created) {
-            result.setCreated(result.getCreated() + 1);
+        if (isGroup) {
+            if (created) {
+                result.setGroupsCreated(result.getGroupsCreated() + 1);
+            } else {
+                result.setGroupsUpdated(result.getGroupsUpdated() + 1);
+            }
         } else {
-            result.setUpdated(result.getUpdated() + 1);
+            if (created) {
+                result.setCreated(result.getCreated() + 1);
+            } else {
+                result.setUpdated(result.getUpdated() + 1);
+            }
         }
     }
 
-    public void registerDeleted(EntityType entityType) {
+    public void registerDeleted(EntityType entityType, boolean isGroup) {
         EntityTypeLoadResult result = results.computeIfAbsent(entityType, EntityTypeLoadResult::new);
-        result.setDeleted(result.getDeleted() + 1);
+        if (isGroup) {
+            result.setGroupsDeleted(result.getDeleted() + 1);
+        } else {
+            result.setDeleted(result.getDeleted() + 1);
+        }
     }
 
     public void addRelations(Collection<EntityRelation> values) {
@@ -142,6 +149,10 @@ public class EntitiesImportCtx {
 
     public boolean isNotFound(EntityId externalId) {
         return notFoundIds.contains(externalId);
+    }
+
+    public boolean shouldImportEntities(EntityType entityType) {
+        return entityType != EntityType.USER;
     }
 
 }

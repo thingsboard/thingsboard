@@ -1,89 +1,96 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<section class="tb-widget-settings flex flex-col" [formGroup]="ledIndicatorWidgetSettingsForm">
-  <fieldset class="fields-group">
-    <legend class="group-title" translate>widgets.rpc.common-settings</legend>
-    <mat-form-field class="mat-block flex-1">
-      <mat-label translate>widgets.rpc.led-title</mat-label>
-      <input matInput formControlName="title">
-    </mat-form-field>
-    <tb-color-input class="flex-1"
-                    formControlName="ledColor"
-                    icon="format_color_fill"
-                    label="{{ 'widgets.rpc.led-color' | translate }}" openOnInput colorClearButton>
-    </tb-color-input>
-  </fieldset>
-  <fieldset class="fields-group">
-    <legend class="group-title" translate>widgets.rpc.value-settings</legend>
-    <mat-checkbox formControlName="initialValue">
-      {{ 'widgets.rpc.initial-value' | translate }}
-    </mat-checkbox>
-    <fieldset class="fields-group">
-      <legend class="group-title" translate>widgets.rpc.check-status-settings</legend>
-      <mat-slide-toggle formControlName="performCheckStatus" class="slide-block">
-        {{ 'widgets.rpc.perform-rpc-status-check' | translate }}
-      </mat-slide-toggle>
-      <mat-form-field [class.!hidden]="ledIndicatorWidgetSettingsForm.get('performCheckStatus').value" class="mat-block flex-1">
-        <mat-label translate>widgets.rpc.retrieve-led-status-value-method</mat-label>
-        <mat-select formControlName="retrieveValueMethod">
-          <mat-option [value]="'attribute'">
-            {{ 'widgets.rpc.retrieve-value-method-attribute' | translate }}
-          </mat-option>
-          <mat-option [value]="'timeseries'">
-            {{ 'widgets.rpc.retrieve-value-method-timeseries' | translate }}
-          </mat-option>
-        </mat-select>
+<ng-container [formGroup]="ledIndicatorWidgetSettingsForm">
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.rpc.common-settings</div>
+    <div class="tb-form-row column-xs">
+      <div class="fixed-title-width" translate>widgets.rpc.led-title</div>
+      <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="title" placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
-      <tb-device-key-autocomplete class="flex-1"
-                                  [class.!hidden]="ledIndicatorWidgetSettingsForm.get('performCheckStatus').value"
-                                  [aliasController]="aliasController"
-                                  [targetDevice]="targetDevice"
-                                  [keyType]="ledIndicatorWidgetSettingsForm.get('retrieveValueMethod').value === 'attribute' ? dataKeyType.attribute : dataKeyType.timeseries"
-                                  attributeLabel="widgets.rpc.led-status-value-attribute"
-                                  timeseriesLabel="widgets.rpc.led-status-value-timeseries"
-                                  required
-                                  formControlName="valueAttribute">
-      </tb-device-key-autocomplete>
-      <mat-form-field [class.!hidden]="!ledIndicatorWidgetSettingsForm.get('performCheckStatus').value" class="flex-1 mat-block">
-        <mat-label translate>widgets.rpc.check-status-method</mat-label>
-        <input required matInput formControlName="checkStatusMethod">
-      </mat-form-field>
+    </div>
+    <div class="tb-form-row column-xs">
+      <div class="fixed-title-width" translate>widgets.rpc.led-color</div>
+      <tb-color-input asBoxInput
+                      colorClearButton
+                      formControlName="ledColor">
+      </tb-color-input>
+    </div>
+  </div>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.rpc.value-settings</div>
+    <div class="tb-form-row space-between">
+      <div tb-hint-tooltip-icon="{{ 'widgets.rpc.initial-led-state-hint' | translate }}" translate>widgets.rpc.initial-led-state</div>
+      <tb-toggle-select formControlName="initialValue">
+        <tb-toggle-option [value]="false">{{ 'widgets.rpc.off' | translate }}</tb-toggle-option>
+        <tb-toggle-option [value]="true">{{ 'widgets.rpc.on' | translate }}</tb-toggle-option>
+      </tb-toggle-select>
+    </div>
+    <div class="tb-form-panel stroked">
+      <div class="tb-form-panel-title" translate>widgets.rpc.check-status-settings</div>
+      <div class="tb-form-row">
+        <mat-slide-toggle class="mat-slide" formControlName="performCheckStatus">
+          {{ 'widgets.rpc.perform-rpc-status-check' | translate }}
+        </mat-slide-toggle>
+      </div>
+      <div class="tb-form-row column-xs" [class.!hidden]="ledIndicatorWidgetSettingsForm.get('performCheckStatus').value">
+        <div class="fixed-title-width" translate>widgets.rpc.retrieve-led-status-value-method</div>
+        <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+          <mat-select formControlName="retrieveValueMethod">
+            <mat-option [value]="'attribute'">
+              {{ 'widgets.rpc.retrieve-value-method-attribute' | translate }}
+            </mat-option>
+            <mat-option [value]="'timeseries'">
+              {{ 'widgets.rpc.retrieve-value-method-timeseries' | translate }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="tb-form-row" [class.!hidden]="ledIndicatorWidgetSettingsForm.get('performCheckStatus').value">
+        <tb-device-key-autocomplete class="flex-1"
+                                    [aliasController]="aliasController"
+                                    [targetDevice]="targetDevice"
+                                    appearance="outline"
+                                    [keyType]="ledIndicatorWidgetSettingsForm.get('retrieveValueMethod').value === 'attribute' ? dataKeyType.attribute : dataKeyType.timeseries"
+                                    attributeLabel="widgets.rpc.led-status-value-attribute"
+                                    timeseriesLabel="widgets.rpc.led-status-value-timeseries"
+                                    required
+                                    formControlName="valueAttribute">
+        </tb-device-key-autocomplete>
+      </div>
+      <div class="tb-form-row column-xs" [class.!hidden]="!ledIndicatorWidgetSettingsForm.get('performCheckStatus').value">
+        <div class="fixed-title-width tb-required" translate>widgets.rpc.check-status-method</div>
+        <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+          <input required matInput formControlName="checkStatusMethod" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+      </div>
       <tb-js-func formControlName="parseValueFunction"
                   [globalVariables]="functionScopeVariables"
                   [functionArgs]="['data']"
                   functionTitle="{{ 'widgets.rpc.parse-led-status-value-function' | translate }}"
                   helpId="widget/lib/rpc/parse_value_fn">
       </tb-js-func>
-    </fieldset>
-  </fieldset>
-  <fieldset [class.!hidden]="!ledIndicatorWidgetSettingsForm.get('performCheckStatus').value" class="fields-group">
-    <legend class="group-title" translate>widgets.rpc.rpc-settings</legend>
-    <mat-form-field class="mat-block flex-1">
-      <mat-label translate>widgets.rpc.request-timeout</mat-label>
-      <input matInput type="number" min="0" formControlName="requestTimeout">
-    </mat-form-field>
-    <fieldset class="fields-group fields-group-slider">
-      <legend class="group-title" translate>widgets.rpc.persistent-rpc-settings</legend>
+    </div>
+  </div>
+  <div class="tb-form-panel" [class.!hidden]="!ledIndicatorWidgetSettingsForm.get('performCheckStatus').value">
+    <div class="tb-form-panel-title" translate>widgets.rpc.rpc-settings</div>
+    <div class="tb-form-row space-between">
+      <div translate>widgets.rpc.request-timeout</div>
+      <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+        <input matInput type="number" min="0" formControlName="requestTimeout" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+    <div class="tb-form-panel stroked">
       <mat-expansion-panel class="tb-settings" [expanded]="ledIndicatorWidgetSettingsForm.get('requestPersistent').value">
         <mat-expansion-panel-header class="flex flex-row flex-wrap">
           <mat-panel-title>
             <mat-slide-toggle formControlName="requestPersistent" (click)="$event.stopPropagation()"
-                              class="flex items-stretch justify-center">
+                              class="mat-slide flex items-stretch justify-center">
               {{ 'widgets.rpc.request-persistent' | translate }}
             </mat-slide-toggle>
           </mat-panel-title>
@@ -92,12 +99,14 @@
           </mat-panel-description>
         </mat-expansion-panel-header>
         <ng-template matExpansionPanelContent>
-          <mat-form-field class="mat-block flex-1">
-            <mat-label translate>widgets.rpc.persistent-polling-interval</mat-label>
-            <input matInput type="number" min="1000" formControlName="persistentPollingInterval">
-          </mat-form-field>
+          <div class="tb-form-row space-between">
+            <div translate>widgets.rpc.persistent-polling-interval</div>
+            <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+              <input matInput type="number" min="1000" formControlName="persistentPollingInterval" placeholder="{{ 'widget-config.set' | translate }}">
+            </mat-form-field>
+          </div>
         </ng-template>
       </mat-expansion-panel>
-    </fieldset>
-  </fieldset>
-</section>
+    </div>
+  </div>
+</ng-container>

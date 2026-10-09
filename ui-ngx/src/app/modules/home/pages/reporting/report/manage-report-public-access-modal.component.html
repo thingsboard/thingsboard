@@ -1,0 +1,51 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<mat-toolbar class="flex flex-row" color="primary">
+  <h2>{{ 'report.manage-public-access' | translate }}</h2>
+  <span class="flex-1"></span>
+  <button mat-icon-button
+          (click)="cancel()"
+          type="button">
+    <mat-icon class="material-icons">close</mat-icon>
+  </button>
+</mat-toolbar>
+<div mat-dialog-content>
+  <div class="tb-form-panel stroked tb-slide-toggle">
+    <mat-expansion-panel class="tb-settings" [expanded]="report.public" disabled>
+      <mat-expansion-panel-header class="flex flex-row flex-wrap">
+        <mat-panel-title>
+          <div tb-hint-tooltip-icon="{{ 'report.public-status-hint' | translate }}"
+               class="tb-form-row no-border no-padding">
+            <mat-slide-toggle class="mat-slide flex items-stretch justify-center" [formControl]="publicStatusControl" (click)="$event.stopPropagation()">
+              <div class="tb-form-panel-title">{{ 'report.public-status' | translate }}</div>
+            </mat-slide-toggle>
+          </div>
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        <div class="tb-public-link-text" [innerHTML]="'report.public-link-text' | translate"></div>
+        <div class="flex flex-row items-center justify-start">
+          <pre class="tb-highlight flex-1 overflow-hidden whitespace-normal break-all text-xs m-0"><code>{{ publicReportLink }}</code></pre>
+          <tb-copy-button [copyText]="publicReportLink"
+                          tooltipText="{{ 'report.copy-public-link' | translate }}"
+                          tooltipPosition="above"
+                          icon="mdi:clipboard-arrow-left">
+          </tb-copy-button>
+        </div>
+      </ng-template>
+    </mat-expansion-panel>
+  </div>
+</div>
+<div mat-dialog-actions class="flex flex-row">
+  <span class="flex-1"></span>
+  <button mat-button color="primary"
+          style="margin-right: 20px;"
+          type="button"
+          (click)="cancel()">
+    {{ 'action.ok' | translate }}
+  </button>
+</div>

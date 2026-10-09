@@ -1,0 +1,27 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="updatePackageForm" class="tb-form-panel no-border no-padding flex flex-col">
+  <div class="tb-form-panel stroked">
+    <div class="tb-form-panel-title" translate>scheduler.target</div>
+    <tb-target-select
+      formControlName="originatorId"
+      appearance="outline"
+      (currentEntity)="currentEntity($event)"
+      required>
+    </tb-target-select>
+    <tb-ota-package-autocomplete
+      formControlName="packageId"
+      appearance="outline"
+      [type]="packageType"
+      [deviceProfileId]="profileId"
+      [deviceGroupId]="groupId"
+      [deviceGroupAll]="groupAll"
+      [useFullEntityId]="true"
+      required
+    ></tb-ota-package-autocomplete>
+  </div>
+</section>

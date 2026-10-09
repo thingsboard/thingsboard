@@ -1,40 +1,30 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <mat-form-field [formGroup]="selectEntityFormGroup"
-                [class.tb-inline-field]="inlineField"
-                [class.flex]="inlineField"
-                class="mat-block"
-                [appearance]="inlineField ? 'outline' : appearance"
-                [subscriptSizing]="inlineField ? 'dynamic' : subscriptSizing"
-                [class]="additionalClasses">
+  [class.tb-inline-field]="inlineField"
+  [class.flex]="inlineField"
+  class="mat-block"
+  [appearance]="inlineField ? 'outline' : appearance"
+  [subscriptSizing]="inlineField ? 'dynamic' : subscriptSizing"
+  [class]="additionalClasses">
   @if (!inlineField) {
     <mat-label>{{ label | translate }}</mat-label>
   }
   <input matInput type="text"
-         #entityInput
-         placeholder="{{ placeholder }}"
-         formControlName="entity"
-         (focusin)="onFocus()"
-         [required]="required"
-         [matAutocomplete]="entityAutocomplete"
-         [class.!hidden]="showEntityLink">
+    #entityInput
+    placeholder="{{ placeholder }}"
+    formControlName="entity"
+    (focusin)="onFocus()"
+    [required]="required"
+    [matAutocomplete]="entityAutocomplete"
+    [class.!hidden]="showEntityLink">
   @if (showEntityLink) {
-    <a aria-label="Open entity details page" [routerLink]=entityURL>
+    <a aria-label="Open entity details page" [routerLink]="entityURL">
       {{ displayEntityFn(selectEntityFormGroup.get('entity').value) }}
     </a>
   }
@@ -48,24 +38,36 @@
   }
   @if (allowCreateNew && !selectEntityFormGroup.get('entity').value && !disabled) {
     <button mat-button color="primary" matSuffix
-            type="button"
-            (click)="createNewEntity($event)">
+      type="button"
+      (click)="createNewEntity($event)">
       <span style="white-space: nowrap">{{ 'entity.create-new' | translate }}</span>
+    </button>
+  }
+  @if (inlineField && selectEntityFormGroup.get('entity').hasError('required')
+    && selectEntityFormGroup.get('entity').touched
+    && selectEntityFormGroup.get('entity').value && newTabDetailsButton && entityURL !== '' && !disabled) {
+    <button
+      type="button"
+      matTooltip="{{ newTabDetailsButtonHint ? newTabDetailsButtonHint : ('common.open-details-page' | translate) }}"
+      matTooltipPosition="above"
+      matSuffix mat-icon-button aria-label="Details"
+      (click)="openEntityDetailsNewTab($event)">
+      <tb-icon matButtonIcon>open_in_new</tb-icon>
     </button>
   }
   @if (inlineField && selectEntityFormGroup.get('entity').hasError('required')
     && selectEntityFormGroup.get('entity').touched) {
     <mat-icon matSuffix
-              matTooltipPosition="above"
-              matTooltipClass="tb-error-tooltip"
-              [matTooltip]="requiredErrorText | translate"
-              class="tb-error">
+      matTooltipPosition="above"
+      matTooltipClass="tb-error-tooltip"
+      [matTooltip]="requiredErrorText | translate"
+      class="tb-error">
       warning
     </mat-icon>
   }
   <mat-autocomplete class="tb-autocomplete"
-                    #entityAutocomplete="matAutocomplete"
-                    [displayWith]="displayEntityFn">
+    #entityAutocomplete="matAutocomplete"
+    [displayWith]="displayEntityFn">
     @for (entity of filteredEntities | async; track entity) {
       <mat-option [value]="entity">
         <span [innerHTML]="displayEntityFn(entity) | highlight:searchText:true:'ig'"></span>

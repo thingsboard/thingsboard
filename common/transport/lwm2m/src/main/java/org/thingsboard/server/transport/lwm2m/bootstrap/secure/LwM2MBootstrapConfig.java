@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.transport.lwm2m.bootstrap.secure;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -51,7 +38,7 @@ public class LwM2MBootstrapConfig implements Serializable {
      *   clientSecretKey?: string,
      *   serverPublicKey?: string;
      *   clientHoldOffTime?: number,
-     *   serverId?: number,
+     *  shortServerId?: number, // DM server only; null for the BS entry
      *   bootstrapServerAccountTimeout: number
      * */
     @Getter
@@ -127,7 +114,7 @@ public class LwM2MBootstrapConfig implements Serializable {
 
     private BootstrapConfig.ServerConfig setServerConfig (AbstractLwM2MBootstrapServerCredential serverCredential) {
         BootstrapConfig.ServerConfig serverConfig = new BootstrapConfig.ServerConfig();
-        if (serverCredential.getShortServerId() != null) {
+        if (!serverCredential.isBootstrapServerIs() && serverCredential.getShortServerId() != null) {
             serverConfig.shortId = serverCredential.getShortServerId();
         }
         serverConfig.lifetime = serverCredential.getLifetime();

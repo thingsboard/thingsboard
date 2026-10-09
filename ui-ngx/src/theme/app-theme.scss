@@ -1,0 +1,76 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@use '@angular/material' as mat;
+@use './app-theme-overwrites' as overwrites;
+@use '@angular/material/core/tokens/m2-utils';
+@import './datepicker-theme';
+@import './theme-constants';
+
+@include mat.elevation-classes();
+@include mat.app-background();
+
+$tb-primary: mat.m2-define-palette($mat-tb-primary);
+$tb-accent: mat.m2-define-palette($mat-tb-accent);
+
+$tb-mat-theme: mat.m2-define-light-theme((
+  color: (
+    primary: $tb-primary,
+    accent: $tb-accent
+  ),
+  typography: mat.m2-define-typography-config(
+    $button: mat.m2-define-typography-level(14px, 36px, 500, $letter-spacing: 0.03125em)
+  ),
+  density: 0
+));
+
+$tb-theme-system: m2-utils.get-system($tb-mat-theme);
+$tb-theme-system: map_merge($tb-theme-system, ( background: map_get(mat.$m2-grey-palette, 200) ));
+$tb-theme: map_merge($tb-mat-theme, (_mat-system: $tb-theme-system));
+
+.tb-default {
+  @include mat.all-component-themes($tb-theme);
+  @include mat-datetimepicker-theme($tb-theme);
+  @include tb-components-theme($tb-theme);
+  @include overwrites.app-theme-overwrites($tb-primary, $tb-theme);
+  @include mat.typography-hierarchy($tb-theme);
+}
+
+.tb-default, .tb-dark {
+
+  &.tb-primary-panels {
+    --tb-primary-background-color: var(--tb-primary-500);
+    --tb-primary-text-color: var(--tb-primary-contrast-500);
+    --tb-primary-right-border: none;
+    --tb-primary-bottom-border: none;
+    --tb-menu-text-color: var(--tb-primary-contrast-500);
+    --tb-menu-border-color: rgba(0, 0, 0, .12);
+  }
+
+  .mat-tb-primary {
+    --mat-fab-container-color: var(--tb-primary-background-color);
+    --mat-fab-foreground-color: var(--tb-primary-text-color);
+    --mat-fab-small-container-color: var(--tb-primary-background-color);
+    --mat-fab-small-foreground-color: var(--tb-primary-text-color);
+    --mat-toolbar-container-background-color: var(--tb-primary-background-color);
+    --mat-toolbar-container-text-color: var(--tb-primary-text-color);
+    --mat-select-enabled-trigger-text-color: var(--tb-primary-text-color);
+    --mat-button-text-disabled-label-text-color: color-mix(in srgb, var(--tb-primary-text-color) 38%, transparent);
+    --mat-button-outlined-disabled-label-text-color: color-mix(in srgb, var(--tb-primary-text-color) 38%, transparent);
+    --mat-button-outlined-disabled-outline-color: color-mix(in srgb, var(--tb-primary-text-color) 38%, transparent);
+    --mat-button-protected-disabled-label-text-color: color-mix(in srgb, var(--tb-primary-text-color) 38%, transparent);
+    --mat-button-protected-disabled-container-color: color-mix(in srgb, var(--tb-primary-text-color) 12%, transparent);
+    .mat-mdc-select-arrow {
+      color: color-mix(in srgb, currentColor 78%, transparent);
+    }
+    &.tb-bottom-border {
+      border-bottom: var(--tb-primary-bottom-border);
+    }
+    &.tb-right-border {
+      border-right: var(--tb-primary-right-border);
+    }
+  }
+
+  .tb-primary-background {
+    background-color: mat.m2-get-color-from-palette($tb-primary);
+  }
+}

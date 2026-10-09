@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { ChangeDetectorRef, Component, Inject } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -22,6 +9,7 @@ import { Tenant, TenantInfo } from '@app/shared/models/tenant.model';
 import { ActionNotificationShow } from '@app/core/notification/notification.actions';
 import { TranslateService } from '@ngx-translate/core';
 import { ContactBasedComponent } from '../../components/entity/contact-based.component';
+import { isDefined } from '@core/utils';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 import { isDefinedAndNotNull } from '@core/utils';
 import { CountryData } from '@shared/models/country.models';
@@ -60,6 +48,11 @@ export class TenantComponent extends ContactBasedComponent<TenantInfo> {
         additionalInfo: this.fb.group(
           {
             description: [entity && entity.additionalInfo ? entity.additionalInfo.description : ''],
+            allowWhiteLabeling: [entity && entity.additionalInfo
+                     && isDefined(entity.additionalInfo.allowWhiteLabeling) ? entity.additionalInfo.allowWhiteLabeling : true],
+            allowCustomerWhiteLabeling: [entity && entity.additionalInfo
+                    && isDefined(entity.additionalInfo.allowCustomerWhiteLabeling) ?
+                        entity.additionalInfo.allowCustomerWhiteLabeling : true],
             homeDashboardId: [entity && entity.additionalInfo ? entity.additionalInfo.homeDashboardId : null],
             homeDashboardHideToolbar: [entity && entity.additionalInfo &&
             isDefinedAndNotNull(entity.additionalInfo.homeDashboardHideToolbar) ? entity.additionalInfo.homeDashboardHideToolbar : true]
@@ -72,12 +65,17 @@ export class TenantComponent extends ContactBasedComponent<TenantInfo> {
   updateEntityForm(entity: Tenant) {
     this.entityForm.patchValue({title: entity.title});
     this.entityForm.patchValue({tenantProfileId: entity.tenantProfileId});
-    this.entityForm.patchValue({additionalInfo: {description: entity.additionalInfo ? entity.additionalInfo.description : ''}});
-    this.entityForm.patchValue({additionalInfo:
-        {homeDashboardId: entity.additionalInfo ? entity.additionalInfo.homeDashboardId : null}});
-    this.entityForm.patchValue({additionalInfo:
-        {homeDashboardHideToolbar: entity.additionalInfo &&
-          isDefinedAndNotNull(entity.additionalInfo.homeDashboardHideToolbar) ? entity.additionalInfo.homeDashboardHideToolbar : true}});
+    this.entityForm.patchValue({additionalInfo: {
+      description: entity.additionalInfo ? entity.additionalInfo.description : '',
+      allowWhiteLabeling: entity.additionalInfo
+        && isDefined(entity.additionalInfo.allowWhiteLabeling) ? entity.additionalInfo.allowWhiteLabeling : true,
+      allowCustomerWhiteLabeling: entity.additionalInfo
+        && isDefined(entity.additionalInfo.allowCustomerWhiteLabeling) ?
+          entity.additionalInfo.allowCustomerWhiteLabeling : true,
+      homeDashboardId: entity.additionalInfo ? entity.additionalInfo.homeDashboardId : null,
+      homeDashboardHideToolbar: entity.additionalInfo &&
+        isDefinedAndNotNull(entity.additionalInfo.homeDashboardHideToolbar) ? entity.additionalInfo.homeDashboardHideToolbar : true
+    }});
   }
 
   updateFormState() {

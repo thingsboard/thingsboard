@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.rule.engine.metadata;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -65,27 +53,30 @@ public abstract class TbAbstractGetEntityDataNode<T extends EntityId> extends Tb
     }
 
     protected TbPair<Boolean, JsonNode> upgradeToUseFetchToAndDataToFetch(JsonNode oldConfiguration) throws TbNodeException {
-        var newConfigObjectNode = (ObjectNode) oldConfiguration;
-        if (!newConfigObjectNode.has(OLD_DATA_TO_FETCH_PROPERTY_NAME)) {
+        return new TbPair<>(true, upgradeConfigToUseFetchToAndDataToFetch((ObjectNode) oldConfiguration));
+    }
+
+    protected ObjectNode upgradeConfigToUseFetchToAndDataToFetch(ObjectNode oldConfiguration) throws TbNodeException {
+        if (!oldConfiguration.has(OLD_DATA_TO_FETCH_PROPERTY_NAME)) {
             throw new TbNodeException("property to update: '" + OLD_DATA_TO_FETCH_PROPERTY_NAME + "' doesn't exists in configuration!");
         }
-        if (!newConfigObjectNode.has(OLD_DATA_MAPPING_PROPERTY_NAME)) {
+        if (!oldConfiguration.has(OLD_DATA_MAPPING_PROPERTY_NAME)) {
             throw new TbNodeException("property to update: '" + OLD_DATA_MAPPING_PROPERTY_NAME + "' doesn't exists in configuration!");
         }
-        newConfigObjectNode.set(DATA_MAPPING_PROPERTY_NAME, newConfigObjectNode.get(OLD_DATA_MAPPING_PROPERTY_NAME));
-        newConfigObjectNode.remove(OLD_DATA_MAPPING_PROPERTY_NAME);
-        var value = newConfigObjectNode.get(OLD_DATA_TO_FETCH_PROPERTY_NAME).asText();
+        oldConfiguration.set(DATA_MAPPING_PROPERTY_NAME, oldConfiguration.get(OLD_DATA_MAPPING_PROPERTY_NAME));
+        oldConfiguration.remove(OLD_DATA_MAPPING_PROPERTY_NAME);
+        var value = oldConfiguration.get(OLD_DATA_TO_FETCH_PROPERTY_NAME).asText();
         if ("true".equals(value)) {
-            newConfigObjectNode.remove(OLD_DATA_TO_FETCH_PROPERTY_NAME);
-            newConfigObjectNode.put(DATA_TO_FETCH_PROPERTY_NAME, DataToFetch.LATEST_TELEMETRY.name());
+            oldConfiguration.remove(OLD_DATA_TO_FETCH_PROPERTY_NAME);
+            oldConfiguration.put(DATA_TO_FETCH_PROPERTY_NAME, DataToFetch.LATEST_TELEMETRY.name());
         } else if ("false".equals(value)) {
-            newConfigObjectNode.remove(OLD_DATA_TO_FETCH_PROPERTY_NAME);
-            newConfigObjectNode.put(DATA_TO_FETCH_PROPERTY_NAME, DataToFetch.ATTRIBUTES.name());
+            oldConfiguration.remove(OLD_DATA_TO_FETCH_PROPERTY_NAME);
+            oldConfiguration.put(DATA_TO_FETCH_PROPERTY_NAME, DataToFetch.ATTRIBUTES.name());
         } else {
             throw new TbNodeException("property to update: '" + OLD_DATA_TO_FETCH_PROPERTY_NAME + "' has unexpected value: " + value + ". Allowed values: true or false!");
         }
-        newConfigObjectNode.put(FETCH_TO_PROPERTY_NAME, TbMsgSource.METADATA.name());
-        return new TbPair<>(true, newConfigObjectNode);
+        oldConfiguration.put(FETCH_TO_PROPERTY_NAME, TbMsgSource.METADATA.name());
+        return oldConfiguration;
     }
 
 }

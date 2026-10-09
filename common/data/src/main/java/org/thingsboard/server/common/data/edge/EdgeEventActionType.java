@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.edge;
 
 import lombok.Getter;
@@ -28,8 +16,6 @@ public enum EdgeEventActionType {
     ATTRIBUTES_DELETED(ActionType.ATTRIBUTES_DELETED),
     TIMESERIES_UPDATED(ActionType.TIMESERIES_UPDATED),
     CREDENTIALS_UPDATED(ActionType.CREDENTIALS_UPDATED),
-    ASSIGNED_TO_CUSTOMER(ActionType.ASSIGNED_TO_CUSTOMER),
-    UNASSIGNED_FROM_CUSTOMER(ActionType.UNASSIGNED_FROM_CUSTOMER),
     RELATION_ADD_OR_UPDATE(ActionType.RELATION_ADD_OR_UPDATE),
     RELATION_DELETED(ActionType.RELATION_DELETED),
     RPC_CALL(ActionType.RPC_CALL),
@@ -44,6 +30,9 @@ public enum EdgeEventActionType {
     ASSIGNED_TO_EDGE(ActionType.ASSIGNED_TO_EDGE),
     UNASSIGNED_FROM_EDGE(ActionType.UNASSIGNED_FROM_EDGE),
     CREDENTIALS_REQUEST(null), // deprecated
+    ADDED_TO_ENTITY_GROUP(ActionType.ADDED_TO_ENTITY_GROUP),
+    REMOVED_FROM_ENTITY_GROUP(ActionType.REMOVED_FROM_ENTITY_GROUP),
+    CHANGE_OWNER(ActionType.CHANGE_OWNER),
     ENTITY_MERGE_REQUEST(null); // deprecated
 
     private final ActionType actionType;
@@ -51,4 +40,5 @@ public enum EdgeEventActionType {
     EdgeEventActionType(ActionType actionType) {
         this.actionType = actionType;
     }
+
 }

@@ -1,0 +1,18 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<button type="button"
+        mat-stroked-button
+        class="tb-box-button"
+        matTooltip="{{ alignmentTranslations.get(modelValue) | translate }}"
+        matTooltipPosition="above"
+        [disabled]="disabled"
+        #matButton
+        (click)="openAlignmentPopup($event, matButton)">
+  <tb-icon matButtonIcon>
+    {{ alignmentIcons.get(modelValue) }}
+  </tb-icon>
+</button>

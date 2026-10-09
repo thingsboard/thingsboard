@@ -1,28 +1,15 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { BaseData } from './base-data';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { BaseData, GroupEntityInfo } from './base-data';
 import { UserId } from './id/user-id';
 import { CustomerId } from './id/customer-id';
 import { Authority } from './authority.enum';
 import { TenantId } from './id/tenant-id';
-import { HasTenantId } from '@shared/models/entity.models';
+import { CustomMenuId } from '@shared/models/id/custom-menu-id';
 import { UnitSystem } from '@shared/models/unit.models';
 
-export interface User extends BaseData<UserId>, HasTenantId {
+export interface User extends BaseData<UserId> {
   tenantId: TenantId;
   customerId: CustomerId;
   email: string;
@@ -30,6 +17,7 @@ export interface User extends BaseData<UserId>, HasTenantId {
   authority: Authority;
   firstName: string;
   lastName: string;
+  customMenuId?: CustomMenuId;
   additionalInfo: Partial<UserAdditionalInfo>;
 }
 
@@ -45,6 +33,8 @@ export interface UserAdditionalInfo {
   lang: string;
   [key: string]: any;
 }
+
+export type UserInfo = User & GroupEntityInfo<UserId>;
 
 export enum ActivationMethod {
   DISPLAY_ACTIVATION_LINK = 'DISPLAY_ACTIVATION_LINK',

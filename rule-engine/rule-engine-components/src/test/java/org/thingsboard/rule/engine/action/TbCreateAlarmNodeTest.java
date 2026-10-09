@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.rule.engine.action;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
@@ -142,6 +130,7 @@ class TbCreateAlarmNodeTest {
         assertThat(config.getSeverity()).isEqualTo(AlarmSeverity.CRITICAL.name());
         assertThat(config.isPropagate()).isFalse();
         assertThat(config.isPropagateToOwner()).isFalse();
+        assertThat(config.isPropagateToOwnerHierarchy()).isFalse();
         assertThat(config.isPropagateToTenant()).isFalse();
         assertThat(config.isUseMessageAlarmData()).isFalse();
         assertThat(config.isOverwriteAlarmDetails()).isFalse();
@@ -186,6 +175,7 @@ class TbCreateAlarmNodeTest {
                 .severity(alarmSeverity)
                 .propagate(false)
                 .propagateToOwner(false)
+                .propagateToOwnerHierarchy(false)
                 .propagateToTenant(false)
                 .propagateRelationTypes(Collections.emptyList())
                 .type(alarmType)
@@ -208,6 +198,7 @@ class TbCreateAlarmNodeTest {
                 .propagation(AlarmPropagationInfo.builder()
                         .propagate(false)
                         .propagateToOwner(false)
+                        .propagateToOwnerHierarchy(false)
                         .propagateToTenant(false)
                         .propagateRelationTypes(Collections.emptyList()).build())
                 .userId(null)
@@ -307,6 +298,7 @@ class TbCreateAlarmNodeTest {
         config.setSeverity("${alarmSeverity}");
         config.setPropagate(true);
         config.setPropagateToOwner(true);
+        config.setPropagateToOwnerHierarchy(true);
         config.setPropagateToTenant(true);
         config.setRelationTypes(List.of("RELATION_TYPE_1", "RELATION_TYPE_2", "RELATION_TYPE_3"));
         config.setUseMessageAlarmData(false);
@@ -339,6 +331,7 @@ class TbCreateAlarmNodeTest {
                 .severity(AlarmSeverity.WARNING)
                 .propagate(false)
                 .propagateToOwner(false)
+                .propagateToOwnerHierarchy(false)
                 .propagateToTenant(false)
                 .propagateRelationTypes(Collections.emptyList())
                 .type(alarmType)
@@ -357,6 +350,7 @@ class TbCreateAlarmNodeTest {
                 .severity(alarmSeverity)
                 .propagate(true)
                 .propagateToOwner(true)
+                .propagateToOwnerHierarchy(true)
                 .propagateToTenant(true)
                 .propagateRelationTypes(config.getRelationTypes())
                 .type(alarmType)
@@ -379,6 +373,7 @@ class TbCreateAlarmNodeTest {
                 .propagation(AlarmPropagationInfo.builder()
                         .propagate(true)
                         .propagateToOwner(true)
+                        .propagateToOwnerHierarchy(true)
                         .propagateToTenant(true)
                         .propagateRelationTypes(config.getRelationTypes()).build())
                 .userId(null)
@@ -471,6 +466,9 @@ class TbCreateAlarmNodeTest {
         boolean oldPropagateToOwner = false;
         boolean newPropagateToOwner = true;
 
+        boolean oldPropagateToOwnerHierarchy = false;
+        boolean newPropagateToOwnerHierarchy = true;
+
         boolean oldPropagateToTenant = false;
         boolean newPropagateToTenant = true;
 
@@ -502,6 +500,7 @@ class TbCreateAlarmNodeTest {
         config.setSeverity("$[alarmSeverity]");
         config.setPropagate(newPropagate);
         config.setPropagateToOwner(newPropagateToOwner);
+        config.setPropagateToOwnerHierarchy(newPropagateToOwnerHierarchy);
         config.setPropagateToTenant(newPropagateToTenant);
         config.setRelationTypes(newPropagateRelationTypes);
         config.setUseMessageAlarmData(false);
@@ -533,6 +532,7 @@ class TbCreateAlarmNodeTest {
                 .severity(oldAlarmSeverity)
                 .propagate(oldPropagate)
                 .propagateToOwner(oldPropagateToOwner)
+                .propagateToOwnerHierarchy(oldPropagateToOwnerHierarchy)
                 .propagateToTenant(oldPropagateToTenant)
                 .propagateRelationTypes(oldPropagateRelationTypes)
                 .type(alarmType)
@@ -551,6 +551,7 @@ class TbCreateAlarmNodeTest {
                 .severity(newAlarmSeverity)
                 .propagate(newPropagate)
                 .propagateToOwner(newPropagateToOwner)
+                .propagateToOwnerHierarchy(newPropagateToOwnerHierarchy)
                 .propagateToTenant(newPropagateToTenant)
                 .propagateRelationTypes(newPropagateRelationTypes)
                 .type(alarmType)
@@ -564,6 +565,7 @@ class TbCreateAlarmNodeTest {
         var expectedUpdateAlarmRequest = AlarmUpdateRequest.builder()
                 .tenantId(tenantId)
                 .alarmId(existingAlarmId)
+                .originator(msgOriginator)
                 .severity(newAlarmSeverity)
                 .startTs(100L)
                 .endTs(newEndTs)
@@ -571,6 +573,7 @@ class TbCreateAlarmNodeTest {
                 .propagation(AlarmPropagationInfo.builder()
                         .propagate(newPropagate)
                         .propagateToOwner(newPropagateToOwner)
+                        .propagateToOwnerHierarchy(newPropagateToOwnerHierarchy)
                         .propagateToTenant(newPropagateToTenant)
                         .propagateRelationTypes(newPropagateRelationTypes).build())
                 .userId(null)
@@ -677,6 +680,7 @@ class TbCreateAlarmNodeTest {
                 .severity(alarmSeverity)
                 .propagate(true)
                 .propagateToOwner(true)
+                .propagateToOwnerHierarchy(true)
                 .propagateToTenant(true)
                 .propagateRelationTypes(Collections.emptyList())
                 .type(alarmType)
@@ -706,6 +710,7 @@ class TbCreateAlarmNodeTest {
                 .severity(AlarmSeverity.WARNING)
                 .propagate(false)
                 .propagateToOwner(true)
+                .propagateToOwnerHierarchy(true)
                 .propagateToTenant(true)
                 .propagateRelationTypes(Collections.emptyList())
                 .type(alarmType)
@@ -724,6 +729,7 @@ class TbCreateAlarmNodeTest {
                 .severity(alarmSeverity)
                 .propagate(true)
                 .propagateToOwner(true)
+                .propagateToOwnerHierarchy(true)
                 .propagateToTenant(true)
                 .propagateRelationTypes(Collections.emptyList())
                 .type(alarmType)
@@ -746,6 +752,7 @@ class TbCreateAlarmNodeTest {
                 .propagation(AlarmPropagationInfo.builder()
                         .propagate(true)
                         .propagateToOwner(true)
+                        .propagateToOwnerHierarchy(true)
                         .propagateToTenant(true)
                         .propagateRelationTypes(Collections.emptyList()).build())
                 .userId(null)
@@ -837,6 +844,9 @@ class TbCreateAlarmNodeTest {
         boolean oldPropagateToOwner = false;
         boolean newPropagateToOwner = true;
 
+        boolean oldPropagateToOwnerHierarchy = false;
+        boolean newPropagateToOwnerHierarchy = true;
+
         boolean oldPropagateToTenant = false;
         boolean newPropagateToTenant = true;
 
@@ -872,6 +882,7 @@ class TbCreateAlarmNodeTest {
                 .severity(newAlarmSeverity)
                 .propagate(newPropagate)
                 .propagateToOwner(newPropagateToOwner)
+                .propagateToOwnerHierarchy(newPropagateToOwnerHierarchy)
                 .propagateToTenant(newPropagateToTenant)
                 .propagateRelationTypes(newPropagateRelationTypes)
                 .type(alarmType)
@@ -896,6 +907,7 @@ class TbCreateAlarmNodeTest {
                 .severity(oldAlarmSeverity)
                 .propagate(oldPropagate)
                 .propagateToOwner(oldPropagateToOwner)
+                .propagateToOwnerHierarchy(oldPropagateToOwnerHierarchy)
                 .propagateToTenant(oldPropagateToTenant)
                 .propagateRelationTypes(oldPropagateRelationTypes)
                 .type(alarmType)
@@ -914,6 +926,7 @@ class TbCreateAlarmNodeTest {
                 .severity(newAlarmSeverity)
                 .propagate(newPropagate)
                 .propagateToOwner(newPropagateToOwner)
+                .propagateToOwnerHierarchy(newPropagateToOwnerHierarchy)
                 .propagateToTenant(newPropagateToTenant)
                 .propagateRelationTypes(newPropagateRelationTypes)
                 .type(alarmType)
@@ -927,6 +940,7 @@ class TbCreateAlarmNodeTest {
         var expectedUpdateAlarmRequest = AlarmUpdateRequest.builder()
                 .tenantId(tenantId)
                 .alarmId(existingAlarmId)
+                .originator(msgOriginator)
                 .severity(newAlarmSeverity)
                 .startTs(100L)
                 .endTs(newEndTs)
@@ -934,6 +948,7 @@ class TbCreateAlarmNodeTest {
                 .propagation(AlarmPropagationInfo.builder()
                         .propagate(newPropagate)
                         .propagateToOwner(newPropagateToOwner)
+                        .propagateToOwnerHierarchy(newPropagateToOwnerHierarchy)
                         .propagateToTenant(newPropagateToTenant)
                         .propagateRelationTypes(newPropagateRelationTypes).build())
                 .userId(null)
@@ -1027,6 +1042,7 @@ class TbCreateAlarmNodeTest {
 
         boolean propagate = true;
         boolean propagateToOwner = false;
+        boolean propagateToOwnerHierarchy = false;
         boolean propagateToTenant = false;
         List<String> propagateRelationTypes = List.of("RELATION_TYPE_1", "RELATION_TYPE_2", "RELATION_TYPE_3");
         JsonNode alarmDetails = JacksonUtil.newObjectNode().put("oldAlarmDetailsKey", "oldAlarmDetailsValue");
@@ -1055,6 +1071,7 @@ class TbCreateAlarmNodeTest {
                 .severity(newAlarmSeverity)
                 .propagate(propagate)
                 .propagateToOwner(propagateToOwner)
+                .propagateToOwnerHierarchy(propagateToOwnerHierarchy)
                 .propagateToTenant(propagateToTenant)
                 .propagateRelationTypes(propagateRelationTypes)
                 .type(alarmType)
@@ -1079,6 +1096,7 @@ class TbCreateAlarmNodeTest {
                 .severity(oldAlarmSeverity)
                 .propagate(propagate)
                 .propagateToOwner(propagateToOwner)
+                .propagateToOwnerHierarchy(propagateToOwnerHierarchy)
                 .propagateToTenant(propagateToTenant)
                 .propagateRelationTypes(propagateRelationTypes)
                 .type(alarmType)
@@ -1097,6 +1115,7 @@ class TbCreateAlarmNodeTest {
                 .severity(newAlarmSeverity)
                 .propagate(propagate)
                 .propagateToOwner(propagateToOwner)
+                .propagateToOwnerHierarchy(propagateToOwnerHierarchy)
                 .propagateToTenant(propagateToTenant)
                 .propagateRelationTypes(propagateRelationTypes)
                 .type(alarmType)
@@ -1110,6 +1129,7 @@ class TbCreateAlarmNodeTest {
         var expectedUpdateAlarmRequest = AlarmUpdateRequest.builder()
                 .tenantId(tenantId)
                 .alarmId(existingAlarmId)
+                .originator(msgOriginator)
                 .severity(newAlarmSeverity)
                 .startTs(100L)
                 .endTs(endTs)
@@ -1117,6 +1137,7 @@ class TbCreateAlarmNodeTest {
                 .propagation(AlarmPropagationInfo.builder()
                         .propagate(propagate)
                         .propagateToOwner(propagateToOwner)
+                        .propagateToOwnerHierarchy(propagateToOwnerHierarchy)
                         .propagateToTenant(propagateToTenant)
                         .propagateRelationTypes(propagateRelationTypes).build())
                 .userId(null)

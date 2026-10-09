@@ -1,18 +1,8 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -20,7 +10,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>4.4.0-SNAPSHOT</version>
+        <version>4.4.0.1-SNAPSHOT</version>
         <artifactId>msa</artifactId>
     </parent>
     <groupId>org.thingsboard.msa</groupId>
@@ -34,13 +24,20 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <main.dir>${basedir}/../..</main.dir>
-        <docker.name>tb-js-executor</docker.name>
+        <docker.name>${tb.docker.id}-js-executor</docker.name>
         <pkg.name>tb-js-executor</pkg.name>
         <pkg.type>js</pkg.type>
         <pkg.process-resources.phase>process-resources</pkg.process-resources.phase>
         <pkg.package.phase>package</pkg.package.phase>
         <pkg.linux.dist>${project.build.directory}/package/linux</pkg.linux.dist>
         <pkg.win.dist>${project.build.directory}/package/windows</pkg.win.dist>
+        <!-- The `yarn test` execution has to be skipped when tests are skipped and also when the
+             yarn build as a whole is skipped: with `yarn install` skipped there is no node_modules
+             to run the tests from. Maven has no boolean OR, so skip.yarn is used as the default
+             here (honoured both from the command line and from a pom property) and the
+             skip-yarn-test profile below folds in maven.test.skip, which is only ever passed on
+             the command line. -->
+        <yarn.test.skip>${skip.yarn}</yarn.test.skip>
         <docker.push-arm-amd-image.phase>pre-integration-test</docker.push-arm-amd-image.phase>
     </properties>
 
@@ -51,6 +48,30 @@
             <classifier>bin</classifier>
             <type>exe</type>
             <scope>provided</scope>
+        </dependency>
+        <!--
+            Reactor-only ordering dep (NOT a real classpath dependency).
+            Forces `mvn -T<n>` to serialize this module after web-ui so that
+            no two `yarn install` / `yarn run pkg` invocations can overlap on
+            the same agent. Concurrent yarn 1.x processes share ~/.cache/yarn
+            and have intermittently produced `tsc: not found` failures during
+            yarn pkg (incomplete typescript extraction in node_modules).
+            The chain is: ui-ngx -> msa/web-ui -> msa/js-executor -> msa/web-report
+            (web-report is PE-only; the upstream CE chain ends at msa/js-executor).
+            type=pom + provided + wildcard exclusions keep nothing on the classpath.
+        -->
+        <dependency>
+            <groupId>org.thingsboard.msa</groupId>
+            <artifactId>web-ui</artifactId>
+            <version>${project.version}</version>
+            <type>pom</type>
+            <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
 
@@ -90,7 +111,18 @@
                         </goals>
                         <phase>compile</phase>
                         <configuration>
-                            <arguments>run pkg</arguments>
+                            <arguments>--mutex network run pkg</arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>yarn test</id>
+                        <goals>
+                            <goal>yarn</goal>
+                        </goals>
+                        <phase>test</phase>
+                        <configuration>
+                            <skip>${yarn.test.skip}</skip>
+                            <arguments>--mutex network run test</arguments>
                         </configuration>
                     </execution>
                 </executions>
@@ -183,6 +215,18 @@
         </plugins>
     </build>
     <profiles>
+        <profile>
+            <id>skip-yarn-test</id>
+            <activation>
+                <property>
+                    <name>maven.test.skip</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <properties>
+                <yarn.test.skip>true</yarn.test.skip>
+            </properties>
+        </profile>
         <profile>
             <id>yarn-start</id>
             <activation>

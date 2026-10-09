@@ -1,0 +1,10 @@
+{
+  "name": "SODAQ UDP Hex Uplink Converter",
+  "type": "UPLINK",
+  "debugFailures": false,
+  "debugAll": true,
+  "configuration": {
+    "decoder": "/** Decoder **/\n\n// The field of input json\nvar reports = decodeToJson(payload).reports;\n\n// Result object with device attributes/telemetry data\nvar result = {\n   deviceName: {},\n   deviceType: \"tracker\",\n   telemetry: []\n};\n\nfor (var i = 0; i < reports.length; i++) {\n  result.deviceName = parseInt(reports[i].value.substring(2, 16), 16);\n  var telemetryObj = {\n      ts: {},\n      values: {}\n  };\n  timestamp = stringToInt(reports[i].value.substring(32,40))*1000;\n  v = stringToInt(reports[i].value.substring(40,42))/100 + 3;\n  t = stringToInt(reports[i].value.substring(42,44));\n  lat = stringToInt(reports[i].value.substring(44,52))/10000000;\n  lon = stringToInt(reports[i].value.substring(52,60))/10000000;\n  alt = stringToInt(reports[i].value.substring(60, 64));\n  speed = stringToInt(reports[i].value.substring(64, 68));\n  sat = stringToInt(reports[i].value.substring(68, 70));\n  ttf = stringToInt(reports[i].value.substring(70, 72));\n   \n  telemetryObj.ts = timestamp;\n  telemetryObj.values.batteryVoltage = v;\n  telemetryObj.values.temperature = t;\n  if(lat !== 0) {\n        telemetryObj.values.latitude = lat;      \n  }\n  if(lon !== 0) {\n        telemetryObj.values.longitude = lon;      \n  }\n  if(alt !== 0) {\n        telemetryObj.values.altitude = alt;      \n  }\n  telemetryObj.values.speed = speed;\n  telemetryObj.values.satellitesObserved = sat;\n  telemetryObj.values.timetToFirstFix = ttf;\n  telemetryObj.values.imei = result.deviceName;\n  result.telemetry.push(telemetryObj);\n}\n\n/** Helper functions **/\n\nfunction stringToInt(hex) {\n    return parseInt('0x' + hex.match(/../g).reverse().join(''));\n}\n\nfunction decodeToString(payload) {\n   return String.fromCharCode.apply(String, payload);\n}\n\nfunction decodeToJson(payload) {\n  // convert payload to string.\n  var str = decodeToString(payload);\n\n  // parse string to JSON\n  var data = JSON.parse(str);\n  return data;\n}\n\nreturn result;"
+  },
+  "additionalInfo": null
+}

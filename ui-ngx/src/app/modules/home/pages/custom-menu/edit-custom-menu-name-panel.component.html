@@ -1,0 +1,33 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-edit-custom-menu-name-panel">
+  <div class="tb-edit-custom-menu-name-title">{{ 'custom-menu.edit-name' | translate }}</div>
+  <mat-form-field appearance="outline">
+    <mat-label translate>custom-menu.name</mat-label>
+    <input matInput [formControl]="nameFormControl" required>
+    @if (nameFormControl.hasError('required')) {
+      <mat-error>
+        {{ 'custom-menu.name-required' | translate }}
+      </mat-error>
+    }
+  </mat-form-field>
+  <div class="tb-edit-custom-menu-name-panel-buttons">
+    <button mat-button
+      color="primary"
+      type="button"
+      (click)="cancel()">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button
+      color="primary"
+      type="button"
+      (click)="applyName()"
+      [disabled]="nameFormControl.invalid || !nameFormControl.dirty">
+      {{ 'action.save' | translate }}
+    </button>
+  </div>
+</div>

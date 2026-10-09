@@ -1,24 +1,14 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { EntityId } from '@shared/models/id/entity-id';
 import { HasUUID } from '@shared/models/id/has-uuid';
 import { isDefinedAndNotNull, isNotEmptyStr } from '@core/utils';
 import { EntityType } from '@shared/models/entity-type.models';
 import { User } from '@shared/models/user.model';
+import { TenantId } from '@shared/models/id/tenant-id';
+import { CustomerId } from '@shared/models/id/customer-id';
+import { EntityInfoData } from '@shared/models/entity.models';
 
 export declare type HasId = EntityId | HasUUID;
 
@@ -27,6 +17,9 @@ export interface BaseData<T extends HasId> {
   id?: T;
   name?: string;
   label?: string;
+  ownerId?: EntityId;
+  tenantId?: TenantId;
+  customerId?: CustomerId;
 }
 
 export function sortEntitiesByIds<I extends HasId, T extends BaseData<I>>(entities: T[], entityIds: string[]): T[] {
@@ -42,6 +35,12 @@ export function sortEntitiesByIds<I extends HasId, T extends BaseData<I>>(entiti
 
 export interface ExportableEntity<T extends EntityId> {
   externalId?: T;
+}
+
+export interface GroupEntityInfo<T extends EntityId> extends BaseData<T> {
+  ownerId?: EntityId;
+  ownerName?: string;
+  groups?: EntityInfoData[];
 }
 
 export function hasIdEquals(id1: HasId, id2: HasId): boolean {

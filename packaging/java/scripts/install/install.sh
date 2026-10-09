@@ -1,41 +1,25 @@
 #!/bin/bash
 #
-# Copyright © 2016-2026 The Thingsboard Authors
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+# SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+# SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 #
 
-while [[ $# -gt 0 ]]
+# --loadDemo was retired: demo data is now loaded from the setup wizard, after the first system administrator
+# is created. Matched only to tell an operator following an older runbook why nothing happened; every other
+# argument is ignored, exactly as before.
+for i in "$@"
 do
-key="$1"
-
-case $key in
+case $i in
     --loadDemo)
-    LOAD_DEMO=true
-    shift # past argument
+    echo "--loadDemo is no longer supported; demo data is loaded from the setup wizard."
+    shift
     ;;
     *)
             # unknown option
     ;;
 esac
-shift # past argument or value
 done
-
-if [ "$LOAD_DEMO" == "true" ]; then
-    loadDemo=true
-else
-    loadDemo=false
-fi
 
 CONF_FOLDER=${pkg.installFolder}/conf
 configfile=${pkg.name}.conf
@@ -48,16 +32,19 @@ run_user=${pkg.user}
 
 su -s /bin/sh -c "java -cp ${jarfile} $JAVA_OPTS -Dloader.main=org.thingsboard.server.ThingsboardInstallApplication \
                     -Dinstall.data_dir=${installDir} \
-                    -Dinstall.load_demo=${loadDemo} \
                     -Dspring.jpa.hibernate.ddl-auto=none \
                     -Dinstall.upgrade=false \
                     -Dlogging.config=${pkg.installFolder}/bin/install/logback.xml \
                     org.springframework.boot.loader.launch.PropertiesLauncher" "$run_user"
 
-if [ $? -ne 0 ]; then
+# Captured immediately: by the end of the if/else below $? is the status of the echo that ran, so exiting on
+# it would report success even when the installation failed.
+installStatus=$?
+
+if [ $installStatus -ne 0 ]; then
     echo "ThingsBoard installation failed!"
 else
     echo "ThingsBoard installed successfully!"
 fi
 
-exit $?
+exit $installStatus

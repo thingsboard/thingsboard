@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.notification;
 
 import lombok.AllArgsConstructor;
@@ -32,16 +20,23 @@ public enum NotificationType {
     ALARM_ASSIGNMENT,
     NEW_PLATFORM_VERSION,
     ENTITIES_LIMIT,
-    ENTITIES_LIMIT_INCREASE_REQUEST,
+    ENTITIES_LIMIT_INCREASE_REQUEST(true),
+    ADDON_ACCESS_REQUEST(true),
+    ADDON_ACCESS_ERROR(true),
+    PLAN_UPGRADE_REQUEST(true),
     API_USAGE_LIMIT,
     RULE_NODE,
+    INTEGRATION_LIFECYCLE_EVENT,
     RATE_LIMITS,
     EDGE_CONNECTION,
     EDGE_COMMUNICATION_FAILURE,
     TASK_PROCESSING_FAILURE,
-    RESOURCES_SHORTAGE;
+    RESOURCES_SHORTAGE,
+    USER_ACTIVATED(true),
+    USER_REGISTERED(true),
+    REPORT_GENERATED;
 
     @Getter
-    private boolean system; // for future use and compatibility with PE
+    private boolean system;
 
 }

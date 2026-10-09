@@ -1,0 +1,40 @@
+{
+  "reprocessingOrder": 0,
+  "type": "PROPAGATION",
+  "name": "Calculate water consumption and save on Field",
+  "entityId": {
+    "entityType": "DEVICE_PROFILE",
+    "id": "190454f3-0d03-4cc9-904a-7d18f5673504"
+  },
+  "debugSettings": {
+    "failuresEnabled": true,
+    "allEnabled": false,
+    "allEnabledUntil": 0
+  },
+  "configurationVersion": 0,
+  "configuration": {
+    "type": "PROPAGATION",
+    "arguments": {
+      "pulseCounter": {
+        "refEntityKey": {
+          "key": "pulseCounter",
+          "type": "TS_ROLLING"
+        },
+        "limit": 2,
+        "timeWindow": 1800000
+      }
+    },
+    "expression": "return {\n    ts: ctx.latestTs,\n    values: {\n        \"waterConsumption\": getConsumption()\n    }\n}\n\n\nfunction getConsumption() {\n    if (pulseCounter.count() == 1) {\n        return pulseCounter.first();\n    }\n    if (pulseCounter.count() < 2) {\n        return 0;\n    }\n    var first = pulseCounter.first();\n    var last = pulseCounter.last();\n    \n    \n    if (isNaN(first) || isNaN(last)) {\n        return 0;\n    }\n\n    var waterConsumption = last - first;\n    if (waterConsumption <= 0) {\n        return 0;\n    }\n    \n    return toFixed(waterConsumption, 2);\n}",
+    "output": {
+      "type": "TIME_SERIES",
+      "strategy": {
+        "type": "RULE_CHAIN"
+      }
+    },
+    "relation": {
+      "direction": "TO",
+      "relationType": "FieldToWaterMeter"
+    },
+    "applyExpressionToResolvedArguments": true
+  }
+}

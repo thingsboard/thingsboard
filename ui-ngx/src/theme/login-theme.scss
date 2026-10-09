@@ -1,0 +1,60 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@use '@angular/material' as mat;
+@use './login-theme-overwrites' as overwrites;
+@use './app-theme-overwrites' as app-overwrites;
+@import './login-theme-constants';
+
+@include mat.elevation-classes();
+@include mat.app-background();
+
+@function get-tb-dark-theme($primary, $accent, $dark-foreground: false, $warn: mat.m2-define-palette(mat.$m2-red-palette)) {
+
+  $backgroundContrastColor: map-get($primary, if($dark-foreground, 900, 200));
+
+  $tb-primary-palette-colors: map_merge($primary, (
+    500: $backgroundContrastColor
+  ));
+
+  $tb-primary: mat.m2-define-palette($tb-primary-palette-colors);
+  $tb-accent: mat.m2-define-palette($accent);
+
+  $tb-login-theme-config: (
+    color: (
+      primary: $tb-primary,
+      accent: $tb-accent,
+      warn: $warn
+    ),
+    typography: mat.m2-define-typography-config(),
+    density: 0
+  );
+
+  $tb-login-theme: if($dark-foreground, mat.m2-define-light-theme($tb-login-theme-config), mat.m2-define-dark-theme($tb-login-theme-config));
+
+  @return $tb-login-theme;
+}
+
+$tb-theme: get-tb-dark-theme(
+    $mat-tb-primary,
+    $mat-tb-accent,
+    false
+);
+
+$tb-dark-foreground-theme: get-tb-dark-theme(
+    $mat-tb-primary,
+    $mat-tb-accent,
+    true
+);
+
+$tb-primary: mat.m2-define-palette($mat-tb-primary);
+
+.tb-dark {
+  @include mat.all-component-colors($tb-theme);
+  @include overwrites.login-theme-overwrites($tb-primary, $tb-theme);
+  @include app-overwrites.app-theme-overwrites($tb-primary, $tb-theme);
+  &.dark-foreground {
+    @include mat.all-component-colors($tb-dark-foreground-theme);
+    @include overwrites.login-theme-overwrites($tb-primary, $tb-dark-foreground-theme);
+    @include app-overwrites.app-theme-overwrites($tb-primary, $tb-dark-foreground-theme);
+  }
+}

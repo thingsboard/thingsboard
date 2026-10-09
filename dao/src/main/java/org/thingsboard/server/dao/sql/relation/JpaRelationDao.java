@@ -1,21 +1,11 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.relation;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import jakarta.annotation.PostConstruct;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -35,6 +25,7 @@ import org.thingsboard.server.dao.model.sql.RelationCompositeKey;
 import org.thingsboard.server.dao.model.sql.RelationEntity;
 import org.thingsboard.server.dao.relation.RelationDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDaoListeningExecutorService;
+import org.thingsboard.server.dao.sql.citus.CitusSettings;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.ArrayList;
@@ -59,8 +50,11 @@ import static org.thingsboard.server.dao.model.ModelConstants.VERSION_COLUMN;
 public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService implements RelationDao {
 
     private static final List<String> ALL_TYPE_GROUP_NAMES = new ArrayList<>();
-    private static final String RETURNING = "RETURNING from_id, from_type, to_id, to_type, relation_type, relation_type_group, nextval('relation_version_seq') as version";
-    private static final String DELETE_QUERY = "DELETE FROM relation WHERE from_id = ? AND from_type = ? AND to_id = ? AND to_type = ? AND relation_type = ? AND relation_type_group = ? " + RETURNING;
+    private static final String RETURNING_SEQ = "RETURNING from_id, from_type, to_id, to_type, relation_type, relation_type_group, nextval('relation_version_seq') as version";
+    // Citus: relation is a reference table whose writes are cross-node 2PC; the version is maintained per row
+    // (see SqlRelationInsertRepository), so delete returns the row's own stored version instead of nextval().
+    private static final String RETURNING_CITUS = "RETURNING from_id, from_type, to_id, to_type, relation_type, relation_type_group, version";
+    private static final String DELETE_QUERY_TEMPLATE = "DELETE FROM relation WHERE from_id = ? AND from_type = ? AND to_id = ? AND to_type = ? AND relation_type = ? AND relation_type_group = ? %s";
 
     static {
         Arrays.stream(RelationTypeGroup.values()).map(RelationTypeGroup::name).forEach(ALL_TYPE_GROUP_NAMES::add);
@@ -71,6 +65,19 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
 
     @Autowired
     private RelationInsertRepository relationInsertRepository;
+
+    @Autowired
+    private CitusSettings citusSettings;
+
+    private String returning;
+    @Getter
+    private String deleteQuery;
+
+    @PostConstruct
+    private void initDeleteQuery() {
+        this.returning = citusSettings.isEnabled() ? RETURNING_CITUS : RETURNING_SEQ;
+        this.deleteQuery = String.format(DELETE_QUERY_TEMPLATE, returning);
+    }
 
     @Override
     public List<EntityRelation> findAllByFrom(TenantId tenantId, EntityId from, RelationTypeGroup typeGroup) {
@@ -198,7 +205,7 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
     }
 
     private EntityRelation deleteRelationIfExists(RelationCompositeKey key) {
-        return jdbcTemplate.query(DELETE_QUERY, rs -> {
+        return jdbcTemplate.query(deleteQuery, rs -> {
             if (!rs.next()) {
                 return null;
             }
@@ -262,7 +269,7 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
             params.addAll(relationTypeGroups);
         }
 
-        sqlBuilder.append(RETURNING);
+        sqlBuilder.append(returning);
 
         return jdbcTemplate.queryForList(sqlBuilder.toString(), params.toArray()).stream()
                 .map(row -> {

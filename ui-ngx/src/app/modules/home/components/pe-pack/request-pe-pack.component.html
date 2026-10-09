@@ -1,0 +1,106 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<mat-card appearance="outlined" class="request-pe-pack">
+  <div class="offer-strip">
+    <span class="t">
+      <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12 2a4.6 4.6 0 0 0-4.6 4.6v2.2H6.5A2.5 2.5 0 0 0 4 11.3v8.2A2.5 2.5 0 0 0 6.5 22h11a2.5 2.5 0 0 0 2.5-2.5v-8.2a2.5 2.5 0 0 0-2.5-2.5h-.9V6.6A4.6 4.6 0 0 0 12 2zm2.6 6.8V6.6a2.6 2.6 0 0 0-5.2 0v2.2z"></path></svg>
+      {{ offerInfo.notInCeGrant | translate }}
+    </span>
+    @if (pePackRequested) {
+      <span class="offer-done">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path></svg>
+        {{ 'subscription.requested' | translate }}
+      </span>
+    } @else {
+      <button class="request-access"
+              mat-button
+              (click)="requestAccess()">
+        {{ 'subscription.request-access' | translate }}
+      </button>
+    }
+  </div>
+  <div class="offer-body">
+    <div class="offer-head">
+      <img class="offer-mark" src="/assets/license/tb-pro-mark.svg" alt width="112" height="110">
+      <div class="t">
+        <p class="offer-kick">{{ 'subscription.pe-pack' | translate }}</p>
+        <h1>{{ offerInfo.packOfferTitle | translate }}</h1>
+        <p class="offer-lede">{{ offerInfo.packOfferLede | translate }}</p>
+      </div>
+    </div>
+    <div class="offer-section">
+      <h2>{{ 'platform-feature.overview' | translate }}</h2>
+      <div class="offer-grid">
+        @for (overview of offerInfo.overviewItems; track overview) {
+          <div class="offer-card">
+            <span class="offer-svg" [innerHTML]="overview.svg | safe : 'html'"></span>
+            <div class="t">
+              <b>{{ overview.title | translate }}</b>
+              <span>{{ overview.description | translate }}</span>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+    @if (feature === PlatformFeature.INTEGRATIONS) {
+      <div class="offer-section">
+        <h2>{{ 'platform-feature.integrations.dozen-protocols-brokers-and-platforms' | translate }}</h2>
+        <p class="offer-note">{{ 'platform-feature.integrations.browse-setup-guides-note' | translate }}</p>
+        <div class="offer-chips">
+          @for (type of integrationTypes; track type) {
+            <button class="offer-chip" (click)="openIntegrationGuide(type)">
+              {{ integrationName(type) | translate }}
+            </button>
+          }
+        </div>
+      </div>
+    }
+  </div>
+  <div class="offer-foot">
+    <h2>{{ 'subscription.request-pe-pack' | translate }}</h2>
+    <p class="offer-note">{{ 'subscription.pe-pack-extend-ce' | translate }}</p>
+    <tb-pe-pack-offer-cards class="offer-cards"
+                            [showWhiteLabeling]="true"
+                            [showIntegrations]="feature !== PlatformFeature.INTEGRATIONS && !customerUser"
+                            [showScheduler]="feature !== PlatformFeature.SCHEDULER"
+                            [showReports]="feature !== PlatformFeature.REPORTING"
+                            (cardClick)="gotoPage($event)">
+    </tb-pe-pack-offer-cards>
+    <div class="offer-act">
+      @if (pePackRequested) {
+        <p class="price">{{ 'subscription.pe-pack-requested' | translate }}</p>
+      }
+      @if (!customerUser) {
+        <p class="self">{{ 'subscription.sys-admin-pe-pack-note' | translate }}</p>
+      }
+      @if (pePackRequested) {
+        <span class="offer-done">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path></svg>
+          {{ 'subscription.requested' | translate }}
+        </span>
+      } @else {
+        <button class="request-access"
+                mat-flat-button
+                color="primary"
+                (click)="requestAccess()">
+          {{ 'subscription.request-access' | translate }}
+        </button>
+      }
+    </div>
+    @if (sendError) {
+      <div class="tb-error-messages -ml-2.5" role="alert">
+        <div class="tb-error-message">
+          @if (sendNetworkError) {
+            {{ 'setup.errors.no-connection' | translate }}
+          } @else {
+            {{ sendErrorMessage }}
+          }
+        </div>
+      </div>
+    }
+  </div>
+</mat-card>

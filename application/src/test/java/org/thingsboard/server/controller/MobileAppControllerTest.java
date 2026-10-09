@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -21,11 +9,13 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.mobile.LoginMobileInfo;
 import org.thingsboard.server.common.data.mobile.app.MobileApp;
 import org.thingsboard.server.common.data.mobile.app.MobileAppStatus;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -68,6 +58,13 @@ public class MobileAppControllerTest extends AbstractControllerTest {
         MobileApp retrievedMobileAppInfo = doGet("/api/mobile/app/{id}", MobileApp.class, savedMobileApp.getId().getId());
         assertThat(retrievedMobileAppInfo).isEqualTo(savedMobileApp);
 
+        // get mobile info
+        LoginMobileInfo loginMobileInfo = doGet("/api/noauth/mobile?pkgName={pkgName}&platform={platform}", LoginMobileInfo.class, mobileApp.getPkgName(), mobileApp.getPlatformType());
+        assertThat(loginMobileInfo.oAuth2ClientLoginInfos()).isEmpty();
+        assertThat(loginMobileInfo.storeInfo()).isEqualTo(ModelConstants.MOBILE_APP_STORE_INFO_EMPTY_OBJECT);
+        assertThat(loginMobileInfo.versionInfo()).isEqualTo(ModelConstants.MOBILE_APP_VERSION_INFO_EMPTY_OBJECT);
+        assertThat(loginMobileInfo.selfRegistrationParams()).isNull();
+
         doDelete("/api/mobile/app/" + savedMobileApp.getId().getId());
         doGet("/api/mobile/app/{id}", savedMobileApp.getId().getId())
                 .andExpect(status().isNotFound());
@@ -75,7 +72,7 @@ public class MobileAppControllerTest extends AbstractControllerTest {
 
     @Test
     public void testSaveMobileAppWithShortAppSecret() throws Exception {
-        MobileApp mobileApp = validMobileApp( "mobileApp.ce", PlatformType.ANDROID);
+        MobileApp mobileApp = validMobileApp("mobileApp.ce", PlatformType.ANDROID);
         mobileApp.setAppSecret("short");
         doPost("/api/mobile/app", mobileApp)
                 .andExpect(status().isBadRequest())
