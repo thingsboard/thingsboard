@@ -3,7 +3,7 @@
 ```html
 {:code-style="max-height: 400px;"}
 <form [formGroup]="addEntityFormGroup" (ngSubmit)="save()" style="min-width:480px;">
-  <mat-toolbar class="flex flex-row" color="primary">
+  <mat-toolbar color="tb-primary" class="tb-bottom-border flex flex-row">
     <h2>Add new User</h2>
     <span class="flex-1"></span>
     <button mat-icon-button (click)="cancel()" type="button">
