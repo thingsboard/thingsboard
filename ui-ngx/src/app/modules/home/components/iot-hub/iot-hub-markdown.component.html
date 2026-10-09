@@ -4,15 +4,13 @@
     SPDX-License-Identifier: Apache-2.0
 
 -->
-<div class="tb-readme-gallery"
-     tbPhotoSwipeGallery
-     [galleryChildrenSelector]="readmeGallerySelector">
-  <tb-markdown [data]="parsedData"
-               [applyDefaultMarkdownStyle]="false"
-               [additionalStyles]="additionalStyles"
-               [additionalCompileModules]="itemLinkCompileModules"
-               [lineNumbers]="lineNumbers"
-               [fallbackToPlainMarkdown]="fallbackToPlainMarkdown"
-               (ready)="onReady()">
-  </tb-markdown>
-</div>
+<tb-markdown tbPhotoSwipeGallery
+             [galleryChildrenSelector]="readmeGallerySelector"
+             [data]="parsedData"
+             [applyDefaultMarkdownStyle]="false"
+             [additionalStyles]="additionalStyles"
+             [additionalCompileModules]="itemLinkCompileModules"
+             [lineNumbers]="lineNumbers"
+             [fallbackToPlainMarkdown]="fallbackToPlainMarkdown"
+             (ready)="onReady()">
+</tb-markdown>

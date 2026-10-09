@@ -93,7 +93,7 @@
                tbPhotoSwipeGallery galleryChildrenSelector=".dlg-carousel-item, .dlg-preview-img"
                (lightboxOpened)="lightboxOpen = true"
                (slideChanged)="carouselIndex = $event"
-               (lightboxClosed)="onLightboxClosed($event)">
+               (lightboxClosed)="lightboxOpen = false">
             @if (carouselImages.length > 1) {
               <div class="dlg-hero-carousel">
                 <ngx-hm-carousel
@@ -135,9 +135,6 @@
                 </div>
               </div>
             } @else {
-              <!-- One image is not a carousel. Reading it off the same list keeps this in step with
-                   the gallery: it is the item's image when there is one, and the single screenshot
-                   otherwise, rather than the placeholder an empty item.image used to leave here. -->
               @if (carouselImages[0]; as url) {
                 <img [src]="url" alt="" class="dlg-preview-img">
               } @else {
