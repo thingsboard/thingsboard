@@ -133,6 +133,7 @@ export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy
   activeConnectivity = new Set<string>();
   activeHardwareTypes = new Set<string>();
   activeVendors = new Set<string>();
+  verifiedCreatorsOnly = false;
 
   readonly sortOptions = IOT_HUB_SORT_OPTIONS;
 
@@ -387,6 +388,12 @@ export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy
     this.loadItems();
   }
 
+  onVerifiedCreatorsToggle(): void {
+    this.verifiedCreatorsOnly = !this.verifiedCreatorsOnly;
+    this.pageIndex = 0;
+    this.loadItems();
+  }
+
   isVendorActive(vendor: string): boolean {
     return this.activeVendors.has(vendor);
   }
@@ -490,12 +497,14 @@ export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy
     this.activeConnectivity.clear();
     this.activeHardwareTypes.clear();
     this.activeVendors.clear();
+    this.verifiedCreatorsOnly = false;
   }
 
   get activeFilterCount(): number {
     const subtypeCount = this.fixedSubType ? this.getActiveSubtypesArray().length : (this.getActiveSubtypes()?.size || 0);
     return subtypeCount + this.activeCategories.size + this.activeUseCases.size +
-           this.activeConnectivity.size + this.activeHardwareTypes.size + this.activeVendors.size;
+           this.activeConnectivity.size + this.activeHardwareTypes.size + this.activeVendors.size +
+           (this.verifiedCreatorsOnly ? 1 : 0);
   }
 
   hasActiveDropdownFilters(): boolean {
@@ -503,7 +512,7 @@ export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy
     return this.activeCategories.size > 0 ||
            this.activeUseCases.size > 0 || subtypeCount > 0 ||
            this.activeConnectivity.size > 0 || this.activeHardwareTypes.size > 0 ||
-           this.activeVendors.size > 0;
+           this.activeVendors.size > 0 || this.verifiedCreatorsOnly;
   }
 
   hasActiveFilters(): boolean {
@@ -691,7 +700,8 @@ export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy
       ruleChainTypes: this.activeRuleChainTypes.size > 0 ? Array.from(this.activeRuleChainTypes) : undefined,
       hardwareTypes: this.activeHardwareTypes.size > 0 ? Array.from(this.activeHardwareTypes) : undefined,
       connectivity: this.activeConnectivity.size > 0 ? Array.from(this.activeConnectivity) : undefined,
-      vendors: this.activeVendors.size > 0 ? Array.from(this.activeVendors) : undefined
+      vendors: this.activeVendors.size > 0 ? Array.from(this.activeVendors) : undefined,
+      creatorVerified: this.verifiedCreatorsOnly
     });
     this.iotHubApiService.getPublishedVersions(
       query,

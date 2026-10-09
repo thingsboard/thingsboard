@@ -462,120 +462,129 @@
             </div>
           }
         } @else {
-          <mat-expansion-panel [expanded]="true">
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                {{ 'iot-hub.type' | translate }}
-                @if (iotHubAppliedWidgetTypes.size) {
-                  <span class="tb-iot-hub-filter-badge">{{ iotHubAppliedWidgetTypes.size }}</span>
-                }
-              </mat-panel-title>
-            </mat-expansion-panel-header>
-            @if (iotHubWidgetTypeOptions.length >= 10) {
-              <div class="tb-iot-hub-filter-search">
-                <mat-icon>search</mat-icon>
-                <input [placeholder]="'iot-hub.search' | translate"
-                       [ngModel]="iotHubFilterSearch['widgetType']"
-                       (ngModelChange)="iotHubFilterSearch['widgetType'] = $event">
-                @if (iotHubFilterSearch['widgetType']) {
-                  <button mat-icon-button class="tb-iot-hub-filter-search-clear" (click)="iotHubFilterSearch['widgetType'] = ''">
-                    <mat-icon>close</mat-icon>
-                  </button>
-                }
-              </div>
-            }
-            <div class="tb-iot-hub-filter-items" [class.scrollable]="getFilteredIotHubItems(iotHubWidgetTypeOptions, 'widgetType').length > 8"
-                 (mouseenter)="getFilteredIotHubItems(iotHubWidgetTypeOptions, 'widgetType').length > 8 && (iotHubFilterItemsHovered = true)"
-                 (mouseleave)="iotHubFilterItemsHovered = false">
-              @for (opt of getFilteredIotHubItems(iotHubWidgetTypeOptions, 'widgetType'); track opt.key) {
-                <div class="tb-iot-hub-filter-option">
-                  <mat-checkbox [checked]="iotHubAppliedWidgetTypes.has(opt.key)"
-                                (change)="toggleIotHubWidgetType(opt.key)">
-                    {{ getIotHubWidgetTypeLabel(opt.key) }}
-                  </mat-checkbox>
-                </div>
-              }
-            </div>
-          </mat-expansion-panel>
-          @if (!hideCategoriesFilterSection) {
+          <div class="tb-iot-hub-filter-option">
+            <mat-checkbox [checked]="iotHubVerifiedCreatorsOnly"
+                          (change)="toggleIotHubVerifiedCreators()">
+              {{ 'iot-hub.verified-creators-only' | translate }}
+            </mat-checkbox>
+          </div>
+          @if (iotHubSubMode !== 'default') {
             <mat-divider></mat-divider>
-            <mat-expansion-panel [expanded]="false">
+            <mat-expansion-panel [expanded]="true">
               <mat-expansion-panel-header>
                 <mat-panel-title>
-                  {{ 'iot-hub.category' | translate }}
-                  @if (iotHubAppliedCategories.size) {
-                    <span class="tb-iot-hub-filter-badge">{{ iotHubAppliedCategories.size }}</span>
+                  {{ 'iot-hub.type' | translate }}
+                  @if (iotHubAppliedWidgetTypes.size) {
+                    <span class="tb-iot-hub-filter-badge">{{ iotHubAppliedWidgetTypes.size }}</span>
                   }
                 </mat-panel-title>
               </mat-expansion-panel-header>
-              @if (iotHubCategoryOptions.length >= 10) {
+              @if (iotHubWidgetTypeOptions.length >= 10) {
                 <div class="tb-iot-hub-filter-search">
                   <mat-icon>search</mat-icon>
                   <input [placeholder]="'iot-hub.search' | translate"
-                         [ngModel]="iotHubFilterSearch['category']"
-                         (ngModelChange)="iotHubFilterSearch['category'] = $event">
-                  @if (iotHubFilterSearch['category']) {
-                    <button mat-icon-button class="tb-iot-hub-filter-search-clear" (click)="iotHubFilterSearch['category'] = ''">
+                         [ngModel]="iotHubFilterSearch['widgetType']"
+                         (ngModelChange)="iotHubFilterSearch['widgetType'] = $event">
+                  @if (iotHubFilterSearch['widgetType']) {
+                    <button mat-icon-button class="tb-iot-hub-filter-search-clear" (click)="iotHubFilterSearch['widgetType'] = ''">
                       <mat-icon>close</mat-icon>
                     </button>
                   }
                 </div>
               }
-              <div class="tb-iot-hub-filter-items" [class.scrollable]="getFilteredIotHubItems(iotHubCategoryOptions, 'category').length > 8"
-                   (mouseenter)="getFilteredIotHubItems(iotHubCategoryOptions, 'category').length > 8 && (iotHubFilterItemsHovered = true)"
+              <div class="tb-iot-hub-filter-items" [class.scrollable]="getFilteredIotHubItems(iotHubWidgetTypeOptions, 'widgetType').length > 8"
+                   (mouseenter)="getFilteredIotHubItems(iotHubWidgetTypeOptions, 'widgetType').length > 8 && (iotHubFilterItemsHovered = true)"
                    (mouseleave)="iotHubFilterItemsHovered = false">
-                @for (opt of getFilteredIotHubItems(iotHubCategoryOptions, 'category'); track opt.key) {
+                @for (opt of getFilteredIotHubItems(iotHubWidgetTypeOptions, 'widgetType'); track opt.key) {
                   <div class="tb-iot-hub-filter-option">
-                    <mat-checkbox [checked]="iotHubAppliedCategories.has(opt.key)"
-                                  (change)="toggleIotHubCategory(opt.key)">
-                      {{ opt.key }}
+                    <mat-checkbox [checked]="iotHubAppliedWidgetTypes.has(opt.key)"
+                                  (change)="toggleIotHubWidgetType(opt.key)">
+                      {{ getIotHubWidgetTypeLabel(opt.key) }}
                     </mat-checkbox>
                   </div>
                 }
               </div>
             </mat-expansion-panel>
-          }
-          <mat-divider></mat-divider>
-          <mat-expansion-panel [expanded]="false">
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                {{ 'iot-hub.use-case' | translate }}
-                @if (iotHubAppliedUseCases.size) {
-                  <span class="tb-iot-hub-filter-badge">{{ iotHubAppliedUseCases.size }}</span>
-                }
-              </mat-panel-title>
-            </mat-expansion-panel-header>
-            @if (iotHubUseCaseOptions.length >= 10) {
-              <div class="tb-iot-hub-filter-search">
-                <mat-icon>search</mat-icon>
-                <input [placeholder]="'iot-hub.search' | translate"
-                       [ngModel]="iotHubFilterSearch['useCase']"
-                       (ngModelChange)="iotHubFilterSearch['useCase'] = $event">
-                @if (iotHubFilterSearch['useCase']) {
-                  <button mat-icon-button class="tb-iot-hub-filter-search-clear" (click)="iotHubFilterSearch['useCase'] = ''">
-                    <mat-icon>close</mat-icon>
-                  </button>
-                }
-              </div>
-            }
-            <div class="tb-iot-hub-filter-items" [class.scrollable]="getFilteredIotHubItems(iotHubUseCaseOptions, 'useCase').length > 8"
-                 (mouseenter)="getFilteredIotHubItems(iotHubUseCaseOptions, 'useCase').length > 8 && (iotHubFilterItemsHovered = true)"
-                 (mouseleave)="iotHubFilterItemsHovered = false">
-              @for (group of getGroupedIotHubFilterItems(iotHubUseCaseOptions, 'useCase'); track group.label) {
-                @if (group.label) {
-                  <div class="tb-iot-hub-filter-group-label">{{ group.label | translate }}</div>
-                }
-                @for (opt of group.items; track opt.key) {
-                  <div class="tb-iot-hub-filter-option">
-                    <mat-checkbox [checked]="iotHubAppliedUseCases.has(opt.key)"
-                                  (change)="toggleIotHubUseCase(opt.key)">
-                      {{ opt.key }}
-                    </mat-checkbox>
+            @if (!hideCategoriesFilterSection) {
+              <mat-divider></mat-divider>
+              <mat-expansion-panel [expanded]="false">
+                <mat-expansion-panel-header>
+                  <mat-panel-title>
+                    {{ 'iot-hub.category' | translate }}
+                    @if (iotHubAppliedCategories.size) {
+                      <span class="tb-iot-hub-filter-badge">{{ iotHubAppliedCategories.size }}</span>
+                    }
+                  </mat-panel-title>
+                </mat-expansion-panel-header>
+                @if (iotHubCategoryOptions.length >= 10) {
+                  <div class="tb-iot-hub-filter-search">
+                    <mat-icon>search</mat-icon>
+                    <input [placeholder]="'iot-hub.search' | translate"
+                           [ngModel]="iotHubFilterSearch['category']"
+                           (ngModelChange)="iotHubFilterSearch['category'] = $event">
+                    @if (iotHubFilterSearch['category']) {
+                      <button mat-icon-button class="tb-iot-hub-filter-search-clear" (click)="iotHubFilterSearch['category'] = ''">
+                        <mat-icon>close</mat-icon>
+                      </button>
+                    }
                   </div>
                 }
+                <div class="tb-iot-hub-filter-items" [class.scrollable]="getFilteredIotHubItems(iotHubCategoryOptions, 'category').length > 8"
+                     (mouseenter)="getFilteredIotHubItems(iotHubCategoryOptions, 'category').length > 8 && (iotHubFilterItemsHovered = true)"
+                     (mouseleave)="iotHubFilterItemsHovered = false">
+                  @for (opt of getFilteredIotHubItems(iotHubCategoryOptions, 'category'); track opt.key) {
+                    <div class="tb-iot-hub-filter-option">
+                      <mat-checkbox [checked]="iotHubAppliedCategories.has(opt.key)"
+                                    (change)="toggleIotHubCategory(opt.key)">
+                        {{ opt.key }}
+                      </mat-checkbox>
+                    </div>
+                  }
+                </div>
+              </mat-expansion-panel>
+            }
+            <mat-divider></mat-divider>
+            <mat-expansion-panel [expanded]="false">
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  {{ 'iot-hub.use-case' | translate }}
+                  @if (iotHubAppliedUseCases.size) {
+                    <span class="tb-iot-hub-filter-badge">{{ iotHubAppliedUseCases.size }}</span>
+                  }
+                </mat-panel-title>
+              </mat-expansion-panel-header>
+              @if (iotHubUseCaseOptions.length >= 10) {
+                <div class="tb-iot-hub-filter-search">
+                  <mat-icon>search</mat-icon>
+                  <input [placeholder]="'iot-hub.search' | translate"
+                         [ngModel]="iotHubFilterSearch['useCase']"
+                         (ngModelChange)="iotHubFilterSearch['useCase'] = $event">
+                  @if (iotHubFilterSearch['useCase']) {
+                    <button mat-icon-button class="tb-iot-hub-filter-search-clear" (click)="iotHubFilterSearch['useCase'] = ''">
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  }
+                </div>
               }
-            </div>
-          </mat-expansion-panel>
+              <div class="tb-iot-hub-filter-items" [class.scrollable]="getFilteredIotHubItems(iotHubUseCaseOptions, 'useCase').length > 8"
+                   (mouseenter)="getFilteredIotHubItems(iotHubUseCaseOptions, 'useCase').length > 8 && (iotHubFilterItemsHovered = true)"
+                   (mouseleave)="iotHubFilterItemsHovered = false">
+                @for (group of getGroupedIotHubFilterItems(iotHubUseCaseOptions, 'useCase'); track group.label) {
+                  @if (group.label) {
+                    <div class="tb-iot-hub-filter-group-label">{{ group.label | translate }}</div>
+                  }
+                  @for (opt of group.items; track opt.key) {
+                    <div class="tb-iot-hub-filter-option">
+                      <mat-checkbox [checked]="iotHubAppliedUseCases.has(opt.key)"
+                                    (change)="toggleIotHubUseCase(opt.key)">
+                        {{ opt.key }}
+                      </mat-checkbox>
+                    </div>
+                  }
+                }
+              </div>
+            </mat-expansion-panel>
+          }
         }
       </div>
     </div>

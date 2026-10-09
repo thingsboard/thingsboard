@@ -135,6 +135,8 @@ export interface MpItemVersionQueryOptions {
   connectivity?: string[];
   vendors?: string[];
   scadaFirst?: boolean;
+  // Serialized only when true: the API matches the value, so `false` would mean "unverified only"
+  creatorVerified?: boolean;
 }
 
 /** Every filter, as `&name=value` pairs. */
@@ -181,6 +183,9 @@ function filtersToQuery(o: MpItemVersionQueryOptions): string {
   }
   if (o.scadaFirst != null) {
     query += `&scadaFirst=${o.scadaFirst}`;
+  }
+  if (o.creatorVerified) {
+    query += `&creatorVerified=true`;
   }
   return query;
 }

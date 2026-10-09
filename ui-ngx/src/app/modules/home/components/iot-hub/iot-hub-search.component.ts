@@ -219,12 +219,12 @@ export class TbIotHubSearchComponent implements OnInit, OnDestroy {
     }
     this.resizeSubscription = this.resizeSubject.pipe(debounceTime(150)).subscribe(() => {
       const before = this.pageSizeOptions[0];
+      // Keep the same first item in view, not the same page number.
+      const firstItem = this.pageIndex * this.pageSize;
       this.measureCols();
       if (this.pageSizeOptions[0] === before) {
         return;
       }
-      // Keep the same first item in view, not the same page number.
-      const firstItem = this.pageIndex * this.pageSize;
       this.pageSize = this.pageSizeOptions[0];
       this.pageIndex = Math.floor(firstItem / this.pageSize);
       this.loadResults();

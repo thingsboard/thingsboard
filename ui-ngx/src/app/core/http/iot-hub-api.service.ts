@@ -103,7 +103,7 @@ export class IotHubApiService {
     return this.http.get<ItemTypeFilterInfo>(url, { params: this.buildParams(config) });
   }
 
-  public getWidgetCategories(textSearch?: string, scadaFirst?: boolean,
+  public getWidgetCategories(textSearch?: string, scadaFirst?: boolean, creatorVerified?: boolean,
                              config?: IotHubRequestConfig): Observable<WidgetCategory[]> {
     const queryParams: string[] = this.platformScopeParams();
     if (textSearch?.trim()) {
@@ -111,6 +111,9 @@ export class IotHubApiService {
     }
     if (scadaFirst != null) {
       queryParams.push(`scadaFirst=${scadaFirst}`);
+    }
+    if (creatorVerified) {
+      queryParams.push(`creatorVerified=true`);
     }
     const url = `${this.baseUrl}/api/item-listing/widgetCategories?${queryParams.join('&')}`;
     return this.http.get<WidgetCategory[]>(url, { params: this.buildParams(config) });
