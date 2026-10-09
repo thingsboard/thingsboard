@@ -44,7 +44,6 @@ export const DEFAULT_ITEM_TYPE_COLOR = '#5f6368';
 /** Colour per item type, wherever an item's type is marked with one. */
 export const itemTypeColors: Record<string, string> = {
   [ItemType.WIDGET]: '#2c9755',
-  [ItemType.DASHBOARD]: DEFAULT_ITEM_TYPE_COLOR,
   [ItemType.SOLUTION_TEMPLATE]: '#2b6bb4',
   [ItemType.CALCULATED_FIELD]: '#3cb4e0',
   [ItemType.RULE_CHAIN]: '#a95ae2',
