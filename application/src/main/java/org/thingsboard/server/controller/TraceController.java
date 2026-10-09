@@ -46,6 +46,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.common.data.trace.TraceCoverageSetting;
 import org.thingsboard.server.common.data.trace.TraceListFilters;
 import org.thingsboard.server.common.data.trace.TracePathDTO;
@@ -90,6 +91,7 @@ public class TraceController extends BaseController {
     @GetMapping("/coverage")
     @ResponseStatus(value = HttpStatus.OK)
     public TraceCoverageSetting getTraceCoverageSetting() throws ThingsboardException {
+        checkReadPermission();
         return traceCoverageSettingService.findTraceCoverageSettingByTenantId(getTenantId());
     }
 
@@ -102,6 +104,7 @@ public class TraceController extends BaseController {
     public TraceCoverageSetting saveTraceCoverageSetting(
             @Parameter(description = "Trace coverage setting", required = true)
             @RequestBody TraceCoverageSetting setting) throws ThingsboardException {
+        checkWritePermission();
         return traceCoverageSettingService.saveTraceCoverageSetting(getTenantId(), checkNotNull(setting));
     }
 
@@ -113,6 +116,7 @@ public class TraceController extends BaseController {
     public TraceDTO getTrace(
             @Parameter(description = "Trace ID (string, OpenTelemetry format)", required = true)
             @PathVariable String traceId) throws ThingsboardException {
+        checkReadPermission();
         return TraceDTO.fromTrace(traceService.getTrace(getTenantId(), traceId));
     }
 
@@ -122,6 +126,7 @@ public class TraceController extends BaseController {
     public List<SpanDTO> getSpansByTraceId(
             @Parameter(description = "Trace ID (string, OpenTelemetry format)", required = true)
             @PathVariable String traceId) throws ThingsboardException {
+        checkReadPermission();
         TraceSpanListQuery query = new TraceSpanListQuery(traceId);
         return traceService.getSpans(getTenantId(), query).stream()
                 .map(SpanDTO::fromEntity)
@@ -137,6 +142,7 @@ public class TraceController extends BaseController {
     public List<SpanTreeNode> getSpansTreeByTraceId(
             @Parameter(description = "Trace ID (string, OpenTelemetry format)", required = true)
             @PathVariable String traceId) throws ThingsboardException {
+        checkReadPermission();
         return traceService.getSpansTree(getTenantId(), new TraceSpanListQuery(traceId));
     }
 
@@ -149,6 +155,7 @@ public class TraceController extends BaseController {
             @PathVariable String traceId,
             @Parameter(description = "Span ID (string, OpenTelemetry format)", required = true)
             @PathVariable String spanId) throws ThingsboardException {
+        checkReadPermission();
         SpanSubResourceQuery query = new SpanSubResourceQuery(traceId, spanId);
         return traceService.getSpanAttributes(getTenantId(), query).stream()
                 .map(SpanAttributeDTO::fromEntity)
@@ -164,6 +171,7 @@ public class TraceController extends BaseController {
             @PathVariable String traceId,
             @Parameter(description = "Span ID (string, OpenTelemetry format)", required = true)
             @PathVariable String spanId) throws ThingsboardException {
+        checkReadPermission();
         SpanSubResourceQuery query = new SpanSubResourceQuery(traceId, spanId);
         return traceService.getSpanEvents(getTenantId(), query).stream()
                 .map(SpanEventDTO::fromEntity)
@@ -179,6 +187,7 @@ public class TraceController extends BaseController {
             @PathVariable String traceId,
             @Parameter(description = "Span ID (string, OpenTelemetry format)", required = true)
             @PathVariable String spanId) throws ThingsboardException {
+        checkReadPermission();
         SpanSubResourceQuery query = new SpanSubResourceQuery(trimToNull(traceId), trimToNull(spanId));
         return traceService.getSpanLinks(getTenantId(), query).stream()
                 .map(SpanLinkDTO::fromEntity)
@@ -192,6 +201,7 @@ public class TraceController extends BaseController {
     @GetMapping("/filters")
     @ResponseStatus(value = HttpStatus.OK)
     public TraceListFilters getTraceFilters() throws ThingsboardException {
+        checkReadPermission();
         return traceService.getTraceFilters(getTenantId());
     }
 
@@ -250,6 +260,7 @@ public class TraceController extends BaseController {
             @RequestParam(required = false, defaultValue = "START_TIME") TraceSortField sortBy,
             @Parameter(description = "Sort order: ASC or DESC (default: DESC)")
             @RequestParam(required = false, defaultValue = "DESC") SortOrder sortOrder) throws ThingsboardException {
+        checkReadPermission();
         TraceSearchQuery query = buildTraceSearchQuery(serviceName, startTime, endTime, spanName, queueName, originatorId,
                 messageType, messageId, messageData, messageMetadata, traceId, errorsOnly, ruleChainId, ruleNodeId, pathId, hasTimeOutsByQueue, page, pageSize, sortBy, sortOrder);
         if (!query.hasTraceId()) {
@@ -291,6 +302,7 @@ public class TraceController extends BaseController {
             @RequestParam(required = false, defaultValue = "TRACES_COUNT") TracePathSortField sortBy,
             @Parameter(description = "Sort order: ASC or DESC (default: DESC)")
             @RequestParam(required = false, defaultValue = "DESC") SortOrder sortOrder) throws ThingsboardException {
+        checkReadPermission();
         validateTimeRange(startTime, endTime);
         int effectivePageSize = Math.min(Math.max(pageSize, 1), 100);
         return traceService.getPathsPaginated(getTenantId(), TracePathListQuery.builder()
@@ -312,6 +324,7 @@ public class TraceController extends BaseController {
     @GetMapping("/paths/filters")
     @ResponseStatus(value = HttpStatus.OK)
     public TracePathFilters getPathFilters() throws ThingsboardException {
+        checkReadPermission();
         return traceService.getPathFilters(getTenantId());
     }
 
@@ -329,6 +342,7 @@ public class TraceController extends BaseController {
             @RequestParam long startTime,
             @Parameter(description = "End time in milliseconds (epoch)", required = true)
             @RequestParam long endTime) throws ThingsboardException {
+        checkReadPermission();
         validateTimeRange(startTime, endTime);
         return traceService.getPathDetails(getTenantId(), pathId, startTime, endTime);
     }
@@ -370,5 +384,14 @@ public class TraceController extends BaseController {
                 .sortField(sortBy)
                 .sortOrder(sortOrder)
                 .build();
+    }
+
+    // Traces carry message payloads, so they are guarded by the rule chain permissions.
+    private void checkReadPermission() throws ThingsboardException {
+        accessControlService.checkPermission(getCurrentUser(), Resource.RULE_CHAIN, org.thingsboard.server.common.data.permission.Operation.READ);
+    }
+
+    private void checkWritePermission() throws ThingsboardException {
+        accessControlService.checkPermission(getCurrentUser(), Resource.RULE_CHAIN, org.thingsboard.server.common.data.permission.Operation.WRITE);
     }
 }

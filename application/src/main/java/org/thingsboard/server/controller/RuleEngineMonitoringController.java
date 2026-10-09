@@ -47,6 +47,8 @@ import org.thingsboard.server.dao.model.sql.ruleenginemonitoring.RuleNodeTsKvEnt
 import org.thingsboard.server.dao.sql.ruleenginemonitoring.RuleEngineMonitoringFilters;
 import org.thingsboard.server.dao.sql.ruleenginemonitoring.RuleNodeDimension;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.ruleenginemonitoring.RuleEngineMonitoringQueryService;
 
@@ -65,6 +67,7 @@ public class RuleEngineMonitoringController extends BaseController {
 
     @GetMapping("/filters")
     public RuleEngineMonitoringFilters getFilterOptions() throws ThingsboardException {
+        checkRuleChainPermission(Operation.READ);
         return queryService.getFilters(getTenantId().getId());
     }
 
@@ -79,6 +82,7 @@ public class RuleEngineMonitoringController extends BaseController {
             @RequestParam(required = false) List<String> serviceIds,
             @RequestParam(required = false) Long intervalMs
     ) throws ThingsboardException {
+        checkRuleChainPermission(Operation.READ);
         UUID tenantId = getTenantId().getId();
         return queryService.getNodeStatsTimeseries(
                 tenantId, startTs, endTs, parseGroupBy(groupBy),
@@ -95,6 +99,7 @@ public class RuleEngineMonitoringController extends BaseController {
             @RequestParam(required = false) List<UUID> ruleNodeIds,
             @RequestParam(required = false) List<String> serviceIds
     ) throws ThingsboardException {
+        checkRuleChainPermission(Operation.READ);
         UUID tenantId = getTenantId().getId();
         return queryService.getNodeStatsTable(
                 tenantId, startTs, endTs, parseGroupBy(groupBy),
@@ -112,6 +117,7 @@ public class RuleEngineMonitoringController extends BaseController {
             @RequestParam(required = false) List<String> serviceIds,
             @RequestParam(required = false) Long intervalMs
     ) throws ThingsboardException {
+        checkRuleChainPermission(Operation.READ);
         UUID tenantId = getTenantId().getId();
         return queryService.getQueueStatsTimeseries(
                 tenantId, startTs, endTs, parseQueueGroupBy(groupBy),
@@ -128,6 +134,7 @@ public class RuleEngineMonitoringController extends BaseController {
             @RequestParam(required = false) List<UUID> ruleNodeIds,
             @RequestParam(required = false) List<String> serviceIds
     ) throws ThingsboardException {
+        checkRuleChainPermission(Operation.READ);
         UUID tenantId = getTenantId().getId();
         return queryService.getQueueStatsTable(
                 tenantId, startTs, endTs, parseQueueGroupBy(groupBy),
@@ -142,6 +149,7 @@ public class RuleEngineMonitoringController extends BaseController {
             @RequestParam(required = false) List<UUID> queueIds,
             @RequestParam(required = false) Long intervalMs
     ) throws ThingsboardException {
+        checkRuleChainPermission(Operation.READ);
         UUID tenantId = getTenantId().getId();
         return queryService.getQueueLagTimeseries(
                 tenantId, startTs, endTs, parseLagGroupBy(groupBy), queueIds, intervalMs);
@@ -154,6 +162,7 @@ public class RuleEngineMonitoringController extends BaseController {
             @RequestParam(required = false) String groupBy,
             @RequestParam(required = false) List<UUID> queueIds
     ) throws ThingsboardException {
+        checkRuleChainPermission(Operation.READ);
         UUID tenantId = getTenantId().getId();
         return queryService.getQueueLagTable(
                 tenantId, startTs, endTs, parseLagGroupBy(groupBy), queueIds);
@@ -163,6 +172,7 @@ public class RuleEngineMonitoringController extends BaseController {
     public long getCurrentQueueLag(
             @RequestParam(required = false) List<UUID> queueIds
     ) throws ThingsboardException {
+        checkRuleChainPermission(Operation.READ);
         UUID tenantId = getTenantId().getId();
         return queryService.getCurrentQueueLag(tenantId, queueIds);
     }
@@ -177,6 +187,7 @@ public class RuleEngineMonitoringController extends BaseController {
             @RequestParam(required = false) List<UUID> ruleNodeIds,
             @RequestParam(required = false) List<String> serviceIds
     ) throws ThingsboardException {
+        checkRuleChainPermission(Operation.READ);
         return queryService.getMergedStatsTable(
                 getTenantId().getId(),
                 startTs, endTs,
@@ -197,6 +208,7 @@ public class RuleEngineMonitoringController extends BaseController {
             @RequestParam(required = false) List<UUID> ruleNodeIds,
             @RequestParam(required = false) List<String> serviceIds
     ) throws ThingsboardException {
+        checkRuleChainPermission(Operation.READ);
         return queryService.getMergedStatsTableCompare(
                 getTenantId().getId(),
                 startTs, endTs,
@@ -247,5 +259,9 @@ public class RuleEngineMonitoringController extends BaseController {
             }
         }
         return dims;
+    }
+
+    private void checkRuleChainPermission(Operation operation) throws ThingsboardException {
+        accessControlService.checkPermission(getCurrentUser(), Resource.RULE_CHAIN, operation);
     }
 }
