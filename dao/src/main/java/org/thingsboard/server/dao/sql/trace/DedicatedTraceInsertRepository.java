@@ -1,0 +1,23 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+package org.thingsboard.server.dao.sql.trace;
+
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.support.TransactionTemplate;
+import org.thingsboard.server.dao.config.DedicatedEventsDataSource;
+
+import static org.thingsboard.server.dao.config.DedicatedEventsJpaDaoConfig.EVENTS_JDBC_TEMPLATE;
+import static org.thingsboard.server.dao.config.DedicatedEventsJpaDaoConfig.EVENTS_TRANSACTION_TEMPLATE;
+
+@DedicatedEventsDataSource
+@Repository
+public class DedicatedTraceInsertRepository extends TraceInsertRepository {
+
+    public DedicatedTraceInsertRepository(@Qualifier(EVENTS_JDBC_TEMPLATE) JdbcTemplate jdbcTemplate,
+                                          @Qualifier(EVENTS_TRANSACTION_TEMPLATE) TransactionTemplate transactionTemplate) {
+        super(jdbcTemplate, transactionTemplate);
+    }
+
+}

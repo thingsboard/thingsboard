@@ -30,48 +30,19 @@
  */
 package org.thingsboard.server.dao.sql.trace;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.dao.config.DedicatedEventsDataSource;
-import org.thingsboard.server.dao.model.sql.trace.SpanEntity;
 import org.thingsboard.server.dao.util.SqlDao;
-
-import java.util.Collection;
-import java.util.List;
-
-import static org.thingsboard.server.dao.config.DedicatedEventsJpaDaoConfig.EVENTS_PERSISTENCE_UNIT;
-import static org.thingsboard.server.dao.config.DedicatedEventsJpaDaoConfig.EVENTS_TRANSACTION_MANAGER;
 
 @DedicatedEventsDataSource
 @Component
 @SqlDao
 public class DedicatedJpaTraceDao extends JpaTraceDao {
-    public DedicatedJpaTraceDao(SpanRepository spanRepository) {
-        super(spanRepository);
+
+    public DedicatedJpaTraceDao(SpanRepository spanRepository,
+                                DedicatedTraceInsertRepository traceInsertRepository,
+                                DedicatedTraceQueryRepository traceQueryRepository) {
+        super(spanRepository, traceInsertRepository, traceQueryRepository);
     }
 
-    @PersistenceContext(unitName = EVENTS_PERSISTENCE_UNIT)
-    public void setEntityManager(EntityManager entityManager) {
-        this.entityManager = entityManager;
-    }
-
-    @Override
-    @Transactional(transactionManager = EVENTS_TRANSACTION_MANAGER)
-    public void saveSpans(List<SpanEntity> spans) {
-        super.saveSpans(spans);
-    }
-
-    @Override
-    @Transactional(transactionManager = EVENTS_TRANSACTION_MANAGER)
-    public int upsertTraceSummaries(Collection<TraceSummaryInfo> summaries) {
-        return super.upsertTraceSummaries(summaries);
-    }
-
-    @Override
-    @Transactional(transactionManager = EVENTS_TRANSACTION_MANAGER)
-    public boolean tryAcquireAggregationLeader(String serviceId, long nowMs, long leaseMs) {
-        return super.tryAcquireAggregationLeader(serviceId, nowMs, leaseMs);
-    }
 }
