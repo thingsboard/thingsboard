@@ -14,6 +14,7 @@ import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.CustomerInfo;
 import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
@@ -35,11 +36,11 @@ import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.selfregistration.DefaultDashboardParams;
 import org.thingsboard.server.common.data.selfregistration.HomeDashboardParams;
-import org.thingsboard.server.common.data.selfregistration.V2CaptchaParams;
 import org.thingsboard.server.common.data.selfregistration.MobileRedirectParams;
 import org.thingsboard.server.common.data.selfregistration.MobileSelfRegistrationParams;
 import org.thingsboard.server.common.data.selfregistration.SignUpField;
 import org.thingsboard.server.common.data.selfregistration.SignUpFieldId;
+import org.thingsboard.server.common.data.selfregistration.V2CaptchaParams;
 import org.thingsboard.server.common.data.selfregistration.WebSelfRegistrationParams;
 import org.thingsboard.server.common.data.signup.SignUpRequest;
 import org.thingsboard.server.common.data.signup.SignUpResult;
@@ -201,6 +202,38 @@ public class SignUpControllerSqlTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testActivationByEmailCodeStoresPolicyAcceptanceTimestamps() throws Exception {
+        createWebSelfRegistrationSettings();
+        doSignUp(createWebSignUpRequest(CUSTOMER_TEST_EMAIL));
+        User user = userService.findUserByEmail(tenantId, CUSTOMER_TEST_EMAIL);
+        String activateToken = userService.findUserCredentialsByUserId(tenantId, user.getId()).getActivateToken();
+
+        doPost("/api/noauth/activateByEmailCode", JsonNode.class, "emailCode", activateToken);
+
+        User activatedUser = userService.findUserById(tenantId, user.getId());
+        assertPrivacyPolicyAccepted(activatedUser);
+        assertTermsOfUseAccepted(activatedUser);
+
+        removeCreatedUser(activatedUser);
+    }
+
+    @Test
+    public void testAcceptPrivacyPolicyStoresAcceptanceTimestamp() {
+        doPost("/api/signup/acceptPrivacyPolicy", JsonNode.class);
+
+        User user = userService.findUserById(tenantId, tenantAdminUserId);
+        assertPrivacyPolicyAccepted(user);
+    }
+
+    @Test
+    public void testAcceptTermsOfUseStoresAcceptanceTimestamp() {
+        doPost("/api/signup/acceptTermsOfUse", JsonNode.class);
+
+        User user = userService.findUserById(tenantId, tenantAdminUserId);
+        assertTermsOfUseAccepted(user);
+    }
+
+    @Test
     public void testSelfRegistrationCreateMessageInRuleChain() throws Exception {
         createWebSelfRegistrationSettings();
         var signUpRequest = createWebSignUpRequest(CUSTOMER_TEST_EMAIL);
@@ -261,6 +294,22 @@ public class SignUpControllerSqlTest extends AbstractControllerTest {
                 SignUpFieldId.PASSWORD, "abcdef123"));
         signUpRequest.setRecaptchaResponse(RECAPTCHA_DUMMY_RESPONSE);
         return signUpRequest;
+    }
+
+    private void assertPrivacyPolicyAccepted(User user) {
+        assertThat(user.isPrivacyPolicyAccepted()).isTrue();
+        assertAcceptedTsIsPositive(user, DataConstants.PRIVACY_POLICY_ACCEPTED_TS);
+    }
+
+    private void assertTermsOfUseAccepted(User user) {
+        assertThat(user.isTermsOfUseAccepted()).isTrue();
+        assertAcceptedTsIsPositive(user, DataConstants.TERMS_OF_USE_ACCEPTED_TS);
+    }
+
+    private void assertAcceptedTsIsPositive(User user, String acceptedTsKey) {
+        JsonNode acceptedTs = user.getAdditionalInfo().path(acceptedTsKey);
+        assertThat(acceptedTs.isNumber()).isTrue();
+        assertThat(acceptedTs.asLong()).isPositive();
     }
 
     protected SignUpRequest createMobileSignUpRequest(String email, String pkgName, String appSecret, PlatformType platformType) {
