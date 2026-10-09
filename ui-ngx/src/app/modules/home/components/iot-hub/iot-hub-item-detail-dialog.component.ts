@@ -170,6 +170,11 @@ export class TbIotHubItemDetailDialogComponent extends DialogComponent<TbIotHubI
       && this.installedItem.itemVersionId !== this.item.id;
   }
 
+  /** The tracking row keeps the item's current name; a version keeps the one it was published under. */
+  get itemTitle(): string {
+    return this.installedItem?.itemVersionId === this.item.id ? this.installedItem.itemName : this.item.name;
+  }
+
   /** Runs whatever the item's action mode calls for: open the local copy, connect, or install. */
   runPrimaryAction(): void {
     if (iotHubItemActionMode(this.item) === 'connect') {

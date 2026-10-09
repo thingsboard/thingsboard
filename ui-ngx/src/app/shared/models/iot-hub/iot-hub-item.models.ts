@@ -4,7 +4,6 @@ import { Direction } from '@shared/models/page/sort-order';
 
 export enum ItemType {
   WIDGET = 'WIDGET',
-  DASHBOARD = 'DASHBOARD',
   SOLUTION_TEMPLATE = 'SOLUTION_TEMPLATE',
   CALCULATED_FIELD = 'CALCULATED_FIELD',
   ALARM_RULE = 'ALARM_RULE',
@@ -15,7 +14,6 @@ export enum ItemType {
 export const itemTypeTranslations = new Map<ItemType, string>(
   [
     [ItemType.WIDGET, 'item.type-widget'],
-    [ItemType.DASHBOARD, 'item.type-dashboard'],
     [ItemType.SOLUTION_TEMPLATE, 'item.type-solution-template'],
     [ItemType.CALCULATED_FIELD, 'item.type-calculated-field'],
     [ItemType.ALARM_RULE, 'item.type-alarm-rule'],
@@ -30,7 +28,6 @@ export const itemTypeTranslations = new Map<ItemType, string>(
 // mapping stays consistent across the app.
 export const itemTypeIcons: Record<string, string> = {
   [ItemType.WIDGET]: 'widgets',
-  [ItemType.DASHBOARD]: 'dashboard',
   [ItemType.SOLUTION_TEMPLATE]: 'apps',
   [ItemType.CALCULATED_FIELD]: 'mdi:function-variant',
   [ItemType.RULE_CHAIN]: 'settings_ethernet',
@@ -60,9 +57,6 @@ export const getItemTypeColor = (type?: string | null): string =>
 
 /**
  * Item types discoverable to creators in the marketplace UI.
- * DASHBOARD is intentionally absent (IoT Hub no longer accepts Dashboard contributions).
- * Defensive code paths (item card, detail dialog descriptor switch, installed-items table,
- * install handler, /iot-hub/dashboards route) remain functional for already-installed items.
  */
 export const CREATOR_VISIBLE_ITEM_TYPES: ItemType[] = [
   ItemType.WIDGET,

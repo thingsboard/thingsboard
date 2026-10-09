@@ -10,7 +10,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.thingsboard</groupId>
     <artifactId>thingsboard</artifactId>
-    <version>4.4.0-SNAPSHOT</version>
+    <version>4.4.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>ThingsBoard</name>
@@ -219,7 +219,6 @@
         <module>common</module>
         <module>rule-engine</module>
         <module>dao</module>
-        <module>packaging</module>
         <module>edqs</module>
         <module>transport</module>
         <module>integration</module>
@@ -1231,16 +1230,6 @@
                 <version>${spring-boot.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>net.bytebuddy</groupId>
-                <artifactId>byte-buddy</artifactId>
-                <version>${bytebuddy.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>net.bytebuddy</groupId>
-                <artifactId>byte-buddy-agent</artifactId>
-                <version>${bytebuddy.version}</version>
             </dependency>
             <dependency>
                 <groupId>net.bytebuddy</groupId>
