@@ -96,7 +96,8 @@
       <div class="tb-creator-divider"></div>
 
       <!-- Right: published items -->
-      <tb-iot-hub-search class="tb-creator-items" [creatorId]="creatorId" [showCreator]="false">
+      <tb-iot-hub-search class="tb-creator-items" [creatorId]="creatorId" [showCreator]="false"
+                         [showFilters]="false">
         <h3 class="tb-creator-items-heading">
           {{ 'iot-hub.published-items' | translate }} ({{ creator.publishedCount }})
         </h3>

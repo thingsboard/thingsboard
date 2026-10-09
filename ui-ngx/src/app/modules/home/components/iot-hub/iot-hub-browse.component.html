@@ -50,8 +50,8 @@
               }
             </div>
           }
-          <div class="tb-iot-hub-filter-items" [class.scrollable]="getFilteredItems(subtypeOptions, 'subtype').length > 8"
-                 (mouseenter)="getFilteredItems(subtypeOptions, 'subtype').length > 8 && (filterItemsHovered = true)"
+          <div class="tb-iot-hub-filter-items" [class.scrollable]="getFilteredItems(subtypeOptions, 'subtype').length > scrollThreshold"
+                 (mouseenter)="getFilteredItems(subtypeOptions, 'subtype').length > scrollThreshold && (filterItemsHovered = true)"
                  (mouseleave)="filterItemsHovered = false">
             @for (opt of getFilteredItems(subtypeOptions, 'subtype'); track opt.key) {
               <mat-checkbox [checked]="isSubtypeActive(opt.key)"
@@ -85,8 +85,8 @@
                 }
               </div>
             }
-            <div class="tb-iot-hub-filter-items" [class.scrollable]="getFilteredItems(vendorOptions, 'vendor').length > 8"
-                   (mouseenter)="getFilteredItems(vendorOptions, 'vendor').length > 8 && (filterItemsHovered = true)"
+            <div class="tb-iot-hub-filter-items" [class.scrollable]="getFilteredItems(vendorOptions, 'vendor').length > scrollThreshold"
+                   (mouseenter)="getFilteredItems(vendorOptions, 'vendor').length > scrollThreshold && (filterItemsHovered = true)"
                    (mouseleave)="filterItemsHovered = false">
               @for (group of getGroupedFilterItems(vendorOptions, 'vendor'); track group.label) {
                 @if (group.label) {
@@ -121,8 +121,8 @@
                 }
               </div>
             }
-            <div class="tb-iot-hub-filter-items" [class.scrollable]="getFilteredItems(hardwareTypeOptions, 'hardwareType').length > 8"
-                   (mouseenter)="getFilteredItems(hardwareTypeOptions, 'hardwareType').length > 8 && (filterItemsHovered = true)"
+            <div class="tb-iot-hub-filter-items" [class.scrollable]="getFilteredItems(hardwareTypeOptions, 'hardwareType').length > scrollThreshold"
+                   (mouseenter)="getFilteredItems(hardwareTypeOptions, 'hardwareType').length > scrollThreshold && (filterItemsHovered = true)"
                    (mouseleave)="filterItemsHovered = false">
               @for (ht of getFilteredItems(hardwareTypeOptions, 'hardwareType'); track ht.key) {
                 <mat-checkbox [checked]="isHardwareTypeActive(ht.key)"
@@ -152,8 +152,8 @@
                 }
               </div>
             }
-            <div class="tb-iot-hub-filter-items" [class.scrollable]="allConnectivityCount > 8"
-                   (mouseenter)="allConnectivityCount > 8 && (filterItemsHovered = true)"
+            <div class="tb-iot-hub-filter-items" [class.scrollable]="allConnectivityCount > scrollThreshold"
+                   (mouseenter)="allConnectivityCount > scrollThreshold && (filterItemsHovered = true)"
                    (mouseleave)="filterItemsHovered = false">
               @for (group of getFilteredConnectivityGroups('connectivity'); track group.group) {
                 <div class="tb-iot-hub-filter-group-label">{{ group.group }}</div>
@@ -189,8 +189,8 @@
                 }
               </div>
             }
-            <div class="tb-iot-hub-filter-items" [class.scrollable]="getFilteredItems(categoryOptions, 'category').length > 8"
-                   (mouseenter)="getFilteredItems(categoryOptions, 'category').length > 8 && (filterItemsHovered = true)"
+            <div class="tb-iot-hub-filter-items" [class.scrollable]="getFilteredItems(categoryOptions, 'category').length > scrollThreshold"
+                   (mouseenter)="getFilteredItems(categoryOptions, 'category').length > scrollThreshold && (filterItemsHovered = true)"
                    (mouseleave)="filterItemsHovered = false">
               @for (cat of getFilteredItems(categoryOptions, 'category'); track cat.key) {
                 <mat-checkbox [checked]="isCategoryActive(cat.key)"
@@ -224,8 +224,8 @@
               }
             </div>
           }
-          <div class="tb-iot-hub-filter-items" [class.scrollable]="getFilteredItems(useCaseOptions, 'useCase').length > 8"
-                 (mouseenter)="getFilteredItems(useCaseOptions, 'useCase').length > 8 && (filterItemsHovered = true)"
+          <div class="tb-iot-hub-filter-items" [class.scrollable]="getFilteredItems(useCaseOptions, 'useCase').length > scrollThreshold"
+                 (mouseenter)="getFilteredItems(useCaseOptions, 'useCase').length > scrollThreshold && (filterItemsHovered = true)"
                  (mouseleave)="filterItemsHovered = false">
             @for (group of getGroupedFilterItems(useCaseOptions, 'useCase'); track group.label) {
               @if (group.label) {
