@@ -125,8 +125,6 @@ export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy
   activeConnectivity = new Set<string>();
   activeHardwareTypes = new Set<string>();
   activeVendors = new Set<string>();
-  // Standalone boolean facet, not a set: the panel offers a single option, so there is nothing
-  // to collect. Off means "no filter at all", never "unverified only" — see `loadItems()`.
   verifiedCreatorsOnly = false;
 
   sortOptions: SortOption[] = [
@@ -705,9 +703,7 @@ export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy
       hardwareTypes: this.activeHardwareTypes.size > 0 ? Array.from(this.activeHardwareTypes) : undefined,
       connectivity: this.activeConnectivity.size > 0 ? Array.from(this.activeConnectivity) : undefined,
       vendors: this.activeVendors.size > 0 ? Array.from(this.activeVendors) : undefined,
-      // `undefined`, not `false`: the server matches this parameter, so `false` would answer
-      // with unverified creators only.
-      creatorVerified: this.verifiedCreatorsOnly || undefined
+      creatorVerified: this.verifiedCreatorsOnly
     });
     this.iotHubApiService.getPublishedVersions(
       query,

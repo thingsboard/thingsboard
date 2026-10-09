@@ -261,8 +261,6 @@ export class DashboardWidgetSelectComponent {
   iotHubAppliedWidgetTypes = new Set<string>();
   iotHubAppliedCategories = new Set<string>();
   iotHubAppliedUseCases = new Set<string>();
-  // Standalone boolean facet, not a set — the panel offers one option. Off means "no filter",
-  // never "unverified only", so it reaches the wire only as `true`.
   iotHubVerifiedCreatorsOnly = false;
 
   iotHubWidgetTypeOptions: FilterParamInfo[] = [];
@@ -319,9 +317,7 @@ export class DashboardWidgetSelectComponent {
         useCases: this.iotHubAppliedUseCases.size > 0 ? Array.from(this.iotHubAppliedUseCases) : undefined,
         widgetTypes: this.iotHubAppliedWidgetTypes.size > 0 ? Array.from(this.iotHubAppliedWidgetTypes) : undefined,
         scadaFirst: this.scadaFirst ? true : undefined,
-        // `undefined`, not `false`: the server matches this parameter, so `false` would answer
-        // with unverified creators only.
-        creatorVerified: this.iotHubVerifiedCreatorsOnly || undefined
+        creatorVerified: this.iotHubVerifiedCreatorsOnly
       });
       return this.iotHubApiService.getPublishedVersions(query, { ignoreLoading: true });
     };
@@ -345,7 +341,7 @@ export class DashboardWidgetSelectComponent {
       const search = typeof filter === 'string' ? filter.split('|')[0] : filter;
       return this.iotHubApiService.getWidgetCategories(search || undefined,
         this.scadaFirst ? true : undefined,
-        this.iotHubVerifiedCreatorsOnly || undefined, { ignoreLoading: true }).pipe(
+        this.iotHubVerifiedCreatorsOnly, { ignoreLoading: true }).pipe(
         map(categories => ({
           data: categories.slice(page * pageSize, page * pageSize + pageSize),
           totalPages: Math.ceil(categories.length / pageSize),
@@ -564,9 +560,6 @@ export class DashboardWidgetSelectComponent {
 
   toggleIotHubVerifiedCreators(): void {
     this.iotHubVerifiedCreatorsOnly = !this.iotHubVerifiedCreatorsOnly;
-    // The category landing reads the same flag, and `isFilterVisible()` lets the panel be open
-    // on the landing itself while the flag is set — so refetch the categories rather than leave
-    // the grid behind showing the previous answer.
     this.loadWidgetCategories();
     this.onIotHubFiltersChanged();
   }
@@ -601,6 +594,9 @@ export class DashboardWidgetSelectComponent {
   get totalFilterCount(): number {
     if (this.selectWidgetMode === 'installed') {
       return (this.filterWidgetTypes?.length ?? 0) + (this.includeDeprecated ? 1 : 0);
+    }
+    if (this.iotHubSubMode === 'default') {
+      return this.iotHubVerifiedCreatorsOnly ? 1 : 0;
     }
     return this.iotHubFilterCount;
   }
@@ -651,11 +647,7 @@ export class DashboardWidgetSelectComponent {
 
   isFilterVisible(): boolean {
     if (this.selectWidgetMode === 'iotHub') {
-      // The category landing has no facets of its own, which is why the button is normally
-      // hidden there. The verified filter is the one exception: it reaches the landing too (a
-      // category whose only widgets it hides stops being offered), so while it is on the button
-      // has to be there — otherwise the list is narrowed with nothing on screen saying so and
-      // no way to switch it off without first entering a sub-mode.
+      // The category landing honours only the verified filter, so the button stays while it is on
       return this.iotHubSubMode !== 'default' || this.iotHubVerifiedCreatorsOnly;
     }
     return this.installedSubMode === 'allWidgets' || this.widgetsBundle !== null;
@@ -865,9 +857,6 @@ export class DashboardWidgetSelectComponent {
       filtered = filtered.filter(v => v.useCases?.some(u => this.iotHubAppliedUseCases.has(u)));
     }
     if (this.iotHubVerifiedCreatorsOnly) {
-      // This sub-mode filters a cached list instead of asking the server, so the facet has to be
-      // applied by hand here too — otherwise the panel offers the control, the badge counts it,
-      // and the list stays exactly as it was.
       filtered = filtered.filter(v => v.creatorVerified);
     }
     filtered = this.sortInstalledVersions(filtered);
