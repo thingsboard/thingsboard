@@ -25,12 +25,11 @@
   <!-- Filter panel template (reused in sidebar and drawer) -->
   <ng-template #filterPanelContent>
     <div class="tb-iot-hub-filters-inner">
-      <div class="tb-iot-hub-filter-standalone">
-        <mat-checkbox [checked]="verifiedCreatorsOnly"
-                      (change)="onVerifiedCreatorsToggle()">
-          {{ 'iot-hub.verified-creators-only' | translate }}
-        </mat-checkbox>
-      </div>
+      <mat-checkbox class="tb-iot-hub-filter-standalone"
+                    [checked]="verifiedCreatorsOnly"
+                    (change)="onVerifiedCreatorsToggle()">
+        {{ 'iot-hub.verified-creators-only' | translate }}
+      </mat-checkbox>
       <div class="tb-iot-hub-filter-divider"></div>
 
       @if (!fixedSubType && subtypeOptions.length > 0 && activeType !== ItemType.ALARM_RULE) {

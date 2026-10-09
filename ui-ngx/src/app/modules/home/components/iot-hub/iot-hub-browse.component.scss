@@ -179,7 +179,7 @@
   }
 
   .tb-iot-hub-filter-standalone {
-    padding-left: 13px;
+    margin-left: 13px;
   }
 
   .tb-iot-hub-filter-panel.mat-expansion-panel {
@@ -216,15 +216,16 @@
 
 // 56px section-title inset minus the checkbox's own 11px
 .tb-iot-hub-filter-standalone {
-  padding-left: 45px;
+  margin-left: 45px;
+}
 
-  mat-checkbox {
-    display: block;
-    overflow: hidden;
+.tb-iot-hub-filter-panel.mat-expansion-panel mat-checkbox,
+.tb-iot-hub-filter-standalone {
+  display: block;
+  overflow: hidden;
 
-    &:hover {
-      background: rgba(0, 0, 0, 0.04);
-    }
+  &:hover {
+    background: rgba(0, 0, 0, 0.04);
   }
 }
 
@@ -248,15 +249,6 @@
 
   ::ng-deep .mat-expansion-panel-body {
     padding: 0 8px 0 0;
-  }
-
-  mat-checkbox {
-    display: block;
-    overflow: hidden;
-
-    &:hover {
-      background: rgba(0, 0, 0, 0.04);
-    }
   }
 
   .tb-iot-hub-filter-items {
