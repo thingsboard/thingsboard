@@ -26,11 +26,11 @@ There are two types of outputs:
 2. **Decoder output:**
    This output is the direct result of the decoding function. It represents the data decoded from the incoming message without any additional configuration or processing. It must be a valid JSON object and meet the following requirements:
 
-* Required **attributes** object:  
-  The result must include an **attributes** object that holds details about the device/asset. It must contain at least one key-value pair; in other words, you need to provide at least one value within the attributes object to ensure it is not empty.
+* Optional **attributes** object:  
+  An object that holds details about the device/asset, such as a serial number or firmware version, stored as a set of attributes. The object may be omitted or left empty.
 
-* Required **telemetry** object or array:  
-  The result must include a **telemetry** object or array that shows time series data for the device/asset. It must contain at least one entry; in other words, you need to provide at least one data point within the telemetry object or array to ensure it is not empty.
+* Optional **telemetry** object or array:  
+  Time series data of the device/asset: a key-value map of telemetry values, or a `{ ts, values }` object with an explicit timestamp, or an array of `{ ts, values }` objects to report multiple timestamps in one message. The object or array may be omitted or left empty.
 
 * Optional **name** property (overridable):  
   The **name** uniquely identifies the device/asset within the tenant's scope. Often, unique identifiers such as the eui, MAC address, or other hardware-specific values are used as the device/asset name. The platform uses this property to locate an existing device/asset. If no match is found and the integration is allowed to create entities, a new device/asset will be created.
