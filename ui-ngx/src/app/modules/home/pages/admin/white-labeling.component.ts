@@ -301,14 +301,7 @@ export class WhiteLabelingComponent extends PageComponent implements OnInit, Has
       whiteLabelingParams.primaryColorPanels = null;
     }
     (this.isLoginWl ? this.whiteLabelingService.saveLoginWhiteLabelParams(whiteLabelingParams) :
-        this.whiteLabelingService.saveWhiteLabelParams(whiteLabelingParams)).subscribe(() => {
-          this.whiteLabelingParams = whiteLabelingParams;
-          if (this.isLoginWl) {
-            this.loadWhiteLabelingParams();
-          } else {
-            this.wlSettings.markAsPristine();
-          }
-    });
+        this.whiteLabelingService.saveWhiteLabelParams(whiteLabelingParams)).subscribe(() => this.loadWhiteLabelingParams());
   }
 
   confirmForm(): UntypedFormGroup {
