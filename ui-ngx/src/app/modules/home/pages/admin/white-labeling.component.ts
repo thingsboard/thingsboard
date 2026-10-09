@@ -306,6 +306,7 @@ export class WhiteLabelingComponent extends PageComponent implements OnInit, Has
           if (this.isLoginWl) {
             this.loadWhiteLabelingParams();
           } else {
+            this.primaryColorPanelsUnset = isUndefinedOrNull(whiteLabelingParams.primaryColorPanels);
             this.wlSettings.markAsPristine();
           }
     });
