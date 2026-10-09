@@ -10423,7 +10423,7 @@
             "thingsboard-version-available": "ThingsBoard {{ version }} is available",
             "free-community-grant-text": "4.4 is licensed differently and requires a license key. Your Community Grant is free.",
             "get-community-grant": "Get your Community Grant",
-            "community-grant-registration-close": "Registration closes July 20, 2027."
+            "community-grant-registration-close": "Registration closes on July 20, 2027."
         },
         "usage-info": {
             "title": "Usage",
