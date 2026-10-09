@@ -45,6 +45,7 @@ import io.opentelemetry.sdk.metrics.export.MetricReader;
 import io.opentelemetry.sdk.metrics.export.PeriodicMetricReader;
 import io.opentelemetry.sdk.resources.Resource;
 import io.opentelemetry.sdk.trace.SdkTracerProvider;
+import io.opentelemetry.sdk.trace.SpanLimits;
 import io.opentelemetry.sdk.trace.export.BatchSpanProcessor;
 import io.opentelemetry.sdk.trace.samplers.Sampler;
 import lombok.RequiredArgsConstructor;
@@ -72,6 +73,9 @@ import java.util.concurrent.TimeUnit;
 @ConditionalOnExpression(TraceConditions.TRACE_ENABLED)
 public class OpenTelemetryConfig {
     private final TbServiceInfoProvider serviceInfoProvider;
+
+    @Value("${otel.tracing.span-limits.max-attribute-value-length:4096}")
+    private int maxAttributeValueLength;
 
     @Value("${otel.processor.trace.batch.schedule-delay-ms:2000}")
     private long postgresScheduleDelayMs;
@@ -127,6 +131,7 @@ public class OpenTelemetryConfig {
                         .merge(Resource.create(Attributes.of(AttributeKey.stringKey("service.id"), serviceId))));
 
         providerBuilder.setSampler(Sampler.parentBased(Sampler.alwaysOff()));
+        providerBuilder.setSpanLimits(SpanLimits.builder().setMaxAttributeValueLength(maxAttributeValueLength).build());
 
         var sdkBuilder = OpenTelemetrySdk.builder();
 
