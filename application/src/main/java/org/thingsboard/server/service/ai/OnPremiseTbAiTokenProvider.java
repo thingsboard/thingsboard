@@ -18,14 +18,13 @@ import org.thingsboard.server.service.install.ProjectInfo;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 
-import java.net.URI;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Supplier;
 
 @Component
 @TbCoreComponent
-@ConditionalOnExpression("'${TB_AI_JWT_SIGNING_KEY:}' == ''")
+@ConditionalOnExpression("'${ai.jwt.signing_key:}' == ''")
 class OnPremiseTbAiTokenProvider implements TbAiTokenProvider {
 
     private final SubscriptionService subscriptionService;
@@ -50,9 +49,9 @@ class OnPremiseTbAiTokenProvider implements TbAiTokenProvider {
 
     @Override
     public Map<String, String> getAdditionalInfo(SecurityUser user) {
-        String origin = StringUtils.isNotEmpty(coreBaseUrl) ? coreBaseUrl : resolveOrigin(user);
-        return additionalInfo(user.getUuidId(), user.getTenantId(), origin);
+        return additionalInfo(user.getUuidId(), user.getTenantId(), resolveOrigin(user));
     }
+
 
     @Override
     public boolean isTokenAvailable() {
@@ -82,11 +81,10 @@ class OnPremiseTbAiTokenProvider implements TbAiTokenProvider {
     }
 
     private String resolveOrigin(SecurityUser user) {
-        String origin = systemSecurityService.getBaseUrl(user.getAuthority(), user.getTenantId(), user.getCustomerId(), null);
-        if ("localhost".equals(URI.create(origin).getHost())) {
-            throw new ThingsboardRuntimeException("Please configure the base URL under Login white labeling or General settings at the sysadmin level", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        if (StringUtils.isNotEmpty(coreBaseUrl)) {
+            return coreBaseUrl;
         }
-        return origin;
+        return systemSecurityService.getBaseUrl(user.getAuthority(), user.getTenantId(), user.getCustomerId(), null);
     }
 
     private Map<String, String> additionalInfo(UUID userId, TenantId tenantId, String origin) {

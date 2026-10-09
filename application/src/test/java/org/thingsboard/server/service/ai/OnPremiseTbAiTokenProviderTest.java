@@ -128,23 +128,18 @@ class OnPremiseTbAiTokenProviderTest {
     }
 
     @Test
-    void shouldThrowBadRequest_whenCoreBaseUrlIsBlankAndResolvedOriginIsLocalhost() {
+    void shouldAcceptLocalhostOrigin_whenBuildingUserHeaders() {
         // GIVEN — no configured core URL and the security service falls back to a localhost base URL.
         OnPremiseTbAiTokenProvider providerWithoutCoreUrl = newProvider("");
+        given(projectInfo.getProjectVersion()).willReturn(tbVersion);
         given(systemSecurityService.getBaseUrl(user.getAuthority(), user.getTenantId(), user.getCustomerId(), null))
                 .willReturn(localhostBaseUrl);
 
         // WHEN
-        Throwable thrown = catchThrowable(() -> providerWithoutCoreUrl.getAdditionalInfo(user));
+        Map<String, String> additionalInfo = providerWithoutCoreUrl.getAdditionalInfo(user);
 
-        // THEN
-        assertThat(thrown)
-                .isInstanceOf(ThingsboardRuntimeException.class)
-                .hasMessageContaining("Please configure the base URL");
-        assertThat(((ThingsboardRuntimeException) thrown).getErrorCode())
-                .isEqualTo(ThingsboardErrorCode.BAD_REQUEST_PARAMS);
-        // The version header is never assembled once origin resolution fails.
-        then(projectInfo).shouldHaveNoInteractions();
+        // THEN — calls that TB AI does not answer by calling TB back work without a public base URL.
+        assertThat(additionalInfo).containsExactlyInAnyOrderEntriesOf(expectedHeaders(localhostBaseUrl));
     }
 
     // ---------------------------------------------------------------------------------------------

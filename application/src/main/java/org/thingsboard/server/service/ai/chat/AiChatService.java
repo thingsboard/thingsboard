@@ -4,6 +4,7 @@ package org.thingsboard.server.service.ai.chat;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.http.codec.ServerSentEvent;
+import org.thingsboard.server.service.ai.transport.TbAiClientRequest;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import reactor.core.publisher.Flux;
 
@@ -22,7 +23,8 @@ public interface AiChatService {
     void deleteChat(UUID chatId, SecurityUser user);
 
     Flux<ServerSentEvent<String>> sendChatMessage(
-            UUID chatId, JsonNode request, String tbAccessToken, String acceptLanguage, SecurityUser user
+            UUID chatId, JsonNode request, String tbAccessToken, String acceptLanguage, TbAiClientRequest clientRequest,
+            SecurityUser user
     );
 
 }

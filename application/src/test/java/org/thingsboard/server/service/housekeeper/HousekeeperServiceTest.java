@@ -16,6 +16,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.thingsboard.ai.common.channel.ChannelProtocol;
 import org.thingsboard.ai.common.client.TbAiClient;
 import org.thingsboard.ai.common.client.TbAiClient.TbAiResponse;
 import org.thingsboard.common.util.JacksonUtil;
@@ -92,6 +93,9 @@ import org.thingsboard.server.dao.usagerecord.ApiUsageStateDao;
 import org.thingsboard.server.gen.transport.TransportProtos.HousekeeperTaskProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToHousekeeperServiceMsg;
 import org.thingsboard.server.service.ai.TbAiTokenProvider;
+import org.thingsboard.server.service.ai.transport.TbAiOperation;
+import org.thingsboard.server.service.ai.transport.TbAiOperations;
+import org.thingsboard.server.service.ai.transport.TbAiTurnContext;
 import org.thingsboard.server.service.housekeeper.processor.EntitiesCleanupTaskProcessor;
 import org.thingsboard.server.service.housekeeper.processor.TsHistoryDeletionTaskProcessor;
 
@@ -142,7 +146,7 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
     @MockitoSpyBean
     private EntitiesCleanupTaskProcessor cleanupTaskProcessor;
     @MockitoBean
-    private TbAiClient tbAiClient;
+    private TbAiOperations tbAiOperations;
     @MockitoBean
     private TbAiTokenProvider tbAiTokenProvider;
     @Autowired
@@ -185,8 +189,7 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
         loginTenantAdmin();
         this.tenantId = super.tenantId;
         doReturn(true).when(tbAiTokenProvider).isTokenAvailable();
-        doReturn(TbAiResponse.builder().success(true).build()).when(tbAiClient).deleteUserData(any());
-        doReturn(TbAiResponse.builder().success(true).build()).when(tbAiClient).deleteTenantData(any());
+        doReturn(TbAiResponse.builder().success(true).build()).when(tbAiOperations).execute(any(TbAiOperation.class), any(TbAiTurnContext.class));
     }
 
     @After
@@ -255,12 +258,10 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
         await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
             verifyNoRelatedData(userId);
             assertThat(alarmService.findAlarmRefsByAssigneeId(tenantId, userId, 0, null, 5000)).size().isZero();
-            verify(tbAiClient).deleteUserData(any());
+            verify(tbAiOperations).execute(argThat(operation -> ChannelProtocol.USER_DATA_DELETE.equals(operation.type())), any());
         });
 
-        ArgumentCaptor<TbAiClient.TokenProvider> captor = ArgumentCaptor.forClass(TbAiClient.TokenProvider.class);
-        verify(tbAiClient).deleteUserData(captor.capture());
-        assertIdScopedToken(captor.getValue(), userId);
+        assertIdScopedToken(deletionContext(ChannelProtocol.USER_DATA_DELETE).tokenProvider(), userId);
     }
 
     @Test
@@ -483,17 +484,12 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
             verifyNoRelatedData(oAuth2ClientId);
             verifyNoRelatedData(appBundleId);
             verifyNoRelatedData(tenantId);
-            verify(tbAiClient).deleteTenantData(any());
-            verify(tbAiClient).deleteUserData(any());
+            verify(tbAiOperations).execute(argThat(operation -> ChannelProtocol.TENANT_DATA_DELETE.equals(operation.type())), any());
+            verify(tbAiOperations).execute(argThat(operation -> ChannelProtocol.USER_DATA_DELETE.equals(operation.type())), any());
         });
 
-        ArgumentCaptor<TbAiClient.TokenProvider> tenantDataCaptor = ArgumentCaptor.forClass(TbAiClient.TokenProvider.class);
-        verify(tbAiClient).deleteTenantData(tenantDataCaptor.capture());
-        assertIdScopedToken(tenantDataCaptor.getValue(), new UserId(tenantId.getId()));
-
-        ArgumentCaptor<TbAiClient.TokenProvider> userDataCaptor = ArgumentCaptor.forClass(TbAiClient.TokenProvider.class);
-        verify(tbAiClient).deleteUserData(userDataCaptor.capture());
-        assertIdScopedToken(userDataCaptor.getValue(), userId);
+        assertIdScopedToken(deletionContext(ChannelProtocol.TENANT_DATA_DELETE).tokenProvider(), new UserId(tenantId.getId()));
+        assertIdScopedToken(deletionContext(ChannelProtocol.USER_DATA_DELETE).tokenProvider(), userId);
     }
 
     @Test
@@ -613,6 +609,12 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
 
         verify(housekeeperService, never()).processTask(argThat(getTaskMatcher(TenantId.SYS_TENANT_ID, HousekeeperTaskType.CLEANUP_ENTITIES, null)));
         verify(housekeeperService, never()).processTask(argThat(getTaskMatcher(tenantId, HousekeeperTaskType.DELETE_ENTITIES, null)));
+    }
+
+    private TbAiTurnContext deletionContext(String type) {
+        ArgumentCaptor<TbAiTurnContext> context = ArgumentCaptor.forClass(TbAiTurnContext.class);
+        verify(tbAiOperations).execute(argThat(operation -> type.equals(operation.type())), context.capture());
+        return context.getValue();
     }
 
     private void assertIdScopedToken(TbAiClient.TokenProvider tokenProvider, UserId expectedUserId) {

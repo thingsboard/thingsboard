@@ -6,11 +6,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClientRequestException;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.thingsboard.ai.common.channel.ChannelProtocol;
 import org.thingsboard.ai.common.client.TbAiClient;
 import org.thingsboard.ai.common.client.TbAiClient.TbAiResponse;
 import org.thingsboard.ai.common.data.usage.ApiUsageInfo;
@@ -21,6 +19,10 @@ import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.exception.ThingsboardRuntimeException;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.ai.transport.TbAiChannelRejectedException;
+import org.thingsboard.server.service.ai.transport.TbAiChannelUnavailableException;
+import org.thingsboard.server.service.ai.transport.TbAiOperation;
+import org.thingsboard.server.service.ai.transport.TbAiOperations;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import reactor.core.publisher.Flux;
@@ -41,8 +43,8 @@ class DefaultTbAiService implements TbAiService {
     private final TbApiUsageStateService apiUsageStateService;
     private final TbApiUsageReportClient apiUsageReportClient;
     private final Optional<TbAiTokenProvider> tokenProvider;
-    private final TbAiClient tbAiClient;
     private final TbAiSettings aiSettings;
+    private final TbAiOperations operations;
 
     @Override
     public JsonNode process(TbAiCall<TbAiResponse> call, SecurityUser user, boolean checkCredits) {
@@ -50,7 +52,7 @@ class DefaultTbAiService implements TbAiService {
         if (checkCredits) {
             checkApiUsage(user);
         }
-        TbAiResponse response = call.apply(tbAiClient, createTokenProvider(user));
+        TbAiResponse response = call.apply(createTokenProvider(user));
         return processResponse(response, user);
     }
 
@@ -62,7 +64,7 @@ class DefaultTbAiService implements TbAiService {
             // Eager subscribe so client cancel does not drop the trailing creditsUsed event.
             Sinks.Many<ServerSentEvent<String>> clientSink = Sinks.many().unicast().onBackpressureBuffer();
 
-            call.apply(tbAiClient, createTokenProvider(user))
+            call.apply(createTokenProvider(user))
                     .timeout(Duration.ofSeconds(aiSettings.getSseInactivityTimeoutSeconds()))
                     .subscribe(
                             event -> {
@@ -98,7 +100,7 @@ class DefaultTbAiService implements TbAiService {
         }
         try {
             return JacksonUtil.IGNORE_UNKNOWN_PROPERTIES_AND_ENUMS_JSON_MAPPER.treeToValue(
-                    process(TbAiClient::getApiUsageInfo, user, false), ApiUsageInfo.class);
+                    process(tokenProvider -> operations.execute(new TbAiOperation(ChannelProtocol.USAGE_GET, null), user, tokenProvider), user, false), ApiUsageInfo.class);
         } catch (Exception e) {
             log.warn("[{}][{}] Couldn't get AI API usage info", user.getTenantId(), user.getId(), e);
             return new ApiUsageInfo(Map.of(), 0);
@@ -139,43 +141,10 @@ class DefaultTbAiService implements TbAiService {
     private static String toUserFriendlyMessage(Throwable e) {
         if (e instanceof TimeoutException) {
             return "Request timed out";
-        } else if (e instanceof WebClientRequestException) {
+        } else if (e instanceof TbAiChannelUnavailableException) {
             return "Service unavailable";
-        } else if (e instanceof WebClientResponseException wcre) {
-            return toUserFriendlyMessage(wcre);
-        }
-        return "Internal error";
-    }
-
-    private static String toUserFriendlyMessage(WebClientResponseException wcre) {
-        var status = HttpStatus.resolve(wcre.getStatusCode().value());
-
-        if (status == null) {
-            return "Internal error";
-        }
-
-        if (status == HttpStatus.UNAUTHORIZED || status == HttpStatus.FORBIDDEN) {
-            return status.getReasonPhrase();
-        }
-
-        String errorMessage = null;
-        try {
-            JsonNode errorResponse = JacksonUtil.toJsonNode(wcre.getResponseBodyAsString());
-            if (errorResponse.hasNonNull("message")) {
-                errorMessage = errorResponse.get("message").asText();
-            }
-        } catch (IllegalArgumentException ignored) {}
-
-        if (errorMessage != null) {
-            return errorMessage;
-        }
-
-        // fallback
-        if (status.is4xxClientError()) {
-            return "Invalid request";
-        }
-        if (status.is5xxServerError()) {
-            return "Service unavailable";
+        } else if (e instanceof TbAiChannelRejectedException || e instanceof ThingsboardRuntimeException) {
+            return e.getMessage();
         }
         return "Internal error";
     }
