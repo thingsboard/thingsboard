@@ -5,11 +5,15 @@
 
 -->
 <form [formGroup]="timewindowForm" class="tb-timewindow-form">
-  @if (!historyOnly) {
+  @if (timewindowTypeOptions.length || isEdit) {
     <div class="tb-timewindow-form-header tb-form-panel no-border no-padding-bottom">
-      <tb-toggle-select class="tb-timewindow-form-type-options" appearance="fill"
-                        [options]="timewindowTypeOptions" formControlName="selectedTab">
-      </tb-toggle-select>
+      @if (timewindowTypeSelectionAvailable) {
+        <tb-toggle-select class="tb-timewindow-form-type-options" appearance="fill"
+                          [options]="timewindowTypeOptions" formControlName="selectedTab">
+        </tb-toggle-select>
+      } @else if (timewindowTypeOptions.length) {
+        <div class="tb-timewindow-form-type-options tb-form-panel-title">{{ timewindowTypeOptions[0].name }}</div>
+      }
       @if (isEdit) {
         <button mat-icon-button type="button" class="tb-timewindow-form-settings-btn tb-mat-24"
                 (click)="openTimewindowConfig()">
@@ -64,7 +68,7 @@
             }
           </div>
         </section>
-      } @else {
+      } @else if (timezone && !timewindow.hideTimezone) {
         <section class="tb-form-row space-between same-padding">
           <div>{{ 'timezone.timezone' | translate }}</div>
           <ng-container *ngTemplateOutlet="timezoneSelection">
@@ -130,7 +134,7 @@
             </div>
           }
         </section>
-      } @else {
+      } @else if (timezone && !timewindow.hideTimezone) {
         <section class="tb-form-row space-between same-padding">
           <div>{{ 'timezone.timezone' | translate }}</div>
           <ng-container *ngTemplateOutlet="timezoneSelection">
@@ -141,7 +145,7 @@
 
     @if (aggregationOptionsAvailable) {
       <ng-container formGroupName="aggregation">
-        @if (isEdit || !timewindow.hideAggregation) {
+        @if (!timewindow.hideAggregation) {
           <section class="tb-form-row column-xs space-between same-padding">
             <div class="fixed-title-width-180">{{ 'aggregation.aggregation' | translate }}</div>
             <tb-aggregation-type-select class="flex" subscriptSizing="dynamic" appearance="outline" displayLabel="false"
@@ -149,7 +153,7 @@
             </tb-aggregation-type-select>
           </section>
         }
-        @if (timewindowForm.get('aggregation.type').value === aggregationTypes.NONE && (isEdit || !timewindow.hideAggInterval)) {
+        @if (timewindowForm.get('aggregation.type').value === aggregationTypes.NONE && !timewindow.hideAggInterval) {
           <section class="tb-form-row column-xs space-between same-padding"
                    >
             <div>{{ 'aggregation.limit' | translate }}</div>
@@ -161,7 +165,7 @@
       </ng-container>
       @if (timewindowForm.get('aggregation.type').value !== aggregationTypes.NONE) {
         <section class="tb-form-row column-xs same-padding"
-                 [class.!hidden]="!(isEdit || !timewindow.hideAggInterval)">
+                 [class.!hidden]="timewindow.hideAggInterval">
           @if (timewindowForm.get('selectedTab').value === timewindowTypes.REALTIME) {
             <ng-container formGroupName="realtime">
               <tb-timeinterval
@@ -201,7 +205,7 @@
   </div>
 
   <ng-template #timezoneSelection>
-    @if (timezone && (isEdit || !timewindow.hideTimezone)) {
+    @if (timezone && !timewindow.hideTimezone) {
       <tb-timezone
         asButton strokedButton noMargin
         localBrowserTimezonePlaceholderOnEmpty="true"
