@@ -6,7 +6,7 @@ import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { MatOptionSelectionChange } from '@angular/material/core';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { forkJoin, of, Subject, Subscription } from 'rxjs';
-import { catchError, debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { catchError, debounceTime, switchMap } from 'rxjs/operators';
 import { MediaBreakpoints } from '@shared/models/constants';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
@@ -63,6 +63,7 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
   searchTotal = 0;
   searchLoaded = false;
   searchLoading = false;
+  searchFailed = false;
   @ViewChild(MatAutocompleteTrigger) searchAutoTrigger: MatAutocompleteTrigger;
   @ViewChild('searchInput', {read: ElementRef}) searchInputRef: ElementRef;
   private searchSubject = new Subject<string>();
@@ -159,7 +160,6 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
     });
     this.searchSubscription = this.searchSubject.pipe(
       debounceTime(300),
-      distinctUntilChanged(),
       switchMap(text => {
         this.searchLoading = true;
         const trimmed = text.trim();
@@ -168,14 +168,15 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
         const sortOrder: SortOrder = { property: RELEVANCE_SORT_PROPERTY, direction: Direction.DESC };
         const pageLink = new PageLink(SEARCH_POPUP_PAGE_SIZE, 0, trimmed || null, sortOrder);
         const query = new MpItemVersionQuery(pageLink, { types: CROSS_TYPE_ITEM_TYPES });
-        // A failure must not end the subscription; the next keystroke replaces the empty answer.
+        // A failure must not end the subscription.
         return this.iotHubApiService.getPublishedVersions(query, { ignoreLoading: true }).pipe(
-          catchError(() => of({ data: [], totalElements: 0 } as PageData<MpItemVersionView>))
+          catchError(() => of(null as PageData<MpItemVersionView>))
         );
       })
     ).subscribe(page => {
-      this.searchResults = page.data ?? [];
-      this.searchTotal = page.totalElements ?? 0;
+      this.searchFailed = !page;
+      this.searchResults = page?.data ?? [];
+      this.searchTotal = page?.totalElements ?? 0;
       this.searchLoaded = true;
       this.searchLoading = false;
     });
