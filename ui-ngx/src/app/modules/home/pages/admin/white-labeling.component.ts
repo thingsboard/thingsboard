@@ -386,6 +386,12 @@ export class WhiteLabelingComponent extends PageComponent implements OnInit, Has
       });
   }
 
+  onShowConnectivityDialogChange(checked: boolean): void {
+    const control = this.wlSettings.get('hideConnectivityDialog');
+    control.setValue(!checked);
+    control.markAsDirty();
+  }
+
   private updatePaletteColors(): void {
     this.selectedPrimaryColor = this.colorFromPalette(this.wlSettings.get('paletteSettings').get('primaryPalette').value);
     this.selectedAccentColor = this.colorFromPalette(this.wlSettings.get('paletteSettings').get('accentPalette').value, false);
