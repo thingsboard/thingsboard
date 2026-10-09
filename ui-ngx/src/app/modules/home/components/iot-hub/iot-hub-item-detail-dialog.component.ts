@@ -7,7 +7,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { MpItemVersionView, cfTypeTranslations, cfTypeIcons, ruleChainTypeTranslations, widgetTypeTranslations, NodeInfo } from '@shared/models/iot-hub/iot-hub-version.models';
-import { getItemTypeIcon, ItemType, itemTypeTranslations } from '@shared/models/iot-hub/iot-hub-item.models';
+import { getItemTypeIcon, isCompactItemType, ItemType, itemTypeTranslations } from '@shared/models/iot-hub/iot-hub-item.models';
 import { getInstalledItemUrl, IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -49,6 +49,8 @@ export class TbIotHubItemDetailDialogComponent extends DialogComponent<TbIotHubI
   installedItem?: IotHubInstalledItem;
   installedItemsCount = 0;
   carouselImages: string[] = [];
+  // Pauses carousel autoplay, so the slide behind the open image stays the one it zooms back to
+  lightboxOpen = false;
   carouselIndex = 0;
   // Built-in marker rides on the version line rather than as a standalone badge.
   versionLabel: string;
@@ -87,9 +89,7 @@ export class TbIotHubItemDetailDialogComponent extends DialogComponent<TbIotHubI
   }
 
   isCompactLayout(): boolean {
-    return this.item.type === ItemType.CALCULATED_FIELD
-        || this.item.type === ItemType.ALARM_RULE
-        || this.item.type === ItemType.RULE_CHAIN;
+    return isCompactItemType(this.item.type);
   }
 
   getPreviewUrl(): string | null {
@@ -283,17 +283,35 @@ export class TbIotHubItemDetailDialogComponent extends DialogComponent<TbIotHubI
     this.dialogRef.close();
   }
 
+  // The item image leads, screenshots follow; a single entry renders as the plain preview image
   private buildCarouselImages(): void {
-    if (this.item.type !== ItemType.SOLUTION_TEMPLATE || !this.item.resources?.length) {
+    if (this.isCompactLayout()) {
       return;
     }
-    const screenshotResources = this.item.resources.filter(r => r.type === 'SCREENSHOT');
-    const allResources = screenshotResources.length > 0
-      ? screenshotResources
-      : this.item.resources.filter(r => r.type === 'ICON');
-    this.carouselImages = allResources.map(r =>
-      this.iotHubApiService.resolveResourceUrl(`/api/resources/${r.id}`)
-    );
+    const urls: string[] = [];
+    const previewUrl = this.getPreviewUrl();
+    if (previewUrl) {
+      urls.push(previewUrl);
+    }
+    // Skip the screenshot the preview already shows; by id, since item.image may carry a suffix
+    const previewResourceId = this.item.image?.match(/\/api\/resources\/([^/?#]+)/)?.[1];
+    for (const resource of this.item.resources || []) {
+      if (resource.type === 'SCREENSHOT' && resource.id !== previewResourceId) {
+        urls.push(this.resourceUrl(resource.id));
+      }
+    }
+    if (!urls.length) {
+      // Same order as resolveIotHubItemImageUrl: image, screenshot, then a single icon stand-in
+      const icon = this.item.resources?.find(resource => resource.type === 'ICON');
+      if (icon) {
+        urls.push(this.resourceUrl(icon.id));
+      }
+    }
+    this.carouselImages = urls;
+  }
+
+  private resourceUrl(id: string): string {
+    return this.iotHubApiService.resolveResourceUrl(`/api/resources/${id}`);
   }
 
   private loadReadme(): void {
