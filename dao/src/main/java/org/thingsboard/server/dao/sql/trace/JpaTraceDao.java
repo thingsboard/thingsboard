@@ -665,7 +665,7 @@ public class JpaTraceDao implements TraceDao {
                 "WHERE s.trace_id = " + outerAlias + ".trace_id " +
                 "AND s.tenant_id = " + outerAlias + ".tenant_id " +
                 "AND COALESCE(s.attributes_jsonb ->> '" + attributeKey + "', '') " +
-                (useLike ? "LIKE :" + paramName + " ESCAPE '\\\\'" : "= :" + paramName) +
+                (useLike ? "LIKE :" + paramName + " ESCAPE '\\'" : "= :" + paramName) +
                 ") ";
     }
 
