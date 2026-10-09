@@ -26,7 +26,6 @@ import org.thingsboard.server.dao.model.sql.RawDataEventEntity;
 import org.thingsboard.server.dao.model.sql.RuleChainDebugEventEntity;
 import org.thingsboard.server.dao.model.sql.RuleNodeDebugEventEntity;
 import org.thingsboard.server.dao.model.sql.StatisticsEventEntity;
-import org.thingsboard.server.dao.model.sql.ruleenginemonitoring.RuleNodeExecStatsEntity;
 import org.thingsboard.server.dao.model.sql.trace.SpanEntity;
 
 import javax.sql.DataSource;
@@ -63,8 +62,7 @@ public class DedicatedEventsJpaDaoConfig {
         return builder
                 .dataSource(eventsDataSource)
                 .packages(LifecycleEventEntity.class, StatisticsEventEntity.class, ErrorEventEntity.class, RuleNodeDebugEventEntity.class, RuleChainDebugEventEntity.class,
-                        ConverterDebugEventEntity.class, IntegrationDebugEventEntity.class, RawDataEventEntity.class, AuditLogEntity.class, CalculatedFieldDebugEventEntity.class, SpanEntity.class,
-                        RuleNodeExecStatsEntity.class)
+                        ConverterDebugEventEntity.class, IntegrationDebugEventEntity.class, RawDataEventEntity.class, AuditLogEntity.class, CalculatedFieldDebugEventEntity.class, SpanEntity.class)
                 .persistenceUnit(EVENTS_PERSISTENCE_UNIT)
                 .build();
     }
