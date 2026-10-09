@@ -38,7 +38,7 @@ import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.trace.TraceCoverageSetting;
-import org.thingsboard.server.dao.sql.trace.TraceCoverageSettingDao;
+import org.thingsboard.server.dao.sql.tracecoverage.TraceCoverageSettingDao;
 import org.thingsboard.server.exception.DataValidationException;
 
 @Service

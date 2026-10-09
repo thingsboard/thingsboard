@@ -55,7 +55,7 @@ public class JpaRuleEngineMonitoringDaoTest extends AbstractJpaDaoTest {
     @After
     public void cleanUp() {
         jdbcTemplate.execute("DROP TABLE IF EXISTS span, span_stats_leader, trace_summary, rule_node_exec_stats, " +
-                "rule_node_queue_stats, rule_node_queue_lag_stats, trace_group, trace_coverage_setting");
+                "rule_node_queue_stats, rule_node_queue_lag_stats, trace_group");
         jdbcTemplate.update("DELETE FROM rule_node WHERE rule_chain_id = ?", ruleChainId);
         jdbcTemplate.update("DELETE FROM rule_chain WHERE id = ?", ruleChainId);
         jdbcTemplate.update("DELETE FROM queue WHERE id = ?", queueId);

@@ -36,7 +36,7 @@ public class TraceSchemaUpgradeIntegrationTest extends AbstractControllerTest {
 
     private static final List<String> TRACE_TABLES = List.of(
             "span", "span_stats_leader", "trace_summary", "rule_node_exec_stats", "rule_node_queue_stats",
-            "rule_node_queue_lag_stats", "trace_group", "trace_coverage_setting");
+            "rule_node_queue_lag_stats", "trace_group");
 
     @Autowired
     private JdbcTemplate jdbcTemplate;

@@ -54,7 +54,7 @@ public class JpaTraceDaoTest extends AbstractJpaDaoTest {
     @After
     public void dropTraceSchema() {
         jdbcTemplate.execute("DROP TABLE IF EXISTS span, span_stats_leader, trace_summary, rule_node_exec_stats, " +
-                "rule_node_queue_stats, rule_node_queue_lag_stats, trace_group, trace_coverage_setting");
+                "rule_node_queue_stats, rule_node_queue_lag_stats, trace_group");
     }
 
     @Test

@@ -176,21 +176,3 @@ CREATE TABLE IF NOT EXISTS trace_group
     rule_node_path_metrics_jsonb    jsonb        NOT NULL DEFAULT '{}'::jsonb,
     CONSTRAINT trace_group_pkey PRIMARY KEY (bucket_time, tenant_id, path_id)
 );
-
--- Per-tenant trace coverage setting (singleton per tenant): drives pack-level trace-id injection
-CREATE TABLE IF NOT EXISTS trace_coverage_setting
-(
-    id                                    uuid        NOT NULL
-        CONSTRAINT trace_coverage_setting_pkey PRIMARY KEY,
-    created_time                          bigint      NOT NULL,
-    tenant_id                             uuid        NOT NULL,
-    enabled                               boolean     NOT NULL DEFAULT false,
-    traces_per_interval                   int         NOT NULL DEFAULT 10,
-    traces_per_pack                       int         NOT NULL DEFAULT 1,
-    interval_seconds                      integer     NOT NULL DEFAULT 1,
-    rule_engine_rotation                  boolean     NOT NULL DEFAULT true,
-    switch_period_seconds                 int         NOT NULL DEFAULT 60,
-    related_trace_sample_interval_seconds int         NOT NULL DEFAULT 1800,
-    message_payload_recording             varchar(16) NOT NULL DEFAULT 'NONE',
-    max_trace_groups_per_day              int         NOT NULL DEFAULT 10000
-);

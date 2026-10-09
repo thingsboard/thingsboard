@@ -28,15 +28,15 @@
  * DOES NOT CONVEY OR IMPLY ANY RIGHTS TO REPRODUCE, DISCLOSE OR DISTRIBUTE ITS CONTENTS,
  * OR TO MANUFACTURE, USE, OR SELL ANYTHING THAT IT  MAY DESCRIBE, IN WHOLE OR IN PART.
  */
-package org.thingsboard.server.dao.sql.trace;
+package org.thingsboard.server.dao.sql.tracecoverage;
 
-import org.thingsboard.server.common.data.trace.TraceCoverageSetting;
-import org.thingsboard.server.dao.Dao;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.thingsboard.server.dao.model.sql.tracecoverage.TraceCoverageSettingEntity;
 
 import java.util.UUID;
 
-public interface TraceCoverageSettingDao extends Dao<TraceCoverageSetting> {
-    TraceCoverageSetting findByTenantId(UUID tenantId);
+public interface TraceCoverageSettingRepository extends JpaRepository<TraceCoverageSettingEntity, UUID> {
+    TraceCoverageSettingEntity findByTenantId(UUID tenantId);
 
-    void removeByTenantId(UUID tenantId);
+    void deleteByTenantId(UUID tenantId);
 }
