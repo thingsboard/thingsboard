@@ -1,0 +1,63 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+@import "./iot-hub-common";
+
+// Matches the type pages' filter panel, minus its rail indent.
+.tb-iot-hub-facet-panel.mat-expansion-panel {
+  box-shadow: none;
+  border-radius: 0;
+  background: transparent;
+
+  // Text is indented by --tb-facet-indent (set by the host); the rules between facets are not.
+  .mat-expansion-panel-header {
+    padding: 8px 16px 8px var(--tb-facet-indent, 16px);
+    height: 48px;
+    min-height: 48px;
+  }
+
+  ::ng-deep .mat-expansion-panel-header-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: rgba(0, 0, 0, 0.87);
+  }
+
+  ::ng-deep .mat-expansion-panel-body {
+    padding: 0 8px 8px var(--tb-facet-indent, 16px);
+  }
+
+  mat-checkbox {
+    display: block;
+    overflow: hidden;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.04);
+    }
+  }
+
+  .tb-iot-hub-facet-items {
+    // Capped only when long enough to scroll.
+    &.scrollable {
+      max-height: 280px;
+      overflow-y: auto;
+    }
+
+    @include tb-iot-hub-hover-scrollbar;
+  }
+
+  .tb-iot-hub-facet-search {
+    @include tb-iot-hub-search-container;
+    margin: 4px 8px 8px 0;
+
+    mat-icon {
+      @include tb-iot-hub-search-icon(rgba(0, 0, 0, 0.54));
+    }
+
+    input {
+      @include tb-iot-hub-search-input-text(0.2px);
+    }
+
+    .tb-iot-hub-facet-search-clear.mat-mdc-icon-button {
+      @include tb-iot-hub-search-clear;
+    }
+  }
+}
