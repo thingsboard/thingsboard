@@ -144,6 +144,8 @@ public class ThingsboardInstallService {
                     databaseEntitiesUpgradeService.upgradeDatabase(updateFromCE);
                     // All new tables that do not have any data will be automatically created here.
                     entityDatabaseSchemaService.createDatabaseSchema(false);
+                    // Trace tables live in their own script (and in the events DB when it is dedicated); the script is idempotent.
+                    sqlTraceDatabaseSchemaService.createDatabaseSchema(false);
                     // Re-create all views, functions.
                     entityDatabaseSchemaService.createOrUpdateViewsAndFunctions();
                     entityDatabaseSchemaService.createOrUpdateDeviceInfoView(persistToTelemetry);
