@@ -434,6 +434,8 @@ public class TraceMessageService {
         String rootSpanId = IdGenerator.random().generateSpanId();
 
         TbMsgMetaData metaData = tbMsg.getMetaData();
+        // Trace keys left by an earlier trace (e.g. a stale payload flag) must not leak into the new one.
+        TraceUtils.stripTraceMetadata(metaData);
         metaData.putValue(DataConstants.TRACE_ID, traceId);
         metaData.putValue(DataConstants.TRACE_PARENT, TraceUtils.buildTraceparent(traceId, rootSpanId, TraceFlags.getSampled().asHex()));
         metaData.putValue(DataConstants.SPAN_ON_RETRY, rootSpanId);
@@ -486,7 +488,12 @@ public class TraceMessageService {
         TraceUtils.putTraceMetaIfMissing(tbMsg.getMetaData(), DataConstants.TRACE_ID, retryMetadata.getTraceId());
         TraceUtils.putTraceMetaIfMissing(tbMsg.getMetaData(), DataConstants.TRACE_PARENT, retryMetadata.getTraceparent());
         TraceUtils.putTraceMetaIfMissing(tbMsg.getMetaData(), DataConstants.SPAN_ON_RETRY, retryMetadata.getSpanOnRetry());
-        TraceUtils.putTraceMetaIfMissing(tbMsg.getMetaData(), DataConstants.TRACE_RECORD_MSG_PAYLOAD, retryMetadata.getTraceRecordMsgPayload());
+        // The flag decided when the trace started wins over whatever the redelivered message carries.
+        if (retryMetadata.getTraceRecordMsgPayload() != null) {
+            tbMsg.getMetaData().putValue(DataConstants.TRACE_RECORD_MSG_PAYLOAD, retryMetadata.getTraceRecordMsgPayload());
+        } else {
+            tbMsg.getMetaData().getData().remove(DataConstants.TRACE_RECORD_MSG_PAYLOAD);
+        }
         tbMsg.setTraceAuthorized(true);
     }
 
