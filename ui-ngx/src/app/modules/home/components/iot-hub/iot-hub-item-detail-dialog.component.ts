@@ -7,7 +7,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { MpItemVersionView, cfTypeTranslations, cfTypeIcons, ruleChainTypeTranslations, widgetTypeTranslations, NodeInfo } from '@shared/models/iot-hub/iot-hub-version.models';
-import { getItemTypeIcon, ItemType, itemTypeTranslations } from '@shared/models/iot-hub/iot-hub-item.models';
+import { getItemTypeIcon, isCompactItemType, ItemType, itemTypeTranslations } from '@shared/models/iot-hub/iot-hub-item.models';
 import { getInstalledItemUrl, IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -87,9 +87,7 @@ export class TbIotHubItemDetailDialogComponent extends DialogComponent<TbIotHubI
   }
 
   isCompactLayout(): boolean {
-    return this.item.type === ItemType.CALCULATED_FIELD
-        || this.item.type === ItemType.ALARM_RULE
-        || this.item.type === ItemType.RULE_CHAIN;
+    return isCompactItemType(this.item.type);
   }
 
   getPreviewUrl(): string | null {
