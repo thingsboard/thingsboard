@@ -30,29 +30,19 @@
  */
 package org.thingsboard.server.dao.sql.ruleenginemonitoring;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.dao.config.DedicatedEventsDataSource;
 import org.thingsboard.server.dao.util.SqlDao;
-
-import static org.thingsboard.server.dao.config.DedicatedEventsJpaDaoConfig.EVENTS_JDBC_TEMPLATE;
-import static org.thingsboard.server.dao.config.DedicatedEventsJpaDaoConfig.EVENTS_PERSISTENCE_UNIT;
 
 @DedicatedEventsDataSource
 @Component
 @SqlDao
 public class DedicatedJpaRuleEngineMonitoringDao extends JpaRuleEngineMonitoringDao {
-    public DedicatedJpaRuleEngineMonitoringDao(@Qualifier(EVENTS_JDBC_TEMPLATE) JdbcTemplate jdbcTemplate,
-                                               @Qualifier("jdbcTemplate") JdbcTemplate mainJdbcTemplate) {
-        super(jdbcTemplate, mainJdbcTemplate);
+
+    public DedicatedJpaRuleEngineMonitoringDao(DedicatedRuleEngineStatsInsertRepository statsInsertRepository,
+                                               DedicatedRuleEngineStatsQueryRepository statsQueryRepository,
+                                               RuleEngineMonitoringLookupRepository lookupRepository) {
+        super(statsInsertRepository, statsQueryRepository, lookupRepository);
     }
 
-    @PersistenceContext(unitName = EVENTS_PERSISTENCE_UNIT)
-    @Override
-    public void setEntityManager(EntityManager entityManager) {
-        this.entityManager = entityManager;
-    }
 }
