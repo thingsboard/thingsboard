@@ -13,7 +13,7 @@
       </div>
     }
     <div class="flex min-w-0 flex-1 flex-col gap-2">
-      <span class="dlg-title">{{ item.name }}</span>
+      <span class="dlg-title">{{ itemTitle }}</span>
       <div class="dlg-subtitle">
         <span class="dlg-subtitle-group">
           <tb-icon class="dlg-subtitle-icon">{{ getTypeIcon() }}</tb-icon>
@@ -86,7 +86,7 @@
           </div>
         </div>
       } @else {
-        <!-- Widget/Dashboard/Device/Solution: image + description side by side -->
+        <!-- Widget/Solution: image + description side by side -->
         <div class="flex gap-6 lt-md:flex-col">
           <div class="dlg-preview"
                [class.dlg-preview-carousel]="carouselImages.length > 1"
@@ -163,7 +163,7 @@
     <!-- Categories & Use Cases / Device metadata -->
     <div class="dlg-meta-bar">
       <div class="dlg-divider"></div>
-      <div class="dlg-meta" [class.dlg-meta-4-col]="item.type === ItemType.SOLUTION_TEMPLATE || item.type === ItemType.DASHBOARD">
+      <div class="dlg-meta" [class.dlg-meta-4-col]="item.type === ItemType.SOLUTION_TEMPLATE">
         @if (showCreator) {
           <div class="dlg-meta-group dlg-meta-creator-section">
             <span class="dlg-meta-label">{{ 'iot-hub.creator' | translate }}</span>
