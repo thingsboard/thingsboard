@@ -6,7 +6,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
-import jnr.ffi.annotations.In;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.awaitility.core.ConditionTimeoutException;
@@ -712,28 +711,28 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         List<LwM2MBootstrapServerCredential> bootstrap = new ArrayList<>();
         switch (bootstrapConfigType) {
             case BOTH:
-                bootstrap.add(getBootstrapServerCredentialNoSec(false));
-                bootstrap.add(getBootstrapServerCredentialNoSec(true));
+                bootstrap.add(getBootstrapSectionServerCredentialNoSec(false));
+                bootstrap.add(getBootstrapSectionServerCredentialNoSec(true));
                 break;
             case BOOTSTRAP_ONLY:
-                bootstrap.add(getBootstrapServerCredentialNoSec(true));
+                bootstrap.add(getBootstrapSectionServerCredentialNoSec(true));
                 break;
             case LWM2M_ONLY:
-                bootstrap.add(getBootstrapServerCredentialNoSec(false));
+                bootstrap.add(getBootstrapSectionServerCredentialNoSec(false));
                 break;
             case NONE:
         }
         return bootstrap;
     }
 
-    protected AbstractLwM2MBootstrapServerCredential getBootstrapServerCredentialNoSec(boolean isBootstrap) {
-        AbstractLwM2MBootstrapServerCredential bootstrapServerCredential = new NoSecLwM2MBootstrapServerCredential();
-        bootstrapServerCredential.setServerPublicKey("");
-        bootstrapServerCredential.setShortServerId(isBootstrap ? null : shortServerId);
-        bootstrapServerCredential.setBootstrapServerIs(isBootstrap);
-        bootstrapServerCredential.setHost(isBootstrap ? LWM2M_BOOTSTRAP_HOST : LWM2M_HOST);
-        bootstrapServerCredential.setPort(isBootstrap ? LWM2M_BOOTSTRAP_PORT : LWM2M_PORT);
-        return bootstrapServerCredential;
+    protected AbstractLwM2MBootstrapServerCredential getBootstrapSectionServerCredentialNoSec(boolean isBootstrap) {
+        AbstractLwM2MBootstrapServerCredential bootstrapSectionServerCredential = new NoSecLwM2MBootstrapServerCredential();
+        bootstrapSectionServerCredential.setServerPublicKey("");
+        bootstrapSectionServerCredential.setShortServerId(isBootstrap ? null : shortServerId);
+        bootstrapSectionServerCredential.setBootstrapServerIs(isBootstrap);
+        bootstrapSectionServerCredential.setHost(isBootstrap ? LWM2M_BOOTSTRAP_HOST : LWM2M_HOST);
+        bootstrapSectionServerCredential.setPort(isBootstrap ? LWM2M_BOOTSTRAP_PORT : LWM2M_PORT);
+        return bootstrapSectionServerCredential;
     }
 
     protected LwM2MDeviceCredentials getDeviceCredentialsNoSec(LwM2MClientCredential clientCredentials) {

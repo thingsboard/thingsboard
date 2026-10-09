@@ -3,6 +3,8 @@
 -- SPDX-License-Identifier: Apache-2.0
 --
 
+-- Runs before schema-entities.sql and the LTS schema migrations: reference only tables a released version already has.
+
 -- UPDATE TENANT PROFILE CONFIGURATION START
 
 UPDATE tenant_profile

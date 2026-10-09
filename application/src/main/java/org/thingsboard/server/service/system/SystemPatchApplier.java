@@ -93,19 +93,7 @@ public class SystemPatchApplier {
         try {
             String dbVersion = schemaSettingsService.getDbSchemaVersion();
             String packageVersion = schemaSettingsService.getPackageSchemaVersion();
-            ltsMigrationService.applyMigrations(dbVersion, packageVersion);
-
-            updateSqlViews();
-            log.info("Updated sql database views");
-
-            WidgetTypeStats widgetStats = updateWidgetTypes();
-            log.info("System widget types: {} created, {} updated", widgetStats.created(), widgetStats.updated());
-
-            int updatedBundles = updateWidgetBundles();
-            log.info("System widget bundles: {} updated", updatedBundles);
-
-            int createdImages = createMissingSystemImages();
-            log.info("Created {} new system images", createdImages);
+            ltsMigrationService.applyMigrations(dbVersion, packageVersion, this::syncSystemData);
 
             schemaSettingsService.updateSchemaVersion();
             log.info("System data patch update completed successfully");
@@ -113,6 +101,21 @@ public class SystemPatchApplier {
         } finally {
             releaseAdvisoryLock();
         }
+    }
+
+    // Views are rebuilt with SELECT * over tables the migrations may have altered, so this must run after them.
+    private void syncSystemData() {
+        updateSqlViews();
+        log.info("Updated sql database views");
+
+        WidgetTypeStats widgetStats = updateWidgetTypes();
+        log.info("System widget types: {} created, {} updated", widgetStats.created(), widgetStats.updated());
+
+        int updatedBundles = updateWidgetBundles();
+        log.info("System widget bundles: {} updated", updatedBundles);
+
+        int createdImages = createMissingSystemImages();
+        log.info("Created {} new system images", createdImages);
     }
 
     private boolean isVersionChanged() {

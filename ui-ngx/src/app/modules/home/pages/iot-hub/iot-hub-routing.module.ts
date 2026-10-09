@@ -41,16 +41,6 @@ const routes: Routes = [
         }
       },
       {
-        path: 'dashboards',
-        component: TbIotHubItemsPageComponent,
-        data: {
-          auth: [Authority.TENANT_ADMIN],
-          title: 'item.type-dashboard-plural',
-          itemType: 'DASHBOARD',
-          breadcrumb: { label: 'item.type-dashboard-plural', icon: 'dashboard' }
-        }
-      },
-      {
         path: 'solution-templates',
         component: TbIotHubItemsPageComponent,
         data: {
