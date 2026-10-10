@@ -66,6 +66,11 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     @Override
     public void onUpdate(TbActorCtx context) throws Exception {
         RuleNode newRuleNode = systemContext.getRuleChainService().findRuleNodeById(tenantId, entityId);
+        if (newRuleNode == null) {
+            // The rule node has just been deleted; the DELETED lifecycle message that follows stops this actor.
+            log.debug("[{}][{}] Rule node no longer exists. Skipping update", tenantId, entityId);
+            return;
+        }
         if (isMyNodePartition(newRuleNode)) {
             this.info = new RuleNodeInfo(entityId, ruleChainName, getName(newRuleNode));
             replaceSecretUsages(newRuleNode);
