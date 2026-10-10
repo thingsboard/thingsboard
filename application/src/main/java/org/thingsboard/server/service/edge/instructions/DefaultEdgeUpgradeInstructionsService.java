@@ -15,6 +15,7 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.dao.attributes.AttributesService;
+import org.thingsboard.server.dao.edge.EdgeEditionStyle;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.install.InstallScripts;
 
@@ -83,6 +84,8 @@ public class DefaultEdgeUpgradeInstructionsService extends BaseEdgeInstallUpgrad
         StringBuilder result = new StringBuilder(readFile(resolveFile("docker", "upgrade_preparing.md")));
         while (edgeUpgradeInfo.getNextEdgeVersion() != null && !platformEdgeVersion.equals(currentEdgeVersion)) {
             String edgeVersion = edgeUpgradeInfo.getNextEdgeVersion();
+            EdgeEditionStyle edition = EdgeEditionStyle.getEdgeEditionStyle(edgeVersion);
+            EdgeEditionStyle fromEdition = EdgeEditionStyle.getEdgeEditionStyle(currentEdgeVersion);
             String dockerUpgradeInstructions = readFile(resolveFile("docker", "instructions.md"));
             if (edgeUpgradeInfo.isRequiresUpdateDb()) {
                 String upgradeDb = readFile(resolveFile("docker", "upgrade_db.md"));
@@ -90,14 +93,16 @@ public class DefaultEdgeUpgradeInstructionsService extends BaseEdgeInstallUpgrad
             } else {
                 dockerUpgradeInstructions = dockerUpgradeInstructions.replace("${UPGRADE_DB}", "");
             }
-            dockerUpgradeInstructions = dockerUpgradeInstructions.replace("${TB_EDGE_VERSION}", edgeVersion + "EDGEPE");
-            dockerUpgradeInstructions = dockerUpgradeInstructions.replace("${FROM_TB_EDGE_VERSION}", currentEdgeVersion + "EDGEPE");
+            dockerUpgradeInstructions = edition.replacePlaceholders(dockerUpgradeInstructions);
+            dockerUpgradeInstructions = dockerUpgradeInstructions.replace("${TB_EDGE_VERSION}", edgeVersion + edition.getVersionSuffix());
+            dockerUpgradeInstructions = dockerUpgradeInstructions.replace("${FROM_TB_EDGE_VERSION}", currentEdgeVersion + fromEdition.getVersionSuffix());
             currentEdgeVersion = edgeVersion;
             edgeUpgradeInfo = upgradeVersionHashMap.get(edgeUpgradeInfo.getNextEdgeVersion());
             result.append(dockerUpgradeInstructions);
         }
-        String startService = readFile(resolveFile("docker", "start_service.md"));
-        startService = startService.replace("${TB_EDGE_VERSION}", currentEdgeVersion + "EDGEPE");
+        EdgeEditionStyle edition = EdgeEditionStyle.getEdgeEditionStyle(currentEdgeVersion);
+        String startService = edition.replacePlaceholders(readFile(resolveFile("docker", "start_service.md")));
+        startService = startService.replace("${TB_EDGE_VERSION}", currentEdgeVersion + edition.getVersionSuffix());
         result.append(startService);
         return new EdgeInstructions(result.toString());
     }
@@ -112,6 +117,7 @@ public class DefaultEdgeUpgradeInstructionsService extends BaseEdgeInstallUpgrad
         StringBuilder result = new StringBuilder(upgrade_preparing);
         while (edgeUpgradeInfo.getNextEdgeVersion() != null && !platformEdgeVersion.equals(currentEdgeVersion)) {
             String edgeVersion = edgeUpgradeInfo.getNextEdgeVersion();
+            EdgeEditionStyle edition = EdgeEditionStyle.getEdgeEditionStyle(edgeVersion);
             String linuxUpgradeInstructions = readFile(resolveFile(os, "instructions.md"));
             if (edgeUpgradeInfo.isRequiresUpdateDb()) {
                 String upgradeDb = readFile(resolveFile("upgrade_db.md"));
@@ -119,9 +125,10 @@ public class DefaultEdgeUpgradeInstructionsService extends BaseEdgeInstallUpgrad
             } else {
                 linuxUpgradeInstructions = linuxUpgradeInstructions.replace("${UPGRADE_DB}", "");
             }
+            linuxUpgradeInstructions = edition.replacePlaceholders(linuxUpgradeInstructions);
             linuxUpgradeInstructions = linuxUpgradeInstructions.replace("${TB_EDGE_TAG}", getTagVersion(edgeVersion));
             linuxUpgradeInstructions = linuxUpgradeInstructions.replace("${FROM_TB_EDGE_TAG}", getTagVersion(currentEdgeVersion));
-            linuxUpgradeInstructions = linuxUpgradeInstructions.replace("${TB_EDGE_VERSION}", edgeVersion);
+            linuxUpgradeInstructions = linuxUpgradeInstructions.replace("${TB_EDGE_VERSION}", edgeVersion + edition.getVersionSuffix());
             linuxUpgradeInstructions = linuxUpgradeInstructions.replace("${FROM_TB_EDGE_VERSION}", currentEdgeVersion);
             currentEdgeVersion = edgeVersion;
             edgeUpgradeInfo = upgradeVersionHashMap.get(edgeUpgradeInfo.getNextEdgeVersion());

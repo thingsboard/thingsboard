@@ -8,11 +8,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.server.common.data.agent.AgentApplicationType;
 import org.thingsboard.server.dao.sql.agent.AppTemplateRegistry;
 import org.thingsboard.server.service.agent.template.AppTemplateMaterializer.AppVersionDescriptor;
 import org.thingsboard.server.service.install.ProjectInfo;
 import org.thingsboard.server.service.sync.GitSyncService;
+import org.thingsboard.server.service.sync.vc.GitRepository.FileType;
+import org.thingsboard.server.service.sync.vc.GitRepository.RepoFile;
 
 import java.util.Arrays;
 import java.util.List;
@@ -135,15 +138,85 @@ class AgentAppTemplateSyncServiceTest {
     }
 
     @Test
-    void appendVersionSuffixRewritesBothVersionAndNextVersion() {
-        List<AppVersionDescriptor> result = AgentAppTemplateSyncService.appendVersionSuffix(List.of(
+    void appendEdgeVersionSuffixRewritesBothVersionAndNextVersion() {
+        List<AppVersionDescriptor> result = AgentAppTemplateSyncService.appendEdgeVersionSuffix(List.of(
                 new AppVersionDescriptor("4.1.0", "4.2.0", true),
-                new AppVersionDescriptor("4.2.0", null, false)), "EDGEPE");
+                new AppVersionDescriptor("4.2.0", null, false)));
 
         assertThat(result).extracting(AppVersionDescriptor::getVersion)
                 .containsExactly("4.1.0EDGEPE", "4.2.0EDGEPE");
         assertThat(result.get(0).getNextVersion()).isEqualTo("4.2.0EDGEPE");
         assertThat(result.get(0).isRequiresUpdateDb()).isTrue();
         assertThat(result.get(1).getNextVersion()).isNull();
+    }
+
+    @Test
+    void appendEdgeVersionSuffixSwitchesToCeStyleFrom4401() {
+        List<AppVersionDescriptor> result = AgentAppTemplateSyncService.appendEdgeVersionSuffix(List.of(
+                new AppVersionDescriptor("4.3.1.6", "4.4.0", true),
+                new AppVersionDescriptor("4.4.0", "4.4.0.1", false),
+                new AppVersionDescriptor("4.4.0.1", "4.4.1", false),
+                new AppVersionDescriptor("4.4.1", null, false)));
+
+        assertThat(result).extracting(AppVersionDescriptor::getVersion)
+                .containsExactly("4.3.1.6EDGEPE", "4.4.0EDGEPE", "4.4.0.1EDGE", "4.4.1EDGE");
+        assertThat(result).extracting(AppVersionDescriptor::getNextVersion)
+                .containsExactly("4.4.0EDGEPE", "4.4.0.1EDGE", "4.4.1EDGE", null);
+    }
+
+    @Test
+    void baseTemplatesAreUsedBelowEverySinceFolder() {
+        AgentAppTemplateSyncService service = serviceWithTemplateFiles("4.4.0PE");
+
+        assertThat(service.getTemplateFiles()).extracting(RepoFile::path).containsExactlyInAnyOrder(
+                "templates/template-EDGE-DOCKER_COMPOSE.json",
+                "templates/template-GATEWAY-DOCKER_COMPOSE.json");
+    }
+
+    @Test
+    void sinceFolderReplacesOnlyTheTemplatesItContains() {
+        AgentAppTemplateSyncService service = serviceWithTemplateFiles("4.4.0.1PE-SNAPSHOT");
+
+        assertThat(service.getTemplateFiles()).extracting(RepoFile::path).containsExactlyInAnyOrder(
+                "templates/since/4.4.0.1/template-EDGE-DOCKER_COMPOSE.json",
+                "templates/template-GATEWAY-DOCKER_COMPOSE.json");
+    }
+
+    @Test
+    void versionWithoutItsOwnSinceFolderUsesTheNewestLowerOne() {
+        AgentAppTemplateSyncService service = serviceWithTemplateFiles("4.4.1");
+
+        assertThat(service.getTemplateFiles()).extracting(RepoFile::path).containsExactlyInAnyOrder(
+                "templates/since/4.4.0.1/template-EDGE-DOCKER_COMPOSE.json",
+                "templates/template-GATEWAY-DOCKER_COMPOSE.json");
+    }
+
+    @Test
+    void newestApplicableSinceFolderWinsPerTemplate() {
+        AgentAppTemplateSyncService service = serviceWithTemplateFiles("4.10.0");
+
+        assertThat(service.getTemplateFiles()).extracting(RepoFile::path).containsExactlyInAnyOrder(
+                "templates/since/4.9/template-EDGE-DOCKER_COMPOSE.json",
+                "templates/since/4.5/template-GATEWAY-DOCKER_COMPOSE.json");
+    }
+
+    private AgentAppTemplateSyncService serviceWithTemplateFiles(String platformVersion) {
+        AgentAppTemplateSyncService service = newService(platformVersion);
+        ReflectionTestUtils.setField(service, "basePath", "templates");
+        when(gitSyncService.listFiles("agent-app-templates", "templates", 1, FileType.FILE)).thenReturn(List.of(
+                file("templates/template-EDGE-DOCKER_COMPOSE.json"),
+                file("templates/template-GATEWAY-DOCKER_COMPOSE.json"),
+                file("templates/README.md")));
+        when(gitSyncService.listFiles("agent-app-templates", "templates/since", 3, FileType.FILE)).thenReturn(List.of(
+                file("templates/since/4.9/template-EDGE-DOCKER_COMPOSE.json"),
+                file("templates/since/4.4.0.1/template-EDGE-DOCKER_COMPOSE.json"),
+                file("templates/since/4.5/template-GATEWAY-DOCKER_COMPOSE.json"),
+                file("templates/since/4.11/template-GATEWAY-DOCKER_COMPOSE.json"),
+                file("templates/since/draft/template-EDGE-DOCKER_COMPOSE.json")));
+        return service;
+    }
+
+    private static RepoFile file(String path) {
+        return new RepoFile(path, path.substring(path.lastIndexOf('/') + 1), FileType.FILE);
     }
 }

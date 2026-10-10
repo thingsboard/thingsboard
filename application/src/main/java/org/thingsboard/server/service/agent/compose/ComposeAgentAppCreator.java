@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.RegexUtils;
+import org.thingsboard.common.util.TbVersionUtils;
 import org.thingsboard.server.common.data.agent.Agent;
 import org.thingsboard.server.common.data.agent.AgentAppEventActionType;
 import org.thingsboard.server.common.data.agent.AgentAppProfileRelationInfo;
@@ -24,6 +25,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.agent.AgentAppProfileService;
 import org.thingsboard.server.dao.agent.AgentAppRelationService;
 import org.thingsboard.server.dao.agent.AgentService;
+import org.thingsboard.server.dao.edge.EdgeEditionStyle;
 import org.thingsboard.server.gen.agent.v1.ComposeState;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.agent.AgentAppProvisioner;
@@ -103,6 +105,13 @@ public class ComposeAgentAppCreator {
     private AgentAppTemplate resolveTemplate(ComposeInfo composeInfo) {
         AgentAppTemplate byAppType = templateService.findByAppTypeAndConfigTypeAndCurrentVersion(
                 composeInfo.appType(), AgentAppConfigType.DOCKER_COMPOSE, composeInfo.version());
+        if (byAppType == null && composeInfo.appType() == AgentApplicationType.EDGE && composeInfo.version() != null
+                && TbVersionUtils.compare(TbVersionUtils.extractStartingDigits(composeInfo.version()), "4.4") >= 0) {
+            // from 4.4 the same edge release may be published under both edition styles (e.g. 4.4.0EDGEPE and the CE-style 4.4.0EDGE),
+            // while its template is registered under one of them only; below 4.4 a CE-style tag is Community Edge and stays GENERIC
+            byAppType = templateService.findByAppTypeAndConfigTypeAndCurrentVersion(AgentApplicationType.EDGE,
+                    AgentAppConfigType.DOCKER_COMPOSE, EdgeEditionStyle.withVersionSuffix(TbVersionUtils.extractStartingDigits(composeInfo.version())));
+        }
         if (byAppType != null) {
             return byAppType;
         }
