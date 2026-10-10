@@ -60,7 +60,8 @@ import {
   RuleNodeComponentDescriptor,
   RuleNodeType,
   ruleNodeTypeDescriptors,
-  ruleNodeTypesLibrary
+  ruleNodeTypesLibrary,
+  toStandardizedLinkLabels
 } from '@shared/models/rule-node.models';
 import { FcRuleNodeModel, FcRuleNodeTypeModel, RuleChainMenuContextInfo } from './rulechain-page.models';
 import { RuleChainService } from '@core/http/rule-chain.service';
@@ -84,7 +85,6 @@ import { HttpStatusCode } from '@angular/common/http';
 import { TbContextMenuEvent } from '@shared/models/jquery-event.models';
 import { EntityDebugSettings } from '@shared/models/entity.models';
 import Timeout = NodeJS.Timeout;
-import { DomSanitizer } from '@angular/platform-browser';
 
 @Component({
     selector: 'tb-rulechain-page',
@@ -152,6 +152,11 @@ export class RuleChainPageComponent extends PageComponent
   isEditingRuleNodeLink = false;
   editingRuleNodeLinkIndex = -1;
 
+  get editingRuleNodeLinkTitle(): string {
+    return this.editingRuleNodeLink ?
+      toStandardizedLinkLabels(this.editingRuleNodeLink.labels ?? [], this.editingRuleNodeLinkLabels) : '';
+  }
+
   hotKeys: Hotkey[] = [];
 
   enableHotKeys = true;
@@ -207,6 +212,7 @@ export class RuleChainPageComponent extends PageComponent
           const allowCustomLabels = this.ruleChainService.ruleNodeAllowCustomLinks(sourceNode.component);
           const sourceRuleChainId = this.ruleChainService.ruleNodeSourceRuleChainId(sourceNode.component, sourceNode.configuration);
           this.enableHotKeys = false;
+
           return this.addRuleNodeLink(edge, labels, allowCustomLabels, sourceRuleChainId).pipe(
             tap(() => {
                 this.enableHotKeys = true;
@@ -843,15 +849,18 @@ export class RuleChainPageComponent extends PageComponent
   }
 
   private prepareEdgeContextMenu(edge: FcRuleEdge): RuleChainMenuContextInfo {
+    const sourceNode: FcRuleNode = this.ruleChainCanvas.modelService.nodes.getNodeByConnectorId(edge.source);
+    const isFromInput = sourceNode.component.type === RuleNodeType.INPUT;
+    const title = isFromInput ? edge.label :
+      toStandardizedLinkLabels(edge.labels ?? [], this.ruleChainService.getRuleNodeSupportedLinks(sourceNode.component));
     const contextInfo: RuleChainMenuContextInfo = {
       headerClass: 'tb-link-header',
       icon: 'trending_flat',
-      title: edge.label,
+      title,
       subtitle: this.translate.instant('rulenode.link'),
       menuItems: []
     };
-    const sourceNode: FcRuleNode = this.ruleChainCanvas.modelService.nodes.getNodeByConnectorId(edge.source);
-    if (sourceNode.component.type !== RuleNodeType.INPUT) {
+    if (!isFromInput) {
       contextInfo.menuItems.push(
         {
           action: () => {
@@ -1353,7 +1362,7 @@ export class RuleChainPageComponent extends PageComponent
           details = this.sanitizer.sanitize(SecurityContext.HTML, node.additionalInfo.description);
         }
       }
-      
+
       name = this.sanitizer.sanitize(SecurityContext.HTML, name);
       desc = this.sanitizer.sanitize(SecurityContext.HTML, desc);
 
@@ -1734,7 +1743,7 @@ export class RuleChainPageComponent extends PageComponent
 
 export interface AddRuleNodeLinkDialogData {
   link: FcRuleEdge;
-  labels: {[label: string]: LinkLabel};
+  labels: { [label: string]: LinkLabel };
   allowCustomLabels: boolean;
   sourceRuleChainId: string;
 }
