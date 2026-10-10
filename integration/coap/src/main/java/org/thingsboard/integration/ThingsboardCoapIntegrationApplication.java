@@ -5,13 +5,16 @@ package org.thingsboard.integration;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Import;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.thingsboard.server.common.transport.service.CertificateReloadManager;
 
 import java.util.Arrays;
 
 @SpringBootApplication
 @EnableAsync
 @ComponentScan({"org.thingsboard.integration", "org.thingsboard.script.api", "org.thingsboard.server.coapserver"})
+@Import(CertificateReloadManager.class)
 public class ThingsboardCoapIntegrationApplication {
 
     private static final String SPRING_CONFIG_NAME_KEY = "--spring.config.name";

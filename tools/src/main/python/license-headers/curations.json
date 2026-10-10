@@ -797,7 +797,7 @@
       "path": "integration/coap/src/main/java/org/thingsboard/integration/ThingsboardCoapIntegrationApplication.java",
       "header": "busl",
       "reason": "Launch, logging or runtime scaffolding for a PE service. Maintainer explicitly resolved this PE module scaffolding as PE-only; matching CE startup/logging conventions do not override that decision. Reviewed similarity candidate transport/http/src/main/java/org/thingsboard/server/http/ThingsboardHttpTransportApplication.java at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 98be09069a487befab217c9b7c036fc6132fc97b).",
-      "contentHash": "sha256:691ed1e7c96845e81ccfdcf522c836794f4045180c74d50be1613122517397c4"
+      "contentHash": "sha256:d603f73f715f82368dcfd54325b95c653684077d49afeafb69b9117b7196dfbc"
     },
     {
       "path": "integration/coap/src/main/resources/logback.xml",
