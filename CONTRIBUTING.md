@@ -155,5 +155,12 @@ Open a pull request against `master`. Fill out the pull request template, and ma
 - `mvn license:format` has been run, so new files carry the correct license header.
 - The change builds cleanly: `mvn -pl <module> -am -DskipTests -Dpkg.skip=true test-compile` at minimum for the modules you touched.
 
-By contributing, you agree that your contribution is licensed under this project's license (see
-[LICENSE](./LICENSE)).
+## Contributor License Agreement
+
+Before we can merge your first pull request, you accept the ThingsBoard Contributor License Agreement (CLA), version 1.0. It is a one-time step: a CLA check on your pull request shows a link, you read the Agreement, fill in your name and email, and click "I agree". The check turns green and your later pull requests to any ThingsBoard repository need no further action.
+
+The Agreement is short and based on the Apache Software Foundation Individual CLA. In summary: you keep ownership of your contribution; you give ThingsBoard and the recipients of ThingsBoard software a copyright and patent license to it; you confirm it is your own work (or that your employer allows you to contribute it). The full text is at https://thingsboard.io/legal/contributor-license-agreement/ and in [CLA.md](./CLA.md) in this repository.
+
+If you contribute on behalf of your employer, fill in the company field when you accept. If your company prefers a signed corporate agreement instead of the click-through, write to legal@thingsboard.io.
+
+Pull requests from automation accounts (dependabot, renovate, github-actions) are exempt.
