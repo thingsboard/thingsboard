@@ -70,8 +70,10 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements LwM2MBootstrapTask
         }
         if (previousResponse == null && shouldStartWithDiscover(configNew)) {
             Tasks tasks = new Tasks();
-            tasks.requestsToSend = new ArrayList<>(1);
-            tasks.requestsToSend.add(new BootstrapDiscoverRequest());
+            tasks.requestsToSend = new ArrayList<>(3);
+            tasks.requestsToSend.add(new BootstrapDiscoverRequest("/0"));
+            tasks.requestsToSend.add(new BootstrapDiscoverRequest("/1"));
+            tasks.requestsToSend.add(new BootstrapDiscoverRequest("/2"));
             tasks.last = false;
             return tasks;
         } else {
