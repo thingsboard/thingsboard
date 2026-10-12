@@ -11,6 +11,7 @@ import org.eclipse.leshan.server.security.SecurityInfo;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2mCredentialsSecurityInfoValidator;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MSecurityInfo;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2MAuthException;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2MTransportUnavailableException;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -59,10 +60,21 @@ public class TbLwM2mSecurityStore implements TbMainSecurityStore {
 
     @Override
     public SecurityInfo getByIdentity(String pskIdentity) {
+        try {
+            return getByPskIdentity(pskIdentity);
+        } catch (LwM2MTransportUnavailableException e) {
+            return null;
+        }
+    }
+
+    @Override
+    public SecurityInfo getByPskIdentity(String pskIdentity) {
         SecurityInfo securityInfo = securityStore.getByIdentity(pskIdentity);
         if (securityInfo == null) {
             try {
                 securityInfo = fetchAndPutSecurityInfo(pskIdentity);
+            } catch (LwM2MTransportUnavailableException e) {
+                throw e;
             } catch (LwM2MAuthException e) {
                 log.trace("Registration failed: No pre-shared key found for [identity: {}]", pskIdentity);
                 return null;

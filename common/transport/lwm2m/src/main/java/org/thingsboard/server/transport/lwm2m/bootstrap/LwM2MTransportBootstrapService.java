@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.lwm2m.bootstrap;
 
 import jakarta.annotation.PostConstruct;
@@ -12,7 +13,6 @@ import org.eclipse.leshan.core.endpoint.Protocol;
 import org.eclipse.leshan.server.bootstrap.BootstrapSessionManager;
 import org.eclipse.leshan.server.bootstrap.LeshanBootstrapServer;
 import org.eclipse.leshan.server.bootstrap.LeshanBootstrapServerBuilder;
-import org.eclipse.leshan.server.californium.bootstrap.LwM2mBootstrapPskStore;
 import org.eclipse.leshan.server.californium.bootstrap.endpoint.CaliforniumBootstrapServerEndpointsProvider;
 import org.eclipse.leshan.server.californium.bootstrap.endpoint.coap.CoapBootstrapServerProtocolProvider;
 import org.eclipse.leshan.server.californium.bootstrap.endpoint.coaps.CoapsBootstrapServerProtocolProvider;
@@ -20,13 +20,16 @@ import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.config.ssl.SslCredentials;
+import org.thingsboard.server.common.transport.limits.TransportRateLimitService;
 import org.thingsboard.server.queue.util.TbLwM2mBootstrapTransportComponent;
 import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2mDefaultBootstrapSessionManager;
 import org.thingsboard.server.transport.lwm2m.bootstrap.secure.TbLwM2MDtlsBootstrapCertificateVerifier;
+import org.thingsboard.server.transport.lwm2m.bootstrap.secure.TbLwM2mBootstrapPskStore;
 import org.thingsboard.server.transport.lwm2m.bootstrap.store.LwM2MBootstrapSecurityStore;
 import org.thingsboard.server.transport.lwm2m.bootstrap.store.LwM2MInMemoryBootstrapConfigStore;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportBootstrapConfig;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
+import org.thingsboard.server.transport.lwm2m.secure.TbLwM2mDtlsHandshakeListener;
 
 import java.net.InetSocketAddress;
 import java.security.cert.X509Certificate;
@@ -51,6 +54,7 @@ public class LwM2MTransportBootstrapService implements SmartInitializingSingleto
     private final LwM2MInMemoryBootstrapConfigStore lwM2MInMemoryBootstrapConfigStore;
     private final TransportService transportService;
     private final TbLwM2MDtlsBootstrapCertificateVerifier certificateVerifier;
+    private final TransportRateLimitService rateLimitService;
     private volatile LeshanBootstrapServer server;
 
     @Override
@@ -107,6 +111,8 @@ public class LwM2MTransportBootstrapService implements SmartInitializingSingleto
     public LeshanBootstrapServer getLhBootstrapServer() {
         LeshanBootstrapServerBuilder builder = new LeshanBootstrapServerBuilder();
 
+        TbLwM2mDtlsHandshakeListener handshakeListener = new TbLwM2mDtlsHandshakeListener(rateLimitService, null);
+
         // Create Californium Endpoints Provider:
         // ------------------
         // Create Server Endpoints Provider
@@ -116,13 +122,14 @@ public class LwM2MTransportBootstrapService implements SmartInitializingSingleto
 
                 // Add coaps/dtls protocol support
                 new CoapsBootstrapServerProtocolProvider(c -> {
+                    c.setSessionListener(handshakeListener);
+                    // Also with X.509 credentials: the cipher suites include PSK ones, and Leshan would use its own store otherwise
+                    c.setAdvancedPskStore(new TbLwM2mBootstrapPskStore(lwM2MBootstrapSecurityStore, handshakeListener));
                     if (this.bootstrapConfig.getSslCredentials() != null) {
                         c.setAdvancedCertificateVerifier(certificateVerifier);
                         c.setAsList(DtlsConfig.DTLS_CIPHER_SUITES, RPK_OR_X509_CIPHER_SUITES);
                     } else {
                         log.info("Unable to load X509 files for LWM2MServer");
-                        LwM2mBootstrapPskStore lwM2mBsPskStore = new LwM2mBootstrapPskStore(lwM2MBootstrapSecurityStore);
-                        c.setAdvancedPskStore(lwM2mBsPskStore);
                         c.setAsList(DtlsConfig.DTLS_CIPHER_SUITES, PSK_CIPHER_SUITES);
                     }
                 }));
@@ -165,7 +172,7 @@ public class LwM2MTransportBootstrapService implements SmartInitializingSingleto
         builder.setSecurityStore(lwM2MBootstrapSecurityStore);
 
 
-        BootstrapSessionManager sessionManager = new LwM2mDefaultBootstrapSessionManager(lwM2MBootstrapSecurityStore, lwM2MInMemoryBootstrapConfigStore, transportService);
+        BootstrapSessionManager sessionManager = new LwM2mDefaultBootstrapSessionManager(lwM2MBootstrapSecurityStore, lwM2MInMemoryBootstrapConfigStore, transportService, rateLimitService);
         builder.setSessionManager(sessionManager);
 
         /* Create BootstrapServer */

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.lwm2m.bootstrap.secure;
 
 import lombok.extern.slf4j.Slf4j;
@@ -25,11 +26,14 @@ import org.eclipse.leshan.server.security.BootstrapSecurityStore;
 import org.eclipse.leshan.server.security.SecurityChecker;
 import org.eclipse.leshan.server.security.SecurityInfo;
 import org.thingsboard.server.common.transport.TransportService;
+import org.thingsboard.server.common.transport.limits.TransportRateLimitService;
 import org.thingsboard.server.transport.lwm2m.bootstrap.store.LwM2MBootstrapConfigStoreTaskProvider;
 import org.thingsboard.server.transport.lwm2m.bootstrap.store.LwM2MBootstrapSecurityStore;
 import org.thingsboard.server.transport.lwm2m.bootstrap.store.LwM2MBootstrapTaskProvider;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2MAuthException;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2MTransportUnavailableException;
 
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -47,6 +51,7 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
     private final LwM2MBootstrapTaskProvider tasksProvider;
     private final LwM2mBootstrapModelProvider modelProvider;
     private TransportService transportService;
+    private TransportRateLimitService rateLimitService;
 
     /**
      * Create a {@link DefaultBootstrapSessionManager} using a default {@link SecurityChecker} to accept or refuse new
@@ -54,10 +59,12 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
      *
      * @param bsSecurityStore the {@link BootstrapSecurityStore} used by default {@link SecurityChecker}.
      */
-    public LwM2mDefaultBootstrapSessionManager(BootstrapSecurityStore bsSecurityStore, BootstrapConfigStore configStore, TransportService transportService) {
+    public LwM2mDefaultBootstrapSessionManager(BootstrapSecurityStore bsSecurityStore, BootstrapConfigStore configStore, TransportService transportService,
+                                               TransportRateLimitService rateLimitService) {
         this(bsSecurityStore, configStore, new SecurityChecker(), new LwM2MBootstrapConfigStoreTaskProvider(configStore),
                 new StandardBootstrapModelProvider());
         this.transportService = transportService;
+        this.rateLimitService = rateLimitService;
     }
 
     /**
@@ -77,12 +84,20 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
 
     @Override
     public BootstrapSession begin(BootstrapRequest request, LwM2mPeer sender, URI endpointUsed) {
+        InetSocketAddress address = ((IpPeer) sender).getSocketAddress();
+        if (rateLimitService != null && !rateLimitService.checkAddress(address)) {
+            log.debug("[{}][{}] Bootstrap declined: IP address is blocked due to repeatedly failed authentication", request.getEndpointName(), address);
+            return new DefaultBootstrapSession(request, sender, false, null, endpointUsed);
+        }
         boolean authorized = sender.getIdentity().isSecure();
+        boolean coreUnavailable = false;
         Iterator<SecurityInfo> securityInfos = null;
           try {
             if (bsSecurityStore != null && securityChecker != null) {
                 if (((IpPeer) sender).isPSK()) {
-                    SecurityInfo securityInfo = bsSecurityStore.getByIdentity(((PskIdentity) sender.getIdentity()).getPskIdentity());
+                    String pskIdentity = ((PskIdentity) sender.getIdentity()).getPskIdentity();
+                    SecurityInfo securityInfo = bsSecurityStore instanceof LwM2MBootstrapSecurityStore tbSecurityStore ?
+                            tbSecurityStore.getByPskIdentity(pskIdentity) : bsSecurityStore.getByIdentity(pskIdentity);
                     securityInfos = Collections.singletonList(securityInfo).iterator();
                 }
                 else if (!((IpPeer) sender).isX509()) {
@@ -90,8 +105,19 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
                 }
                 authorized = this.checkSecurityInfo(request.getEndpointName(), sender, securityInfos);
             }
+        } catch (LwM2MTransportUnavailableException e) {
+            authorized = false;
+            coreUnavailable = true;
         } catch (LwM2MAuthException e) {
             authorized = false;
+        }
+        // The source address of an unsecured request can be forged: counting it would let anybody get a victim's address blocked
+        if (rateLimitService != null && sender.getIdentity().isSecure() && !coreUnavailable) {
+            if (authorized) {
+                rateLimitService.onAuthSuccess(address);
+            } else {
+                rateLimitService.onAuthFailure(address);
+            }
         }
         DefaultBootstrapSession session = new DefaultBootstrapSession(request, sender, authorized, null, endpointUsed);
         if (authorized) {

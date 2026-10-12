@@ -84,7 +84,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcResponseM
 import org.thingsboard.server.gen.transport.TransportProtos.TransportToDeviceActorMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateBasicMqttCredRequestMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509CertRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ValidateOrCreateDeviceX509CertRequestMsg;
 import org.thingsboard.server.gen.transport.mqtt.SparkplugBProto;
 import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
@@ -1133,10 +1133,18 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             }
             String strCert = SslUtil.getCertificateString(cert);
             String sha3Hash = EncryptionUtil.getSha3Hash(strCert);
-            transportService.process(DeviceTransportType.MQTT, ValidateDeviceX509CertRequestMsg.newBuilder().setHash(sha3Hash).build(),
+            // Asked only now, not by the trust manager during the handshake: the handshake has proved that the client holds the
+            // private key of the certificate, and chain provisioning may create the device or replace its credentials.
+            String certificateChain = SslUtil.getCertificateChainString(sslHandler.engine().getSession().getPeerCertificates());
+            transportService.process(DeviceTransportType.MQTT, ValidateOrCreateDeviceX509CertRequestMsg.newBuilder().setCertificateChain(certificateChain).build(),
                     new TransportServiceCallback<>() {
                         @Override
                         public void onSuccess(ValidateDeviceCredentialsResponse msg) {
+                            if (msg.hasDeviceInfo() && !strCert.equals(msg.getCredentials())) {
+                                // The core matches the credentials of every certificate in the chain, the client proved only the leaf
+                                log.debug("[{}] Credentials found for another certificate of the chain: {}", address, sha3Hash);
+                                msg = ValidateDeviceCredentialsResponse.builder().build();
+                            }
                             onValidateDeviceResponse(msg, ctx, connectMessage);
                         }
 

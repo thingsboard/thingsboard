@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.device;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -26,6 +27,7 @@ import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
+import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.ServiceType;
@@ -33,6 +35,7 @@ import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.transport.util.SslUtil;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.audit.AuditLogService;
+import org.thingsboard.server.dao.device.DeviceCertificateRevocationService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceProvisionService;
@@ -69,15 +72,17 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
     private final DeviceProfileService deviceProfileService;
     private final DeviceService deviceService;
     private final DeviceCredentialsService deviceCredentialsService;
+    private final DeviceCertificateRevocationService deviceCertificateRevocationService;
     private final AttributesService attributesService;
     private final AuditLogService auditLogService;
     private final PartitionService partitionService;
 
-    public DeviceProvisionServiceImpl(TbQueueProducerProvider producerProvider, DeviceProfileService deviceProfileService, DeviceService deviceService, DeviceCredentialsService deviceCredentialsService, AttributesService attributesService, AuditLogService auditLogService, PartitionService partitionService) {
+    public DeviceProvisionServiceImpl(TbQueueProducerProvider producerProvider, DeviceProfileService deviceProfileService, DeviceService deviceService, DeviceCredentialsService deviceCredentialsService, DeviceCertificateRevocationService deviceCertificateRevocationService, AttributesService attributesService, AuditLogService auditLogService, PartitionService partitionService) {
         ruleEngineMsgProducer = producerProvider.getRuleEngineMsgProducer();
         this.deviceProfileService = deviceProfileService;
         this.deviceService = deviceService;
         this.deviceCredentialsService = deviceCredentialsService;
+        this.deviceCertificateRevocationService = deviceCertificateRevocationService;
         this.attributesService = attributesService;
         this.auditLogService = auditLogService;
         this.partitionService = partitionService;
@@ -93,6 +98,9 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
         }
         X509CertificateChainProvisionConfiguration configuration = (X509CertificateChainProvisionConfiguration) targetProfile.getProfileData().getProvisionConfiguration();
         String certificateValue = provisionRequest.getCredentialsData().getX509CertHash();
+        if (deviceCertificateRevocationService.isRevoked(targetProfile.getTenantId(), EncryptionUtil.getSha3Hash(certificateValue))) {
+            throw new ProvisionFailedException("Device certificate is revoked!");
+        }
         String certificateRegEx = configuration.getCertificateRegExPattern();
         String commonName = getCNFromX509Certificate(targetProfile, certificateValue);
         String deviceName = extractDeviceNameFromCNByRegEx(targetProfile, commonName, certificateRegEx);

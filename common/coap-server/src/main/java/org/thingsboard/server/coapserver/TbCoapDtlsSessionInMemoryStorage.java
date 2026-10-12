@@ -1,9 +1,11 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.coapserver;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -25,6 +27,23 @@ public class TbCoapDtlsSessionInMemoryStorage {
     public void put(TbCoapDtlsSessionKey tbCoapDtlsSessionKey, TbCoapDtlsSessionInfo dtlsSessionInfo) {
         log.trace("DTLS session added to in-memory store: [{}] timestamp: [{}]", tbCoapDtlsSessionKey, dtlsSessionInfo.getLastActivityTime());
         dtlsSessionsMap.putIfAbsent(tbCoapDtlsSessionKey, dtlsSessionInfo);
+    }
+
+    /**
+     * Requests of an evicted session fall back to access token authentication and are rejected, so a device whose
+     * certificate was revoked stops working without waiting for the inactivity timeout it would otherwise never reach.
+     */
+    public void evictSessions(TenantId tenantId, String certificateHash) {
+        dtlsSessionsMap.entrySet().removeIf(entry -> {
+            TbCoapDtlsSessionInfo sessionInfo = entry.getValue();
+            if (certificateHash.equals(sessionInfo.getCertificateHash())
+                    && tenantId.equals(sessionInfo.getMsg().getDeviceInfo().getTenantId())) {
+                log.debug("[{}] DTLS session of revoked certificate was removed from in-memory store: [{}]", tenantId, entry.getKey());
+                return true;
+            } else {
+                return false;
+            }
+        });
     }
 
     public void evictTimeoutSessions() {

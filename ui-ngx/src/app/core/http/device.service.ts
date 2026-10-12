@@ -26,6 +26,11 @@ import { BulkImportRequest, BulkImportResult } from '@shared/import-export/impor
 import { PersistentRpc, RpcStatus } from '@shared/models/rpc.models';
 import { ResourcesService } from '@core/services/resources.service';
 import { toSaveParams } from '@shared/models/entity.models';
+import {
+  DeviceCertificateInfo,
+  DeviceCertificateRevocation,
+  DeviceCertificateRevocationRequest
+} from '@shared/models/device-certificate-revocation.models';
 
 @Injectable({
   providedIn: 'root'
@@ -170,6 +175,16 @@ export class DeviceService {
 
   public saveDeviceCredentials(deviceCredentials: DeviceCredentials, config?: RequestConfig): Observable<DeviceCredentials> {
     return this.http.post<DeviceCredentials>('/api/device/credentials', deviceCredentials, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getDeviceCertificateInfo(deviceId: string, config?: RequestConfig): Observable<DeviceCertificateInfo> {
+    return this.http.get<DeviceCertificateInfo>(`/api/device/${deviceId}/credentials/certificate`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public revokeDeviceCertificate(deviceId: string, request: DeviceCertificateRevocationRequest,
+                                 config?: RequestConfig): Observable<DeviceCertificateRevocation> {
+    return this.http.post<DeviceCertificateRevocation>(`/api/device/${deviceId}/credentials/revoke`, request,
+      defaultHttpOptionsFromConfig(config));
   }
 
   /*public makeDevicePublic(deviceId: string, config?: RequestConfig): Observable<Device> {

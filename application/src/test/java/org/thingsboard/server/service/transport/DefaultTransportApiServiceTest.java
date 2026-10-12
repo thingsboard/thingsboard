@@ -14,18 +14,26 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
+import org.thingsboard.server.common.data.device.data.DefaultDeviceConfiguration;
+import org.thingsboard.server.common.data.device.data.DefaultDeviceTransportConfiguration;
+import org.thingsboard.server.common.data.device.data.DeviceData;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.device.profile.X509CertificateChainProvisionConfiguration;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.dao.customer.CustomerService;
+import org.thingsboard.server.dao.device.DeviceCertificateRevocationService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceProvisionService;
@@ -39,6 +47,7 @@ import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
@@ -49,12 +58,16 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.willReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -74,6 +87,7 @@ public class DefaultTransportApiServiceTest {
                                                                      DeviceProfileService deviceProfileService,
                                                                      RelationService relationService,
                                                                      DeviceCredentialsService deviceCredentialsService,
+                                                                     DeviceCertificateRevocationService deviceCertificateRevocationService,
                                                                      TbClusterService tbClusterService,
                                                                      DeviceProvisionService deviceProvisionService,
                                                                      ResourceService resourceService,
@@ -83,7 +97,7 @@ public class DefaultTransportApiServiceTest {
                                                                      EntityGroupService entityGroupService,
                                                                      CustomerService customerService) {
             return new DefaultTransportApiService(deviceProfileCache, tenantProfileCache, apiUsageStateService,
-                    deviceService, deviceProfileService, relationService, deviceCredentialsService, tbClusterService,
+                    deviceService, deviceProfileService, relationService, deviceCredentialsService, deviceCertificateRevocationService, tbClusterService,
                     deviceProvisionService, resourceService, otaPackageService, otaPackageDataCache, queueService,
                     entityGroupService, customerService);
         }
@@ -103,6 +117,8 @@ public class DefaultTransportApiServiceTest {
     protected RelationService relationService;
     @MockitoBean
     protected DeviceCredentialsService deviceCredentialsService;
+    @MockitoBean
+    protected DeviceCertificateRevocationService deviceCertificateRevocationService;
     @MockitoBean
     protected DbCallbackExecutorService dbCallbackExecutorService;
     @MockitoBean
@@ -148,7 +164,7 @@ public class DefaultTransportApiServiceTest {
         when(deviceCredentialsService.findDeviceCredentialsByCredentialsId(any())).thenReturn(deviceCredentials);
 
         TransportProtos.TransportApiResponseMsg response = mock(TransportProtos.TransportApiResponseMsg.class);
-        willReturn(response).given(service).getDeviceInfo(deviceCredentials);
+        willReturn(response).given(service).getDeviceInfo(eq(deviceCredentials), any());
 
         service.validateOrCreateDeviceX509Certificate(certificateChain);
         verify(deviceCredentialsService, times(1)).findDeviceCredentialsByCredentialsId(any());
@@ -170,13 +186,84 @@ public class DefaultTransportApiServiceTest {
         when(deviceProvisionService.provisionDeviceViaX509Chain(any(), any())).thenReturn(provisionResponse);
 
         TransportProtos.TransportApiResponseMsg response = mock(TransportProtos.TransportApiResponseMsg.class);
-        willReturn(response).given(service).getDeviceInfo(deviceCredentials);
+        willReturn(response).given(service).getDeviceInfo(eq(deviceCredentials), any());
 
         service.validateOrCreateDeviceX509Certificate(certificateChain);
         verify(deviceProfileService, times(1)).findDeviceProfileByProvisionDeviceKey(any());
-        verify(service, times(1)).getDeviceInfo(any());
+        verify(service, times(1)).getDeviceInfo(any(), eq(EncryptionUtil.getSha3Hash(EncryptionUtil.certTrimNewLines(chain[0]))));
         verify(deviceCredentialsService, times(1)).findDeviceCredentialsByCredentialsId(any());
         verify(deviceProvisionService, times(1)).provisionDeviceViaX509Chain(any(), any());
+    }
+
+    @Test
+    public void revokedDeviceCertificateIsRejectedBeforeProvisioning() {
+        TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());
+        var deviceProfile = createDeviceProfile(chain[1]);
+        deviceProfile.setTenantId(tenantId);
+        when(deviceProfileService.findDeviceProfileByProvisionDeviceKey(any())).thenReturn(deviceProfile);
+        when(deviceCertificateRevocationService.isRevoked(tenantId, leafHash())).thenReturn(true);
+
+        TransportProtos.TransportApiResponseMsg response = service.validateOrCreateDeviceX509Certificate(certificateChain);
+
+        assertThat(response.getValidateCredResponseMsg().hasDeviceInfo()).isFalse();
+        verify(deviceProvisionService, never()).provisionDeviceViaX509Chain(any(), any());
+    }
+
+    @Test
+    public void revokedBoundCertificateIsRejected() {
+        var device = createDevice();
+        var deviceCredentials = createDeviceCredentials(chain[0], device.getId());
+        when(deviceCredentialsService.findDeviceCredentialsByCredentialsId(any())).thenReturn(deviceCredentials);
+        when(deviceService.findDeviceById(any(), any())).thenReturn(device);
+        when(deviceCertificateRevocationService.isRevoked(device.getTenantId(), leafHash())).thenReturn(true);
+
+        TransportProtos.TransportApiResponseMsg response = service.validateOrCreateDeviceX509Certificate(certificateChain);
+
+        assertThat(response.getValidateCredResponseMsg().hasDeviceInfo()).isFalse();
+        verify(deviceProvisionService, never()).provisionDeviceViaX509Chain(any(), any());
+    }
+
+    @Test
+    public void certificateRevokedByAnotherTenantIsAccepted() {
+        var device = createDevice();
+        var deviceCredentials = createDeviceCredentials(chain[0], device.getId());
+        when(deviceService.findDeviceById(any(), any())).thenReturn(device);
+        when(deviceCertificateRevocationService.isRevoked(TenantId.fromUUID(UUID.randomUUID()), leafHash())).thenReturn(true);
+
+        TransportProtos.TransportApiResponseMsg response = service.getDeviceInfo(deviceCredentials, leafHash());
+
+        assertThat(response.getValidateCredResponseMsg().hasDeviceInfo()).isTrue();
+    }
+
+    @Test
+    public void lwm2mCredentialsAreRejectedForRevokedCertificate() throws Exception {
+        var device = createDevice();
+        DeviceCredentials lwm2mCredentials = new DeviceCredentials();
+        lwm2mCredentials.setDeviceId(device.getId());
+        lwm2mCredentials.setCredentialsId("lwm2m-endpoint");
+        lwm2mCredentials.setCredentialsType(DeviceCredentialsType.LWM2M_CREDENTIALS);
+        lwm2mCredentials.setCredentialsValue("{}");
+        when(deviceCredentialsService.findDeviceCredentialsByCredentialsId("lwm2m-endpoint")).thenReturn(lwm2mCredentials);
+        when(deviceService.findDeviceById(any(), any())).thenReturn(device);
+        when(deviceCertificateRevocationService.isRevoked(device.getTenantId(), "revoked-certificate-hash")).thenReturn(true);
+
+        TransportProtos.ValidateDeviceLwM2MCredentialsRequestMsg.Builder request = TransportProtos.ValidateDeviceLwM2MCredentialsRequestMsg.newBuilder()
+                .setCredentialsId("lwm2m-endpoint");
+        // In trust mode the credentials id is the endpoint: only the certificate hash sent by the transport identifies the certificate
+        assertThat(validateLwM2M(request.clone().setCertificateHash("revoked-certificate-hash").build()).hasDeviceInfo()).isFalse();
+        assertThat(validateLwM2M(request.clone().setCertificateHash("other-certificate-hash").build()).hasDeviceInfo()).isTrue();
+        // Transports of previous versions don't send the hash
+        assertThat(validateLwM2M(request.build()).hasDeviceInfo()).isTrue();
+    }
+
+    private TransportProtos.ValidateDeviceCredentialsResponseMsg validateLwM2M(TransportProtos.ValidateDeviceLwM2MCredentialsRequestMsg msg) throws Exception {
+        TransportProtos.TransportApiRequestMsg request = TransportProtos.TransportApiRequestMsg.newBuilder()
+                .setValidateDeviceLwM2MCredentialsRequestMsg(msg).build();
+        return service.handle(new TbProtoQueueMsg<>(UUID.randomUUID(), request)).get(10, TimeUnit.SECONDS).getValue().getValidateCredResponseMsg();
+    }
+
+    private String leafHash() {
+        return EncryptionUtil.getSha3Hash(EncryptionUtil.certTrimNewLines(chain[0]));
     }
 
     private DeviceProfile createDeviceProfile(String certificateValue) {
@@ -207,6 +294,16 @@ public class DefaultTransportApiServiceTest {
     private Device createDevice() {
         Device device = new Device();
         device.setId(new DeviceId(UUID.randomUUID()));
+        device.setTenantId(TenantId.fromUUID(UUID.randomUUID()));
+        device.setCustomerId(new CustomerId(CustomerId.NULL_UUID));
+        device.setDeviceProfileId(new DeviceProfileId(UUID.randomUUID()));
+        device.setName("device");
+        device.setType("default");
+        device.setAdditionalInfo(JacksonUtil.newObjectNode());
+        DeviceData deviceData = new DeviceData();
+        deviceData.setTransportConfiguration(new DefaultDeviceTransportConfiguration());
+        deviceData.setConfiguration(new DefaultDeviceConfiguration());
+        device.setDeviceData(deviceData);
         return device;
     }
 

@@ -16,8 +16,10 @@ import org.eclipse.californium.scandium.DTLSConnector;
 import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.server.common.transport.X509CertificateRevokedEvent;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -174,6 +176,14 @@ public class DefaultCoapServerService implements CoapServerService, SmartInitial
 
     private void evictTimeoutSessions() {
         tbDtlsCertificateVerifier.evictTimeoutSessions();
+    }
+
+    @EventListener(X509CertificateRevokedEvent.class)
+    public void onX509CertificateRevoked(X509CertificateRevokedEvent event) {
+        TbCoapDtlsCertificateVerifier verifier = tbDtlsCertificateVerifier;
+        if (verifier != null) {
+            verifier.evictSessions(event.getTenantId(), event.getCertificateHash());
+        }
     }
 
     private long getDtlsSessionReportTimeout() {

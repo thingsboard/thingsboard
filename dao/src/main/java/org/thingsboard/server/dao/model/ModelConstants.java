@@ -491,6 +491,19 @@ public class ModelConstants {
     public static final String DEVICE_CREDENTIALS_CREDENTIALS_VALUE_PROPERTY = "credentials_value";
 
     /**
+     * Device_certificate_revocation constants.
+     */
+    public static final String DEVICE_CERTIFICATE_REVOCATION_TABLE_NAME = "device_certificate_revocation";
+    public static final String DEVICE_CERTIFICATE_REVOCATION_CERTIFICATE_HASH_PROPERTY = "certificate_hash";
+    public static final String DEVICE_CERTIFICATE_REVOCATION_SERIAL_NUMBER_PROPERTY = "serial_number";
+    public static final String DEVICE_CERTIFICATE_REVOCATION_ISSUER_PROPERTY = "issuer";
+    public static final String DEVICE_CERTIFICATE_REVOCATION_SUBJECT_PROPERTY = "subject";
+    public static final String DEVICE_CERTIFICATE_REVOCATION_NOT_BEFORE_PROPERTY = "not_before";
+    public static final String DEVICE_CERTIFICATE_REVOCATION_NOT_AFTER_PROPERTY = "not_after";
+    public static final String DEVICE_CERTIFICATE_REVOCATION_REASON_PROPERTY = "reason";
+    public static final String DEVICE_CERTIFICATE_REVOCATION_REVOKED_BY_PROPERTY = "revoked_by";
+
+    /**
      * Widgets_bundle constants.
      */
     public static final String WIDGETS_BUNDLE_TABLE_NAME = "widgets_bundle";

@@ -60,6 +60,7 @@ import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.dao.customer.CustomerService;
+import org.thingsboard.server.dao.device.DeviceCertificateRevocationService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceProvisionService;
@@ -128,6 +129,7 @@ public class DefaultTransportApiService implements TransportApiService {
     private final DeviceProfileService deviceProfileService;
     private final RelationService relationService;
     private final DeviceCredentialsService deviceCredentialsService;
+    private final DeviceCertificateRevocationService deviceCertificateRevocationService;
     private final TbClusterService tbClusterService;
     private final DeviceProvisionService deviceProvisionService;
     private final ResourceService resourceService;
@@ -181,7 +183,7 @@ public class DefaultTransportApiService implements TransportApiService {
         } else if (transportApiRequestMsg.hasValidateX509CertRequestMsg()) {
             ValidateDeviceX509CertRequestMsg msg = transportApiRequestMsg.getValidateX509CertRequestMsg();
             final String hash = msg.getHash();
-            return validateCredentials(hash, DeviceCredentialsType.X509_CERTIFICATE);
+            return validateCredentials(hash, DeviceCredentialsType.X509_CERTIFICATE, hash);
         } else if (transportApiRequestMsg.hasValidateOrCreateX509CertRequestMsg()) {
             TransportProtos.ValidateOrCreateDeviceX509CertRequestMsg msg = transportApiRequestMsg.getValidateOrCreateX509CertRequestMsg();
             final String certChain = msg.getCertificateChain();
@@ -195,7 +197,7 @@ public class DefaultTransportApiService implements TransportApiService {
         } else if (transportApiRequestMsg.hasValidateDeviceLwM2MCredentialsRequestMsg()) {
             ValidateDeviceLwM2MCredentialsRequestMsg msg = transportApiRequestMsg.getValidateDeviceLwM2MCredentialsRequestMsg();
             final String credentialsId = msg.getCredentialsId();
-            return validateCredentials(credentialsId, DeviceCredentialsType.LWM2M_CREDENTIALS);
+            return validateCredentials(credentialsId, DeviceCredentialsType.LWM2M_CREDENTIALS, msg.hasCertificateHash() ? msg.getCertificateHash() : null);
         } else if (transportApiRequestMsg.hasProvisionDeviceRequestMsg()) {
             return handle(transportApiRequestMsg.getProvisionDeviceRequestMsg());
         } else if (transportApiRequestMsg.hasResourceRequestMsg()) {
@@ -215,9 +217,17 @@ public class DefaultTransportApiService implements TransportApiService {
     }
 
     private TransportApiResponseMsg validateCredentials(String credentialsId, DeviceCredentialsType credentialsType) {
+        return validateCredentials(credentialsId, credentialsType, null);
+    }
+
+    /**
+     * @param certificateHash hash of the X.509 certificate the device presented, checked against the certificates revoked
+     *                        in the device's tenant; null when the device does not authenticate with a certificate
+     */
+    private TransportApiResponseMsg validateCredentials(String credentialsId, DeviceCredentialsType credentialsType, String certificateHash) {
         DeviceCredentials credentials = deviceCredentialsService.findDeviceCredentialsByCredentialsId(credentialsId);
         if (credentials != null && credentials.getCredentialsType() == credentialsType) {
-            return getDeviceInfo(credentials);
+            return getDeviceInfo(credentials, certificateHash);
         } else {
             return getEmptyTransportApiResponse();
         }
@@ -253,20 +263,27 @@ public class DefaultTransportApiService implements TransportApiService {
     protected TransportApiResponseMsg validateOrCreateDeviceX509Certificate(String certificateChain) {
         List<String> chain = X509_CERTIFICATE_TRIM_CHAIN_PATTERN.matcher(certificateChain).results().map(match ->
                 EncryptionUtil.certTrimNewLines(match.group())).collect(Collectors.toList());
+        String deviceCertificateHash = chain.isEmpty() ? null : EncryptionUtil.getSha3Hash(chain.get(0));
         for (String certificateValue : chain) {
             String certificateHash = EncryptionUtil.getSha3Hash(certificateValue);
             DeviceCredentials credentials = deviceCredentialsService.findDeviceCredentialsByCredentialsId(certificateHash);
             if (credentials != null && DeviceCredentialsType.X509_CERTIFICATE.equals(credentials.getCredentialsType())) {
-                return getDeviceInfo(credentials);
+                return getDeviceInfo(credentials, deviceCertificateHash);
             }
             DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileByProvisionDeviceKey(certificateHash);
             if (deviceProfile != null && DeviceProfileProvisionType.X509_CERTIFICATE_CHAIN.equals(deviceProfile.getProvisionType())) {
+                // Must run before provisioning: binding a revoked certificate would replace the device's stored credentials
+                // and close its sessions, and with "create new devices" enabled it would create a device for it.
+                if (deviceCertificateRevocationService.isRevoked(deviceProfile.getTenantId(), deviceCertificateHash)) {
+                    log.debug("[{}][{}] Rejected revoked device certificate [{}]", deviceProfile.getTenantId(), deviceProfile.getId(), deviceCertificateHash);
+                    return getEmptyTransportApiResponse();
+                }
                 String updatedDeviceProvisionSecret = chain.get(0);
                 ProvisionRequest provisionRequest = createProvisionRequest(updatedDeviceProvisionSecret);
                 try {
                     ProvisionResponse provisionResponse = deviceProvisionService.provisionDeviceViaX509Chain(deviceProfile, provisionRequest);
                     if (ProvisionResponseStatus.SUCCESS.equals(provisionResponse.getResponseStatus())) {
-                        return getDeviceInfo(provisionResponse.getDeviceCredentials());
+                        return getDeviceInfo(provisionResponse.getDeviceCredentials(), deviceCertificateHash);
                     }
                 } catch (ProvisionFailedException e) {
                     log.debug("[{}][{}] Failed to provision device with cert chain: {}", deviceProfile.getTenantId(), deviceProfile.getId(), provisionRequest, e);
@@ -655,9 +672,17 @@ public class DefaultTransportApiService implements TransportApiService {
     }
 
     TransportApiResponseMsg getDeviceInfo(DeviceCredentials credentials) {
+        return getDeviceInfo(credentials, null);
+    }
+
+    TransportApiResponseMsg getDeviceInfo(DeviceCredentials credentials, String certificateHash) {
         Device device = deviceService.findDeviceById(TenantId.SYS_TENANT_ID, credentials.getDeviceId());
         if (device == null) {
             log.trace("[{}] Failed to lookup device by id", credentials.getDeviceId());
+            return getEmptyTransportApiResponse();
+        }
+        if (certificateHash != null && deviceCertificateRevocationService.isRevoked(device.getTenantId(), certificateHash)) {
+            log.debug("[{}][{}] Rejected revoked device certificate [{}]", device.getTenantId(), device.getId(), certificateHash);
             return getEmptyTransportApiResponse();
         }
         try {

@@ -23,12 +23,14 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
+import org.thingsboard.server.common.transport.limits.TransportRateLimitService;
 import org.thingsboard.server.common.transport.util.SslUtil;
 import org.thingsboard.server.queue.util.TbLwM2mBootstrapTransportComponent;
 import org.thingsboard.server.transport.lwm2m.bootstrap.store.LwM2MBootstrapSecurityStore;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MSecurityInfo;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2MAuthException;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2MTransportUnavailableException;
 
 import javax.security.auth.x500.X500Principal;
 import java.net.InetSocketAddress;
@@ -49,6 +51,7 @@ public class TbLwM2MDtlsBootstrapCertificateVerifier implements NewAdvancedCerti
 
     private final LwM2MTransportServerConfig config;
     private final LwM2MBootstrapSecurityStore bsSecurityStore;
+    private final TransportRateLimitService rateLimitService;
 
     private StaticNewAdvancedCertificateVerifier staticCertificateVerifier;
 
@@ -86,12 +89,16 @@ public class TbLwM2MDtlsBootstrapCertificateVerifier implements NewAdvancedCerti
         } else {
             try {
                 boolean x509CredentialsFound = false;
+                boolean coreUnavailable = false;
                 X509Certificate[] chain = certChain.getCertificates().toArray(new X509Certificate[0]);
                 for (X509Certificate cert : chain) {
                     try {
                         if (!skipValidityCheckForClientCert) {
                             cert.checkValidity();
                         }
+                        // Sent along with every lookup, so the core rejects a revoked certificate also in trust mode
+                        String strCert = SslUtil.getCertificateString(cert);
+                        String sha3Hash = EncryptionUtil.getSha3Hash(strCert);
                         TbLwM2MSecurityInfo securityInfo = null;
                         // verify if trust
                         if (staticCertificateVerifier != null) {
@@ -99,7 +106,13 @@ public class TbLwM2MDtlsBootstrapCertificateVerifier implements NewAdvancedCerti
                             if (exception == null) {
                                 String endpoint = config.getTrustSslCredentials().getValueFromSubjectNameByKey(cert.getSubjectX500Principal().getName(), "CN");
                                 if (StringUtils.isNotEmpty(endpoint)) {
-                                    securityInfo = bsSecurityStore.getX509ByEndpoint(endpoint);
+                                    try {
+                                        securityInfo = bsSecurityStore.getX509ByEndpoint(endpoint, sha3Hash);
+                                    } catch (LwM2MTransportUnavailableException e) {
+                                        coreUnavailable = true;
+                                    } catch (LwM2MAuthException e) {
+                                        log.trace("Failed to find security info: [{}]", endpoint, e);
+                                    }
                                 }
                             } else {
                                 log.trace("Certificate validation failed.", exception);
@@ -107,10 +120,10 @@ public class TbLwM2MDtlsBootstrapCertificateVerifier implements NewAdvancedCerti
                         }
                         // if not trust or cert trust securityInfo == null
                         if (securityInfo == null || securityInfo.getMsg() == null) {
-                            String strCert = SslUtil.getCertificateString(cert);
-                            String sha3Hash = EncryptionUtil.getSha3Hash(strCert);
                             try {
-                                securityInfo = bsSecurityStore.getX509ByEndpoint(sha3Hash);
+                                securityInfo = bsSecurityStore.getX509ByEndpoint(sha3Hash, sha3Hash);
+                            } catch (LwM2MTransportUnavailableException e) {
+                                coreUnavailable = true;
                             } catch (LwM2MAuthException e) {
                                 log.trace("Failed to find security info: [{}]", sha3Hash, e);
                             }
@@ -127,6 +140,9 @@ public class TbLwM2MDtlsBootstrapCertificateVerifier implements NewAdvancedCerti
                     }
                 }
                 if (!x509CredentialsFound) {
+                    if (!coreUnavailable) {
+                        rateLimitService.onAuthFailure(remotePeer);
+                    }
                     AlertMessage alert = new AlertMessage(AlertMessage.AlertLevel.FATAL, AlertMessage.AlertDescription.INTERNAL_ERROR);
                     throw new HandshakeException("x509 verification not enabled!", alert);
                 }

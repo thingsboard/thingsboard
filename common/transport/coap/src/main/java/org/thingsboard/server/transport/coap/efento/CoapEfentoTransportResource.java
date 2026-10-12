@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.coap.efento;
 
 import com.google.gson.JsonElement;
@@ -18,7 +19,6 @@ import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.common.adaptor.AdaptorException;
 import org.thingsboard.server.common.adaptor.ProtoConverter;
 import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.device.profile.CoapDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.EfentoCoapDeviceTypeConfiguration;
@@ -30,7 +30,6 @@ import org.thingsboard.server.gen.transport.coap.MeasurementsProtos;
 import org.thingsboard.server.gen.transport.coap.MeasurementsProtos.ProtoChannel;
 import org.thingsboard.server.transport.coap.AbstractCoapTransportResource;
 import org.thingsboard.server.transport.coap.CoapTransportContext;
-import org.thingsboard.server.transport.coap.callback.CoapDeviceAuthCallback;
 import org.thingsboard.server.transport.coap.callback.CoapEfentoCallback;
 import org.thingsboard.server.transport.coap.efento.utils.CoapEfentoUtils;
 import org.thingsboard.server.transport.coap.efento.utils.PulseCounterType;
@@ -198,19 +197,18 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
     }
 
     private void validateAndProcessEffentoMessage(String token, CoapExchange exchange, TriConsumer<DeviceProfile, TransportProtos.SessionInfoProto, UUID> requestProcessor) {
-        transportService.process(DeviceTransportType.COAP, TransportProtos.ValidateDeviceTokenRequestMsg.newBuilder().setToken(token).build(),
-                new CoapDeviceAuthCallback(exchange, (msg, deviceProfile) -> {
-                    TransportProtos.SessionInfoProto sessionInfo = SessionInfoCreator.create(msg, transportContext, UUID.randomUUID());
-                    UUID sessionId = new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB());
-                    try {
-                        validateEfentoTransportConfiguration(deviceProfile);
-                        requestProcessor.accept(deviceProfile, sessionInfo, sessionId);
-                        reportSubscriptionInfo(sessionInfo, false, false);
-                    } catch (AdaptorException e) {
-                        log.error("[{}] Failed to decode Efento request: ", sessionId, e);
-                        exchange.respond(CoAP.ResponseCode.BAD_REQUEST);
-                    }
-                }));
+        validateAccessToken(exchange, token, (msg, deviceProfile) -> {
+            TransportProtos.SessionInfoProto sessionInfo = SessionInfoCreator.create(msg, transportContext, UUID.randomUUID());
+            UUID sessionId = new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB());
+            try {
+                validateEfentoTransportConfiguration(deviceProfile);
+                requestProcessor.accept(deviceProfile, sessionInfo, sessionId);
+                reportSubscriptionInfo(sessionInfo, false, false);
+            } catch (AdaptorException e) {
+                log.error("[{}] Failed to decode Efento request: ", sessionId, e);
+                exchange.respond(CoAP.ResponseCode.BAD_REQUEST);
+            }
+        });
     }
 
     @Override

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.coap;
 
 import lombok.extern.slf4j.Slf4j;
@@ -9,7 +10,6 @@ import org.eclipse.californium.core.coap.Response;
 import org.eclipse.californium.core.network.Exchange;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.eclipse.californium.core.server.resources.Resource;
-import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -19,7 +19,6 @@ import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.auth.SessionInfoCreator;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.transport.coap.callback.CoapDeviceAuthCallback;
 
 import java.util.List;
 import java.util.Optional;
@@ -58,10 +57,9 @@ public class OtaPackageTransportResource extends AbstractCoapTransportResource {
             exchange.respond(CoAP.ResponseCode.UNAUTHORIZED);
             return;
         }
-        transportService.process(DeviceTransportType.COAP, TransportProtos.ValidateDeviceTokenRequestMsg.newBuilder().setToken(credentials.get().getCredentialsId()).build(),
-                new CoapDeviceAuthCallback(exchange, (msg, deviceProfile) -> {
-                    getOtaPackageCallback(msg, exchange, otaPackageType);
-                }));
+        validateAccessToken(exchange, credentials.get().getCredentialsId(), (msg, deviceProfile) -> {
+            getOtaPackageCallback(msg, exchange, otaPackageType);
+        });
     }
 
     private void getOtaPackageCallback(ValidateDeviceCredentialsResponse msg, CoapExchange exchange, OtaPackageType firmwareType) {

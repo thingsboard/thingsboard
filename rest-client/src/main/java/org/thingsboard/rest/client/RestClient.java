@@ -135,6 +135,7 @@ import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.ConverterId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
+import org.thingsboard.server.common.data.id.DeviceCertificateRevocationId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.DomainId;
@@ -247,6 +248,9 @@ import org.thingsboard.server.common.data.scheduler.SchedulerEvent;
 import org.thingsboard.server.common.data.scheduler.SchedulerEventInfo;
 import org.thingsboard.server.common.data.secret.Secret;
 import org.thingsboard.server.common.data.secret.SecretInfo;
+import org.thingsboard.server.common.data.security.DeviceCertificateInfo;
+import org.thingsboard.server.common.data.security.DeviceCertificateRevocation;
+import org.thingsboard.server.common.data.security.DeviceCertificateRevocationRequest;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.data.security.model.JwtPair;
@@ -1318,6 +1322,41 @@ public class RestClient implements Closeable {
 
     public DeviceCredentials saveDeviceCredentials(DeviceCredentials deviceCredentials) {
         return restTemplate.postForEntity(baseURL + "/api/device/credentials", deviceCredentials, DeviceCredentials.class).getBody();
+    }
+
+    public Optional<DeviceCertificateInfo> getDeviceCertificateInfo(DeviceId deviceId) {
+        try {
+            ResponseEntity<DeviceCertificateInfo> certificateInfo = restTemplate.getForEntity(baseURL + "/api/device/{deviceId}/credentials/certificate", DeviceCertificateInfo.class, deviceId.getId());
+            return Optional.ofNullable(certificateInfo.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public DeviceCertificateRevocation revokeDeviceCertificate(DeviceId deviceId, DeviceCertificateRevocationRequest request) {
+        return restTemplate.postForEntity(baseURL + "/api/device/{deviceId}/credentials/revoke", request, DeviceCertificateRevocation.class, deviceId.getId()).getBody();
+    }
+
+    public DeviceCertificateRevocation revokeCertificate(DeviceCertificateRevocationRequest request) {
+        return restTemplate.postForEntity(baseURL + "/api/deviceCertificateRevocation", request, DeviceCertificateRevocation.class).getBody();
+    }
+
+    public PageData<DeviceCertificateRevocation> getDeviceCertificateRevocations(PageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        addPageLinkToParam(params, pageLink);
+        return restTemplate.exchange(
+                baseURL + "/api/deviceCertificateRevocations?" + getUrlParams(pageLink),
+                HttpMethod.GET, HttpEntity.EMPTY,
+                new ParameterizedTypeReference<PageData<DeviceCertificateRevocation>>() {
+                }, params).getBody();
+    }
+
+    public void deleteDeviceCertificateRevocation(DeviceCertificateRevocationId revocationId) {
+        restTemplate.delete(baseURL + "/api/deviceCertificateRevocation/{revocationId}", revocationId.getId());
     }
 
     public Optional<Device> saveDeviceWithCredentials(Device device, DeviceCredentials credentials) {

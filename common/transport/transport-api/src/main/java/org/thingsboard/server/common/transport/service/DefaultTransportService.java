@@ -62,6 +62,7 @@ import org.thingsboard.server.common.transport.TransportResourceCache;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.TransportTenantProfileCache;
+import org.thingsboard.server.common.transport.X509CertificateRevokedEvent;
 import org.thingsboard.server.common.transport.auth.GetOrCreateDeviceFromGatewayResponse;
 import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
@@ -949,6 +950,10 @@ public class DefaultTransportService extends TransportActivityManager implements
                 partitionService.updateQueues(toSessionMsg.getQueueUpdateMsgsList());
             } else if (toSessionMsg.getQueueDeleteMsgsCount() > 0) {
                 partitionService.removeQueues(toSessionMsg.getQueueDeleteMsgsList());
+            } else if (toSessionMsg.hasX509CertificateRevokedMsg()) {
+                TransportProtos.X509CertificateRevokedMsg msg = toSessionMsg.getX509CertificateRevokedMsg();
+                TenantId tenantId = TenantId.fromUUID(new UUID(msg.getTenantIdMSB(), msg.getTenantIdLSB()));
+                eventPublisher.publishEvent(new X509CertificateRevokedEvent(tenantId, msg.getCertificateHash()));
             } else {
                 //TODO: should we notify the device actor about missed session?
                 log.debug("[{}] Missing session.", sessionId);

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.mqtt;
 
 import io.netty.handler.ssl.SslHandler;
@@ -10,7 +11,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.config.ssl.SslCredentials;
 import org.thingsboard.server.common.transport.config.ssl.SslCredentialsConfig;
 
@@ -39,16 +39,12 @@ public class MqttSslHandlerProviderTest {
     @Mock
     private SslCredentials mockCredentials;
 
-    @Mock
-    private TransportService mockTransportService;
-
     private MqttSslHandlerProvider sslHandlerProvider;
 
     @BeforeEach
     public void setup() throws Exception {
         sslHandlerProvider = new MqttSslHandlerProvider();
         ReflectionTestUtils.setField(sslHandlerProvider, "mqttSslCredentialsConfig", mockCredentialsConfig);
-        ReflectionTestUtils.setField(sslHandlerProvider, "transportService", mockTransportService);
         ReflectionTestUtils.setField(sslHandlerProvider, "sslProtocol", "TLSv1.2");
 
         KeyManagerFactory mockKmf = mock(KeyManagerFactory.class);

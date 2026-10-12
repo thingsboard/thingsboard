@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.lwm2m.server;
 
 import org.eclipse.leshan.server.LeshanServer;
@@ -18,7 +19,9 @@ import org.mockito.quality.Strictness;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
 import org.thingsboard.server.common.transport.config.ssl.SslCredentials;
+import org.thingsboard.server.common.transport.limits.TransportRateLimitService;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
+import org.thingsboard.server.transport.lwm2m.secure.LwM2mClientCertificateRegistry;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MAuthorizer;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MDtlsCertificateVerifier;
 import org.thingsboard.server.transport.lwm2m.server.store.TbSecurityStore;
@@ -26,6 +29,7 @@ import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandle
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -90,7 +94,9 @@ public class LwM2mServerCertificateReloadTest {
                 mockSecurityStore,
                 mockCertificateVerifier,
                 mockAuthorizer,
-                mockModelProvider
+                mockModelProvider,
+                mock(TransportRateLimitService.class),
+                new LwM2mClientCertificateRegistry()
         );
 
         when(mockConfig.getHost()).thenReturn("localhost");

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
@@ -8,6 +9,7 @@ import { DeviceCredentialsComponent } from '@home/components/device/device-crede
 import { DeviceCredentialsLwm2mComponent } from '@home/components/device/device-credentials-lwm2m.component';
 import { DeviceCredentialsLwm2mServerComponent } from '@home/components/device/device-credentials-lwm2m-server.component';
 import { DeviceCredentialsMqttBasicComponent } from '@home/components/device/device-credentials-mqtt-basic.component';
+import { RevokeDeviceCertificateDialogComponent } from '@home/components/device/revoke-device-certificate-dialog.component';
 
 @NgModule({
   declarations: [
@@ -15,7 +17,8 @@ import { DeviceCredentialsMqttBasicComponent } from '@home/components/device/dev
     DeviceCredentialsComponent,
     DeviceCredentialsLwm2mComponent,
     DeviceCredentialsLwm2mServerComponent,
-    DeviceCredentialsMqttBasicComponent
+    DeviceCredentialsMqttBasicComponent,
+    RevokeDeviceCertificateDialogComponent
   ],
   imports: [
     CommonModule,
@@ -26,7 +29,8 @@ import { DeviceCredentialsMqttBasicComponent } from '@home/components/device/dev
     DeviceCredentialsComponent,
     DeviceCredentialsLwm2mComponent,
     DeviceCredentialsLwm2mServerComponent,
-    DeviceCredentialsMqttBasicComponent
+    DeviceCredentialsMqttBasicComponent,
+    RevokeDeviceCertificateDialogComponent
   ]
 })
 export class DeviceCredentialsModule { }

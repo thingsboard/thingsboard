@@ -66,6 +66,16 @@ public enum ActionType {
      */
     CREDENTIALS_UPDATED,
     /**
+     * Device certificate revoked: it can no longer authenticate or be bound to a device. Does not push to rule engine.
+     * Audit log payload: the revocation (certificate hash, serial number, issuer, subject, reason).
+     */
+    CREDENTIALS_REVOKED,
+    /**
+     * Revocation of a device certificate removed: the certificate is accepted again. Does not push to rule engine.
+     * Audit log payload: the removed revocation.
+     */
+    CREDENTIALS_REVOCATION_DELETED,
+    /**
      * Entity assigned to a customer. Pushes {@link TbMsgType#ENTITY_ASSIGNED} to rule engine.
      * Rule engine msg metadata includes {@code assignedCustomerId} and {@code assignedCustomerName}.
      * Audit log payload: customer name.

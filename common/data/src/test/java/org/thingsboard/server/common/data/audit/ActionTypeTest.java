@@ -27,6 +27,8 @@ import static org.thingsboard.server.common.data.audit.ActionType.LOGIN;
 import static org.thingsboard.server.common.data.audit.ActionType.LOGOUT;
 import static org.thingsboard.server.common.data.audit.ActionType.MADE_PRIVATE;
 import static org.thingsboard.server.common.data.audit.ActionType.MADE_PUBLIC;
+import static org.thingsboard.server.common.data.audit.ActionType.CREDENTIALS_REVOCATION_DELETED;
+import static org.thingsboard.server.common.data.audit.ActionType.CREDENTIALS_REVOKED;
 import static org.thingsboard.server.common.data.audit.ActionType.NON_PRODUCTION_CONFIRMED;
 import static org.thingsboard.server.common.data.audit.ActionType.REST_API_RULE_ENGINE_CALL;
 import static org.thingsboard.server.common.data.audit.ActionType.RPC_CALL;
@@ -38,6 +40,8 @@ class ActionTypeTest {
     private final Set<ActionType> typesWithNullRuleEngineMsgType = EnumSet.of(
             RPC_CALL,
             CREDENTIALS_UPDATED,
+            CREDENTIALS_REVOKED,
+            CREDENTIALS_REVOCATION_DELETED,
             ACTIVATED,
             SUSPENDED,
             CREDENTIALS_READ,

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.transport.limits;
 
 import lombok.extern.slf4j.Slf4j;
@@ -152,8 +153,20 @@ public class DefaultTransportRateLimitService implements TransportRateLimitServi
         if (!ipRateLimitsEnabled) {
             return true;
         }
-        var stats = ipMap.computeIfAbsent(address.getAddress(), a -> new InetAddressRateLimitStats());
-        return !stats.isBlocked() || (stats.getLastActivityTs() + ipBlockTimeout < System.currentTimeMillis());
+        // Looked up, not created: an entry for every source address would let forged UDP sources fill the map
+        var stats = ipMap.get(address.getAddress());
+        if (stats == null || !stats.isBlocked()) {
+            return true;
+        }
+        stats.getLock().lock();
+        try {
+            if (stats.isBlocked() && stats.getLastActivityTs() + ipBlockTimeout < System.currentTimeMillis()) {
+                unblock(address.getAddress(), stats, "ip block timeout");
+            }
+            return !stats.isBlocked();
+        } finally {
+            stats.getLock().unlock();
+        }
     }
 
     @Override
@@ -161,15 +174,18 @@ public class DefaultTransportRateLimitService implements TransportRateLimitServi
         if (!ipRateLimitsEnabled) {
             return;
         }
-
-        var stats = ipMap.computeIfAbsent(address.getAddress(), a -> new InetAddressRateLimitStats());
+        // Called for every authenticated CoAP request: nothing to reset for addresses without failures
+        var stats = ipMap.get(address.getAddress());
+        if (stats == null || (!stats.isBlocked() && stats.getFailureCount() == 0)) {
+            return;
+        }
         stats.getLock().lock();
         try {
             stats.setLastActivityTs(System.currentTimeMillis());
-            stats.setFailureCount(0);
             if (stats.isBlocked()) {
-                stats.setBlocked(false);
-                log.info("[{}] IP address un-blocked due to correct credentials.", address.getAddress());
+                unblock(address.getAddress(), stats, "correct credentials");
+            } else {
+                stats.setFailureCount(0);
             }
         } finally {
             stats.getLock().unlock();
@@ -188,7 +204,7 @@ public class DefaultTransportRateLimitService implements TransportRateLimitServi
             stats.setLastActivityTs(System.currentTimeMillis());
             int failureCount = stats.getFailureCount() + 1;
             stats.setFailureCount(failureCount);
-            if (failureCount >= maxWrongCredentialsPerIp) {
+            if (failureCount >= maxWrongCredentialsPerIp && !stats.isBlocked()) {
                 log.info("[{}] IP address blocked due to constantly wrong credentials.", address.getAddress());
                 stats.setBlocked(true);
             }
@@ -210,10 +226,26 @@ public class DefaultTransportRateLimitService implements TransportRateLimitServi
                 log.debug("[{}] IP address removed due to session inactivity timeout.", entry.getKey());
                 ipMap.remove(entry.getKey());
             } else if (stats.isBlocked() && (stats.getLastActivityTs() + ipBlockTimeout < currentTime)) {
-                log.info("[{}] IP address unblocked due ip block timeout.", entry.getKey());
-                stats.setBlocked(false);
+                stats.getLock().lock();
+                try {
+                    if (stats.isBlocked() && stats.getLastActivityTs() + ipBlockTimeout < currentTime) {
+                        unblock(entry.getKey(), stats, "ip block timeout");
+                    }
+                } finally {
+                    stats.getLock().unlock();
+                }
             }
         }
+    }
+
+    /**
+     * Gives the address a fresh failure budget: otherwise a single failure after the block expires blocks it again,
+     * which keeps an address shared by many devices behind a NAT blocked as long as one of them keeps failing.
+     */
+    private void unblock(InetAddress address, InetAddressRateLimitStats stats, String reason) {
+        stats.setBlocked(false);
+        stats.setFailureCount(0);
+        log.info("[{}] IP address unblocked due to {}.", address, reason);
     }
 
     private <T extends EntityId> void mergeLimits(T entityId, EntityTransportRateLimits newRateLimits,

@@ -101,6 +101,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineNotifica
 import org.thingsboard.server.gen.transport.TransportProtos.ToTbReportNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToVersionControlServiceMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.X509CertificateRevokedMsg;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.MultipleTbQueueCallbackWrapper;
@@ -473,6 +474,18 @@ public class DefaultTbClusterService implements TbClusterService {
     }
 
     @Override
+    public void onDeviceCertificateRevoked(TenantId tenantId, String certificateHash, TbQueueCallback callback) {
+        log.trace("[{}] Processing revoked device certificate [{}]", tenantId, certificateHash);
+        X509CertificateRevokedMsg revokedMsg = X509CertificateRevokedMsg.newBuilder()
+                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .setCertificateHash(certificateHash)
+                .build();
+        ToTransportMsg transportMsg = ToTransportMsg.newBuilder().setX509CertificateRevokedMsg(revokedMsg).build();
+        broadcast(transportMsg, List.of(DataConstants.COAP_TRANSPORT_NAME, DataConstants.LWM2M_TRANSPORT_NAME), callback);
+    }
+
+    @Override
     public void onResourceChange(TbResourceInfo resource, TbQueueCallback callback) {
         TenantId tenantId = resource.getTenantId();
         TbResourceId resourceId = resource.getId();
@@ -563,8 +576,12 @@ public class DefaultTbClusterService implements TbClusterService {
     }
 
     private void broadcast(ToTransportMsg transportMsg, String transportType, TbQueueCallback callback) {
+        broadcast(transportMsg, List.of(transportType), callback);
+    }
+
+    private void broadcast(ToTransportMsg transportMsg, List<String> transportTypes, TbQueueCallback callback) {
         Set<String> tbTransportServices = partitionService.getAllServices(ServiceType.TB_TRANSPORT).stream()
-                .filter(info -> info.getTransportsList().contains(transportType))
+                .filter(info -> info.getTransportsList().stream().anyMatch(transportTypes::contains))
                 .map(TransportProtos.ServiceInfo::getServiceId).collect(Collectors.toSet());
         broadcast(transportMsg, tbTransportServices, callback);
     }

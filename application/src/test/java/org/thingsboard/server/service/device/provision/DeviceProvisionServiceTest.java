@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.device.provision;
 
 
@@ -32,6 +33,7 @@ import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.common.transport.util.SslUtil;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.audit.AuditLogService;
+import org.thingsboard.server.dao.device.DeviceCertificateRevocationService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
@@ -56,6 +58,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -72,11 +75,12 @@ public class DeviceProvisionServiceTest {
                                                                  DeviceProfileService deviceProfileService,
                                                                  DeviceService deviceService,
                                                                  DeviceCredentialsService deviceCredentialsService,
+                                                                 DeviceCertificateRevocationService deviceCertificateRevocationService,
                                                                  AttributesService attributesService,
                                                                  AuditLogService auditLogService,
                                                                  PartitionService partitionService) {
             return new DeviceProvisionServiceImpl(producerProvider, deviceProfileService, deviceService,
-                    deviceCredentialsService, attributesService, auditLogService, partitionService);
+                    deviceCredentialsService, deviceCertificateRevocationService, attributesService, auditLogService, partitionService);
         }
     }
 
@@ -92,6 +96,8 @@ public class DeviceProvisionServiceTest {
     protected DeviceService deviceService;
     @MockitoBean
     protected DeviceCredentialsService deviceCredentialsService;
+    @MockitoBean
+    protected DeviceCertificateRevocationService deviceCertificateRevocationService;
     @MockitoBean
     protected AttributesService attributesService;
     @MockitoBean
@@ -136,6 +142,22 @@ public class DeviceProvisionServiceTest {
 
         Assertions.assertThat(response.getResponseStatus()).isEqualTo(ProvisionResponseStatus.SUCCESS);
         Assertions.assertThat(response.getDeviceCredentials()).isEqualTo(deviceCredentials);
+    }
+
+    @Test
+    public void provisionDeviceViaRevokedX509CertificateIsRejectedBeforeBinding() {
+        var tenant = createTenant();
+        var deviceProfile = createDeviceProfile(tenant.getId(), chain[1], true);
+        when(deviceCertificateRevocationService.isRevoked(tenant.getId(), EncryptionUtil.getSha3Hash(chain[0]))).thenReturn(true);
+
+        Assertions.assertThatThrownBy(() ->
+                        service.provisionDeviceViaX509Chain(deviceProfile, createProvisionRequest(chain[0])))
+                .isInstanceOf(ProvisionFailedException.class)
+                .hasMessage("Device certificate is revoked!");
+
+        verify(deviceService, never()).findDeviceByTenantIdAndName(any(), any());
+        verify(deviceCredentialsService, never()).updateDeviceCredentials(any(), any());
+        verify(deviceService, never()).saveDeviceWithCredentials(any(), any());
     }
 
     @Test

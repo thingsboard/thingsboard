@@ -12,6 +12,11 @@ import jakarta.annotation.PreDestroy;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.californium.core.network.CoapEndpoint;
+import org.eclipse.californium.core.network.Endpoint;
+import org.eclipse.californium.elements.auth.X509CertPath;
+import org.eclipse.californium.elements.util.Filter;
+import org.eclipse.californium.scandium.DTLSConnector;
 import org.eclipse.leshan.core.ResponseCode;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
@@ -35,9 +40,13 @@ import org.eclipse.leshan.core.request.WriteRequest.Mode;
 import org.eclipse.leshan.core.response.ObserveResponse;
 import org.eclipse.leshan.core.response.ReadCompositeResponse;
 import org.eclipse.leshan.core.response.ReadResponse;
+import org.eclipse.leshan.server.LeshanServer;
+import org.eclipse.leshan.server.californium.endpoint.CaliforniumServerEndpointsProvider;
+import org.eclipse.leshan.server.endpoint.LwM2mServerEndpointsProvider;
 import org.eclipse.leshan.server.registration.Registration;
 import org.eclipse.leshan.server.registration.RegistrationStore;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.server.common.data.Device;
@@ -51,12 +60,17 @@ import org.thingsboard.server.common.data.device.profile.lwm2m.TelemetryObserveS
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.ota.OtaPackageUtil;
+import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
+import org.thingsboard.server.common.transport.X509CertificateRevokedEvent;
+import org.thingsboard.server.common.transport.util.SslUtil;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
+import org.thingsboard.server.transport.lwm2m.secure.LwM2mClientCertificateRegistry;
+import org.thingsboard.server.transport.lwm2m.secure.LwM2mClientCertificateRegistry.ClientCertificate;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mOtaConvert;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServerHelper;
@@ -97,6 +111,8 @@ import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2mSecurityStore;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
+import java.security.Principal;
+import java.security.cert.CertificateEncodingException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -111,6 +127,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -165,6 +182,7 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
     private final RegistrationStore registrationStore;
     private final TbLwM2mSecurityStore securityStore;
     private final LwM2MModelConfigService modelConfigService;
+    private final LwM2mClientCertificateRegistry certificateRegistry;
 
     @PostConstruct
     public void init() {
@@ -434,6 +452,61 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
     @Override
     public void onDeviceDelete(DeviceId deviceId) {
         clearAndUnregister(clientContext.getClientByDeviceId(deviceId.getId()));
+    }
+
+    /**
+     * Besides unregistering the client, terminates its DTLS connections and removes their sessions from the session cache:
+     * a client that resumed the DTLS session would skip the certificate check of a full handshake and could register again
+     * in trust mode, where the core identifies the device by its endpoint and does not see the certificate.
+     * Only clients that this node saw authenticate with the certificate for the tenant are affected, so that a tenant can't
+     * disconnect devices of another tenant by revoking their certificates.
+     */
+    @EventListener(X509CertificateRevokedEvent.class)
+    public void onX509CertificateRevoked(X509CertificateRevokedEvent event) {
+        for (ClientCertificate certificate : certificateRegistry.findByCertificate(event.getTenantId(), event.getCertificateHash())) {
+            executor.submit(() -> {
+                log.info("[{}] Closing LwM2M client with revoked certificate", certificate.endpoint());
+                terminateDtlsConnections(certificate.certificateHash());
+                clientContext.getLwM2mClients().stream()
+                        .filter(client -> certificate.endpoint().equals(client.getEndpoint()) && client.getRegistration() != null)
+                        .findFirst()
+                        .ifPresent(this::clearAndUnregister);
+                sessionStore.remove(certificate.endpoint());
+                certificateRegistry.unregister(certificate.endpoint());
+            });
+        }
+    }
+
+    private void terminateDtlsConnections(String certificateHash) {
+        LeshanServer server = context.getServer();
+        if (server == null) {
+            return;
+        }
+        for (LwM2mServerEndpointsProvider provider : server.getEndpointsProvider()) {
+            if (provider instanceof CaliforniumServerEndpointsProvider californiumProvider && californiumProvider.getCoapServer() != null) {
+                for (Endpoint endpoint : californiumProvider.getCoapServer().getEndpoints()) {
+                    if (endpoint instanceof CoapEndpoint coapEndpoint && coapEndpoint.getConnector() instanceof DTLSConnector dtlsConnector) {
+                        try {
+                            Filter<Principal> revokedCertificate = principal -> isCertificate(principal, certificateHash);
+                            dtlsConnector.startTerminateConnectionsForPrincipal(revokedCertificate, true);
+                        } catch (RejectedExecutionException e) {
+                            log.debug("[{}] Failed to terminate DTLS connections, connector is stopping", certificateHash, e);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private static boolean isCertificate(Principal principal, String certificateHash) {
+        if (principal instanceof X509CertPath certPath) {
+            try {
+                return certificateHash.equals(EncryptionUtil.getSha3Hash(SslUtil.getCertificateString(certPath.getTarget())));
+            } catch (CertificateEncodingException e) {
+                return false;
+            }
+        }
+        return false;
     }
 
     @Override

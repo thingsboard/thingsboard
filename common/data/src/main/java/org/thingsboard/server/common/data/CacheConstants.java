@@ -8,6 +8,7 @@ public final class CacheConstants {
     private CacheConstants() {}
 
     public static final String DEVICE_CREDENTIALS_CACHE = "deviceCredentials";
+    public static final String DEVICE_CERTIFICATE_REVOCATIONS_CACHE = "deviceCertificateRevocations";
     public static final String RELATIONS_CACHE = "relations";
     public static final String DEVICE_CACHE = "devices";
     public static final String SESSIONS_CACHE = "sessions";

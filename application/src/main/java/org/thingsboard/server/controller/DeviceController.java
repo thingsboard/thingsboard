@@ -60,6 +60,9 @@ import org.thingsboard.server.common.data.permission.MergedUserPermissions;
 import org.thingsboard.server.common.data.permission.Operation;
 import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.common.data.security.DeviceCertificateInfo;
+import org.thingsboard.server.common.data.security.DeviceCertificateRevocation;
+import org.thingsboard.server.common.data.security.DeviceCertificateRevocationRequest;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.sync.ie.importing.csv.BulkImportRequest;
 import org.thingsboard.server.common.data.sync.ie.importing.csv.BulkImportResult;
@@ -69,6 +72,7 @@ import org.thingsboard.server.dao.device.claim.ClaimResult;
 import org.thingsboard.server.dao.device.claim.ReclaimResult;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.device.DeviceBulkImportService;
+import org.thingsboard.server.service.entitiy.device.TbDeviceCertificateRevocationService;
 import org.thingsboard.server.service.entitiy.device.TbDeviceService;
 import org.thingsboard.server.service.gateway_device.GatewayNotificationsService;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -137,6 +141,7 @@ public class DeviceController extends BaseController {
     private final DeviceBulkImportService deviceBulkImportService;
     private final GatewayNotificationsService gatewayNotificationsService;
     private final TbDeviceService tbDeviceService;
+    private final TbDeviceCertificateRevocationService tbDeviceCertificateRevocationService;
 
     @ApiOperation(value = "Get Device (getDeviceById)",
             notes = "Fetch the Device object based on the provided Device Id. "
@@ -296,6 +301,44 @@ public class DeviceController extends BaseController {
         checkNotNull(deviceCredentials);
         Device device = checkDeviceId(deviceCredentials.getDeviceId(), Operation.WRITE_CREDENTIALS);
         return tbDeviceService.updateDeviceCredentials(device, deviceCredentials, getCurrentUser());
+    }
+
+    @ApiOperation(value = "Revoke device certificate (revokeDeviceCertificate)",
+            notes = "Revokes the X.509 certificate stored in the device credentials: the certificate can no longer authenticate " +
+                    "or be bound to a device by X.509 certificate chain provisioning. Active sessions of the device are closed. " +
+                    "The device keeps its credentials, so a new certificate with the same CN is bound again by chain provisioning. " +
+                    "To revoke a certificate that is not stored in the credentials, use 'revokeCertificate'." +
+                    TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH + RBAC_WRITE_CREDENTIALS_CHECK)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PostMapping(value = "/device/{deviceId}/credentials/revoke")
+    public DeviceCertificateRevocation revokeDeviceCertificate(
+            @Parameter(description = DEVICE_ID_PARAM_DESCRIPTION)
+            @PathVariable(DEVICE_ID) String strDeviceId,
+            @Parameter(description = "Optional reason of the revocation.")
+            @RequestBody(required = false) DeviceCertificateRevocationRequest request) throws ThingsboardException {
+        checkParameter(DEVICE_ID, strDeviceId);
+        Device device = checkDeviceId(new DeviceId(toUUID(strDeviceId)), Operation.WRITE_CREDENTIALS);
+        String reason = request != null ? request.getReason() : null;
+        return tbDeviceCertificateRevocationService.revokeDeviceCertificate(device, reason, getCurrentUser());
+    }
+
+    @ApiOperation(value = "Get device certificate (getDeviceCertificateInfo)",
+            notes = "Describes the X.509 certificate stored in the device credentials: subject, issuer, serial number, " +
+                    "validity period, SHA-256 fingerprint and its revocation, if it is revoked. " +
+                    "Returns nothing if the credentials hold no valid certificate." +
+                    TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH + RBAC_READ_CREDENTIALS_CHECK)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @GetMapping(value = "/device/{deviceId}/credentials/certificate")
+    public DeviceCertificateInfo getDeviceCertificateInfo(
+            @Parameter(description = DEVICE_ID_PARAM_DESCRIPTION)
+            @PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
+        checkParameter(DEVICE_ID, strDeviceId);
+        Device device = checkDeviceId(new DeviceId(toUUID(strDeviceId)), Operation.READ_CREDENTIALS);
+        DeviceCertificateInfo info = tbDeviceCertificateRevocationService.getDeviceCertificateInfo(device);
+        if (info != null && info.getRevocation() != null && getCurrentUser().isCustomerUser()) {
+            info.getRevocation().setRevokedBy(null); // a tenant user id
+        }
+        return info;
     }
 
     @ApiOperation(value = "Get Tenant Devices (getTenantDevices)",
