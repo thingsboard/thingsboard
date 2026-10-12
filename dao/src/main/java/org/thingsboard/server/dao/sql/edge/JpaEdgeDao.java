@@ -143,6 +143,31 @@ public class JpaEdgeDao extends JpaAbstractDao<EdgeEntity, Edge> implements Edge
     }
 
     @Override
+    public PageData<Edge> findEdgesByTenantIdAndEdgeProfileId(UUID tenantId, UUID edgeProfileId, PageLink pageLink) {
+        return DaoUtil.toPageData(edgeRepository.findByTenantIdAndEdgeProfileId(tenantId, edgeProfileId,
+                pageLink.getTextSearch(), DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public PageData<EdgeId> findEdgeIdsByTenantIdAndEdgeProfileId(UUID tenantId, UUID edgeProfileId, PageLink pageLink) {
+        return DaoUtil.pageToPageData(
+                edgeRepository.findIdsByTenantIdAndEdgeProfileId(
+                        tenantId,
+                        edgeProfileId,
+                        DaoUtil.toPageable(pageLink))).mapData(EdgeId::fromUUID);
+    }
+
+    @Override
+    public long countByTenantIdAndEdgeProfileId(UUID tenantId, UUID edgeProfileId) {
+        return edgeRepository.countByTenantIdAndEdgeProfileId(tenantId, edgeProfileId);
+    }
+
+    @Override
+    public boolean existsByTenantIdAndEdgeProfileId(UUID tenantId, UUID edgeProfileId) {
+        return edgeRepository.existsByTenantIdAndEdgeProfileId(tenantId, edgeProfileId);
+    }
+
+    @Override
     public PageData<Edge> findEdgesByTenantIdAndCustomerIdAndType(UUID tenantId, UUID customerId, String type, PageLink pageLink) {
         return DaoUtil.toPageData(
                 edgeRepository.findByTenantIdAndCustomerIdAndType(

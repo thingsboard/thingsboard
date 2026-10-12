@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.dao.sql.agent;
 
+import com.google.common.hash.Hashing;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -30,6 +31,9 @@ import java.util.UUID;
 @Slf4j
 public class JpaAgentAppProfileDao extends JpaAbstractDao<AgentAppProfileEntity, AgentAppProfile> implements AgentAppProfileDao {
 
+    // its own key space, so this lock never joins the acquisition order of the relation endpoint locks taken under it
+    private static final String EDGE_PROFILE_LINK_LOCK_NAMESPACE = "agentAppProfileEdgeProfileLink";
+
     @Autowired
     private AgentAppProfileRepository profileRepository;
 
@@ -41,6 +45,12 @@ public class JpaAgentAppProfileDao extends JpaAbstractDao<AgentAppProfileEntity,
     @Override
     protected JpaRepository<AgentAppProfileEntity, UUID> getRepository() {
         return profileRepository;
+    }
+
+    @Override
+    public void lockEdgeProfileLink(UUID profileId) {
+        long key = Hashing.murmur3_128().hashUnencodedChars(EDGE_PROFILE_LINK_LOCK_NAMESPACE + profileId).asLong();
+        jdbcTemplate.queryForList("SELECT pg_advisory_xact_lock(?)", key);
     }
 
     @Override
@@ -107,4 +117,5 @@ public class JpaAgentAppProfileDao extends JpaAbstractDao<AgentAppProfileEntity,
     public EntityType getEntityType() {
         return EntityType.AGENT_APP_PROFILE;
     }
+
 }

@@ -1,16 +1,21 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.edge.rpc.processor.rule;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
@@ -121,6 +126,14 @@ public class RuleChainEdgeProcessor extends BaseRuleChainProcessor {
         }
     }
 
+    // the applier drops the previous profile's rows right after a switch and the edge refuses to delete the chain it is
+    // rooted on, so the new root is persisted on the caller's thread and every drop is queued behind it
+    public ListenableFuture<Void> pushRootRuleChain(TenantId tenantId, EdgeId edgeId, RuleChainId ruleChainId) {
+        ObjectNode body = JacksonUtil.newObjectNode();
+        body.put(EDGE_IS_ROOT_BODY_KEY, Boolean.TRUE);
+        return saveEdgeEvent(tenantId, edgeId, EdgeEventType.RULE_CHAIN, EdgeEventActionType.UPDATED, ruleChainId, body);
+    }
+
     @Override
     public DownlinkMsg convertEdgeEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
         RuleChainId ruleChainId = new RuleChainId(edgeEvent.getEntityId());
@@ -138,7 +151,8 @@ public class RuleChainEdgeProcessor extends BaseRuleChainProcessor {
                     }
                     if (!isRoot) {
                         Edge edge = edgeCtx.getEdgeService().findEdgeById(edgeEvent.getTenantId(), edgeEvent.getEdgeId());
-                        isRoot = edge.getRootRuleChainId().equals(ruleChainId);
+                        // an edge on a profile that has no root rule chain has no root of its own either
+                        isRoot = edge != null && ruleChainId.equals(edge.getRootRuleChainId());
                     }
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
                     RuleChainUpdateMsg ruleChainUpdateMsg = EdgeMsgConstructorUtils.constructRuleChainUpdatedMsg(msgType, ruleChain, isRoot);

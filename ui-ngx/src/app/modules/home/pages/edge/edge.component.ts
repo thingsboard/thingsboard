@@ -36,8 +36,6 @@ import {
 })
 export class EdgeComponent extends GroupEntityComponent<EdgeInfo> {
 
-  entityType = EntityType;
-
   // edgeScope: 'tenant' | 'customer' | 'customer_user';
   upgradeAvailable: boolean = false;
 
@@ -80,54 +78,6 @@ export class EdgeComponent extends GroupEntityComponent<EdgeInfo> {
     }
   }
 
-  hideManageUsers() {
-    if (this.isGroupMode()) {
-      return !this.groupEntitiesTableConfig.manageUsersEnabled(this.entity);
-    } else {
-      return false;
-    }
-  }
-
-  hideManageAssets() {
-    if (this.isGroupMode()) {
-      return !this.groupEntitiesTableConfig.manageAssetsEnabled(this.entity);
-    } else {
-      return false;
-    }
-  }
-
-  hideManageDevices() {
-    if (this.isGroupMode()) {
-      return !this.groupEntitiesTableConfig.manageDevicesEnabled(this.entity);
-    } else {
-      return false;
-    }
-  }
-
-  hideManageEntityViews() {
-    if (this.isGroupMode()) {
-      return !this.groupEntitiesTableConfig.manageEntityViewsEnabled(this.entity);
-    } else {
-      return false;
-    }
-  }
-
-  hideManageDashboards() {
-    if (this.isGroupMode()) {
-      return !this.groupEntitiesTableConfig.manageDashboardsEnabled(this.entity);
-    } else {
-      return false;
-    }
-  }
-
-  hideManageSchedulerEvents() {
-    if (this.isGroupMode()) {
-      return !this.groupEntitiesTableConfig.manageSchedulerEventsEnabled(this.entity);
-    } else {
-      return false;
-    }
-  }
-
   /* isAssignedToCustomer(entity: EdgeInfo): boolean {
     return entity && entity.customerId && entity.customerId.id !== NULL_UUID;
   } */
@@ -138,7 +88,7 @@ export class EdgeComponent extends GroupEntityComponent<EdgeInfo> {
 
     const form = this.fb.group({
       name: [entity ? entity.name : '', [Validators.required, Validators.maxLength(255)]],
-      type: [entity?.type ? entity.type : 'default', [Validators.required, Validators.maxLength(255)]],
+      edgeProfileId: [entity ? entity.edgeProfileId : null, [Validators.required]],
       label: [entity ? entity.label : '', Validators.maxLength(255)],
       routingKey: this.fb.control({value: entity ? entity.routingKey : null, disabled: true}),
       secret: this.fb.control({value: entity ? entity.secret : null, disabled: true}),
@@ -159,7 +109,7 @@ export class EdgeComponent extends GroupEntityComponent<EdgeInfo> {
   updateForm(entity: EdgeInfo) {
     const patch: any = {
       name: entity.name,
-      type: entity.type,
+      edgeProfileId: entity.edgeProfileId,
       label: entity.label,
       routingKey: entity.routingKey,
       secret: entity.secret,

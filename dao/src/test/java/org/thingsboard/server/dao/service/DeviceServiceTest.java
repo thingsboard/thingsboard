@@ -162,6 +162,7 @@ public class DeviceServiceTest extends AbstractServiceTest {
         TenantProfile defaultTenantProfile = tenantProfileService.findDefaultTenantProfile(tenantId);
         defaultTenantProfile.getProfileData().setConfiguration(DefaultTenantProfileConfiguration.builder().maxDevices(5l).build());
         tenantProfileService.saveTenantProfile(tenantId, defaultTenantProfile);
+        tenantProfileCache.evict(defaultTenantProfile.getId());
 
         for (int i = 0; i < 50; i++) {
             executor.submit(() -> {

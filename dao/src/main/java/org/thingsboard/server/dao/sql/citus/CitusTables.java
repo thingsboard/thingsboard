@@ -53,7 +53,7 @@ public final class CitusTables {
      */
     public static final List<String> REFERENCE_TABLES = List.of(
             "key_dictionary", "tenant_profile", "converter", "rule_chain", "ota_package", "dashboard",
-            "device_profile", "asset_profile",
+            "device_profile", "asset_profile", "edge_profile",
             "report_template", "entity_group",
             // entity tables (tenant->tenant_profile; asset/entity_view are now distributed, not reference)
             "tenant", "customer", "tb_user", "edge",
@@ -195,6 +195,7 @@ public final class CitusTables {
             new ManagedForeignKey("integration", "fk_integration_converter", List.of("converter_id"), "converter", "FOREIGN KEY (converter_id) REFERENCES converter(id)"),
             new ManagedForeignKey("integration", "fk_integration_downlink_converter", List.of("downlink_converter_id"), "converter", "FOREIGN KEY (downlink_converter_id) REFERENCES converter(id)"),
             new ManagedForeignKey("tenant", "fk_tenant_profile", List.of("tenant_profile_id"), "tenant_profile", "FOREIGN KEY (tenant_profile_id) REFERENCES tenant_profile(id)"),
+            new ManagedForeignKey("edge", "fk_edge_profile", List.of("edge_profile_id"), "edge_profile", "FOREIGN KEY (edge_profile_id) REFERENCES edge_profile(id)"),
             new ManagedForeignKey("user_auth_settings", "fk_user_auth_settings_user_id", List.of("user_id"), "tb_user", "FOREIGN KEY (user_id) REFERENCES tb_user(id)"),
             new ManagedForeignKey("user_settings", "fk_user_id", List.of("user_id"), "tb_user", "FOREIGN KEY (user_id) REFERENCES tb_user(id) ON DELETE CASCADE"),
             new ManagedForeignKey("alarm_types", "fk_entity_tenant_id", List.of("tenant_id"), "tenant", "FOREIGN KEY (tenant_id) REFERENCES tenant(id) ON DELETE CASCADE"),

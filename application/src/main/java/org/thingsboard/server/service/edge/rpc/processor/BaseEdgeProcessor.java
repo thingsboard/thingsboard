@@ -160,9 +160,10 @@ public abstract class BaseEdgeProcessor implements EdgeProcessor {
     }
 
     private boolean doSaveIfEdgeIsOffline(EdgeEventType type, EdgeEventActionType action) {
+        // an edge that was offline when it lost access must still be told, so assignment changes outrank the type allowlist
         return switch (action) {
             case TIMESERIES_UPDATED, ALARM_ACK, ALARM_CLEAR, ALARM_ASSIGNED, ALARM_UNASSIGNED, ADDED_COMMENT,
-                 UPDATED_COMMENT, DELETED -> true;
+                 UPDATED_COMMENT, DELETED, ASSIGNED_TO_EDGE, UNASSIGNED_FROM_EDGE -> true;
             default -> switch (type) {
                 case ALARM, ALARM_COMMENT, RULE_CHAIN, RULE_CHAIN_METADATA, CUSTOMER, TENANT, TENANT_PROFILE, WIDGETS_BUNDLE, WIDGET_TYPE,
                      ADMIN_SETTINGS, OTA_PACKAGE, QUEUE, RELATION, CALCULATED_FIELD, AI_MODEL, API_KEY, NOTIFICATION_TEMPLATE, NOTIFICATION_TARGET, NOTIFICATION_RULE,

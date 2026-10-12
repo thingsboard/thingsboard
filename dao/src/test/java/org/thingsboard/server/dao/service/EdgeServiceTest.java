@@ -12,12 +12,20 @@ import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.edge.EdgeProfile;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EdgeProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BooleanDataEntry;
+import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
@@ -25,7 +33,9 @@ import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
+import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.customer.CustomerService;
+import org.thingsboard.server.dao.edge.EdgeProfileService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.secret.SecretConfigurationService;
@@ -37,6 +47,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.function.Function;
 
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
@@ -53,7 +70,11 @@ public class EdgeServiceTest extends AbstractServiceTest {
     @Autowired
     EdgeService edgeService;
     @Autowired
+    EdgeProfileService edgeProfileService;
+    @Autowired
     RuleChainService ruleChainService;
+    @Autowired
+    AttributesService attributesService;
 
     @MockitoBean
     SecretConfigurationService secretConfigurationService;
@@ -86,6 +107,31 @@ public class EdgeServiceTest extends AbstractServiceTest {
         Assert.assertEquals(foundEdge.getName(), savedEdge.getName());
 
         edgeService.deleteEdge(tenantId, savedEdge.getId());
+    }
+
+    @Test
+    public void testFailedSaveLeavesNoAutoCreatedEdgeProfile() {
+        Edge edge = constructEdge("Edge with a missing customer", "typeThatIsAboutToFail");
+        edge.setCustomerId(new CustomerId(UUID.randomUUID()));
+
+        Assertions.assertThrows(DataValidationException.class, () -> edgeService.saveEdge(edge));
+
+        Assert.assertNull(edgeProfileService.findEdgeProfileByName(tenantId, "typeThatIsAboutToFail"));
+    }
+
+    @Test
+    public void testUpdateWithoutProfileOrTypeKeepsTheCurrentProfile() {
+        Edge saved = edgeService.saveEdge(constructEdge("Edge that keeps its profile", "typeKept"));
+        EdgeProfileId profileId = saved.getEdgeProfileId();
+        Assert.assertNotEquals(edgeProfileService.findDefaultEdgeProfile(tenantId).getId(), profileId);
+
+        saved.setEdgeProfileId(null);
+        saved.setType(null);
+        saved.setName("Edge renamed only");
+        Edge updated = edgeService.saveEdge(saved);
+
+        Assert.assertEquals(profileId, updated.getEdgeProfileId());
+        edgeService.deleteEdge(tenantId, updated.getId());
     }
 
     @Test
@@ -181,6 +227,42 @@ public class EdgeServiceTest extends AbstractServiceTest {
             Assert.assertEquals("typeC", edgeTypes.get(2).getType());
         } finally {
             edges.forEach((edge) -> {
+                edgeService.deleteEdge(tenantId, edge.getId());
+            });
+        }
+    }
+
+    @Test
+    public void testConcurrentSaveEdgeWithNewTypeCreatesOneProfile() throws Exception {
+        int threads = 6;
+        CyclicBarrier startTogether = new CyclicBarrier(threads);
+        ExecutorService pool = Executors.newFixedThreadPool(threads);
+        List<Edge> saved = new ArrayList<>();
+        try {
+            List<Callable<Edge>> racers = new ArrayList<>();
+            for (int i = 0; i < threads; i++) {
+                int index = i;
+                racers.add(() -> {
+                    startTogether.await();
+                    return edgeService.saveEdge(constructEdge("Raced edge " + index, "Raced type"));
+                });
+            }
+            for (Future<Edge> future : pool.invokeAll(racers)) {
+                // a losing save used to fail the whole request on the edge profile unique constraint
+                saved.add(future.get());
+            }
+            Assert.assertEquals(threads, saved.size());
+            saved.forEach(Assert::assertNotNull);
+            EdgeProfileId profileId = saved.get(0).getEdgeProfileId();
+            Assert.assertNotNull(profileId);
+            saved.forEach(edge -> Assert.assertEquals("every edge must end up on the same profile", profileId, edge.getEdgeProfileId()));
+
+            EdgeProfile profile = edgeProfileService.findEdgeProfileByName(tenantId, "Raced type");
+            Assert.assertNotNull(profile);
+            Assert.assertEquals(profileId, profile.getId());
+        } finally {
+            pool.shutdownNow();
+            saved.forEach(edge -> {
                 edgeService.deleteEdge(tenantId, edge.getId());
             });
         }
@@ -378,6 +460,18 @@ public class EdgeServiceTest extends AbstractServiceTest {
     }
 
     @Test
+    public void testFindActiveEdges() throws ExecutionException, InterruptedException {
+        Edge edge = edgeService.saveEdge(constructEdge("Active edge", "default"));
+        KvEntry activeEntry = new BooleanDataEntry("active", true);
+        AttributeKvEntry attribute = new BaseAttributeKvEntry(activeEntry, System.currentTimeMillis());
+        attributesService.save(tenantId, edge.getId(), AttributeScope.SERVER_SCOPE, Collections.singletonList(attribute)).get();
+
+        PageData<Edge> activeEdges = edgeService.findActiveEdges(new PageLink(100));
+
+        Assert.assertTrue(activeEdges.getData().stream().anyMatch(e -> e.getId().equals(edge.getId())));
+    }
+
+    @Test
     public void testCleanCacheIfEdgeRenamed() {
         String edgeNameBeforeRename = StringUtils.randomAlphanumeric(15);
         String edgeNameAfterRename = StringUtils.randomAlphanumeric(15);
@@ -467,6 +561,93 @@ public class EdgeServiceTest extends AbstractServiceTest {
         Assert.assertEquals(2, edgesPageData.getTotalElements());
         tenantService.deleteTenant(tenant1.getId());
         tenantService.deleteTenant(tenant2.getId());
+    }
+
+    @Test
+    public void testSaveEdgeResolvesProfileFromTypeAndDefault() {
+        Edge byType = edgeService.saveEdge(constructEdge(tenantId, "Edge typed", "storeType"));
+        EdgeProfile typed = edgeProfileService.findEdgeProfileByName(tenantId, "storeType");
+        Assert.assertNotNull(typed);
+        Assert.assertEquals(typed.getId(), byType.getEdgeProfileId());
+        Assert.assertEquals("storeType", byType.getType());
+
+        Edge untyped = constructEdge(tenantId, "Edge untyped", null);
+        untyped = edgeService.saveEdge(untyped);
+        EdgeProfile def = edgeProfileService.findDefaultEdgeProfile(tenantId);
+        Assert.assertEquals(def.getId(), untyped.getEdgeProfileId());
+        Assert.assertEquals("default", untyped.getType());
+
+        Edge explicit = constructEdge(tenantId, "Edge explicit", "ignored");
+        explicit.setEdgeProfileId(typed.getId());
+        explicit = edgeService.saveEdge(explicit);
+        Assert.assertEquals("storeType", explicit.getType());
+    }
+
+    @Test
+    public void testEdgeTypeFollowsProfileRename() {
+        Edge edge = edgeService.saveEdge(constructEdge(tenantId, "Edge rename", "renameMe"));
+        // Warm the name-keyed cache with the stale type so the post-rename read below proves eviction happened.
+        Assert.assertEquals("renameMe", edgeService.findEdgeByTenantIdAndName(tenantId, edge.getName()).getType());
+
+        EdgeProfile profile = edgeProfileService.findEdgeProfileById(tenantId, edge.getEdgeProfileId());
+        profile.setName("renamed");
+        edgeProfileService.saveEdgeProfile(profile);
+        Assert.assertEquals("renamed", edgeService.findEdgeById(tenantId, edge.getId()).getType());
+        Assert.assertEquals("renamed", edgeService.findEdgeByTenantIdAndName(tenantId, edge.getName()).getType());
+    }
+
+    @Test
+    public void testDeleteProfileInUseProhibited() {
+        Edge edge = edgeService.saveEdge(constructEdge(tenantId, "Edge in use", "inUse"));
+        EdgeProfileId profileId = edge.getEdgeProfileId();
+        Assertions.assertThrows(DataValidationException.class, () -> edgeProfileService.deleteEdgeProfile(tenantId, profileId));
+        edgeService.deleteEdge(tenantId, edge.getId());
+        edgeProfileService.deleteEdgeProfile(tenantId, profileId);
+        Assert.assertNull(edgeProfileService.findEdgeProfileById(tenantId, profileId));
+    }
+
+    @Test
+    public void testProfileRootCopiedOnCreateAndProfileSwitch() throws Exception {
+        RuleChain rc1 = saveEdgeRuleChain("Root 1");
+        RuleChain rc2 = saveEdgeRuleChain("Root 2");
+        RuleChain rc3 = saveEdgeRuleChain("Root 3");
+        EdgeProfile p1 = newRootedProfile("P1", rc1);
+        EdgeProfile p2 = newRootedProfile("P2", rc2);
+
+        Edge edge = constructEdge(tenantId, "Edge roots", null);
+        edge.setEdgeProfileId(p1.getId());
+        edge = edgeService.saveEdge(edge);
+        Assert.assertEquals(rc1.getId(), edge.getRootRuleChainId());
+
+        // the edge itself may move its root (RuleChainEdgeProcessor does this on an uplink); a later plain cloud-side
+        // save must not clobber it with the profile root while the profile is unchanged
+        edge = edgeService.setEdgeRootRuleChain(tenantId, edge, rc3.getId());
+        Assert.assertEquals(rc3.getId(), edge.getRootRuleChainId());
+        edge.setLabel("touched");
+        edge = edgeService.saveEdge(edge);
+        Assert.assertEquals(rc3.getId(), edge.getRootRuleChainId());
+
+        edge.setEdgeProfileId(p2.getId());
+        edge = edgeService.saveEdge(edge);
+        Assert.assertEquals(rc2.getId(), edge.getRootRuleChainId());
+        Assert.assertEquals("P2", edge.getType());
+    }
+
+    private RuleChain saveEdgeRuleChain(String name) {
+        RuleChain rc = new RuleChain();
+        rc.setTenantId(tenantId);
+        rc.setName(name);
+        rc.setType(RuleChainType.EDGE);
+        return ruleChainService.saveRuleChain(rc);
+    }
+
+    private EdgeProfile newRootedProfile(String name, RuleChain root) {
+        EdgeProfile p = new EdgeProfile();
+        p.setTenantId(tenantId);
+        p.setName(name);
+        p.getProfileData().getRuleChainIds().add(root.getId());
+        p.setRootRuleChainId(root.getId());
+        return edgeProfileService.saveEdgeProfile(p);
     }
 
 }

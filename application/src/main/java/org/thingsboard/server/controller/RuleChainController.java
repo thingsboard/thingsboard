@@ -42,7 +42,6 @@ import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageDataIterableByTenant;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.permission.Operation;
 import org.thingsboard.server.common.data.permission.Resource;
@@ -105,8 +104,6 @@ public class RuleChainController extends BaseController {
 
     public static final String RULE_CHAIN_ID = "ruleChainId";
     public static final String RULE_NODE_ID = "ruleNodeId";
-
-    private static final int DEFAULT_PAGE_SIZE = 1000;
 
     public static final int TIMEOUT = 20;
 
@@ -520,62 +517,6 @@ public class RuleChainController extends BaseController {
         checkEdgeId(edgeId, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         return checkNotNull(ruleChainService.findRuleChainsByTenantIdAndEdgeId(tenantId, edgeId, pageLink));
-    }
-
-    @ApiOperation(value = "Set Edge Template Root Rule Chain (setEdgeTemplateRootRuleChain)",
-            notes = "Makes the rule chain to be root rule chain for any new edge that will be created. " +
-                    "Does not update root rule chain for already created edges. " + TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @PostMapping("/ruleChain/{ruleChainId}/edgeTemplateRoot")
-    public RuleChain setEdgeTemplateRootRuleChain(@Parameter(description = RULE_CHAIN_ID_PARAM_DESCRIPTION)
-                                                  @PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
-        checkParameter(RULE_CHAIN_ID, strRuleChainId);
-        RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
-        RuleChain ruleChain = checkRuleChain(ruleChainId, Operation.WRITE);
-        return tbRuleChainService.setEdgeTemplateRootRuleChain(getTenantId(), ruleChain, getCurrentUser());
-    }
-
-    @ApiOperation(value = "Set Auto Assign To Edge Rule Chain (setAutoAssignToEdgeRuleChain)",
-            notes = "Makes the rule chain to be automatically assigned for any new edge that will be created. " +
-                    "Does not assign this rule chain for already created edges. " + TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @PostMapping("/ruleChain/{ruleChainId}/autoAssignToEdge")
-    public RuleChain setAutoAssignToEdgeRuleChain(@Parameter(description = RULE_CHAIN_ID_PARAM_DESCRIPTION)
-                                                  @PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
-        checkParameter(RULE_CHAIN_ID, strRuleChainId);
-        RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
-        RuleChain ruleChain = checkRuleChain(ruleChainId, Operation.WRITE);
-        return tbRuleChainService.setAutoAssignToEdgeRuleChain(getTenantId(), ruleChain, getCurrentUser());
-    }
-
-    @ApiOperation(value = "Unset Auto Assign To Edge Rule Chain (unsetAutoAssignToEdgeRuleChain)",
-            notes = "Removes the rule chain from the list of rule chains that are going to be automatically assigned for any new edge that will be created. " +
-                    "Does not unassign this rule chain for already assigned edges. " + TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @DeleteMapping("/ruleChain/{ruleChainId}/autoAssignToEdge")
-    public RuleChain unsetAutoAssignToEdgeRuleChain(@Parameter(description = RULE_CHAIN_ID_PARAM_DESCRIPTION)
-                                                    @PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
-        checkParameter(RULE_CHAIN_ID, strRuleChainId);
-        RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
-        RuleChain ruleChain = checkRuleChain(ruleChainId, Operation.WRITE);
-        return tbRuleChainService.unsetAutoAssignToEdgeRuleChain(getTenantId(), ruleChain, getCurrentUser());
-    }
-
-    // TODO: refactor this - add new config to edge rule chain to set it as auto-assign
-    @ApiOperation(value = "Get Auto Assign To Edge Rule Chains (getAutoAssignToEdgeRuleChains)",
-            notes = "Returns a list of Rule Chains that will be assigned to a newly created edge. " + RULE_CHAIN_DESCRIPTION + TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @GetMapping("/ruleChain/autoAssignToEdgeRuleChains")
-    public List<RuleChain> getAutoAssignToEdgeRuleChains() throws ThingsboardException {
-        accessControlService.checkPermission(getCurrentUser(), Resource.RULE_CHAIN, Operation.READ);
-        TenantId tenantId = getCurrentUser().getTenantId();
-        List<RuleChain> result = new ArrayList<>();
-        PageDataIterableByTenant<RuleChain> autoAssignRuleChainsIterator =
-                new PageDataIterableByTenant<>(ruleChainService::findAutoAssignToEdgeRuleChainsByTenantId, tenantId, DEFAULT_PAGE_SIZE);
-        for (RuleChain ruleChain : autoAssignRuleChainsIterator) {
-            result.add(ruleChain);
-        }
-        return checkNotNull(result);
     }
 
     @Hidden

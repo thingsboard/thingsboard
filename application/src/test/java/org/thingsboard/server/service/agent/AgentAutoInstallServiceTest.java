@@ -24,16 +24,17 @@ import org.thingsboard.server.common.data.agent.AgentProfile;
 import org.thingsboard.server.common.data.agent.AgentProvisionType;
 import org.thingsboard.server.common.data.agent.config.DockerComposeConfig;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.edge.EdgeProfile;
 import org.thingsboard.server.common.data.group.EntityGroup;
 import org.thingsboard.server.common.data.id.AgentAppProfileId;
 import org.thingsboard.server.common.data.id.AgentId;
 import org.thingsboard.server.common.data.id.AgentProfileId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.EdgeProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
@@ -41,7 +42,7 @@ import org.thingsboard.server.dao.agent.AgentAppProfileService;
 import org.thingsboard.server.dao.agent.AgentProfileService;
 import org.thingsboard.server.dao.agent.AgentService;
 import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.dao.rule.RuleChainService;
+import org.thingsboard.server.dao.edge.EdgeProfileService;
 import org.thingsboard.server.dao.subscription.SubscriptionService;
 import org.thingsboard.server.service.entitiy.edge.TbEdgeService;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
@@ -84,9 +85,9 @@ class AgentAutoInstallServiceTest {
     @Mock
     private TbEdgeService tbEdgeService;
     @Mock
-    private RuleChainService ruleChainService;
-    @Mock
     private DeviceService deviceService;
+    @Mock
+    private EdgeProfileService edgeProfileService;
     @Mock
     private SystemSecurityService systemSecurityService;
     @Mock
@@ -176,14 +177,10 @@ class AgentAutoInstallServiceTest {
         when(systemSecurityService.getBaseUrl(eq(TENANT_ID), isNull(), isNull()))
                 .thenReturn("http://thingsboard.local");
 
-        RuleChain edgeTemplateRootRuleChain = new RuleChain();
-        edgeTemplateRootRuleChain.setId(new RuleChainId(UUID.randomUUID()));
-        when(ruleChainService.getEdgeTemplateRootRuleChain(TENANT_ID)).thenReturn(edgeTemplateRootRuleChain);
-
         EdgeId edgeId = new EdgeId(UUID.randomUUID());
         Edge createdEdge = new Edge();
         createdEdge.setId(edgeId);
-        when(tbEdgeService.save(any(Edge.class), eq(edgeTemplateRootRuleChain), eq(Collections.<EntityGroup>emptyList()), isNull()))
+        when(tbEdgeService.save(any(Edge.class), eq(Collections.<EntityGroup>emptyList()), isNull()))
                 .thenReturn(createdEdge);
         when(appProvisioner.saveWithLifecycleEvent(eq(TENANT_ID), any(AgentApplication.class), any(), eq(AgentAppEventActionType.INSTALL)))
                 .thenAnswer(inv -> inv.getArgument(1));
@@ -191,11 +188,11 @@ class AgentAutoInstallServiceTest {
         autoInstallService.autoInstall(TENANT_ID, AGENT_ID);
 
         ArgumentCaptor<Edge> edgeCaptor = ArgumentCaptor.forClass(Edge.class);
-        verify(tbEdgeService).save(edgeCaptor.capture(), eq(edgeTemplateRootRuleChain), eq(Collections.emptyList()), isNull());
+        verify(tbEdgeService).save(edgeCaptor.capture(), eq(Collections.emptyList()), isNull());
         Edge edge = edgeCaptor.getValue();
         assertThat(edge.getTenantId()).isEqualTo(TENANT_ID);
         assertThat(edge.getName()).startsWith("Edge-");
-        assertThat(edge.getType()).isEqualTo("default");
+        assertThat(edge.getType()).isNull();
         assertThat(edge.getRoutingKey()).isNotBlank().hasSize(20);
         assertThat(edge.getSecret()).isNotBlank().hasSize(20);
         assertThat(edge.getEdgeLicenseKey()).isNotBlank();
@@ -207,6 +204,64 @@ class AgentAutoInstallServiceTest {
     }
 
     @Test
+    void whenAppProfileLinkedToEdgeProfile_shouldCreateEdgeOnThatProfile() throws Exception {
+        EdgeProfileId edgeProfileId = new EdgeProfileId(UUID.randomUUID());
+        EdgeProfile edgeProfile = new EdgeProfile(edgeProfileId);
+        edgeProfile.setName("Substation");
+        edgeProfile.setRootRuleChainId(new RuleChainId(UUID.randomUUID()));
+        when(profileService.findEdgeProfileId(eq(TENANT_ID), any(AgentAppProfileId.class))).thenReturn(edgeProfileId);
+        when(edgeProfileService.findEdgeProfileById(TENANT_ID, edgeProfileId)).thenReturn(edgeProfile);
+
+        Edge edge = autoInstallSingleEdgeProfile();
+
+        assertThat(edge.getEdgeProfileId()).isEqualTo(edgeProfileId);
+    }
+
+    @Test
+    void whenLinkedEdgeProfileHasNoRootRuleChain_shouldFallBackToTenantDefault() throws Exception {
+        EdgeProfileId edgeProfileId = new EdgeProfileId(UUID.randomUUID());
+        EdgeProfile edgeProfile = new EdgeProfile(edgeProfileId);
+        edgeProfile.setName("Unfinished");
+        when(profileService.findEdgeProfileId(eq(TENANT_ID), any(AgentAppProfileId.class))).thenReturn(edgeProfileId);
+        when(edgeProfileService.findEdgeProfileById(TENANT_ID, edgeProfileId)).thenReturn(edgeProfile);
+
+        Edge edge = autoInstallSingleEdgeProfile();
+
+        assertThat(edge.getEdgeProfileId()).isNull();
+    }
+
+    @Test
+    void whenLinkedEdgeProfileNoLongerExists_shouldFallBackToTenantDefault() throws Exception {
+        EdgeProfileId edgeProfileId = new EdgeProfileId(UUID.randomUUID());
+        when(profileService.findEdgeProfileId(eq(TENANT_ID), any(AgentAppProfileId.class))).thenReturn(edgeProfileId);
+        when(edgeProfileService.findEdgeProfileById(TENANT_ID, edgeProfileId)).thenReturn(null);
+
+        Edge edge = autoInstallSingleEdgeProfile();
+
+        assertThat(edge.getEdgeProfileId()).isNull();
+    }
+
+    private Edge autoInstallSingleEdgeProfile() throws Exception {
+        AgentAppProfile profile = newProfile(AgentApplicationType.EDGE, emptyComposeConfig());
+        when(agentService.findAgentById(TENANT_ID, AGENT_ID)).thenReturn(agentWithProfile);
+        mockAgentProfile(AgentProvisionType.AUTO_INSTALL_PER_APP_PROFILE);
+        when(profileService.findUninstalledAppProfilesForAgentProfile(TENANT_ID, AGENT_PROFILE_ID, AGENT_ID))
+                .thenReturn(List.of(profile));
+        when(systemSecurityService.getBaseUrl(eq(TENANT_ID), isNull(), isNull())).thenReturn("http://thingsboard.local");
+        Edge createdEdge = new Edge();
+        createdEdge.setId(new EdgeId(UUID.randomUUID()));
+        when(tbEdgeService.save(any(Edge.class), eq(Collections.<EntityGroup>emptyList()), isNull())).thenReturn(createdEdge);
+        when(appProvisioner.saveWithLifecycleEvent(eq(TENANT_ID), any(AgentApplication.class), any(), eq(AgentAppEventActionType.INSTALL)))
+                .thenAnswer(inv -> inv.getArgument(1));
+
+        autoInstallService.autoInstall(TENANT_ID, AGENT_ID);
+
+        ArgumentCaptor<Edge> edgeCaptor = ArgumentCaptor.forClass(Edge.class);
+        verify(tbEdgeService).save(edgeCaptor.capture(), eq(Collections.emptyList()), isNull());
+        return edgeCaptor.getValue();
+    }
+
+    @Test
     void whenAddOnLicenseAndEdgeProfileBelowMinVersion_shouldNotCreateEdgeOrApp() {
         AgentAppProfile profile = newProfile(AgentApplicationType.EDGE, emptyComposeConfig());
         profile.setTemplateVersion("4.2.2.4EDGEPE");
@@ -214,7 +269,6 @@ class AgentAutoInstallServiceTest {
         mockAgentProfile(AgentProvisionType.AUTO_INSTALL_PER_APP_PROFILE);
         when(profileService.findUninstalledAppProfilesForAgentProfile(TENANT_ID, AGENT_PROFILE_ID, AGENT_ID))
                 .thenReturn(List.of(profile));
-        when(ruleChainService.getEdgeTemplateRootRuleChain(TENANT_ID)).thenReturn(new RuleChain());
         when(subscriptionService.getLicenseVersion()).thenReturn(2);
 
         autoInstallService.autoInstall(TENANT_ID, AGENT_ID);
@@ -230,19 +284,17 @@ class AgentAutoInstallServiceTest {
         mockAgentProfile(AgentProvisionType.AUTO_INSTALL_PER_APP_PROFILE);
         when(profileService.findUninstalledAppProfilesForAgentProfile(TENANT_ID, AGENT_PROFILE_ID, AGENT_ID))
                 .thenReturn(List.of(profile));
-        RuleChain edgeTemplateRootRuleChain = new RuleChain();
-        when(ruleChainService.getEdgeTemplateRootRuleChain(TENANT_ID)).thenReturn(edgeTemplateRootRuleChain);
         when(subscriptionService.getLicenseVersion()).thenReturn(1);
         Edge createdEdge = new Edge();
         createdEdge.setId(new EdgeId(UUID.randomUUID()));
-        when(tbEdgeService.save(any(Edge.class), eq(edgeTemplateRootRuleChain), eq(Collections.<EntityGroup>emptyList()), isNull()))
+        when(tbEdgeService.save(any(Edge.class), eq(Collections.<EntityGroup>emptyList()), isNull()))
                 .thenReturn(createdEdge);
         when(appProvisioner.saveWithLifecycleEvent(eq(TENANT_ID), any(AgentApplication.class), any(), eq(AgentAppEventActionType.INSTALL)))
                 .thenAnswer(inv -> inv.getArgument(1));
 
         autoInstallService.autoInstall(TENANT_ID, AGENT_ID);
 
-        verify(tbEdgeService).save(any(Edge.class), eq(edgeTemplateRootRuleChain), eq(Collections.emptyList()), isNull());
+        verify(tbEdgeService).save(any(Edge.class), eq(Collections.emptyList()), isNull());
         verify(appProvisioner).saveWithLifecycleEvent(eq(TENANT_ID), any(AgentApplication.class), eq(createdEdge.getId()), eq(AgentAppEventActionType.INSTALL));
     }
 
@@ -350,13 +402,9 @@ class AgentAutoInstallServiceTest {
         when(systemSecurityService.getBaseUrl(eq(TENANT_ID), isNull(), isNull()))
                 .thenReturn("http://thingsboard.local");
 
-        RuleChain edgeTemplateRootRuleChain = new RuleChain();
-        edgeTemplateRootRuleChain.setId(new RuleChainId(UUID.randomUUID()));
-        when(ruleChainService.getEdgeTemplateRootRuleChain(TENANT_ID)).thenReturn(edgeTemplateRootRuleChain);
-
         Edge createdEdge = new Edge();
         createdEdge.setId(new EdgeId(UUID.randomUUID()));
-        when(tbEdgeService.save(any(Edge.class), eq(edgeTemplateRootRuleChain), eq(Collections.<EntityGroup>emptyList()), isNull()))
+        when(tbEdgeService.save(any(Edge.class), eq(Collections.<EntityGroup>emptyList()), isNull()))
                 .thenReturn(createdEdge);
         when(appProvisioner.saveWithLifecycleEvent(eq(TENANT_ID), any(AgentApplication.class), any(), eq(AgentAppEventActionType.INSTALL)))
                 .thenThrow(new RuntimeException("boom"));
@@ -502,13 +550,9 @@ class AgentAutoInstallServiceTest {
         when(systemSecurityService.getBaseUrl(eq(TENANT_ID), isNull(), isNull()))
                 .thenReturn("http://thingsboard.local");
 
-        RuleChain edgeTemplateRootRuleChain = new RuleChain();
-        edgeTemplateRootRuleChain.setId(new RuleChainId(UUID.randomUUID()));
-        when(ruleChainService.getEdgeTemplateRootRuleChain(TENANT_ID)).thenReturn(edgeTemplateRootRuleChain);
-
         Edge createdEdge = new Edge();
         createdEdge.setId(new EdgeId(UUID.randomUUID()));
-        when(tbEdgeService.save(any(Edge.class), eq(edgeTemplateRootRuleChain), eq(Collections.<EntityGroup>emptyList()), isNull()))
+        when(tbEdgeService.save(any(Edge.class), eq(Collections.<EntityGroup>emptyList()), isNull()))
                 .thenReturn(createdEdge);
         when(appProvisioner.saveWithLifecycleEvent(eq(TENANT_ID), any(AgentApplication.class), any(), eq(AgentAppEventActionType.INSTALL)))
                 .thenAnswer(inv -> inv.getArgument(1));

@@ -26,6 +26,8 @@ public interface AgentAppProfileDao extends Dao<AgentAppProfile> {
 
     List<AgentAppProfile> findByTenantIdAndIds(UUID tenantId, List<UUID> profileIds);
 
+    void lockEdgeProfileLink(UUID profileId);
+
     List<AgentAppProfileRelationInfo> findRelationInfosByAgentProfileId(UUID agentProfileId, String relationType);
 
     List<AgentAppProfileRelationInfo> findRelationInfosByAgentProfileIdAndAppTypeAndTemplateVersion(UUID agentProfileId, AgentApplicationType appType, String templateVersion, String relationType);

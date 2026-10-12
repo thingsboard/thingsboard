@@ -143,6 +143,8 @@ import { EmbedDashboardDialogComponent } from '@home/components/widget/dialog/em
 import { EMBED_DASHBOARD_DIALOG_TOKEN } from '@home/components/widget/dialog/embed-dashboard-dialog-token';
 import { EdgeDownlinkTableComponent } from '@home/components/edge/edge-downlink-table.component';
 import { EdgeDownlinkTableHeaderComponent } from '@home/components/edge/edge-downlink-table-header.component';
+import { EdgeAssignmentsComponent } from '@home/components/edge/edge-assignments.component';
+import { AddEdgeProfileAssignmentDialogComponent } from '@home/components/edge/add-edge-profile-assignment-dialog.component';
 import { EntityGroupWizardDialogComponent } from '@home/components/wizard/entity-group-wizard-dialog.component';
 import { GroupConfigTableConfigService } from '@home/components/group/group-config-table-config.service';
 import { EntityGroupsTableConfigResolver } from '@home/components/group/entity-groups-table-config.resolver';
@@ -294,6 +296,8 @@ import { RequestPePackComponent } from '@home/components/pe-pack/request-pe-pack
       EventFilterPanelComponent,
       EdgeDownlinkTableHeaderComponent,
       EdgeDownlinkTableComponent,
+      EdgeAssignmentsComponent,
+      AddEdgeProfileAssignmentDialogComponent,
       RelationTableComponent,
       RelationDialogComponent,
       RelationFiltersComponent,
@@ -503,6 +507,8 @@ import { RequestPePackComponent } from '@home/components/pe-pack/request-pe-pack
     EventTableComponent,
     EdgeDownlinkTableHeaderComponent,
     EdgeDownlinkTableComponent,
+    EdgeAssignmentsComponent,
+    AddEdgeProfileAssignmentDialogComponent,
     RelationTableComponent,
     RelationFiltersComponent,
     AlarmTableComponent,

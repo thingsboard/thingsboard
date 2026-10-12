@@ -18,6 +18,8 @@ import {
 import { TranslateService } from '@ngx-translate/core';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 import { AgentService } from '@core/http/agent.service';
+import { EdgeProfileService } from '@core/http/edge-profile.service';
+import { EdgeProfileId } from '@shared/models/id/edge-profile-id';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { MatDialog } from '@angular/material/dialog';
 import { DialogService } from '@core/services/dialog.service';
@@ -50,6 +52,9 @@ export class AgentAppProfileComponent extends EntityComponent<AgentAppProfile>
 
   templateVersion = '';
   nextVersion: string | null = null;
+  private edgeProfileLoaded = true;
+  // shown in place of an empty link; saving it untouched keeps the link empty
+  private edgeProfileDefaulted = false;
   private fullscreenHost: HTMLElement | null = null;
 
   private composeEditor: Ace.Editor | null = null;
@@ -69,6 +74,7 @@ export class AgentAppProfileComponent extends EntityComponent<AgentAppProfile>
               public fb: UntypedFormBuilder,
               protected cd: ChangeDetectorRef,
               private agentService: AgentService,
+              private edgeProfileService: EdgeProfileService,
               private dialog: MatDialog,
               private dialogService: DialogService,
               private hostElementRef: ElementRef<HTMLElement>) {
@@ -99,9 +105,14 @@ export class AgentAppProfileComponent extends EntityComponent<AgentAppProfile>
       name: [entity ? entity.name : '', [Validators.required, Validators.maxLength(255)]],
       description: [entity ? entity.description : ''],
       appType: [entity ? entity.appType : AgentApplicationType.EDGE, Validators.required],
+      edgeProfileId: [null],
       composeYaml: [this.dumpCompose(entity)],
       arguments: [this.extractArguments(entity)]
     });
+  }
+
+  get isEdgeAppType(): boolean {
+    return this.entityForm?.get('appType').value === AgentApplicationType.EDGE;
   }
 
   updateForm(entity: AgentAppProfile) {
@@ -121,6 +132,7 @@ export class AgentAppProfileComponent extends EntityComponent<AgentAppProfile>
     }
     this.pushComposeToEditor(yaml);
     this.loadTemplateVersion();
+    this.loadEdgeProfile(entity);
   }
 
   prepareFormValue(formValue: any): any {
@@ -157,7 +169,25 @@ export class AgentAppProfileComponent extends EntityComponent<AgentAppProfile>
     if (prepared.appType == null && this.entity?.appType) {
       prepared.appType = this.entity.appType;
     }
+    // stripped from the payload by the table config, which passes it as a request parameter instead
+    prepared.edgeProfileId = this.isEdgeAppType && this.edgeProfileKnown() ? (prepared.edgeProfileId?.id ?? '') : undefined;
+    // stripped as well, it only picks which 'saved' message the table config shows
+    prepared.edgeProfileOnlyChange = this.isEdgeProfileOnlyChange();
     return prepared;
+  }
+
+  // a bulk update/upgrade cannot carry the edge profile, so that save deserves a different message
+  private isEdgeProfileOnlyChange(): boolean {
+    const controls = this.entityForm.controls;
+    if (!controls.edgeProfileId.dirty) {
+      return false;
+    }
+    return !Object.keys(controls).some(name => name !== 'edgeProfileId' && controls[name].dirty);
+  }
+
+  // undefined leaves the link untouched, so a failed read never turns into a clear on the next save
+  private edgeProfileKnown(): boolean {
+    return (this.edgeProfileLoaded && !this.edgeProfileDefaulted) || this.entityForm.controls.edgeProfileId.dirty;
   }
 
   updateFormState() {
@@ -230,6 +260,39 @@ export class AgentAppProfileComponent extends EntityComponent<AgentAppProfile>
         error: () => {}
       });
     }
+  }
+
+  private loadEdgeProfile(entity: AgentAppProfile) {
+    this.entityForm.get('edgeProfileId').patchValue(null, { emitEvent: false });
+    this.edgeProfileLoaded = true;
+    this.edgeProfileDefaulted = false;
+    if (entity?.id?.id && entity.appType === AgentApplicationType.EDGE) {
+      this.edgeProfileLoaded = false;
+      this.agentService.getAgentAppProfileEdgeProfileId(entity.id.id, { ignoreErrors: true }).subscribe({
+        next: edgeProfileId => {
+          this.entityForm.get('edgeProfileId').patchValue(edgeProfileId ?? null, { emitEvent: false });
+          this.edgeProfileLoaded = true;
+          if (!edgeProfileId) {
+            this.showDefaultEdgeProfile(entity);
+          }
+          this.cd.markForCheck();
+        },
+        error: () => {}
+      });
+    }
+  }
+
+  private showDefaultEdgeProfile(entity: AgentAppProfile) {
+    this.edgeProfileService.getDefaultEdgeProfile({ ignoreErrors: true }).subscribe({
+      next: edgeProfile => {
+        if (edgeProfile && this.entity?.id?.id === entity.id.id && !this.entityForm.get('edgeProfileId').dirty) {
+          this.edgeProfileDefaulted = true;
+          this.entityForm.get('edgeProfileId').patchValue(new EdgeProfileId(edgeProfile.id.id), { emitEvent: false });
+          this.cd.markForCheck();
+        }
+      },
+      error: () => {}
+    });
   }
 
   private reloadEntity() {

@@ -54,6 +54,7 @@ export enum EntityType {
   API_KEY = 'API_KEY',
   AGENT = 'AGENT',
   AGENT_PROFILE = 'AGENT_PROFILE',
+  EDGE_PROFILE = 'EDGE_PROFILE',
   AGENT_APPLICATION = 'AGENT_APPLICATION',
   AGENT_APP_EVENT = 'AGENT_APP_EVENT',
   AGENT_APP_UNIT = 'AGENT_APP_UNIT',
@@ -741,6 +742,20 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
       }
     ],
     [
+      EntityType.EDGE_PROFILE,
+      {
+        type: 'entity.type-edge-profile',
+        typePlural: 'entity.type-edge-profiles',
+        list: 'entity.list-of-edge-profiles',
+        nameStartsWith: 'entity.edge-profile-name-starts-with',
+        details: 'edge-profile.edge-profile-details',
+        add: 'edge-profile.add',
+        noEntities: 'edge-profile.no-edge-profiles-text',
+        search: 'edge-profile.search',
+        selectedEntities: 'edge-profile.selected-edge-profiles'
+      }
+    ],
+    [
       EntityType.AGENT_APPLICATION,
       {
         type: 'entity.type-agent-application',
@@ -989,6 +1004,7 @@ export const entityTypeResources = new Map<EntityType, EntityTypeResource<BaseDa
         helpLinkId: 'agentProfiles'
       }
     ],
+    [EntityType.EDGE_PROFILE, { helpLinkId: 'edgeProfiles' }],
     [
       EntityType.AGENT_APPLICATION,
       {
@@ -1031,6 +1047,7 @@ export const baseDetailsPageByEntityType = new Map<EntityType, string>([
   [EntityType.REPORT_TEMPLATE, '/reporting/templates'],
   [EntityType.AGENT, '/edgeManagement/agents/all'],
   [EntityType.AGENT_PROFILE, '/edgeManagement/profiles/agent'],
+  [EntityType.EDGE_PROFILE, '/edgeManagement/profiles/edge'],
   [EntityType.AGENT_APP_PROFILE, '/edgeManagement/profiles/application'],
   [EntityType.CALCULATED_FIELD, '/calculatedFields'],
 ]);

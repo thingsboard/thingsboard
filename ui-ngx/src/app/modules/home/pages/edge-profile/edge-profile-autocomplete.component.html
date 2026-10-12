@@ -1,0 +1,71 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<mat-form-field [formGroup]="selectEdgeProfileFormGroup" class="mat-block" [subscriptSizing]="subscriptSizing" [appearance]="appearance">
+  <mat-label>{{ 'edge.edge-profile' | translate }}</mat-label>
+  <input matInput type="text"
+         #edgeProfileInput
+         formControlName="edgeProfile"
+         (focusin)="onFocus()"
+         [required]="required"
+         [matAutocomplete]="edgeProfileAutocomplete"
+         [class.!hidden]="showDetailsPageLink && disabled && selectEdgeProfileFormGroup.get('edgeProfile').value &&
+                          (resource.EDGE_PROFILE | hasGenericPermission: operation.READ)">
+  @if (showDetailsPageLink && disabled && selectEdgeProfileFormGroup.get('edgeProfile').value &&
+       (resource.EDGE_PROFILE | hasGenericPermission: operation.READ)) {
+    <a aria-label="Open edge profile" [routerLink]="edgeProfileURL">
+      {{ displayEdgeProfileFn(selectEdgeProfileFormGroup.get('edgeProfile').value) }}
+    </a>
+  }
+  @if (selectEdgeProfileFormGroup.get('edgeProfile').value && !disabled) {
+    <button type="button" matSuffix mat-icon-button aria-label="Clear" (click)="clear()">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  }
+  @if (selectEdgeProfileFormGroup.get('edgeProfile').value?.id && !disabled && editProfileEnabled &&
+       (resource.EDGE_PROFILE | hasGenericPermission: operation.WRITE)) {
+    <button type="button" matSuffix mat-icon-button aria-label="Edit"
+            matTooltip="{{ 'edge-profile.edit' | translate }}" matTooltipPosition="above"
+            (click)="editEdgeProfile($event)">
+      <mat-icon class="material-icons">edit</mat-icon>
+    </button>
+  }
+  @if (!selectEdgeProfileFormGroup.get('edgeProfile').value && !disabled && addNewProfile &&
+       (resource.EDGE_PROFILE | hasGenericPermission: operation.CREATE)) {
+    <button mat-button color="primary" matSuffix type="button" (click)="createEdgeProfile($event, '')">
+      <span style="white-space: nowrap">{{ 'notification.create-new' | translate }}</span>
+    </button>
+  }
+  <mat-autocomplete class="tb-autocomplete" #edgeProfileAutocomplete="matAutocomplete" [displayWith]="displayEdgeProfileFn">
+    @for (edgeProfile of filteredEdgeProfiles | async; track edgeProfile.id.id) {
+      <mat-option [value]="edgeProfile">
+        <span [innerHTML]="edgeProfile.name | highlight:searchText"></span>
+      </mat-option>
+    }
+    @if (!(filteredEdgeProfiles | async)?.length) {
+      <mat-option [value]="null" class="tb-not-found">
+        <div class="tb-not-found-content" (click)="$event.stopPropagation()">
+          @if (!textIsNotEmpty(searchText) || !addNewProfile) {
+            <div><span translate>edge-profile.no-edge-profiles-found</span></div>
+          } @else {
+            <span>{{ translate.get('edge-profile.no-edge-profiles-matching', {entity: truncate.transform(searchText, true, 6, '...')}) | async }}</span>
+            @if (resource.EDGE_PROFILE | hasGenericPermission: operation.CREATE) {
+              <span>
+                <a translate (click)="createEdgeProfile($event, searchText)">edge-profile.create-new-edge-profile</a>
+              </span>
+            }
+          }
+        </div>
+      </mat-option>
+    }
+  </mat-autocomplete>
+  @if (selectEdgeProfileFormGroup.get('edgeProfile').hasError('required')) {
+    <mat-error>{{ 'edge-profile.edge-profile-required' | translate }}</mat-error>
+  }
+  @if (hint && !disabled) {
+    <mat-hint>{{ hint | translate }}</mat-hint>
+  }
+</mat-form-field>

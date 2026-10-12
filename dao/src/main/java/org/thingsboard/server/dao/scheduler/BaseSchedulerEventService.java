@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.dao.scheduler;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.FluentFuture;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
@@ -210,13 +211,18 @@ public class BaseSchedulerEventService extends AbstractEntityService implements 
 
     @Override
     public SchedulerEventInfo assignSchedulerEventToEdge(TenantId tenantId, SchedulerEventId schedulerEventId, EdgeId edgeId) {
+        return assignSchedulerEventToEdge(tenantId, schedulerEventId, edgeId, null);
+    }
+
+    @Override
+    public SchedulerEventInfo assignSchedulerEventToEdge(TenantId tenantId, SchedulerEventId schedulerEventId, EdgeId edgeId, JsonNode additionalInfo) {
         SchedulerEventInfo schedulerEventInfo = findSchedulerEventInfoById(tenantId, schedulerEventId);
         Edge edge = edgeService.findEdgeById(tenantId, edgeId);
         if (edge == null) {
             throw new DataValidationException("Can't assign scheduler event to non-existent edge!");
         }
         try {
-            createRelation(tenantId, new EntityRelation(edgeId, schedulerEventId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
+            createRelation(tenantId, new EntityRelation(edgeId, schedulerEventId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE, edgeRelationInfo(tenantId, edgeId, schedulerEventId, EntityRelation.CONTAINS_TYPE, additionalInfo)));
         } catch (Exception e) {
             log.warn("[{}] Failed to create scheduler event relation. Edge Id: [{}]", schedulerEventId, edgeId);
             throw new RuntimeException(e);

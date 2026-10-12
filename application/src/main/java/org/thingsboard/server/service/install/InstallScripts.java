@@ -245,8 +245,7 @@ public class InstallScripts {
     }
 
     public void createDefaultEdgeRuleChains(TenantId tenantId) {
-        Path edgeChainsDir = getEdgeRuleChainsDir();
-        loadAdditionalTenantRuleChains(tenantId, edgeChainsDir);
+        loadAdditionalTenantRuleChains(tenantId, getEdgeRuleChainsDir());
     }
 
     public void loadSystemWidgets() {
@@ -577,17 +576,14 @@ public class InstallScripts {
     }
 
     @SneakyThrows
-    private Map<String, RuleChainId> loadAdditionalTenantRuleChains(TenantId tenantId, Path chainsDir) {
-        Map<String, RuleChainId> ruleChainIdMap = new HashMap<>();
+    private List<RuleChain> loadAdditionalTenantRuleChains(TenantId tenantId, Path chainsDir) {
+        List<RuleChain> ruleChains = new ArrayList<>();
         try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(chainsDir, path -> path.toString().endsWith(InstallScripts.JSON_EXT))) {
             dirStream.forEach(
                     path -> {
                         try {
                             JsonNode ruleChainJson = JacksonUtil.toJsonNode(path.toFile());
-
-                            RuleChain ruleChain = loadRuleChain(path, ruleChainJson, tenantId, null);
-                            ruleChainIdMap.put(ruleChain.getName(), ruleChain.getId());
-
+                            ruleChains.add(loadRuleChain(path, ruleChainJson, tenantId, null));
                         } catch (Exception e) {
                             log.error("Unable to load rule chain from json: [{}]", path.toString());
                             throw new RuntimeException("Unable to load rule chain from json", e);
@@ -595,7 +591,7 @@ public class InstallScripts {
                     }
             );
         }
-        return ruleChainIdMap;
+        return ruleChains;
     }
 
     public void createOAuth2Templates() {

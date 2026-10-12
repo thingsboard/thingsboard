@@ -30,7 +30,6 @@ import { catchError, map, mergeMap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { deepClone, snakeCase } from '@core/utils';
 import { DebugRuleNodeEventBody } from '@app/shared/models/event.models';
-import { Edge } from '@shared/models/edge.models';
 import { IModulesMap } from '@modules/common/modules-map.models';
 import { sortEntitiesByIds } from '@shared/models/base-data';
 
@@ -264,26 +263,6 @@ export class RuleChainService {
 
   public unassignRuleChainFromEdge(edgeId: string, ruleChainId: string, config?: RequestConfig) {
     return this.http.delete(`/api/edge/${edgeId}/ruleChain/${ruleChainId}`, defaultHttpOptionsFromConfig(config));
-  }
-
-  public setEdgeTemplateRootRuleChain(ruleChainId: string, config?: RequestConfig): Observable<RuleChain> {
-    return this.http.post<RuleChain>(`/api/ruleChain/${ruleChainId}/edgeTemplateRoot`, defaultHttpOptionsFromConfig(config));
-  }
-
-  public setAutoAssignToEdgeRuleChain(ruleChainId: string, config?: RequestConfig): Observable<RuleChain> {
-    return this.http.post<RuleChain>(`/api/ruleChain/${ruleChainId}/autoAssignToEdge`, defaultHttpOptionsFromConfig(config));
-  }
-
-  public unsetAutoAssignToEdgeRuleChain(ruleChainId: string, config?: RequestConfig): Observable<RuleChain> {
-    return this.http.delete<RuleChain>(`/api/ruleChain/${ruleChainId}/autoAssignToEdge`, defaultHttpOptionsFromConfig(config));
-  }
-
-  public getAutoAssignToEdgeRuleChains(config?: RequestConfig): Observable<Array<RuleChain>> {
-    return this.http.get<Array<RuleChain>>(`/api/ruleChain/autoAssignToEdgeRuleChains`, defaultHttpOptionsFromConfig(config));
-  }
-
-  public setEdgeRootRuleChain(edgeId: string, ruleChainId: string, config?: RequestConfig): Observable<Edge> {
-    return this.http.post<Edge>(`/api/edge/${edgeId}/${ruleChainId}/root`, defaultHttpOptionsFromConfig(config));
   }
 
 }

@@ -31,7 +31,10 @@ import {
   pickComposeType
 } from '@home/pages/agent/util/agent-compose-yaml';
 import { orderTemplatesNewestFirst } from '@home/pages/agent/util/template-version-order';
+import { EdgeProfile } from '@shared/models/edge-profile.models';
 import { EdgeTemplateCompatibilityService } from '@home/pages/agent/util/edge-template-compatibility.service';
+import { EdgeProfileId } from '@shared/models/id/edge-profile-id';
+import { EdgeProfileService } from '@core/http/edge-profile.service';
 
 export interface AgentAppProfileWizardData {
   profile?: AgentAppProfile;
@@ -85,6 +88,11 @@ export class AgentAppProfileWizardComponent
   diffSyncScroll = false;
 
   submitting = false;
+  selectedEdgeProfile: EdgeProfile = null;
+  defaultEdgeProfile: EdgeProfile = null;
+  private edgeProfileLoaded = true;
+  // shown in place of an empty link; saving it untouched keeps the link empty
+  private edgeProfileDefaulted = false;
 
   stepperOrientation: Observable<StepperOrientation>;
   stepperLabelPosition: Observable<'bottom' | 'end'>;
@@ -105,10 +113,19 @@ export class AgentAppProfileWizardComponent
     return this.profileForm.get('description').value ?? '';
   }
 
+  get isEdgeAppType(): boolean {
+    return this.selectedType === AgentApplicationType.EDGE;
+  }
+
+  onEdgeProfileChanged(edgeProfile: EdgeProfile) {
+    this.selectedEdgeProfile = edgeProfile;
+  }
+
   constructor(protected store: Store<AppState>,
               protected router: Router,
               protected translate: TranslateService,
               private agentService: AgentService,
+              private edgeProfileService: EdgeProfileService,
               private breakpointObserver: BreakpointObserver,
               private edgeTemplateCompatibility: EdgeTemplateCompatibilityService,
               private fb: UntypedFormBuilder,
@@ -117,7 +134,8 @@ export class AgentAppProfileWizardComponent
     super(store, router, dialogRef);
     this.profileForm = this.fb.group({
       name: ['', [Validators.required, Validators.maxLength(255)]],
-      description: ['']
+      description: [''],
+      edgeProfileId: [null]
     });
     this.stepperOrientation = this.breakpointObserver.observe(MediaBreakpoints['gt-sm'])
       .pipe(map(({ matches }) => matches ? 'horizontal' : 'vertical'));
@@ -132,6 +150,10 @@ export class AgentAppProfileWizardComponent
         next: templates => this.templatesByTypeCache.set(card.type, templates),
         error: () => {}
       });
+    });
+    this.edgeProfileService.getDefaultEdgeProfile({ ignoreErrors: true }).subscribe({
+      next: edgeProfile => this.defaultEdgeProfile = edgeProfile,
+      error: () => {}
     });
     if (this.editMode) {
       this.initForEdit(this.data.profile);
@@ -159,9 +181,35 @@ export class AgentAppProfileWizardComponent
     return this.translate.instant('agent.app-profile-name-placeholder-generic');
   }
 
+  private showDefaultEdgeProfile() {
+    this.edgeProfileService.getDefaultEdgeProfile({ ignoreErrors: true }).subscribe({
+      next: edgeProfile => {
+        if (edgeProfile && !this.profileForm.get('edgeProfileId').dirty) {
+          this.edgeProfileDefaulted = true;
+          this.profileForm.get('edgeProfileId').patchValue(new EdgeProfileId(edgeProfile.id.id));
+        }
+      },
+      error: () => {}
+    });
+  }
+
   private initForEdit(profile: AgentAppProfile) {
     this.selectedType = profile.appType;
     this.profileForm.patchValue({ name: profile.name, description: profile.description || '' });
+    if (profile.appType === AgentApplicationType.EDGE && profile.id?.id) {
+      this.edgeProfileLoaded = false;
+      this.agentService.getAgentAppProfileEdgeProfileId(profile.id.id, { ignoreErrors: true }).subscribe({
+        next: edgeProfileId => {
+          this.edgeProfileLoaded = true;
+          if (edgeProfileId) {
+            this.profileForm.get('edgeProfileId').patchValue(edgeProfileId);
+          } else {
+            this.showDefaultEdgeProfile();
+          }
+        },
+        error: () => {}
+      });
+    }
     this.selectedTemplateVersion = profile.templateVersion || null;
     this.loadTemplatesForType(profile.appType);
     if (!profile.templateVersion) {
@@ -355,7 +403,14 @@ export class AgentAppProfileWizardComponent
       description: this.profileDescription.trim() || undefined,
     };
 
-    this.agentService.saveAgentAppProfile(profile).subscribe({
+    // an undefined edge profile id leaves any existing link untouched, so an unloaded one is never sent as a clear
+    const edgeProfileCtrl = this.profileForm.get('edgeProfileId');
+    const edgeProfileKnown = (this.edgeProfileLoaded && !this.edgeProfileDefaulted) || edgeProfileCtrl.dirty;
+    const edgeProfileId: string | undefined = this.isEdgeAppType && edgeProfileKnown
+      ? (edgeProfileCtrl.value?.id ?? '')
+      : undefined;
+
+    this.agentService.saveAgentAppProfile(profile, undefined, edgeProfileId).subscribe({
       next: saved => this.dialogRef.close(saved),
       error: () => {
         this.submitting = false;

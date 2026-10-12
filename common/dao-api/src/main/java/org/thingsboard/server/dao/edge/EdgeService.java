@@ -11,6 +11,7 @@ import org.thingsboard.server.common.data.edge.EdgeInfo;
 import org.thingsboard.server.common.data.edge.EdgeSearchQuery;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.EdgeProfileId;
 import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.IntegrationId;
@@ -52,6 +53,16 @@ public interface EdgeService extends EntityDaoService {
 
     PageData<Edge> findEdgesByTenantIdAndType(TenantId tenantId, String type, PageLink pageLink);
 
+    PageData<Edge> findEdgesByTenantIdAndEdgeProfileId(TenantId tenantId, EdgeProfileId edgeProfileId, PageLink pageLink);
+
+    PageData<EdgeId> findEdgeIdsByTenantIdAndEdgeProfileId(TenantId tenantId, EdgeProfileId edgeProfileId, PageLink pageLink);
+
+    long countByTenantIdAndEdgeProfileId(TenantId tenantId, EdgeProfileId edgeProfileId);
+
+    boolean existsByTenantIdAndEdgeProfileId(TenantId tenantId, EdgeProfileId edgeProfileId);
+
+    void updateTypeByEdgeProfileId(TenantId tenantId, EdgeProfileId edgeProfileId, String type);
+
     ListenableFuture<List<Edge>> findEdgesByTenantIdAndIdsAsync(TenantId tenantId, List<EdgeId> edgeIds);
 
     void deleteEdgesByTenantId(TenantId tenantId);
@@ -67,8 +78,6 @@ public interface EdgeService extends EntityDaoService {
     ListenableFuture<List<Edge>> findEdgesByQuery(TenantId tenantId, EdgeSearchQuery query);
 
     ListenableFuture<List<EntitySubtype>> findEdgeTypesByTenantId(TenantId tenantId);
-
-    void assignDefaultRuleChainsToEdge(TenantId tenantId, EdgeId edgeId);
 
     void assignTenantAdministratorsAndUsersGroupToEdge(TenantId tenantId, EdgeId edgeId);
 

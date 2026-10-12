@@ -16,7 +16,11 @@ import org.thingsboard.server.common.data.agent.AgentApplicationType;
 import org.thingsboard.server.common.data.agent.AgentProfile;
 import org.thingsboard.server.common.data.agent.config.DockerComposeConfig;
 import org.thingsboard.server.common.data.agent.template.AgentAppTemplate;
+import org.thingsboard.server.common.data.edge.EdgeProfile;
 import org.thingsboard.server.common.data.id.AgentAppProfileId;
+import org.thingsboard.server.common.data.id.EdgeProfileId;
+import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.agent.AgentAppProfileService;
 import org.thingsboard.server.dao.agent.AgentApplicationService;
@@ -421,6 +425,83 @@ public class AgentAppProfileServiceTest extends AbstractServiceTest {
 
     private AgentAppTemplate createTemplate() {
         return registerAppTemplate(createAppTemplate(AgentApplicationType.GENERIC, "1.0.0"));
+    }
+
+    @Test
+    public void testSetEdgeProfile_setReplaceAndClear() {
+        AgentAppProfile profile = profileService.saveProfile(createEdgeProfile("Linked Profile", createTemplate()));
+        EdgeProfile first = saveRootedEdgeProfile("Substation A");
+        EdgeProfile second = saveRootedEdgeProfile("Substation B");
+
+        profileService.setEdgeProfile(tenantId, profile.getId(), first.getId());
+        Assert.assertEquals(first.getId(), profileService.findEdgeProfileId(tenantId, profile.getId()));
+        Assert.assertEquals(1, profileService.countAppProfilesByEdgeProfileId(tenantId, first.getId()));
+
+        profileService.setEdgeProfile(tenantId, profile.getId(), second.getId());
+        Assert.assertEquals(second.getId(), profileService.findEdgeProfileId(tenantId, profile.getId()));
+        Assert.assertEquals(0, profileService.countAppProfilesByEdgeProfileId(tenantId, first.getId()));
+
+        profileService.setEdgeProfile(tenantId, profile.getId(), null);
+        Assert.assertNull(profileService.findEdgeProfileId(tenantId, profile.getId()));
+        Assert.assertEquals(0, profileService.countAppProfilesByEdgeProfileId(tenantId, second.getId()));
+    }
+
+    @Test
+    public void testSetEdgeProfile_reportsNoChangeWhenAlreadyLinked() {
+        AgentAppProfile profile = profileService.saveProfile(createEdgeProfile("Idempotent Profile", createTemplate()));
+        EdgeProfile edgeProfile = saveRootedEdgeProfile("Substation D");
+
+        Assert.assertTrue(profileService.setEdgeProfile(tenantId, profile.getId(), edgeProfile.getId()));
+        Assert.assertFalse(profileService.setEdgeProfile(tenantId, profile.getId(), edgeProfile.getId()));
+        Assert.assertEquals(edgeProfile.getId(), profileService.findEdgeProfileId(tenantId, profile.getId()));
+        Assert.assertEquals(1, profileService.countAppProfilesByEdgeProfileId(tenantId, edgeProfile.getId()));
+
+        Assert.assertTrue(profileService.setEdgeProfile(tenantId, profile.getId(), null));
+        Assert.assertFalse(profileService.setEdgeProfile(tenantId, profile.getId(), null));
+    }
+
+    @Test
+    public void testSetEdgeProfile_rejectsNonEdgeAppProfile() {
+        AgentAppProfile profile = new AgentAppProfile();
+        profile.setTenantId(tenantId);
+        profile.setName("Generic Profile");
+        profile.setAppType(AgentApplicationType.GENERIC);
+        profile.setTemplateVersion(createTemplate().getCurrentVersion());
+        DockerComposeConfig config = new DockerComposeConfig();
+        config.setCompose(JacksonUtil.newObjectNode());
+        profile.setConfig(config);
+        AgentAppProfileId profileId = profileService.saveProfile(profile).getId();
+        EdgeProfileId edgeProfileId = saveRootedEdgeProfile("Substation C").getId();
+
+        Assertions.assertThrows(DataValidationException.class,
+                () -> profileService.setEdgeProfile(tenantId, profileId, edgeProfileId));
+    }
+
+    @Test
+    public void testSetEdgeProfile_rejectsEdgeProfileWithoutRootRuleChain() {
+        AgentAppProfileId profileId = profileService.saveProfile(createEdgeProfile("Rootless Link", createTemplate())).getId();
+        EdgeProfile rootless = new EdgeProfile();
+        rootless.setTenantId(tenantId);
+        rootless.setName("Rootless");
+        EdgeProfileId rootlessId = edgeProfileService.saveEdgeProfile(rootless).getId();
+
+        Assertions.assertThrows(DataValidationException.class,
+                () -> profileService.setEdgeProfile(tenantId, profileId, rootlessId));
+    }
+
+    private EdgeProfile saveRootedEdgeProfile(String name) {
+        RuleChain ruleChain = new RuleChain();
+        ruleChain.setTenantId(tenantId);
+        ruleChain.setName(name + " root");
+        ruleChain.setType(RuleChainType.EDGE);
+        RuleChain saved = ruleChainService.saveRuleChain(ruleChain);
+
+        EdgeProfile edgeProfile = new EdgeProfile();
+        edgeProfile.setTenantId(tenantId);
+        edgeProfile.setName(name);
+        edgeProfile.getProfileData().getRuleChainIds().add(saved.getId());
+        edgeProfile.setRootRuleChainId(saved.getId());
+        return edgeProfileService.saveEdgeProfile(edgeProfile);
     }
 
     private AgentAppProfile createEdgeProfile(String name, AgentAppTemplate template) {

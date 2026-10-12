@@ -45,6 +45,7 @@ import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.converter.Converter;
 import org.thingsboard.server.common.data.domain.Domain;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.edge.EdgeProfile;
 import org.thingsboard.server.common.data.group.EntityGroup;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -91,6 +92,7 @@ import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.domain.DomainService;
+import org.thingsboard.server.dao.edge.EdgeProfileService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.group.EntityGroupService;
@@ -150,6 +152,8 @@ public class TenantIdLoaderTest {
     private DashboardService dashboardService;
     @Mock
     private EdgeService edgeService;
+    @Mock
+    private EdgeProfileService edgeProfileService;
     @Mock
     private OtaPackageService otaPackageService;
     @Mock
@@ -565,6 +569,12 @@ public class TenantIdLoaderTest {
                 agentBulkAction.setTenantId(tenantId);
                 when(tbPeContext.getAgentBulkActionService()).thenReturn(agentBulkActionService);
                 doReturn(agentBulkAction).when(agentBulkActionService).findById(eq(tenantId), any());
+                break;
+            case EDGE_PROFILE:
+                EdgeProfile edgeProfile = new EdgeProfile();
+                edgeProfile.setTenantId(tenantId);
+                when(tbPeContext.getEdgeProfileService()).thenReturn(edgeProfileService);
+                doReturn(edgeProfile).when(edgeProfileService).findEdgeProfileById(eq(tenantId), any());
                 break;
             default:
                 throw new RuntimeException("Unexpected originator EntityType " + entityType);

@@ -50,6 +50,7 @@ import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.rule.RuleNodeUpdateResult;
 import org.thingsboard.server.common.data.util.ReflectionUtils;
 import org.thingsboard.server.dao.DaoUtil;
+import org.thingsboard.server.dao.edge.EdgeProfileDao;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entity.EntityCountService;
 import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
@@ -111,6 +112,9 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
 
     @Autowired
     private RelationWriteLock relationWriteLock;
+
+    @Autowired
+    private EdgeProfileDao edgeProfileDao;
 
     /**
      * Self-reference to the Spring proxy, so non-transactional entry points (importTenantRuleChains, which is invoked
@@ -550,10 +554,13 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         List<RuleNode> referencingRuleNodes = getReferencingRuleChainNodes(tenantId, ruleChainId);
         Set<RuleChainId> referencingRuleChainIds = referencingRuleNodes.stream().map(RuleNode::getRuleChainId).collect(Collectors.toSet());
 
-        if (ruleChain.isRoot()) {
+        if (ruleChain.isRoot() && RuleChainType.CORE.equals(ruleChain.getType())) {
             throw new DataValidationException("Deletion of Root Tenant Rule Chain is prohibited!");
         }
         if (RuleChainType.EDGE.equals(ruleChain.getType())) {
+            if (edgeProfileDao.existsByTenantIdAndRootRuleChainId(tenantId.getId(), ruleChainId.getId())) {
+                throw new DataValidationException("Can't delete rule chain that is root for an edge profile. Set another root rule chain on the profile first!");
+            }
             for (Edge edge : new PageDataIterable<>(link -> edgeService.findEdgesByTenantIdAndEntityId(tenantId, ruleChainId, link), DEFAULT_PAGE_SIZE)) {
                 if (edge.getRootRuleChainId() != null && edge.getRootRuleChainId().equals(ruleChainId)) {
                     throw new DataValidationException("Can't delete rule chain that is root for edge [" + edge.getName() + "]. Please assign another root rule chain first to the edge!");
@@ -751,7 +758,15 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
 
     @Override
     public RuleChain assignRuleChainToEdge(TenantId tenantId, RuleChainId ruleChainId, EdgeId edgeId) {
+        return assignRuleChainToEdge(tenantId, ruleChainId, edgeId, null);
+    }
+
+    @Override
+    public RuleChain assignRuleChainToEdge(TenantId tenantId, RuleChainId ruleChainId, EdgeId edgeId, JsonNode additionalInfo) {
         RuleChain ruleChain = findRuleChainById(tenantId, ruleChainId);
+        if (ruleChain == null) {
+            throw new DataValidationException("Can't assign non-existent ruleChain to edge!");
+        }
         Edge edge = edgeService.findEdgeById(tenantId, edgeId);
         if (edge == null) {
             throw new DataValidationException("Can't assign ruleChain to non-existent edge!");
@@ -763,7 +778,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             throw new DataValidationException("Can't assign non EDGE ruleChain to edge!");
         }
         try {
-            createRelation(tenantId, new EntityRelation(edgeId, ruleChainId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
+            createRelation(tenantId, new EntityRelation(edgeId, ruleChainId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE, edgeRelationInfo(tenantId, edgeId, ruleChainId, EntityRelation.CONTAINS_TYPE, additionalInfo)));
         } catch (Exception e) {
             log.warn("[{}] Failed to create ruleChain relation. Edge Id: [{}]", ruleChainId, edgeId);
             throw new RuntimeException(e);
@@ -801,64 +816,6 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         Validator.validateId(edgeId, id -> "Incorrect edgeId " + id);
         Validator.validatePageLink(pageLink);
         return ruleChainDao.findRuleChainsByTenantIdAndEdgeId(tenantId.getId(), edgeId.getId(), pageLink);
-    }
-
-    @Override
-    public RuleChain getEdgeTemplateRootRuleChain(TenantId tenantId) {
-        Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
-        return ruleChainDao.findRootRuleChainByTenantIdAndType(tenantId.getId(), RuleChainType.EDGE);
-    }
-
-    @Override
-    public boolean setEdgeTemplateRootRuleChain(TenantId tenantId, RuleChainId ruleChainId) {
-        RuleChain ruleChain = ruleChainDao.findById(tenantId, ruleChainId.getId());
-        RuleChain previousEdgeTemplateRootRuleChain = getEdgeTemplateRootRuleChain(ruleChain.getTenantId());
-        if (previousEdgeTemplateRootRuleChain == null || !previousEdgeTemplateRootRuleChain.getId().equals(ruleChain.getId())) {
-            try {
-                if (previousEdgeTemplateRootRuleChain != null) {
-                    previousEdgeTemplateRootRuleChain.setRoot(false);
-                    ruleChainDao.save(tenantId, previousEdgeTemplateRootRuleChain);
-                }
-                ruleChain.setRoot(true);
-                ruleChainDao.save(tenantId, ruleChain);
-                return true;
-            } catch (Exception e) {
-                log.warn("Failed to set edge template root rule chain, ruleChainId: [{}]", ruleChainId, e);
-                throw new RuntimeException(e);
-            }
-        }
-        return false;
-    }
-
-    @Override
-    public boolean setAutoAssignToEdgeRuleChain(TenantId tenantId, RuleChainId ruleChainId) {
-        try {
-            createRelation(tenantId, new EntityRelation(tenantId, ruleChainId,
-                    EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE_AUTO_ASSIGN_RULE_CHAIN));
-            return true;
-        } catch (Exception e) {
-            log.warn("Failed to set auto assign to edge rule chain, ruleChainId: [{}]", ruleChainId, e);
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
-    public boolean unsetAutoAssignToEdgeRuleChain(TenantId tenantId, RuleChainId ruleChainId) {
-        try {
-            deleteRelation(tenantId, new EntityRelation(tenantId, ruleChainId,
-                    EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE_AUTO_ASSIGN_RULE_CHAIN));
-            return true;
-        } catch (Exception e) {
-            log.warn("Failed to unset auto assign to edge rule chain, ruleChainId: [{}]", ruleChainId, e);
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
-    public PageData<RuleChain> findAutoAssignToEdgeRuleChainsByTenantId(TenantId tenantId, PageLink pageLink) {
-        log.trace("Executing findAutoAssignToEdgeRuleChainsByTenantId, tenantId [{}], pageLink {}", tenantId, pageLink);
-        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
-        return ruleChainDao.findAutoAssignToEdgeRuleChainsByTenantId(tenantId.getId(), pageLink);
     }
 
     @Override

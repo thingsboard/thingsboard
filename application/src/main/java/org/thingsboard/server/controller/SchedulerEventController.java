@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -44,6 +45,7 @@ import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.subscription.PlatformFeature;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.profile.EdgeProfileApplier;
 import org.thingsboard.server.service.entitiy.scheduler.TbSchedulerService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
@@ -94,6 +96,7 @@ public class SchedulerEventController extends BaseController {
     public static final String SCHEDULER_EVENT_ID = "schedulerEventId";
 
     private final TbSchedulerService tbSchedulerService;
+    private final EdgeProfileApplier edgeProfileApplier;
 
     @ApiOperation(value = "Get Scheduler Event With Customer Info (getSchedulerEventInfoById)",
             notes = "Fetch the SchedulerEventWithCustomerInfo object based on the provided scheduler event Id. " +
@@ -412,10 +415,16 @@ public class SchedulerEventController extends BaseController {
         // Assignment hands the event to an edge that runs a scheduler of its own, so a report-producing event
         // is a reporting write here too. Loaded before the edge, so the refusal does not depend on the edge.
         SchedulerEventId schedulerEventId = new SchedulerEventId(toUUID(strSchedulerEventId));
-        checkReportingAllowed(checkSchedulerEventId(schedulerEventId, Operation.READ));
+        SchedulerEvent schedulerEvent = checkSchedulerEventId(schedulerEventId, Operation.READ);
+        checkReportingAllowed(schedulerEvent);
 
         EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
         Edge edge = checkEdgeId(edgeId, Operation.WRITE);
+        // the edge holds only its owner's customer, so another customer's event would be assigned here but never arrive there
+        if (!edgeProfileApplier.isEligible(edge.getTenantId(), EdgeProfileApplier.ownerOf(edge.getTenantId(), schedulerEvent.getCustomerId()), edge.getOwnerId(), true)) {
+            throw new ThingsboardException("Scheduler event '" + schedulerEvent.getName() + "' belongs to a customer other than the owner of edge '"
+                    + edge.getName() + "'", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        }
 
         return tbSchedulerService.assignToEdge(schedulerEventId, edge, getCurrentUser());
     }

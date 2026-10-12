@@ -1,11 +1,16 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
 import { inject, NgModule } from '@angular/core';
-import { ActivatedRouteSnapshot, ResolveFn, Route, RouterModule, Routes } from '@angular/router';
+import { ActivatedRouteSnapshot, CanActivateFn, ResolveFn, Route, Router, RouterModule, Routes } from '@angular/router';
 import { of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, filter, map, take } from 'rxjs/operators';
+import { select, Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { selectIsUserLoaded } from '@core/auth/auth.selectors';
 import { EntitiesTableComponent } from '@home/components/entity/entities-table.component';
 import { Authority } from '@shared/models/authority.enum';
+import { Resource } from '@shared/models/security.models';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
 import { EntityDetailsPageComponent } from '@home/components/entity/entity-details-page.component';
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
 import { entityDetailsPageBreadcrumbLabelFunction } from '@home/pages/home-pages.models';
@@ -16,6 +21,7 @@ import { resolveAgentIdParam } from '@home/pages/agent/util/agent-route-params';
 import { MenuId } from '@core/services/menu.models';
 import { AgentsTableConfigResolver } from '@home/pages/agent/agents-table-config.resolver';
 import { AgentProfilesTableConfigResolver } from '@home/pages/agent/agent-profiles-table-config.resolver';
+import { EdgeProfilesTableConfigResolver } from '@home/pages/edge-profile/edge-profiles-table-config.resolver';
 import { AgentAppProfilesTableConfigResolver } from '@home/pages/agent/agent-app-profiles-table-config.resolver';
 import { AgentApplicationsTableConfigResolver } from '@home/pages/agent/agent-applications-table-config.resolver';
 import { AgentEventsPageComponent } from '@home/pages/agent/agent-events-page.component';
@@ -62,6 +68,35 @@ const agentGroupBreadcrumbLabelFunction: BreadCrumbLabelFunction<GroupEntitiesTa
     const name = component?.entityGroup?.name ?? route?.data?.entityGroup?.name ?? '';
     return utils ? utils.customTranslation(name, name) : name;
   };
+
+// Lands on the first profiles tab the user can read, since a custom role may lack edge-profile access.
+const firstReadableProfilesTab = (userPermissionsService: UserPermissionsService): string => {
+  if (userPermissionsService.hasReadGenericPermission(Resource.EDGE_PROFILE)) {
+    return 'edge';
+  }
+  if (userPermissionsService.hasReadGenericPermission(Resource.AGENT_PROFILE)) {
+    return 'agent';
+  }
+  if (userPermissionsService.hasReadGenericPermission(Resource.AGENT_APP_PROFILE)) {
+    return 'application';
+  }
+  return 'edge';
+};
+
+// A guard, not a redirectTo function: redirects are resolved during URL recognition, before AuthGuard has waited for
+// the user to load, so on a hard refresh the permissions are not there yet. Guards run after recognition, and the
+// parent's AuthGuard has already waited for the user by the time this one runs; the wait below is a safety net.
+const profilesDefaultTabGuard: CanActivateFn = () => {
+  const store = inject<Store<AppState>>(Store);
+  const router = inject(Router);
+  const userPermissionsService = inject(UserPermissionsService);
+  return store.pipe(
+    select(selectIsUserLoaded),
+    filter(isUserLoaded => isUserLoaded),
+    take(1),
+    map(() => router.createUrlTree(['/edgeManagement/profiles', firstReadableProfilesTab(userPermissionsService)]))
+  );
+};
 
 // Per-agent detail route used under /agents/all/:agentId — opens the existing
 // tabbed view (applications, events). Split out so both the flat /all branch
@@ -338,12 +373,56 @@ const routes: Routes = [
           {
             path: '',
             pathMatch: 'full',
-            redirectTo: 'agent'
+            canActivate: [profilesDefaultTabGuard],
+            children: []
+          },
+          {
+            path: 'edge',
+            data: {
+              auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+              canActivate: (userPermissionsService: UserPermissionsService): boolean =>
+                userPermissionsService.hasReadGenericPermission(Resource.EDGE_PROFILE),
+              breadcrumb: {
+                label: 'edge-profile.edge-profiles',
+                icon: 'list_alt'
+              }
+            },
+            children: [
+              {
+                path: '',
+                component: EntitiesTableComponent,
+                data: {
+                  auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+                  title: 'edge-profile.edge-profiles'
+                },
+                resolve: {
+                  entitiesTableConfig: EdgeProfilesTableConfigResolver
+                }
+              },
+              {
+                path: ':entityId',
+                component: EntityDetailsPageComponent,
+                canDeactivate: [ConfirmOnExitGuard],
+                data: {
+                  breadcrumb: {
+                    labelFunction: entityDetailsPageBreadcrumbLabelFunction,
+                    icon: 'list_alt'
+                  } as BreadCrumbConfig<EntityDetailsPageComponent>,
+                  auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+                  title: 'edge-profile.edge-profiles'
+                },
+                resolve: {
+                  entitiesTableConfig: EdgeProfilesTableConfigResolver
+                }
+              }
+            ]
           },
           {
             path: 'agent',
             data: {
               auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+              canActivate: (userPermissionsService: UserPermissionsService): boolean =>
+                userPermissionsService.hasReadGenericPermission(Resource.AGENT_PROFILE),
               breadcrumb: {
                 label: 'agent.agent-profiles',
                 icon: 'group_work'
@@ -396,6 +475,8 @@ const routes: Routes = [
             path: 'application',
             data: {
               auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+              canActivate: (userPermissionsService: UserPermissionsService): boolean =>
+                userPermissionsService.hasReadGenericPermission(Resource.AGENT_APP_PROFILE),
               breadcrumb: {
                 label: 'agent.app-profiles',
                 icon: 'description'
@@ -443,6 +524,7 @@ const routes: Routes = [
   providers: [
     AgentsTableConfigResolver,
     AgentProfilesTableConfigResolver,
+    EdgeProfilesTableConfigResolver,
     AgentAppProfilesTableConfigResolver,
     AgentApplicationsTableConfigResolver,
     {

@@ -241,6 +241,7 @@ SELECT ee.id
         , ee.additional_info
         , ee.customer_id
         , ee.root_rule_chain_id
+        , ee.edge_profile_id
         , ee.type
         , ee.name
         , ee.label

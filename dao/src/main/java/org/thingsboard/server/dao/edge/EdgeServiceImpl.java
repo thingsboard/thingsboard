@@ -30,11 +30,13 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeInfo;
+import org.thingsboard.server.common.data.edge.EdgeProfile;
 import org.thingsboard.server.common.data.edge.EdgeSearchQuery;
 import org.thingsboard.server.common.data.group.EntityGroup;
 import org.thingsboard.server.common.data.id.ConverterId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.EdgeProfileId;
 import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
@@ -66,6 +68,7 @@ import org.thingsboard.server.dao.group.EntityGroupService;
 import org.thingsboard.server.dao.integration.IntegrationService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
+import org.thingsboard.server.dao.service.ConstraintValidator;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
@@ -139,6 +142,10 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
     @Autowired
     private EntityCountService countService;
 
+    @Autowired
+    @Lazy
+    private EdgeProfileService edgeProfileService;
+
     @Value("${edges.enabled}")
     @Getter
     private boolean edgesEnabled;
@@ -208,13 +215,26 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
     }
 
     @Override
+    @Transactional
     public Edge saveEdge(Edge edge) {
         return saveEntity(edge, () -> doSaveEdge(edge));
     }
 
     private Edge doSaveEdge(Edge edge) {
         log.trace("Executing saveEdge [{}]", edge);
+        // fields first, so an invalid 'type' is reported as the edge's type and not as a profile name
+        ConstraintValidator.validateFields(edge);
+        EdgeProfile profile = edgeProfileService.resolveEdgeProfile(edge.getTenantId(), currentProfileId(edge), edge.getType());
+        // an edge inherits its root rule chain from the profile, so a rootless profile cannot produce a working edge
+        if (profile.getRootRuleChainId() == null) {
+            throw new DataValidationException("Edge profile [" + profile.getName() + "] has no root rule chain. Assign a root rule chain to the profile first!");
+        }
+        edge.setEdgeProfileId(profile.getId());
+        edge.setType(profile.getName());
         Edge oldEdge = edgeValidator.validate(edge, Edge::getTenantId);
+        if (oldEdge == null || !profile.getId().equals(oldEdge.getEdgeProfileId())) {
+            edge.setRootRuleChainId(profile.getRootRuleChainId());
+        }
         EdgeCacheEvictEvent evictEvent = new EdgeCacheEvictEvent(edge.getTenantId(), edge.getName(), oldEdge != null ? oldEdge.getName() : null);
         try {
             Edge savedEdge = edgeDao.save(edge.getTenantId(), edge);
@@ -235,6 +255,15 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
                 throw t;
             }
         }
+    }
+
+    // an update that carries neither a profile nor a type keeps the profile the edge already has, rather than moving it to the default
+    private EdgeProfileId currentProfileId(Edge edge) {
+        if (edge.getEdgeProfileId() != null || edge.getId() == null || StringUtils.isNotEmpty(edge.getType())) {
+            return edge.getEdgeProfileId();
+        }
+        Edge stored = edgeDao.findById(edge.getTenantId(), edge.getId().getId());
+        return stored != null ? stored.getEdgeProfileId() : null;
     }
 
     @Override
@@ -289,6 +318,50 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
         validateString(type, t -> "Incorrect type " + t);
         validatePageLink(pageLink);
         return edgeDao.findEdgesByTenantIdAndType(tenantId.getId(), type, pageLink);
+    }
+
+    @Override
+    public PageData<Edge> findEdgesByTenantIdAndEdgeProfileId(TenantId tenantId, EdgeProfileId edgeProfileId, PageLink pageLink) {
+        log.trace("Executing findEdgesByTenantIdAndEdgeProfileId, tenantId [{}], edgeProfileId [{}], pageLink [{}]", tenantId, edgeProfileId, pageLink);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validateId(edgeProfileId, id -> BaseEdgeProfileService.INCORRECT_EDGE_PROFILE_ID + id);
+        validatePageLink(pageLink);
+        return edgeDao.findEdgesByTenantIdAndEdgeProfileId(tenantId.getId(), edgeProfileId.getId(), pageLink);
+    }
+
+    @Override
+    public PageData<EdgeId> findEdgeIdsByTenantIdAndEdgeProfileId(TenantId tenantId, EdgeProfileId edgeProfileId, PageLink pageLink) {
+        log.trace("Executing findEdgeIdsByTenantIdAndEdgeProfileId, tenantId [{}], edgeProfileId [{}], pageLink [{}]", tenantId, edgeProfileId, pageLink);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validateId(edgeProfileId, id -> BaseEdgeProfileService.INCORRECT_EDGE_PROFILE_ID + id);
+        validatePageLink(pageLink);
+        return edgeDao.findEdgeIdsByTenantIdAndEdgeProfileId(tenantId.getId(), edgeProfileId.getId(), pageLink);
+    }
+
+    @Override
+    public long countByTenantIdAndEdgeProfileId(TenantId tenantId, EdgeProfileId edgeProfileId) {
+        return edgeDao.countByTenantIdAndEdgeProfileId(tenantId.getId(), edgeProfileId.getId());
+    }
+
+    @Override
+    public boolean existsByTenantIdAndEdgeProfileId(TenantId tenantId, EdgeProfileId edgeProfileId) {
+        return edgeDao.existsByTenantIdAndEdgeProfileId(tenantId.getId(), edgeProfileId.getId());
+    }
+
+    @Override
+    public void updateTypeByEdgeProfileId(TenantId tenantId, EdgeProfileId edgeProfileId, String type) {
+        log.trace("Executing updateTypeByEdgeProfileId, tenantId [{}], edgeProfileId [{}], type [{}]", tenantId, edgeProfileId, type);
+        // one save per edge, not a bulk update: EDQS, edge state sourcing and the edge session all listen to SaveEntityEvent
+        for (Edge edge : new PageDataIterable<>(link -> edgeDao.findEdgesByTenantIdAndEdgeProfileId(tenantId.getId(), edgeProfileId.getId(), link), 1024)) {
+            if (type.equals(edge.getType())) {
+                continue;
+            }
+            Edge oldEdge = new Edge(edge);
+            edge.setType(type);
+            Edge savedEdge = edgeDao.save(tenantId, edge);
+            publishEvictEvent(new EdgeCacheEvictEvent(tenantId, savedEdge.getName(), null));
+            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entityId(savedEdge.getId()).entity(savedEdge).oldEntity(oldEdge).created(false).build());
+        }
     }
 
     @Override
@@ -395,7 +468,7 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
         List<EntityType> groupTypesToRename = List.of(EntityType.DEVICE, EntityType.ASSET, EntityType.ENTITY_VIEW, EntityType.DASHBOARD);
         for (EntityType groupType : groupTypesToRename) {
             updateGroupName(tenantId, edge, groupType, oldTenantGroupName, newTenantGroupName);
-            if (oldCustomerGroupName != null && newCustomerGroupName != null) {
+            if (oldCustomerGroupName != null) {
                 updateGroupName(tenantId, edge, groupType, oldCustomerGroupName, newCustomerGroupName);
             }
         }
@@ -419,16 +492,6 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
                 log.error("[{}] Failed to find edge 'All' group [{}]", tenantId, edge, t);
             }
         }, MoreExecutors.directExecutor());
-    }
-
-    @Override
-    public void assignDefaultRuleChainsToEdge(TenantId tenantId, EdgeId edgeId) {
-        log.trace("Executing assignDefaultRuleChainsToEdge, tenantId [{}], edgeId [{}]", tenantId, edgeId);
-        PageDataIterable<RuleChain> ruleChains = new PageDataIterable<>(
-                link -> ruleChainService.findAutoAssignToEdgeRuleChainsByTenantId(tenantId, link), 1024);
-        for (RuleChain ruleChain : ruleChains) {
-            ruleChainService.assignRuleChainToEdge(tenantId, ruleChain.getId(), edgeId);
-        }
     }
 
     @Override
@@ -672,8 +735,12 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
 
     @Override
     public Edge setEdgeRootRuleChain(TenantId tenantId, Edge edge, RuleChainId ruleChainId) {
-        edge.setRootRuleChainId(ruleChainId);
-        Edge savedEdge = saveEdge(edge);
+        Edge savedEdge = edge;
+        // re-setting the current root has nothing to save but still re-notifies the edge
+        if (!ruleChainId.equals(edge.getRootRuleChainId())) {
+            edge.setRootRuleChainId(ruleChainId);
+            savedEdge = saveEdge(edge);
+        }
         ObjectNode isRootBody = JacksonUtil.newObjectNode();
         isRootBody.put(EDGE_IS_ROOT_BODY_KEY, Boolean.TRUE);
         eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).edgeId(edge.getId()).entityId(ruleChainId)

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.edge.rpc.fetch;
 
 import lombok.AllArgsConstructor;
@@ -50,7 +51,8 @@ public class GeneralEdgeEventFetcher implements EdgeEventFetcher {
             }
             if (seqIdStart > this.maxReadRecordsCount) {
                 edgeEvents = edgeEventService.findEdgeEvents(tenantId, edge.getId(), 0L, Math.max(this.maxReadRecordsCount, seqIdStart - this.maxReadRecordsCount), (TimePageLink) pageLink);
-                if (edgeEvents.getData().stream().anyMatch(ee -> ee.getSeqId() < seqIdStart)) {
+                // a wrapped sequence hands out its low seq_ids after the last sent event; a young edge got them before
+                if (edgeEvents.getData().stream().anyMatch(ee -> ee.getSeqId() < seqIdStart && ee.getCreatedTime() >= queueStartTs)) {
                     log.info("[{}] seqId column of edge_event table started new cycle [{}]", tenantId, edge.getId());
                     this.seqIdNewCycleStarted = true;
                     this.seqIdStart = 0L;

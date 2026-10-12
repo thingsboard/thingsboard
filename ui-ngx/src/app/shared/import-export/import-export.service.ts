@@ -68,6 +68,7 @@ import { EdgeService } from '@core/http/edge.service';
 import { RuleNode, ScriptLanguage } from '@shared/models/rule-node.models';
 import { AssetProfileService } from '@core/http/asset-profile.service';
 import { AssetProfile } from '@shared/models/asset.models';
+import { EdgeProfile } from '@shared/models/edge-profile.models';
 import { ImageService } from '@core/http/image.service';
 import { ImageExportData, ImageResourceInfo, ImageResourceType } from '@shared/models/resource.models';
 import { selectUserSettingsProperty } from '@core/auth/auth.selectors';
@@ -492,7 +493,8 @@ export class ImportExportService {
     switch (id.entityType) {
       case EntityType.DEVICE_PROFILE:
       case EntityType.ASSET_PROFILE:
-        preparedData = this.prepareProfileExport(entityData as DeviceProfile | AssetProfile);
+      case EntityType.EDGE_PROFILE:
+        preparedData = this.prepareProfileExport(entityData as DeviceProfile | AssetProfile | EdgeProfile);
         break;
       case EntityType.RULE_CHAIN:
         forkJoin([this.ruleChainService.getRuleChainMetadata(id.id), this.ruleChainService.getRuleChain(id.id)])
@@ -1582,7 +1584,7 @@ export class ImportExportService {
     setTimeout(() => URL.revokeObjectURL(url), 0);
   }
 
-  private prepareProfileExport<T extends DeviceProfile|AssetProfile|TenantProfile>(profile: T): T {
+  public prepareProfileExport<T extends DeviceProfile|AssetProfile|TenantProfile|EdgeProfile>(profile: T): T {
     profile = this.prepareExport(profile);
     profile.default = false;
     return profile;

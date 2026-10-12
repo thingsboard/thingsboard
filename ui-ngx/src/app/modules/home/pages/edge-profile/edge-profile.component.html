@@ -1,0 +1,83 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+@if (!standalone) {
+<div class="tb-details-buttons xs:flex xs:flex-col">
+  <button mat-stroked-button color="primary"
+    [disabled]="(isLoading$ | async)"
+    (click)="onEntityAction($event, 'open')"
+    [class.!hidden]="isEdit || isDetailsPage">
+    {{'common.open-details-page' | translate }}
+  </button>
+  <button mat-stroked-button color="primary"
+    [disabled]="(isLoading$ | async)"
+    (click)="onEntityAction($event, 'export')"
+    [class.!hidden]="isEdit">
+    {{'edge-profile.export' | translate }}
+  </button>
+  @if (isTenantAdmin() && (resource.EDGE_PROFILE | hasGenericPermission: operation.WRITE)) {
+    <button mat-stroked-button color="primary"
+      [disabled]="(isLoading$ | async)"
+      (click)="onEntityAction($event, 'setDefault')"
+      [class.!hidden]="isEdit || entity?.default || !entity?.rootRuleChainId">
+      {{'edge-profile.set-default' | translate }}
+    </button>
+    <button mat-stroked-button color="primary"
+      [disabled]="(isLoading$ | async)"
+      (click)="onEntityAction($event, 'reapply')"
+      [class.!hidden]="isEdit">
+      {{'edge-profile.reapply' | translate }}
+    </button>
+  }
+  <button mat-stroked-button color="primary"
+    [disabled]="(isLoading$ | async)"
+    (click)="onEntityAction($event, 'delete')"
+    [class.!hidden]="hideDelete() || isEdit">
+    {{'edge-profile.delete' | translate }}
+  </button>
+  <div class="flex flex-row xs:flex-col">
+    <button mat-stroked-button
+      ngxClipboard
+      (cbOnSuccess)="onEdgeProfileIdCopied()"
+      [cbContent]="entity?.id?.id"
+      [class.!hidden]="isEdit">
+      <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
+      <span translate>edge-profile.copy-id</span>
+    </button>
+  </div>
+</div>
+}
+<div [class.mat-padding]="!standalone" class="flex flex-col">
+  <form [formGroup]="entityForm">
+    <fieldset [disabled]="(isLoading$ | async)" style="min-width: 0;" class="flex flex-col gap-2">
+      <mat-form-field class="mat-block" appearance="outline">
+        <mat-label translate>edge-profile.name</mat-label>
+        <input matInput formControlName="name" required>
+        @if (entityForm.get('name').hasError('required')) {
+          <mat-error>{{ 'edge-profile.name-required' | translate }}</mat-error>
+        }
+        @if (entityForm.get('name').hasError('maxlength')) {
+          <mat-error>{{ 'edge-profile.name-max-length' | translate }}</mat-error>
+        }
+      </mat-form-field>
+      @if (rootRuleChainControl) {
+        <tb-rule-chain-autocomplete
+          labelText="edge-profile.root-rule-chain"
+          appearance="outline"
+          [required]="true"
+          [ruleChainType]="edgeRuleChainType"
+          [formControl]="rootRuleChainControl"
+          showHint>
+          <span tb-hint translate>edge-profile.root-rule-chain-hint</span>
+        </tb-rule-chain-autocomplete>
+      }
+      <mat-form-field class="mat-block" appearance="outline">
+        <mat-label translate>edge-profile.description</mat-label>
+        <textarea matInput formControlName="description" rows="2"></textarea>
+      </mat-form-field>
+    </fieldset>
+  </form>
+</div>

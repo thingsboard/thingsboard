@@ -16,6 +16,7 @@ import org.thingsboard.server.common.data.agent.step.AgentAppStepType;
 import org.thingsboard.server.common.data.agent.step.ComposeTypeChoiceStep;
 import org.thingsboard.server.common.data.agent.template.AgentAppTemplate;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.id.EdgeProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.agent.AgentAppProfileService;
 import org.thingsboard.server.dao.agent.StepLinkedListUtils;
@@ -24,6 +25,8 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.function.Consumer;
 
 @AllArgsConstructor
 @TbCoreComponent
@@ -36,15 +39,42 @@ public class DefaultTbAgentAppProfileService extends AbstractTbEntityService imp
 
     @Override
     public AgentAppProfile save(AgentAppProfile profile, User user) throws Exception {
+        return save(profile, user, null);
+    }
+
+    @Transactional
+    @Override
+    public AgentAppProfile save(AgentAppProfile profile, EdgeProfileId edgeProfileId, User user) throws Exception {
+        return save(profile, user, saved -> setEdgeProfile(saved, edgeProfileId, user));
+    }
+
+    // the link goes in before the entity action is logged, so a rejected link cannot leave an ADDED entry for a rolled back profile
+    private AgentAppProfile save(AgentAppProfile profile, User user, Consumer<AgentAppProfile> linkEdgeProfile) throws Exception {
         ActionType actionType = profile.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = profile.getTenantId();
         try {
             AgentAppProfile saved = checkNotNull(profileService.saveProfile(profile));
+            if (linkEdgeProfile != null) {
+                linkEdgeProfile.accept(saved);
+            }
             logEntityActionService.logEntityAction(tenantId, saved.getId(), saved, actionType, user);
             return saved;
         } catch (Exception e) {
             logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.AGENT_APP_PROFILE), profile, actionType, user, e);
             throw e;
+        }
+    }
+
+    private void setEdgeProfile(AgentAppProfile profile, EdgeProfileId edgeProfileId, User user) {
+        TenantId tenantId = profile.getTenantId();
+        EdgeProfileId previous = profileService.findEdgeProfileId(tenantId, profile.getId());
+        if (!profileService.setEdgeProfile(tenantId, profile.getId(), edgeProfileId)) {
+            return;
+        }
+        if (edgeProfileId != null) {
+            logEntityActionService.logEntityAction(tenantId, profile.getId(), profile, ActionType.RELATION_ADD_OR_UPDATE, user, edgeProfileId.toString());
+        } else {
+            logEntityActionService.logEntityAction(tenantId, profile.getId(), profile, ActionType.RELATION_DELETED, user, Objects.toString(previous, ""));
         }
     }
 

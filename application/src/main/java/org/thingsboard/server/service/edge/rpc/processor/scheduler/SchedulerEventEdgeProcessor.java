@@ -85,7 +85,7 @@ public class SchedulerEventEdgeProcessor extends BaseSchedulerEventProcessor imp
     public DownlinkMsg convertEdgeEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
         SchedulerEventId schedulerEventId = new SchedulerEventId(edgeEvent.getEntityId());
         switch (edgeEvent.getAction()) {
-            case UPDATED, ASSIGNED_TO_EDGE -> {
+            case ADDED, UPDATED, ASSIGNED_TO_EDGE -> {
                 SchedulerEvent schedulerEvent = edgeCtx.getSchedulerEventService().findSchedulerEventById(edgeEvent.getTenantId(), schedulerEventId);
                 if (schedulerEvent != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());

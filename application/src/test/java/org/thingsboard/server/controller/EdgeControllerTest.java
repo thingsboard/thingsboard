@@ -209,7 +209,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
 
         testNotifyEdgeStateChangeEventManyTimeMsgToEdgeServiceNever(savedEdge, savedEdge.getId(), savedEdge.getId(),
                 tenantId, tenantAdminUser.getCustomerId(), tenantAdminUser.getId(), tenantAdminUser.getEmail(),
-                ActionType.ADDED, 2);
+                ActionType.ADDED, 1);
 
         savedEdge.setName("My new edge");
         doPost("/api/edge", savedEdge, Edge.class);
@@ -237,6 +237,8 @@ public class EdgeControllerTest extends AbstractControllerTest {
                 tenantAdminUser.getId(), tenantAdminUser.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
         Mockito.reset(tbClusterService, auditLogService);
 
+        // the edge's own fields are validated before a profile is resolved from 'type', so the message names the
+        // field the caller actually got wrong rather than the auto-created profile's 'name'
         msgError = msgErrorFieldLength("type");
         edge.setName("normal name");
         edge.setType(StringUtils.randomAlphabetic(300));
@@ -322,18 +324,12 @@ public class EdgeControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testSaveEdgeWithEmptyType() throws Exception {
+    public void testSaveEdgeWithEmptyTypeResolvesDefaultProfile() throws Exception {
         Edge edge = constructEdge("My edge", null);
-
-        Mockito.reset(tbClusterService, auditLogService);
-
-        String msgError = "Edge type " + msgErrorShouldBeSpecified;
-        doPost("/api/edge", edge)
-                .andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString(msgError)));
-
-        testNotifyEntityEqualsOneTimeServiceNeverError(edge, tenantId,
-                tenantAdminUser.getId(), tenantAdminUser.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
+        Edge saved = doPost("/api/edge", edge, Edge.class);
+        Assert.assertEquals("default", saved.getType());
+        Assert.assertNotNull(saved.getEdgeProfileId());
+        Assert.assertNotNull(saved.getRootRuleChainId());
     }
 
     @Test

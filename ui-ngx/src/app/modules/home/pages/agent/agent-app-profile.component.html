@@ -66,6 +66,16 @@
       </mat-form-field>
     }
     <fieldset [disabled]="(isLoading$ | async) || !isEdit">
+      @if (isEdgeAppType) {
+        <tb-edge-profile-autocomplete
+          formControlName="edgeProfileId"
+          [addNewProfile]="isEdit"
+          [editProfileEnabled]="isEdit"
+          [disabled]="!isEdit"
+          [showDetailsPageLink]="true"
+          hint="agent.app-profile-edge-profile-hint">
+        </tb-edge-profile-autocomplete>
+      }
       <mat-form-field class="mat-block" appearance="outline">
         <mat-label translate>agent.description</mat-label>
         <textarea matInput formControlName="description" rows="2"></textarea>

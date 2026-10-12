@@ -70,9 +70,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -695,6 +695,7 @@ public class TenantServiceTest extends AbstractServiceTest {
     }
 
     private Edge createAndSaveEdgeFor(Tenant tenant) {
+        createEdgeRootRuleChain(tenant.getId());
         Edge edge = constructEdge(tenant.getId(), "Test edge", "Simple");
         return edgeService.saveEdge(edge);
     }
@@ -799,4 +800,5 @@ public class TenantServiceTest extends AbstractServiceTest {
         tenantProfile.setName("Test tenant profile");
         return tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, tenantProfile);
     }
+
 }
