@@ -49,8 +49,10 @@
       "desc": "Votre licence est enregistrée sur ce serveur et dans votre compte du Portail des licences.",
       "create-sys-admin-account": "Créer un compte administrateur système",
       "create-sys-admin-account-hint": "Il vous connecte à ce serveur — distinct du compte du Portail des licences qui contient votre licence.",
+      "email-label": "Email",
       "email-required": "Saisissez une adresse email.",
       "email-invalid": "Saisissez une adresse email valide.",
+      "password-label": "Mot de passe",
       "password-required": "Saisissez un mot de passe.",
       "password-min-length": "Le mot de passe doit contenir au moins 6 caractères.",
       "confirm-label": "Confirmer le mot de passe",
@@ -59,9 +61,7 @@
       "demo-tenant-title": "Configurer un locataire de démonstration",
       "demo-tenant-desc": "La façon la plus rapide de voir la plateforme en action. Les tableaux de bord, les appareils et les chaînes de règles sont déjà configurés, avec des utilisateurs locataire et client prêts à se connecter. Vous pouvez aussi l’ouvrir depuis Locataires en tant qu’administrateur système.",
       "create": "Créer un compte",
-      "creating": "Création du compte",
-      "email-label": "Email",
-      "password-label": "Mot de passe"
+      "creating": "Création du compte"
     },
     "demo-tenant": {
       "signed-in-as": "Votre compte d’administrateur système est créé et vous êtes connecté en tant que <b>{{email}}</b>.",
@@ -14074,6 +14074,7 @@
     "non-production-mode": "Mode développement — usage hors production uniquement",
     "non-production-mode-details": "Les quotas d’appareils, d’actifs et d’Edge sont illimités ; la marque blanche n’est pas disponible. N’utilisez pas cette instance en production.",
     "offline-mode": "Mode hors ligne",
+    "devices": "Appareils",
     "number-of-devices": "{ count, plural, one {# appareil} other {# appareils} }",
     "unlimited-devices": "Appareils illimités",
     "add-devices": "Ajouter des appareils",
@@ -14166,13 +14167,12 @@
     "pe-pack-requested": "Le Professional Pack a été demandé à votre administrateur système.",
     "white-labeling-promo": "Définissez le logo, les couleurs et les titres depuis une page de paramètres.",
     "white-labeling-promo-try": "Définissez le logo, les couleurs et les titres depuis une page de paramètres. Ouvrez-la pour essayer.",
+    "integrations": "Intégrations",
     "integrations-promo": "Importez des données depuis LoRaWAN, MQTT, Kafka et d’autres plateformes IoT.",
     "scheduler": "Planificateur",
     "scheduler-promo": "Exécutez des mises à jour et envoyez des événements aux chaînes de règles selon une planification.",
     "reports": "Rapports",
-    "reports-promo": "Créez des rapports à partir de tableaux, de graphiques et de votre propre image de marque, et envoyez-les selon une planification.",
-    "devices": "Appareils",
-    "integrations": "Intégrations"
+    "reports-promo": "Créez des rapports à partir de tableaux, de graphiques et de votre propre image de marque, et envoyez-les selon une planification."
   },
   "platform-feature": {
     "overview": "Aperçu",

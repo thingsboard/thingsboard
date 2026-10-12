@@ -49,8 +49,10 @@
       "desc": "Ihre Lizenz ist auf diesem Server und in Ihrem Lizenzportal-Konto gespeichert.",
       "create-sys-admin-account": "Systemadministrator-Konto erstellen",
       "create-sys-admin-account-hint": "Damit melden Sie sich an diesem Server an – getrennt vom Lizenzportal-Konto, das Ihre Lizenz enthält.",
+      "email-label": "E-Mail",
       "email-required": "Geben Sie eine E-Mail-Adresse ein.",
       "email-invalid": "Geben Sie eine gültige E-Mail-Adresse ein.",
+      "password-label": "Passwort",
       "password-required": "Geben Sie ein Passwort ein.",
       "password-min-length": "Das Passwort muss mindestens 6 Zeichen lang sein.",
       "confirm-label": "Passwort bestätigen",
@@ -59,9 +61,7 @@
       "demo-tenant-title": "Demo-Mandanten einrichten",
       "demo-tenant-desc": "Der schnellste Weg, die Plattform in Aktion zu erleben. Dashboards, Geräte und Regelketten sind bereits eingerichtet, Mandanten- und Kundenbenutzer stehen zur Anmeldung bereit. Sie können den Mandanten auch als Systemadministrator unter Mandanten öffnen.",
       "create": "Konto erstellen",
-      "creating": "Konto wird erstellt",
-      "email-label": "E-Mail",
-      "password-label": "Passwort"
+      "creating": "Konto wird erstellt"
     },
     "demo-tenant": {
       "signed-in-as": "Ihr Systemadministrator-Konto wurde erstellt, und Sie sind als <b>{{email}}</b> angemeldet.",
@@ -14074,6 +14074,7 @@
     "non-production-mode": "Entwicklungsmodus – nur für den Nicht-Produktiv-Einsatz",
     "non-production-mode-details": "Geräte-, Asset- und Edge-Kontingente sind unbegrenzt; White-Labeling ist nicht verfügbar. Diese Instanz nicht in der Produktion verwenden.",
     "offline-mode": "Offline-Modus",
+    "devices": "Geräte",
     "number-of-devices": "{ count, plural, one {# Gerät} other {# Geräte} }",
     "unlimited-devices": "Unbegrenzte Geräte",
     "add-devices": "Geräte hinzufügen",
@@ -14166,13 +14167,12 @@
     "pe-pack-requested": "Das Professional Pack wurde bei Ihrem Systemadministrator angefordert.",
     "white-labeling-promo": "Logo, Farben und Titel auf einer Einstellungsseite festlegen.",
     "white-labeling-promo-try": "Logo, Farben und Titel auf einer Einstellungsseite festlegen. Öffnen Sie sie zum Ausprobieren.",
+    "integrations": "Integrationen",
     "integrations-promo": "Daten aus LoRaWAN, MQTT, Kafka und anderen IoT-Plattformen übernehmen.",
     "scheduler": "Zeitplaner",
     "scheduler-promo": "Updates ausführen und Ereignisse nach Zeitplan an Regelketten senden.",
     "reports": "Berichte",
-    "reports-promo": "Berichte aus Tabellen, Diagrammen und Ihrem eigenen Branding erstellen und nach Zeitplan versenden.",
-    "devices": "Geräte",
-    "integrations": "Integrationen"
+    "reports-promo": "Berichte aus Tabellen, Diagrammen und Ihrem eigenen Branding erstellen und nach Zeitplan versenden."
   },
   "platform-feature": {
     "overview": "Übersicht",
