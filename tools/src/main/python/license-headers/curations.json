@@ -47,7 +47,7 @@
       "path": "application/src/main/java/org/thingsboard/server/service/edge/rpc/processor/secret/SecretEdgeProcessor.java",
       "header": "busl",
       "reason": "PE-specific service adapter/message SecretEdgeProcessor.java. Reviewed methods bind the common framework to PE integration, scheduler, encryption/secret, group, or customer-parent behavior. This is a new typed PE extension, not a relocation of the candidate CE implementation. Reviewed candidate application/src/main/java/org/thingsboard/server/service/edge/rpc/processor/queue/QueueEdgeProcessor.java at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 8e5a65b588937e5703ff87f301be023d27ce1808).",
-      "contentHash": "sha256:6f960791993777f636b230e3829422af292370a5b5a113b082dc2d05ee151491"
+      "contentHash": "sha256:90dd38a851c6297758e6919857716c632926c53e5b322d88a4c77a11b904506c"
     },
     {
       "path": "application/src/main/java/org/thingsboard/server/service/integration/rpc/IntegrationSessionCaffeineCache.java",
@@ -449,7 +449,7 @@
       "path": "common/data/src/main/java/org/thingsboard/server/common/data/permission/Resource.java",
       "header": "ce-modified",
       "reason": "Reviewed relocation from application/src/main/java/org/thingsboard/server/service/security/permission/Resource.java in PE commit d97b2f71224e96c27fbdf287f592a08b6fa0407b. The source exists in shared CE ancestry 4c2aa4a60368318eafc2dea155b93721668654c4. The relocated CE permission enum has PE permission/group extensions. Compared with CE fa82445a7078506defbaadc5bea07227dc1b016d (blob d8b4dd8f4ef95df06ba22fd584813f437a8b453a); a move alone does not imply PE authorship.",
-      "contentHash": "sha256:635cb50f3945d1bca662a7100a6129bea1270755bf4fe7cd6bc9849f228a4f08"
+      "contentHash": "sha256:2682ed70dc58974e7347a3ddf2f6bf23a9d5364fe31471cde48f84416fa24694"
     },
     {
       "path": "common/data/src/main/java/org/thingsboard/server/common/data/query/EntityGroupNameFilter.java",

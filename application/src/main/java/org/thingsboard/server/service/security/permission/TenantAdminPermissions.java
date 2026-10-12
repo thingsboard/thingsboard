@@ -16,6 +16,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.menu.CustomMenuInfo;
 import org.thingsboard.server.common.data.permission.Operation;
 import org.thingsboard.server.common.data.permission.Resource;
+import org.thingsboard.server.common.data.secret.SecretInfo;
 import org.thingsboard.server.dao.group.EntityGroupService;
 import org.thingsboard.server.dao.wl.WhiteLabelingService;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -83,7 +84,7 @@ public class TenantAdminPermissions extends AbstractPermissions {
         put(Resource.MOBILE_APP_BUNDLE, tenantStandaloneEntityPermissionChecker);
         put(Resource.JOB, tenantStandaloneEntityPermissionChecker);
         put(Resource.DOMAIN, tenantStandaloneEntityPermissionChecker);
-        put(Resource.SECRET, tenantStandaloneEntityPermissionChecker);
+        put(Resource.SECRET, secretPermissionChecker);
         put(Resource.REPORT_TEMPLATE, tenantStandaloneEntityPermissionChecker);
         put(Resource.REPORT, tenantStandaloneEntityPermissionChecker);
         put(Resource.AI_MODEL, tenantStandaloneEntityPermissionChecker);
@@ -302,6 +303,25 @@ public class TenantAdminPermissions extends AbstractPermissions {
             Resource resource = Resource.resourceFromEntityType(entity.getEntityType());
             // This entity does not have groups, so we are checking only generic level permissions
             return user.getUserPermissions().hasGenericPermission(resource, operation);
+        }
+    };
+
+    private static final PermissionChecker secretPermissionChecker = new PermissionChecker() {
+
+        @Override
+        public boolean hasPermission(SecurityUser user, Resource resource, Operation operation) {
+            return user.getUserPermissions().hasGenericPermission(resource, operation);
+        }
+
+        @Override
+        public boolean hasPermission(SecurityUser user, Operation operation, EntityId entityId, TenantEntity entity) {
+            if (!user.getTenantId().equals(entity.getTenantId())) {
+                return false;
+            }
+            if (entity instanceof SecretInfo secretInfo && !secretInfo.getCustomerId().isNullUid()) {
+                return false;
+            }
+            return user.getUserPermissions().hasGenericPermission(Resource.SECRET, operation);
         }
     };
 

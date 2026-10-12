@@ -17,6 +17,8 @@ import org.thingsboard.server.common.data.TbSecretDeleteResult;
 import org.thingsboard.server.common.data.converter.Converter;
 import org.thingsboard.server.common.data.converter.ConverterType;
 import org.thingsboard.server.common.data.id.ConverterId;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.integration.Integration;
 import org.thingsboard.server.common.data.integration.IntegrationType;
@@ -33,6 +35,7 @@ import org.thingsboard.server.exception.DataValidationException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -127,7 +130,7 @@ public class SecretServiceTest extends AbstractServiceTest {
         Secret savedSecret = secretService.saveSecret(tenantId, secret);
         assertThat(savedSecret.getName()).isEqualTo(name);
 
-        Secret retrieved = secretService.findSecretByName(tenantId, name);
+        Secret retrieved = secretService.findSecretByName(tenantId, new CustomerId(EntityId.NULL_UUID), name);
         assertThat(savedSecret).isEqualTo(retrieved);
 
         secretService.deleteSecret(tenantId, savedSecret);
@@ -140,12 +143,12 @@ public class SecretServiceTest extends AbstractServiceTest {
             Secret savedSecret = secretService.saveSecret(tenantId, constructSecret(tenantId, "Name_" + i, "Password", SecretType.TEXT));
             secrets.add(savedSecret);
         }
-        PageData<SecretInfo> retrieved = secretService.findSecretInfosByTenantId(tenantId, new PageLink(10, 0));
+        PageData<SecretInfo> retrieved = secretService.findSecretInfosByTenantIdAndCustomerId(tenantId, new CustomerId(EntityId.NULL_UUID), new PageLink(10, 0));
         List<SecretInfo> secretInfos = secrets.stream().map(SecretInfo::new).toList();
         assertThat(retrieved.getData()).containsOnlyOnceElementsOf(secretInfos);
 
         secrets.forEach(secret -> secretService.deleteSecret(tenantId, secret));
-        retrieved = secretService.findSecretInfosByTenantId(tenantId, new PageLink(10, 0));
+        retrieved = secretService.findSecretInfosByTenantIdAndCustomerId(tenantId, new CustomerId(EntityId.NULL_UUID), new PageLink(10, 0));
         assertThat(retrieved.getData().size()).isEqualTo(0);
     }
 
@@ -190,9 +193,76 @@ public class SecretServiceTest extends AbstractServiceTest {
         assertThat(exception.getMessage()).contains("Secret file size is " + value.length() + " bytes; exceeds the maximum of " + (512 * 1024) + " bytes");
     }
 
+    @Test
+    public void testFindSecretInfoByNameRespectsCustomerScope() {
+        CustomerId customerA = new CustomerId(UUID.randomUUID());
+        CustomerId customerB = new CustomerId(UUID.randomUUID());
+        CustomerId tenantScope = new CustomerId(EntityId.NULL_UUID);
+
+        secretService.saveSecret(tenantId, constructSecret(tenantId, customerA, "shared_name", "valueA", SecretType.TEXT));
+        secretService.saveSecret(tenantId, constructSecret(tenantId, customerB, "shared_name", "valueB", SecretType.TEXT));
+        secretService.saveSecret(tenantId, constructSecret(tenantId, tenantScope, "shared_name", "tenantValue", SecretType.TEXT));
+
+        SecretInfo a = secretService.findSecretInfoByName(tenantId, customerA, "shared_name");
+        SecretInfo b = secretService.findSecretInfoByName(tenantId, customerB, "shared_name");
+        SecretInfo t = secretService.findSecretInfoByName(tenantId, tenantScope, "shared_name");
+
+        assertThat(a.getCustomerId()).isEqualTo(customerA);
+        assertThat(b.getCustomerId()).isEqualTo(customerB);
+        assertThat(t.getCustomerId().isNullUid()).isTrue();
+        assertThat(a.getId()).isNotEqualTo(b.getId()).isNotEqualTo(t.getId());
+    }
+
+    @Test
+    public void testFindSecretInfosByTenantIdAndCustomerIdReturnsOnlyThatScope() {
+        CustomerId customerA = new CustomerId(UUID.randomUUID());
+        CustomerId tenantScope = new CustomerId(EntityId.NULL_UUID);
+
+        secretService.saveSecret(tenantId, constructSecret(tenantId, customerA, "a1", "v", SecretType.TEXT));
+        secretService.saveSecret(tenantId, constructSecret(tenantId, customerA, "a2", "v", SecretType.TEXT));
+        secretService.saveSecret(tenantId, constructSecret(tenantId, tenantScope, "t1", "v", SecretType.TEXT));
+
+        PageData<SecretInfo> customerPage = secretService.findSecretInfosByTenantIdAndCustomerId(tenantId, customerA, new PageLink(50));
+        PageData<SecretInfo> tenantPage = secretService.findSecretInfosByTenantIdAndCustomerId(tenantId, tenantScope, new PageLink(50));
+
+        assertThat(customerPage.getData()).hasSize(2).allMatch(s -> customerA.equals(s.getCustomerId()));
+        assertThat(tenantPage.getData()).hasSize(1).allMatch(s -> s.getCustomerId().isNullUid());
+    }
+
+    @Test
+    public void testDuplicateSecretNameAcrossScopesIsAllowed() {
+        CustomerId customerA = new CustomerId(UUID.randomUUID());
+
+        secretService.saveSecret(tenantId, constructSecret(tenantId, new CustomerId(EntityId.NULL_UUID), "collision", "tenant_value", SecretType.TEXT));
+        // Same name in a different scope — must NOT throw constraint violation
+        Secret customerSecret = secretService.saveSecret(tenantId, constructSecret(tenantId, customerA, "collision", "customer_value", SecretType.TEXT));
+
+        assertThat(customerSecret.getId()).isNotNull();
+    }
+
+    @Test
+    public void testDeleteSecretsByTenantIdAndCustomerIdRemovesOnlyThatScope() {
+        CustomerId customerA = new CustomerId(UUID.randomUUID());
+        CustomerId tenantScope = new CustomerId(EntityId.NULL_UUID);
+
+        secretService.saveSecret(tenantId, constructSecret(tenantId, customerA, "a1", "v", SecretType.TEXT));
+        secretService.saveSecret(tenantId, constructSecret(tenantId, customerA, "a2", "v", SecretType.TEXT));
+        secretService.saveSecret(tenantId, constructSecret(tenantId, tenantScope, "t1", "v", SecretType.TEXT));
+
+        secretService.deleteSecretsByTenantIdAndCustomerId(tenantId, customerA);
+
+        assertThat(secretService.findSecretInfosByTenantIdAndCustomerId(tenantId, customerA, new PageLink(50)).getData()).isEmpty();
+        assertThat(secretService.findSecretInfosByTenantIdAndCustomerId(tenantId, tenantScope, new PageLink(50)).getData()).hasSize(1);
+    }
+
     private Secret constructSecret(TenantId tenantId, String name, String value, SecretType secretType) {
+        return constructSecret(tenantId, new CustomerId(EntityId.NULL_UUID), name, value, secretType);
+    }
+
+    private Secret constructSecret(TenantId tenantId, CustomerId customerId, String name, String value, SecretType secretType) {
         Secret secret = new Secret();
         secret.setTenantId(tenantId);
+        secret.setCustomerId(customerId);
         secret.setName(name);
         secret.setType(secretType);
         secret.setValue(value);

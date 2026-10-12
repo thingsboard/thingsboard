@@ -509,9 +509,9 @@ public class AdminController extends BaseController {
                 .build() + "\"";
     }
 
-    @GetMapping(value = "/mail/oauth2/code",  params = {"code", "state"})
+    @GetMapping(value = "/mail/oauth2/code", params = {"code", "state"})
     public void handleMailOAuth2Callback(@RequestParam(value = "code") String code, @RequestParam(value = "state") String state,
-                                  HttpServletRequest request, HttpServletResponse response) throws Exception {
+                                         HttpServletRequest request, HttpServletResponse response) throws Exception {
         String redirectUrl = getMailOAuth2RedirectUrl(request);
         Optional<Cookie> cookieState = CookieUtils.getCookie(request, STATE_COOKIE_NAME);
 

@@ -27,6 +27,8 @@ import org.thingsboard.server.common.data.SecretType;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.converter.ConverterType;
 import org.thingsboard.server.common.data.event.LifeCycleEventFilter;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.integration.IntegrationType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -293,7 +295,7 @@ public class HttpIntegrationTest extends AbstractIntegrationTest {
                 });
 
         // should trigger new update event
-        Secret secret = secretService.findSecretByName(tenantId, LOCALHOST);
+        Secret secret = secretService.findSecretByName(tenantId, new CustomerId(EntityId.NULL_UUID), LOCALHOST);
         secret.setValue("updated");
         secretService.saveSecret(tenantId, secret);
 

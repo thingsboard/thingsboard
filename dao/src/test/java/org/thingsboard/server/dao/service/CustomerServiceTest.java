@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.SecretType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.cf.CalculatedField;
@@ -26,18 +27,23 @@ import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.TimeSeriesOutput;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.secret.Secret;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.customer.CustomerService;
+import org.thingsboard.server.dao.secret.SecretService;
 import org.thingsboard.server.exception.DataValidationException;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -55,6 +61,8 @@ public class CustomerServiceTest extends AbstractServiceTest {
     CalculatedFieldService calculatedFieldService;
     @Autowired
     AssetService assetService;
+    @Autowired
+    SecretService secretService;
 
     static final int TIMEOUT = 30;
 
@@ -401,6 +409,41 @@ public class CustomerServiceTest extends AbstractServiceTest {
                 .hasMessage("Can't delete customer that is referenced in calculated fields!");
 
         calculatedFieldService.deleteCalculatedField(tenantId, savedCalculatedField.getId());
+    }
+
+    @Test
+    public void testDeleteCustomer_thenVerifyItsSecretsAreDeleted() {
+        Customer customer = new Customer();
+        customer.setTenantId(tenantId);
+        customer.setTitle("scoped-secrets-customer-" + UUID.randomUUID());
+        Customer savedCustomer = customerService.saveCustomer(customer);
+        CustomerId customerId = savedCustomer.getId();
+        CustomerId tenantScope = new CustomerId(EntityId.NULL_UUID);
+
+        secretService.saveSecret(tenantId, buildSecret(customerId, "alpha"));
+        secretService.saveSecret(tenantId, buildSecret(customerId, "beta"));
+        Secret tenantSecret = secretService.saveSecret(tenantId, buildSecret(tenantScope, "tenant_one"));
+
+        assertThat(secretService.findSecretInfosByTenantIdAndCustomerId(tenantId, customerId, new PageLink(10)).getData()).hasSize(2);
+        assertThat(secretService.findSecretInfosByTenantIdAndCustomerId(tenantId, tenantScope, new PageLink(10)).getData()).hasSize(1);
+
+        customerService.deleteCustomer(tenantId, customerId);
+
+        assertThat(secretService.findSecretInfosByTenantIdAndCustomerId(tenantId, customerId, new PageLink(10)).getData()).isEmpty();
+        assertThat(secretService.findSecretInfosByTenantIdAndCustomerId(tenantId, tenantScope, new PageLink(10)).getData()).hasSize(1);
+
+        secretService.deleteSecret(tenantId, tenantSecret);
+        assertThat(secretService.findSecretInfosByTenantIdAndCustomerId(tenantId, tenantScope, new PageLink(10)).getData()).isEmpty();
+    }
+
+    private Secret buildSecret(CustomerId customerId, String name) {
+        Secret secret = new Secret();
+        secret.setTenantId(tenantId);
+        secret.setCustomerId(customerId);
+        secret.setName(name);
+        secret.setType(SecretType.TEXT);
+        secret.setValue("v");
+        return secret;
     }
 
 }

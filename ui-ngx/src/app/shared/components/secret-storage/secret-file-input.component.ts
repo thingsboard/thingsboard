@@ -33,8 +33,6 @@ import { Operation, Resource } from '@shared/models/security.models';
 import { UserPermissionsService } from '@core/http/user-permissions.service';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { getCurrentAuthUser } from '@core/auth/auth.selectors';
-import { Authority } from '@shared/models/authority.enum';
 
 @Component({
     selector: 'tb-secret-file-input',
@@ -86,7 +84,7 @@ export class SecretFileInputComponent extends PageComponent implements OnInit, C
 
   secretStorageFile: string;
 
-  allowSecret = getCurrentAuthUser(this.store).authority !== Authority.CUSTOMER_USER;
+  allowSecret = this.userPermissionsService.hasGenericPermission(Resource.SECRET, Operation.READ);
 
   private modelValue: string;
 
@@ -106,7 +104,7 @@ export class SecretFileInputComponent extends PageComponent implements OnInit, C
   }
 
   ngOnInit(): void {
-    this.readonly = this.readonly || !this.userPermissionsService.hasGenericPermission(Resource.SECRET, Operation.WRITE);
+    this.readonly = this.readonly || !this.userPermissionsService.hasGenericPermission(Resource.SECRET, Operation.CREATE);
     this.secretFileFormGroup = this.fb.group({
       secretFile: [null, this.required ? [Validators.required] : []]
     });

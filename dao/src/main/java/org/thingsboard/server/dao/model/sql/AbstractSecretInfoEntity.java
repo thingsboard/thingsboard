@@ -9,6 +9,7 @@ import jakarta.persistence.MappedSuperclass;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.SecretType;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.SecretId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.secret.SecretInfo;
@@ -18,6 +19,7 @@ import org.thingsboard.server.dao.model.ModelConstants;
 
 import java.util.UUID;
 
+import static org.thingsboard.server.dao.model.ModelConstants.CUSTOMER_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.SECRET_DESCRIPTION_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.SECRET_NAME_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.TENANT_ID_COLUMN;
@@ -29,6 +31,9 @@ public abstract class AbstractSecretInfoEntity<T extends SecretInfo> extends Bas
 
     @Column(name = TENANT_ID_COLUMN)
     private UUID tenantId;
+
+    @Column(name = CUSTOMER_ID_PROPERTY)
+    private UUID customerId;
 
     @Column(name = SECRET_NAME_COLUMN)
     private String name;
@@ -47,6 +52,7 @@ public abstract class AbstractSecretInfoEntity<T extends SecretInfo> extends Bas
     public AbstractSecretInfoEntity(SecretInfo secretInfo) {
         super(secretInfo);
         this.tenantId = secretInfo.getTenantId().getId();
+        this.customerId = secretInfo.getCustomerId().getId();
         this.name = secretInfo.getName();
         this.type = secretInfo.getType();
         this.description = secretInfo.getDescription();
@@ -56,6 +62,7 @@ public abstract class AbstractSecretInfoEntity<T extends SecretInfo> extends Bas
         SecretInfo secretInfo = new SecretInfo(new SecretId(getUuid()));
         secretInfo.setCreatedTime(createdTime);
         secretInfo.setTenantId(TenantId.fromUUID(tenantId));
+        secretInfo.setCustomerId(new CustomerId(customerId));
         secretInfo.setName(name);
         secretInfo.setType(type);
         secretInfo.setDescription(description);

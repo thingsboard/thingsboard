@@ -13,6 +13,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatchers;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
@@ -20,6 +21,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNode;
 import org.thingsboard.rule.engine.mqtt.TbMqttNode;
 import org.thingsboard.rule.engine.mqtt.TbMqttNodeConfiguration;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.SecretType;
 import org.thingsboard.server.common.data.StringUtils;
@@ -35,8 +37,10 @@ import org.thingsboard.server.common.data.ai.provider.GoogleAiGeminiProviderConf
 import org.thingsboard.server.common.data.converter.Converter;
 import org.thingsboard.server.common.data.converter.ConverterType;
 import org.thingsboard.server.common.data.id.ConverterId;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.IntegrationId;
 import org.thingsboard.server.common.data.id.RuleChainId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.integration.Integration;
 import org.thingsboard.server.common.data.integration.IntegrationType;
 import org.thingsboard.server.common.data.page.PageData;
@@ -46,6 +50,8 @@ import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.secret.Secret;
 import org.thingsboard.server.common.data.secret.SecretInfo;
+import org.thingsboard.server.dao.encryptionkey.EncryptionService;
+import org.thingsboard.server.dao.secret.SecretService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.service.ai.AiRequestsExecutor;
 
@@ -81,9 +87,16 @@ public class SecretControllerTest extends AbstractControllerTest {
     @MockitoSpyBean
     private Langchain4jChatModelConfigurer chatModelConfigurer;
 
+    @Autowired
+    private SecretService secretService;
+
+    @Autowired
+    private EncryptionService encryptionService;
+
     @Before
     public void setUp() throws Exception {
         loginTenantAdmin();
+        encryptionService.createEncryptionKey(TenantId.SYS_TENANT_ID);
     }
 
     @Test
@@ -99,7 +112,7 @@ public class SecretControllerTest extends AbstractControllerTest {
 
         PageData<SecretInfo> pageData2 = doGetTypedWithPageLink("/api/secrets?", PAGE_DATA_SECRET_TYPE_REF, new PageLink(10, 0));
         assertThat(pageData2.getData()).hasSize(1);
-        assertThat(pageData2.getData().get(0)).isEqualTo(new SecretInfo(savedSecret));
+        assertThat(pageData2.getData().getFirst()).isEqualTo(new SecretInfo(savedSecret));
 
         SecretInfo retrievedSecret = doGet("/api/secret/{id}/info", SecretInfo.class, savedSecret.getId().getId());
         assertThat(retrievedSecret).isEqualTo(savedSecret);
@@ -393,11 +406,142 @@ public class SecretControllerTest extends AbstractControllerTest {
         doGet("/api/secret/{id}/info", savedSecret.getId().getId()).andExpect(status().isNotFound());
     }
 
+    @Test
+    public void testTenantAdminCannotAccessCustomerScopedSecret() throws Exception {
+        Secret customerSecret = secretService.saveSecret(tenantId, constructCustomerScopedSecret(customerId, "customer-only", "v"));
+        String idPath = "/api/secret/" + customerSecret.getUuidId();
+
+        doGet(idPath + "/info").andExpect(status().isForbidden());
+        doPut(idPath + "/description", "new description").andExpect(status().isForbidden());
+        doPut(idPath + "/value", "new value").andExpect(status().isForbidden());
+        doDelete(idPath).andExpect(status().isForbidden());
+
+        secretService.deleteSecret(tenantId, customerSecret);
+    }
+
+    @Test
+    public void testTenantAdminListAndNameLookupExcludeCustomerScopedSecret() throws Exception {
+        Secret customerSecret = secretService.saveSecret(tenantId, constructCustomerScopedSecret(customerId, "shared-name", "customer-value"));
+        SecretInfo tenantSecret = doPost("/api/secret", constructSecret("tenant-only", "tenant-value"), SecretInfo.class);
+
+        PageData<SecretInfo> page = doGetTypedWithPageLink("/api/secrets?", PAGE_DATA_SECRET_TYPE_REF, new PageLink(50, 0));
+        assertThat(page.getData())
+                .extracting(SecretInfo::getUuidId)
+                .contains(tenantSecret.getUuidId())
+                .doesNotContain(customerSecret.getUuidId());
+
+        doGet("/api/secret?name=" + "shared-name").andExpect(status().isNotFound());
+
+        doDelete("/api/secret/" + tenantSecret.getUuidId()).andExpect(status().isOk());
+        secretService.deleteSecret(tenantId, customerSecret);
+    }
+
+    @Test
+    public void testSysAdminCannotAccessTenantOrCustomerScopedSecret() throws Exception {
+        SecretInfo tenantSecret = doPost("/api/secret", constructSecret("tenant-only", "v"), SecretInfo.class);
+        Secret customerSecret = secretService.saveSecret(tenantId, constructCustomerScopedSecret(customerId, "customer-only", "v"));
+
+        loginSysAdmin();
+        doGet("/api/secret/" + tenantSecret.getUuidId() + "/info").andExpect(status().isForbidden());
+        doGet("/api/secret/" + customerSecret.getUuidId() + "/info").andExpect(status().isForbidden());
+        doDelete("/api/secret/" + tenantSecret.getUuidId()).andExpect(status().isForbidden());
+        doDelete("/api/secret/" + customerSecret.getUuidId()).andExpect(status().isForbidden());
+
+        loginTenantAdmin();
+        doDelete("/api/secret/" + tenantSecret.getUuidId()).andExpect(status().isOk());
+        secretService.deleteSecret(tenantId, customerSecret);
+    }
+
+    @Test
+    public void testTenantAdminCannotAccessSysAdminScopedSecret() throws Exception {
+        loginSysAdmin();
+        SecretInfo sysAdminSecret = doPost("/api/secret", constructSecret("sysadmin-only", "v"), SecretInfo.class);
+
+        loginTenantAdmin();
+        doGet("/api/secret/" + sysAdminSecret.getUuidId() + "/info").andExpect(status().isForbidden());
+        doDelete("/api/secret/" + sysAdminSecret.getUuidId()).andExpect(status().isForbidden());
+
+        loginSysAdmin();
+        doDelete("/api/secret/" + sysAdminSecret.getUuidId()).andExpect(status().isOk());
+        loginTenantAdmin();
+    }
+
+    @Test
+    public void testCustomerUserCannotAccessOutOfScopeSecrets() throws Exception {
+        SecretInfo tenantSecret = doPost("/api/secret", constructSecret("tenant-only", "v"), SecretInfo.class);
+
+        Customer otherCustomer = new Customer();
+        otherCustomer.setTitle("Other customer " + UUID.randomUUID());
+        otherCustomer = doPost("/api/customer", otherCustomer, Customer.class);
+        Secret otherCustomerSecret = secretService.saveSecret(tenantId, constructCustomerScopedSecret(otherCustomer.getId(), "other-customer-only", "v"));
+
+        loginSysAdmin();
+        SecretInfo sysAdminSecret = doPost("/api/secret", constructSecret("sysadmin-only", "v"), SecretInfo.class);
+
+        loginCustomerUser();
+        doGet("/api/secret/" + tenantSecret.getUuidId() + "/info").andExpect(status().isForbidden());
+        doGet("/api/secret/" + sysAdminSecret.getUuidId() + "/info").andExpect(status().isForbidden());
+        doGet("/api/secret/" + otherCustomerSecret.getUuidId() + "/info").andExpect(status().isForbidden());
+
+        loginTenantAdmin();
+        doDelete("/api/secret/" + tenantSecret.getUuidId()).andExpect(status().isOk());
+        secretService.deleteSecret(tenantId, otherCustomerSecret);
+        doDelete("/api/customer/" + otherCustomer.getUuidId()).andExpect(status().isOk());
+        loginSysAdmin();
+        doDelete("/api/secret/" + sysAdminSecret.getUuidId()).andExpect(status().isOk());
+        loginTenantAdmin();
+    }
+
+    @Test
+    public void testCustomerUserCanManageOwnSecret() throws Exception {
+        loginCustomerAdminUser();
+
+        // nothing is visible within the customer scope yet
+        PageData<SecretInfo> initial = doGetTypedWithPageLink("/api/secrets?", PAGE_DATA_SECRET_TYPE_REF, new PageLink(10, 0));
+        assertThat(initial.getData()).isEmpty();
+
+        // create a secret as a customer user
+        SecretInfo savedSecret = doPost("/api/secret", constructSecret("customer-secret", "customer-value"), SecretInfo.class);
+        assertNotNull(savedSecret);
+        assertNotNull(savedSecret.getId());
+        // it is owned by the customer, not the tenant
+        assertThat(savedSecret.getCustomerId()).isEqualTo(customerId);
+
+        // read it back by id
+        SecretInfo byId = doGet("/api/secret/{id}/info", SecretInfo.class, savedSecret.getUuidId());
+        assertThat(byId).isEqualTo(savedSecret);
+
+        // it shows up in the customer's list
+        PageData<SecretInfo> page = doGetTypedWithPageLink("/api/secrets?", PAGE_DATA_SECRET_TYPE_REF, new PageLink(10, 0));
+        assertThat(page.getData()).extracting(SecretInfo::getUuidId).containsExactly(savedSecret.getUuidId());
+
+        // and is resolvable by name within the customer scope
+        SecretInfo byName = doGet("/api/secret?name=customer-secret", SecretInfo.class);
+        assertThat(byName).isEqualTo(savedSecret);
+
+        // update its value
+        Secret update = new Secret(savedSecret);
+        update.setValue("updated-value");
+        SecretInfo updatedSecret = doPost("/api/secret", update, SecretInfo.class);
+        assertThat(updatedSecret.getUuidId()).isEqualTo(savedSecret.getUuidId());
+
+        // delete it
+        doDelete("/api/secret/" + savedSecret.getUuidId()).andExpect(status().isOk());
+        doGet("/api/secret/{id}/info", savedSecret.getUuidId()).andExpect(status().isNotFound());
+    }
+
     private Secret constructSecret(String name, String value) {
         Secret secret = new Secret();
         secret.setName(name);
         secret.setValue(value);
         secret.setType(SecretType.TEXT);
+        return secret;
+    }
+
+    private Secret constructCustomerScopedSecret(CustomerId customerId, String name, String value) {
+        Secret secret = constructSecret(name, value);
+        secret.setTenantId(tenantId);
+        secret.setCustomerId(customerId);
         return secret;
     }
 

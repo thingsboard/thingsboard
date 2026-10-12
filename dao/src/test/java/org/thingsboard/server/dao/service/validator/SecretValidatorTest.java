@@ -11,6 +11,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.thingsboard.server.common.data.SecretType;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.SecretId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.secret.Secret;
@@ -108,6 +109,52 @@ class SecretValidatorTest {
         assertThrows(DataValidationException.class,
                 () -> validator.validateUpdate(tenantId, secret),
                 "Can't update non existing secret!");
+    }
+
+    @Test
+    void testValidateUpdateChangedTenantId() {
+        TenantId otherTenantId = TenantId.fromUUID(UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"));
+
+        Secret oldSecret = new Secret(secretId);
+        oldSecret.setName("Test Secret");
+        oldSecret.setType(SecretType.TEXT);
+        oldSecret.setValue("secretValue");
+        oldSecret.setTenantId(tenantId);
+
+        Secret newSecret = new Secret(secretId);
+        newSecret.setName("Test Secret");
+        newSecret.setType(SecretType.TEXT);
+        newSecret.setValue("secretValue");
+        newSecret.setTenantId(otherTenantId);
+
+        given(secretService.findSecretById(tenantId, secretId)).willReturn(oldSecret);
+
+        assertThrows(DataValidationException.class,
+                () -> validator.validateUpdate(tenantId, newSecret),
+                "Can't update secret tenant!");
+    }
+
+    @Test
+    void testValidateUpdateChangedCustomerId() {
+        Secret oldSecret = new Secret(secretId);
+        oldSecret.setName("Test Secret");
+        oldSecret.setType(SecretType.TEXT);
+        oldSecret.setValue("secretValue");
+        oldSecret.setTenantId(tenantId);
+        oldSecret.setCustomerId(new CustomerId(UUID.fromString("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")));
+
+        Secret newSecret = new Secret(secretId);
+        newSecret.setName("Test Secret");
+        newSecret.setType(SecretType.TEXT);
+        newSecret.setValue("secretValue");
+        newSecret.setTenantId(tenantId);
+        newSecret.setCustomerId(new CustomerId(UUID.fromString("cccccccc-cccc-cccc-cccc-cccccccccccc")));
+
+        given(secretService.findSecretById(tenantId, secretId)).willReturn(oldSecret);
+
+        assertThrows(DataValidationException.class,
+                () -> validator.validateUpdate(tenantId, newSecret),
+                "Can't update secret customer!");
     }
 
     @Test

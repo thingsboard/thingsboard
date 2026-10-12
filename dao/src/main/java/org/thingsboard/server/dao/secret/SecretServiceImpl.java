@@ -12,6 +12,7 @@ import org.thingsboard.server.cache.secret.SecretCacheKey;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.TbSecretDeleteResult;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.SecretId;
@@ -24,6 +25,7 @@ import org.thingsboard.server.dao.encryptionkey.EncryptionService;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
+import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.validator.SecretDataValidator;
 import org.thingsboard.server.dao.sql.HasSecretsEntityDao;
 
@@ -58,7 +60,7 @@ public class SecretServiceImpl extends AbstractCachedEntityService<SecretCacheKe
 
     @Override
     public void handleEvictEvent(SecretCacheEvictEvent event) {
-        cache.evict(new SecretCacheKey(event.tenantId(), event.name()));
+        cache.evict(new SecretCacheKey(event.tenantId(), event.customerId(), event.name()));
     }
 
     @Override
@@ -77,7 +79,7 @@ public class SecretServiceImpl extends AbstractCachedEntityService<SecretCacheKe
             }
 
             Secret savedSecret = secretDao.save(tenantId, secret);
-            publishEvictEvent(new SecretCacheEvictEvent(savedSecret.getTenantId(), savedSecret.getName()));
+            publishEvictEvent(new SecretCacheEvictEvent(savedSecret.getTenantId(), savedSecret.getCustomerId(), savedSecret.getName()));
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entityId(savedSecret.getId()).entity(savedSecret).created(secret.getId() == null).broadcastEvent(isValueUpdated).build());
             return savedSecret;
         } catch (Exception e) {
@@ -102,16 +104,16 @@ public class SecretServiceImpl extends AbstractCachedEntityService<SecretCacheKe
     private TbSecretDeleteResult deleteSecret(TenantId tenantId, EntityId entityId, boolean force) {
         UUID secretId = entityId.getId();
         validateId(secretId, id -> INCORRECT_SECRET_ID + id);
-        TbSecretDeleteResult.TbSecretDeleteResultBuilder result = TbSecretDeleteResult.builder();
-        boolean success = true;
-
         SecretInfo secretInfo = secretInfoDao.findById(tenantId, secretId);
         if (secretInfo == null) {
-            if (!force) {
-                success = false;
-            }
-            return result.success(success).build();
+            return TbSecretDeleteResult.builder().success(force).build();
         }
+        return deleteSecret(tenantId, secretInfo, force);
+    }
+
+    private TbSecretDeleteResult deleteSecret(TenantId tenantId, SecretInfo secretInfo, boolean force) {
+        TbSecretDeleteResult.TbSecretDeleteResultBuilder result = TbSecretDeleteResult.builder();
+        boolean success = true;
         if (!force) {
             var entities = findEntitiesBySecret(tenantId, secretInfo);
             if (!entities.isEmpty()) {
@@ -120,9 +122,9 @@ public class SecretServiceImpl extends AbstractCachedEntityService<SecretCacheKe
             }
         }
         if (success) {
-            secretDao.removeById(tenantId, secretId);
+            secretDao.removeById(tenantId, secretInfo.getId().getId());
             eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(secretInfo.getId()).build());
-            publishEvictEvent(new SecretCacheEvictEvent(tenantId, secretInfo.getName()));
+            publishEvictEvent(new SecretCacheEvictEvent(tenantId, secretInfo.getCustomerId(), secretInfo.getName()));
         }
         return result.success(success).build();
     }
@@ -146,34 +148,40 @@ public class SecretServiceImpl extends AbstractCachedEntityService<SecretCacheKe
     }
 
     @Override
-    public Secret findSecretByName(TenantId tenantId, String name) {
-        log.trace("Executing findSecretByName [{}] [{}]", tenantId, name);
-        return cache.getAndPutInTransaction(new SecretCacheKey(tenantId, name),
-                () -> secretDao.findByName(tenantId, name), true);
+    public Secret findSecretByName(TenantId tenantId, CustomerId customerId, String name) {
+        log.trace("Executing findSecretByName [{}] [{}] [{}]", tenantId, customerId, name);
+        return cache.getAndPutInTransaction(new SecretCacheKey(tenantId, customerId, name),
+                () -> secretDao.findByName(tenantId, customerId, name), true);
     }
 
     @Override
-    public SecretInfo findSecretInfoByName(TenantId tenantId, String name) {
-        log.trace("Executing findSecretInfoByName [{}] [{}]", tenantId, name);
-        return secretInfoDao.findByName(tenantId, name);
+    public SecretInfo findSecretInfoByName(TenantId tenantId, CustomerId customerId, String name) {
+        log.trace("Executing findSecretInfoByName [{}] [{}] [{}]", tenantId, customerId, name);
+        return secretInfoDao.findByName(tenantId, customerId, name);
     }
 
     @Override
-    public List<String> findSecretNamesByTenantId(TenantId tenantId) {
-        log.trace("Executing findSecretNamesByTenantId [{}]", tenantId);
-        return secretInfoDao.findAllNamesByTenantId(tenantId);
+    public List<String> findSecretNamesByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId) {
+        log.trace("Executing findSecretNamesByTenantIdAndCustomerId [{}] [{}]", tenantId, customerId);
+        return secretInfoDao.findAllNamesByTenantIdAndCustomerId(tenantId, customerId);
     }
 
     @Override
-    public PageData<Secret> findSecretsByTenantId(TenantId tenantId, PageLink pageLink) {
-        log.trace("Executing findSecretsByTenantId [{}]", tenantId);
-        return secretDao.findByTenantId(tenantId, pageLink);
+    public PageData<Secret> findSecretsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, PageLink pageLink) {
+        log.trace("Executing findSecretsByTenantIdAndCustomerId [{}] [{}]", tenantId, customerId);
+        return secretDao.findByTenantIdAndCustomerId(tenantId, customerId, pageLink);
     }
 
     @Override
-    public PageData<SecretInfo> findSecretInfosByTenantId(TenantId tenantId, PageLink pageLink) {
-        log.trace("Executing findSecretInfosByTenantId [{}]", tenantId);
-        return secretInfoDao.findByTenantId(tenantId, pageLink);
+    public PageData<SecretInfo> findSecretInfosByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, PageLink pageLink) {
+        log.trace("Executing findSecretInfosByTenantIdAndCustomerId [{}] [{}]", tenantId, customerId);
+        return secretInfoDao.findByTenantIdAndCustomerId(tenantId, customerId, pageLink);
+    }
+
+    @Override
+    public void deleteSecretsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId) {
+        log.trace("Executing deleteSecretsByTenantIdAndCustomerId [{}] [{}]", tenantId, customerId);
+        customerSecretsRemover.removeEntities(tenantId, customerId);
     }
 
     @Override
@@ -199,6 +207,19 @@ public class SecretServiceImpl extends AbstractCachedEntityService<SecretCacheKe
         return FluentFuture.from(secretDao.findByIdAsync(tenantId, entityId.getId()))
                 .transform(Optional::ofNullable, directExecutor());
     }
+
+    private final PaginatedRemover<CustomerId, SecretInfo> customerSecretsRemover = new PaginatedRemover<>() {
+        @Override
+        protected PageData<SecretInfo> findEntities(TenantId tenantId, CustomerId customerId, PageLink pageLink) {
+            return secretInfoDao.findByTenantIdAndCustomerId(tenantId, customerId, pageLink);
+        }
+
+        @Override
+        protected void removeEntity(TenantId tenantId, SecretInfo secretInfo) {
+            // force=true: customer deletion removes its secrets regardless of references
+            deleteSecret(tenantId, secretInfo, true);
+        }
+    };
 
     @Override
     public EntityType getEntityType() {

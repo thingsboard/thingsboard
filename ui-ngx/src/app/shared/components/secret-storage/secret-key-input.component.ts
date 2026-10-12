@@ -32,8 +32,6 @@ import { coerceNumber } from '@shared/decorators/coercion';
 import { MatFormFieldAppearance } from '@angular/material/form-field';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { getCurrentAuthUser } from '@core/auth/auth.selectors';
-import { Authority } from '@shared/models/authority.enum';
 
 @Component({
     selector: 'tb-secret-key-input',
@@ -86,7 +84,7 @@ export class SecretKeyInputComponent extends PageComponent implements OnInit, Co
 
   secretStorageKey: string;
 
-  allowSecret = getCurrentAuthUser(this.store).authority !== Authority.CUSTOMER_USER;
+  allowSecret = this.userPermissionsService.hasGenericPermission(Resource.SECRET, Operation.READ);
 
   private modelValue: string;
 
@@ -104,7 +102,7 @@ export class SecretKeyInputComponent extends PageComponent implements OnInit, Co
   }
 
   ngOnInit(): void {
-    this.readonly = this.readonly || !this.userPermissionsService.hasGenericPermission(Resource.SECRET, Operation.WRITE);
+    this.readonly = this.readonly || !this.userPermissionsService.hasGenericPermission(Resource.SECRET, Operation.CREATE);
     const validators = [Validators.pattern(/.*\S.*/)];
     if (this.required) {
       validators.push(Validators.required);

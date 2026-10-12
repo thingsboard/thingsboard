@@ -112,9 +112,10 @@ public class EdgeSyncCursor {
             fetchers.add(new SystemCustomMenuEdgeEventFetcher(ctx.getCustomMenuService()));
             fetchers.add(new CustomMenuEdgeEventFetcher(ctx.getCustomMenuService()));
             fetchers.add(new EncryptionKeyEdgeEventFetcher(ctx.getEncryptionService()));
-            fetchers.add(new SecretEdgeEventFetcher(ctx.getSecretService()));
+            fetchers.add(new SecretEdgeEventFetcher(ctx.getSecretService(), null));
             fetchers.add(new ReportTemplateEdgeEventFetcher(ctx.getReportTemplateService(), null));
             if (EntityType.CUSTOMER.equals(edge.getOwnerId().getEntityType())) {
+                fetchers.add(new SecretEdgeEventFetcher(ctx.getSecretService(), new CustomerId(edge.getOwnerId().getId())));
                 fetchers.add(new ReportTemplateEdgeEventFetcher(ctx.getReportTemplateService(), new CustomerId(edge.getOwnerId().getId())));
             }
         }

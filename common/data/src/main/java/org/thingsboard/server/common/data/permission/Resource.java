@@ -276,6 +276,7 @@ public enum Resource {
                 Resource.WHITE_LABELING,
                 Resource.DOMAIN,
                 Resource.OAUTH2_CLIENT,
+                Resource.SECRET,
                 Resource.AUDIT_LOG,
                 Resource.DEVICE_PROFILE,
                 Resource.ASSET_PROFILE,

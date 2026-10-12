@@ -14,17 +14,19 @@ import java.util.UUID;
 
 public interface SecretInfoRepository extends JpaRepository<SecretInfoEntity, UUID> {
 
-    @Query("SELECT d FROM SecretInfoEntity d WHERE d.tenantId = :tenantId AND " +
+    @Query("SELECT d FROM SecretInfoEntity d WHERE d.tenantId = :tenantId AND d.customerId = :customerId AND " +
             "(:searchText is NULL OR " +
             "ilike(d.name, concat('%', :searchText, '%')) = true OR " +
             "ilike(d.description, concat('%', :searchText, '%')) = true)")
-    Page<SecretInfoEntity> findByTenantId(@Param("tenantId") UUID tenantId,
-                                          @Param("searchText") String searchText,
-                                          Pageable pageable);
+    Page<SecretInfoEntity> findByTenantIdAndCustomerId(@Param("tenantId") UUID tenantId,
+                                                       @Param("customerId") UUID customerId,
+                                                       @Param("searchText") String searchText,
+                                                       Pageable pageable);
 
-    SecretInfoEntity findByTenantIdAndName(UUID id, String name);
+    SecretInfoEntity findByTenantIdAndCustomerIdAndName(UUID tenantId, UUID customerId, String name);
 
-    @Query("SELECT d.name FROM SecretInfoEntity d WHERE d.tenantId = :tenantId")
-    List<String> findAllNamesByTenantId(@Param("tenantId") UUID tenantId);
+    @Query("SELECT d.name FROM SecretInfoEntity d WHERE d.tenantId = :tenantId AND d.customerId = :customerId")
+    List<String> findAllNamesByTenantIdAndCustomerId(@Param("tenantId") UUID tenantId,
+                                                     @Param("customerId") UUID customerId);
 
 }
