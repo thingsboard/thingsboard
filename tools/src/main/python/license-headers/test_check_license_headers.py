@@ -54,72 +54,91 @@ class GitFixture:
 
 
 class DecisionTests(unittest.TestCase):
+    VERSION = {"path": "a.java", "ref": "b" * 40, "blob": "c" * 40}
+    COPY = {"path": "source.java", "ref": "a" * 40, "blob": "c" * 40, "similarity": 78}
+
     def decide(self, **changes):
-        evidence = dict(path="a.java", content_hash=p.raw_hash(b"reviewed"), current="pe-only", curation=None,
-                        inherited=True, recreated=False, ce_hash="same", pe_hash="same",
-                        candidates=[], historical=[], in_comparison=True)
+        evidence = dict(path="a.java", content_hash=p.raw_hash(b"reviewed"), current=p.NON_CE,
+                        ce_versions=(self.VERSION,), identical=self.VERSION)
         return p.decide(p.Evidence(**(evidence | changes)))
+
+    def new(self, **changes):
+        return self.decide(**(dict(ce_versions=(), identical=None) | changes))
 
     def test_current_header_does_not_establish_origin(self):
         row = self.decide()
-        self.assertEqual("apache", row["expectedHeader"])
-        self.assertEqual("mismatch", row["status"])
-        self.assertEqual("ce-modified", self.decide(pe_hash="changed")["expectedHeader"])
+        self.assertEqual(("mismatch", "apache"), (row["status"], row["expectedHeader"]))
+        self.assertEqual(self.VERSION, row["identicalTo"])
+        row = self.decide(identical=None)
+        self.assertEqual(("ce-modified", "same path in CE, content differs"), (row["expectedHeader"], row["reason"]))
+        self.assertEqual([self.VERSION], row["ceVersions"])
+
+    def test_clean_merge_of_ce_versions_is_apache(self):
+        merge = {"path": "a.java", "merge": ["b" * 40, "d" * 40], "base": "e" * 40}
+        row = self.decide(current="apache", identical=merge)
+        self.assertEqual(("match", "apache"), (row["status"], row["expectedHeader"]))
+        self.assertEqual("same path in CE, content identical to a clean merge of its CE versions", row["reason"])
+        self.assertEqual(merge, row["identicalTo"])
+
+    def test_new_path_without_ce_evidence_is_non_ce(self):
+        row = self.new()
+        self.assertEqual(("match", p.NON_CE, "not in CE, no CE evidence"),
+                         (row["status"], row["expectedHeader"], row["reason"]))
+
+    def test_ce_evidence_for_a_new_path_needs_a_decision(self):
+        row = self.new(copies=(self.COPY,))
+        self.assertEqual(("unresolved", None, None), (row["status"], row["expectedHeader"], row["suggestedHeader"]))
+        self.assertEqual([self.COPY], row["copyCandidates"])
+        self.assertEqual("apache", self.new(copies=(self.COPY | {"similarity": 100},))["suggestedHeader"])
+        deleted = {"path": "a.java", "ref": "f" * 40 + "^1", "blob": "c" * 40}
+        row = self.new(deleted=deleted)
+        self.assertEqual(("unresolved", "CE history had this path"), (row["status"], row["reason"]))
+        self.assertEqual(deleted, row["historicalCandidate"])
+
+    def test_descriptor_of_a_module_absent_in_ce_is_non_ce_despite_similar_ce_descriptors(self):
+        copy = self.COPY | {"path": "transport/mqtt/pom.xml"}
+        descriptor = dict(path="integration/mqtt/pom.xml", copies=(copy,), directory_in_ce=False)
+        row = self.new(**descriptor)
+        self.assertEqual(("match", p.NON_CE), (row["status"], row["expectedHeader"]))
+        for evidence in (dict(directory_in_ce=True),
+                         dict(path="integration/mqtt/Mqtt.java"),
+                         dict(copies=(copy | {"similarity": 100},)),
+                         dict(deleted={"path": "integration/mqtt/pom.xml", "ref": "f" * 40, "blob": "c" * 40})):
+            self.assertEqual("unresolved", self.new(**(descriptor | evidence))["status"], evidence)
 
     def test_matching_curation_precedes_inference(self):
-        curation = dict(contentHash=p.raw_hash(b"reviewed"), header="pe-only", reason="Independent replacement")
-        self.assertEqual("match", self.decide(curation=curation)["status"])
+        curation = dict(contentHash=p.raw_hash(b"reviewed"), header="ce-modified", reason="Reviewed")
+        row = self.decide(current="ce-modified", curation=curation)
+        self.assertEqual(("match", "ce-modified", "curation: Reviewed"),
+                         (row["status"], row["expectedHeader"], row["reason"]))
+        self.assertNotIn("redundantCuration", row)
+        row = self.new(copies=(self.COPY,), curation=curation | {"header": p.NON_CE})
+        self.assertEqual(("match", p.NON_CE), (row["status"], row["expectedHeader"]))
+        self.assertNotIn("redundantCuration", row)
         curation["contentHash"] = p.raw_hash(b"different")
         self.assertEqual("stale-curation", self.decide(curation=curation)["status"])
 
-    def test_recreated_and_missing_ce_files_do_not_silently_pass(self):
-        self.assertEqual("unresolved", self.decide(recreated=True)["status"])
-        row = self.decide(inherited=False, in_comparison=False, ce_hash=None)
-        self.assertEqual("unresolved", row["status"])
-        self.assertEqual("pe-only", row["suggestedHeader"])
-        self.assertIsNone(row["expectedHeader"])
-
-    def test_identical_cross_path_source_is_not_proof(self):
-        row = self.decide(inherited=False, candidates=[{"path": "original.java"}])
-        self.assertEqual("unresolved", row["status"])
-        self.assertEqual("apache", row["suggestedHeader"])
-
-    def test_pe_additions_pass_without_strong_ce_evidence(self):
-        added = dict(inherited=False, in_comparison=False, ce_hash=None, pe_addition=True)
-        self.assertEqual("match", self.decide(**added)["status"])
-        self.assertEqual("match", self.decide(**added, historical=[{"path": "other/a.java"}])["status"])
-        for evidence in (dict(historical=[{"path": "a.java"}]),
-                         dict(historical=[{"path": "other/a.java", "contentMatches": True}]),
-                         dict(copies=[{"path": "other.java", "similarity": 78}])):
-            self.assertEqual("unresolved", self.decide(**added, **evidence)["status"])
-
-    def test_descriptor_of_a_module_absent_in_ce_is_pe_only_despite_similar_ce_descriptors(self):
-        descriptor = dict(path="integration/mqtt/pom.xml", inherited=False, in_comparison=False, ce_hash=None,
-                          pe_addition=True, copies=[{"path": "transport/mqtt/pom.xml", "similarity": 78}],
-                          directory_in_ce=False)
-        row = self.decide(**descriptor)
-        self.assertEqual("match", row["status"])
-        self.assertEqual("pe-only", row["expectedHeader"])
-        for evidence in (dict(directory_in_ce=True),
-                         dict(path="integration/mqtt/Mqtt.java"),
-                         dict(pe_addition=False),
-                         dict(candidates=[{"path": "transport/mqtt/pom.xml"}]),
-                         dict(historical=[{"path": "transport/mqtt/pom.xml", "contentMatches": True}])):
-            self.assertEqual("unresolved", self.decide(**(descriptor | evidence))["status"])
+    def test_curation_that_repeats_the_inferred_header_is_redundant(self):
+        curation = dict(contentHash=p.raw_hash(b"reviewed"), header="apache", reason="Reviewed")
+        row = self.decide(current="apache", curation=curation)
+        self.assertEqual(("match", "apache", "same path in CE, content identical", True),
+                         (row["status"], row["expectedHeader"], row["reason"], row["redundantCuration"]))
+        row = self.new(curation=curation | {"header": p.NON_CE})
+        self.assertTrue(row["redundantCuration"])
 
     def test_console_groups_findings_by_required_action(self):
         missing = self.decide(current=p.MISSING)
         foreign = self.decide(path="vendored.java", current=p.FOREIGN)
-        candidate = {"path": "original.java", "ref": "b" * 40, "blob": "c" * 40}
-        renamed = self.decide(path="new.java", inherited=False, candidates=[candidate, candidate])
-        copied = self.decide(path="copied.java", inherited=False, in_comparison=False, ce_hash=None,
-                             copies=[{"path": "source.java", "ref": "a" * 40, "similarity": 78}])
-        changed = self.decide(curation=dict(contentHash=p.raw_hash(b"other"), header="pe-only", reason="Reviewed"))
+        copied = self.new(path="copied.java", copies=(self.COPY, self.COPY | {"path": "other.java", "similarity": 60}))
+        historical = self.new(path="gone.java", deleted={"path": "gone.java", "ref": "d" * 40 + "^1", "blob": "c" * 40})
+        changed = self.decide(curation=dict(contentHash=p.raw_hash(b"other"), header=p.NON_CE, reason="Reviewed"))
         clean = self.decide(path="clean.java", current="apache")
+        redundant = self.decide(path="curated.java", current="apache",
+                                curation=dict(contentHash=p.raw_hash(b"reviewed"), header="apache", reason="Reviewed"))
         orphaned = dict(path="deleted.java", status="stale-curation", reason="file is no longer in scope")
         stderr, stdout = io.StringIO(), io.StringIO()
         with redirect_stderr(stderr), redirect_stdout(stdout):
-            rows = [missing, foreign, renamed, copied, changed, clean]
+            rows = [missing, foreign, copied, historical, changed, clean, redundant]
             p.print_findings(rows, [orphaned], {"a" * 40: "ce/lts-4.2"})
             p.print_summary(rows, [orphaned], "target/report.json")
         output = stderr.getvalue()
@@ -135,13 +154,13 @@ class DecisionTests(unittest.TestCase):
               → Rerun with --fix to restamp automatically
 
             Needs a decision (2)
-              new.java
-                has pe-only, no expected header yet (hint: apache)
-                exact CE match: original.java at {"b" * 11}
-                another 1 candidate in the report
               copied.java
-                has pe-only, no expected header yet
+                has {p.NON_CE}, no expected header yet
                 similar CE file (78%): source.java at ce/lts-4.2
+                another 1 candidate in the report
+              gone.java
+                has {p.NON_CE}, no expected header yet
+                CE history: gone.java at {"d" * 11}^1
               → Decide the origin and add a curation, see {p.README}
 
             Stale curations (2)
@@ -149,11 +168,30 @@ class DecisionTests(unittest.TestCase):
                 file changed since the curation, re-review and update contentHash
               deleted.java
                 file is no longer in scope
-              → Remove or update the entry in {p.CURATIONS}
+              → Review the file and update the entry in {p.CURATIONS}; --fix removes entries of files no longer in scope
 
-            6 findings in 6 files. Report: target/report.json
+            Redundant curations (1)
+              curated.java
+                curated apache, the check decides apache by itself
+              → Rerun with --fix to remove them from {p.CURATIONS}
+
+            6 findings in 7 files. Report: target/report.json
             """), output)
         self.assertEqual("", stdout.getvalue())
+
+    def test_orphaned_curations_alone_point_to_fix(self):
+        orphaned = dict(path="deleted.java", status="stale-curation", reason="file is no longer in scope")
+        stderr = io.StringIO()
+        with redirect_stderr(stderr):
+            p.print_findings([self.decide(current="apache")], [orphaned], {})
+        self.assertIn("  → Rerun with --fix to remove them\n", stderr.getvalue())
+
+    def test_console_lists_removed_curations(self):
+        stderr = io.StringIO()
+        with redirect_stderr(stderr):
+            p.print_removed_curations([{"path": "a.java", "reason": "file is no longer in scope"}])
+            p.print_removed_curations([])
+        self.assertEqual("Removed curations (1)\n  a.java\n    file is no longer in scope\n\n", stderr.getvalue())
 
     def test_console_closes_an_interrupted_phase_before_reporting(self):
         stderr = io.StringIO()
@@ -164,7 +202,7 @@ class DecisionTests(unittest.TestCase):
         self.assertEqual("Resolving Git history ... failed\n\nError: boom\n", stderr.getvalue())
 
     def test_console_summarizes_a_clean_run(self):
-        rows = [self.decide(current="apache"), self.decide(path="b.java", pe_hash="changed", current="ce-modified")]
+        rows = [self.decide(current="apache"), self.decide(path="b.java", identical=None, current="ce-modified")]
         stderr = io.StringIO()
         with redirect_stderr(stderr):
             p.print_restamped(rows)
@@ -173,7 +211,7 @@ class DecisionTests(unittest.TestCase):
                          "Report: target/report.json\n", stderr.getvalue())
 
     def test_console_lists_restamped_files(self):
-        rows = [self.decide(current="apache"), self.decide(path="b.java", pe_hash="changed", current="ce-modified")]
+        rows = [self.decide(current="apache"), self.decide(path="b.java", identical=None, current="ce-modified")]
         rows[1]["previousHeader"] = p.LEGACY
         stderr = io.StringIO()
         with redirect_stderr(stderr):
@@ -297,10 +335,25 @@ class InputTests(unittest.TestCase):
         write([entry])
         self.assertEqual({"a.java"}, set(p.load_curations(path)))
         for entries in ([entry, entry], [entry | {"reason": " "}],
-                        [entry | {"path": "../a.java"}], [entry | {"header": "MIT"}]):
+                        [entry | {"path": "../a.java"}], [entry | {"header": "MIT"}],
+                        [entry | {"header": "pe-only"}]):
             write(entries)
             with self.assertRaises(p.Failure):
                 p.load_curations(path)
+
+    def test_non_ce_header_is_the_only_other_template(self):
+        directory = temporary_directory(self)
+        for name in ("license-header.txt", "license-header-ce-modified.txt", "notes.txt"):
+            (directory / name).write_text("header\n")
+        with self.assertRaises(RuntimeError):
+            p.non_ce_header(directory)
+        (directory / "license-header-busl.txt").write_text("header\n")
+        self.assertEqual("busl", p.non_ce_header(directory))
+        (directory / "license-header-pe.txt").write_text("header\n")
+        with self.assertRaises(RuntimeError):
+            p.non_ce_header(directory)
+        self.assertEqual(f"{p.TEMPLATE_DIRECTORY}/license-header-{p.NON_CE}.txt", p.TEMPLATES[p.NON_CE])
+        self.assertTrue((this_repository() / p.TEMPLATES[p.NON_CE]).is_file())
 
     def test_plugin_version_and_configuration_come_from_root_pom(self):
         repo = temporary_directory(self)
@@ -341,33 +394,117 @@ class GitHistoryTests(unittest.TestCase):
         self.assertEqual({initial, merged}, {change.commit for change in changes})
         self.assertEqual(source, changes[0].path)
 
-        git("checkout", "side")
-        git.write("side-only.java", "not integrated\n")
-        git.commit("side only")
-        git("checkout", "lts-4.2")
-        self.assertNotIn("side-only.java", {change.path for change in p.history(git.root, "HEAD")})
-
         git("rm", source)
         git.commit("delete")
-        deleted = p.history(git.root, "HEAD")[0]
-        self.assertTrue(deleted.deleted)
-        self.assertEqual(b"merged result\n", p.blobs(git.root, [deleted.old])[deleted.old])
+        deleted = p.history(git.root, "HEAD", "--diff-filter=D")
+        self.assertEqual(["D"], [change.status for change in deleted])
+        self.assertEqual(b"merged result\n", p.blobs(git.root, [deleted[0].old])[deleted[0].old])
 
-    def test_integration_boundary_does_not_walk_preintegration_pe_history(self):
+    def relicensed_fixture(self):
+        git = GitFixture(temporary_directory(self), "master")
+        git.write("Base.java", "base\n")
+        git.commit("CE base")
+        git("checkout", "-b", "lts-4.3")
+        git.write("Fix.java", "lts fix\n")
+        fix = git.commit("CE fix")
+        git("checkout", "master")
+        git.write("Feature.java", "CE feature\n")
+        last = git.commit("last Apache commit")
+        git.write("Tb.java", "TB feature\n")
+        relicensing = git.commit("relicensing")
+        git("merge", "--no-ff", "lts-4.3", "-m", "integrate CE fix")
+        return git, fix, last, relicensing
+
+    def test_relicensed_ce_bases_are_the_latest_ce_commits_merged_into_the_branch(self):
+        git, fix, last, relicensing = self.relicensed_fixture()
+        with patch.object(p, "RELICENSING_COMMIT", relicensing):
+            self.assertEqual(sorted([fix, last]), p.relicensed_ce_bases(git.root, git("rev-parse", "HEAD")))
+            git("checkout", "lts-4.3")
+            git.write("Fix.java", "second lts fix\n")
+            second = git.commit("second CE fix")
+            git("checkout", "master")
+            self.assertEqual(sorted([fix, last]), p.relicensed_ce_bases(git.root, git("rev-parse", "HEAD")))
+            git("merge", "--no-ff", "lts-4.3", "-m", "integrate second CE fix")
+            self.assertEqual(sorted([second, last]), p.relicensed_ce_bases(git.root, git("rev-parse", "HEAD")))
+            self.assertEqual([last], p.relicensed_ce_bases(git.root, relicensing))
+
+    def test_relicensed_ce_bases_need_the_relicensing_commit_in_history(self):
+        git, _, _, relicensing = self.relicensed_fixture()
+        with patch.object(p, "RELICENSING_COMMIT", relicensing), self.assertRaisesRegex(p.Failure, "Pass --ce-ref"):
+            p.relicensed_ce_bases(git.root, git("rev-parse", "lts-4.3"))
+        with patch.object(p, "RELICENSING_COMMIT", "0" * 40), self.assertRaisesRegex(p.Failure, "Pass --ce-ref"):
+            p.relicensed_ce_bases(git.root, git("rev-parse", "HEAD"))
+
+    def test_merged_ce_bases_follow_the_integrated_ce_commit(self):
         git = GitFixture(temporary_directory(self), "ce")
-        git.write("initial", "initial")
-        git.commit("initial")
-        git("branch", "pe")
-        git.write("ce-file", "CE")
-        anchor = git.commit("CE addition")
-        git("checkout", "pe")
-        git.write("pe-file", "PE")
-        git.commit("PE addition")
-        git("merge", "ce", "-m", "CE integration")
-        boundary = git("rev-parse", "HEAD")
-        git.write("pe-file", "PE edit")
-        git.commit("PE edit")
-        self.assertEqual(boundary, p.integration_boundary(git.root, anchor, "HEAD"))
+        git.write("Base.java", "base\n")
+        git.commit("CE base")
+        git("checkout", "-b", "integrating")
+        git.write("Own.java", "own\n")
+        git.commit("own addition")
+        git("checkout", "ce")
+        git.write("Base.java", "CE fix\n")
+        integrated = git.commit("CE fix")
+        git("checkout", "integrating")
+        git("merge", "--no-ff", "ce", "-m", "integrate CE")
+        git("checkout", "ce")
+        git.write("Base.java", "later CE fix\n")
+        tip = git.commit("not yet integrated")
+        self.assertEqual([integrated], p.merged_ce_bases(git.root, git("rev-parse", "integrating"), tip))
+        git("checkout", "--orphan", "unrelated")
+        git.write("Other.java", "other\n")
+        unrelated = git.commit("unrelated history")
+        with self.assertRaisesRegex(p.Failure, "shares no history"):
+            p.merged_ce_bases(git.root, unrelated, tip)
+
+    def test_merged_ce_bases_below_a_relicensed_ce_ref_exclude_relicensed_commits(self):
+        git, fix, last, relicensing = self.relicensed_fixture()
+        ce_tip = git("rev-parse", "HEAD")
+        git("checkout", "-b", "downstream", git("rev-list", "--max-parents=0", "HEAD"))
+        git.write("Own.java", "own\n")
+        own = git.commit("own history without the relicensing commit")
+        git("merge", "--no-ff", "master", "-m", "integrate CE master")
+        head = git("rev-parse", "HEAD")
+        with patch.object(p, "RELICENSING_COMMIT", relicensing):
+            self.assertIn(own, p.relicensed_ce_bases(git.root, head))
+            self.assertEqual(sorted([fix, last]), p.merged_ce_bases(git.root, head, ce_tip))
+
+    def test_lineage_records_first_parent_ce_deletions(self):
+        git = GitFixture(temporary_directory(self), "ce")
+        git.write("Gone.java", "removed from CE\n")
+        git.write("Kept.java", "kept\n")
+        git.commit("CE base")
+        git("checkout", "-b", "side")
+        git.write("Temporary.java", "never on the mainline\n")
+        git.commit("side addition")
+        git("rm", "Temporary.java")
+        git.commit("side removal")
+        git("checkout", "ce")
+        git("merge", "--no-ff", "side", "-m", "integrate side")
+        git("rm", "Gone.java")
+        removal = git.commit("CE removal")
+        lineage = p.Lineage.load(git.root, removal, [removal])
+        self.assertEqual({"Gone.java"}, set(lineage.deleted))
+        self.assertEqual(removal + "^1", lineage.deleted["Gone.java"]["ref"])
+        self.assertEqual(b"removed from CE\n", p.blobs(git.root, [lineage.deleted["Gone.java"]["blob"]])
+                         [lineage.deleted["Gone.java"]["blob"]])
+        self.assertEqual([(removal, git("rev-parse", f"{removal}:Kept.java"))], lineage.versions("Kept.java"))
+        self.assertEqual([], lineage.versions("Gone.java"))
+
+    def test_merge_blobs_returns_only_clean_merges(self):
+        git = GitFixture(temporary_directory(self), "main")
+        git.write("File.java", "one\ntwo\nthree\nfour\nfive\n")
+        git.commit("base")
+        base = git("rev-parse", "HEAD:File.java")
+
+        def blob(content):
+            git.write("File.java", content)
+            git.commit(content.splitlines()[0])
+            return git("rev-parse", "HEAD:File.java")
+
+        ours, theirs = blob("ONE\ntwo\nthree\nfour\nfive\n"), blob("one\ntwo\nthree\nfour\nFIVE\n")
+        self.assertEqual(b"ONE\ntwo\nthree\nfour\nFIVE\n", p.merge_blobs(git.root, ours, base, theirs))
+        self.assertIsNone(p.merge_blobs(git.root, ours, base, blob("uno\ntwo\nthree\nfour\nfive\n")))
 
     def test_ignore_filter_keeps_tracked_and_unignored_files(self):
         repo = temporary_directory(self)
@@ -393,10 +530,10 @@ class GitHistoryTests(unittest.TestCase):
         original = b"class Source {\n" + b"    void action() { doUsefulWork(); }\n" * 20 + b"}\n"
         tool.add(source, "Source.java", original)
         tool.add(empty, "Empty.java", b"\n")
-        tool.add(("pe", "Renamed.java"), "Renamed.java",
+        tool.add(("head", "Renamed.java"), "Renamed.java",
                  original.replace(b"Source", b"Renamed").replace(b"\n", b"\r\n"))
-        tool.add(("pe", "Other.java"), "Other.java", b"independent PE implementation\n")
-        tool.add(("pe", "Blank.java"), "Blank.java", b"\r\n")
+        tool.add(("head", "Other.java"), "Other.java", b"independent implementation\n")
+        tool.add(("head", "Blank.java"), "Blank.java", b"\r\n")
         found = p.normalized_copies(tool, {source: "selected-mainline", empty: "selected-mainline"},
                                     ["Renamed.java", "Other.java", "Blank.java"], tool.nonempty())
         self.assertEqual({"Renamed.java"}, set(found))
@@ -412,19 +549,19 @@ class FetchTests(unittest.TestCase):
         self.ce("tag", "-a", "v4.2.0", "-m", "release")
         self.ce.write("Base.java", "second\n")
         self.second = self.ce.commit("second")
-        self.pe = GitFixture(temporary_directory(self), "pe")
-        self.pe.write("Pe.java", "pe\n")
-        self.pe.commit("pe base")
+        self.local = GitFixture(temporary_directory(self), "main")
+        self.local.write("Own.java", "own\n")
+        self.local.commit("own base")
 
     def fetch(self, ref):
-        return p.fetch(self.pe.root, str(self.ce.root), ref)
+        return p.fetch(self.local.root, str(self.ce.root), ref)
 
     def test_fetches_branches_tags_and_commits(self):
         self.assertEqual(self.second, self.fetch("lts-4.2"))
         self.assertEqual(self.second, self.fetch("refs/heads/lts-4.2"))
         self.assertEqual(self.first, self.fetch("v4.2.0"))
         self.assertEqual(self.first, self.fetch(self.first))
-        self.assertEqual("second", self.pe("show", f"{self.second}:Base.java"))
+        self.assertEqual("second", self.local("show", f"{self.second}:Base.java"))
 
     def test_every_run_fetches_the_current_tip(self):
         self.assertEqual(self.second, self.fetch("lts-4.2"))
@@ -440,33 +577,39 @@ class FetchTests(unittest.TestCase):
 
 
 class CheckCommandTests(unittest.TestCase):
+    LINES = "".join(f"line {index}\n" for index in range(10))
+
     def setUp(self):
         self.repo = temporary_directory(self)
-        self.git = git = GitFixture(self.repo, "lts-4.2")
-        self.body = "new CE feature implementation\n" * 20
-        git.write("Base.java", "base implementation\n")
-        git.commit("release base")
-        git("branch", "pe")
-        git("checkout", "-b", "fix/my-fix")
-        git.write("Feature.java", self.body)
-        git.write("Deleted.java", "historical CE feature source\n")
-        git.commit("CE fix sources")
-        git("rm", "Deleted.java")
-        self.feature = git.commit("remove temporary source")
-        git("checkout", "-b", "unrelated", "lts-4.2")
-        git.write("Unrelated.java", "unrelated source\n")
-        git.commit("unrelated source")
-        git("checkout", "pe")
-        git.write("Renamed.java", fixture("pe-only") + self.body)
-        git.write("Deleted.java", fixture("pe-only") + "historical CE feature source\n")
-        git.write("Local.java", fixture("pe-only") + "unrelated source\n")
-        git.write("Swapped.java", fixture("apache") + "swapped source\n")
+        self.git = git = GitFixture(self.repo, "master")
+        self.body = "CE source implementation\n" * 20
+        git.write(".gitignore", "target/\n")
         for category, name in p.TEMPLATES.items():
             git.write(name, f"fixture {category}\n")
         git.write(p.CURATIONS, '{"schemaVersion": 1, "curations": []}')
+        git.write("Base.java", fixture("apache") + "base implementation\n")
+        git.write("Changed.java", fixture("apache") + "CE implementation\n")
+        git.write("Merged.java", fixture("apache") + self.LINES)
+        git.write("Source.java", fixture("apache") + self.body)
+        self.base = git.commit("CE base")
+        git("checkout", "-b", "lts-4.3")
+        git.write("Merged.java", fixture("apache") + self.LINES.replace("line 9", "lts fix"))
+        git.write("Fixed.java", fixture("apache") + "lts addition\n")
+        self.fix = git.commit("CE fix")
+        git("checkout", "master")
+        git.write("Deleted.java", fixture("apache") + "removed CE source\n")
+        self.addition = git.commit("CE addition")
+        git.write("Merged.java", fixture("apache") + self.LINES.replace("line 0", "master change"))
+        git("rm", "-q", "Deleted.java")
+        self.last = git.commit("last Apache commit")
+        git.write("Changed.java", fixture("ce-modified") + "CE implementation\nTB change\n")
+        git.write("New.java", fixture(p.NON_CE) + "TB feature\n")
+        self.relicensing = git.commit("relicensing")
+        git("merge", "--no-ff", "lts-4.3", "-m", "integrate CE fix")
+        self.scope = ["Base.java", "Changed.java", "Fixed.java", "Merged.java", "New.java", "Source.java"]
         self.output = self.repo / "target/report.json"
 
-    def check(self, ref, scope, fix=False):
+    def check(self, *args, scope=None):
         def recognized(content):
             for header in p.TEMPLATES:
                 if content.startswith(fixture(header).encode()):
@@ -483,30 +626,134 @@ class CheckCommandTests(unittest.TestCase):
         def strip_headers(tool):
             tool.removed = {key: split(body)[0] for key, body in tool.contents.items()}
             tool.stacked = set()
-            return {key: p.comparison_hash(split(body)[1]) for key, body in tool.contents.items()}
+            for key, body in list(tool.contents.items()):
+                tool.write(key, split(body)[1])
+            return {key: p.comparison_hash(body) for key, body in tool.contents.items()}
 
         def restamp(tool, expected):
             for key, header in expected.items():
                 (tool.root / tool.paths[key]).write_bytes(fixture(header).encode() + split(tool.contents[key])[1])
             return {key: (tool.root / tool.paths[key]).read_bytes() for key in expected}, {}
 
+        stderr = io.StringIO()
         with (patch.object(p.Path, "cwd", return_value=self.repo),
+              patch.object(p, "RELICENSING_COMMIT", self.relicensing),
               patch.object(p, "read_plugin", return_value=fixture_plugin()),
-              patch.object(p, "discover_scope", return_value=p.Scope(scope, [], [], 0)),
+              patch.object(p, "discover_scope", return_value=p.Scope(scope or self.scope, [], [], 0)),
               patch.object(p.Mycila, "current_headers", current_headers),
               patch.object(p.Mycila, "strip_headers", strip_headers),
               patch.object(p.Mycila, "restamp", restamp),
-              redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO())):
-            code = p.main(["check", "--ce-ref", ref, "--ce-remote", str(self.repo), "--output", str(self.output)]
-                          + (["--fix"] if fix else []))
-        return code, json.loads(self.output.read_text())
+              redirect_stdout(io.StringIO()), redirect_stderr(stderr)):
+            code = p.main(["check", "--output", str(self.output), *args])
+        report = json.loads(self.output.read_text()) if self.output.exists() else None
+        return code, report, stderr.getvalue()
 
-    def test_matching_mainline_passes(self):
-        code, report = self.check("lts-4.2", ["Renamed.java", "Deleted.java", "Local.java"])
+    def rows(self, report):
+        return {row["path"]: row for row in report["files"]}
+
+    def test_relicensed_branch_passes(self):
+        code, report, _ = self.check()
         self.assertEqual(0, code)
-        self.assertEqual({"match": 3}, report["summary"])
-        self.assertEqual({"remote": str(self.repo), "input": "lts-4.2", "commit": self.git("rev-parse", "lts-4.2")},
-                         report["ceComparison"])
+        self.assertEqual({"match": 6}, report["summary"])
+        bases = sorted([self.fix, self.last])
+        self.assertEqual({"relicensingCommit": self.relicensing, "bases": bases}, report["ce"])
+        rows = self.rows(report)
+        self.assertEqual({"Base.java": "apache", "Changed.java": "ce-modified", "Fixed.java": "apache",
+                          "Merged.java": "apache", "New.java": p.NON_CE, "Source.java": "apache"},
+                         {name: row["expectedHeader"] for name, row in rows.items()})
+        self.assertEqual({"path": "Merged.java", "merge": bases, "base": self.base}, rows["Merged.java"]["identicalTo"])
+        self.assertEqual({"path": "Fixed.java", "ref": self.fix, "blob": self.git("rev-parse", f"{self.fix}:Fixed.java")},
+                         rows["Fixed.java"]["identicalTo"])
+
+    def test_fix_restamps_decided_headers_only(self):
+        self.git.write("Base.java", FOREIGN_LINE.decode() + "base implementation\n")
+        self.git.write("New.java", fixture("apache") + "TB feature\n")
+        shortened = self.body.replace("CE source implementation\n", "", 1)
+        self.git.write("Source.java", fixture("apache") + shortened)
+        code, report, _ = self.check()
+        self.assertEqual(1, code)
+        self.assertEqual({"match": 3, "mismatch": 3}, report["summary"])
+        rows = self.rows(report)
+        self.assertEqual((p.FOREIGN, "apache"), (rows["Base.java"]["currentHeader"], rows["Base.java"]["expectedHeader"]))
+        self.assertEqual(("apache", p.NON_CE), (rows["New.java"]["currentHeader"], rows["New.java"]["expectedHeader"]))
+        self.assertEqual(("apache", "ce-modified"),
+                         (rows["Source.java"]["currentHeader"], rows["Source.java"]["expectedHeader"]))
+
+        code, report, _ = self.check("--fix")
+
+        self.assertEqual(1, code)
+        self.assertEqual(["New.java", "Source.java"], report["restamped"])
+        self.assertEqual({"match": 5, "mismatch": 1}, report["summary"])
+        self.assertEqual(fixture(p.NON_CE) + "TB feature\n", (self.repo / "New.java").read_text())
+        self.assertEqual(fixture("ce-modified") + shortened, (self.repo / "Source.java").read_text())
+        self.assertEqual(FOREIGN_LINE.decode() + "base implementation\n", (self.repo / "Base.java").read_text())
+        code, report, _ = self.check("--fix")
+        self.assertEqual([], report["restamped"])
+        self.assertEqual({"match": 5, "mismatch": 1}, report["summary"])
+
+    def test_ce_evidence_for_new_paths_needs_a_decision(self):
+        self.git.write("Copy.java", fixture(p.NON_CE) + self.body)
+        self.git.write("Deleted.java", fixture(p.NON_CE) + "removed CE source\n")
+        code, report, output = self.check(scope=self.scope + ["Copy.java", "Deleted.java"])
+        self.assertEqual(1, code)
+        self.assertEqual({"match": 6, "unresolved": 2}, report["summary"])
+        rows = self.rows(report)
+        self.assertEqual("Source.java", rows["Copy.java"]["copyCandidates"][0]["path"])
+        self.assertEqual({"path": "Deleted.java", "ref": self.last + "^1",
+                          "blob": self.git("rev-parse", f"{self.addition}:Deleted.java")},
+                         rows["Deleted.java"]["historicalCandidate"])
+        self.assertIn("Needs a decision (2)\n", output)
+
+    def test_fix_removes_redundant_and_orphaned_curations(self):
+        self.git.write("Copy.java", fixture(p.NON_CE) + self.body)
+
+        def curation(name, header):
+            return dict(path=name, header=header, reason="Reviewed",
+                        contentHash=p.raw_hash((self.repo / name).read_bytes()))
+
+        needed, redundant = curation("Copy.java", p.NON_CE), curation("New.java", p.NON_CE)
+        orphaned = dict(path="Gone.java", header=p.NON_CE, reason="Reviewed", contentHash=p.raw_hash(b"gone"))
+        self.git.write(p.CURATIONS, json.dumps(dict(schemaVersion=1, curations=[needed, redundant, orphaned]),
+                                               indent=2) + "\n")
+        scope = self.scope + ["Copy.java"]
+        code, report, output = self.check(scope=scope)
+        self.assertEqual(1, code)
+        self.assertEqual({"match": 7}, report["summary"])
+        self.assertEqual(["New.java"], report["redundantCurations"])
+        self.assertEqual([dict(path="Gone.java", status="stale-curation", reason="file is no longer in scope")],
+                         report["curationIssues"])
+        self.assertIn("Redundant curations (1)\n", output)
+
+        code, report, output = self.check("--fix", scope=scope)
+
+        self.assertEqual(0, code)
+        self.assertEqual([{"path": "Gone.java", "reason": "file is no longer in scope"},
+                          {"path": "New.java", "reason": "the check decides the same header by itself"}],
+                         report["removedCurations"])
+        self.assertEqual(([], []), (report["redundantCurations"], report["curationIssues"]))
+        self.assertEqual(json.dumps(dict(schemaVersion=1, curations=[needed]), indent=2) + "\n",
+                         (self.repo / p.CURATIONS).read_text())
+        self.assertIn("Removed curations (2)\n", output)
+        code, report, _ = self.check("--fix", scope=scope)
+        self.assertEqual((0, []), (code, report["removedCurations"]))
+
+    def test_missing_relicensing_commit_fails_before_the_scan(self):
+        self.relicensing = "0" * 40
+        code, report, output = self.check()
+        self.assertEqual((2, None), (code, report))
+        self.assertIn("Resolving Git history ... failed\n", output)
+        self.assertIn("Pass --ce-ref", output)
+
+    def test_ce_ref_mode_compares_against_the_merged_ce_commit(self):
+        code, report, output = self.check("--ce-ref", "lts-4.3", "--ce-remote", str(self.repo))
+        self.assertEqual(1, code)
+        self.assertEqual({"remote": str(self.repo), "ref": "lts-4.3", "commit": self.fix, "bases": [self.fix]},
+                         report["ce"])
+        rows = self.rows(report)
+        self.assertEqual(("mismatch", "ce-modified"), (rows["Merged.java"]["status"], rows["Merged.java"]["expectedHeader"]))
+        self.assertEqual({"match": 5, "mismatch": 1}, report["summary"])
+        self.assertIn(f"  CE ref    lts-4.3 → {self.fix[:11]}\n", output)
+        self.assertIn("Resolving Git history ... done (CE base lts-4.3)\n", output)
 
     def test_ce_ref_is_fetched_from_the_public_ce_repository_by_default(self):
         fetched = []
@@ -520,9 +767,9 @@ class CheckCommandTests(unittest.TestCase):
               patch.object(p, "read_plugin", return_value=fixture_plugin()),
               patch.object(p, "discover_scope", return_value=p.Scope([], [], [], 0)),
               redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO())):
-            code = p.main(["check", "--ce-ref", "lts-4.2", "--output", str(self.output)])
+            code = p.main(["check", "--ce-ref", "lts-4.3", "--output", str(self.output)])
         self.assertEqual(0, code)
-        self.assertEqual([(p.CE_REMOTE, "lts-4.2")], fetched)
+        self.assertEqual([(p.CE_REMOTE, "lts-4.3")], fetched)
 
     def test_unfetchable_ce_ref_fails_before_the_history_walk(self):
         stderr = io.StringIO()
@@ -534,71 +781,6 @@ class CheckCommandTests(unittest.TestCase):
         self.assertFalse(self.output.exists())
         self.assertIn(f"Fetching missing from {self.repo} ... failed\n", stderr.getvalue())
         self.assertIn(f"Error: cannot fetch 'missing' from {self.repo}.", stderr.getvalue())
-
-    def test_feature_ref_exposes_rename_and_history_candidates(self):
-        code, report = self.check("fix/my-fix", ["Renamed.java", "Deleted.java", "Local.java"])
-        self.assertEqual(1, code)
-        rows = {row["path"]: row for row in report["files"]}
-        self.assertEqual("unresolved", rows["Renamed.java"]["status"])
-        candidate = rows["Renamed.java"]["candidates"][0]
-        self.assertEqual(("Feature.java", self.feature), (candidate["path"], candidate["ref"]))
-        self.assertEqual("unresolved", rows["Deleted.java"]["status"])
-        self.assertTrue(rows["Deleted.java"]["historicalCandidates"])
-        self.assertEqual("pe-only", rows["Local.java"]["expectedHeader"])
-        self.assertEqual({"tip": self.feature, "firstParent": True}, report["ceHistory"])
-
-    def test_curation_for_deleted_file_fails_the_check(self):
-        curation = dict(path="Gone.java", contentHash=p.raw_hash(b"gone"), header="pe-only", reason="Reviewed")
-        self.git.write(p.CURATIONS, json.dumps(dict(schemaVersion=1, curations=[curation])))
-        code, report = self.check("lts-4.2", ["Renamed.java", "Deleted.java", "Local.java"])
-        self.assertEqual(1, code)
-        self.assertEqual({"match": 3}, report["summary"])
-        self.assertEqual([dict(path="Gone.java", status="stale-curation", reason="file is no longer in scope")],
-                         report["curationIssues"])
-
-    def test_fix_restamps_decided_headers_only(self):
-        self.git("merge", "--no-ff", "fix/my-fix", "-m", "integrate CE fix")
-        self.git.write("Base.java", FOREIGN_LINE.decode() + "base implementation\n")
-        scope = ["Base.java", "Feature.java", "Renamed.java", "Swapped.java"]
-        code, report = self.check(self.feature, scope)
-        self.assertEqual(1, code)
-        self.assertEqual({"mismatch": 3, "unresolved": 1}, report["summary"])
-        self.assertEqual([], report["restamped"])
-        rows = {row["path"]: row for row in report["files"]}
-        self.assertEqual((p.FOREIGN, "apache"), (rows["Base.java"]["currentHeader"], rows["Base.java"]["expectedHeader"]))
-        self.assertEqual((p.MISSING, "apache"),
-                         (rows["Feature.java"]["currentHeader"], rows["Feature.java"]["expectedHeader"]))
-        self.assertEqual(("apache", "pe-only"),
-                         (rows["Swapped.java"]["currentHeader"], rows["Swapped.java"]["expectedHeader"]))
-
-        code, report = self.check(self.feature, scope, fix=True)
-
-        self.assertEqual(1, code)
-        self.assertEqual(["Feature.java", "Swapped.java"], report["restamped"])
-        self.assertEqual({"match": 2, "mismatch": 1, "unresolved": 1}, report["summary"])
-        rows = {row["path"]: row for row in report["files"]}
-        self.assertEqual(("match", "apache", p.MISSING),
-                         (rows["Feature.java"]["status"], rows["Feature.java"]["currentHeader"],
-                          rows["Feature.java"]["previousHeader"]))
-        self.assertEqual(fixture("apache") + self.body, (self.repo / "Feature.java").read_text())
-        self.assertEqual(fixture("pe-only") + "swapped source\n", (self.repo / "Swapped.java").read_text())
-        self.assertEqual("apache", rows["Swapped.java"]["previousHeader"])
-        self.assertEqual("mismatch", rows["Base.java"]["status"])
-        self.assertNotIn("previousHeader", rows["Base.java"])
-        self.assertEqual(FOREIGN_LINE.decode() + "base implementation\n", (self.repo / "Base.java").read_text())
-        self.assertEqual(fixture("pe-only") + self.body, (self.repo / "Renamed.java").read_text())
-        code, report = self.check(self.feature, scope, fix=True)
-        self.assertEqual([], report["restamped"])
-        self.assertEqual({"match": 2, "mismatch": 1, "unresolved": 1}, report["summary"])
-
-    def test_integrated_ce_file_compares_against_shared_ancestor(self):
-        self.git("merge", "--no-ff", "fix/my-fix", "-m", "integrate CE fix")
-        _, report = self.check(self.feature, ["Feature.java"])
-        self.assertEqual("apache", report["files"][0]["expectedHeader"])
-        self.assertEqual(self.feature, report["sharedAncestor"])
-        self.git.write("Feature.java", self.body + "PE-specific addition\n")
-        _, report = self.check(self.feature, ["Feature.java"])
-        self.assertEqual("ce-modified", report["files"][0]["expectedHeader"])
 
 
 MANAGED_POM = textwrap.dedent("""\
@@ -748,30 +930,30 @@ class MavenTests(unittest.TestCase):
             header = (repo / template).read_text()
             for extension in SAMPLE_BODY:
                 for eol in ("\n", "\r\n"):
-                    key = ("pe", category + extension + repr(eol))
+                    key = ("head", category + extension + repr(eol))
                     sample = SAMPLE_PREFIX[extension] + commented(header, extension) + SAMPLE_BODY[extension]
                     tool.add(key, "sample." + extension, sample.replace("\n", eol).encode())
                     expected[key] = p.comparison_hash((SAMPLE_PREFIX[extension] + SAMPLE_BODY[extension]).encode())
-        missing = ("pe", "missing")
+        missing = ("head", "missing")
         tool.add(missing, "missing.java", b"// Ordinary documentation\nclass Missing {}\n")
         expected[missing] = p.comparison_hash(b"// Ordinary documentation\nclass Missing {}\n")
         legacy = ("ce", "legacy")
         tool.add(legacy, "legacy.java", LEGACY_JAVA)
         expected[legacy] = p.comparison_hash(b"class Legacy {}\n")
-        foreign = ("pe", "foreign")
+        foreign = ("head", "foreign")
         tool.add(foreign, "foreign.java", FOREIGN_LINE + b"class Foreign {}\n")
         expected[foreign] = p.comparison_hash(b"class Foreign {}\n")
-        one_line = ("pe", "one-line")
+        one_line = ("head", "one-line")
         tool.add(one_line, "one.sh", b"#!/bin/sh\n# Copyright 2024 The Thingsboard Authors\nset -e\necho x\n")
         expected[one_line] = p.comparison_hash(b"#!/bin/sh\nset -e\necho x\n")
         spdx = stamped((repo / p.TEMPLATES["apache"]).read_text(), "java").encode()
-        stacked = ("pe", "stacked")
+        stacked = ("head", "stacked")
         tool.add(stacked, "stacked.java", spdx + LEGACY_JAVA)
         expected[stacked] = p.comparison_hash(b"class Legacy {}\n")
-        reversed_stack = ("pe", "reversed")
+        reversed_stack = ("head", "reversed")
         tool.add(reversed_stack, "reversed.java", LEGACY_JAVA.replace(b"class Legacy {}\n", spdx + b"class Legacy {}\n"))
         expected[reversed_stack] = p.comparison_hash(b"class Legacy {}\n")
-        mentioned = ("pe", "mentioned")
+        mentioned = ("head", "mentioned")
         tool.add(mentioned, "mentioned.java", spdx + b"\n" + FOREIGN_LINE + b"class Mentioned {}\n")
         expected[mentioned] = p.comparison_hash(FOREIGN_LINE + b"class Mentioned {}\n")
         pairs = {}
@@ -780,18 +962,18 @@ class MavenTests(unittest.TestCase):
             new = stamped((repo / p.TEMPLATES["apache"]).read_text(), extension).encode()
             old = legacy_file[:-len(body)]
             for order, content in (("new-old", new + old + body), ("old-new", old + new + body)):
-                key = ("pe", order + "." + extension)
+                key = ("head", order + "." + extension)
                 pairs[key] = content
                 tool.add(key, key[1], content)
                 expected[key] = p.comparison_hash(body)
         header_only = {}
         for extension in SAMPLE_BODY:
-            key = ("pe", "only." + extension)
-            header_only[key] = SAMPLE_PREFIX[extension] + commented((repo / p.TEMPLATES["pe-only"]).read_text(), extension)
+            key = ("head", "only." + extension)
+            header_only[key] = SAMPLE_PREFIX[extension] + commented((repo / p.TEMPLATES[p.NON_CE]).read_text(), extension)
             tool.add(key, "only." + extension, header_only[key].encode())
             expected[key] = p.comparison_hash(SAMPLE_PREFIX[extension].encode())
 
-        headers = tool.current_headers([key for key in expected if key[0] == "pe"])
+        headers = tool.current_headers([key for key in expected if key[0] == "head"])
         recognized = dict(headers)
 
         self.assertEqual(p.UNRECOGNIZED, headers.pop(missing))
@@ -803,7 +985,7 @@ class MavenTests(unittest.TestCase):
         for key in pairs:
             headers.pop(key)
         for key in header_only:
-            self.assertEqual("pe-only", headers.pop(key), key)
+            self.assertEqual(p.NON_CE, headers.pop(key), key)
         for key, header in headers.items():
             self.assertTrue(key[1].startswith(header), (key, header))
         self.assertEqual(expected, tool.strip_headers())
@@ -832,55 +1014,55 @@ class MavenTests(unittest.TestCase):
             for extension in SAMPLE_BODY:
                 for eol in ("\n", "\r\n"):
                     body = (SAMPLE_PREFIX[extension] + SAMPLE_BODY[extension]).replace("\n", eol)
-                    key = ("pe", "missing-" + category + extension + repr(eol))
+                    key = ("head", "missing-" + category + extension + repr(eol))
                     tool.add(key, "sample." + extension, body.encode())
                     wanted[key] = category
                     expected[key] = (SAMPLE_PREFIX[extension] + stamped(header, extension) + SAMPLE_BODY[extension]).replace("\n", eol).encode()
-        legacy = ("pe", "legacy")
+        legacy = ("head", "legacy")
         tool.add(legacy, "legacy.java", LEGACY_JAVA)
         wanted[legacy], expected[legacy] = "apache", (stamped(templates["apache"], "java") + "class Legacy {}\n").encode()
-        confidential = ("pe", "confidential")
+        confidential = ("head", "confidential")
         tool.add(confidential, "start.sh", b"#!/bin/bash\n#\n# ThingsBoard, Inc. (\"COMPANY\") CONFIDENTIAL\n#\n"
                                            b"# Copyright \xc2\xa9 2016-2026 ThingsBoard, Inc. All Rights Reserved.\n#\n\nset -e\n")
-        wanted[confidential], expected[confidential] = "pe-only", ("#!/bin/bash\n" + stamped(templates["pe-only"], "sh") + "set -e\n").encode()
-        header_only = ("pe", "only")
+        wanted[confidential], expected[confidential] = p.NON_CE, ("#!/bin/bash\n" + stamped(templates[p.NON_CE], "sh") + "set -e\n").encode()
+        header_only = ("head", "only")
         tool.add(header_only, "only.java", b"/**\n * Copyright 2024 The Thingsboard Authors\n */\n")
         wanted[header_only], expected[header_only] = "ce-modified", stamped(templates["ce-modified"], "java").encode()
-        shebang = ("pe", "shebang")
+        shebang = ("head", "shebang")
         tool.add(shebang, "shebang.sh", b"#!/bin/sh\n#\n# Copyright 2024 The Thingsboard Authors\n#\n")
-        wanted[shebang], expected[shebang] = "pe-only", ("#!/bin/sh\n" + stamped(templates["pe-only"], "sh")).encode()
-        glued = ("pe", "glued")
+        wanted[shebang], expected[shebang] = p.NON_CE, ("#!/bin/sh\n" + stamped(templates[p.NON_CE], "sh")).encode()
+        glued = ("head", "glued")
         tool.add(glued, "glued.sh", b"#\n# Copyright 2024 The Thingsboard Authors\n#\n# helper\nset -e\n")
-        wanted[glued] = "pe-only"
-        doubled = ("pe", "doubled")
+        wanted[glued] = p.NON_CE
+        doubled = ("head", "doubled")
         tool.add(doubled, "doubled.java", LEGACY_JAVA.replace(b"class Legacy {}\n", LEGACY_JAVA))
-        wanted[doubled], expected[doubled] = "pe-only", (stamped(templates["pe-only"], "java") + "class Legacy {}\n").encode()
-        damaged = ("pe", "damaged")
+        wanted[doubled], expected[doubled] = p.NON_CE, (stamped(templates[p.NON_CE], "java") + "class Legacy {}\n").encode()
+        damaged = ("head", "damaged")
         tool.add(damaged, "damaged.java", stamped(templates["apache"], "java").replace("Apache-2.0", "Apache-2.0 test").encode()
                  + b"class Damaged {}\n")
         wanted[damaged], expected[damaged] = "apache", (stamped(templates["apache"], "java") + "class Damaged {}\n").encode()
-        truncated = ("pe", "truncated")
+        truncated = ("head", "truncated")
         tool.add(truncated, "truncated.java", b"// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors\nclass Truncated {}\n")
         wanted[truncated], expected[truncated] = "apache", (stamped(templates["apache"], "java") + "class Truncated {}\n").encode()
-        vendored = ("pe", "vendored")
+        vendored = ("head", "vendored")
         tool.add(vendored, "vendored.java", LEGACY_JAVA.replace(b"class Legacy {}\n", FOREIGN_LINE + b"// MIT\nclass Legacy {}\n"))
-        wanted[vendored] = "pe-only"
+        wanted[vendored] = p.NON_CE
         spdx = stamped(templates["apache"], "java").encode()
-        stacked = ("pe", "stacked")
+        stacked = ("head", "stacked")
         tool.add(stacked, "stacked.java", spdx + LEGACY_JAVA)
         wanted[stacked], expected[stacked] = "ce-modified", (stamped(templates["ce-modified"], "java") + "class Legacy {}\n").encode()
-        reversed_stack = ("pe", "reversed")
+        reversed_stack = ("head", "reversed")
         tool.add(reversed_stack, "reversed.java", LEGACY_JAVA.replace(b"class Legacy {}\n", spdx + b"\nclass Legacy {}\n"))
         wanted[reversed_stack], expected[reversed_stack] = "apache", (stamped(templates["apache"], "java") + "class Legacy {}\n").encode()
-        mentioned = ("pe", "mentioned")
+        mentioned = ("head", "mentioned")
         tool.add(mentioned, "mentioned.java", spdx + b"\n" + FOREIGN_LINE + b"class Mentioned {}\n")
-        wanted[mentioned] = "pe-only"
+        wanted[mentioned] = p.NON_CE
         for extension, legacy_file, body in (("ts", LEGACY_TS, b"export const legacy = 1;\n"),
                                              ("xml", LEGACY_XML, b"<example/>\n")):
             new = stamped(templates["apache"], extension).encode()
             old = legacy_file[:-len(body)]
             for order, content in (("new-old", new + old + body), ("old-new", old + new + body)):
-                key = ("pe", order + "." + extension)
+                key = ("head", order + "." + extension)
                 tool.add(key, key[1], content)
                 wanted[key] = "ce-modified"
                 expected[key] = stamped(templates["ce-modified"], extension).encode() + body

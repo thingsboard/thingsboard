@@ -1,7 +1,7 @@
 {
   "name": "thingsboard-web-report",
   "private": true,
-  "version": "4.4.0",
+  "version": "4.4.0.1",
   "description": "ThingsBoard Web Reporting Microservice",
   "main": "server.ts",
   "bin": "server.js",
@@ -10,15 +10,14 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon --watch '.' --ext 'ts' --exec 'ts-node server.ts'",
     "start-prod": "nodemon --watch '.' --ext 'ts' --exec 'NODE_ENV=production ts-node server.ts'",
-    "build": "tsc",
-    "postinstall": "node -e \"if (process.env.NODE_ENV !== 'production') { try { const stdout = require('child_process').execSync('patch-package').toString(); console.log(stdout); } catch (error) { console.log(error.message); if (error.stderr) { console.error(error.stderr.toString()); } process.exit(-1); } }\""
+    "build": "tsc"
   },
   "dependencies": {
     "config": "~4.1.1",
     "express": "~5.1.0",
     "js-yaml": "^4.1.1",
-    "playwright-chromium": "~1.54.2",
-    "playwright-core": "~1.54.2",
+    "playwright-chromium": "~1.64.0",
+    "playwright-core": "~1.64.0",
     "winston": "~3.17.0",
     "winston-daily-rotate-file": "~5.0.0"
   },
@@ -37,7 +36,6 @@
     "@yao-pkg/pkg": "^6.6.0",
     "fs-extra": "~11.3.1",
     "nodemon": "~3.1.10",
-    "patch-package": "^8.0.1",
     "postinstall-postinstall": "^2.1.0",
     "ts-node": "~10.9.2",
     "typescript": "~5.9.3"
@@ -46,7 +44,9 @@
     "assets": [
       "node_modules/config/**/*.*",
       "node_modules/open/xdg-open",
-      "node_modules/playwright-core/lib/server/chromium/appIcon.png"
+      "../../node_modules/playwright-core/browsers.json",
+      "node_modules/playwright-core/lib/server/chromium/appIcon.png",
+      "../../node_modules/playwright-core/lib/webp_codec.wasm"
     ]
   }
 }

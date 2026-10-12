@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ExceptionUtil;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.asset.AssetProfile;
@@ -35,7 +34,6 @@ import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.iot_hub.AlarmRuleInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.CalculatedFieldInstalledItemDescriptor;
-import org.thingsboard.server.common.data.iot_hub.DashboardInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.DeviceInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.IotHubInstalledItem;
 import org.thingsboard.server.common.data.iot_hub.IotHubInstalledItemDescriptor;
@@ -100,7 +98,6 @@ public class DefaultIotHubService implements IotHubService {
     private static final String SECTION_RULE_CHAIN_METADATA = "rule chain metadata";
 
     private static final String ITEM_TYPE_WIDGET = "widget";
-    private static final String ITEM_TYPE_DASHBOARD = "dashboard";
     private static final String ITEM_TYPE_CALCULATED_FIELD = "calculated field";
     private static final String ITEM_TYPE_ALARM_RULE = "alarm rule";
     private static final String ITEM_TYPE_RULE_CHAIN = "rule chain";
@@ -183,7 +180,6 @@ public class DefaultIotHubService implements IotHubService {
 
         IotHubInstalledItemDescriptor descriptor = switch (itemType) {
             case "WIDGET" -> installWidget(user, tenantId, fileData);
-            case "DASHBOARD" -> installDashboard(user, tenantId, fileData, data);
             case "CALCULATED_FIELD" -> installCalculatedField(user, tenantId, fileData, data);
             case "ALARM_RULE" -> installAlarmRule(user, tenantId, fileData, data);
             case "RULE_CHAIN" -> installRuleChain(user, tenantId, fileData, data);
@@ -241,58 +237,6 @@ public class DefaultIotHubService implements IotHubService {
         log.debug("[{}] Widget installed: {}", tenantId, saved.getName());
         WidgetInstalledItemDescriptor descriptor = new WidgetInstalledItemDescriptor();
         descriptor.setWidgetTypeId(saved.getId());
-        return descriptor;
-    }
-
-    private DashboardInstalledItemDescriptor installDashboard(SecurityUser user, TenantId tenantId, byte[] fileData, JsonNode data) throws Exception {
-        Dashboard dashboard;
-        try {
-            dashboard = JacksonUtil.fromString(new String(fileData), Dashboard.class, true);
-        } catch (Exception e) {
-            throw parseFailure(ACTION_INSTALL, ITEM_TYPE_DASHBOARD, e);
-        }
-        dashboard.setId(null);
-        dashboard.setTenantId(tenantId);
-
-        if (data != null && data.hasNonNull("customerId") && data.get("customerId").isTextual()) {
-            String strCustomerId = data.get("customerId").asText();
-            if (!strCustomerId.isEmpty()) {
-                CustomerId customerId = new CustomerId(UUID.fromString(strCustomerId));
-                Customer customer = customerService.findCustomerById(tenantId, customerId);
-                if (customer == null) {
-                    throw new IllegalArgumentException("Customer with id [" + customerId + "] is not found");
-                }
-                if (!tenantId.equals(customer.getTenantId())) {
-                    throw new IllegalArgumentException("Customer [" + customerId + "] does not belong to the current tenant");
-                }
-                dashboard.setCustomerId(customerId);
-            }
-        }
-
-        List<EntityGroup> entityGroups = null;
-        if (data != null && data.hasNonNull("entityGroupId") && data.get("entityGroupId").isTextual()) {
-            String strEntityGroupId = data.get("entityGroupId").asText();
-            if (!strEntityGroupId.isEmpty()) {
-                EntityGroupId entityGroupId = new EntityGroupId(UUID.fromString(strEntityGroupId));
-                EntityGroupInfo entityGroup = checkEntityGroup(user, entityGroupId);
-                if (entityGroup.getType() != EntityType.DASHBOARD) {
-                    throw new IllegalArgumentException("Entity group [" + entityGroupId + "] is not a dashboard group (type: " + entityGroup.getType() + ")");
-                }
-                entityGroups = List.of(entityGroup);
-                // If the entity group is owned by a customer, align the dashboard owner with the group owner
-                // (mirrors BaseController.saveGroupEntity logic for new entities).
-                if (dashboard.getCustomerId() == null || dashboard.getCustomerId().isNullUid()) {
-                    if (entityGroup.getOwnerId().getEntityType() == EntityType.CUSTOMER) {
-                        dashboard.setOwnerId(new CustomerId(entityGroup.getOwnerId().getId()));
-                    }
-                }
-            }
-        }
-
-        Dashboard saved = tbDashboardService.save(dashboard, entityGroups, user);
-        log.debug("[{}] Dashboard installed: {}", tenantId, saved.getTitle());
-        DashboardInstalledItemDescriptor descriptor = new DashboardInstalledItemDescriptor();
-        descriptor.setDashboardId(saved.getId());
         return descriptor;
     }
 
@@ -466,7 +410,6 @@ public class DefaultIotHubService implements IotHubService {
             }
 
             String itemType = installedItem.getItemType();
-
             IotHubInstalledItemDescriptor descriptor = installedItem.getDescriptor();
 
             // Skip checksum validation for solution templates
@@ -508,7 +451,6 @@ public class DefaultIotHubService implements IotHubService {
 
             switch (itemType) {
                 case "WIDGET" -> updateWidget(user, tenantId, (WidgetInstalledItemDescriptor) descriptor, fileData);
-                case "DASHBOARD" -> updateDashboard(user, tenantId, (DashboardInstalledItemDescriptor) descriptor, fileData);
                 case "CALCULATED_FIELD" -> updateCalculatedField(user, tenantId, (CalculatedFieldInstalledItemDescriptor) descriptor, fileData);
                 case "ALARM_RULE" -> updateAlarmRule(user, tenantId, (AlarmRuleInstalledItemDescriptor) descriptor, fileData);
                 case "RULE_CHAIN" -> updateRuleChain(tenantId, (RuleChainInstalledItemDescriptor) descriptor, fileData);
@@ -565,22 +507,6 @@ public class DefaultIotHubService implements IotHubService {
         existing.setName(newWidgetType.getName());
         existing.setDescriptor(newWidgetType.getDescriptor());
         tbWidgetTypeService.save(existing, false, user);
-    }
-
-    private void updateDashboard(SecurityUser user, TenantId tenantId, DashboardInstalledItemDescriptor descriptor, byte[] fileData) throws Exception {
-        Dashboard newDashboard;
-        try {
-            newDashboard = JacksonUtil.fromString(new String(fileData), Dashboard.class, true);
-        } catch (Exception e) {
-            throw parseFailure(ACTION_UPDATE, ITEM_TYPE_DASHBOARD, e);
-        }
-        Dashboard existing = dashboardService.findDashboardById(tenantId, descriptor.getDashboardId());
-        if (existing == null) {
-            throw new Exception("Dashboard not found for update");
-        }
-        existing.setTitle(newDashboard.getTitle());
-        existing.setConfiguration(newDashboard.getConfiguration());
-        tbDashboardService.save(existing, (List<EntityGroup>) null, user);
     }
 
     private void updateCalculatedField(SecurityUser user, TenantId tenantId, CalculatedFieldInstalledItemDescriptor descriptor, byte[] fileData) throws Exception {
@@ -649,8 +575,6 @@ public class DefaultIotHubService implements IotHubService {
         IotHubInstalledItemDescriptor descriptor = installedItem.getDescriptor();
         if (descriptor instanceof WidgetInstalledItemDescriptor wd) {
             return calculateWidgetChecksum(tenantId, wd);
-        } else if (descriptor instanceof DashboardInstalledItemDescriptor dd) {
-            return calculateDashboardChecksum(tenantId, dd);
         } else if (descriptor instanceof CalculatedFieldInstalledItemDescriptor cd) {
             return calculateCalculatedFieldChecksum(tenantId, cd.getCalculatedFieldId());
         } else if (descriptor instanceof AlarmRuleInstalledItemDescriptor ad) {
@@ -669,16 +593,6 @@ public class DefaultIotHubService implements IotHubService {
         String content = (cf.getName() != null ? cf.getName() : "") +
                 (cf.getType() != null ? cf.getType().name() : "") +
                 (cf.getConfiguration() != null ? JacksonUtil.valueToTree(cf.getConfiguration()).toString() : "");
-        return sha256(content);
-    }
-
-    private String calculateDashboardChecksum(TenantId tenantId, DashboardInstalledItemDescriptor descriptor) {
-        Dashboard dashboard = dashboardService.findDashboardById(tenantId, descriptor.getDashboardId());
-        if (dashboard == null) {
-            return null;
-        }
-        String content = (dashboard.getTitle() != null ? dashboard.getTitle() : "") +
-                (dashboard.getConfiguration() != null ? dashboard.getConfiguration().toString() : "");
         return sha256(content);
     }
 
@@ -864,11 +778,6 @@ public class DefaultIotHubService implements IotHubService {
             WidgetTypeDetails widgetType = widgetTypeService.findWidgetTypeDetailsById(tenantId, wd.getWidgetTypeId());
             if (widgetType != null) {
                 tbWidgetTypeService.delete(widgetType, user);
-            }
-        } else if (descriptor instanceof DashboardInstalledItemDescriptor dd) {
-            Dashboard dashboard = dashboardService.findDashboardById(tenantId, dd.getDashboardId());
-            if (dashboard != null) {
-                tbDashboardService.delete(dashboard, user);
             }
         } else if (descriptor instanceof CalculatedFieldInstalledItemDescriptor cd) {
             CalculatedField calculatedField = calculatedFieldService.findById(tenantId, cd.getCalculatedFieldId());

@@ -24,11 +24,24 @@ import uuid
 import xml.etree.ElementTree as ET
 
 
+TEMPLATE_DIRECTORY = "tools/src/main/python/license-headers/templates"
+
+
+def non_ce_header(directory):
+    kinds = sorted(path.name[len("license-header-"):-len(".txt")] for path in directory.glob("license-header-*.txt"))
+    kinds = [kind for kind in kinds if kind != "ce-modified"]
+    if len(kinds) != 1:
+        raise RuntimeError(f"Expected exactly one license-header-<kind>.txt besides the ce-modified one in {directory}")
+    return kinds[0]
+
+
+NON_CE = non_ce_header(Path(__file__).resolve().parent / "templates")
 TEMPLATES = {
-    "apache": "tools/src/main/python/license-headers/templates/license-header.txt",
-    "ce-modified": "tools/src/main/python/license-headers/templates/license-header-ce-modified.txt",
-    "pe-only": "tools/src/main/python/license-headers/templates/license-header-busl.txt",
+    "apache": f"{TEMPLATE_DIRECTORY}/license-header.txt",
+    "ce-modified": f"{TEMPLATE_DIRECTORY}/license-header-ce-modified.txt",
+    NON_CE: f"{TEMPLATE_DIRECTORY}/license-header-{NON_CE}.txt",
 }
+RELICENSING_COMMIT = "31936b09d24871e421f212502a8342f9d8aabb20"
 CE_REMOTE = "https://github.com/thingsboard/thingsboard.git"
 CURATIONS = "tools/src/main/python/license-headers/curations.json"
 README = "tools/src/main/python/license-headers/README.md"
@@ -152,16 +165,37 @@ def fetch(repo, remote, ref):
     return resolve(repo, "FETCH_HEAD")
 
 
-def unique_base(repo, left, right):
-    bases = git(repo, "merge-base", "--all", left, right).decode().splitlines()
-    if len(bases) != 1:
-        raise Failure(f"found {len(bases)} merge bases between PE HEAD and the CE ref, expected exactly one. "
-                      "Check that the right CE branch was passed.")
-    return bases[0]
+def independent(repo, commits):
+    return sorted(git(repo, "merge-base", "--independent", *commits).decode().split())
 
 
-def first_parent_commits(repo, revision):
-    return git(repo, "rev-list", "--first-parent", revision).decode().splitlines()
+def contains(repo, ancestor, descendant):
+    return run(["git", "merge-base", "--is-ancestor", ancestor, descendant], repo, ok=(0, 1, 128)).returncode == 0
+
+
+def relicensed_ce_bases(repo, head):
+    if not contains(repo, RELICENSING_COMMIT, head):
+        raise Failure(f"the relicensing commit {RELICENSING_COMMIT[:11]} is not in the history of HEAD. "
+                      "Pass --ce-ref with the CE branch that this branch integrates.")
+    records = git(repo, "rev-list", "--parents", "--ancestry-path", f"{RELICENSING_COMMIT}..{head}").decode().splitlines()
+    records.append(git(repo, "rev-list", "--parents", "-1", RELICENSING_COMMIT).decode().strip())
+    commits = {record.split()[0] for record in records}
+    parents = {parent for record in records for parent in record.split()[1:]}
+    return independent(repo, sorted(parents - commits))
+
+
+def merged_ce_bases(repo, head, baseline):
+    bases = run(["git", "merge-base", "--all", head, baseline], repo, ok=(0, 1)).stdout.decode().split()
+    if not bases:
+        raise Failure("HEAD shares no history with the CE ref. Check that the right CE branch was passed.")
+    ce = [ce_base for base in bases
+          for ce_base in (relicensed_ce_bases(repo, base) if contains(repo, RELICENSING_COMMIT, base) else [base])]
+    return independent(repo, ce)
+
+
+def merge_blobs(repo, ours, base, theirs):
+    result = run(["git", "merge-file", "-p", "--object-id", ours, base, theirs], repo, ok=range(0, 256))
+    return result.stdout if result.returncode == 0 else None
 
 
 def tree(repo, revision):
@@ -203,10 +237,6 @@ class Change:
     new: str
     status: str
 
-    @property
-    def deleted(self):
-        return self.status == "D"
-
 
 def history(repo, revision, *options):
     raw = git(repo, "log", "--first-parent", "--diff-merges=first-parent", "--root", "--raw", "--no-abbrev",
@@ -237,21 +267,6 @@ def parse_history(raw):
             yield Change(commit, paths[0], fields[2].decode(), fields[3].decode(), status)
         elif token:
             raise Failure(f"Unexpected Git history token: {token[:80]!r}")
-
-
-def integration_boundary(repo, anchor, head):
-    chain = first_parent_commits(repo, head)
-    low, high = 0, len(chain)
-    while low < high:
-        middle = (low + high) // 2
-        code = run(["git", "merge-base", "--is-ancestor", anchor, chain[middle]], repo, ok=(0, 1)).returncode
-        if code == 0:
-            low = middle + 1
-        else:
-            high = middle
-    if not low:
-        raise Failure("CE anchor is not in PE history")
-    return chain[low - 1]
 
 
 def git_ignored(repo, paths):
@@ -513,7 +528,7 @@ class Mycila:
             (directory / name).write_bytes(self.templates[header])
 
     def add(self, key, name, content):
-        group = "pe" if key[0] == "pe" else "ce"
+        group = "head" if key[0] == "head" else "ce"
         path = self.root / "files" / group / str(len(self.paths)) / PurePosixPath(name).name
         path.parent.mkdir(parents=True)
         path.write_bytes(content)
@@ -561,11 +576,11 @@ class Mycila:
     def remove_headers(self, keys):
         before = {key: self.contents[key] for key in keys}
         with self.guarded(keys):
-            results = self.invoke("remove", "pe-only", keys, styles=(STRICT_XML,))
+            results = self.invoke("remove", NON_CE, keys, styles=(STRICT_XML,))
             unchanged = [key for key, result in results.items()
                          if result == "NOOP" and PurePosixPath(self.paths[key]).suffix in BLOCK_COMMENT_SUFFIXES]
             if unchanged:
-                self.invoke("remove", "pe-only", unchanged, styles=(STRICT_XML, STRICT_BLOCK))
+                self.invoke("remove", NON_CE, unchanged, styles=(STRICT_XML, STRICT_BLOCK))
         removed = {}
         for key in keys:
             content, removed[key] = split_removed(before[key], self.contents[key])
@@ -690,14 +705,14 @@ class Mycila:
         selected = set(keys)
         if selected == set(self.paths):
             return ["files/**"]
-        if selected == {key for key in self.paths if key[0] == "pe"}:
-            return ["files/pe/**"]
+        if selected == {key for key in self.paths if key[0] == "head"}:
+            return ["files/head/**"]
         return [str(PurePosixPath(self.paths[key]).parent) + "/*" for key in keys]
 
 
 def normalized_copies(mycila, source_refs, names, nonempty):
     sources = set(source_refs) & nonempty
-    destinations = {("pe", name) for name in names} & nonempty
+    destinations = {("head", name) for name in names} & nonempty
     if not sources or not destinations:
         return {}
     git(mycila.root, "init", "--quiet")
@@ -712,7 +727,7 @@ def normalized_copies(mycila, source_refs, names, nonempty):
     for source, destination, similarity in parse_copies(raw):
         source_key, destination_key = keys[source], keys[destination]
         if source_key not in sources or destination_key not in destinations:
-            raise Failure("Normalized copy escaped the selected CE/PE inputs")
+            raise Failure("Normalized copy escaped the selected CE and HEAD inputs")
         copies[destination_key[1]].append({"path": source_key[0], "blob": source_key[1],
                                            "ref": source_refs[source_key], "similarity": similarity})
     return dict(copies)
@@ -742,160 +757,78 @@ class Evidence:
     path: str
     content_hash: str
     current: str
-    curation: dict | None
-    inherited: bool
-    recreated: bool
-    ce_hash: str | None
-    pe_hash: str
-    candidates: list
-    historical: list
-    in_comparison: bool
-    pe_addition: bool = False
+    curation: dict | None = None
+    ce_versions: tuple = ()
+    identical: dict | None = None
     copies: tuple = ()
+    deleted: dict | None = None
     directory_in_ce: bool = True
-    ce_ref: str | None = None
-    ce_blob: str | None = None
 
-    @property
-    def strong(self):
-        return [c for c in self.historical if c["path"] == self.path or c.get("contentMatches")]
-
-    def ce_traces(self):
-        return bool(self.candidates or self.copies or self.in_comparison or self.strong)
-
-    def pe_module_descriptor(self):
+    def module_descriptor(self):
         return (PurePosixPath(self.path).name == MODULE_DESCRIPTOR and not self.directory_in_ce
-                and not (self.candidates or self.in_comparison or self.strong))
+                and self.deleted is None and all(copy["similarity"] < 100 for copy in self.copies))
 
 
 def decide(evidence):
     row = {"path": evidence.path, "contentHash": evidence.content_hash, "currentHeader": evidence.current}
-    if evidence.curation is not None:
-        return row | curated_verdict(evidence)
-    if evidence.recreated:
-        return row | {"status": "unresolved", "expectedHeader": None,
-                      "reason": "deleted and recreated at this path, origin unclear"}
-    if evidence.inherited and evidence.ce_hash is not None:
-        comparison = {"comparison": {"path": evidence.path, "ref": evidence.ce_ref, "blob": evidence.ce_blob}}
-        if evidence.pe_hash == evidence.ce_hash:
-            return row | verdict(evidence.current, "apache", "same path in CE, content identical") | comparison
-        return row | verdict(evidence.current, "ce-modified", "same path in CE, content differs") | comparison
-    if evidence.pe_addition and not evidence.ce_traces():
-        return row | verdict(evidence.current, "pe-only", "added in PE, no CE evidence")
-    if evidence.pe_addition and evidence.pe_module_descriptor():
-        return row | verdict(evidence.current, "pe-only", "build descriptor of a module that does not exist in CE")
-    return row | open_question(evidence)
+    inferred = infer(evidence)
+    curation = evidence.curation
+    if curation is None:
+        return row | inferred
+    if curation["contentHash"] != evidence.content_hash:
+        return row | {"status": "stale-curation", "expectedHeader": None,
+                      "reason": "file changed since the curation, re-review and update contentHash"}
+    if inferred["expectedHeader"] == curation["header"]:
+        return row | inferred | {"redundantCuration": True}
+    return row | verdict(evidence.current, curation["header"], "curation: " + curation["reason"])
+
+
+def infer(evidence):
+    if evidence.ce_versions:
+        versions = {"ceVersions": list(evidence.ce_versions)}
+        if evidence.identical is None:
+            return verdict(evidence.current, "ce-modified", "same path in CE, content differs") | versions
+        reason = ("same path in CE, content identical" if "blob" in evidence.identical
+                  else "same path in CE, content identical to a clean merge of its CE versions")
+        return verdict(evidence.current, "apache", reason) | versions | {"identicalTo": evidence.identical}
+    if evidence.module_descriptor():
+        return verdict(evidence.current, NON_CE, "build descriptor of a module that does not exist in CE")
+    if evidence.copies:
+        suggested = "apache" if evidence.copies[0]["similarity"] == 100 else None
+        return unresolved("similar content exists in CE under another path", suggested,
+                          copyCandidates=list(evidence.copies))
+    if evidence.deleted is not None:
+        return unresolved("CE history had this path", None, historicalCandidate=evidence.deleted)
+    return verdict(evidence.current, NON_CE, "not in CE, no CE evidence")
 
 
 def verdict(current, expected, reason):
     return {"status": "match" if current == expected else "mismatch", "expectedHeader": expected, "reason": reason}
 
 
-def curated_verdict(evidence):
-    curation = evidence.curation
-    if curation["contentHash"] != evidence.content_hash:
-        return {"status": "stale-curation", "expectedHeader": None,
-                "reason": "file changed since the curation, re-review and update contentHash"}
-    return verdict(evidence.current, curation["header"], "curation: " + curation["reason"])
-
-
-def open_question(evidence):
-    strong = evidence.strong
-    ranked = [
-        (evidence.candidates, "identical content exists in CE under another path", "apache"),
-        (evidence.copies, "similar content exists in CE under another path", None),
-        (strong, "CE history has this path or content", None),
-        (evidence.in_comparison, "present in CE, but not in the shared ancestry", None),
-        (True, "no CE evidence, but not proven to be added in PE", "pe-only"),
-    ]
-    _, reason, suggested = next(item for item in ranked if item[0])
-    return {
-        "status": "unresolved",
-        "expectedHeader": None,
-        "suggestedHeader": suggested,
-        "reason": reason,
-        "candidates": evidence.candidates[:10],
-        "historicalCandidates": strong[:10],
-        "copyCandidates": list(evidence.copies),
-        "candidateCount": len(evidence.candidates),
-        "historicalCandidateCount": len(strong),
-    }
+def unresolved(reason, suggested, **candidates):
+    return {"status": "unresolved", "expectedHeader": None, "suggestedHeader": suggested, "reason": reason} | candidates
 
 
 @dataclass(frozen=True)
 class Lineage:
     head: str
-    baseline: str
-    anchor: str
-    boundary: str
-    ce_commits: frozenset
-    ce_changes: list
-    comparison: dict
-    shared: dict
-    pe_tree: dict
-    additions: dict
-    recreated: frozenset
+    bases: tuple
+    trees: dict
+    deleted: dict
 
     @classmethod
-    def load(cls, repo, head, baseline):
+    def load(cls, repo, head, bases):
         if git(repo, "rev-parse", "--is-shallow-repository").decode().strip() == "true":
             raise Failure("this clone is shallow and the check needs full history. Run git fetch --unshallow.")
-        anchor = unique_base(repo, head, baseline)
-        ce_chain = first_parent_commits(repo, baseline)
-        ce_commits = frozenset(ce_chain)
-        if anchor not in ce_commits:
-            raise Failure("the shared ancestor is not on the CE ref's first-parent chain. "
-                          "Pass the CE mainline branch that the PE branch integrates.")
-        boundary = integration_boundary(repo, anchor, head)
-        shared = tree(repo, anchor)
-        additions = {}
-        for change in history(repo, head, "--diff-filter=A"):
-            additions.setdefault(change.path, change.commit)
-        ce_changes = history(repo, baseline)
-        divergent = frozenset(ce_chain[:ce_chain.index(anchor)])
-        divergence = (history(repo, f"{boundary}..{head}")
-                      + [change for change in ce_changes if change.commit in divergent])
-        return cls(
-            head=head,
-            baseline=baseline,
-            anchor=anchor,
-            boundary=boundary,
-            ce_commits=ce_commits,
-            ce_changes=ce_changes,
-            comparison=tree(repo, baseline),
-            shared=shared,
-            pe_tree=tree(repo, head),
-            additions=additions,
-            recreated=frozenset(change.path for change in divergence
-                                if change.status in {"A", "D"} and change.path in shared),
-        )
+        deleted = {}
+        for base in bases:
+            for change in history(repo, base, "--diff-filter=D"):
+                deleted.setdefault(change.path, {"path": change.path, "ref": change.commit + "^1", "blob": change.old})
+        return cls(head=head, bases=tuple(bases), trees={base: tree(repo, base) for base in bases}, deleted=deleted)
 
-    def unmatched(self, names):
-        return {name for name in names
-                if name not in self.shared or name not in self.comparison or name in self.recreated}
-
-    def pe_addition(self, name):
-        if name not in self.pe_tree:
-            return True
-        return name in self.additions and self.additions[name] not in self.ce_commits
-
-    def added_by(self, name):
-        if name not in self.pe_tree:
-            return self.additions.get(name, "working-tree addition")
-        return self.additions.get(name)
-
-
-def historical_versions(ce_changes, unmatched):
-    basenames = {PurePosixPath(name).name for name in unmatched}
-    versions = {}
-    for change in ce_changes:
-        if change.path not in unmatched and PurePosixPath(change.path).name not in basenames:
-            continue
-        oid = change.old if change.deleted else change.new
-        if set(oid) == {"0"}:
-            continue
-        versions.setdefault((change.path, oid), change.commit + "^1" if change.deleted else change.commit)
-    return versions
+    def versions(self, name):
+        return [(base, files[name]) for base, files in self.trees.items() if name in files]
 
 
 def comparable_ce_files(comparison, names):
@@ -909,96 +842,99 @@ def comparable_ce_files(comparison, names):
 class Comparison:
     lineage: Lineage
     contents: dict
-    unmatched: set
     headers: dict
     normalized: dict
-    nonempty: set
     copies: dict
-    exact_index: dict
-    historic_index: dict
+    merges: dict
     ce_directories: frozenset
 
     def classify(self, name, curation):
-        key = ("pe", name)
-        lineage = self.lineage
-        unmatched = name in self.unmatched
-        historic = self.historical_candidates(name) if unmatched else []
-        evidence = Evidence(
+        key = ("head", name)
+        versions = self.lineage.versions(name)
+        identical = next(({"path": name, "ref": base, "blob": oid} for base, oid in versions
+                          if self.normalized[(name, oid)] == self.normalized[key]), self.merges.get(name))
+        copies = sorted(self.copies.get(name, []), key=lambda copy: (-copy["similarity"], copy["path"]))
+        return decide(Evidence(
             path=name,
             content_hash=raw_hash(self.contents[name]),
             current=self.headers[key],
             curation=curation,
-            inherited=name in lineage.shared,
-            recreated=name in lineage.recreated,
-            ce_hash=self.normalized.get((name, lineage.comparison.get(name))),
-            pe_hash=self.normalized[key],
-            candidates=self.exact_index.get(self.normalized[key], []) if unmatched else [],
-            historical=historic,
-            in_comparison=name in lineage.comparison,
-            pe_addition=lineage.pe_addition(name),
-            copies=self.copies.get(name, []),
+            ce_versions=tuple({"path": name, "ref": base, "blob": oid} for base, oid in versions),
+            identical=identical,
+            copies=tuple(copies),
+            deleted=self.lineage.deleted.get(name),
             directory_in_ce=str(PurePosixPath(name).parent) in self.ce_directories,
-            ce_ref=lineage.baseline,
-            ce_blob=lineage.comparison.get(name),
-        )
-        row = decide(evidence)
-        if unmatched:
-            row["peAddition"] = lineage.added_by(name)
-            row["basenameHintCount"] = len(historic) - len(evidence.strong)
-        return row
-
-    def historical_candidates(self, name):
-        key = ("pe", name)
-        candidates = []
-        for version in self.historic_index.get(PurePosixPath(name).name, []):
-            matches = (key in self.nonempty
-                       and self.normalized[key] == self.normalized[(version["path"], version["blob"])])
-            candidates.append(version | {"contentMatches": matches})
-        candidates.sort(key=lambda candidate: (not candidate["contentMatches"], candidate["path"] != name))
-        return candidates
+        ))
 
 
 def compare(repo, plugin, lineage, contents):
     names = list(contents)
-    unmatched = lineage.unmatched(names)
-    versions = historical_versions(lineage.ce_changes, unmatched)
-    counterparts = comparable_ce_files(lineage.comparison, names)
-    source_refs = versions | {key: lineage.baseline for key in counterparts.items()}
-    bytes_by_id = blobs(repo, [oid for _, oid in source_refs])
+    new_paths = {name for name in names if not lineage.versions(name)}
+    sources = {}
+    for base, files in lineage.trees.items():
+        for name in names:
+            if name in files:
+                sources.setdefault((name, files[name]), base)
+        for key in comparable_ce_files(files, new_paths).items():
+            sources.setdefault(key, base)
+    bytes_by_id = blobs(repo, [oid for _, oid in sources])
     with tempfile.TemporaryDirectory(prefix="license-provenance-") as temporary:
         mycila = Mycila(repo, Path(temporary), plugin)
         for name, content in contents.items():
-            mycila.add(("pe", name), name, content)
-        for path, oid in sorted(source_refs):
+            mycila.add(("head", name), name, content)
+        for path, oid in sorted(sources):
             mycila.add((path, oid), path, bytes_by_id[oid])
         console.begin("Recognizing headers")
-        recognized = mycila.current_headers([("pe", name) for name in names])
+        recognized = mycila.current_headers([("head", name) for name in names])
         console.end()
         console.begin("Comparing against CE")
         normalized = mycila.strip_headers()
         headers = mycila.header_states(recognized)
-        nonempty = mycila.nonempty()
-        copies = normalized_copies(mycila, source_refs, unmatched, nonempty)
-    exact_index = defaultdict(list)
-    for path, oid in counterparts.items():
-        if (path, oid) in nonempty:
-            exact_index[normalized[(path, oid)]].append({"path": path, "ref": lineage.baseline, "blob": oid})
-    historic_index = defaultdict(list)
-    for (path, oid), ref in versions.items():
-        historic_index[PurePosixPath(path).name].append({"path": path, "ref": ref, "blob": oid})
+        copies = normalized_copies(mycila, sources, new_paths, mycila.nonempty())
+    merges = clean_merges(repo, plugin, lineage, names, normalized)
     console.end(f"done ({len(normalized)} file versions)")
     return Comparison(
         lineage=lineage,
         contents=contents,
-        unmatched=unmatched,
         headers=headers,
         normalized=normalized,
-        nonempty=nonempty,
         copies=copies,
-        exact_index=dict(exact_index),
-        historic_index=dict(historic_index),
-        ce_directories=frozenset(str(parent) for path in lineage.comparison for parent in PurePosixPath(path).parents),
+        merges=merges,
+        ce_directories=frozenset(str(parent) for files in lineage.trees.values()
+                                 for path in files for parent in PurePosixPath(path).parents),
     )
+
+
+def clean_merges(repo, plugin, lineage, names, normalized):
+    merged = {}
+    for index, left in enumerate(lineage.bases):
+        for right in lineage.bases[index + 1:]:
+            ancestors = git(repo, "merge-base", "--all", left, right).decode().split()
+            if len(ancestors) != 1:
+                continue
+            ancestry = tree(repo, ancestors[0])
+            for name in names:
+                ours, theirs = lineage.trees[left].get(name), lineage.trees[right].get(name)
+                if ours is None or theirs is None or ours == theirs or name not in ancestry:
+                    continue
+                if normalized[("head", name)] in {normalized[(name, ours)], normalized[(name, theirs)]}:
+                    continue
+                content = merge_blobs(repo, ours, ancestry[name], theirs)
+                if content is not None:
+                    merged[(name, left, right)] = (content, {"path": name, "merge": [left, right],
+                                                             "base": ancestors[0]})
+    if not merged:
+        return {}
+    with tempfile.TemporaryDirectory(prefix="license-provenance-") as temporary:
+        mycila = Mycila(repo, Path(temporary), plugin)
+        for key, (content, _) in merged.items():
+            mycila.add(key, key[0], content)
+        hashes = mycila.strip_headers()
+    result = {}
+    for key, (_, description) in merged.items():
+        if hashes[key] == normalized[("head", key[0])]:
+            result.setdefault(key[0], description)
+    return result
 
 
 def current_branch(repo):
@@ -1006,11 +942,14 @@ def current_branch(repo):
     return "" if branch == "HEAD" else branch
 
 
-def print_banner(repo, head, ce_remote, ce_ref, baseline):
+def print_banner(repo, head, ce):
     console.line("License header provenance check")
-    console.line(f"  PE head   {head[:11]}  {current_branch(repo)}".rstrip())
-    console.line(f"  CE remote {ce_remote}")
-    console.line(f"  CE ref    {ce_ref}" + (f" → {baseline[:11]}" if baseline != ce_ref else ""))
+    console.line(f"  HEAD      {head[:11]}  {current_branch(repo)}".rstrip())
+    if "ref" in ce:
+        console.line(f"  CE remote {ce['remote']}")
+        console.line(f"  CE ref    {ce['ref']}" + (f" → {ce['commit'][:11]}" if ce["commit"] != ce["ref"] else ""))
+    else:
+        console.line(f"  CE        commits without the relicensing commit {ce['relicensingCommit'][:11]} in their history")
     console.line()
 
 
@@ -1039,16 +978,15 @@ def describe_mismatch(row):
 def describe_unresolved(row, ref_names):
     hint = f" (hint: {row['suggestedHeader']})" if row.get("suggestedHeader") else ""
     details = [f"has {header_name(row['currentHeader'])}, no expected header yet{hint}"]
-    evidence = ([("exact CE match", candidate) for candidate in row.get("candidates", [])]
-                + [(f"similar CE file ({candidate['similarity']}%)", candidate)
-                   for candidate in row.get("copyCandidates", [])]
-                + [("CE history", candidate) for candidate in row.get("historicalCandidates", [])])
+    evidence = [(f"similar CE file ({candidate['similarity']}%)", candidate)
+                for candidate in row.get("copyCandidates", [])]
+    if "historicalCandidate" in row:
+        evidence.append(("CE history", row["historicalCandidate"]))
     if not evidence:
         return details + [row["reason"]]
     label, candidate = evidence[0]
     details.append(f"{label}: {candidate['path']} at {ref_name(candidate['ref'], ref_names)}")
-    others = (row.get("candidateCount", 0) + len(row.get("copyCandidates", []))
-              + row.get("historicalCandidateCount", 0) - 1)
+    others = len(evidence) - 1
     if others > 0:
         details.append(f"another {others} candidate{'s' if others != 1 else ''} in the report")
     return details
@@ -1058,8 +996,12 @@ def describe_stale(row):
     return [row["reason"]]
 
 
-def print_group(title, rows, describe, hint):
-    console.line(f"{title} ({len(rows)})", "red")
+def describe_redundant(row):
+    return [f"curated {row['expectedHeader']}, the check decides {row['expectedHeader']} by itself"]
+
+
+def print_group(title, rows, describe, hint, style="red"):
+    console.line(f"{title} ({len(rows)})", style)
     for row in rows:
         console.line(f"  {row['path']}")
         for detail in describe(row):
@@ -1084,6 +1026,16 @@ def print_restamped(rows):
     console.line()
 
 
+def print_removed_curations(removed):
+    if not removed:
+        return
+    console.line(f"Removed curations ({len(removed)})", "green")
+    for entry in removed:
+        console.line(f"  {entry['path']}")
+        console.line(f"    {entry['reason']}")
+    console.line()
+
+
 def print_findings(rows, curation_issues, ref_names):
     mismatches = [row for row in rows if row["status"] == "mismatch"]
     unresolved = [row for row in rows if row["status"] == "unresolved"]
@@ -1096,7 +1048,14 @@ def print_findings(rows, curation_issues, ref_names):
         print_group("Needs a decision", unresolved, lambda row: describe_unresolved(row, ref_names),
                     f"Decide the origin and add a curation, see {README}")
     if stale:
-        print_group("Stale curations", stale, describe_stale, f"Remove or update the entry in {CURATIONS}")
+        hint = (f"Review the file and update the entry in {CURATIONS}; --fix removes entries of files no longer in scope"
+                if any(row["status"] == "stale-curation" and "contentHash" in row for row in stale)
+                else "Rerun with --fix to remove them")
+        print_group("Stale curations", stale, describe_stale, hint)
+    redundant = [row for row in rows if row.get("redundantCuration")]
+    if redundant:
+        print_group("Redundant curations", redundant, describe_redundant,
+                    f"Rerun with --fix to remove them from {CURATIONS}", style=None)
 
 
 def print_summary(rows, curation_issues, report):
@@ -1145,8 +1104,8 @@ def restamp(repo, plugin, rows, contents):
         templates = {header: template_lines(content) for header, content in mycila.templates.items()}
         for name, header in current.items():
             if header not in TEMPLATES:
-                expected[("pe", name)] = wanted[name]
-                mycila.add(("pe", name), name, contents[name])
+                expected[("head", name)] = wanted[name]
+                mycila.add(("head", name), name, contents[name])
                 continue
             try:
                 stamped[name] = swap_header(contents[name], templates[header], templates[wanted[name]])
@@ -1157,9 +1116,9 @@ def restamp(repo, plugin, rows, contents):
             stamped |= {key[1]: content for key, content in results.items()}
             skipped |= {key[1]: reason for key, reason in rejected.items()}
         for name, content in stamped.items():
-            if ("pe", name) not in mycila.paths:
-                mycila.add(("pe", name), name, content)
-        headers = mycila.current_headers([("pe", name) for name in stamped])
+            if ("head", name) not in mycila.paths:
+                mycila.add(("head", name), name, content)
+        headers = mycila.current_headers([("head", name) for name in stamped])
     wrong = sorted(key[1] for key, header in headers.items() if header != wanted[key[1]])
     if wrong:
         raise Failure(f"Restamping did not produce the expected header: {wrong[:20]}")
@@ -1174,13 +1133,32 @@ def restamp(repo, plugin, rows, contents):
     console.end(f"{len(stamped)} files" + (f", {len(skipped)} skipped" if skipped else ""))
 
 
+def prune_curations(path, rows, orphaned):
+    obsolete = {row["path"]: "the check decides the same header by itself" for row in rows if row.get("redundantCuration")}
+    obsolete |= {row["path"]: row["reason"] for row in orphaned}
+    if not obsolete:
+        return []
+    data = json.loads(path.read_text(encoding="utf-8"))
+    data["curations"] = [entry for entry in data["curations"] if entry["path"] not in obsolete]
+    path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    for row in rows:
+        row.pop("redundantCuration", None)
+    return [{"path": name, "reason": reason} for name, reason in sorted(obsolete.items())]
+
+
 def check(args):
     repo = repository_root()
     head = resolve(repo, "HEAD")
-    console.begin(f"Fetching {args.ce_ref} from {args.ce_remote}")
-    baseline = fetch(repo, args.ce_remote, args.ce_ref)
-    console.end()
-    print_banner(repo, head, args.ce_remote, args.ce_ref, baseline)
+    if args.ce_ref:
+        console.begin(f"Fetching {args.ce_ref} from {args.ce_remote}")
+        baseline = fetch(repo, args.ce_remote, args.ce_ref)
+        console.end()
+        ce = {"remote": args.ce_remote, "ref": args.ce_ref, "commit": baseline}
+        ref_names = {baseline: args.ce_ref}
+    else:
+        ce = {"relicensingCommit": RELICENSING_COMMIT}
+        ref_names = {}
+    print_banner(repo, head, ce)
     destination = report_destination(repo, args.output)
     plugin = read_plugin(repo)
     reject_module_overrides(repo)
@@ -1188,8 +1166,9 @@ def check(args):
     curation_bytes = curation_path.read_bytes()
     curations = load_curations(curation_path)
     console.begin("Resolving Git history")
-    lineage = Lineage.load(repo, head, baseline)
-    console.end()
+    bases = merged_ce_bases(repo, head, ce["commit"]) if "ref" in ce else relicensed_ce_bases(repo, head)
+    lineage = Lineage.load(repo, head, bases)
+    console.end("done (CE base " + ", ".join(ref_name(base, ref_names) for base in bases) + ")")
     console.begin("Collecting Mycila scope")
     scope = discover_scope(repo, plugin)
     console.end(f"{len(scope.eligible)} files ({scope.ignored} Git-ignored skipped)")
@@ -1200,19 +1179,21 @@ def check(args):
     orphaned = [{"path": name, "status": "stale-curation", "reason": "file is no longer in scope"}
                 for name in sorted(set(curations) - set(scope.eligible))]
     ensure_inputs_unchanged(repo, lineage, curation_path, curation_bytes, contents)
+    removed = []
     if args.fix:
         restamp(repo, plugin, rows, contents)
+        removed = prune_curations(curation_path, rows, orphaned)
+        orphaned = []
     summary = Counter(row["status"] for row in rows)
     result = {
-        "schemaVersion": 1,
-        "peHead": lineage.head,
-        "ceComparison": {"remote": args.ce_remote, "input": args.ce_ref, "commit": lineage.baseline},
-        "ceHistory": {"tip": lineage.baseline, "firstParent": True},
-        "sharedAncestor": lineage.anchor,
-        "peIntegrationBoundary": lineage.boundary,
+        "schemaVersion": 2,
+        "head": lineage.head,
+        "ce": ce | {"bases": list(lineage.bases)},
         "scope": {"supported": len(scope.eligible), "unknown": scope.unknown, "modules": scope.modules},
         "summary": dict(summary),
         "restamped": sorted(row["path"] for row in rows if "previousHeader" in row),
+        "removedCurations": removed,
+        "redundantCurations": sorted(row["path"] for row in rows if row.get("redundantCuration")),
         "curationIssues": orphaned,
         "files": rows,
     }
@@ -1220,7 +1201,8 @@ def check(args):
     destination.write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     report = destination.relative_to(repo) if destination.is_relative_to(repo) else destination
     print_restamped(rows)
-    print_findings(rows, orphaned, {baseline: args.ce_ref})
+    print_removed_curations(removed)
+    print_findings(rows, orphaned, ref_names)
     print_summary(rows, orphaned, report)
     return 1 if orphaned or summary.keys() - {"match"} else 0
 
@@ -1228,14 +1210,15 @@ def check(args):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("command", choices=["check"])
-    parser.add_argument("--ce-ref", required=True,
-                        help="CE tree and first-parent history to check against; a branch, tag, or commit "
-                             "of the CE repository, fetched from --ce-remote on every run")
+    parser.add_argument("--ce-ref",
+                        help="CE branch, tag, or commit that this branch integrates, fetched from --ce-remote; "
+                             "without it, CE is the history of HEAD that does not contain the relicensing commit")
     parser.add_argument("--ce-remote", default=CE_REMOTE,
                         help=f"Git URL or path of the CE repository to fetch --ce-ref from (default: {CE_REMOTE})")
     parser.add_argument("--output", default="target/license-provenance/report.json")
     parser.add_argument("--fix", action="store_true",
-                        help="restamp files whose expected header the check determined; unrecognized headers are kept")
+                        help="restamp files whose expected header the check determined and remove redundant or "
+                             "orphaned curations; unrecognized headers are kept")
     args = parser.parse_args(argv)
     try:
         return check(args)

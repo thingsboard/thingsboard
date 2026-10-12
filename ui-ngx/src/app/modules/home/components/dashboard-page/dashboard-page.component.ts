@@ -67,6 +67,7 @@ import { EntityService } from '@core/http/entity.service';
 import { AliasController } from '@core/api/alias-controller';
 import { BehaviorSubject, Observable, of, Subject, Subscription, throwError } from 'rxjs';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
+import { HtmlContainerWidgetSettings } from '@shared/models/html-container.models';
 import { DashboardService } from '@core/http/dashboard.service';
 import {
   DashboardContextMenuItem,
@@ -194,6 +195,10 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   get hideToolbar(): boolean {
     return ((this.hideToolbarValue || this.hideToolbarSetting()) && !this.isEdit) || (this.isEditingWidget || this.isAddingWidget);
+  }
+
+  get isHtml(): boolean {
+    return this.layouts.main?.layoutCtx?.gridSettings?.layoutType === LayoutType.html;
   }
 
   @Input()
@@ -1086,7 +1091,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     }
     let gridSettings: GridSettings = null;
     const layoutKeys = this.dashboardUtils.isSingleLayoutDashboard(this.dashboard);
-    if (layoutKeys) {
+    // An HTML page has no widget grid, so the dialog shows only the dashboard settings.
+    if (layoutKeys && !this.isHtml) {
       const layouts = this.dashboardUtils.getDashboardLayoutConfig(
         this.dashboard.configuration.states[layoutKeys.state].layouts[layoutKeys.layout],
         this.layouts[layoutKeys.layout].layoutCtx.breakpoint);
@@ -1114,6 +1120,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
           this.dashboardUtils.updateLayoutSettings(layoutConfig, newGridSettings);
           this.updateDashboardLayouts(layouts);
        }
+       this.cd.markForCheck();
       }
     });
   }
@@ -1584,13 +1591,22 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     const widget = this.dashboardUtils.prepareWidgetForSaving(deepClone(this.editingWidget));
     const widgetLayout = deepClone(this.editingWidgetLayout);
     const id = this.editingWidgetOriginal.id;
-    this.dashboardConfiguration.widgets[id] = widget;
     this.editingWidgetOriginal = widget;
     this.editingWidgetLayoutOriginal = widgetLayout;
-    this.editingLayoutCtx.widgetLayouts[widget.id] = widgetLayout;
-    setTimeout(() => {
-      this.editingLayoutCtx.ctrl.highlightWidget(widget.id, 0);
-    }, 0);
+    if (this.isHtml) {
+      const state = this.dashboardConfiguration.states[this.dashboardCtx.state];
+      state.layouts.main.gridSettings.htmlPageConfig = {
+        settings: widget.config.settings as HtmlContainerWidgetSettings,
+        actions: widget.config.actions
+      };
+      this.updateLayouts();
+    } else {
+      this.dashboardConfiguration.widgets[id] = widget;
+      this.editingLayoutCtx.widgetLayouts[widget.id] = widgetLayout;
+      setTimeout(() => {
+        this.editingLayoutCtx.ctrl.highlightWidget(widget.id, 0);
+      }, 0);
+    }
   }
 
   onEditWidgetClosed() {
@@ -1618,31 +1634,22 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     if (this.editingWidgetOriginal === widget) {
       this.onEditWidgetClosed();
     } else {
-      const transition = !this.forceDashboardMobileMode;
-      this.editingWidgetOriginal = widget;
-      this.editingWidgetLayoutOriginal = layoutCtx.widgetLayouts[widget.id];
-      this.editingWidget = deepClone(this.editingWidgetOriginal);
-      this.editingWidgetLayout = deepClone(this.editingWidgetLayoutOriginal);
-      this.editingLayoutCtx = layoutCtx;
-      this.editingWidgetSubtitle = this.widgetComponentService.getInstantWidgetInfo(this.editingWidget).widgetName;
-      this.forceDashboardMobileMode = true;
-      this.isEditingWidget = true;
-      this.updateLayoutSizes();
-      if (layoutCtx) {
-        const delayOffset = transition ? 350 : 0;
-        const delay = transition ? 400 : 300;
-        setTimeout(() => {
-          layoutCtx.ctrl.highlightWidget(widget.id, delay);
-        }, delayOffset);
-      }
+      this.prepareWidgetEdit(widget, layoutCtx);
     }
   }
 
+  editHtmlPage($event: Event) {
+    $event.stopPropagation();
+    const layoutCtx = this.layouts.main?.layoutCtx;
+    const widget = layoutCtx.widgets.widgetByIndex(0);
+    this.prepareWidgetEdit(widget, layoutCtx, '');
+  }
+
   showLayoutConfigInEdit(layoutCtx: DashboardPageLayoutContext): boolean {
-    return layoutCtx?.gridSettings?.layoutType === LayoutType.divider ||
+    return layoutCtx?.gridSettings?.layoutType !== LayoutType.html && (layoutCtx?.gridSettings?.layoutType === LayoutType.divider ||
       layoutCtx?.gridSettings?.layoutType === LayoutType.default &&
       (layoutCtx?.breakpoint === 'default' ||
-        layoutCtx?.breakpoint !== 'default' && layoutCtx?.gridSettings?.viewFormat === ViewFormatType.list);
+        layoutCtx?.breakpoint !== 'default' && layoutCtx?.gridSettings?.viewFormat === ViewFormatType.list));
   }
 
   replaceReferenceWithWidgetCopy($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget) {
@@ -1726,14 +1733,14 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   }
 
   widgetMouseDown($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget) {
-    if (this.isEdit && !this.isEditingWidget) {
+    if (this.isEdit && !this.isEditingWidget && !this.isHtml) {
       layoutCtx.ctrl.selectWidget(widget.id, 0);
     }
   }
 
   prepareDashboardContextMenu(layoutCtx: DashboardPageLayoutContext): Array<DashboardContextMenuItem> {
     const dashboardContextActions: Array<DashboardContextMenuItem> = [];
-    if (this.isEdit && !this.isEditingWidget && !this.widgetEditMode) {
+    if (this.isEdit && !this.isEditingWidget && !this.widgetEditMode && !this.isHtml) {
       dashboardContextActions.push(
         {
           action: this.openDashboardSettings.bind(this),
@@ -1788,7 +1795,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   prepareWidgetContextMenu(layoutCtx: DashboardPageLayoutContext, widget: Widget, isReference: boolean): Array<WidgetContextMenuItem> {
     const widgetContextActions: Array<WidgetContextMenuItem> = [];
-    if (this.isEdit && !this.isEditingWidget) {
+    if (this.isEdit && !this.isEditingWidget && !this.isHtml) {
       widgetContextActions.push(
         {
           action: (event, currentWidget) => {
@@ -1951,5 +1958,29 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   private getDashboardLogoLink(): UrlTree {
     return this.forceFullscreen ? null : this.router.createUrlTree([], {relativeTo: this.route});
+  }
+
+  private prepareWidgetEdit(widget: Widget, layoutCtx: DashboardPageLayoutContext, subtitle?: string) {
+    const transition = !this.forceDashboardMobileMode;
+    this.editingWidgetOriginal = widget;
+    this.editingWidgetLayoutOriginal = layoutCtx.widgetLayouts[widget.id];
+    this.editingWidget = deepClone(this.editingWidgetOriginal);
+    this.editingWidgetLayout = deepClone(this.editingWidgetLayoutOriginal);
+    this.editingLayoutCtx = layoutCtx;
+    if (isDefinedAndNotNull(subtitle)) {
+      this.editingWidgetSubtitle = subtitle;
+    } else {
+      this.editingWidgetSubtitle = this.widgetComponentService.getInstantWidgetInfo(this.editingWidget).widgetName;
+    }
+    this.forceDashboardMobileMode = true;
+    this.isEditingWidget = true;
+    this.updateLayoutSizes();
+    if (layoutCtx) {
+      const delayOffset = transition ? 350 : 0;
+      const delay = transition ? 400 : 300;
+      setTimeout(() => {
+        layoutCtx.ctrl.highlightWidget(widget.id, delay);
+      }, delayOffset);
+    }
   }
 }
