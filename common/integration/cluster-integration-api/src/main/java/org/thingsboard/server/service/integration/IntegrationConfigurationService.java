@@ -19,11 +19,14 @@ import org.thingsboard.server.gen.integration.IntegrationInfoProto;
 import org.thingsboard.server.service.data.EntityUplinkData;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 public interface IntegrationConfigurationService {
 
     List<Integration> getActiveIntegrationList(IntegrationType type, boolean remote);
+
+    List<Integration> getTenantActiveIntegrationList(TenantId tenantId, Set<IntegrationType> types, boolean remote);
 
     Integration getIntegration(TenantId tenantId, IntegrationId integrationId);
 

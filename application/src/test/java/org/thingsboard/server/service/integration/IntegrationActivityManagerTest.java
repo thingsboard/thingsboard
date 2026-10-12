@@ -13,6 +13,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.integration.api.IntegrationCallback;
+import org.thingsboard.server.common.data.ApiUsageState;
+import org.thingsboard.server.common.data.ApiUsageStateValue;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -31,6 +33,7 @@ import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -663,6 +666,7 @@ public class IntegrationActivityManagerTest {
     @Test
     void givenPostTelemetryMsg_whenProcessingMsg_thenShouldCallOnActivity() {
         // GIVEN
+        mockApiUsageStateEnabled();
         Integration integration = new Integration();
         integration.setTenantId(TENANT_ID);
         integration.setId(new IntegrationId(UUID.randomUUID()));
@@ -711,6 +715,7 @@ public class IntegrationActivityManagerTest {
     @Test
     void givenPostAttributesMsg_whenProcessingMsg_thenShouldCallOnActivity() {
         // GIVEN
+        mockApiUsageStateEnabled();
         Integration integration = new Integration();
         integration.setTenantId(TENANT_ID);
         integration.setId(new IntegrationId(UUID.randomUUID()));
@@ -836,6 +841,14 @@ public class IntegrationActivityManagerTest {
 
         // WHEN-THEN
         assertThatNoException().isThrownBy(() -> integrationServiceMock.onStateExpiry(key, null));
+    }
+
+    private void mockApiUsageStateEnabled() {
+        var apiUsageStateService = mock(TbApiUsageStateService.class);
+        ReflectionTestUtils.setField(integrationServiceMock, "apiUsageStateService", apiUsageStateService);
+        var enabledState = new ApiUsageState();
+        enabledState.setIntegrationState(ApiUsageStateValue.ENABLED);
+        when(apiUsageStateService.getApiUsageState(any(TenantId.class))).thenReturn(enabledState);
     }
 
 }

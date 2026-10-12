@@ -19,6 +19,7 @@ import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -34,6 +35,11 @@ public class TbCoreIntegrationConfigurationService implements IntegrationConfigu
     @Override
     public List<Integration> getActiveIntegrationList(IntegrationType type, boolean remote) {
         return integrationService.findAllCoreIntegrations(type, remote, true);
+    }
+
+    @Override
+    public List<Integration> getTenantActiveIntegrationList(TenantId tenantId, Set<IntegrationType> types, boolean remote) {
+        return integrationService.findAllTenantCoreIntegrations(tenantId, types, remote, true);
     }
 
     @Override

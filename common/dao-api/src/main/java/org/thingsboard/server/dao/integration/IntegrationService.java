@@ -16,6 +16,7 @@ import org.thingsboard.server.dao.entity.EntityDaoService;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface IntegrationService extends EntityDaoService {
 
@@ -50,6 +51,8 @@ public interface IntegrationService extends EntityDaoService {
     Long countCoreIntegrations();
 
     List<Integration> findAllCoreIntegrations(IntegrationType integrationType, boolean remote, boolean enabled);
+
+    List<Integration> findAllTenantCoreIntegrations(TenantId tenantId, Set<IntegrationType> types, boolean remote, boolean enabled);
 
     Integration assignIntegrationToEdge(TenantId tenantId, IntegrationId integrationId, EdgeId edgeId);
 

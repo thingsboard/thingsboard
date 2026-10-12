@@ -11,6 +11,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.thingsboard.integration.api.IntegrationCallback;
+import org.thingsboard.integration.api.exception.IntegrationFeatureDisabledException;
+import org.thingsboard.server.common.data.ApiUsageState;
+import org.thingsboard.server.common.data.ApiUsageStateValue;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.asset.Asset;
@@ -35,6 +39,7 @@ import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.common.TbRuleEngineProducerService;
+import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.profile.DefaultTbAssetProfileCache;
 import org.thingsboard.server.service.profile.DefaultTbDeviceProfileCache;
 
@@ -92,6 +97,9 @@ public class DefaultPlatformIntegrationServiceTest {
     @Mock
     private ExecutorService callbackExecutor;
 
+    @Mock
+    private TbApiUsageStateService apiUsageStateService;
+
     private DefaultPlatformIntegrationService service;
 
     @BeforeEach
@@ -107,6 +115,11 @@ public class DefaultPlatformIntegrationServiceTest {
         ReflectionTestUtils.setField(service, "ruleEngineProducerService", ruleEngineProducerService);
         ReflectionTestUtils.setField(service, "integrationRuleEngineMsgProducer", integrationRuleEngineMsgProducer);
         ReflectionTestUtils.setField(service, "callbackExecutor", callbackExecutor);
+        ReflectionTestUtils.setField(service, "apiUsageStateService", apiUsageStateService);
+
+        ApiUsageState enabledState = new ApiUsageState();
+        enabledState.setIntegrationState(ApiUsageStateValue.ENABLED);
+        when(apiUsageStateService.getApiUsageState(any(TenantId.class))).thenReturn(enabledState);
     }
 
     @Test
@@ -482,6 +495,27 @@ public class DefaultPlatformIntegrationServiceTest {
 
         assertThat(result).isEqualTo(savedDevice);
         verify(customerService).saveCustomer(any(Customer.class));
+    }
+
+    @Test
+    public void whenIntegrationDisabled_thenProcessTbMsgInvokesOnError() {
+        ApiUsageState disabledState = new ApiUsageState();
+        disabledState.setIntegrationState(ApiUsageStateValue.DISABLED);
+        when(apiUsageStateService.getApiUsageState(eq(TENANT_ID))).thenReturn(disabledState);
+
+        TbMsg tbMsg = mock(TbMsg.class);
+        when(tbMsg.getCustomerId()).thenReturn(CUSTOMER_ID);
+
+        @SuppressWarnings("unchecked")
+        IntegrationCallback<Void> callback = mock(IntegrationCallback.class);
+
+        service.process(TENANT_ID, tbMsg, callback);
+
+        ArgumentCaptor<Throwable> errorCaptor = ArgumentCaptor.forClass(Throwable.class);
+        verify(callback, times(1)).onError(errorCaptor.capture());
+        assertThat(errorCaptor.getValue()).isInstanceOf(IntegrationFeatureDisabledException.class);
+        verify(callback, never()).onSuccess(any());
+        verify(ruleEngineProducerService, never()).sendToRuleEngine(any(), any(TenantId.class), any(TbMsg.class), any(TbQueueCallback.class));
     }
 
 }

@@ -16,6 +16,7 @@ import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.integration.api.IntegrationRateLimitService;
 import org.thingsboard.integration.api.IntegrationStatisticsService;
 import org.thingsboard.integration.api.util.LogSettingsComponent;
+import org.thingsboard.server.common.stats.TbApiUsageStateClient;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.converter.ConverterService;
@@ -45,7 +46,7 @@ public class IntegrationContextComponent {
     private volatile boolean isClosed = false;
 
     @EventListener
-    public void handleContextClosed(ContextClosedEvent event) {
+    public void handleContextClosed(ContextClosedEvent ignoredEvent) {
         isClosed = true;
     }
 
@@ -123,6 +124,9 @@ public class IntegrationContextComponent {
     private IntegrationRateLimitService rateLimitService;
 
     @Autowired
+    private TbApiUsageStateClient apiUsageStateClient;
+
+    @Autowired
     private SecretConfigurationService secretConfigurationService;
 
     @Lazy
@@ -171,4 +175,5 @@ public class IntegrationContextComponent {
     public boolean isExceptionStackTraceEnabled() {
         return logSettingsComponent.isExceptionStackTraceEnabled();
     }
+
 }

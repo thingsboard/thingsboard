@@ -11,4 +11,5 @@ public interface RemoteIntegrationSessionService {
     IntegrationSession putIntegrationSession(IntegrationId integrationId, IntegrationSession session);
 
     void removeIntegrationSession(IntegrationId integrationId);
+
 }

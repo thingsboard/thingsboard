@@ -4,6 +4,7 @@ package org.thingsboard.server.service.integration;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.integration.api.ThingsboardPlatformIntegration;
+import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.integration.Integration;
 import org.thingsboard.server.common.data.integration.IntegrationType;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
@@ -26,6 +27,8 @@ public interface IntegrationManagerService {
     void refresh(IntegrationType integrationType, Set<TopicPartitionInfo> newPartitions);
 
     void handleComponentLifecycleMsg(ComponentLifecycleMsg componentLifecycleMsg);
+
+    void onApiUsageStateUpdate(ApiUsageState apiUsageState);
 
     void handleDownlink(IntegrationDownlinkMsgProto downlinkMsg, TbCallback callback);
 

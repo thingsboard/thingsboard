@@ -28,13 +28,15 @@ public class ApiUsageStateFields extends AbstractEntityFields {
     private ApiUsageStateValue emailExecState;
     private ApiUsageStateValue smsExecState;
     private ApiUsageStateValue alarmExecState;
+    private ApiUsageStateValue edgeState;
     private ApiUsageStateValue reportExecState;
+    private ApiUsageStateValue integrationState;
     private ApiUsageStateValue aiState;
 
     public ApiUsageStateFields(UUID id, long createdTime, UUID tenantId, UUID entityId, String entityType, ApiUsageStateValue transportState, ApiUsageStateValue dbStorageState,
                                ApiUsageStateValue reExecState, ApiUsageStateValue jsExecState, ApiUsageStateValue tbelExecState,
                                ApiUsageStateValue emailExecState, ApiUsageStateValue smsExecState, ApiUsageStateValue alarmExecState,
-                               ApiUsageStateValue reportExecState, ApiUsageStateValue aiState, Long version) {
+                               ApiUsageStateValue edgeState, ApiUsageStateValue reportExecState, ApiUsageStateValue integrationState, ApiUsageStateValue aiState, Long version) {
         super(id, createdTime, tenantId, null, null, version);
         this.entityId = (entityType != null && entityId != null) ? EntityIdFactory.getByTypeAndUuid(entityType, entityId) : null;
         this.transportState = transportState;
@@ -45,7 +47,9 @@ public class ApiUsageStateFields extends AbstractEntityFields {
         this.emailExecState = emailExecState;
         this.smsExecState = smsExecState;
         this.alarmExecState = alarmExecState;
+        this.edgeState = edgeState;
         this.reportExecState = reportExecState;
+        this.integrationState = integrationState;
         this.aiState = aiState;
     }
 

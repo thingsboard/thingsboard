@@ -6,15 +6,22 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 import org.thingsboard.server.common.data.id.IntegrationId;
+
+import java.io.Serial;
 
 @Schema
 @EqualsAndHashCode(callSuper = true)
 public class IntegrationInfo extends AbstractIntegration {
 
+    @Serial
     private static final long serialVersionUID = 4934987577236873728L;
 
+    @Getter @Setter
     private transient ObjectNode status;
+    @Getter @Setter
     private transient ArrayNode stats;
 
     public IntegrationInfo() {
@@ -23,22 +30,6 @@ public class IntegrationInfo extends AbstractIntegration {
 
     public IntegrationInfo(IntegrationId id) {
         super(id);
-    }
-
-    public ObjectNode getStatus() {
-        return status;
-    }
-
-    public void setStatus(ObjectNode status) {
-        this.status = status;
-    }
-
-    public ArrayNode getStats() {
-        return stats;
-    }
-
-    public void setStats(ArrayNode stats) {
-        this.stats = stats;
     }
 
 }

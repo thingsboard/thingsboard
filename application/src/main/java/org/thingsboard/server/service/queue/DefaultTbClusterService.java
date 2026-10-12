@@ -75,6 +75,7 @@ import org.thingsboard.server.common.msg.rule.engine.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.group.EntityGroupService;
+import org.thingsboard.server.dao.ota.OtaPackageStateService;
 import org.thingsboard.server.gen.integration.ToIntegrationExecutorNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.AgentAppEventNotificationProto;
@@ -111,7 +112,6 @@ import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.gateway_device.GatewayNotificationsService;
-import org.thingsboard.server.dao.ota.OtaPackageStateService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 
@@ -433,6 +433,7 @@ public class DefaultTbClusterService implements TbClusterService {
     @Override
     public void onApiStateChange(ApiUsageState apiUsageState, TbQueueCallback callback) {
         broadcastEntityChangeToTransport(apiUsageState.getTenantId(), apiUsageState.getId(), apiUsageState, callback);
+        broadcastApiUsageStateToIntegrationExecutor(apiUsageState);
         broadcast(new ComponentLifecycleMsg(apiUsageState.getTenantId(), apiUsageState.getId(), ComponentLifecycleEvent.UPDATED));
     }
 
@@ -544,6 +545,21 @@ public class DefaultTbClusterService implements TbClusterService {
         log.trace("[{}][{}][{}] Processing [{}] change event", tenantId, entityid.getEntityType(), entityid.getId(), entityName);
         ToTransportMsg transportMsg = ToTransportMsg.newBuilder().setEntityUpdateMsg(ProtoUtils.toEntityUpdateProto(entity)).build();
         broadcast(transportMsg, callback);
+    }
+
+    private void broadcastApiUsageStateToIntegrationExecutor(ApiUsageState apiUsageState) {
+        TransportProtos.ApiUsageStateProto apiUsageStateProto = ProtoUtils.toProto(apiUsageState);
+        TbQueueProducer<TbProtoQueueMsg<ToIntegrationExecutorNotificationMsg>> toIeNfProducer = producerProvider.getTbIntegrationExecutorNotificationsMsgProducer();
+        Set<String> tbIeServices = partitionService.getAllServiceIds(ServiceType.TB_INTEGRATION_EXECUTOR);
+        tbIeServices.addAll(partitionService.getAllServiceIds(ServiceType.TB_CORE));
+        for (String serviceId : tbIeServices) {
+            TopicPartitionInfo tpi = topicService.getNotificationsTopic(ServiceType.TB_INTEGRATION_EXECUTOR, serviceId);
+            ToIntegrationExecutorNotificationMsg toIeMsg = ToIntegrationExecutorNotificationMsg.newBuilder()
+                    .setApiUsageState(apiUsageStateProto)
+                    .build();
+            toIeNfProducer.send(tpi, new TbProtoQueueMsg<>(apiUsageState.getId().getId(), toIeMsg), null);
+            toIntegrationExecutorNfs.incrementAndGet();
+        }
     }
 
     private void broadcastEntityDeleteToTransport(TenantId tenantId, EntityId entityId, String name, TbQueueCallback callback) {

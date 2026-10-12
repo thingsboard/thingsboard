@@ -6,6 +6,7 @@ package org.thingsboard.server.common.data;
 import lombok.Getter;
 
 public enum ApiFeature {
+
     TRANSPORT("transportApiState", "Device API"),
     DB("dbApiState", "Telemetry persistence"),
     RE("ruleEngineApiState", "Rule Engine execution"),
@@ -14,7 +15,9 @@ public enum ApiFeature {
     EMAIL("emailApiState", "Email messages"),
     SMS("smsApiState", "SMS messages"),
     ALARM("alarmApiState", "Alarms"),
+    EDGE("edgeApiState", "Edge"),
     REPORT("reportApiState", "Reports"),
+    INTEGRATION("integrationApiState", "Integrations"),
     AI("aiApiState", "AI");
 
     @Getter

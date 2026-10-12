@@ -465,8 +465,8 @@ public class DefaultIntegrationApiService implements IntegrationApiService {
         @Override
         public void onSuccess(T msg) {
             try {
-                apiUsageReportClient.report(tenantId, customerId, ApiUsageRecordKey.TRANSPORT_MSG_COUNT, 1);
-                apiUsageReportClient.report(tenantId, customerId, ApiUsageRecordKey.TRANSPORT_DP_COUNT, dataPoints);
+                apiUsageReportClient.report(tenantId, customerId, ApiUsageRecordKey.INTEGRATION_MSG_COUNT, 1);
+                apiUsageReportClient.report(tenantId, customerId, ApiUsageRecordKey.INTEGRATION_DP_COUNT, dataPoints);
             } finally {
                 if (callback != null) {
                     callback.onSuccess(msg);

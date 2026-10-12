@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.service;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
@@ -61,7 +62,7 @@ public class EdgeEventServiceTest extends AbstractServiceTest {
         PageData<EdgeEvent> edgeEvents = edgeEventService.findEdgeEvents(tenantId, edgeId, 0L, null, new TimePageLink(1));
         Assert.assertFalse(edgeEvents.getData().isEmpty());
 
-        EdgeEvent saved = edgeEvents.getData().get(0);
+        EdgeEvent saved = edgeEvents.getData().getFirst();
         Assert.assertEquals(saved.getTenantId(), edgeEvent.getTenantId());
         Assert.assertEquals(saved.getEdgeId(), edgeEvent.getEdgeId());
         Assert.assertEquals(saved.getEntityId(), edgeEvent.getEntityId());
@@ -111,7 +112,7 @@ public class EdgeEventServiceTest extends AbstractServiceTest {
 
         Assert.assertNotNull(edgeEvents.getData());
         Assert.assertEquals(1, edgeEvents.getData().size());
-        Assert.assertEquals(Uuids.startOf(eventTime + 1), edgeEvents.getData().get(0).getUuidId());
+        Assert.assertEquals(Uuids.startOf(eventTime + 1), edgeEvents.getData().getFirst().getUuidId());
         Assert.assertFalse(edgeEvents.hasNext());
 
         edgeEventDao.cleanupEvents(1);

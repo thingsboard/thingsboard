@@ -42,6 +42,7 @@ import org.thingsboard.server.service.integration.IntegrationConfigurationServic
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -85,6 +86,26 @@ public class TbIntegrationExecutorIntegrationConfigurationService implements Int
             }
         }
         throw new RuntimeException("Interrupted while fetching integration list");
+    }
+
+    @Override
+    public List<Integration> getTenantActiveIntegrationList(TenantId tenantId, Set<IntegrationType> types, boolean remote) {
+        try {
+            var builder = IntegrationInfoListRequestProto.newBuilder()
+                    .setEnabled(true)
+                    .setRemote(remote)
+                    .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                    .setTenantIdLSB(tenantId.getId().getLeastSignificantBits());
+            if (types != null && !types.isEmpty()) {
+                builder.addAllTypes(types.stream().map(IntegrationType::name).toList());
+            }
+            var request = builder.build();
+            var response = apiTemplate.send(new TbProtoQueueMsg<>(UUID.randomUUID(),
+                    IntegrationApiRequestMsg.newBuilder().setIntegrationListRequest(request).build()));
+            return Futures.transform(response, this::parseListFromProto, callbackExecutor).get(10, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to receive the list of integrations for tenant " + tenantId, e);
+        }
     }
 
     @Override

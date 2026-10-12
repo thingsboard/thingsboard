@@ -76,6 +76,7 @@ ALTER TABLE component_descriptor ADD COLUMN IF NOT EXISTS has_secrets boolean de
 
 ALTER TABLE api_usage_state ADD COLUMN IF NOT EXISTS report_exec varchar(32) DEFAULT 'ENABLED';
 ALTER TABLE api_usage_state ADD COLUMN IF NOT EXISTS ai varchar(32) DEFAULT 'ENABLED';
+ALTER TABLE api_usage_state ADD COLUMN IF NOT EXISTS integration varchar(32) DEFAULT 'ENABLED';
 
 ALTER TABLE api_key ADD COLUMN IF NOT EXISTS internal boolean DEFAULT false;
 

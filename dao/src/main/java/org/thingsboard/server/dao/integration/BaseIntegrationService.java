@@ -35,8 +35,10 @@ import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.exception.DataValidationException;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
@@ -223,6 +225,13 @@ public class BaseIntegrationService extends CachedVersionedEntityService<Integra
     public List<Integration> findAllCoreIntegrations(IntegrationType integrationType, boolean remote, boolean enabled) {
         log.trace("Executing findAllCoreIntegrations [{}][{}][{}]", integrationType, remote, enabled);
         return integrationDao.findAllCoreIntegrations(integrationType, remote, enabled);
+    }
+
+    @Override
+    public List<Integration> findAllTenantCoreIntegrations(TenantId tenantId, Set<IntegrationType> types, boolean remote, boolean enabled) {
+        log.trace("Executing findAllTenantCoreIntegrations [{}][{}][{}][{}]", tenantId, types, remote, enabled);
+        List<IntegrationType> typesList = (types == null || types.isEmpty()) ? null : new ArrayList<>(types);
+        return integrationDao.findAllTenantCoreIntegrations(tenantId.getId(), typesList, remote, enabled);
     }
 
     @Override

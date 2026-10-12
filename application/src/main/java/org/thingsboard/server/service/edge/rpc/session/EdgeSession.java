@@ -1,8 +1,10 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.edge.rpc.session;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import org.springframework.data.util.Pair;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
@@ -18,13 +20,23 @@ import java.util.List;
 public interface EdgeSession extends Closeable {
 
     StreamObserver<RequestMsg> initInputStream();
+
     EdgeSessionState getState();
+
     void startSyncProcess(boolean fullSync);
+
     void sendDownlinkMsg(ResponseMsg responseMsg);
+
     void addHighPriorityEvent(EdgeEvent edgeEvent);
+
     void processHighPriorityEvents();
+
     boolean hasHighPriorityEvents();
+
     ListenableFuture<Pair<Long, Long>> fetchAndSendEdgeEvents(EdgeEventFetcher fetcher);
+
     ListenableFuture<Boolean> sendDownlinkMsgsPack(List<DownlinkMsg> downlinkMsgsPack);
+
+    void closeWithError(Status status, String errorMsg);
 
 }

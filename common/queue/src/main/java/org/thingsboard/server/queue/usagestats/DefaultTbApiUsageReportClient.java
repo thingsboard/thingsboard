@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.queue.usagestats;
 
 import com.google.common.collect.Lists;
@@ -19,9 +20,9 @@ import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.gen.transport.TransportProtos.UsageStatsServiceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.UsageStatsKVProto;
+import org.thingsboard.server.gen.transport.TransportProtos.UsageStatsServiceMsg;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
@@ -165,7 +166,9 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
 
     @Override
     public void report(TenantId tenantId, CustomerId customerId, ApiUsageRecordKey key, long value) {
-        if (!enabled) return;
+        if (!enabled) {
+            return;
+        }
 
         ReportLevel[] reportLevels = new ReportLevel[3];
         reportLevels[0] = ReportLevel.of(tenantId);
@@ -186,7 +189,9 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
     private void report(ApiUsageRecordKey key, long value, ReportLevel... levels) {
         ConcurrentMap<ReportLevel, AtomicLong> statsForKey = stats.get(key);
         for (ReportLevel level : levels) {
-            if (level == null) continue;
+            if (level == null) {
+                continue;
+            }
 
             AtomicLong n = statsForKey.computeIfAbsent(level, k -> new AtomicLong());
             if (key.isCounter()) {
@@ -199,6 +204,7 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
 
     @Data
     private static class ReportLevel {
+
         private final TenantId tenantId;
         private final CustomerId customerId;
 
@@ -218,12 +224,14 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
 
     @Data
     private static class ParentEntity {
+
         private final TenantId tenantId;
         private final CustomerId customerId;
 
         public EntityId getId() {
             return customerId != null ? customerId : tenantId;
         }
+
     }
 
 }

@@ -127,8 +127,14 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private long maxSms;
     @Schema(example = "1000")
     private long maxCreatedAlarms;
+    @Schema(example = "10000000")
+    private long maxEdgeEvents;
     @Schema(example = "10000")
     private long maxGeneratedReports;
+    @Schema(example = "10000000")
+    private long maxIntegrationMessages;
+    @Schema(example = "10000000")
+    private long maxIntegrationDataPoints;
     @Schema(example = "10000")
     private long maxAiCredits;
 
@@ -243,7 +249,10 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
             case EMAIL_EXEC_COUNT -> maxEmails;
             case SMS_EXEC_COUNT -> maxSms;
             case CREATED_ALARMS_COUNT -> maxCreatedAlarms;
+            case EDGE_EVENT_COUNT -> maxEdgeEvents;
             case GENERATED_REPORTS_COUNT -> maxGeneratedReports;
+            case INTEGRATION_MSG_COUNT -> maxIntegrationMessages;
+            case INTEGRATION_DP_COUNT -> maxIntegrationDataPoints;
             case AI_CREDITS_COUNT -> maxAiCredits;
             default -> 0L;
         };
@@ -252,7 +261,7 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     @Override
     public boolean getProfileFeatureEnabled(ApiUsageRecordKey key) {
         return switch (key) {
-            case SMS_EXEC_COUNT -> smsEnabled == null || Boolean.TRUE.equals(smsEnabled);
+            case SMS_EXEC_COUNT -> smsEnabled == null || smsEnabled;
             default -> true;
         };
     }

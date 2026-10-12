@@ -57,10 +57,17 @@ public class ApiUsageStateEntity extends BaseVersionedEntity<ApiUsageState> impl
     @Enumerated(EnumType.STRING)
     @Column(name = ModelConstants.API_USAGE_STATE_ALARM_EXEC_COLUMN)
     private ApiUsageStateValue alarmExecState = ApiUsageStateValue.ENABLED;
+    @Enumerated(EnumType.STRING)
+    @Column(name = ModelConstants.API_USAGE_STATE_EDGE_COLUMN)
+    private ApiUsageStateValue edgeState = ApiUsageStateValue.ENABLED;
 
     @Enumerated(EnumType.STRING)
     @Column(name = ModelConstants.API_USAGE_STATE_REPORT_EXEC_COLUMN)
     private ApiUsageStateValue reportExecState = ApiUsageStateValue.ENABLED;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = ModelConstants.API_USAGE_STATE_INTEGRATION_COLUMN)
+    private ApiUsageStateValue integrationState = ApiUsageStateValue.ENABLED;
 
     @Enumerated(EnumType.STRING)
     @Column(name = ModelConstants.API_USAGE_STATE_AI_COLUMN)
@@ -86,7 +93,9 @@ public class ApiUsageStateEntity extends BaseVersionedEntity<ApiUsageState> impl
         this.emailExecState = ur.getEmailExecState();
         this.smsExecState = ur.getSmsExecState();
         this.alarmExecState = ur.getAlarmExecState();
+        this.edgeState = ur.getEdgeState();
         this.reportExecState = ur.getReportExecState();
+        this.integrationState = ur.getIntegrationState();
         this.aiState = ur.getAiState();
     }
 
@@ -108,7 +117,9 @@ public class ApiUsageStateEntity extends BaseVersionedEntity<ApiUsageState> impl
         ur.setEmailExecState(emailExecState);
         ur.setSmsExecState(smsExecState);
         ur.setAlarmExecState(alarmExecState);
+        ur.setEdgeState(edgeState);
         ur.setReportExecState(reportExecState);
+        ur.setIntegrationState(integrationState);
         ur.setAiState(aiState);
         ur.setVersion(version);
         return ur;

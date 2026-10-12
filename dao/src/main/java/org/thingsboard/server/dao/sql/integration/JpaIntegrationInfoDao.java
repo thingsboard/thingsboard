@@ -24,10 +24,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-
-/**
- * Created by Valerii Sosliuk on 5/6/2017.
- */
 @Slf4j
 @Component
 @SqlDao

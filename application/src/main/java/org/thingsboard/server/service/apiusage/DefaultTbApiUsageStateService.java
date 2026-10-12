@@ -5,6 +5,7 @@ package org.thingsboard.server.service.apiusage;
 
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.Striped;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
@@ -49,9 +50,8 @@ import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
 import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.UsageStatsServiceMsg;
-import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.UsageStatsKVProto;
+import org.thingsboard.server.gen.transport.TransportProtos.UsageStatsServiceMsg;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
@@ -123,6 +123,10 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
     private int packSize;
 
     private final Lock updateLock = new ReentrantLock();
+    // Per-owner lock for the cold-fetch path of getOrFetchState. Splitting this off the global
+    // updateLock prevents first-touch fetches for one tenant from blocking stats processing for
+    // others (the only other operations that hold updateLock).
+    private final Striped<Lock> fetchLocks = Striped.lazyWeakLock(1024);
 
     @PostConstruct
     public void init() {
@@ -150,26 +154,7 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
         ToUsageStatsServiceMsg serviceMsg = msgPack.getValue();
         String serviceId = serviceMsg.getServiceId();
         Map<TopicPartitionInfo, List<UsageStatsServiceMsg>> toPropagateStats = new HashMap<>();
-        List<TransportProtos.UsageStatsServiceMsg> msgs;
-
-        //For backward compatibility, remove after release
-        if (serviceMsg.getMsgsList().isEmpty()) {
-            TransportProtos.UsageStatsServiceMsg oldMsg = TransportProtos.UsageStatsServiceMsg.newBuilder()
-                    .setTenantIdMSB(serviceMsg.getTenantIdMSB())
-                    .setTenantIdLSB(serviceMsg.getTenantIdLSB())
-                    .setCustomerIdMSB(serviceMsg.getCustomerIdMSB())
-                    .setCustomerIdLSB(serviceMsg.getCustomerIdLSB())
-                    .setEntityIdMSB(serviceMsg.getEntityIdMSB())
-                    .setEntityIdLSB(serviceMsg.getEntityIdLSB())
-                    .addAllValues(serviceMsg.getValuesList())
-                    .build();
-
-            msgs = List.of(oldMsg);
-        } else {
-            msgs = serviceMsg.getMsgsList();
-        }
-
-        msgs.forEach(msg -> {
+        serviceMsg.getMsgsList().forEach(msg -> {
             TenantId tenantId = TenantId.fromUUID(new UUID(msg.getTenantIdMSB(), msg.getTenantIdLSB()));
             EntityId ownerId;
             if (msg.getCustomerIdMSB() != 0 && msg.getCustomerIdLSB() != 0) {
@@ -195,7 +180,9 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
     }
 
     private void processEntityUsageStats(TenantId tenantId, EntityId ownerId, List<UsageStatsKVProto> values, String serviceId) {
-        if (deletedEntities.contains(ownerId)) return;
+        if (deletedEntities.contains(ownerId)) {
+            return;
+        }
 
         BaseApiUsageState usageState;
         List<TsKvEntry> updatedEntries;
@@ -216,14 +203,7 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
             updatedEntries = new ArrayList<>(ApiUsageRecordKey.values().length);
             Set<ApiFeature> apiFeatures = new HashSet<>();
             for (UsageStatsKVProto statsItem : values) {
-                ApiUsageRecordKey recordKey;
-
-                //For backward compatibility, remove after release
-                if (StringUtils.isNotEmpty(statsItem.getKey())) {
-                    recordKey = ApiUsageRecordKey.valueOf(statsItem.getKey());
-                } else {
-                    recordKey = ProtoUtils.fromProto(statsItem.getRecordKey());
-                }
+                ApiUsageRecordKey recordKey = ProtoUtils.fromProto(statsItem.getRecordKey());
 
                 StatsCalculationResult calculationResult = usageState.calculate(recordKey, statsItem.getValue(), serviceId);
                 if (calculationResult.isValueChanged()) {
@@ -476,6 +456,7 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
 
     private interface StateChecker {
         boolean check(long threshold, long warnThreshold, long value);
+
     }
 
     public void checkStartOfNextCycle() {
@@ -522,7 +503,21 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
         if (state != null) {
             return state;
         }
+        Lock fetchLock = fetchLocks.get(ownerId);
+        fetchLock.lock();
+        try {
+            state = myUsageStates.get(ownerId);
+            if (state != null) {
+                return state;
+            }
+            return doFetchState(tenantId, ownerId);
+        } finally {
+            fetchLock.unlock();
+        }
+    }
 
+    private BaseApiUsageState doFetchState(TenantId tenantId, EntityId ownerId) {
+        BaseApiUsageState state;
         ApiUsageState storedState = apiUsageStateService.findApiUsageStateByEntityId(ownerId);
         if (storedState == null) {
             try {
@@ -634,4 +629,5 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
     private void destroy() {
         super.stop();
     }
+
 }

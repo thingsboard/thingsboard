@@ -58,6 +58,7 @@ enum ConnectResponseCode {
   ACCEPTED = 0;
   BAD_CREDENTIALS = 1;
   SERVER_UNAVAILABLE = 2;
+  FEATURE_DISABLED = 3;
 }
 
 message ConnectResponseMsg {
@@ -244,6 +245,9 @@ message IntegrationInfoListRequestProto {
   string type = 1;
   bool enabled = 2;
   bool remote = 3;
+  optional int64 tenantIdMSB = 4;
+  optional int64 tenantIdLSB = 5;
+  repeated string types = 6;
 }
 
 message IntegrationInfoListResponseProto {
@@ -343,6 +347,7 @@ message IntegrationApiResponseMsg {
 /* High priority messages with low latency are handled by ThingsBoard Integration Executor Service separately */
 message ToIntegrationExecutorNotificationMsg {
   transport.ComponentLifecycleMsgProto componentLifecycle = 1;
+  transport.ApiUsageStateProto apiUsageState = 2;
 }
 
 message IntegrationValidationRequestProto {

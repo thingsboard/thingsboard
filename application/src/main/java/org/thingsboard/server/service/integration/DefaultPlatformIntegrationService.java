@@ -20,8 +20,10 @@ import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.integration.api.IntegrationCallback;
+import org.thingsboard.integration.api.exception.IntegrationFeatureDisabledException;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
+import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
@@ -88,6 +90,7 @@ import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.common.TbRuleEngineProducerService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.profile.DefaultTbAssetProfileCache;
 import org.thingsboard.server.service.profile.DefaultTbDeviceProfileCache;
@@ -150,6 +153,9 @@ public class DefaultPlatformIntegrationService extends IntegrationActivityManage
 
     @Autowired
     private TbApiUsageReportClient apiUsageReportClient;
+
+    @Autowired
+    private TbApiUsageStateService apiUsageStateService;
 
     @Autowired
     private DefaultTbDeviceProfileCache deviceProfileCache;
@@ -369,6 +375,7 @@ public class DefaultPlatformIntegrationService extends IntegrationActivityManage
                 return;
             }
             TenantId tenantId = TenantId.fromUUID(new UUID(sessionInfo.getTenantIdMSB(), sessionInfo.getTenantIdLSB()));
+            checkIntegrationApiUsageState(tenantId);
             DeviceId deviceId = new DeviceId(new UUID(sessionInfo.getDeviceIdMSB(), sessionInfo.getDeviceIdLSB()));
             onActivity(new IntegrationActivityKey(tenantId, deviceId), null, getCurrentTimeMillis());
             int dataPoints = 0;
@@ -393,6 +400,7 @@ public class DefaultPlatformIntegrationService extends IntegrationActivityManage
     public void process(SessionInfoProto sessionInfo, PostAttributeMsg msg, IntegrationCallback<Void> callback) {
         try {
             TenantId tenantId = TenantId.fromUUID(new UUID(sessionInfo.getTenantIdMSB(), sessionInfo.getTenantIdLSB()));
+            checkIntegrationApiUsageState(tenantId);
             DeviceId deviceId = new DeviceId(new UUID(sessionInfo.getDeviceIdMSB(), sessionInfo.getDeviceIdLSB()));
             onActivity(new IntegrationActivityKey(tenantId, deviceId), null, getCurrentTimeMillis());
             JsonObject json = JsonUtils.getJsonObject(msg.getKvList());
@@ -408,7 +416,20 @@ public class DefaultPlatformIntegrationService extends IntegrationActivityManage
 
     @Override
     public void process(TenantId tenantId, TbMsg tbMsg, IntegrationCallback<Void> callback) {
+        try {
+            checkIntegrationApiUsageState(tenantId);
+        } catch (IntegrationFeatureDisabledException e) {
+            callback.onError(e);
+            return;
+        }
         sendToRuleEngine(tenantId, tbMsg, new IntegrationTbQueueCallback(new ApiStatsProxyCallback<>(tenantId, tbMsg.getCustomerId(), 1, callback)));
+    }
+
+    private void checkIntegrationApiUsageState(TenantId tenantId) {
+        ApiUsageState state = apiUsageStateService.getApiUsageState(tenantId);
+        if (state != null && !state.isIntegrationEnabled()) {
+            throw new IntegrationFeatureDisabledException();
+        }
     }
 
     @Override
@@ -955,8 +976,8 @@ public class DefaultPlatformIntegrationService extends IntegrationActivityManage
         @Override
         public void onSuccess(T msg) {
             try {
-                apiUsageReportClient.report(tenantId, customerId, ApiUsageRecordKey.TRANSPORT_MSG_COUNT, 1);
-                apiUsageReportClient.report(tenantId, customerId, ApiUsageRecordKey.TRANSPORT_DP_COUNT, dataPoints);
+                apiUsageReportClient.report(tenantId, customerId, ApiUsageRecordKey.INTEGRATION_MSG_COUNT, 1);
+                apiUsageReportClient.report(tenantId, customerId, ApiUsageRecordKey.INTEGRATION_DP_COUNT, dataPoints);
             } finally {
                 if (callback != null) {
                     callback.onSuccess(msg);

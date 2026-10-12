@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.query.StringFilterPredicate;
 import org.thingsboard.server.edqs.util.RepositoryUtils;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
 public class ApiUsageStateFilterTest extends AbstractEDQTest {
@@ -53,7 +54,7 @@ public class ApiUsageStateFilterTest extends AbstractEDQTest {
         var result = repository.findEntityDataByQuery(tenantId, null, RepositoryUtils.ALL_READ_PERMISSIONS, getEntityDataQuery(new CustomerId(customerId)), false);
 
         Assert.assertEquals(1, result.getTotalElements());
-        var customer = result.getData().get(0);
+        var customer = result.getData().getFirst();
         Assert.assertEquals("Customer A", customer.getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue());
     }
 
@@ -70,7 +71,9 @@ public class ApiUsageStateFilterTest extends AbstractEDQTest {
         apiUsageState.setSmsExecState(ApiUsageStateValue.ENABLED);
         apiUsageState.setEmailExecState(ApiUsageStateValue.ENABLED);
         apiUsageState.setAlarmExecState(ApiUsageStateValue.ENABLED);
+        apiUsageState.setEdgeState(ApiUsageStateValue.ENABLED);
         apiUsageState.setReportExecState(ApiUsageStateValue.ENABLED);
+        apiUsageState.setIntegrationState(ApiUsageStateValue.ENABLED);
         return apiUsageState;
     }
 
@@ -89,7 +92,7 @@ public class ApiUsageStateFilterTest extends AbstractEDQTest {
         nameFilter.setPredicate(predicate);
         nameFilter.setValueType(EntityKeyValueType.STRING);
 
-        return new EntityDataQuery(filter, pageLink, entityFields, null, Arrays.asList(nameFilter));
+        return new EntityDataQuery(filter, pageLink, entityFields, null, List.of(nameFilter));
     }
 
 }
