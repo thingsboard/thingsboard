@@ -1,0 +1,52 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.thingsboard</groupId>
+        <version>4.4.0.1-SNAPSHOT</version>
+        <artifactId>thingsboard</artifactId>
+    </parent>
+    <artifactId>integration</artifactId>
+    <packaging>pom</packaging>
+
+    <name>ThingsBoard Server Integration Modules</name>
+    <url>https://thingsboard.io</url>
+
+    <properties>
+        <main.dir>${basedir}/..</main.dir>
+    </properties>
+
+    <modules>
+        <module>http</module>
+        <module>mqtt</module>
+        <module>opc-ua</module>
+        <module>azure</module>
+        <module>aws</module>
+        <module>tcp-udp</module>
+        <module>kafka</module>
+        <module>apache-pulsar</module>
+        <module>rabbitmq</module>
+        <module>pubsub</module>
+        <module>coap</module>
+        <module>tuya</module>
+        <module>executor</module>
+    </modules>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

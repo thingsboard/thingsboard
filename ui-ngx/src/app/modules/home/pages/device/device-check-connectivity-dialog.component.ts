@@ -1,20 +1,7 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { Component, Inject, NgZone, OnDestroy, OnInit } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { Component, DestroyRef, Inject, NgZone, OnDestroy, OnInit } from '@angular/core';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -43,6 +30,8 @@ import {
 import { ActionPreferencesPutUserSettings } from '@core/auth/auth.actions';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { getOS } from '@core/utils';
+import { WhiteLabelingService } from '@core/http/white-labeling.service';
+import { AiDashboardGenerationService } from '@home/components/ai/ai-dashboard-generation.service';
 
 export interface DeviceCheckConnectivityDialogData {
   deviceId: EntityId;
@@ -78,6 +67,8 @@ export class DeviceCheckConnectivityDialogComponent extends
 
   notShowAgain = false;
 
+  docsLink = this.wl.getDocsUrl();
+
   httpTabIndex = 0;
   mqttTabIndex = 0;
   coapTabIndex = 0;
@@ -94,7 +85,10 @@ export class DeviceCheckConnectivityDialogComponent extends
               public dialogRef: MatDialogRef<DeviceCheckConnectivityDialogComponent>,
               private deviceService: DeviceService,
               private telemetryWsService: TelemetryWebsocketService,
-              private zone: NgZone) {
+              private wl: WhiteLabelingService,
+              private zone: NgZone,
+              private destroyRef: DestroyRef,
+              private aiDashboardGenerationService: AiDashboardGenerationService) {
     super(store, router, dialogRef);
 
     if (this.data.afterAdd) {
@@ -218,4 +212,23 @@ export class DeviceCheckConnectivityDialogComponent extends
     }
   }
 
+  generateDashboard($event: Event) {
+    $event.stopPropagation();
+
+    if (!this.data.afterAdd) {
+      this.aiDashboardGenerationService.generateWithTelemetryCheck({
+        deviceId: this.data.deviceId.id,
+        destroyRef: this.destroyRef,
+        noTelemetry: { hideSendTelemetry: true }
+      });
+    } else if (!this.latestTelemetry.length) {
+      this.aiDashboardGenerationService.openNoTelemetryModal({ hideSendTelemetry: true });
+    } else {
+      this.aiDashboardGenerationService.generate(this.data.deviceId.id, this.destroyRef);
+    }
+  }
+
+  isAllowedDashboardGenerate(): boolean {
+    return this.aiDashboardGenerationService.isAllowedDashboardGenerate({ requireTelemetry: true });
+  }
 }

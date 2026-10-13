@@ -1,0 +1,94 @@
+{
+  "entityId": {
+    "entityType": "DEVICE_PROFILE",
+    "id": "93855be4-461e-4a35-b925-50a70d30c738"
+  },
+  "type": "ALARM",
+  "name": "Entered restricted area",
+  "debugSettings": {
+    "failuresEnabled": true,
+    "allEnabled": false,
+    "allEnabledUntil": 0
+  },
+  "configurationVersion": 0,
+  "configuration": {
+    "type": "ALARM",
+    "arguments": {
+      "restrictedAreaEvent": {
+        "refEntityKey": {
+          "key": "restrictedAreaEvent",
+          "type": "TS_LATEST"
+        },
+        "defaultValue": "LEFT"
+      }
+    },
+    "createRules": {
+      "CRITICAL": {
+        "condition": {
+          "type": "SIMPLE",
+          "expression": {
+            "type": "SIMPLE",
+            "filters": [
+              {
+                "argument": "restrictedAreaEvent",
+                "valueType": "STRING",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "STRING",
+                    "operation": "EQUAL",
+                    "value": {
+                      "staticValue": "ENTERED",
+                      "dynamicValueArgument": null
+                    },
+                    "ignoreCase": false
+                  }
+                ]
+              }
+            ],
+            "operation": "AND"
+          },
+          "schedule": null
+        },
+        "alarmDetails": "Haul track entered the mine site restricted area",
+        "dashboardId": null
+      }
+    },
+    "clearRule": {
+      "condition": {
+        "type": "SIMPLE",
+        "expression": {
+          "type": "SIMPLE",
+          "filters": [
+            {
+              "argument": "restrictedAreaEvent",
+              "valueType": "STRING",
+              "operation": "AND",
+              "predicates": [
+                {
+                  "type": "STRING",
+                  "operation": "EQUAL",
+                  "value": {
+                    "staticValue": "LEFT",
+                    "dynamicValueArgument": null
+                  },
+                  "ignoreCase": false
+                }
+              ]
+            }
+          ],
+          "operation": "AND"
+        },
+        "schedule": null
+      },
+      "alarmDetails": "Haul track left the mine site restricted area",
+      "dashboardId": null
+    },
+    "propagate": false,
+    "propagateToOwner": false,
+    "propagateToOwnerHierarchy": false,
+    "propagateToTenant": false,
+    "propagateRelationTypes": null,
+    "output": null
+  }
+}

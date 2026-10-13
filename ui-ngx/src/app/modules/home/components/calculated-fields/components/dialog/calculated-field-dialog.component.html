@@ -1,22 +1,12 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div [formGroup]="fieldFormGroup" class="calculated-field-dialog-container flex flex-col">
-  <mat-toolbar color="primary">
+  <mat-toolbar color="tb-primary" class="tb-bottom-border">
     <h2>{{ 'entity.type-calculated-field' | translate}}</h2>
     <span class="flex-1"></span>
     <div tb-help="calculatedField"></div>
@@ -60,7 +50,7 @@
                             entityTypeLabel="{{ 'entity.entity-type' | translate }}"
                             [filterAllowedEntityTypes]="false"
                             [allowedEntityTypes]="calculatedFieldsEntityTypeList"
-                            [defaultEntityType]="EntityType.DEVICE_PROFILE"
+                            [defaultEntityType]="defaultEntityType"
                             (entityChanged)="changeEntity($event)">
           </tb-entity-select>
         }
@@ -94,6 +84,7 @@
                                        [entityName]="entityName"
                                        [ownerId]="ownerId"
                                        [tenantId]="data.tenantId"
+                                       [readonly]="data.readonly"
           ></tb-geofencing-configuration>
         }
         @case (CalculatedFieldType.PROPAGATION) {
@@ -104,6 +95,7 @@
                                         [tenantId]="data.tenantId"
                                         [ownerId]="ownerId"
                                         [testScript]="onTestScript.bind(this)"
+                                        [readonly]="data.readonly"
           ></tb-propagation-configuration>
         }
         @case (CalculatedFieldType.RELATED_ENTITIES_AGGREGATION) {
@@ -113,6 +105,7 @@
                                                      [entityName]="entityName"
                                                      [tenantId]="data.tenantId"
                                                      [testScript]="onTestScript.bind(this)"
+                                                     [readonly]="data.readonly"
           ></tb-related-entities-aggregation-component>
         }
         @case (CalculatedFieldType.ENTITY_AGGREGATION) {
@@ -121,6 +114,7 @@
                                            [entityId]="entityId"
                                            [entityName]="entityName"
                                            [tenantId]="data.tenantId"
+                                           [readonly]="data.readonly"
           ></tb-entity-aggregation-component>
         }
         @default {
@@ -132,6 +126,7 @@
                                    [tenantId]="data.tenantId"
                                    [isScript]="fieldFormGroup.get('type').value === CalculatedFieldType.SCRIPT"
                                    [testScript]="onTestScript.bind(this)"
+                                   [readonly]="data.readonly"
           ></tb-simple-configuration>
         }
       }
@@ -145,10 +140,12 @@
             (click)="cancel()">
       {{ 'action.cancel' | translate }}
     </button>
-    <button mat-raised-button color="primary"
-            (click)="add()"
-            [disabled]="isLoading || fieldFormGroup.invalid || !fieldFormGroup.dirty">
-      {{ data.buttonTitle | translate }}
-    </button>
+    @if (!data.readonly) {
+      <button mat-raised-button color="primary"
+              (click)="add()"
+              [disabled]="isLoading || fieldFormGroup.invalid || !fieldFormGroup.dirty">
+        {{ data.buttonTitle | translate }}
+      </button>
+    }
   </div>
 </div>

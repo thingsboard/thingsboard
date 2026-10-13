@@ -38,7 +38,7 @@
     },
     {
       "tag": "day-rate",
-      "stateRenderFunction": "ctx.api.font(element, ctx.properties.dayValueFont, ctx.properties.dayValueColor);\nctx.api.text(element, ctx.api.formatValue(ctx.values.dayRate, {units: ctx.properties.units, decimals: 0, ignoreUnitSymbol: true}));",
+      "stateRenderFunction": "ctx.api.font(element, ctx.properties.dayValueFont, ctx.properties.dayValueColor);\nctx.api.text(element, ctx.api.formatValue(ctx.values.dayRate, {units: ctx.properties.units, decimals: ctx.properties.dayValueDecimals, ignoreUnitSymbol: true}));",
       "actions": null
     },
     {
@@ -48,7 +48,7 @@
     },
     {
       "tag": "night-rate",
-      "stateRenderFunction": "ctx.api.font(element, ctx.properties.nightValueFont, ctx.properties.nightValueColor);\nctx.api.text(element, ctx.api.formatValue(ctx.values.nightRate, {units: ctx.properties.units, decimals: 0, ignoreUnitSymbol: true}));",
+      "stateRenderFunction": "ctx.api.font(element, ctx.properties.nightValueFont, ctx.properties.nightValueColor);\nctx.api.text(element, ctx.api.formatValue(ctx.values.nightRate, {units: ctx.properties.units, decimals: ctx.properties.nightValueDecimals, ignoreUnitSymbol: true}));",
       "actions": null
     },
     {
@@ -459,6 +459,19 @@
       "visible": true
     },
     {
+      "id": "dayValueDecimals",
+      "name": "{i18n:scada.symbol.value}",
+      "group": "{i18n:scada.symbol.day-rate}",
+      "type": "number",
+      "default": 0,
+      "subLabel": "{i18n:scada.symbol.decimals}",
+      "min": 0,
+      "max": 10,
+      "step": 1,
+      "disabled": false,
+      "visible": true
+    },
+    {
       "id": "dayValueFont",
       "name": "{i18n:scada.symbol.value}",
       "group": "{i18n:scada.symbol.day-rate}",
@@ -535,6 +548,19 @@
       "default": "#000",
       "disableOnProperty": "showNightLabel",
       "disabled": true,
+      "visible": true
+    },
+    {
+      "id": "nightValueDecimals",
+      "name": "{i18n:scada.symbol.value}",
+      "group": "{i18n:scada.symbol.night-rate}",
+      "type": "number",
+      "default": 0,
+      "subLabel": "{i18n:scada.symbol.decimals}",
+      "min": 0,
+      "max": 10,
+      "step": 1,
+      "disabled": false,
       "visible": true
     },
     {

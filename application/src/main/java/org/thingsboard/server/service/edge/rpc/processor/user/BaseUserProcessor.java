@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.edge.rpc.processor.user;
 
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +10,9 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
@@ -32,9 +22,15 @@ import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.gen.edge.v1.UserCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
+import org.thingsboard.server.service.security.permission.UserPermissionsService;
+
+import java.util.UUID;
 
 @Slf4j
 public abstract class BaseUserProcessor extends BaseEdgeProcessor {
+
+    @Autowired
+    private UserPermissionsService userPermissionsService;
 
     @Autowired
     private DataValidator<User> userValidator;
@@ -54,6 +50,7 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
                 isCreated = true;
                 user.setId(null);
             } else {
+                changeOwnerIfRequired(tenantId, user.getCustomerId(), userById.getId());
                 user.setId(userId);
             }
             if (isSaveRequired(userById, user)) {
@@ -66,14 +63,27 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
                     user.setId(userId);
                 }
 
-                edgeCtx.getUserService().saveUser(tenantId, user, false);
+                User savedUser = edgeCtx.getUserService().saveUser(tenantId, user, false);
+                if (isCreated) {
+                    edgeCtx.getEntityGroupService().addEntityToEntityGroupAll(savedUser.getTenantId(), savedUser.getOwnerId(), savedUser.getId());
+                }
+                userPermissionsService.onUserUpdatedOrRemoved(savedUser);
             }
+            safeAddToEntityGroup(tenantId, userUpdateMsg, userId);
         } catch (Exception e) {
             log.error("[{}] Failed to process user update msg [{}]", tenantId, userUpdateMsg, e);
-            throw e;
+            throw new RuntimeException(e);
         }
 
         return Pair.of(isCreated, userEmailUpdated);
+    }
+
+    private void safeAddToEntityGroup(TenantId tenantId, UserUpdateMsg userUpdateMsg, UserId userId) {
+        if (userUpdateMsg.hasEntityGroupIdMSB() && userUpdateMsg.hasEntityGroupIdLSB()) {
+            UUID entityGroupUUID = safeGetUUID(userUpdateMsg.getEntityGroupIdMSB(),
+                    userUpdateMsg.getEntityGroupIdLSB());
+            safeAddEntityToGroup(tenantId, new EntityGroupId(entityGroupUUID), userId);
+        }
     }
 
     private boolean updateUserEmailIfDuplicateExists(TenantId tenantId, UserId userId, User user) {
@@ -90,11 +100,11 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
         return false;
     }
 
-    protected void deleteUserAndPushEntityDeletedEventToRuleEngine(TenantId tenantId, UserId userId) {
+    protected void deleteUserAndPushEntityDeletedEventToRuleEngine(TenantId tenantId, UserId userId) throws ThingsboardException {
         deleteUserAndPushEntityDeletedEventToRuleEngine(tenantId, userId, null);
     }
 
-    protected void deleteUserAndPushEntityDeletedEventToRuleEngine(TenantId tenantId, UserId userId, Edge edge) {
+    protected void deleteUserAndPushEntityDeletedEventToRuleEngine(TenantId tenantId, UserId userId, Edge edge) throws ThingsboardException {
         User removedUser = deleteUser(tenantId, userId);
         if (removedUser == null) {
             return;
@@ -106,13 +116,14 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
         pushEntityEventToRuleEngine(tenantId, userId, userCustomerId, TbMsgType.ENTITY_DELETED, userAsString, msgMetaData);
     }
 
-    private User deleteUser(TenantId tenantId, UserId userId) {
+    private User deleteUser(TenantId tenantId, UserId userId) throws ThingsboardException {
         User userById = edgeCtx.getUserService().findUserById(tenantId, userId);
         if (userById == null) {
             log.trace("[{}] User with id {} does not exist", tenantId, userId);
             return null;
         }
         edgeCtx.getUserService().deleteUser(tenantId, userById);
+        userPermissionsService.onUserUpdatedOrRemoved(userById);
         return userById;
     }
 

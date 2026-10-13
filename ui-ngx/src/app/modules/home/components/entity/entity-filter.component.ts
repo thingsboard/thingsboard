@@ -1,27 +1,22 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, EventEmitter, forwardRef, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
-import { AliasFilterType, aliasFilterTypeTranslationMap, EntityAliasFilter } from '@shared/models/alias.models';
+import {
+  AliasFilterType,
+  aliasFilterTypeTranslationMap,
+  EntityAliasFilter,
+  reportAliasFilterTypeTranslationMap, subReportAliasFilterTypeTranslationMap
+} from '@shared/models/alias.models';
 import { AliasEntityType, EntityType } from '@shared/models/entity-type.models';
 import { EntityService } from '@core/http/entity.service';
 import { EntitySearchDirection, entitySearchDirectionTranslations } from '@shared/models/relation.models';
 import { Subject, Subscription } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { entityGroupTypes } from '@app/shared/models/entity-group.models';
+import { defaultSchedulerEventConfigTypes } from '@home/components/scheduler/scheduler-event-config.models';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
     selector: 'tb-entity-filter',
@@ -46,20 +41,32 @@ export class EntityFilterComponent implements ControlValueAccessor, OnInit, OnDe
 
   @Output() resolveMultipleChanged: EventEmitter<boolean> = new EventEmitter<boolean>();
 
+  @Input() disableResolveMultiple: boolean;
+
+  @Input()
+  @coerceBoolean()
+  reportMode = false;
+
+  @Input()
+  @coerceBoolean()
+  subReport = false;
+
   entityFilterFormGroup: FormGroup;
   filterFormGroup: FormGroup;
 
   aliasFilterTypes: Array<AliasFilterType>;
+  entityGroupTypes: Array<EntityType>;
 
   listEntityTypes: Array<EntityType | AliasEntityType>;
 
   aliasFilterType = AliasFilterType;
-  aliasFilterTypeTranslations = aliasFilterTypeTranslationMap;
+  aliasFilterTypeTranslations: Map<AliasFilterType, string>;
   entityType = EntityType;
 
   directionTypes = Object.keys(EntitySearchDirection);
   directionTypeTranslations = entitySearchDirectionTranslations;
   directionTypeEnum = EntitySearchDirection;
+  schedulerEventConfigTypes = defaultSchedulerEventConfigTypes;
 
   private propagateChange = null;
 
@@ -71,8 +78,14 @@ export class EntityFilterComponent implements ControlValueAccessor, OnInit, OnDe
   }
 
   ngOnInit(): void {
-
+    this.aliasFilterTypeTranslations = aliasFilterTypeTranslationMap;
+    if (this.reportMode) {
+      this.aliasFilterTypeTranslations = this.subReport ? subReportAliasFilterTypeTranslationMap : reportAliasFilterTypeTranslationMap;
+    }
     this.aliasFilterTypes = this.entityService.getAliasFilterTypesByEntityTypes(this.allowedEntityTypes);
+    this.entityGroupTypes = entityGroupTypes.filter((entityType) =>
+      this.allowedEntityTypes ? this.allowedEntityTypes.indexOf(entityType) > - 1 : true
+    );
 
     this.listEntityTypes = this.entityService.prepareAllowedEntityTypesList(this.allowedEntityTypes, false);
     if (!this.allowedEntityTypes?.length || this.allowedEntityTypes.includes(EntityType.QUEUE_STATS)) {
@@ -115,9 +128,11 @@ export class EntityFilterComponent implements ControlValueAccessor, OnInit, OnDe
   writeValue(filter: EntityAliasFilter): void {
     if (!filter) {
       filter = {
-        type: null,
-        resolveMultiple: this.resolveMultiple
+        type: null
       };
+      if (!this.disableResolveMultiple) {
+        filter.resolveMultiple = this.resolveMultiple;
+      }
     }
     this.entityFilterFormGroup.get('type').patchValue(filter.type, {emitEvent: false});
     if (filter && filter.type) {
@@ -133,6 +148,23 @@ export class EntityFilterComponent implements ControlValueAccessor, OnInit, OnDe
         this.filterFormGroup = this.fb.group({
           singleEntity: [filter ? filter.singleEntity : null, [Validators.required]]
         });
+        break;
+      case AliasFilterType.entityGroup:
+        this.filterFormGroup = this.fb.group({
+          groupStateEntity: [filter ? filter.groupStateEntity : false, []],
+          stateEntityParamName: [filter ? filter.stateEntityParamName : null, []],
+          defaultStateGroupType: [filter ? filter.defaultStateGroupType : null, []],
+          defaultStateEntityGroup: [filter ? filter.defaultStateEntityGroup : null, []],
+          groupType: [filter ? filter.groupType : null, (filter && filter.groupStateEntity) ? [] : [Validators.required]],
+          entityGroup: [filter ? filter.entityGroup : null, (filter && filter.groupStateEntity) ? [] : [Validators.required]],
+        });
+        const groupStateEntitySubscription = this.filterFormGroup.get('groupStateEntity').valueChanges.subscribe((groupStateEntity: boolean) => {
+          this.filterFormGroup.get('groupType').setValidators(groupStateEntity ? [] : [Validators.required]);
+          this.filterFormGroup.get('entityGroup').setValidators(groupStateEntity ? [] : [Validators.required]);
+          this.filterFormGroup.get('groupType').updateValueAndValidity();
+          this.filterFormGroup.get('entityGroup').updateValueAndValidity();
+        });
+        this.subscriptions.add(groupStateEntitySubscription);
         break;
       case AliasFilterType.entityList:
         this.filterFormGroup = this.fb.group({
@@ -160,7 +192,37 @@ export class EntityFilterComponent implements ControlValueAccessor, OnInit, OnDe
           entityType: [filter ? filter.entityType : null, [Validators.required]]
         });
         break;
+      case AliasFilterType.entityGroupList:
+        this.filterFormGroup = this.fb.group({
+          groupType: [filter ? filter.groupType : null, [Validators.required]],
+          entityGroupList: [{
+            value: filter ? filter.entityGroupList : [],
+            disabled: !filter?.groupType
+          }, [Validators.required]],
+        });
+        const groupTypeSubscription = this.filterFormGroup.get('groupType').valueChanges.subscribe((groupType) => {
+          if (groupType && this.filterFormGroup.get('entityGroupList').disabled) {
+            this.filterFormGroup.get('entityGroupList').enable({emitEvent: false});
+          }
+        });
+        this.subscriptions.add(groupTypeSubscription);
+        break;
+      case AliasFilterType.entityGroupName:
+        this.filterFormGroup = this.fb.group({
+          groupType: [filter ? filter.groupType : null, [Validators.required]],
+          entityGroupNameFilter: [filter ? filter.entityGroupNameFilter : '', [Validators.required]],
+        });
+        break;
+      case AliasFilterType.entitiesByGroupName:
+        this.filterFormGroup = this.fb.group({
+          groupStateEntity: [filter ? filter.groupStateEntity : false, []],
+          stateEntityParamName: [filter ? filter.stateEntityParamName : null, []],
+          groupType: [filter ? filter.groupType : null, [Validators.required]],
+          entityGroupNameFilter: [filter ? filter.entityGroupNameFilter : '', [Validators.required]],
+        });
+        break;
       case AliasFilterType.stateEntity:
+      case AliasFilterType.stateEntityOwner:
         this.filterFormGroup = this.fb.group({
           stateEntityParamName: [filter ? filter.stateEntityParamName : null, []],
           defaultStateEntity: [filter ? filter.defaultStateEntity : null, []],
@@ -233,6 +295,15 @@ export class EntityFilterComponent implements ControlValueAccessor, OnInit, OnDe
           }
         }
         break;
+      case AliasFilterType.schedulerEvent:
+        this.filterFormGroup = this.fb.group({
+          originatorStateEntity: [filter ? filter.originatorStateEntity : false, []],
+          stateEntityParamName: [filter ? filter.stateEntityParamName : null, []],
+          defaultStateEntity: [filter ? filter.defaultStateEntity : null, []],
+          originator: [filter ? filter.originator : null, []],
+          eventType: [filter ? filter.eventType : null, []]
+        });
+        break;
     }
     const filterFormSubscription = this.filterFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
@@ -241,12 +312,15 @@ export class EntityFilterComponent implements ControlValueAccessor, OnInit, OnDe
   }
 
   private filterTypeChanged(type: AliasFilterType) {
-    let resolveMultiple = true;
-    if (type === AliasFilterType.singleEntity || type === AliasFilterType.stateEntity || type === AliasFilterType.apiUsageState) {
-      resolveMultiple = false;
-    }
-    if (this.resolveMultiple !== resolveMultiple) {
-      this.resolveMultipleChanged.emit(resolveMultiple);
+    if (!this.disableResolveMultiple) {
+      let resolveMultiple = true;
+      if (type === AliasFilterType.singleEntity || type === AliasFilterType.stateEntity || type === AliasFilterType.apiUsageState ||
+        type === AliasFilterType.stateEntityOwner) {
+        resolveMultiple = false;
+      }
+      if (this.resolveMultiple !== resolveMultiple) {
+        this.resolveMultipleChanged.emit(resolveMultiple);
+      }
     }
     this.updateFilterFormGroup(type);
   }
@@ -255,9 +329,11 @@ export class EntityFilterComponent implements ControlValueAccessor, OnInit, OnDe
     let filter = null;
     if (this.entityFilterFormGroup.valid && this.filterFormGroup.valid) {
       filter = {
-        type: this.entityFilterFormGroup.get('type').value,
-        resolveMultiple: this.resolveMultiple
+        type: this.entityFilterFormGroup.get('type').value
       };
+      if (!this.disableResolveMultiple) {
+        filter.resolveMultiple = this.resolveMultiple;
+      }
       filter = {...filter, ...this.filterFormGroup.value};
     }
     this.propagateChange(filter);

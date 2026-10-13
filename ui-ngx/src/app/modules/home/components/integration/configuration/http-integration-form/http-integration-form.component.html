@@ -1,0 +1,78 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="baseHttpIntegrationConfigForm">
+  <mat-form-field appearance="outline" class="mat-block">
+    <mat-label translate>integration.base-url</mat-label>
+    <input matInput formControlName="baseUrl" required>
+    @if (baseHttpIntegrationConfigForm.get('baseUrl').hasError('required')) {
+      <mat-error translate>
+        integration.base-url-required
+      </mat-error>
+    }
+    @if (baseHttpIntegrationConfigForm.get('baseUrl').hasError('privateNetwork')) {
+      <mat-error translate>
+        integration.url-private
+      </mat-error>
+    }
+  </mat-form-field>
+  <div class="flex flex-row items-center justify-start gap-2">
+    <mat-form-field appearance="outline" class="mat-block flex-1">
+      <mat-label translate>integration.http-endpoint</mat-label>
+      <input matInput formControlName="httpEndpoint">
+    </mat-form-field>
+    <button mat-icon-button ngxClipboard type="button" color="primary"
+            (cbOnSuccess)="onHttpEndpointCopied()"
+            [cbContent]="baseHttpIntegrationConfigForm.get('httpEndpoint').value"
+            matTooltip="{{'integration.copy-http-endpoint-url' | translate }}">
+      <mat-icon class="tb-mat-20">content_copy</mat-icon>
+    </button>
+  </div>
+
+  @if (showSecurity) {
+    <mat-expansion-panel class="security-setting"
+                         [expanded]="baseHttpIntegrationConfigForm.get('enableSecurity').value">
+      <mat-expansion-panel-header class="flex flex-row">
+        <mat-panel-title>
+          <mat-slide-toggle [aria-label]="'integration.enable-security' | translate"
+                            formControlName="enableSecurity"
+                            (click)="$event.stopPropagation()">
+            {{ 'integration.enable-security' | translate }} ({{ 'integration.headers-filter' | translate }})
+          </mat-slide-toggle>
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        <tb-key-val-map
+          class="security-setting-content"
+          noDataText="integration.no-headers-filter"
+          keyPlaceholderText="integration.header"
+          isStrokedButton="true"
+          appearance="outline"
+          formControlName="headersFilter">
+        </tb-key-val-map>
+      </ng-template>
+    </mat-expansion-panel>
+  }
+
+  <ng-container [ngTemplateOutlet]="executeRemotelyTemplate">
+  </ng-container>
+
+  <mat-expansion-panel class="configuration-panel">
+    <mat-expansion-panel-header>
+      <mat-panel-description class="flex items-stretch justify-end" translate>
+        integration.advanced-settings
+      </mat-panel-description>
+    </mat-expansion-panel-header>
+    <ng-template matExpansionPanelContent>
+      <mat-slide-toggle class="toggle" [aria-label]="'integration.replace-no-content-to-ok' | translate"
+                        formControlName="replaceNoContentToOk">
+        {{ 'integration.replace-no-content-to-ok' | translate }}
+      </mat-slide-toggle>
+      <ng-container [ngTemplateOutlet]="genericAdditionalInfoTemplate">
+      </ng-container>
+    </ng-template>
+  </mat-expansion-panel>
+</section>

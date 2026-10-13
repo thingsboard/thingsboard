@@ -1,22 +1,11 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
-  Component,
+  ChangeDetectorRef,
+  Component, ComponentRef,
   ElementRef,
+  inject,
   Inject,
   Injector,
   Input,
@@ -28,9 +17,6 @@ import {
 } from '@angular/core';
 import { WidgetContext } from '@home/models/widget-component.models';
 import {
-  htmlContainerDefaultSettings,
-  HtmlContainerWidgetSettings,
-  HtmlContainerWidgetType,
   WidgetContainerAngularFunction,
   WidgetContainerPlainFunction
 } from '@home/components/widget/lib/html/html-container-widget.models';
@@ -52,6 +38,11 @@ import {
 import { MODULES_MAP } from '@shared/models/constants';
 import { IModulesMap } from '@modules/common/modules-map.models';
 import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
+import {
+  htmlContainerDefaultSettings,
+  HtmlContainerWidgetSettings,
+  HtmlContainerWidgetType
+} from '@shared/models/html-container.models';
 
 @Component({
   selector: 'tb-html-container-widget',
@@ -96,6 +87,7 @@ export class HtmlContainerWidgetComponent implements OnInit {
               @Inject(HOME_COMPONENTS_MODULE_TOKEN) private homeComponentsModule: Type<any>,
               private dynamicComponentFactoryService: DynamicComponentFactoryService,
               private utils: UtilsService,
+              private cdr: ChangeDetectorRef,
               private resources: ResourcesService) {}
 
   ngOnInit(): void {
@@ -160,11 +152,13 @@ export class HtmlContainerWidgetComponent implements OnInit {
           this.compileAngularFunction().subscribe(
             {
               next: (containerFunction) => {
-                try {
-                  this.initAngularComponent(imports, containerFunction);
-                } catch (e) {
-                  this.handleWidgetException(e);
-                }
+                setTimeout(() => {
+                  try {
+                    this.initAngularComponent(imports, containerFunction);
+                  } catch (e) {
+                    this.handleWidgetException(e);
+                  }
+                });
               },
               error: (e) => {
                 this.handleWidgetException(e);
@@ -200,9 +194,16 @@ export class HtmlContainerWidgetComponent implements OnInit {
       compileModules = compileModules.concat(imports);
     }
     const self = () => this;
+
+    let containerRef: ComponentRef<any>;
+
     this.dynamicComponentFactoryService.createDynamicComponent(
       class TbContainerInstance {
+
+        private cdr = inject(ChangeDetectorRef);
+
         ngOnInit(): void {
+          this.cdr.detach();
           if (containerFunction) {
             const instance = self();
             try {
@@ -210,6 +211,15 @@ export class HtmlContainerWidgetComponent implements OnInit {
             } catch (e) {
               instance.handleWidgetException(e);
             }
+          }
+        }
+        ngDoCheck(): void {
+          const instance = self();
+          try {
+            this.cdr.detectChanges()
+          } catch (error) {
+            containerRef.destroy();
+            instance.handleWidgetException(error)
           }
         }
         ngOnDestroy(): void {
@@ -224,7 +234,7 @@ export class HtmlContainerWidgetComponent implements OnInit {
         this.containerInstanceComponentType = componentType;
         const injector: Injector = Injector.create({providers: [], parent: this.angularContainer.viewContainerRef.injector});
         try {
-          this.angularContainer.viewContainerRef.createComponent(this.containerInstanceComponentType,
+          containerRef = this.angularContainer.viewContainerRef.createComponent(this.containerInstanceComponentType,
               {index: 0, injector});
 
         } catch (error) {

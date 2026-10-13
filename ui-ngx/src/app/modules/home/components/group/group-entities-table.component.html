@@ -1,0 +1,26 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<mat-drawer-container hasBackdrop="false" class="tb-absolute-fill">
+  <mat-drawer class="tb-details-drawer mat-elevation-z4"
+              #entityGroupDrawer
+              mode="over"
+              position="end"
+              [opened]="isGroupDetailsOpen">
+    <tb-entity-details-panel
+      #entityGroupDetailsPanel
+      [entitiesTableConfig]="entityGroupDetailsConfig"
+      [entityId]="isGroupDetailsOpen ? entityGroup?.id : null"
+      (closeEntityDetails)="isGroupDetailsOpen = false"
+      (entityUpdated)="onEntityGroupUpdated($event)"
+      (entityAction)="onEntityGroupAction($event)"
+    ></tb-entity-details-panel>
+  </mat-drawer>
+  <mat-drawer-content>
+    <tb-entities-table #entitiesTable [entitiesTableConfig]="entityGroupConfig">
+    </tb-entities-table>
+  </mat-drawer-content>
+</mat-drawer-container>

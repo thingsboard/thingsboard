@@ -1,0 +1,40 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section class="tb-user-groups-panel-row tb-form-row no-padding no-border lt-md:flex-wrap lt-md:!gap-2" [formGroup]="groupPermissionForm">
+  <mat-form-field class="mat-block gt-sm:!w-37.5 xs:!w-1/2 sm:!w-1/4 lt-md:flex-auto gt-sm:min-w-37.5" appearance="outline" subscriptSizing="dynamic">
+    <mat-label translate>role.role-type</mat-label>
+    <mat-select required [formControl]="groupType">
+      @for (type of roleTypes; track type) {
+        <mat-option [value]="type">
+          {{ roleTypeTranslations.get(type) | translate }}
+        </mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+  <tb-entity-autocomplete
+    class="flex-auto xs:w-1/2 sm:w-1/4 gt-sm:w-1/3"
+    required
+    appearance="outline"
+    subscriptSizing="dynamic"
+    [entitySubtype]="groupType.value"
+    [entityType]="entityType.ROLE"
+    [useFullEntityId]="true"
+    formControlName="roleId">
+  </tb-entity-autocomplete>
+  @if (groupType.value === roleType.GROUP) {
+    <tb-entity-group-select
+      class="flex-auto lt-md:w-1/2 gt-sm:w-2/3"
+      [ownerId]="entityGroupOwnerId"
+      formControlName="entityGroupId"
+      [excludeGroupTypes]="[entityType.USER]"
+      required
+      appearance="outline"
+      placeholderText="entity-group.select-entity-group"
+      notFoundText="entity-group.no-entity-groups-matching">
+    </tb-entity-group-select>
+  }
+</section>

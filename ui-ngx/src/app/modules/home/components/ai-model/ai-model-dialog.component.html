@@ -1,21 +1,11 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<mat-toolbar color="primary">
+<mat-toolbar color="tb-primary" class="tb-bottom-border">
   <h2>{{ dialogTitle | translate }}</h2>
   <span class="flex-1"></span>
   <div tb-help="aiModels"></div>
@@ -66,17 +56,12 @@
           </mat-form-field>
           <div formGroupName="providerConfig" class="tb-form-panel no-border no-padding no-gap">
             @if (providerFieldsList.includes('personalAccessToken')) {
-              <mat-form-field class="mat-block flex-1" appearance="outline">
-                <mat-label translate>ai-models.personal-access-token</mat-label>
-                <input type="password" required matInput formControlName="personalAccessToken" autocomplete="new-password">
-                <tb-toggle-password matSuffix></tb-toggle-password>
-                @if (aiModelForms.get('configuration.providerConfig.personalAccessToken').hasError('required') ||
-                  aiModelForms.get('configuration.providerConfig.personalAccessToken').hasError('pattern')) {
-                  <mat-error>
-                    {{ 'ai-models.personal-access-token-required' | translate }}
-                  </mat-error>
-                }
-              </mat-form-field>
+              <tb-secret-key-input formControlName="personalAccessToken" class="mat-block flex-1"
+                                   appearance="outline"
+                                   required
+                                   label="{{ 'ai-models.personal-access-token' | translate }}"
+                                   requiredText="{{ 'ai-models.personal-access-token-required' | translate }}">
+              </tb-secret-key-input>
             }
             @if (providerFieldsList.includes('projectId')) {
               <mat-form-field class="mat-block flex-1" appearance="outline">
@@ -103,17 +88,14 @@
               </mat-form-field>
             }
             @if (providerFieldsList.includes('serviceAccountKey')) {
-              <tb-file-input formControlName="serviceAccountKey"
-                             [existingFileName]="aiModelForms.get('configuration').get('providerConfig').get('fileName').value"
-                             (fileNameChanged)="aiModelForms.get('configuration').get('providerConfig').get('fileName').setValue($event)"
-                             required
-                             requiredAsError
-                             accept=".json,application/json"
-                             allowedExtensions="json"
-                             label="{{'ai-models.service-account-key-file' | translate}}"
-                             noFileText="ai-models.no-file"
-                             dropLabel="{{'ai-models.drop-file' | translate}}">
-              </tb-file-input>
+              <tb-secret-file-input formControlName="serviceAccountKey"
+                                    label="{{'ai-models.service-account-key-file' | translate}}"
+                                    required
+                                    accept=".json,application/json"
+                                    allowedExtensions="json"
+                                    [existingFileName]="aiModelForms.get('configuration').get('providerConfig').get('fileName')?.value"
+                                    (fileNameChanged)="aiModelForms.get('configuration').get('providerConfig').get('fileName').patchValue($event)">
+              </tb-secret-file-input>
             }
             @if (providerFieldsList.includes('endpoint')) {
               <mat-form-field class="mat-block flex-1" appearance="outline">
@@ -146,17 +128,12 @@
               </mat-form-field>
             }
             @if (providerFieldsList.includes('apiKey')) {
-              <mat-form-field class="mat-block flex-1" appearance="outline">
-                <mat-label translate>ai-models.api-key</mat-label>
-                <input type="password" matInput formControlName="apiKey" [required]="apiKeyRequired" autocomplete="new-password">
-                <tb-toggle-password matSuffix></tb-toggle-password>
-                @if (aiModelForms.get('configuration.providerConfig.apiKey').hasError('required') ||
-                  aiModelForms.get('configuration.providerConfig.apiKey').hasError('pattern')) {
-                  <mat-error>
-                    {{ ( provider === aiProvider.OPENAI ? 'ai-models.api-key-open-ai-required' : 'ai-models.api-key-required') | translate }}
-                  </mat-error>
-                }
-              </mat-form-field>
+              <tb-secret-key-input formControlName="apiKey" class="mat-block flex-1"
+                                   appearance="outline"
+                                   [required]="apiKeyRequired"
+                                   label="{{ 'ai-models.api-key' | translate }}"
+                                   requiredText="{{ 'ai-models.api-key-required' | translate }}">
+              </tb-secret-key-input>
             }
             @if (providerFieldsList.includes('region')) {
               <mat-form-field class="mat-block flex-1" appearance="outline">
@@ -183,17 +160,12 @@
               </mat-form-field>
             }
             @if (providerFieldsList.includes('secretAccessKey')) {
-              <mat-form-field class="mat-block flex-1" appearance="outline">
-                <mat-label translate>ai-models.secret-access-key</mat-label>
-                <input type="password" required matInput formControlName="secretAccessKey" autocomplete="new-password">
-                <tb-toggle-password matSuffix></tb-toggle-password>
-                @if (aiModelForms.get('configuration.providerConfig.secretAccessKey').hasError('required') ||
-                  aiModelForms.get('configuration.providerConfig.secretAccessKey').hasError('pattern')) {
-                  <mat-error>
-                    {{ 'ai-models.secret-access-key-required' | translate }}
-                  </mat-error>
-                }
-              </mat-form-field>
+              <tb-secret-key-input formControlName="secretAccessKey" class="mat-block flex-1"
+                                   appearance="outline"
+                                   required
+                                   label="{{ 'ai-models.secret-access-key' | translate }}"
+                                   requiredText="{{ 'ai-models.secret-access-key-required' | translate }}">
+              </tb-secret-key-input>
             }
             @if (provider === aiProvider.OLLAMA) {
               <div class="tb-form-panel stroked no-gap no-padding-bottom mb-4" formGroupName="auth">
@@ -219,30 +191,20 @@
                         </mat-error>
                       }
                     </mat-form-field>
-                    <mat-form-field class="mat-block flex-1" appearance="outline">
-                      <mat-label translate>ai-models.password</mat-label>
-                      <input type="password" required matInput formControlName="password" autocomplete="new-password">
-                      <tb-toggle-password matSuffix></tb-toggle-password>
-                      @if (aiModelForms.get('configuration.providerConfig.auth.password').hasError('required') ||
-                        aiModelForms.get('configuration.providerConfig.auth.password').hasError('pattern')) {
-                        <mat-error>
-                          {{ 'ai-models.password-required' | translate }}
-                        </mat-error>
-                      }
-                    </mat-form-field>
+                    <tb-secret-key-input formControlName="password" class="mat-block flex-1"
+                                         appearance="outline"
+                                         required
+                                         label="{{ 'ai-models.password' | translate }}"
+                                         requiredText="{{ 'ai-models.password-required' | translate }}">
+                    </tb-secret-key-input>
                   }
                   @if (aiModelForms.get('configuration.providerConfig.auth.type').value === AuthenticationType.TOKEN) {
-                    <mat-form-field class="mat-block flex-1" appearance="outline">
-                      <mat-label translate>ai-models.token</mat-label>
-                      <input type="password" required matInput formControlName="token" autocomplete="new-password">
-                      <tb-toggle-password matSuffix></tb-toggle-password>
-                      @if (aiModelForms.get('configuration.providerConfig.auth.token').hasError('required') ||
-                        aiModelForms.get('configuration.providerConfig.auth.token').hasError('pattern')) {
-                        <mat-error>
-                          {{ 'ai-models.token-required' | translate }}
-                        </mat-error>
-                      }
-                    </mat-form-field>
+                    <tb-secret-key-input formControlName="token" class="mat-block flex-1"
+                                         appearance="outline"
+                                         required
+                                         label="{{ 'ai-models.token' | translate }}"
+                                         requiredText="{{ 'ai-models.token-required' | translate }}">
+                    </tb-secret-key-input>
                   }
                 </div>
               </div>
@@ -381,7 +343,7 @@
           type="button"
           [disabled]="(isLoading$ | async)"
           (click)="cancel()" cdkFocusInitial>
-    {{ 'action.cancel' | translate }}
+    {{ (readonly ? 'action.close' : 'action.cancel') | translate }}
   </button>
   <span class="flex-1"></span>
   <button mat-button mat-stroked-button color="primary"
@@ -389,9 +351,11 @@
           [disabled]="(isLoading$ | async) || aiModelForms.invalid">
     {{ 'ai-models.check-connectivity' | translate }}
   </button>
-  <button mat-button mat-raised-button color="primary"
-          type="button" (click)="add()"
-          [disabled]="(isLoading$ | async) || aiModelForms.invalid || !aiModelForms.dirty">
-    {{ 'action.save' | translate }}
-  </button>
+  @if (!readonly) {
+    <button mat-button mat-raised-button color="primary"
+            type="button" (click)="add()"
+            [disabled]="(isLoading$ | async) || aiModelForms.invalid || !aiModelForms.dirty">
+      {{ 'action.save' | translate }}
+    </button>
+  }
 </div>

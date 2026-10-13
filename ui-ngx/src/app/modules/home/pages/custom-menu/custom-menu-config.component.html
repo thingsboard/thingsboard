@@ -1,0 +1,148 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<mat-card appearance="outlined" class="tb-custom-menu-config-card">
+  <mat-card-header>
+    <mat-card-title>
+      <div class="title-container">
+        <div class="title-row">
+          <button mat-icon-button
+                  matTooltip="{{ 'action.back' | translate }}"
+                  matTooltipPosition="above"
+                  (click)="goBack()">
+            <mat-icon>arrow_back</mat-icon>
+          </button>
+          <div class="title-section">
+            <span tbTruncateWithTooltip class="tb-custom-menu-config-title">{{  customMenu.name }} </span>
+          </div>
+          <span class="flex-1"></span>
+          <div tb-help="customMenu"></div>
+        </div>
+        <div class="title-row min-h-10">
+          <mat-slide-toggle class="tb-custom-menu-show-hidden-items" [formControl]="showHiddenItems">{{ 'custom-menu.show-hidden-items' | translate }}</mat-slide-toggle>
+          <span class="flex-1"></span>
+          @if (!readonly) {
+            <button class="tb-custom-menu-button xs:!hidden"
+                    mat-stroked-button
+                    color="primary"
+                    (click)="hideAll()">
+              <tb-icon matButtonIcon>visibility_off</tb-icon>
+              <div tbTruncateWithTooltip>{{'custom-menu.hide-all-menu-items' | translate}}</div>
+            </button>
+            <button class="tb-custom-menu-button xs:!hidden"
+                    mat-stroked-button
+                    color="primary"
+                    (click)="resetToDefault()">
+              <tb-icon matButtonIcon>mdi:broom</tb-icon>
+              <div tbTruncateWithTooltip>{{'custom-menu.reset-to-default-menu' | translate}}</div>
+            </button>
+            <button
+              type="button"
+              mat-stroked-button
+              class="tb-box-button gt-xs:!hidden"
+              matTooltip="{{ 'custom-menu.hide-all-menu-items' | translate }}"
+              matTooltipPosition="above"
+              (click)="hideAll()">
+              <tb-icon color="primary" matButtonIcon>visibility_off</tb-icon>
+            </button>
+            <button
+              type="button"
+              mat-stroked-button
+              class="tb-box-button gt-xs:!hidden"
+              matTooltip="{{ 'custom-menu.reset-to-default-menu' | translate }}"
+              matTooltipPosition="above"
+              (click)="resetToDefault()">
+              <tb-icon color="primary" matButtonIcon>mdi:broom</tb-icon>
+            </button>
+          }
+        </div>
+      </div>
+    </mat-card-title>
+  </mat-card-header>
+  @if (isLoading$ | async) {
+    <mat-progress-bar color="warn" mode="indeterminate">
+    </mat-progress-bar>
+  }
+  @if ((isLoading$ | async) === false) {
+    <div style="height: 4px;"></div>
+  }
+  <mat-card-content>
+    <div #menuItemsContainer class="tb-drop-list tb-custom-menu-items-container"
+      cdkScrollable
+      cdkDropList
+      cdkDropListOrientation="vertical"
+      cdkDropListAutoScrollStep="20"
+      (cdkDropListDropped)="menuItemDrop($event)"
+      [cdkDropListDisabled]="!dragEnabled">
+      @for (menuItemControl of visibleMenuItemsControls(); track menuItemControl; let isLast = $last) {
+        <div class="tb-custom-menu-item-row-container">
+          <div cdkDrag [cdkDragDisabled]="!dragEnabled"
+            class="tb-draggable tb-custom-menu-item-row">
+            @if (isCustom(menuItemControl)) {
+              <div class="tb-custom-menu-item-label">
+                {{ 'custom-menu.custom-item' | translate }}
+              </div>
+            }
+            @if (dragEnabled) {
+              <button cdkDragHandle
+                mat-icon-button
+                matTooltip="{{ 'action.drag' | translate }}"
+                matTooltipPosition="above"
+                class="tb-mat-40 tb-drag-handle">
+                <tb-icon>drag_indicator</tb-icon>
+              </button>
+            }
+            <tb-custom-menu-item-row style="flex: 1; min-width: 0;"
+              [formControl]="menuItemControl"
+              [scope]="customMenu.scope"
+              [showHidden]="showHiddenItems.value"
+              [maxIconNameBlockWidth]="maxIconNameBlockWidth"
+              [hideItems]="hideItems$"
+              (menuItemRemoved)="removeCustomMenuItem($index)">
+            </tb-custom-menu-item-row>
+          </div>
+          @if (!isLast && !readonly) {
+            <button
+              (click)="addCustomMenuItem($index)"
+              class="tb-add-custom-menu-item-button"
+              mat-button
+              matTooltip="{{ 'custom-menu.add-custom-menu-item' | translate }}"
+              matTooltipPosition="above"
+              color="primary">
+              <div class="tb-add-custom-menu-icon-container tb-primary-fill">
+                <mat-icon class="tb-mat-18" color="primary">add</mat-icon>
+              </div>
+            </button>
+          }
+        </div>
+      }
+    </div>
+    @if (!readonly) {
+      <button
+        (click)="addCustomMenuItem()"
+        mat-button color="primary" class="tb-primary-fill" style="min-height: 52px;">
+        <mat-icon color="primary">add</mat-icon>
+        <span translate>custom-menu.add-custom-menu-item</span>
+      </button>
+    }
+  </mat-card-content>
+  <mat-card-actions>
+    @if (!readonly) {
+      <button mat-button color="primary"
+        [disabled]="(isLoading$ | async) || !customMenuFormGroup.dirty"
+        (click)="cancel()">
+        {{'action.cancel' | translate}}
+      </button>
+    }
+    @if (!readonly) {
+      <button mat-raised-button color="primary"
+        [disabled]="(isLoading$ | async) || !customMenuFormGroup.dirty || customMenuFormGroup.invalid"
+        (click)="save()">{{'action.save' | translate}}
+      </button>
+    }
+  </mat-card-actions>
+</mat-card>
+

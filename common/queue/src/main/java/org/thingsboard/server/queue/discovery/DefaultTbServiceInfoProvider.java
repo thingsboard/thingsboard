@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.queue.discovery;
 
 import jakarta.annotation.PostConstruct;
@@ -24,6 +12,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbTransportService;
+import org.thingsboard.server.common.data.integration.IntegrationType;
 import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.common.data.util.CollectionsUtil;
 import org.thingsboard.server.common.msg.queue.ServiceType;
@@ -35,6 +24,7 @@ import org.thingsboard.server.queue.util.AfterContextReady;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -49,11 +39,12 @@ import static org.thingsboard.common.util.SystemUtil.getMemoryUsage;
 import static org.thingsboard.common.util.SystemUtil.getTotalDiscSpace;
 import static org.thingsboard.common.util.SystemUtil.getTotalMemory;
 
-
 @Component
 @Slf4j
 public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
 
+    private static final String INTEGRATIONS_NONE = "NONE";
+    private static final String INTEGRATIONS_ALL = "ALL";
     @Getter
     @Value("${service.id:#{null}}")
     private String serviceId;
@@ -61,6 +52,12 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
     @Getter
     @Value("${service.type:monolith}")
     private String serviceType;
+
+    @Value("${service.integrations.supported:ALL}")
+    private String supportedIntegrationsStr;
+
+    @Value("${service.integrations.excluded:NONE}")
+    private String excludedIntegrationsStr;
 
     @Getter
     @Value("${service.rule_engine.assigned_tenant_profiles:}")
@@ -114,6 +111,44 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
         generateNewServiceInfoWithCurrentSystemInfo();
     }
 
+    @Override
+    public List<IntegrationType> getSupportedIntegrationTypes() {
+        List<IntegrationType> supportedIntegrationTypes;
+        if (serviceTypes.contains(ServiceType.TB_INTEGRATION_EXECUTOR)) {
+            if (StringUtils.isEmpty(supportedIntegrationsStr) || supportedIntegrationsStr.equalsIgnoreCase(INTEGRATIONS_NONE)) {
+                supportedIntegrationTypes = Collections.emptyList();
+            } else if (supportedIntegrationsStr.equalsIgnoreCase(INTEGRATIONS_ALL)) {
+                supportedIntegrationTypes = Arrays.asList(IntegrationType.values());
+            } else {
+                try {
+                    supportedIntegrationTypes = Arrays.stream(supportedIntegrationsStr.split(",")).map(String::trim).map(IntegrationType::valueOf).collect(Collectors.toList());
+                } catch (RuntimeException e) {
+                    log.warn("Failed to parse supplied integration types: {}", supportedIntegrationsStr);
+                    throw e;
+                }
+            }
+
+            List<IntegrationType> excludedIntegrationTypes;
+            if (StringUtils.isEmpty(excludedIntegrationsStr) || excludedIntegrationsStr.equalsIgnoreCase(INTEGRATIONS_NONE)) {
+                excludedIntegrationTypes = Collections.emptyList();
+            } else if (excludedIntegrationsStr.equalsIgnoreCase(INTEGRATIONS_ALL)) {
+                excludedIntegrationTypes = Arrays.asList(IntegrationType.values());
+            } else {
+                try {
+                    excludedIntegrationTypes = Arrays.stream(excludedIntegrationsStr.split(",")).map(String::trim).map(IntegrationType::valueOf).collect(Collectors.toList());
+                } catch (RuntimeException e) {
+                    log.warn("Failed to parse excluded integration types: {}", excludedIntegrationsStr);
+                    throw e;
+                }
+            }
+
+            supportedIntegrationTypes = supportedIntegrationTypes.stream().filter(it -> !it.isRemoteOnly()).filter(it -> !excludedIntegrationTypes.contains(it)).collect(Collectors.toList());
+        } else {
+            supportedIntegrationTypes = Collections.emptyList();
+        }
+        return supportedIntegrationTypes;
+    }
+
     @AfterContextReady
     public void setTransports() {
         serviceInfo = ServiceInfo.newBuilder(serviceInfo)
@@ -148,6 +183,9 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
                 .setServiceId(serviceId)
                 .addAllServiceTypes(serviceTypes.stream().map(ServiceType::name).collect(Collectors.toList()))
                 .setSystemInfo(getCurrentSystemInfoProto());
+        List<IntegrationType> supportedIntegrationTypes = getSupportedIntegrationTypes();
+        supportedIntegrationTypes.forEach(integrationType -> builder.addIntegrationTypes(integrationType.name()));
+
         if (CollectionsUtil.isNotEmpty(assignedTenantProfiles)) {
             builder.addAllAssignedTenantProfiles(assignedTenantProfiles.stream().map(UUID::toString).collect(Collectors.toList()));
         }

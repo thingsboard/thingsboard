@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -21,8 +9,16 @@ import org.junit.After;
 import org.junit.Before;
 import org.thingsboard.client.ApiException;
 import org.thingsboard.client.ThingsboardClient;
+import org.thingsboard.client.api.ThingsboardApi.ActivateUserArgs;
+import org.thingsboard.client.api.ThingsboardApi.DeleteTenantArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetActivationLinkArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetEntityGroupEntityInfosByOwnerAndTypeAndPageLinkArgs;
+import org.thingsboard.client.api.ThingsboardApi.SaveCustomerArgs;
+import org.thingsboard.client.api.ThingsboardApi.SaveTenantArgs;
+import org.thingsboard.client.api.ThingsboardApi.SaveUserArgs;
 import org.thingsboard.client.model.ActivateUserRequest;
 import org.thingsboard.client.model.Authority;
+import org.thingsboard.client.model.EntityInfo;
 import org.thingsboard.client.model.JwtPair;
 import org.thingsboard.client.model.User;
 import org.thingsboard.client.model.UserId;
@@ -41,6 +37,7 @@ public abstract class AbstractApiClientTest extends AbstractControllerTest {
     protected static final String TEST_PREFIX = "ApiClientTestDevice_";
     protected static final String TEST_PREFIX_2 = "ApiClientTestDevice2_";
     protected static final String CUSTOMER_USERNAME = "javaClientCustomer@thingsboard.org";
+    protected static final String SUB_CUSTOMER_USERNAME = "javaClientSubCustomer@thingsboard.org";
     protected static final String TENANT_ADMIN_USERNAME = "javaClientTenant@thingsboard.org";
     protected static final String TEST_PASSWORD = "password123";
 
@@ -50,48 +47,101 @@ public abstract class AbstractApiClientTest extends AbstractControllerTest {
     protected org.thingsboard.client.model.Tenant savedClientTenant;
     protected User clientTenantAdmin;
     protected org.thingsboard.client.model.Customer savedClientCustomer;
+    protected org.thingsboard.client.model.Customer savedClientSubCustomer;
     protected User savedClientCustomerUser;
+    protected User savedClientSubCustomerUser;
 
     @Before
     public void setUpJavaClient() throws Exception {
         client = ThingsboardClient.builder()
-                .url("http://localhost:" + wsPort)
+                .url("http://localhost:" + serverPort)
                 .build();
         client.login("sysadmin@thingsboard.org", "sysadmin");
 
         org.thingsboard.client.model.Tenant tenant = new org.thingsboard.client.model.Tenant();
         tenant.setTitle("Java client test tenant");
-        savedClientTenant = client.saveTenant(tenant);
+        savedClientTenant = client.saveTenant(SaveTenantArgs.builder()
+                .tenant(tenant)
+                .build());
 
         clientTenantAdmin = new User();
         clientTenantAdmin.setAuthority(Authority.TENANT_ADMIN);
         clientTenantAdmin.setTenantId(savedClientTenant.getId());
         clientTenantAdmin.setEmail(TENANT_ADMIN_USERNAME);
-        clientTenantAdmin = client.saveUser(clientTenantAdmin, "false");
+        clientTenantAdmin = client.saveUser(SaveUserArgs.builder()
+                .user(clientTenantAdmin)
+                .sendActivationMail("false")
+                .build());
         activateUserAndAuthorize(clientTenantAdmin);
 
         org.thingsboard.client.model.Customer customer = new org.thingsboard.client.model.Customer();
         customer.setTitle("Java client test customer");
         customer.setTenantId(savedClientTenant.getId());
-        savedClientCustomer = client.saveCustomer(customer, null, null, null);
+        savedClientCustomer = client.saveCustomer(SaveCustomerArgs.builder()
+                .customer(customer)
+                .build());
+
+        EntityInfo customerAdminGroup = client.getEntityGroupEntityInfosByOwnerAndTypeAndPageLink(GetEntityGroupEntityInfosByOwnerAndTypeAndPageLinkArgs.builder()
+                .ownerType("CUSTOMER")
+                .ownerId(savedClientCustomer.getId().getId().toString())
+                .groupType("USER")
+                .pageSize("1")
+                .page("0")
+                .textSearch("Customer Administrators")
+                .build()).getData().get(0);
 
         User customerUser = new User();
         customerUser.setAuthority(Authority.CUSTOMER_USER);
         customerUser.setTenantId(savedClientTenant.getId());
         customerUser.setCustomerId(savedClientCustomer.getId());
         customerUser.setEmail(CUSTOMER_USERNAME);
-        savedClientCustomerUser = client.saveUser(customerUser, "false");
+        savedClientCustomerUser = client.saveUser(SaveUserArgs.builder()
+                .user(customerUser)
+                .sendActivationMail("false")
+                .entityGroupId(customerAdminGroup.getId().getId().toString())
+                .build());
         activateUser(savedClientCustomerUser.getId(), "password123", false);
+
+        org.thingsboard.client.model.Customer subCustomer = new org.thingsboard.client.model.Customer();
+        subCustomer.setTitle("Java client test subCustomer");
+        subCustomer.setTenantId(savedClientTenant.getId());
+        subCustomer.setParentCustomerId(savedClientCustomer.getId());
+        savedClientSubCustomer = client.saveCustomer(SaveCustomerArgs.builder()
+                .customer(subCustomer)
+                .build());
+
+        EntityInfo subcustomerAdminGroup = client.getEntityGroupEntityInfosByOwnerAndTypeAndPageLink(GetEntityGroupEntityInfosByOwnerAndTypeAndPageLinkArgs.builder()
+                .ownerType("CUSTOMER")
+                .ownerId(savedClientSubCustomer.getId().getId().toString())
+                .groupType("USER")
+                .pageSize("1")
+                .page("0")
+                .textSearch("Customer Administrators")
+                .build()).getData().get(0);
+
+        User subcustomerUser = new User();
+        subcustomerUser.setAuthority(Authority.CUSTOMER_USER);
+        subcustomerUser.setTenantId(savedClientTenant.getId());
+        subcustomerUser.setCustomerId(savedClientSubCustomer.getId());
+        subcustomerUser.setEmail(SUB_CUSTOMER_USERNAME);
+        savedClientSubCustomerUser = client.saveUser(SaveUserArgs.builder()
+                .user(subcustomerUser)
+                .sendActivationMail("false")
+                .entityGroupId(subcustomerAdminGroup.getId().getId().toString())
+                .build());
+        activateUser(savedClientSubCustomerUser.getId(), "password123", false);
     }
 
     @After
     public void tearDownJavaClient() {
         client.login("sysadmin@thingsboard.org", "sysadmin");
-        client.deleteTenant(savedClientTenant.getId().getId().toString());
+        client.deleteTenant(DeleteTenantArgs.builder()
+                .tenantId(savedClientTenant.getId().getId().toString())
+                .build());
     }
 
     protected String getBaseUrl() {
-        return "http://localhost:" + wsPort;
+        return "http://localhost:" + serverPort;
     }
 
     protected void activateUserAndAuthorize(User user) throws ApiException {
@@ -103,12 +153,17 @@ public abstract class AbstractApiClientTest extends AbstractControllerTest {
         ActivateUserRequest activateRequest = new ActivateUserRequest();
         activateRequest.setActivateToken(getActivateToken(userId));
         activateRequest.setPassword(password);
-        return client.activateUser(activateRequest, sendActivationMail);
+        return client.activateUser(ActivateUserArgs.builder()
+                .activateUserRequest(activateRequest)
+                .sendActivationMail(sendActivationMail)
+                .build());
     }
 
     protected String getActivateToken(UserId userId) throws ApiException {
         String activateTokenRegex = "/api/noauth/activate?activateToken=";
-        String activationLink = client.getActivationLink(userId.getId().toString());
+        String activationLink = client.getActivationLink(GetActivationLinkArgs.builder()
+                .userId(userId.getId().toString())
+                .build());
         return activationLink.substring(activationLink.lastIndexOf(activateTokenRegex) + activateTokenRegex.length());
     }
 
@@ -119,6 +174,18 @@ public abstract class AbstractApiClientTest extends AbstractControllerTest {
         } catch (ApiException exception) {
             assertEquals("Expected 404 status code but got " + exception.getCode(),
                     404, exception.getCode());
+        } catch (Exception e) {
+            fail("Expected ApiException but got " + e.getClass().getName() + ": " + e.getMessage());
+        }
+    }
+
+    protected void assertReturns403(ThrowingRunnable operation) {
+        try {
+            operation.run();
+            fail("Expected ApiException with 403 status code");
+        } catch (ApiException exception) {
+            assertEquals("Expected 403 status code but got " + exception.getCode(),
+                    403, exception.getCode());
         } catch (Exception e) {
             fail("Expected ApiException but got " + e.getClass().getName() + ": " + e.getMessage());
         }

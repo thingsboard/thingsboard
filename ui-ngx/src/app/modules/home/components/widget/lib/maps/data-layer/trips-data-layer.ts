@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   calculateInterpolationRatio,
   calculateLastPoints, DataLayerColorSettings, DataLayerColorType,
@@ -28,7 +15,7 @@ import { forkJoin, Observable } from 'rxjs';
 import { DataKey, FormattedData, WidgetActionType } from '@shared/models/widget.models';
 import { map } from 'rxjs/operators';
 import L from 'leaflet';
-import { deepClone, isDefined, isUndefined } from '@core/utils';
+import { deepClone, isDefined, isUndefined, plainColorFromVariable } from '@core/utils';
 import { TbMap } from '@home/components/widget/lib/maps/map';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import moment from 'moment/moment';
@@ -526,7 +513,7 @@ export class TbTripsDataLayer extends TbMapDataLayer<TripsDataLayerSettings, TbT
             pixelSize: this.settings.pathDecoratorSymbolSize,
             polygon: false,
             pathOptions: {
-              color: this.settings.pathDecoratorSymbolColor ? this.settings.pathDecoratorSymbolColor : pathStroke,
+              color: this.settings.pathDecoratorSymbolColor ? plainColorFromVariable(this.settings.pathDecoratorSymbolColor) : pathStroke,
               stroke: true
             }
           })

@@ -1,0 +1,57 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<mat-form-field floatLabel="always" hideRequiredMarker [formGroup]="resourceTypeFormGroup" class="mat-block" [appearance]="appearance" [subscriptSizing]="subscriptSizing">
+  @if (label) {
+    <mat-label>{{label}}</mat-label>
+  }
+  <input matInput type="text" placeholder="{{ 'permission.resource.select-resource' | translate }}"
+    #resourceTypeInput
+    formControlName="resourceType"
+    (focusin)="onFocus()"
+    [required]="required"
+    [matAutocomplete]="resourceTypeAutocomplete">
+  @if (resourceTypeFormGroup.get('resourceType').value && !disabled) {
+    <button
+      type="button"
+      matSuffix mat-icon-button aria-label="Clear"
+      (click)="clear()">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  }
+  @if (inlineField && errorMessage && resourceTypeControl.touched) {
+    <mat-icon matIconSuffix
+      matTooltipPosition="above"
+      matTooltipClass="tb-error-tooltip"
+      [matTooltip]="errorMessage | translate"
+      [attr.aria-label]="errorMessage | translate"
+      class="material-icons tb-suffix-show-always tb-error">
+      warning
+    </mat-icon>
+  }
+  <mat-autocomplete
+    class="tb-autocomplete"
+    #resourceTypeAutocomplete="matAutocomplete"
+    [displayWith]="displayResourceTypeFn">
+    @for (resourceType of filteredResources | async; track resourceType) {
+      <mat-option [value]="resourceType">
+        <span [innerHTML]="displayResourceTypeFn(resourceType) | highlight:searchText:true"></span>
+      </mat-option>
+    }
+    @if (!(filteredResources | async)?.length) {
+      <mat-option [value]="null">
+        <span>
+          {{ translate.get('permission.resource.no-resources-matching', {resource: searchText}) | async }}
+        </span>
+      </mat-option>
+    }
+  </mat-autocomplete>
+  @if (!inlineField && errorMessage) {
+    <mat-error>
+      {{ errorMessage | translate }}
+    </mat-error>
+  }
+</mat-form-field>

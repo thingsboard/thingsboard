@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.job;
 
 import com.google.common.util.concurrent.SettableFuture;
@@ -22,10 +10,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.rule.engine.api.JobManager;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.JobId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.job.DummyJobConfiguration;
@@ -68,10 +57,10 @@ public class JobManagerTest extends AbstractControllerTest {
     @Autowired
     private JobManager jobManager;
 
-    @SpyBean
+    @MockitoSpyBean
     private TestTaskProcessor taskProcessor;
 
-    @SpyBean
+    @MockitoSpyBean
     private JobStatsService jobStatsService;
 
     @Autowired
@@ -114,6 +103,134 @@ public class JobManagerTest extends AbstractControllerTest {
             assertThat(job.getResult().getStartTs()).isPositive();
             assertThat(job.getResult().getFinishTs()).isPositive();
         });
+    }
+
+    @Test
+    public void testSubmitCustomerJob_allTasksSuccessful() throws Exception {
+        int tasksCount = 7;
+        loginCustomerAdminUser();
+        jobEntity = createDevice("customer-test-device", "customer-test-device");
+        JobId jobId = submitJob(customerId, DummyJobConfiguration.builder()
+                .successfulTasksCount(tasksCount)
+                .taskProcessingTimeMs(1000)
+                .build()).getId();
+
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            Job job = findJobById(jobId);
+            assertThat(job.getStatus()).isEqualTo(JobStatus.RUNNING);
+            assertThat(job.getCustomerId()).isEqualTo(customerId);
+            assertThat(job.getResult().getSuccessfulCount()).isBetween(0, tasksCount - 1);
+            assertThat(job.getResult().getTotalCount()).isEqualTo(tasksCount);
+        });
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            Job job = findJobById(jobId);
+            assertThat(job.getStatus()).isEqualTo(JobStatus.COMPLETED);
+            assertThat(job.getCustomerId()).isEqualTo(customerId);
+            assertThat(job.getResult().getSuccessfulCount()).isEqualTo(tasksCount);
+            assertThat(job.getResult().getResults()).isEmpty();
+            assertThat(job.getResult().getCompletedCount()).isEqualTo(tasksCount);
+            assertThat(job.getResult().getStartTs()).isPositive();
+            assertThat(job.getResult().getFinishTs()).isPositive();
+        });
+    }
+
+    @Test
+    public void testGetJobs_tenantAdmin_includeCustomers() throws Exception {
+        // Tenant admin submits a job
+        loginTenantAdmin();
+        JobId tenantJobId = submitJob(DummyJobConfiguration.builder()
+                .successfulTasksCount(1)
+                .taskProcessingTimeMs(100)
+                .build()).getId();
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(findJobById(tenantJobId).getStatus()).isEqualTo(JobStatus.COMPLETED);
+        });
+
+        // Customer admin submits a job
+        loginCustomerAdminUser();
+        JobId customerJobId = submitJob(customerId, DummyJobConfiguration.builder()
+                .successfulTasksCount(1)
+                .taskProcessingTimeMs(100)
+                .build()).getId();
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(findJobById(customerJobId).getStatus()).isEqualTo(JobStatus.COMPLETED);
+        });
+
+        loginTenantAdmin();
+
+        // Without includeCustomers: tenant admin only sees their own jobs
+        List<Job> ownJobs = findJobs(false);
+        assertThat(ownJobs.stream().map(Job::getId)).contains(tenantJobId);
+        assertThat(ownJobs.stream().map(Job::getId)).doesNotContain(customerJobId);
+
+        List<Job> allJobs = findJobs(true);
+        assertThat(allJobs.stream().map(Job::getId)).contains(tenantJobId, customerJobId);
+    }
+
+    @Test
+    public void testGetJobs_customerAdmin_doesNotSeeOtherCustomerJobs() throws Exception {
+        // Tenant admin submits a job
+        loginTenantAdmin();
+        JobId tenantJobId = submitJob(DummyJobConfiguration.builder()
+                .successfulTasksCount(1)
+                .taskProcessingTimeMs(100)
+                .build()).getId();
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(findJobById(tenantJobId).getStatus()).isEqualTo(JobStatus.COMPLETED);
+        });
+
+        // First customer admin submits a job
+        loginCustomerAdminUser();
+        CustomerId firstCustomerId = customerId;
+        JobId firstCustomerJobId = submitJob(firstCustomerId, DummyJobConfiguration.builder()
+                .successfulTasksCount(1)
+                .taskProcessingTimeMs(100)
+                .build()).getId();
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(findJobById(firstCustomerJobId).getStatus()).isEqualTo(JobStatus.COMPLETED);
+        });
+
+        // Create second customer and submit a job as tenant admin on behalf of it
+        loginDifferentCustomerAdmin();
+        JobId secondCustomerJobId = submitJob(differentCustomerId, DummyJobConfiguration.builder()
+                .successfulTasksCount(1)
+                .taskProcessingTimeMs(100)
+                .build()).getId();
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(findJobById(secondCustomerJobId).getStatus()).isEqualTo(JobStatus.COMPLETED);
+        });
+
+        // First customer without includeCustomers: only sees own jobs
+        loginCustomerAdminUser();
+        List<Job> jobs = findJobs(false);
+        assertThat(jobs.stream().map(Job::getId)).contains(firstCustomerJobId);
+        assertThat(jobs.stream().map(Job::getId)).doesNotContain(tenantJobId, secondCustomerJobId);
+
+        // First customer with includeCustomers=true: sees own + sub-customer jobs, but not other customer's or tenant's jobs
+        jobs = findJobs(true);
+        assertThat(jobs.stream().map(Job::getId)).contains(firstCustomerJobId);
+        assertThat(jobs.stream().map(Job::getId)).doesNotContain(tenantJobId, secondCustomerJobId);
+    }
+
+    @Test
+    public void testGetJobs_subCustomers_withTypeFilter() throws Exception {
+        // Customer admin submits a job
+        loginCustomerAdminUser();
+        JobId customerJobId = submitJob(customerId, DummyJobConfiguration.builder()
+                .successfulTasksCount(1)
+                .taskProcessingTimeMs(100)
+                .build()).getId();
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() ->
+                assertThat(findJobById(customerJobId).getStatus()).isEqualTo(JobStatus.COMPLETED));
+
+        // includeCustomers=true goes through the native sub-customers query; a matching type filter
+        // must return the job (verifies the enum IN-clause is bound by name, not ordinal)
+        List<Job> matching = findJobs(true, List.of(JobType.DUMMY));
+        assertThat(matching.stream().map(Job::getId)).contains(customerJobId);
+
+        // a non-matching type filter must exclude it
+        List<Job> nonMatching = findJobs(true, List.of(JobType.REPORT));
+        assertThat(nonMatching.stream().map(Job::getId)).doesNotContain(customerJobId);
     }
 
     @Test
@@ -612,19 +729,34 @@ public class JobManagerTest extends AbstractControllerTest {
         });
     }
 
+    private Job submitJob(CustomerId customerId, DummyJobConfiguration configuration) {
+        return submitJob(customerId, configuration, "test-job");
+    }
+
     private Job submitJob(DummyJobConfiguration configuration) {
         return submitJob(configuration, "test-job");
     }
 
     @SneakyThrows
     private Job submitJob(DummyJobConfiguration configuration, String key) {
-        return submitJob(configuration, key, null);
+        return submitJob(null, configuration, key);
+    }
+
+    @SneakyThrows
+    private Job submitJob(CustomerId customerId, DummyJobConfiguration configuration, String key) {
+        return submitJob(customerId, configuration, key, null);
     }
 
     @SneakyThrows
     private Job submitJob(DummyJobConfiguration configuration, String key, TbCallback callback) {
+        return submitJob(null, configuration, key, callback);
+    }
+
+    @SneakyThrows
+    private Job submitJob(CustomerId customerId, DummyJobConfiguration configuration, String key, TbCallback callback) {
         return jobManager.submitJob(Job.builder()
                 .tenantId(tenantId)
+                .customerId(customerId)
                 .type(JobType.DUMMY)
                 .key(key)
                 .entityId(jobEntity.getId())

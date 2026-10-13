@@ -1,0 +1,44 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<mat-form-field [formGroup]="selectEntityGroupFormGroup" class="mat-block" [appearance]="appearance">
+  <mat-label>{{ placeholderText | translate }}</mat-label>
+  <input matInput type="text"
+    #entityGroupInput
+    formControlName="entityGroup"
+    (focusin)="onFocus()"
+    [required]="required"
+    [matAutocomplete]="entityGroupAutocomplete">
+  @if (selectEntityGroupFormGroup.get('entityGroup').value && !disabled) {
+    <button
+      type="button"
+      matSuffix mat-icon-button aria-label="Clear"
+      (click)="clear()">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  }
+  <mat-autocomplete class="tb-autocomplete"
+    #entityGroupAutocomplete="matAutocomplete"
+    [displayWith]="displayEntityGroupFn">
+    @for (entityGroup of filteredEntityGroups | async; track entityGroup) {
+      <mat-option [value]="entityGroup">
+        <span [innerHTML]="entityGroup.name | highlight:searchText"></span>
+      </mat-option>
+    }
+    @if (!(filteredEntityGroups | async)?.length) {
+      <mat-option [value]="null">
+        <span>
+          {{ translate.get(notFoundText, {entityGroup: searchText}) | async }}
+        </span>
+      </mat-option>
+    }
+  </mat-autocomplete>
+  @if (selectEntityGroupFormGroup.get('entityGroup').hasError('required')) {
+    <mat-error>
+      {{ requiredText | translate }}
+    </mat-error>
+  }
+</mat-form-field>

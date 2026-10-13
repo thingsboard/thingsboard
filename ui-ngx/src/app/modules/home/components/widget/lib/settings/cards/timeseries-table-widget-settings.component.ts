@@ -1,25 +1,12 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component } from '@angular/core';
 import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { buildPageStepSizeValues } from '@home/components/widget/lib/table-widget.models';
+import { buildPageStepSizeValues, columnExportOptions } from '@home/components/widget/lib/table-widget.models';
 import { Direction } from '@shared/models/page/sort-order';
 import { entityFields } from '@shared/models/entity.models';
 
@@ -56,6 +43,7 @@ export class TimeseriesTableWidgetSettingsComponent extends WidgetSettingsCompon
       reserveSpaceForHiddenAction: 'true',
       showTimestamp: true,
       dateFormat: {format: 'yyyy-MM-dd HH:mm:ss'},
+      timestampExportOption: columnExportOptions.onlyVisible,
       displayPagination: true,
       useEntityLabel: false,
       defaultPageSize: 10,
@@ -98,6 +86,7 @@ export class TimeseriesTableWidgetSettingsComponent extends WidgetSettingsCompon
       reserveSpaceForHiddenAction: [settings.reserveSpaceForHiddenAction, []],
       showTimestamp: [settings.showTimestamp, []],
       dateFormat: [dateFormat, []],
+      timestampExportOption: [settings.timestampExportOption, []],
       displayPagination: [settings.displayPagination, []],
       useEntityLabel: [settings.useEntityLabel, []],
       defaultPageSize: [settings.defaultPageSize, [Validators.min(1)]],

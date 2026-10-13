@@ -39,7 +39,7 @@
     },
     {
       "tag": "in-value",
-      "stateRenderFunction": "if (ctx.values.operatingMode === 1) {\n    element.show();\n    ctx.api.font(element, ctx.properties.inputValutFont, ctx.properties.inputValueColor);\n    ctx.api.text(element, ctx.api.formatValue(ctx.values.inputVoltage, 0, null, 0));\n} else {\n    element.hide();\n}\n",
+      "stateRenderFunction": "if (ctx.values.operatingMode === 1) {\n    element.show();\n    ctx.api.font(element, ctx.properties.inputValutFont, ctx.properties.inputValueColor);\n    ctx.api.text(element, ctx.api.formatValue(ctx.values.inputVoltage, {decimals: ctx.properties.inputValueDecimals, ignoreUnitSymbol: true}));\n} else {\n    element.hide();\n}\n",
       "actions": null
     },
     {
@@ -54,7 +54,7 @@
     },
     {
       "tag": "out-value",
-      "stateRenderFunction": "if (ctx.values.operatingMode === 1) {\n    element.show();\n    ctx.api.font(element, ctx.properties.outputValueFont, ctx.properties.outputValueColor);\n    ctx.api.text(element, ctx.api.formatValue(ctx.values.outputVoltage, 0, null, 0));\n} else {\n    element.hide();\n}\n",
+      "stateRenderFunction": "if (ctx.values.operatingMode === 1) {\n    element.show();\n    ctx.api.font(element, ctx.properties.outputValueFont, ctx.properties.outputValueColor);\n    ctx.api.text(element, ctx.api.formatValue(ctx.values.outputVoltage, {decimals: ctx.properties.outputValueDecimals, ignoreUnitSymbol: true}));\n} else {\n    element.hide();\n}\n",
       "actions": null
     },
     {
@@ -461,6 +461,19 @@
       "visible": true
     },
     {
+      "id": "inputValueDecimals",
+      "name": "{i18n:scada.symbol.value}",
+      "group": "{i18n:scada.symbol.input-voltage}",
+      "type": "number",
+      "default": 0,
+      "subLabel": "{i18n:scada.symbol.decimals}",
+      "min": 0,
+      "max": 10,
+      "step": 1,
+      "disabled": false,
+      "visible": true
+    },
+    {
       "id": "inputValutFont",
       "name": "{i18n:scada.symbol.value}",
       "group": "{i18n:scada.symbol.input-voltage}",
@@ -532,6 +545,19 @@
       "group": "{i18n:scada.symbol.output-voltage}",
       "type": "color",
       "default": "#000",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "outputValueDecimals",
+      "name": "{i18n:scada.symbol.value}",
+      "group": "{i18n:scada.symbol.output-voltage}",
+      "type": "number",
+      "default": 0,
+      "subLabel": "{i18n:scada.symbol.decimals}",
+      "min": 0,
+      "max": 10,
+      "step": 1,
       "disabled": false,
       "visible": true
     },

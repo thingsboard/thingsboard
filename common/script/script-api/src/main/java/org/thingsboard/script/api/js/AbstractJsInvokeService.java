@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.script.api.js;
 
 import com.google.common.hash.Hashing;
@@ -110,11 +98,21 @@ public abstract class AbstractJsInvokeService extends AbstractScriptInvokeServic
 
     protected abstract void doRelease(UUID scriptId, JsScriptInfo scriptInfo) throws Exception;
 
+    protected abstract boolean isLocal();
+
     private String generateJsScript(ScriptType scriptType, String functionName, String scriptBody, String... argNames) {
-        if (scriptType == ScriptType.RULE_NODE_SCRIPT) {
-            return RuleNodeScriptFactory.generateRuleNodeScript(functionName, scriptBody, argNames);
+        switch (scriptType) {
+            case RULE_NODE_SCRIPT:
+                return RuleNodeScriptFactory.generateRuleNodeScript(functionName, scriptBody, argNames);
+            case ATTRIBUTES_SCRIPT:
+                return AttributesScriptFactory.generateAttributesScript(functionName, scriptBody);
+            case UPLINK_CONVERTER_SCRIPT:
+                return UplinkConverterScriptFactory.generateUplinkConverterScript(functionName, scriptBody, isLocal());
+            case DOWNLINK_CONVERTER_SCRIPT:
+                return DownlinkConverterScriptFactory.generateDownlinkConverterScript(functionName, scriptBody, isLocal());
+            default:
+                throw new RuntimeException("No script factory implemented for scriptType: " + scriptType);
         }
-        throw new RuntimeException("No script factory implemented for scriptType: " + scriptType);
     }
 
     protected String constructFunctionName(UUID scriptId, String scriptHash) {

@@ -1,19 +1,13 @@
 #!/bin/bash
 #
-# Copyright © 2016-2026 The Thingsboard Authors
+# SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+# SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+# SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
+
+# Set TB_LICENSE_SECRET in the configuration file sourced below so the upgrade can verify, before it
+# changes anything, that this instance does not hold more devices than the license covers. Without it that
+# check is skipped and the upgrade proceeds.
 
 for i in "$@"
 do
@@ -39,6 +33,11 @@ source "${CONF_FOLDER}/${configfile}"
 
 run_user=${pkg.user}
 
+# 4.4 folded the twilio rule nodes into the boot jar; the leftover extension jar is an unrelocated
+# fat jar that shadows core libraries JVM-wide through LOADER_PATH. Repeated here for installs that
+# are upgraded without the deb/rpm control scripts.
+rm -f ${pkg.installFolder}/extensions/rule-node-twilio-sms*.jar
+
 su -s /bin/sh -c "java -cp ${jarfile} $JAVA_OPTS -Dloader.main=org.thingsboard.server.ThingsboardInstallApplication \
                     -Dinstall.data_dir=${installDir} \
                     -Dspring.jpa.hibernate.ddl-auto=none \
@@ -47,10 +46,15 @@ su -s /bin/sh -c "java -cp ${jarfile} $JAVA_OPTS -Dloader.main=org.thingsboard.s
                     -Dlogging.config=${pkg.installFolder}/bin/install/logback.xml \
                     org.springframework.boot.loader.launch.PropertiesLauncher" "$run_user"
 
-if [ $? -ne 0 ]; then
+# Captured immediately: by the end of the if/else below $? is the status of the echo that ran, so exiting on
+# it would report success even when the upgrade failed - including a deliberate refusal by the pre-upgrade
+# license capacity check, which any wrapper driving this script has to be able to see.
+upgradeStatus=$?
+
+if [ $upgradeStatus -ne 0 ]; then
     echo "ThingsBoard upgrade failed!"
 else
     echo "ThingsBoard upgraded successfully!"
 fi
 
-exit $?
+exit $upgradeStatus

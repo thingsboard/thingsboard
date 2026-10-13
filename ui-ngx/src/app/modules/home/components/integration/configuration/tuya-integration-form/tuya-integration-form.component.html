@@ -1,0 +1,72 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="tuyaIntegrationConfigForm">
+  <div class="flex flex-row xs:flex-col gt-xs:gap-2">
+    <mat-form-field appearance="outline" class="mat-block flex-1">
+      <mat-label translate>integration.region</mat-label>
+      <mat-select required formControlName="region">
+        @for (region of tuyaRegion | keyvalue; track region.key) {
+          <mat-option [value]="region.value">
+            {{ TuyaRegionTranslation.get(region.value) | translate}}
+          </mat-option>
+        }
+      </mat-select>
+      @if (tuyaIntegrationConfigForm.get('region').hasError('required')) {
+        <mat-error>
+          {{ 'integration.region-required' | translate }}
+        </mat-error>
+      }
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="mat-block flex-1">
+      <mat-label translate>integration.environment</mat-label>
+      <mat-select required formControlName="env">
+        @for (env of tuyaEnv | keyvalue; track env.key) {
+          <mat-option [value]="env.value">
+            {{ env.value }}
+          </mat-option>
+        }
+      </mat-select>
+      @if (tuyaIntegrationConfigForm.get('env').hasError('required')) {
+        <mat-error>
+          {{ 'integration.environment-required' | translate }}
+        </mat-error>
+      }
+    </mat-form-field>
+  </div>
+  <div class="flex flex-row xs:flex-col gt-xs:gap-2">
+    <mat-form-field appearance="outline" class="mat-block flex-1">
+      <mat-label translate>integration.access-id</mat-label>
+      <input matInput required formControlName="accessId" autocomplete="new-username">
+      @if (tuyaIntegrationConfigForm.get('accessId').hasError('required')) {
+        <mat-error>
+          {{ 'integration.access-id-required' | translate }}
+        </mat-error>
+      }
+    </mat-form-field>
+    <tb-secret-key-input formControlName="accessKey" class="mat-block flex-1"
+                         required
+                         appearance="outline"
+                         label="{{ 'integration.access-key' | translate }}"
+                         requiredText="{{ 'integration.access-key-required' | translate }}">
+    </tb-secret-key-input>
+  </div>
+
+  <ng-container [ngTemplateOutlet]="executeRemotelyTemplate">
+  </ng-container>
+
+  <mat-expansion-panel class="configuration-panel">
+    <mat-expansion-panel-header>
+      <mat-panel-description class="flex items-stretch justify-end" translate>
+        integration.advanced-settings
+      </mat-panel-description>
+    </mat-expansion-panel-header>
+    <ng-template matExpansionPanelContent>
+      <ng-container [ngTemplateOutlet]="genericAdditionalInfoTemplate">
+      </ng-container>
+    </ng-template>
+  </mat-expansion-panel>
+</section>

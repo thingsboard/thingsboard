@@ -220,6 +220,36 @@
       "enable": "Enable OAuth2 settings"
     }
   },
+  "ai-assistant": {
+    "configure-with-ai": "Konfiguriraj z AI",
+    "follow-up-prompt-placeholder": "Odgovori...",
+    "sub-title": "Pomagam vam surove telemetrične podatke spremeniti v smiselne uvide. Preprosto opišite, kaj želite doseči, in jaz bom poskrbel za ostalo.",
+    "new-chat": "Nov klepet",
+    "no-chats": "Še ni klepetov",
+    "today": "Danes",
+    "yesterday": "Včeraj",
+    "last-7-days": "Zadnjih 7 dni",
+    "older": "Starejši",
+    "delete-chat-title": "Ali ste prepričani, da želite izbrisati '{{name}}'?",
+    "delete-chat-text": "Vsa sporočila klepeta bodo izgubljena",
+    "delete-chat-confirm": "Da, izbriši",
+    "action-approval-required": "Potrebna je odobritev dejanja",
+    "approve": "Odobri",
+    "deny": "Zavrni",
+    "processing": "Obdelovanje...",
+    "approved": "Končano",
+    "denied": "Zavrnjeno",
+    "error": "Ni uspelo",
+    "thinking": "Razmišljam...",
+    "rename-chat-title": "Preimenuj ta klepet",
+    "main-title": "Pozdravljeni! Jaz sem vaš AI-pomočnik"
+  },
+  "alarm-rule": {
+    "ai-assistant-initial-prompt-placeholder": "Poskusi: Predlagaj pravila alarma za moje naprave"
+  },
+  "calculated-fields": {
+    "ai-assistant-initial-prompt-placeholder": "Poskusi: Predlagaj izračunana polja za moje naprave"
+  },
   "alarm": {
     "alarm": "Alarm",
     "alarms": "Alarmi",
@@ -802,6 +832,9 @@
     "toggle-edit-mode": "Preklopi način urejanja"
   },
   "device": {
+    "ai-assistant-initial-prompt-placeholder": "Opišite, kaj želite nastaviti...",
+    "ai-assistant-example-connect-label": "Poveži mojo napravo",
+    "ai-assistant-example-connect-message": "Pomagajte mi povezati eno od mojih naprav s platformo, da bo začela pošiljati pravo telemetrijo.",
     "device": "Naprava",
     "device-required": "Naprava je potrebna.",
     "devices": "Naprave",

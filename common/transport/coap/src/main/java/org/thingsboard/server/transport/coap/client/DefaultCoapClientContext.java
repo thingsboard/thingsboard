@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.coap.client;
 
 import lombok.RequiredArgsConstructor;
@@ -25,7 +13,6 @@ import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.coapserver.CoapServerContext;
 import org.thingsboard.server.coapserver.TbCoapTransportComponent;
 import org.thingsboard.server.common.adaptor.AdaptorException;
 import org.thingsboard.server.common.data.DataConstants;
@@ -85,7 +72,6 @@ import static org.eclipse.californium.core.coap.Message.NONE;
 @TbCoapTransportComponent
 public class DefaultCoapClientContext implements CoapClientContext {
 
-    private final CoapServerContext config;
     private final CoapTransportContext transportContext;
     private final TransportService transportService;
     private final TransportDeviceProfileCache profileCache;
@@ -93,10 +79,8 @@ public class DefaultCoapClientContext implements CoapClientContext {
     private final ConcurrentMap<DeviceId, TbCoapClientState> clients = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, TbCoapClientState> clientsByToken = new ConcurrentHashMap<>();
 
-    public DefaultCoapClientContext(CoapServerContext config, @Lazy CoapTransportContext transportContext,
-                                    TransportService transportService, TransportDeviceProfileCache profileCache,
-                                    PartitionService partitionService) {
-        this.config = config;
+    public DefaultCoapClientContext(@Lazy CoapTransportContext transportContext, TransportService transportService,
+                                    TransportDeviceProfileCache profileCache, PartitionService partitionService) {
         this.transportContext = transportContext;
         this.transportService = transportService;
         this.profileCache = profileCache;

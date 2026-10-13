@@ -1,0 +1,30 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-alignment-panel">
+  @for (alignmentOption of alignments; track alignmentOption) {
+    @if(alignmentOption === alignment) {
+      <button class="tb-select-alignment-button"
+              mat-raised-button
+              color="primary"
+              (click)="selectAlignment(alignmentOption)"
+              matTooltip="{{ alignmentTranslations.get(alignmentOption) | translate }}"
+              matTooltipPosition="above"
+              type="button">
+        <tb-icon matButtonIcon>{{alignmentIcons.get(alignmentOption)}}</tb-icon>
+      </button>
+    } @else {
+      <button class="tb-select-alignment-button"
+              mat-button
+              (click)="selectAlignment(alignmentOption)"
+              matTooltip="{{ alignmentTranslations.get(alignmentOption) | translate }}"
+              matTooltipPosition="above"
+              type="button">
+        <tb-icon matButtonIcon>{{alignmentIcons.get(alignmentOption)}}</tb-icon>
+      </button>
+    }
+  }
+</div>

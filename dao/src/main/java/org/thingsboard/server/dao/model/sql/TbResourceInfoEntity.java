@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -25,6 +13,7 @@ import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.ResourceSubType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResourceInfo;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseEntity;
@@ -35,6 +24,7 @@ import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.EXTERNAL_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.PUBLIC_RESOURCE_KEY_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_CUSTOMER_ID_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_DESCRIPTOR_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_ETAG_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_FILE_NAME_COLUMN;
@@ -55,6 +45,9 @@ public class TbResourceInfoEntity extends BaseSqlEntity<TbResourceInfo> implemen
 
     @Column(name = RESOURCE_TENANT_ID_COLUMN, columnDefinition = "uuid")
     private UUID tenantId;
+
+    @Column(name = RESOURCE_CUSTOMER_ID_COLUMN, columnDefinition = "uuid")
+    private UUID customerId;
 
     @Column(name = RESOURCE_TITLE_COLUMN)
     private String title;
@@ -99,6 +92,9 @@ public class TbResourceInfoEntity extends BaseSqlEntity<TbResourceInfo> implemen
         }
         this.createdTime = resource.getCreatedTime();
         this.tenantId = resource.getTenantId().getId();
+        if (resource.getCustomerId() != null) {
+            this.customerId = resource.getCustomerId().getId();
+        }
         this.title = resource.getTitle();
         this.resourceType = resource.getResourceType().name();
         if (resource.getResourceSubType() != null) {
@@ -119,6 +115,9 @@ public class TbResourceInfoEntity extends BaseSqlEntity<TbResourceInfo> implemen
         TbResourceInfo resource = new TbResourceInfo(new TbResourceId(id));
         resource.setCreatedTime(createdTime);
         resource.setTenantId(TenantId.fromUUID(tenantId));
+        if (customerId != null) {
+            resource.setCustomerId(new CustomerId(customerId));
+        }
         resource.setTitle(title);
         resource.setResourceType(ResourceType.valueOf(resourceType));
         resource.setResourceSubType(resourceSubType != null ? ResourceSubType.valueOf(resourceSubType) : null);

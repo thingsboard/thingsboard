@@ -1,0 +1,73 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@use '../../components/agent/agent-shared' as *;
+
+// Widen the entity-details-page card for the agent application route only.
+// The marker class is added/removed via the component's lifecycle hooks so
+// no other entity types are affected. The double class boosts specificity
+// over the shared `:host .settings-card` rules at every media-query breakpoint.
+::ng-deep .settings-card.tb-agent-app-fullscreen.tb-agent-app-fullscreen {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+}
+
+:host ::ng-deep {
+  .tb-app-upgrade-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: $agent-color-warning;
+    font-weight: 500;
+    mat-icon {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+    }
+  }
+  .mat-mdc-form-field:has(.tb-app-upgrade-hint) {
+    margin-bottom: 12px;
+  }
+  .tb-app-compose-hint {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    background: $agent-warning-surface;
+    color: $agent-warning-text;
+    font-size: 12px;
+    .tb-app-compose-hint-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      color: #c79100;
+    }
+  }
+  .tb-mat-label {
+    display: block;
+    margin-bottom: 8px;
+  }
+  .tb-app-compose-editor {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid $agent-divider;
+    border-radius: 4px;
+    background: $agent-surface-muted;
+  }
+  .tb-app-compose-editor-ace {
+    height: 480px;
+    overflow: hidden;
+    ::ng-deep .ace_editor {
+      font-family: $agent-mono-font !important;
+      background: transparent;
+    }
+    ::ng-deep .ace_gutter {
+      background: #f5f5f5;
+      color: rgba(0, 0, 0, 0.42);
+    }
+  }
+}
+

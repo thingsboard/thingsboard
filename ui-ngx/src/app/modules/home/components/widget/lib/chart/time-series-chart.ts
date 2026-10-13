@@ -1,29 +1,17 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { WidgetContext } from '@home/models/widget-component.models';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { WidgetAction, WidgetContext } from '@home/models/widget-component.models';
 import {
   adjustTimeAxisExtentToData,
   calculateThresholdsOffset,
   createTimeSeriesVisualMapOption,
   createTimeSeriesXAxis,
-  createTimeSeriesYAxis,
+  createTimeSeriesYAxis, dataKeySeriesType,
   defaultTimeSeriesChartYAxisSettings,
   generateChartData,
-  LineSeriesStepType, normalizeAxisLimit,
+  LineSeriesStepType,
+  normalizeAxisLimit,
   parseThresholdData,
   TimeSeriesChartAxis,
   TimeSeriesChartDataItem,
@@ -47,9 +35,11 @@ import {
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import {
   calculateAxisSize,
+  DataZoomEvent,
   ECharts,
   echartsModule,
   EChartsOption,
+  getAxis,
   getAxisExtent,
   getFocusedSeriesIndex,
   measureAxisNameSize
@@ -140,6 +130,13 @@ export class TbTimeSeriesChart {
 
   private hasVisualMap = false;
   private visualMapSelectedRanges: {[key: number]: boolean};
+
+  private dataZoomResetting = false;
+  private dataZoomUpdatePending = false;
+  private dataZoomDebounce: ReturnType<typeof setTimeout> | null = null;
+  private lastDataZoomStart = 0;
+  private lastDataZoomEnd = 100;
+  private timewindowChanged = false;
 
   private timeSeriesChart: ECharts;
   private timeSeriesChartOptions: EChartsOption;
@@ -265,6 +262,12 @@ export class TbTimeSeriesChart {
       if (this.highlightedDataKey) {
         this.keyEnter(this.highlightedDataKey);
       }
+      if (this.dataZoomUpdatePending) {
+        this.dataZoomUpdatePending = false;
+        this.dataZoomResetting = true;
+        this.timeSeriesChart.dispatchAction({ type: 'dataZoom', start: 0, end: 100 });
+        this.dataZoomResetting = false;
+      }
     }
   }
 
@@ -386,6 +389,10 @@ export class TbTimeSeriesChart {
   }
 
   public destroy(): void {
+    if (this.dataZoomDebounce !== null) {
+      clearTimeout(this.dataZoomDebounce);
+      this.dataZoomDebounce = null;
+    }
     if (this.shapeResize$) {
       this.shapeResize$.disconnect();
     }
@@ -395,7 +402,9 @@ export class TbTimeSeriesChart {
     this.yMinSubject.complete();
     this.yMaxSubject.complete();
     this.darkModeObserver?.disconnect();
-    this.ctx.dashboard.gridster.el.removeEventListener('scroll', this.onParentScroll);
+    if (this.ctx.dashboard?.gridster) {
+      this.ctx.dashboard.gridster.el.removeEventListener('scroll', this.onParentScroll);
+    }
   }
 
   public resize(): void {
@@ -417,6 +426,25 @@ export class TbTimeSeriesChart {
     return this.darkMode;
   }
 
+  public getWidgetActions(): WidgetAction[] {
+    if (this.settings.dataZoom && this.settings.dataZoomUpdateTimewindow) {
+      return [{
+        name: 'widgets.time-series-chart.reset-timewindow',
+        icon: 'restore',
+        onAction: () => {
+          if (this.dataZoomDebounce !== null) {
+            clearTimeout(this.dataZoomDebounce);
+            this.dataZoomDebounce = null;
+          }
+          this.timewindowChanged = false;
+          this.ctx.defaultSubscription.onResetTimewindow();
+        },
+        show: ()=> this.timewindowChanged
+      }];
+    }
+    return [];
+  }
+
   private setupData(): void {
     const noAggregationBarWidthSettings = this.settings.noAggregationBarWidthSettings;
     const targetBarWidth = noAggregationBarWidthSettings.strategy === TimeSeriesChartNoAggregationBarWidthStrategy.group ?
@@ -435,15 +463,15 @@ export class TbTimeSeriesChart {
         for (const dataKey of dataKeys) {
           const keySettings = mergeDeep<TimeSeriesChartKeySettings>({} as TimeSeriesChartKeySettings,
             timeSeriesChartKeyDefaultSettings, dataKey.settings);
-          if ((keySettings.type === TimeSeriesChartSeriesType.line && keySettings.lineSettings.showPointLabel &&
+          if ((dataKeySeriesType(keySettings) === TimeSeriesChartSeriesType.line && keySettings.lineSettings.showPointLabel &&
               keySettings.lineSettings.pointLabelPosition === ChartLabelPosition.top) ||
-            (keySettings.type === TimeSeriesChartSeriesType.bar &&
+            (dataKeySeriesType(keySettings) === TimeSeriesChartSeriesType.bar &&
               keySettings.barSettings.showLabel &&
               [ChartLabelPosition.top, ChartLabelPosition.bottom]
               .includes(keySettings.barSettings.labelPosition as ChartLabelPosition))) {
             this.topPointLabels = true;
           }
-          if (this.stateValueConverter && keySettings.type === TimeSeriesChartSeriesType.line) {
+          if (this.stateValueConverter && dataKeySeriesType(keySettings) === TimeSeriesChartSeriesType.line) {
             keySettings.lineSettings.pointLabelFormatter = this.stateValueConverter.labelFormatter;
           }
           dataKey.settings = keySettings;
@@ -777,7 +805,9 @@ export class TbTimeSeriesChart {
     this.timeSeriesChart = echarts.init(this.chartElement,  null, {
       renderer: 'svg'
     });
-    this.ctx.dashboard.gridster.el.addEventListener('scroll', this.onParentScroll);
+    if (this.ctx.dashboard?.gridster) {
+      this.ctx.dashboard.gridster.el.addEventListener('scroll', this.onParentScroll);
+    }
     this.timeSeriesChartOptions = {
       darkMode: this.darkMode,
       backgroundColor: 'transparent',
@@ -846,8 +876,39 @@ export class TbTimeSeriesChart {
     this.updateAxes(false);
 
     if (this.settings.dataZoom) {
-      this.timeSeriesChart.on('datazoom', () => {
+      this.timeSeriesChart.on('datazoom', (event: DataZoomEvent) => {
         this.updateAxes();
+        if (this.settings.dataZoomUpdateTimewindow && !this.dataZoomResetting) {
+          const evStart = event.batch?.length ? event.batch[0].start : event.start;
+          const evEnd   = event.batch?.length ? event.batch[0].end   : event.end;
+          this.lastDataZoomStart = evStart;
+          this.lastDataZoomEnd = evEnd;
+          if (this.dataZoomDebounce !== null) {
+            clearTimeout(this.dataZoomDebounce);
+          }
+          this.dataZoomDebounce = setTimeout(() => {
+            this.dataZoomDebounce = null;
+            if (this.timeSeriesChart?.isDisposed()) {
+              return;
+            }
+            if (Math.round(this.lastDataZoomStart) === 0 && Math.round(this.lastDataZoomEnd) === 100) {
+              this.ctx.defaultSubscription.onResetTimewindow();
+              this.timewindowChanged = false;
+            } else {
+              const axis = getAxis(this.timeSeriesChart, 'xAxis', 'main');
+              if (axis) {
+                const extent = axis.scale.getExtent();
+                const startMs = Math.round(extent[0]);
+                const endMs = Math.round(extent[1]);
+                if (startMs < endMs) {
+                  this.dataZoomUpdatePending = true;
+                  this.timewindowChanged = true;
+                  this.ctx.defaultSubscription.onUpdateTimewindow(startMs, endMs);
+                }
+              }
+            }
+          }, 500);
+        }
       });
     }
   }
@@ -1016,22 +1077,36 @@ export class TbTimeSeriesChart {
   private scaleYAxis(yAxis: TimeSeriesChartYAxis): boolean {
     if (!this.stateData) {
       const axisBarDataItems = this.dataItems.filter(d => d.yAxisId === yAxis.id && d.enabled &&
-        d.data.length && d.dataKey.settings.type === TimeSeriesChartSeriesType.bar);
+        d.data.length && dataKeySeriesType(d.dataKey.settings) === TimeSeriesChartSeriesType.bar);
       return !axisBarDataItems.length;
     } else {
       return false;
     }
   }
 
+  private maxTickLabelHalfHeight(): number {
+    const axes = this.yAxisList.filter(a => a.settings.show && a.settings.showTickLabels);
+    if (!axes.length) {
+      return 0;
+    }
+
+    const defaultSize = defaultTimeSeriesChartYAxisSettings.tickLabelFont.size;
+    const maxFontSize = Math.max(...axes.map(a => a.settings.tickLabelFont?.size || defaultSize));
+    return Math.ceil(maxFontSize / 2);
+  }
+
   private minTopOffset(): number {
-    const showTickLabels =
-      !!this.yAxisList.find(yAxis => yAxis.settings.show && yAxis.settings.showTickLabels);
-    return (this.topPointLabels) ? 25 :
-      (showTickLabels ? 10 : 5);
+    if (this.topPointLabels) {
+      return 25;
+    }
+    const half = this.maxTickLabelHalfHeight();
+    return half ? Math.max(10, half) : 5;
   }
 
   private minBottomOffset(): number {
-    return this.settings.dataZoom ? 45 : 5;
+    const half = this.maxTickLabelHalfHeight();
+    const minOffset = half ? Math.max(5, half) : 5;
+    return this.settings.dataZoom ? Math.max(45, minOffset) : minOffset;
   }
 
   private _onParentScroll() {
@@ -1056,10 +1131,11 @@ export class TbTimeSeriesChart {
           if (this.animationEnabled()) {
             barItems =
               this.dataItems.filter(d => d.enabled && d.data.length &&
-                d.dataKey.settings.type === TimeSeriesChartSeriesType.bar);
+                dataKeySeriesType(d.dataKey.settings) === TimeSeriesChartSeriesType.bar);
             this.updateBarsAnimation(barItems, false);
           }
           this.timeSeriesChart.resize();
+          this.updateAxes();
           if (this.animationEnabled()) {
             this.updateBarsAnimation(barItems, true);
           }
@@ -1069,7 +1145,7 @@ export class TbTimeSeriesChart {
   }
 
   private animationEnabled(): boolean {
-    return this.settings.animation.animation;
+    return this.ctx.reportService?.reportView ? false : this.settings.animation.animation;
   }
 
   private updateBarsAnimation(barItems: TimeSeriesChartDataItem[], animation: boolean) {

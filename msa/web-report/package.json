@@ -1,0 +1,52 @@
+{
+  "name": "thingsboard-web-report",
+  "private": true,
+  "version": "4.4.0.1",
+  "description": "ThingsBoard Web Reporting Microservice",
+  "main": "server.ts",
+  "bin": "server.js",
+  "scripts": {
+    "pkg": "tsc && pkg -t node22-linux-x64 --output ./target/thingsboard-web-report-linux ./target/src && pkg -t node22-win-x64 --no-bytecode --public-packages \"*\" --public --output ./target/thingsboard-web-report-win.exe ./target/src && node install.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon --watch '.' --ext 'ts' --exec 'ts-node server.ts'",
+    "start-prod": "nodemon --watch '.' --ext 'ts' --exec 'NODE_ENV=production ts-node server.ts'",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "config": "~4.1.1",
+    "express": "~5.1.0",
+    "js-yaml": "^4.1.1",
+    "playwright-chromium": "~1.64.0",
+    "playwright-core": "~1.64.0",
+    "winston": "~3.17.0",
+    "winston-daily-rotate-file": "~5.0.0"
+  },
+  "nyc": {
+    "exclude": [
+      "test",
+      "__tests__",
+      "node_modules",
+      "target"
+    ]
+  },
+  "devDependencies": {
+    "@types/config": "~3.3.5",
+    "@types/express": "~5.0.3",
+    "@types/node": "~22.17.2",
+    "@yao-pkg/pkg": "^6.6.0",
+    "fs-extra": "~11.3.1",
+    "nodemon": "~3.1.10",
+    "postinstall-postinstall": "^2.1.0",
+    "ts-node": "~10.9.2",
+    "typescript": "~5.9.3"
+  },
+  "pkg": {
+    "assets": [
+      "node_modules/config/**/*.*",
+      "node_modules/open/xdg-open",
+      "../../node_modules/playwright-core/browsers.json",
+      "node_modules/playwright-core/lib/server/chromium/appIcon.png",
+      "../../node_modules/playwright-core/lib/webp_codec.wasm"
+    ]
+  }
+}

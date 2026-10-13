@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.install;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -20,23 +8,29 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.dao.dashboard.DashboardService;
+import org.thingsboard.server.dao.encryptionkey.EncryptionService;
+import org.thingsboard.server.dao.group.EntityGroupService;
+import org.thingsboard.server.dao.notification.NotificationSettingsService;
+import org.thingsboard.server.dao.notification.NotificationTemplateService;
 import org.thingsboard.server.dao.oauth2.OAuth2ConfigTemplateService;
 import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.validator.RuleChainDataValidator;
+import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
+import org.thingsboard.server.dao.wl.WhiteLabelingService;
 import org.thingsboard.server.service.install.update.ResourcesUpdater;
 
 import java.nio.file.Path;
@@ -52,30 +46,42 @@ import static org.mockito.BDDMockito.willReturn;
 @SpringBootTest(classes = {InstallScripts.class, RuleChainDataValidator.class})
 class InstallScriptsTest {
 
-    @MockBean
+    @MockitoBean
     RuleChainService ruleChainService;
-    @MockBean
+    @MockitoBean
     DashboardService dashboardService;
-    @MockBean
+    @MockitoBean
     WidgetTypeService widgetTypeService;
-    @MockBean
+    @MockitoBean
     WidgetsBundleService widgetsBundleService;
-    @MockBean
+    @MockitoBean
+    AdminSettingsService adminSettingsService;
+    @MockitoBean
+    EntityGroupService entityGroupService;
+    @MockitoBean
     OAuth2ConfigTemplateService oAuth2TemplateService;
-    @MockBean
+    @MockitoBean
     ResourceService resourceService;
-    @MockBean
+    @MockitoBean
+    WhiteLabelingService whiteLabelingService;
+    @MockitoBean
     ImageService imageService;
-    @MockBean
+    @MockitoBean
+    NotificationSettingsService notificationSettingsService;
+    @MockitoBean
+    NotificationTemplateService notificationTemplateService;
+    @MockitoBean
     ResourcesUpdater resourcesUpdater;
-    @SpyBean
+    @MockitoBean
+    EncryptionService encryptionService;
+    @MockitoSpyBean
     InstallScripts installScripts;
 
-    @MockBean
+    @MockitoBean
     TenantService tenantService;
-    @MockBean
+    @MockitoBean
     ApiLimitService apiLimitService;
-    @SpyBean
+    @MockitoSpyBean
     RuleChainDataValidator ruleChainValidator;
     TenantId tenantId = TenantId.fromUUID(UUID.fromString("9ef79cdf-37a8-4119-b682-2e7ed4e018da"));
 
@@ -90,6 +96,11 @@ class InstallScriptsTest {
         Path dir = installScripts.getTenantRuleChainsDir();
         installScripts.findRuleChainsFromPath(dir)
                 .forEach(this::validateRuleChainTemplate);
+    }
+
+    @Test
+    void testRootTenantRuleChainTemplate() {
+        validateRuleChainTemplate(installScripts.getRootTenantRuleChainFile());
     }
 
     @Test

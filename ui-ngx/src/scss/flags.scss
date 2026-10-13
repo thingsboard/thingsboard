@@ -1,0 +1,8 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@import 'flag-icons/sass/_variables';
+$flag-icons-path: '/assets/flags';
+$flag-icons-rect-path: '';
+$flag-icons-use-square: false;
+@import 'flag-icons/sass/_flag-icons-base';
+@import 'flag-icons/sass/_flag-icons-list';
