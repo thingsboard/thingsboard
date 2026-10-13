@@ -152,8 +152,21 @@ rm ~/.testcontainers.properties
 Open a pull request against `master`. Fill out the pull request template, and make sure:
 
 - New or changed behavior has test coverage.
-- `mvn license:format` has been run, so new files carry the correct license header.
+- `mvn license:format` has been run, so new files carry the correct license header. Do not add
+  your own copyright or author lines to file headers.
 - The change builds cleanly: `mvn -pl <module> -am -DskipTests -Dpkg.skip=true test-compile` at minimum for the modules you touched.
+- You have signed the Contributor License Agreement (see below).
 
-By contributing, you agree that your contribution is licensed under this project's license (see
-[LICENSE](./LICENSE)).
+## Contributor License Agreement
+
+Before we can merge your pull request, you need to sign the ThingsBoard
+[Contributor License Agreement](https://cla-assistant.io/thingsboard/thingsboard) (CLA). On your
+first pull request a bot posts a link: sign in with GitHub and accept the agreement. You sign once,
+and it covers all your contributions to this repository, including those made before you signed.
+
+You keep the copyright in your contributions. The CLA grants ThingsBoard, Inc. a license to use and
+distribute them, including under this project's license (see [LICENSE](./LICENSE)) and under
+commercial licenses.
+
+If you contribute on behalf of your employer, your employer may need to sign the Corporate CLA
+instead. Contact info@thingsboard.io.
