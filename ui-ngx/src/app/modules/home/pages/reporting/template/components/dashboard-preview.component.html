@@ -1,0 +1,30 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-dashboard-preview" [style.justify-content]="imageAlign">
+  <div class="tb-dashboard-img" [style.width]="imageWidth" [style.min-width]="imageWidth">
+    <div class="tb-type-title mat-elevation-z2">
+      <tb-icon class="tb-mat-20">dashboards</tb-icon>
+      <div translate>report-template.component.dashboard.type</div>
+    </div>
+    <div class="tb-dashboard-content">
+    @if(dashboard$ | async; as dashboard) {
+      <div class="flex flex-row items-center gap-3 overflow-hidden">
+        <div tbTruncateWithTooltip>{{ dashboard.title }}</div>
+        <button type="button"
+                matTooltip="{{'report-template.component.dashboard.open-dashboard-new-tab' | translate }}"
+                matTooltipPosition="above"
+                matSuffix mat-icon-button aria-label="Details"
+                (click)="openDashboardNewTab($event, dashboard)">
+          <tb-icon matButtonIcon>open_in_new</tb-icon>
+        </button>
+      </div>
+    } @else {
+      <div tbTruncateWithTooltip>{{ 'report-template.component.dashboard.no-dashboard' | translate }}</div>
+    }
+    </div>
+  </div>
+</div>

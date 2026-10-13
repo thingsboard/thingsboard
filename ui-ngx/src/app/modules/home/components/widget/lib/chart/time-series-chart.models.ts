@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2025 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   ECharts,
   EChartsOption,
@@ -44,7 +31,8 @@ import {
   isUndefined,
   isUndefinedOrNull,
   mergeDeep,
-  parseFunction
+  parseFunction,
+  plainColorFromVariable
 } from '@core/utils';
 import tinycolor from 'tinycolor2';
 import { TimeAxisBaseOption, ValueAxisBaseOption } from 'echarts/types/src/coord/axisCommonTypes';
@@ -99,6 +87,8 @@ import {
   TimeSeriesChartTooltipWidgetSettings
 } from '@home/components/widget/lib/chart/time-series-chart-tooltip.models';
 import { TbUnit, TbUnitConverter } from '@shared/models/unit.models';
+import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
+import { DataKeysCallbacks } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
 
 type TimeSeriesChartDataEntry = [number, any, number, number];
 
@@ -555,7 +545,7 @@ export const timeSeriesChartThresholdDefaultSettings: TimeSeriesChartThreshold =
     size: 12,
     sizeUnit: 'px',
     style: 'normal',
-    weight: '400',
+    weight: 'normal',
     lineHeight: '1'
   },
   labelColor: chartColorScheme['threshold.label'].light,
@@ -620,7 +610,7 @@ export interface TimeSeriesChartVisualMapPiece {
 
 export const createTimeSeriesChartVisualMapPiece = (color: string, from?: number, to?: number): TimeSeriesChartVisualMapPiece => {
   const piece: TimeSeriesChartVisualMapPiece = {
-    color
+    color: plainColorFromVariable(color)
   };
   if (isNumber(from) && isNumber(to)) {
     if (from === to) {
@@ -697,6 +687,7 @@ export interface TimeSeriesChartSettings extends TimeSeriesChartTooltipWidgetSet
   thresholds: TimeSeriesChartThreshold[];
   darkMode: boolean;
   dataZoom: boolean;
+  dataZoomUpdateTimewindow: boolean;
   stack: boolean;
   grid: TimeSeriesChartGridSettings;
   yAxes: TimeSeriesChartYAxes;
@@ -712,6 +703,7 @@ export const timeSeriesChartDefaultSettings: TimeSeriesChartSettings = {
   thresholds: [],
   darkMode: false,
   dataZoom: true,
+  dataZoomUpdateTimewindow: false,
   stack: false,
   grid: mergeDeep({} as TimeSeriesChartGridSettings,
     timeSeriesChartGridDefaultSettings),
@@ -1117,10 +1109,10 @@ export const createTimeSeriesVisualMapOption = (settings: TimeSeriesChartVisualM
   dimension: 1,
   pieces: settings.pieces,
   outOfRange: {
-  color: settings.outOfRangeColor
+  color: plainColorFromVariable(settings.outOfRangeColor)
 },
   inRange: !settings.pieces.length ? {
-    color: settings.outOfRangeColor
+    color: plainColorFromVariable(settings.outOfRangeColor)
   } : undefined
 });
 
@@ -1254,6 +1246,14 @@ const createThresholdData = (val: string | number, item: TimeSeriesChartThreshol
     }
   ];
 
+export const dataKeySeriesType = (settings: any): TimeSeriesChartSeriesType => {
+  if (settings.seriesType) {
+    return settings.seriesType;
+  } else {
+    return settings.type;
+  }
+}
+
 const generateChartSeries = (dataItems: TimeSeriesChartDataItem[],
                              stack: boolean,
                              noAggregation: boolean,
@@ -1262,7 +1262,7 @@ const generateChartSeries = (dataItems: TimeSeriesChartDataItem[],
   const series: Array<LineSeriesOption | CustomSeriesOption> = [];
   const enabledDataItems = dataItems.filter(d => d.enabled);
   const barDataItems = enabledDataItems.filter(d =>
-    d.dataKey.settings.type === TimeSeriesChartSeriesType.bar && d.data.length);
+    dataKeySeriesType(d.dataKey.settings) === TimeSeriesChartSeriesType.bar && d.data.length);
   let barsCount = barDataItems.length;
   const barGroups: number[] = [];
   if (stack) {
@@ -1274,7 +1274,7 @@ const generateChartSeries = (dataItems: TimeSeriesChartDataItem[],
     barsCount = barGroups.length;
   }
   for (const item of enabledDataItems) {
-    if (item.dataKey.settings.type === TimeSeriesChartSeriesType.bar) {
+    if (dataKeySeriesType(item.dataKey.settings) === TimeSeriesChartSeriesType.bar) {
       if (!item.barRenderContext) {
         item.barRenderContext = {noAggregation,
           shared: barRenderSharedContext};
@@ -1323,7 +1323,7 @@ export const updateDarkMode = (options: EChartsOption,
     }
   }
   for (const item of dataItems) {
-    if (item.dataKey.settings.type === TimeSeriesChartSeriesType.line) {
+    if (dataKeySeriesType(item.dataKey.settings) === TimeSeriesChartSeriesType.line) {
       const lineSettings = item.dataKey.settings as LineSeriesSettings;
       if (item.option.label?.show) {
         item.option.label.rich.value.color = prepareChartThemeColor(lineSettings.pointLabelColor, darkMode, 'series.label');
@@ -1379,7 +1379,7 @@ const createTimeSeriesChartSeries = (item: TimeSeriesChartDataItem,
       }
     };
     item.option = seriesOption;
-    if (settings.type === TimeSeriesChartSeriesType.line) {
+    if (dataKeySeriesType(settings) === TimeSeriesChartSeriesType.line) {
       const lineSettings = settings.lineSettings;
       const lineSeriesOption = seriesOption as LineSeriesOption;
       lineSeriesOption.type = 'line';
@@ -1495,3 +1495,101 @@ const createSeriesLabelOption = (item: TimeSeriesChartDataItem, show: boolean,
   }
   return labelOption;
 };
+
+export const checkLatestDataKeys = (yAxes: TimeSeriesChartYAxes, datasource: Datasource): TimeSeriesChartYAxes => {
+  const latestKeys = datasource?.latestDataKeys || [];
+  const result: TimeSeriesChartYAxes = {};
+
+  for (const [id, axis] of Object.entries(yAxes)) {
+    axis.min = normalizeAxisLimit(axis.min);
+    axis.max = normalizeAxisLimit(axis.max);
+    const minCfg = axis.min;
+    const maxCfg = axis.max;
+
+    const minValid = !!minCfg && (
+      minCfg.type !== ValueSourceType.latestKey ||
+      latestKeys.some(k => isYAxisKey(k, minCfg))
+    );
+
+    const maxValid = !!maxCfg && (
+      maxCfg.type !== ValueSourceType.latestKey ||
+      latestKeys.some(k => isYAxisKey(k, maxCfg))
+    );
+
+    if (minValid && maxValid) {
+      result[id] = axis;
+    }
+  }
+
+  return result;
+}
+
+export const updateLatestDataKeys = (yAxes: TimeSeriesChartYAxisSettings[], datasource: Datasource, dataKeyCallbacks: DataKeysCallbacks)=> {
+  if (datasource) {
+    let latestKeys = datasource.latestDataKeys;
+    if (!latestKeys) {
+      latestKeys = [];
+      datasource.latestDataKeys = latestKeys;
+    }
+    const existingYAxisKeys = latestKeys.filter(k => k.settings?.__yAxisMinKey === true || k.settings?.__yAxisMaxKey === true);
+    const foundYAxisKeys: DataKey[] = [];
+
+    for(const yAxis of yAxes) {
+      const min = yAxis.min as ValueSourceConfig;
+      const max = yAxis.max as ValueSourceConfig;
+      if (min && min.type === ValueSourceType.latestKey) {
+        const found = existingYAxisKeys.find(k => isYAxisKey(k, min));
+        if (!found) {
+          const newKey = dataKeyCallbacks.generateDataKey(min.latestKey, min.latestKeyType,
+            null, true, null);
+          newKey.settings.__yAxisMinKey = true;
+          latestKeys.push(newKey);
+        } else if (foundYAxisKeys.indexOf(found) === -1) {
+          foundYAxisKeys.push(found);
+        }
+      }
+      if (max && max.type === ValueSourceType.latestKey) {
+        const found = existingYAxisKeys.find(k => isYAxisKey(k, max));
+        if (!found) {
+          const newKey = dataKeyCallbacks.generateDataKey(max.latestKey, max.latestKeyType,
+            null, true, null);
+          newKey.settings.__yAxisMaxKey = true;
+          latestKeys.push(newKey);
+        } else if (foundYAxisKeys.indexOf(found) === -1) {
+          foundYAxisKeys.push(found);
+        }
+      }
+    }
+    const toRemove = existingYAxisKeys.filter(k => foundYAxisKeys.indexOf(k) === -1);
+    for (const key of toRemove) {
+      const index = latestKeys.indexOf(key);
+      if (index > -1) {
+        latestKeys.splice(index, 1);
+      }
+    }
+  }
+}
+
+export const isYAxisKey = (d: DataKey, limit: ValueSourceConfig): boolean => {
+  return (d.type === DataKeyType.function && d.label === limit.latestKey) ||
+    (d.type !== DataKeyType.function && d.name === limit.latestKey &&
+      d.type === limit.latestKeyType);
+}
+
+export const normalizeAxisLimit = (limit: string | number | ValueSourceConfig): ValueSourceConfig => {
+  if (!limit) {
+    return {
+      type: ValueSourceType.constant,
+      value: null,
+      entityAlias: null
+    };
+  } else if (typeof limit === 'number' || typeof limit === 'string') {
+    return {
+      type: ValueSourceType.constant,
+      value: Number(limit),
+      entityAlias: null
+    };
+  }
+  return limit;
+}
+

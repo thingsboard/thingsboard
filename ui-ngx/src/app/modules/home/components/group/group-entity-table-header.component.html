@@ -1,0 +1,13 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<span class="group-table-title">{{ tableTitle }}</span>
+<span class="group-table-entities-title xs:!hidden sm:!hidden">{{ entitiesTitle }}</span>
+<button [disabled]="isLoading$ | async" mat-icon-button (click)="toggleGroupDetails()"
+  matTooltip="{{ 'entity-group.entity-group-details' | translate }}"
+  matTooltipPosition="above">
+  <mat-icon>edit</mat-icon>
+</button>

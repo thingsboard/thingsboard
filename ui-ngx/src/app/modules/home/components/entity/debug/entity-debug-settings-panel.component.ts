@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2025 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   booleanAttribute,
   ChangeDetectionStrategy,
@@ -39,15 +26,14 @@ import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.m
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
 
 @Component({
-  selector: 'tb-entity-debug-settings-panel',
-  templateUrl: './entity-debug-settings-panel.component.html',
-  standalone: true,
-  imports: [
-    SharedModule,
-    CommonModule,
-    DurationLeftPipe
-  ],
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'tb-entity-debug-settings-panel',
+    templateUrl: './entity-debug-settings-panel.component.html',
+    imports: [
+        SharedModule,
+        CommonModule,
+        DurationLeftPipe
+    ],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EntityDebugSettingsPanelComponent extends PageComponent implements OnInit {
 
@@ -148,6 +134,10 @@ export class EntityDebugSettingsPanelComponent extends PageComponent implements 
         return getCurrentAuthState(this.store).ruleChainDebugPerTenantLimitsConfiguration;
       case EntityType.CALCULATED_FIELD:
         return getCurrentAuthState(this.store).calculatedFieldDebugPerTenantLimitsConfiguration;
+      case EntityType.INTEGRATION:
+        return getCurrentAuthState(this.store).integrationDebugPerTenantLimitsConfiguration;
+      case EntityType.CONVERTER:
+        return getCurrentAuthState(this.store).converterDebugPerTenantLimitsConfiguration;
     }
   }
 }

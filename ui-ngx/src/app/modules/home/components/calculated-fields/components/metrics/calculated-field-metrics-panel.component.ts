@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2025 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Component, Input, OnInit, output } from '@angular/core';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { FormBuilder, Validators } from '@angular/forms';
@@ -24,6 +10,8 @@ import {
   AggInputType,
   AggInputTypeTranslations,
   CalculatedFieldAggMetricValue,
+  calculatedFieldMetricFilterDefaultScript,
+  calculatedFieldMetricMapDefaultScript,
   FORBIDDEN_NAMES,
   forbiddenNamesValidator,
   uniqueNameValidator
@@ -40,9 +28,10 @@ interface CalculatedFieldAggMetricValuePanel extends CalculatedFieldAggMetricVal
 }
 
 @Component({
-  selector: 'tb-calculated-field-metrics-panel',
-  templateUrl: './calculated-field-metrics-panel.component.html',
-  styleUrl: '../common/calculated-field-panel.scss',
+    selector: 'tb-calculated-field-metrics-panel',
+    templateUrl: './calculated-field-metrics-panel.component.html',
+    styleUrls: ['../common/calculated-field-panel.scss', '../../calculated-field.component.scss'],
+    standalone: false
 })
 export class CalculatedFieldMetricsPanelComponent implements OnInit {
 
@@ -54,6 +43,7 @@ export class CalculatedFieldMetricsPanelComponent implements OnInit {
   @Input() editorCompleter: TbEditorCompleter;
   @Input() highlightRules: AceHighlightRules;
   @Input({required: true}) testScript: (expression?: string) => Observable<string>;
+  @Input() readonly = false;
 
   metricDataApplied = output<CalculatedFieldAggMetricValue>();
   filterExpanded = false;
@@ -63,18 +53,18 @@ export class CalculatedFieldMetricsPanelComponent implements OnInit {
     name: ['', [Validators.required, forbiddenNamesValidator(FORBIDDEN_NAMES), Validators.pattern(charsWithNumRegex), Validators.maxLength(255)]],
     function: [AggFunction.AVG],
     allowFilter: [false],
-    filter: ['', Validators.required],
+    filter: [calculatedFieldMetricFilterDefaultScript, Validators.required],
     input: this.fb.group({
       type: [AggInputType.key],
       key: ['', Validators.required],
-      function: ['', Validators.required],
+      function: [calculatedFieldMetricMapDefaultScript, Validators.required],
     }),
     defaultValue: [null]
   });
 
   entityFilter: EntityFilter;
 
-  readonly AggFunctions = Object.values(AggFunction) as AggFunction[];
+  AggFunctions = Object.values(AggFunction) as AggFunction[];
   readonly AggFunctionTranslations = AggFunctionTranslations;
   readonly ScriptLanguage = ScriptLanguage;
   readonly AggInputType = AggInputType;
@@ -103,6 +93,14 @@ export class CalculatedFieldMetricsPanelComponent implements OnInit {
     this.validateInputKey();
 
     this.functionArgs = ['ctx', ...this.arguments];
+
+    if (this.simpleMode) {
+      this.AggFunctions = this.AggFunctions.filter(aggFunc => aggFunc !== AggFunction.COUNT_UNIQUE);
+    }
+
+    if (this.readonly) {
+      this.metricForm.disable({emitEvent: false});
+    }
   }
 
   saveMetric(): void {

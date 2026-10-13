@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2025 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { AfterViewInit, ChangeDetectorRef, Component, forwardRef, Input, OnDestroy, ViewChild } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
@@ -21,7 +7,7 @@ import { AppState } from '@core/core.state';
 import { ControlValueAccessor, FormArray, NG_VALUE_ACCESSOR, } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { DropDirective, FlowDirective } from '@flowjs/ngx-flow';
+import { FlowConfig, FlowDrop } from '@flowjs/ngx-flow';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { UtilsService } from '@core/services/utils.service';
 import { DialogService } from '@core/services/dialog.service';
@@ -32,16 +18,17 @@ import { DndDropEvent } from 'ngx-drag-drop';
 import { isUndefined } from '@core/utils';
 
 @Component({
-  selector: 'tb-multiple-image-input',
-  templateUrl: './multiple-image-input.component.html',
-  styleUrls: ['./multiple-image-input.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => MultipleImageInputComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-multiple-image-input',
+    templateUrl: './multiple-image-input.component.html',
+    styleUrls: ['./multiple-image-input.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => MultipleImageInputComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class MultipleImageInputComponent extends PageComponent implements AfterViewInit, OnDestroy, ControlValueAccessor {
 
@@ -77,10 +64,10 @@ export class MultipleImageInputComponent extends PageComponent implements AfterV
   dragIndex: number;
 
   @ViewChild('flow', {static: true})
-  flow: FlowDirective;
+  flow: FlowConfig;
 
   @ViewChild('flowDrop', {static: true})
-  flowDrop: DropDirective;
+  flowDrop: FlowDrop;
 
   autoUploadSubscription: Subscription;
 

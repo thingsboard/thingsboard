@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "ruleChain": {
     "name": "Root Rule Chain",
     "type": "CORE",
@@ -7,10 +7,12 @@
     "root": false,
     "debugMode": false,
     "configuration": null,
-    "additionalInfo": null
+    "additionalInfo": {
+      "description": ""
+    }
   },
   "metadata": {
-    "firstNodeIndex": 9,
+    "firstNodeIndex": 12,
     "nodes": [
       {
         "type": "org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode",
@@ -18,13 +20,14 @@
         "debugSettings": {
           "failuresEnabled": true,
           "allEnabled": false,
-          "allEnabledUntil": 1735310701003
+          "allEnabledUntil": 1742298157855
         },
         "singletonMode": false,
         "queueName": null,
         "configurationVersion": 1,
         "configuration": {
-          "defaultTTL": 0,
+          "defaultTTL": 1209600,
+          "useServerTs": null,
           "processingSettings": {
             "type": "ON_EVERY_MESSAGE"
           }
@@ -38,7 +41,11 @@
       {
         "type": "org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode",
         "name": "Save Attributes",
-        "debugSettings": null,
+        "debugSettings": {
+          "failuresEnabled": true,
+          "allEnabled": false,
+          "allEnabledUntil": 1742298157855
+        },
         "singletonMode": false,
         "queueName": null,
         "configurationVersion": 3,
@@ -52,6 +59,7 @@
           "updateAttributesOnlyOnValueChange": false
         },
         "additionalInfo": {
+          "description": null,
           "layoutX": 1000,
           "layoutY": 167
         }
@@ -59,7 +67,11 @@
       {
         "type": "org.thingsboard.rule.engine.filter.TbMsgTypeSwitchNode",
         "name": "Message Type Switch",
-        "debugSettings": null,
+        "debugSettings": {
+          "failuresEnabled": true,
+          "allEnabled": false,
+          "allEnabledUntil": 1742304208838
+        },
         "singletonMode": false,
         "queueName": null,
         "configurationVersion": 0,
@@ -67,6 +79,7 @@
           "version": 0
         },
         "additionalInfo": {
+          "description": null,
           "layoutX": 566,
           "layoutY": 302
         }
@@ -121,12 +134,63 @@
         }
       },
       {
+        "type": "org.thingsboard.rule.engine.filter.TbOriginatorTypeFilterNode",
+        "name": "Is Entity Group",
+        "debugSettings": null,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "originatorTypes": [
+            "ENTITY_GROUP"
+          ]
+        },
+        "additionalInfo": {
+          "layoutX": 268,
+          "layoutY": 300
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.filter.TbMsgTypeFilterNode",
+        "name": "Post attributes or RPC request",
+        "debugSettings": null,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "messageTypes": [
+            "POST_ATTRIBUTES_REQUEST",
+            "RPC_CALL_FROM_SERVER_TO_DEVICE"
+          ]
+        },
+        "additionalInfo": {
+          "layoutX": 319,
+          "layoutY": 109
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.transform.TbDuplicateMsgToGroupNode",
+        "name": "Duplicate To Group Entities",
+        "debugSettings": null,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 1,
+        "configuration": {
+          "entityGroupId": null,
+          "entityGroupIsMessageOriginator": true
+        },
+        "additionalInfo": {
+          "layoutX": 627,
+          "layoutY": 108
+        }
+      },
+      {
         "type": "org.thingsboard.rule.engine.profile.TbDeviceProfileNode",
         "name": "Device Profile Node",
         "debugSettings": {
           "failuresEnabled": true,
           "allEnabled": false,
-          "allEnabledUntil": 1735310701003
+          "allEnabledUntil": 1742304208838
         },
         "singletonMode": false,
         "queueName": null,
@@ -150,19 +214,23 @@
         "configurationVersion": 0,
         "configuration": {
           "scriptLang": "JS",
-          "jsScript": "var test = {\n    a: 'a',\n    b: 'b'\n};\n\nreturn test.a === 'a' && test.b === 'b';",
+          "jsScript": "var test = {\n    a: 'a',\n    b: 'b'\n};\nreturn test.a === 'a' && test.b === 'b';",
           "tbelScript": "return msg.temperature > 20;"
         },
         "additionalInfo": {
           "description": "",
-          "layoutX": 251,
-          "layoutY": 499
+          "layoutX": 154,
+          "layoutY": 548
         }
       },
       {
         "type": "org.thingsboard.rule.engine.filter.TbJsFilterNode",
         "name": "Test TBEL script",
-        "debugSettings": null,
+        "debugSettings": {
+          "failuresEnabled": true,
+          "allEnabled": false,
+          "allEnabledUntil": 0
+        },
         "singletonMode": false,
         "queueName": null,
         "configurationVersion": 0,
@@ -173,18 +241,14 @@
         },
         "additionalInfo": {
           "description": "",
-          "layoutX": 317,
-          "layoutY": 355
+          "layoutX": 357,
+          "layoutY": 457
         }
       },
       {
         "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
         "name": "Add arrival timestamp",
-        "debugSettings": {
-          "failuresEnabled": true,
-          "allEnabled": false,
-          "allEnabledUntil": 1744642101587
-        },
+        "debugSettings": null,
         "singletonMode": false,
         "queueName": null,
         "configurationVersion": 0,
@@ -205,7 +269,7 @@
         "debugSettings": {
           "failuresEnabled": true,
           "allEnabled": false,
-          "allEnabledUntil": 1735310701003
+          "allEnabledUntil": 1733331880270
         },
         "singletonMode": false,
         "queueName": null,
@@ -227,7 +291,7 @@
         "debugSettings": null,
         "singletonMode": false,
         "queueName": null,
-        "configurationVersion": 0,
+        "configurationVersion": 1,
         "configuration": {
           "originatorSource": "ENTITY",
           "entityType": "ASSET",
@@ -242,7 +306,8 @@
               }
             ],
             "fetchLastLevelOnly": false
-          }
+          },
+          "preserveOriginatorIfCustomer": true
         },
         "additionalInfo": {
           "description": "",
@@ -256,13 +321,14 @@
         "debugSettings": {
           "failuresEnabled": true,
           "allEnabled": false,
-          "allEnabledUntil": 1735310701003
+          "allEnabledUntil": 1733331880270
         },
         "singletonMode": false,
         "queueName": null,
         "configurationVersion": 1,
         "configuration": {
-          "defaultTTL": 0,
+          "defaultTTL": 1209600,
+          "useServerTs": null,
           "processingSettings": {
             "type": "ON_EVERY_MESSAGE"
           }
@@ -276,7 +342,11 @@
       {
         "type": "org.thingsboard.rule.engine.filter.TbCheckMessageNode",
         "name": "Has testData",
-        "debugSettings": null,
+        "debugSettings": {
+          "failuresEnabled": true,
+          "allEnabled": false,
+          "allEnabledUntil": 1744655225418
+        },
         "singletonMode": false,
         "queueName": null,
         "configurationVersion": 0,
@@ -300,20 +370,32 @@
         "debugSettings": {
           "failuresEnabled": true,
           "allEnabled": false,
-          "allEnabledUntil": 1742305233839
+          "allEnabledUntil": 1742304208838
         },
         "singletonMode": false,
         "queueName": null,
         "configurationVersion": 1,
         "configuration": {
           "processingSettings": {
-            "type": "ON_EVERY_MESSAGE"
+            "timeseries": {
+              "type": "ON_EVERY_MESSAGE"
+            },
+            "latest": {
+              "type": "ON_EVERY_MESSAGE"
+            },
+            "webSockets": {
+              "type": "ON_EVERY_MESSAGE"
+            },
+            "calculatedFields": {
+              "type": "ON_EVERY_MESSAGE"
+            },
+            "type": "ADVANCED"
           },
           "defaultTTL": 60,
           "useServerTs": null
         },
         "additionalInfo": {
-          "description": "",
+          "description": null,
           "layoutX": 1203,
           "layoutY": 327
         }
@@ -342,13 +424,23 @@
       },
       {
         "fromIndex": 2,
-        "toIndex": 13,
+        "toIndex": 16,
         "type": "Post telemetry"
       },
       {
         "fromIndex": 6,
+        "toIndex": 2,
+        "type": "False"
+      },
+      {
+        "fromIndex": 6,
         "toIndex": 7,
-        "type": "Success"
+        "type": "True"
+      },
+      {
+        "fromIndex": 7,
+        "toIndex": 2,
+        "type": "False"
       },
       {
         "fromIndex": 7,
@@ -358,36 +450,51 @@
       {
         "fromIndex": 8,
         "toIndex": 2,
-        "type": "True"
+        "type": "Success"
       },
       {
         "fromIndex": 9,
-        "toIndex": 6,
+        "toIndex": 10,
         "type": "Success"
       },
       {
         "fromIndex": 10,
         "toIndex": 11,
-        "type": "Success"
+        "type": "True"
       },
       {
         "fromIndex": 11,
-        "toIndex": 12,
-        "type": "Success"
+        "toIndex": 6,
+        "type": "True"
       },
       {
-        "fromIndex": 13,
-        "toIndex": 0,
-        "type": "False"
+        "fromIndex": 12,
+        "toIndex": 9,
+        "type": "Success"
       },
       {
         "fromIndex": 13,
         "toIndex": 14,
-        "type": "True"
+        "type": "Success"
       },
       {
         "fromIndex": 14,
-        "toIndex": 10,
+        "toIndex": 15,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 16,
+        "toIndex": 0,
+        "type": "False"
+      },
+      {
+        "fromIndex": 16,
+        "toIndex": 17,
+        "type": "True"
+      },
+      {
+        "fromIndex": 17,
+        "toIndex": 13,
         "type": "Success"
       }
     ],

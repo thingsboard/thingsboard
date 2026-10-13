@@ -1,0 +1,315 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-solution-settings">
+  <mat-toolbar class="tb-solution-settings-toolbar">
+    <div class="flex-1" tbTruncateWithTooltip>{{ 'solution-creator.solution-overview' | translate: {name: solutionName} }}</div>
+    <tb-toggle-select appearance="fill" selectMediaBreakpoint="xs" [formControl]="solutionMode">
+      <tb-toggle-option value="basic">{{ 'solution-creator.basic-mode' | translate }}</tb-toggle-option>
+      <tb-toggle-option value="advanced">{{ 'solution-creator.advanced-mode' | translate }}</tb-toggle-option>
+    </tb-toggle-select>
+  </mat-toolbar>
+  <div class="tb-solution-settings-container size-full">
+    @if (solutionMode.value === 'basic') {
+      <div class="tb-solution-settings-container-setting size-full">
+        <div class="tb-solution-menu-container w-48 min-w-48">
+          <mat-selection-list class="tb-solution-menu flex flex-col items-stretch justify-start"
+                              [multiple]="false"
+                              [formControl]="solutionEntity"
+                              hideSingleSelectionIndicator color="primary">
+            @for (entity of solutionEntities; track entity) {
+              @if (entity.value === 'entityProfiles' || description[entity.value]?.length) {
+                <mat-list-option [value]="entity.value">{{ entity.title | translate }}</mat-list-option>
+              }
+            }
+          </mat-selection-list>
+        </div>
+        <div class="flex flex-col flex-1 min-w-0 overflow-hidden">
+          <div class="tb-solution-settings-table-toolbar justify-between">
+            <div class="flex-1" tbTruncateWithTooltip>{{ solutionEntityTitle | translate }}</div>
+            <tb-toggle-select selectMediaBreakpoint="xs" [formControl]="profileMode"
+              [class.hidden]="solutionEntity.value[0] !== 'entityProfiles'">
+              <tb-toggle-option value="table">{{ 'solution-creator.table-view' | translate }}</tb-toggle-option>
+              <tb-toggle-option value="schema">{{ 'solution-creator.schema-view' | translate }}</tb-toggle-option>
+            </tb-toggle-select>
+          </div>
+          @if (profileMode.value === 'table' || solutionEntity.value[0] !== 'entityProfiles') {
+            <div class="flex-1 overflow-auto">
+              <table mat-table [dataSource]="dataSource">
+                <ng-container matColumnDef="name">
+                  <th mat-header-cell class="w-36 min-w-36" *matHeaderCellDef>{{ 'solution-creator.name' | translate }}</th>
+                  <td mat-cell *matCellDef="let element" class="min-w-36 whitespace-nowrap"> {{element.name}} </td>
+                </ng-container>
+                <ng-container matColumnDef="calculatedFieldName">
+                  <th mat-header-cell class="w-36 min-w-36" *matHeaderCellDef>{{ 'solution-creator.name' | translate }}</th>
+                  <td mat-cell *matCellDef="let element" class="min-w-36 whitespace-nowrap"> {{element.calculatedFieldName}} </td>
+                </ng-container>
+                <ng-container matColumnDef="entityType">
+                  <th mat-header-cell class="w-20" *matHeaderCellDef> {{ 'entity.entity-type' | translate }} </th>
+                  <td mat-cell *matCellDef="let element"> {{element.entityType}} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="telemetry">
+                  <th mat-header-cell style="width: 100%" *matHeaderCellDef>{{ 'solution-creator.data' | translate }}</th>
+                  <td mat-cell *matCellDef="let element" class="overflow-hidden">
+                    @if (element.telemetry?.length || getEntityRelations(element.name).length) {
+                      <div tb-chip-overflow overflowClass="tb-overflow-chip tb-primary-fill flex h-7 min-w-fit w-fit items-center gap-2 whitespace-nowrap rounded-2xl leading-5 tracking-wide">
+                        @for (keyInfo of element.telemetry; track keyInfo.key) {
+                          <ng-container *ngTemplateOutlet="dataChip; context:{title: keyInfo.key, type: keyInfo.telemetryType}"></ng-container>
+                        }
+                        @for (relation of getEntityRelations(element.name); track relation.child) {
+                          <ng-container *ngTemplateOutlet="dataChip; context:{title: relation.child, type: 'relation'}"></ng-container>
+                        }
+                      </div>
+                    }
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="profileName">
+                  <th mat-header-cell *matHeaderCellDef>{{ 'solution-creator.entity-profile' | translate }}</th>
+                  <td mat-cell *matCellDef="let element" class="w-full min-w-44">
+                    <ng-container *ngTemplateOutlet="chip; context:{title: element.profileName}"></ng-container>
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="alarmName">
+                  <th mat-header-cell *matHeaderCellDef class="w-1/3">{{ 'alarm.type' | translate }}</th>
+                  <td mat-cell *matCellDef="let element" class="w-1/3 whitespace-nowrap">{{ element.alarmName }}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="entityProfiles">
+                  <th mat-header-cell *matHeaderCellDef class="w-1/3">{{ 'solution-creator.entity-profiles' | translate}}</th>
+                  <td mat-cell *matCellDef="let element">
+                    <div class="flex gap-2">
+                      @if (element.entityProfiles?.length) {
+                        <div tb-chip-overflow overflowClass="tb-overflow-chip tb-primary-fill flex h-7 min-w-fit w-fit items-center gap-2 whitespace-nowrap rounded-2xl leading-5 tracking-wide">
+                          @for (entityProfile of element.entityProfiles; track entityProfile) {
+                            <ng-container *ngTemplateOutlet="chip; context:{title: entityProfile}"></ng-container>
+                          }
+                        </div>
+                      }
+                    </div>
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="profileNames">
+                  <th mat-header-cell *matHeaderCellDef class="w-1/3">{{ 'solution-creator.entity-profiles' | translate}}</th>
+                  <td mat-cell *matCellDef="let element">
+                    <div class="flex gap-2">
+                      @if (element.profileNames?.length) {
+                        <div tb-chip-overflow overflowClass="tb-overflow-chip tb-primary-fill flex h-7 min-w-fit w-fit items-center gap-2 whitespace-nowrap rounded-2xl leading-5 tracking-wide">
+                          @for (entityProfile of element.profileNames; track entityProfile) {
+                            <ng-container *ngTemplateOutlet="chip; context:{title: entityProfile}"></ng-container>
+                          }
+                        </div>
+                      }
+                    </div>
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="severities">
+                  <th mat-header-cell *matHeaderCellDef class="w-1/3">{{ 'alarm-rule.severities' | translate }}</th>
+                  <td mat-cell *matCellDef="let element">
+                    @for (key of element.severities; track key; let last=$last) {
+                      <span [style.color]="getAlarmSeverityColor(key)" class="font-bold">
+                        {{ key }}
+                      </span>
+                      @if(!last) {
+                        <span>, </span>
+                      }
+                    }
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="permissions">
+                  <th mat-header-cell *matHeaderCellDef>{{ 'permission.operation.operations' | translate }}</th>
+                  <td mat-cell *matCellDef="let element" class="w-full">
+                    <div class="flex gap-2">
+                      @for (operation of element.permissions.split(''); track operation) {
+                        <ng-container *ngTemplateOutlet="chip; context:{title: (('solution-creator.operation.'+ operation) | translate)}"></ng-container>
+                      }
+                    </div>
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="alarmActions" stickyEnd>
+                  <th mat-header-cell *matHeaderCellDef class="w-20 min-w-20 max-w-20"></th>
+                  <td mat-cell *matCellDef="let element" class="w-20 min-w-20 max-w-20">
+                    <button type="button"
+                            mat-icon-button #info (click)="openAlarmInfo($event, info, element)"
+                            class="tb-mat-40"
+                            matTooltip="{{ 'solution-creator.alarm-info' | translate }}"
+                            matTooltipPosition="above">
+                      <tb-icon>info_outline</tb-icon>
+                    </button>
+                    <button type="button"
+                            mat-icon-button (click)="deleteAlarm($event, element)"
+                            class="tb-mat-40"
+                            matTooltip="{{ 'action.delete' | translate }}"
+                            matTooltipPosition="above">
+                      <tb-icon>delete</tb-icon>
+                    </button>
+
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="entityActions" stickyEnd>
+                  <th mat-header-cell *matHeaderCellDef class="w-10 min-w-10 max-w-10"></th>
+                  <td mat-cell *matCellDef="let element" class="w-10 min-w-10 max-w-10">
+                    <button type="button"
+                            mat-icon-button #info (click)="openEntityInfo($event, info, element)"
+                            class="tb-mat-40"
+                            matTooltip="{{ 'solution-creator.entity-info' | translate }}"
+                            matTooltipPosition="above">
+                      <tb-icon>info_outline</tb-icon>
+                    </button>
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="metricActions" stickyEnd>
+                  <th mat-header-cell *matHeaderCellDef class="w-10 min-w-10 max-w-10"></th>
+                  <td mat-cell *matCellDef="let element" class="w-10 min-w-10 max-w-10">
+                    <button type="button"
+                            mat-icon-button #info (click)="openMetricInfo($event, info, element)"
+                            class="tb-mat-40"
+                            matTooltip="{{ 'solution-creator.calculated-field-info' | translate }}"
+                            matTooltipPosition="above">
+                      <tb-icon>info_outline</tb-icon>
+                    </button>
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="iamActions" stickyEnd>
+                  <th mat-header-cell *matHeaderCellDef class="w-10 min-w-10 max-w-10"></th>
+                  <td mat-cell *matCellDef="let element" class="w-10 min-w-10 max-w-10">
+                    <button type="button"
+                            mat-icon-button #info (click)="openIamInfo($event, info, element)"
+                            class="tb-mat-40"
+                            matTooltip="{{ 'solution-creator.iam-info' | translate }}"
+                            matTooltipPosition="above">
+                      <tb-icon>info_outline</tb-icon>
+                    </button>
+                  </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+                <tr mat-row *matRowDef="let _row; columns: displayedColumns;"></tr>
+              </table>
+            </div>
+          } @else {
+            <div #graphContainer class="graph-container flex size-full flex-1 overflow-hidden">
+              <ngx-graph
+                class="size-full"
+                [links]="links"
+                [nodes]="nodes"
+                [clusters]="clusters"
+                layout="dagreCluster"
+                [layoutSettings]="{ orientation: 'TB', nodePadding: 32, edgePadding: 80, rankPadding: 80 }"
+                [draggingEnabled]="false"
+                [panningEnabled]="true"
+                [enableZoom]="true"
+                [autoCenter]="true"
+                [minZoomLevel]="0.5"
+              >
+                <ng-template #defsTemplate>
+                  <svg:marker id="arrow" viewBox="0 -5 10 10" refX="8" refY="0" markerWidth="4" markerHeight="4" orient="auto">
+                    <svg:path d="M0,-5L10,0L0,5" class="arrow-head" fill="#B1B1B1" />
+                  </svg:marker>
+                </ng-template>
+
+                <ng-template #clusterTemplate let-cluster>
+                  <svg:g class="node cluster" style="pointer-events: none">
+                    <svg:rect
+                      rx="6"
+                      ry="6"
+                      [attr.width]="cluster.dimension.width"
+                      [attr.height]="cluster.dimension.height"
+                      [attr.fill]="cluster.data?.color"
+                    />
+                    <text alignment-baseline="central" x="8" y="12" class="cluster-title">
+                      {{ cluster.label }}
+                    </text>
+                  </svg:g>
+                </ng-template>
+
+                <ng-template #nodeTemplate let-node>
+                  <svg:foreignObject [attr.width]="node.dimension.width" [attr.height]="node.dimension.height" style="overflow: hidden">
+                    <div xmlns="http://www.w3.org/1999/xhtml"
+                         class="node flex justify-between gap-1"
+                         [style.width.px]="node.dimension.width"
+                         [style.height.px]="node.dimension.height"
+                         [class.device]="node.data?.entityType==='DEVICE'"
+                         [class.asset]="node.data?.entityType==='ASSET'"
+                         [class.customer]="node.data?.entityType==='CUSTOMER'"
+                         [class.user]="node.data?.entityType==='USER'">
+                      <div class="flex flex-col flex-1 gap-1 overflow-hidden">
+                        <div class="title" tbTruncateWithTooltip>{{ node.label }}</div>
+                        <div class="subtitle">{{ node.data?.entityType }}</div>
+                      </div>
+                      <div class="node-info-btn"
+                           #info (click)="openEntityInfo($event, info, node.data?.entity, false)"
+                           matTooltip="{{ 'solution-creator.entity-info' | translate }}"
+                           matTooltipPosition="above">
+                        <mat-icon class="tb-mat-20">info_outline</mat-icon>
+                      </div>
+                    </div>
+                  </svg:foreignObject>
+                </ng-template>
+
+                <ng-template #linkTemplate let-link>
+                  <svg:g class="edge">
+                    <svg:path class="line" stroke-width="1.5" stroke="#B1B1B1" marker-end="url(#arrow)"></svg:path>
+                    <svg:g class="edge-label" text-anchor="middle">
+                      <svg:foreignObject width="120" height="28" [attr.x]="(link.midPoint?.x - 60)" [attr.y]="(link.midPoint?.y - 14)">
+                        <div class="edge-label-text" tbTruncateWithTooltip>{{ link.label }}</div>
+                      </svg:foreignObject>
+                    </svg:g>
+                  </svg:g>
+                </ng-template>
+              </ngx-graph>
+            </div>
+          }
+        </div>
+      </div>
+    }
+    @else {
+      <tb-json-object-edit
+        class="h-full"
+        [fillHeight]="true"
+        [formControl]="solutionDescriptor"
+      ></tb-json-object-edit>
+      <div class="flex justify-end">
+        <button mat-stroked-button
+                (click)="updatedSolutionDescriptor($event)"
+                color="primary"
+                [disabled]="solutionDescriptor.pristine">
+          {{ 'action.apply' | translate }}
+        </button>
+      </div>
+    }
+  </div>
+</div>
+<ng-template #chip let-title="title">
+  <div class="tb-chip tb-primary-fill h-7 w-fit whitespace-nowrap rounded-2xl leading-5 tracking-wide">
+    {{ title }}
+  </div>
+</ng-template>
+<ng-template #dataChip let-title="title" let-type="type">
+  <div class="tb-chip tb-primary-fill flex h-7 w-fit min-w-fit items-center gap-2 whitespace-nowrap rounded-2xl leading-5 tracking-wide">
+    @switch (type) {
+      @case ('TIMESERIES') {
+        <tb-icon class="tb-mat-18">timeline</tb-icon>
+      }
+      @case ('ATTRIBUTE') {
+        <tb-icon class="tb-mat-18">mdi:alpha-a-circle-outline</tb-icon>
+      }
+      @case ('relation') {
+        <tb-icon class="tb-mat-18">mdi:repeat</tb-icon>
+      }
+    }
+    {{ title }}
+  </div>
+</ng-template>

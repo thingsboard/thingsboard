@@ -1,0 +1,92 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+package org.thingsboard.server.common.data.query;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.JsonNode;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Schema;
+import org.jspecify.annotations.Nullable;
+import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.EntityType;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+@Schema(
+        description = """
+                Contains unique time series and attribute key names discovered from entities matching a query,
+                optionally including a sample value for each key."""
+)
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public record AvailableEntityKeysV2(
+        @Schema(
+                description = "Total number of entities that matched the query filter.",
+                example = "5",
+                requiredMode = Schema.RequiredMode.REQUIRED
+        )
+        @Nullable Integer totalEntities,
+
+        @Schema(
+                description = "Set of entity types found among the matched entities.",
+                example = "[\"DEVICE\", \"ASSET\"]",
+                requiredMode = Schema.RequiredMode.REQUIRED
+        )
+        Set<EntityType> entityTypes,
+
+        @Schema(
+                description = """
+                        List of unique time series keys available on the matched entities, sorted alphabetically.
+                        Omitted when timeseries keys were not requested.""",
+                nullable = true
+        )
+        @ArraySchema(schema = @Schema(implementation = KeyInfo.class))
+        @Nullable List<KeyInfo> timeseries,
+
+        @Schema(
+                description = """
+                        Map of attribute scope to the list of unique attribute keys available on the matched entities.
+                        Only scopes supported by the matched entity types are included.
+                        Omitted when attribute keys were not requested or when none of the requested scopes apply to the matched entity types.""",
+                nullable = true
+        )
+        @Nullable Map<AttributeScope, List<KeyInfo>> attributes
+) {
+
+    @Schema(description = "Key name with an optional sample value.")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public record KeyInfo(
+            @Schema(
+                    description = "Key name.",
+                    example = "temperature",
+                    requiredMode = Schema.RequiredMode.REQUIRED
+            )
+            String key,
+
+            @Schema(
+                    description = "Most recent sample value for this key across the matched entities. Omitted when samples were not requested.",
+                    nullable = true
+            )
+            @Nullable KeySample sample
+    ) {}
+
+    @Schema(description = "Most recent value and its timestamp.")
+    public record KeySample(
+            @Schema(
+                    description = "Timestamp in milliseconds since epoch.", example = "1707000000000",
+                    requiredMode = Schema.RequiredMode.REQUIRED
+            )
+            long ts,
+
+            @Schema(
+                    description = "Sample value.",
+                    example = "23.5",
+                    requiredMode = Schema.RequiredMode.REQUIRED,
+                    implementation = Object.class
+            )
+            JsonNode value
+    ) {}
+
+}

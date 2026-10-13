@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2025 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.cf.ctx.state.aggregation;
 
 import lombok.AllArgsConstructor;
@@ -23,6 +10,8 @@ import org.thingsboard.script.api.tbel.TbelCfSingleValueArg;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntryType;
+import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
+import org.thingsboard.server.service.cf.ctx.state.HasEntityLimit;
 import org.thingsboard.server.service.cf.ctx.state.HasLatestTs;
 import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
 
@@ -33,7 +22,7 @@ import static org.thingsboard.server.service.cf.ctx.state.BaseCalculatedFieldSta
 
 @Data
 @AllArgsConstructor
-public class RelatedEntitiesArgumentEntry implements ArgumentEntry, HasLatestTs {
+public class RelatedEntitiesArgumentEntry implements ArgumentEntry, HasLatestTs, HasEntityLimit {
 
     private final Map<EntityId, ArgumentEntry> entityInputs;
 
@@ -63,25 +52,27 @@ public class RelatedEntitiesArgumentEntry implements ArgumentEntry, HasLatestTs 
     }
 
     @Override
-    public boolean updateEntry(ArgumentEntry entry) {
+    public boolean updateEntry(ArgumentEntry entry, CalculatedFieldCtx ctx) {
         if (entry instanceof RelatedEntitiesArgumentEntry relatedEntitiesArgumentEntry) {
+            checkEntityLimit(entityInputs.size(), ctx);
             entityInputs.putAll(relatedEntitiesArgumentEntry.entityInputs);
-            return true;
         } else if (entry instanceof SingleValueArgumentEntry singleValueArgumentEntry) {
             if (entry.isForceResetPrevious()) {
+                checkEntityLimit(entityInputs.size(), ctx);
                 entityInputs.put(singleValueArgumentEntry.getEntityId(), singleValueArgumentEntry);
-                return true;
-            }
-            ArgumentEntry argumentEntry = entityInputs.get(singleValueArgumentEntry.getEntityId());
-            if (argumentEntry != null) {
-                argumentEntry.updateEntry(singleValueArgumentEntry);
             } else {
-                entityInputs.put(singleValueArgumentEntry.getEntityId(), singleValueArgumentEntry);
+                ArgumentEntry argumentEntry = entityInputs.get(singleValueArgumentEntry.getEntityId());
+                if (argumentEntry != null) {
+                    argumentEntry.updateEntry(singleValueArgumentEntry, ctx);
+                } else {
+                    checkEntityLimit(entityInputs.size(), ctx);
+                    entityInputs.put(singleValueArgumentEntry.getEntityId(), singleValueArgumentEntry);
+                }
             }
-            return true;
         } else {
             throw new IllegalArgumentException("Unsupported argument entry type for aggregation argument entry: " + entry.getType());
         }
+        return true;
     }
 
     @Override

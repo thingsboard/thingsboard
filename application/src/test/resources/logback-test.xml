@@ -18,9 +18,6 @@
     <logger name="org.thingsboard.server.controller.AbstractWebTest" level="INFO"/>
     <logger name="org.thingsboard.server.service.script" level="INFO"/>
 
-    <!-- mute TelemetryEdgeSqlTest that causes a lot of randomly generated errors -->
-    <logger name="org.thingsboard.server.service.edge.rpc.PostgresEdgeGrpcSession" level="OFF"/>
-
     <!--    LwM2m lifecycle debug for the test scope -->
     <logger name="org.thingsboard.server.transport.lwm2m.server.downlink.DefaultLwM2mDownlinkMsgHandler" level="TRACE"/>
     <logger name="org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2mUplinkMsgHandler" level="TRACE"/>
@@ -41,6 +38,12 @@
     <!--    <logger name="org.thingsboard.server.transport.lwm2m.server.store.TbInMemoryRegistrationStore" level="TRACE"/>-->
     <!--    <logger name="org.thingsboard.server.transport.lwm2m.server.store.TbLwM2mRedisRegistrationStore" level="TRACE"/>-->
     <!--    <logger name="org.thingsboard.server.transport.lwm2m.security.diffPort" level="TRACE"/>-->
+
+    <!-- Avoiding multiple logs like: The cache 'relations' is not recording statistics. No meters except 'cache.size' will be registered. Call 'Caffeine#recordStats()' prior to building the cache for metrics to be recorded.-->
+    <logger name="io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics" level="ERROR"/>
+
+    <!-- Log MvcMock result with status >=400 -->
+    <logger name="org.springframework.test.web.servlet.result" level="DEBUG"/>
 
     <root level="WARN">
         <appender-ref ref="console"/>

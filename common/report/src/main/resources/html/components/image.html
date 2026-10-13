@@ -1,0 +1,9 @@
+<div th:style="|width: ${layoutWidth};
+                overflow: hidden;
+                text-align: ${imageAlign};
+                page-break-inside: avoid;|">
+    <img th:src="${imageUrl}"
+         th:style="|height: auto;
+                    display: inline-block;
+                    width: ${imageWidth};|" />
+</div>

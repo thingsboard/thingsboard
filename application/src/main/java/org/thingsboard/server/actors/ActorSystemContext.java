@@ -1,21 +1,10 @@
-/**
- * Copyright © 2016-2025 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.actors;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -30,11 +19,16 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.DebugModeUtil;
+import org.thingsboard.common.util.EventUtil;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.SsrfProtectionValidator;
+import org.thingsboard.rule.engine.api.DashboardReportService;
 import org.thingsboard.rule.engine.api.DeviceStateManager;
 import org.thingsboard.rule.engine.api.JobManager;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.MqttClientSettings;
+import org.thingsboard.rule.engine.api.TbHttpClientSettings;
 import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.rule.engine.api.RuleEngineAiChatModelService;
 import org.thingsboard.rule.engine.api.SmsService;
@@ -42,10 +36,13 @@ import org.thingsboard.rule.engine.api.notification.SlackService;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
 import org.thingsboard.script.api.js.JsInvokeService;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
+import org.thingsboard.server.actors.calculatedField.CalculatedFieldException;
 import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.actors.tenant.DebugTbRateLimits;
 import org.thingsboard.server.cache.limits.RateLimitService;
 import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.event.CalculatedFieldDebugEvent;
 import org.thingsboard.server.common.data.event.ErrorEvent;
 import org.thingsboard.server.common.data.event.LifecycleEvent;
@@ -54,8 +51,13 @@ import org.thingsboard.server.common.data.event.RuleNodeDebugEvent;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
+import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.limit.LimitedApi;
+import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
@@ -69,8 +71,11 @@ import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.audit.AuditLogService;
+import org.thingsboard.server.dao.blob.BlobEntityService;
 import org.thingsboard.server.dao.cassandra.CassandraCluster;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
+import org.thingsboard.server.dao.component.ComponentDescriptorService;
+import org.thingsboard.server.dao.converter.ConverterService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.ClaimDevicesService;
@@ -83,6 +88,9 @@ import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.event.EventService;
+import org.thingsboard.server.dao.group.EntityGroupService;
+import org.thingsboard.server.dao.grouppermission.GroupPermissionService;
+import org.thingsboard.server.dao.integration.IntegrationService;
 import org.thingsboard.server.dao.job.JobService;
 import org.thingsboard.server.dao.mobile.MobileAppBundleService;
 import org.thingsboard.server.dao.mobile.MobileAppService;
@@ -93,15 +101,31 @@ import org.thingsboard.server.dao.notification.NotificationRuleService;
 import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.dao.notification.NotificationTemplateService;
 import org.thingsboard.server.dao.oauth2.OAuth2ClientService;
+import org.thingsboard.server.dao.ota.DeviceGroupOtaPackageService;
 import org.thingsboard.server.dao.ota.OtaPackageService;
+import org.thingsboard.server.dao.agent.AgentAppEventService;
+import org.thingsboard.server.dao.agent.AgentAppProfileService;
+import org.thingsboard.server.dao.agent.AgentAppUnitService;
+import org.thingsboard.server.dao.agent.AgentApplicationService;
+import org.thingsboard.server.dao.agent.AgentBulkActionService;
+import org.thingsboard.server.dao.agent.AgentProfileService;
+import org.thingsboard.server.dao.agent.AgentService;
+import org.thingsboard.server.dao.ota.OtaPackageStateService;
+import org.thingsboard.server.dao.owner.OwnerService;
 import org.thingsboard.server.dao.pat.ApiKeyService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.queue.QueueStatsService;
 import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.dao.report.ReportService;
+import org.thingsboard.server.dao.report.ReportTemplateService;
 import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.resource.TbResourceDataCache;
+import org.thingsboard.server.dao.role.RoleService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.rule.RuleNodeStateService;
+import org.thingsboard.server.dao.scheduler.SchedulerEventService;
+import org.thingsboard.server.dao.secret.SecretConfigurationService;
+import org.thingsboard.server.dao.secret.SecretService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.dao.tenant.TenantService;
@@ -118,8 +142,8 @@ import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.cf.CalculatedFieldProcessingService;
 import org.thingsboard.server.service.cf.CalculatedFieldQueueService;
 import org.thingsboard.server.service.cf.CalculatedFieldStateService;
-import org.thingsboard.server.service.cf.OwnerService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
+import org.thingsboard.server.service.converter.DataConverterService;
 import org.thingsboard.server.service.edge.rpc.EdgeRpcService;
 import org.thingsboard.server.service.entitiy.entityview.TbEntityViewService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
@@ -127,12 +151,16 @@ import org.thingsboard.server.service.executors.ExternalCallExecutorService;
 import org.thingsboard.server.service.executors.NotificationExecutorService;
 import org.thingsboard.server.service.executors.PubSubRuleNodeExecutorProvider;
 import org.thingsboard.server.service.executors.SharedEventLoopGroupService;
+import org.thingsboard.server.service.integration.PlatformIntegrationService;
+import org.thingsboard.server.service.integration.TbIntegrationDownlinkService;
 import org.thingsboard.server.service.mail.MailExecutorService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.rpc.TbCoreDeviceRpcService;
 import org.thingsboard.server.service.rpc.TbRpcService;
 import org.thingsboard.server.service.rpc.TbRuleEngineDeviceRpcService;
+import org.thingsboard.server.service.ruleengine.RuleEngineCallService;
+import org.thingsboard.server.service.security.permission.OwnersCacheService;
 import org.thingsboard.server.service.session.DeviceSessionCacheService;
 import org.thingsboard.server.service.sms.SmsExecutorService;
 import org.thingsboard.server.service.state.DeviceStateService;
@@ -141,8 +169,9 @@ import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import org.thingsboard.server.service.transport.TbCoreToTransportService;
 import org.thingsboard.server.utils.DebugModeRateLimitsConfig;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -216,6 +245,11 @@ public class ActorSystemContext {
     @Getter
     @Setter
     private ComponentDiscoveryService componentService;
+
+    @Autowired
+    @Getter
+    @Setter
+    private ComponentDescriptorService componentDescriptorService;
 
     @Autowired
     @Getter
@@ -295,6 +329,10 @@ public class ActorSystemContext {
 
     @Autowired
     @Getter
+    private TbIntegrationDownlinkService downlinkService;
+
+    @Autowired
+    @Getter
     private TimeseriesService tsService;
 
     @Autowired
@@ -353,6 +391,42 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private MailExecutorService mailExecutor;
+
+    @Autowired
+    @Getter
+    private ConverterService converterService;
+
+    @Autowired
+    @Getter
+    private IntegrationService integrationService;
+
+    @Autowired
+    @Getter
+    private EntityGroupService entityGroupService;
+
+    @Autowired
+    @Getter
+    private DashboardReportService dashboardReportService;
+
+    @Autowired
+    @Getter
+    private BlobEntityService blobEntityService;
+
+    @Autowired
+    @Getter
+    private ReportTemplateService reportTemplateService;
+
+    @Autowired
+    @Getter
+    private ReportService reportService;
+
+    @Autowired
+    @Getter
+    private GroupPermissionService groupPermissionService;
+
+    @Autowired
+    @Getter
+    private RoleService roleService;
 
     @Autowired
     @Getter
@@ -457,6 +531,14 @@ public class ActorSystemContext {
     @Getter
     private TbCoreToTransportService tbCoreToTransportService;
 
+    @Autowired
+    @Getter
+    private RuleEngineCallService ruleEngineCallService;
+
+    @Autowired
+    @Getter
+    private OwnersCacheService ownersCacheService;
+
     @Lazy
     @Autowired(required = false)
     @Getter
@@ -494,6 +576,16 @@ public class ActorSystemContext {
     @Lazy
     @Autowired(required = false)
     @Getter
+    private PlatformIntegrationService platformIntegrationService;
+
+    @Lazy
+    @Autowired(required = false)
+    @Getter
+    private DataConverterService dataConverterService;
+
+    @Lazy
+    @Autowired(required = false)
+    @Getter
     private EdgeService edgeService;
 
     @Lazy
@@ -519,6 +611,14 @@ public class ActorSystemContext {
     @Autowired(required = false)
     @Getter
     private OtaPackageService otaPackageService;
+
+    @Autowired
+    @Getter
+    private OtaPackageStateService otaPackageStateService;
+
+    @Autowired
+    @Getter
+    private DeviceGroupOtaPackageService deviceGroupOtaPackageService;
 
     @Lazy
     @Autowired(required = false)
@@ -552,6 +652,11 @@ public class ActorSystemContext {
 
     @Autowired(required = false)
     @Getter
+    private SchedulerEventService schedulerEventService;
+
+    @Lazy
+    @Autowired(required = false)
+    @Getter
     private CalculatedFieldProcessingService calculatedFieldProcessingService;
 
     @Autowired(required = false)
@@ -572,11 +677,47 @@ public class ActorSystemContext {
 
     @Autowired
     @Getter
-    private ApiKeyService apiKeyService;
+    private SecretConfigurationService secretConfigurationService;
+
+    @Autowired
+    @Getter
+    private SecretService secretService;
 
     @Autowired
     @Getter
     private OwnerService ownerService;
+
+    @Autowired
+    @Getter
+    private ApiKeyService apiKeyService;
+
+    @Autowired
+    @Getter
+    private AgentService agentService;
+
+    @Autowired
+    @Getter
+    private AgentApplicationService agentApplicationService;
+
+    @Autowired
+    @Getter
+    private AgentAppEventService agentAppEventService;
+
+    @Autowired
+    @Getter
+    private AgentAppUnitService agentAppUnitService;
+
+    @Autowired
+    @Getter
+    private AgentAppProfileService agentAppProfileService;
+
+    @Autowired
+    @Getter
+    private AgentProfileService agentProfileService;
+
+    @Autowired
+    @Getter
+    private AgentBulkActionService agentBulkActionService;
 
     @Value("${actors.session.max_concurrent_sessions_per_device:1}")
     @Getter
@@ -613,9 +754,27 @@ public class ActorSystemContext {
     @Getter
     private boolean localCacheType;
 
+    @Value("${actors.rule.external.ssrf_protection_enabled:false}")
+    private boolean ssrfProtectionEnabled;
+
+    @Value("${actors.rule.external.ssrf_additional_blocked_hosts:}")
+    private List<String> ssrfAdditionalBlockedHosts;
+
+    @Value("${actors.rule.external.ssrf_allowed_hosts:}")
+    private List<String> ssrfAllowedHosts;
+
     @PostConstruct
     public void init() {
         this.localCacheType = "caffeine".equals(cacheType);
+        SsrfProtectionValidator.setEnabled(ssrfProtectionEnabled);
+        SsrfProtectionValidator.setAdditionalBlockedHosts(ssrfAdditionalBlockedHosts);
+        SsrfProtectionValidator.setAllowedHosts(ssrfAllowedHosts);
+        if (!ssrfProtectionEnabled) {
+            log.warn("SSRF protection for external rule nodes is DISABLED. This allows rule chains to make HTTP requests to " +
+                    "internal/private network addresses including cloud metadata endpoints. It is strongly recommended to " +
+                    "enable SSRF protection by setting SSRF_PROTECTION_ENABLED=true. If your rule chains need to access " +
+                    "devices on local networks, use SSRF_ALLOWED_HOSTS to whitelist specific addresses or ranges.");
+        }
     }
 
     @Value("${actors.tenant.create_components_on_init:true}")
@@ -670,6 +829,10 @@ public class ActorSystemContext {
     @Getter
     private MqttClientSettings mqttClientSettings;
 
+    @Autowired(required = false)
+    @Getter
+    private TbHttpClientSettings tbHttpClientSettings;
+
     @Getter
     @Setter
     private TbActorSystem actorSystem;
@@ -707,29 +870,46 @@ public class ActorSystemContext {
                 .entityId(entityId.getId())
                 .serviceId(getServiceId())
                 .method(method)
-                .error(toString(e)).build());
+                .error(EventUtil.toString(e)).build());
     }
 
     public void persistLifecycleEvent(TenantId tenantId, EntityId entityId, ComponentLifecycleEvent lcEvent, Exception e) {
-        LifecycleEvent.LifecycleEventBuilder event = LifecycleEvent.builder()
+        LifecycleEvent.LifecycleEventBuilder eventBuilder = LifecycleEvent.builder()
                 .tenantId(tenantId)
                 .entityId(entityId.getId())
                 .serviceId(getServiceId())
                 .lcEventType(lcEvent.name());
 
         if (e != null) {
-            event.success(false).error(toString(e));
+            eventBuilder.success(false).error(EventUtil.toString(e));
         } else {
-            event.success(true);
+            eventBuilder.success(true);
         }
 
-        eventService.saveAsync(event.build());
-    }
+        LifecycleEvent event = eventBuilder.build();
 
-    private String toString(Throwable e) {
-        StringWriter sw = new StringWriter();
-        e.printStackTrace(new PrintWriter(sw));
-        return sw.toString();
+        eventService.saveAsync(event);
+
+        if (entityId.getEntityType().equals(EntityType.INTEGRATION)) {
+            String key = "integration_status_" + getServiceId().toLowerCase();
+
+            if (event.getLcEventType().equals("STARTED") || event.getLcEventType().equals("UPDATED")) {
+                ObjectNode value = JacksonUtil.newObjectNode();
+
+                if (e == null) {
+                    value.put("success", true);
+                } else {
+                    value.put("success", false);
+                    value.put("serviceId", getServiceId());
+                    value.put("error", event.getError());
+                }
+
+                AttributeKvEntry attr = new BaseAttributeKvEntry(new JsonDataEntry(key, JacksonUtil.toString(value)), event.getCreatedTime());
+                attributesService.save(tenantId, entityId, AttributeScope.SERVER_SCOPE, Collections.singletonList(attr));
+            } else if (event.getLcEventType().equals("STOPPED")) {
+                attributesService.removeAll(tenantId, entityId, AttributeScope.SERVER_SCOPE, Collections.singletonList(key));
+            }
+        }
     }
 
     public TopicPartitionInfo resolve(ServiceType serviceType, TenantId tenantId, EntityId entityId) {
@@ -768,6 +948,14 @@ public class ActorSystemContext {
         persistDebugAsync(tenantId, entityId, "OUT", tbMsg, relationType, null, null);
     }
 
+    public void persistDebugOutputIfNeeded(TenantId tenantId, RuleNode ruleNode, TbMsg tbMsg, Set<String> relationTypes, Throwable error, String failureMessage) {
+        if (DebugModeUtil.isDebugAllAvailable(ruleNode)) {
+            relationTypes.forEach(relationType -> persistDebugOutput(tenantId, ruleNode.getId(), tbMsg, relationType, error, failureMessage));
+        } else if (DebugModeUtil.isDebugFailuresAvailable(ruleNode, relationTypes)) {
+            persistDebugOutput(tenantId, ruleNode.getId(), tbMsg, TbNodeConnectionType.FAILURE, error, failureMessage);
+        }
+    }
+
     private void persistDebugAsync(TenantId tenantId, EntityId entityId, String type, TbMsg tbMsg, String relationType, Throwable error, String failureMessage) {
         if (checkLimits(tenantId, tbMsg, error)) {
             try {
@@ -785,7 +973,7 @@ public class ActorSystemContext {
                         .metadata(JacksonUtil.toString(tbMsg.getMetaData().getData()));
 
                 if (error != null) {
-                    event.error(toString(error));
+                    event.error(EventUtil.toString(error));
                 } else if (failureMessage != null) {
                     event.error(failureMessage);
                 }
@@ -824,11 +1012,23 @@ public class ActorSystemContext {
                 .serviceId(getServiceId())
                 .message("Reached debug mode rate limit!");
         if (error != null) {
-            event.error(toString(error));
+            event.error(EventUtil.toString(error));
         }
 
         ListenableFuture<Void> future = eventService.saveAsync(event.build());
         Futures.addCallback(future, RULE_CHAIN_DEBUG_EVENT_ERROR_CALLBACK, MoreExecutors.directExecutor());
+    }
+
+    public void persistCalculatedFieldDebugError(CalculatedFieldException cfe) {
+        String message;
+        if (cfe.getErrorMessage() != null) {
+            message = cfe.getErrorMessage();
+        } else if (cfe.getCause() != null) {
+            message = cfe.getCause().getMessage();
+        } else {
+            message = "N/A";
+        }
+        persistCalculatedFieldDebugEvent(cfe.getCtx().getTenantId(), cfe.getCtx().getCfId(), cfe.getEventEntity(), cfe.getArguments(), cfe.getMsgId(), cfe.getMsgType(), null, message);
     }
 
     public void persistCalculatedFieldDebugEvent(TenantId tenantId, CalculatedFieldId calculatedFieldId, EntityId entityId, JsonNode arguments, UUID tbMsgId, String tbMsgType, String result, String errorMessage) {
@@ -846,7 +1046,7 @@ public class ActorSystemContext {
                 if (tbMsgType != null) {
                     eventBuilder.msgType(tbMsgType);
                 }
-                if (arguments != null) {
+                if (arguments != null && !arguments.isEmpty()) {
                     eventBuilder.arguments(JacksonUtil.toString(arguments));
                 }
                 if (result != null) {

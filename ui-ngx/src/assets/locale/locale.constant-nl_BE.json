@@ -460,6 +460,44 @@
         "slack": "Los",
         "slack-settings": "Slack-instellingen"
     },
+    "ai-assistant": {
+        "configure-with-ai": "Configureren met AI",
+        "follow-up-prompt-placeholder": "Antwoord...",
+        "sub-title": "Ik kan u helpen bij het instellen en beheren van uw devices, dashboards, berekende velden, alarmregels en meldingen — beschrijf gewoon wat u nodig hebt en ik regel de rest.",
+        "new-chat": "Nieuwe chat",
+        "no-chats": "Nog geen chats",
+        "today": "Vandaag",
+        "yesterday": "Gisteren",
+        "last-7-days": "Afgelopen 7 dagen",
+        "older": "Ouder",
+        "delete-chat-title": "Weet je zeker dat je '{{name}}' wilt verwijderen?",
+        "delete-chat-text": "Alle chatberichten gaan verloren",
+        "delete-chat-confirm": "Ja, verwijderen",
+        "action-approval-required": "Goedkeuring voor actie vereist",
+        "approve": "Goedkeuren",
+        "deny": "Weigeren",
+        "processing": "Bezig met verwerken...",
+        "approved": "Klaar",
+        "denied": "Geweigerd",
+        "error": "Mislukt",
+        "thinking": "Aan het nadenken...",
+        "rename-chat-title": "Deze chat hernoemen",
+        "main-title": "Hallo! Ik ben je AI-assistent"
+    },
+    "alarm-rule": {
+        "ai-assistant-example-suggest-rules-label": "Alarmregels voorstellen",
+        "ai-assistant-example-suggest-rules-message": "Bekijk mijn apparaten en stel alarmregels voor die de moeite waard zijn om in te stellen.",
+        "ai-assistant-example-inactivity-label": "Alarm voor apparaatinactiviteit",
+        "ai-assistant-example-inactivity-message": "Maak een alarmregel die een waarschuwing activeert wanneer een apparaat langer dan 10 minuten geen telemetrie meer verzendt.",
+        "ai-assistant-initial-prompt-placeholder": "Beschrijf wat u wilt instellen..."
+    },
+    "calculated-fields": {
+        "ai-assistant-example-suggest-fields-label": "Berekende velden voorstellen",
+        "ai-assistant-example-suggest-fields-message": "Bekijk mijn apparaten en stel berekende velden voor die de moeite waard zijn om in te stellen.",
+        "ai-assistant-example-aggregate-label": "Telemetrie aggregeren",
+        "ai-assistant-example-aggregate-message": "Kies een van mijn apparaten en stel een berekend veld in dat enkele van zijn telemetriesleutels aggregeert. Beschrijf wat u gaat maken en vraag mij eerst om bevestiging.",
+        "ai-assistant-initial-prompt-placeholder": "Beschrijf wat u wilt instellen..."
+    },
     "alarm": {
         "alarm": "Alarm",
         "alarms": "Alarmen",
@@ -1094,15 +1132,7 @@
     "custom-translation": {
         "custom-translation": "Aangepaste vertaling",
         "translation-map": "Vertaling kaart",
-        "key": "Vertaling sleutel",
-        "import": "Vertaling importeren",
-        "export": "Vertaling exporteren",
-        "export-data": "Vertaalgegevens exporteren",
-        "import-data": "Vertaalgegevens importeren",
-        "translation-file": "Vertaal bestand",
-        "invalid-translation-file-error": "Kan vertaalbestand niet importeren: Ongeldige gegevensstructuur voor vertalingen.",
-        "custom-translation-hint": "Definieer hieronder de JSON voor aangepaste vertalingen. Deze JSON overschrijft de standaardvertaling. Klik op 'Download locale file' om een bestaande vertaling te krijgen. U kunt het gedownloade bestand ook gebruiken als referentie voor beschikbare sleutel-waardeparen voor vertalingen.",
-        "download-locale-file": "Landinstellingsbestand downloaden"
+        "translation-file": "Vertaal bestand"
     },
     "date": {
         "last-update-n-ago": "Laatste update N geleden",
@@ -1128,6 +1158,11 @@
         "to": "Tot"
     },
     "dashboard": {
+        "ai-assistant-initial-prompt-placeholder": "Beschrijf wat u wilt instellen...",
+        "ai-assistant-example-monitor-device-label": "Een apparaat bewaken",
+        "ai-assistant-example-monitor-device-message": "Het apparaat is ... Ik wil dit dashboard instellen als een weergave met één status van dit apparaat, met de nieuwste telemetrie als waardekaarten bovenaan, een tijdreeksgrafiek van die telemetrie daaronder en een tabel met de actieve alarmen onderaan.",
+        "ai-assistant-example-monitor-fleet-label": "Een apparaatvloot bewaken",
+        "ai-assistant-example-monitor-fleet-message": "Het apparaattype is ... Ik wil dit dashboard met twee statussen voor dat type instellen. De overzichtsstatus moet alle apparaten van dat type in een entiteitentabel weergeven, met daaronder een tabel met de actieve alarmen van die apparaten. Door een apparaat te selecteren wordt een detailstatus geopend met de nieuwste telemetrie van dat apparaat als waardekaarten bovenaan, een tijdreeksgrafiek van die telemetrie daaronder en een tabel met de actieve alarmen onderaan.",
         "all": "Alle",
         "all-dashboards": "Alle dashboards",
         "groups": "Groepen",
@@ -1395,6 +1430,9 @@
         "toggle-edit-mode": "Bewerkingsmodus in-/uitschakelen"
     },
     "device": {
+        "ai-assistant-initial-prompt-placeholder": "Beschrijf wat u wilt instellen...",
+        "ai-assistant-example-connect-label": "Mijn device verbinden",
+        "ai-assistant-example-connect-message": "Help me een van mijn devices met het platform te verbinden zodat het echte telemetrie begint te versturen.",
         "all": "Alle",
         "all-devices": "Alle Devices",
         "groups": "Groepen",
@@ -2076,7 +2114,7 @@
         "cloud-endpoint": "Cloud-eindpunt",
         "cloud-endpoint-required": "Cloud Endpoint is vereist.",
         "cloud-endpoint-max-length": "Cloud-eindpunt moet kleiner zijn dan 256 tekens",
-        "cloud-endpoint-hint": "Edge vereist HTTP(s)-toegang tot Cloud (ThingsBoard PE) om de licentiesleutel te verifiëren. Geef de cloud-URL op waarmee Edge verbinding kan maken.",
+        "cloud-endpoint-hint": "Edge vereist HTTP(s)-toegang tot Cloud (ThingsBoard) om de licentiesleutel te verifiëren. Geef de cloud-URL op waarmee Edge verbinding kan maken.",
         "description": "Omschrijving",
         "details": "Details",
         "events": "Events",
@@ -3340,8 +3378,8 @@
         "topics-required": "Onderwerp is vereist.",
         "routing-keys": "Routing sleutels",
         "routing-keys-required": "Routingsleutel is vereist.",
-        "queues": "Queues",
-        "queues-required": "De naam van de queue is vereist.",
+        "queue": "Queue",
+        "queue-required": "De naam van de queue is vereist.",
         "durable": "Duurzaam",
         "exclusive": "Exclusief",
         "autoDelete": "Automatisch verwijderen",
@@ -3436,7 +3474,7 @@
         "sas-key-name-required": "SAS-sleutelnaam is vereist.",
         "sas-key": "SAS-toets",
         "sas-key-required": "SAS-sleutel is vereist.",
-        "iot-hub-name": "IoT Hub-naam (vereist voor downlink)",
+        "iot-hub-name": "IoT Hub-naam",
         "hostname": "Hostnaam",
         "hostname-required": "Hostnaam is vereist",
         "integration-clazz": "Integratie klasse",
@@ -3911,6 +3949,11 @@
         "copied": "Gekopieerd!"
     },
     "notification": {
+        "ai-assistant-initial-prompt-placeholder": "Beschrijf wat u wilt instellen...",
+        "ai-assistant-example-explain-label": "Hoe meldingen werken",
+        "ai-assistant-example-explain-message": "Leg uit hoe meldingen werken in ThingsBoard.",
+        "ai-assistant-example-inactivity-label": "E-mail bij offline apparaat",
+        "ai-assistant-example-inactivity-message": "Maak een meldingsregel die mij een e-mail stuurt wanneer een van mijn apparaten inactief wordt.",
         "action-button": "Actieknop",
         "action-type": "Soort actie",
         "active": "Actief",
@@ -4855,7 +4898,7 @@
         "search": "Bestanden zoeken",
         "clear-search": "Zoekopdracht wissen",
         "no-blob-entities-prompt": "Geen bestanden gevonden",
-        "report": "Rapport",
+        "report": "Webrapport",
         "created-time": "Gecreëerde tijd",
         "name": "Naam",
         "type": "Type",
@@ -7010,8 +7053,6 @@
         },
         "functions": {
             "title": "Functies",
-            "pe-feature-tooltip": "Alleen op ThingsBoard\nProfessionele editie",
-            "switch-to-pe": "Overschakelen naar PE",
             "alarms": "Alarmen",
             "dashboards": "Dashboards",
             "entities-and-relations": "Entiteiten en relaties",

@@ -1,23 +1,11 @@
-/**
- * Copyright © 2016-2025 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.sync;
 
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.jgit.revwalk.RevCommit;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardExecutors;
@@ -46,6 +34,8 @@ public class DefaultGitSyncService implements GitSyncService {
     private final ScheduledExecutorService executor = ThingsBoardExecutors.newSingleThreadScheduledExecutor("git-sync");
     private final Map<String, GitRepository> repositories = new ConcurrentHashMap<>();
     private final Map<String, Runnable> updateListeners = new ConcurrentHashMap<>();
+
+    private final Map<String, RevCommit> lastCommits = new ConcurrentHashMap<>();
 
     @Override
     public void registerSync(String key, String repoUri, String branch, long fetchFrequencyMs, Runnable onUpdate) {
@@ -84,7 +74,7 @@ public class DefaultGitSyncService implements GitSyncService {
     @Override
     public List<RepoFile> listFiles(String key, String path, int depth, FileType type) {
         GitRepository repository = getRepository(key);
-        return repository.listFilesAtCommit(getBranchRef(repository), path, depth).stream()
+        return repository.listFilesAtCommit(getLastCommit(key), path, depth).stream()
                 .filter(file -> type == null || file.type() == type)
                 .toList();
     }
@@ -93,7 +83,7 @@ public class DefaultGitSyncService implements GitSyncService {
     @Override
     public byte[] getFileContent(String key, String path) {
         GitRepository repository = getRepository(key);
-        return repository.getFileContentAtCommit(path, getBranchRef(repository));
+        return repository.getFileContentAtCommit(path, getLastCommit(key));
     }
 
     @Override
@@ -137,6 +127,15 @@ public class DefaultGitSyncService implements GitSyncService {
     }
 
     private void onUpdate(String key) {
+        GitRepository repository = getRepository(key);
+        String branchRef = getBranchRef(repository);
+        try {
+            lastCommits.put(key, repository.resolveCommit(branchRef));
+        } catch (Throwable e) {
+            log.error("[{}] Failed to resolve commit for ref {}", key, branchRef, e);
+            return;
+        }
+
         Runnable listener = updateListeners.get(key);
         if (listener != null) {
             log.debug("[{}] Handling repository update", key);
@@ -152,6 +151,14 @@ public class DefaultGitSyncService implements GitSyncService {
         // using uri to define folder name in case repo url is changed
         String name = URI.create(settings.getRepositoryUri()).getPath().replaceAll("[^a-zA-Z]", "");
         return Path.of(repositoriesFolder, name);
+    }
+
+    private RevCommit getLastCommit(String key) {
+        RevCommit commit = lastCommits.get(key);
+        if (commit == null) {
+            throw new IllegalStateException(key + " repository has no resolved commit");
+        }
+        return commit;
     }
 
     private String getBranchRef(GitRepository repository) {

@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2025 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, forwardRef, Input, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import {
   AbstractControl,
@@ -53,17 +40,18 @@ export function advancedRangeValidator(control: AbstractControl): ValidationErro
 }
 
 @Component({
-  selector: 'tb-color-range-list',
-  templateUrl: './color-range-list.component.html',
-  styleUrls: ['color-settings-panel.component.scss', 'color-range-list.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ColorRangeListComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-color-range-list',
+    templateUrl: './color-range-list.component.html',
+    styleUrls: ['color-settings-panel.component.scss', 'color-range-list.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ColorRangeListComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class ColorRangeListComponent implements OnInit, ControlValueAccessor, OnDestroy {
 
@@ -91,6 +79,10 @@ export class ColorRangeListComponent implements OnInit, ControlValueAccessor, On
 
   @Input()
   @coerceBoolean()
+  useThemePalette = false;
+
+  @Input()
+  @coerceBoolean()
   advancedMode = false;
 
   modelValue: any;
@@ -113,9 +105,6 @@ export class ColorRangeListComponent implements OnInit, ControlValueAccessor, On
     this.colorRangeListFormGroup.valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe(() => this.updateModel());
-    this.colorRangeListFormGroup.get('advancedMode').valueChanges.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe(() => setTimeout(() => {this.popover?.updatePosition();}, 0));
   }
 
   ngOnDestroy() {
@@ -169,17 +158,8 @@ export class ColorRangeListComponent implements OnInit, ControlValueAccessor, On
     return this.rangeListFormArray.controls as FormGroup[];
   }
 
-  trackByRange(index: number, rangeControl: AbstractControl): any {
-    return rangeControl;
-  }
-
-  public trackByAdvancedRange(index: number, advancedRangeControl: AbstractControl): any {
-    return advancedRangeControl;
-  }
-
   public removeAdvancedRange(index: number) {
     (this.colorRangeListFormGroup.get('rangeAdvanced') as UntypedFormArray).removeAt(index);
-    setTimeout(() => {this.popover?.updatePosition();}, 0);
   }
 
   get advancedRangeFormArray(): UntypedFormArray {
@@ -193,7 +173,6 @@ export class ColorRangeListComponent implements OnInit, ControlValueAccessor, On
   removeRange(index: number) {
     this.rangeListFormArray.removeAt(index);
     this.colorRangeListFormGroup.markAsDirty();
-    setTimeout(() => {this.popover?.updatePosition();}, 0);
   }
 
   rangeDrop(event: CdkDragDrop<string[]>, range: string) {
@@ -216,7 +195,6 @@ export class ColorRangeListComponent implements OnInit, ControlValueAccessor, On
     const advancedRangeColorsArray = this.colorRangeListFormGroup.get('rangeAdvanced') as UntypedFormArray;
     const advancedRangeColorControl = this.fb.control(advancedRange, [advancedRangeValidator]);
     advancedRangeColorsArray.push(advancedRangeColorControl);
-    setTimeout(() => {this.popover?.updatePosition();}, 0);
   }
 
   addRange() {
@@ -228,7 +206,6 @@ export class ColorRangeListComponent implements OnInit, ControlValueAccessor, On
       };
       this.rangeListFormArray.push(this.colorRangeControl(newRange));
       this.colorRangeListFormGroup.markAsDirty();
-      setTimeout(() => {this.popover?.updatePosition();}, 0);
     }
   }
 

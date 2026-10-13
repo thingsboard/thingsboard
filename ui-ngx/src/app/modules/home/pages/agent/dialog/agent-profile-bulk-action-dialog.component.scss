@@ -1,0 +1,289 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@use '../../../components/agent/agent-shared' as *;
+
+:host {
+  display: block;
+  width: min(720px, 95vw);
+  min-width: 0;
+  max-width: 95vw;
+}
+
+.tb-bulk-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0;
+  padding: 16px 16px 9px 24px;
+
+  h2 {
+    font-size: 20px;
+    font-weight: 400;
+    margin: 0;
+  }
+}
+
+.tb-bulk-dialog-body {
+  padding: 16px 24px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.tb-bulk-hint {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--tb-primary-500) 6%, transparent);
+  color: rgba(0, 0, 0, 0.72);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.tb-bulk-summary {
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 4px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+
+  .tb-bulk-summary-row {
+    display: flex;
+    gap: 12px;
+    font-size: 13px;
+    line-height: 1.8;
+
+    .label {
+      color: $agent-text-secondary;
+      min-width: 120px;
+    }
+    .value { color: $agent-text-primary; }
+  }
+}
+
+.tb-type-badge {
+  @include agent-type-badge;
+}
+
+.tb-bulk-step {
+  padding: 12px 16px;
+  border: 1px solid $agent-divider-light;
+  border-radius: 4px;
+  background: $agent-surface-muted;
+  margin-bottom: 16px;
+
+  .tb-bulk-step-header {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    .tb-bulk-step-type {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+      color: $agent-text-secondary;
+      background: rgba(0, 0, 0, 0.06);
+      padding: 1px 8px;
+      border-radius: 10px;
+    }
+  }
+
+  .tb-bulk-step-hint {
+    font-size: 12px;
+    color: $agent-text-secondary;
+    margin: 0 0 8px;
+  }
+
+  .pull-policy-toggle {
+    display: inline-block;
+    ::ng-deep tb-toggle-header { width: fit-content; }
+    ::ng-deep .mat-button-toggle-group { width: auto !important; }
+  }
+
+  .tb-bulk-volume-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .tb-bulk-volume-row {
+    display: flex;
+    align-items: center;
+    .tb-bulk-volume-name {
+      font-family: $agent-mono-font;
+      font-size: 12px;
+    }
+  }
+
+  .tb-bulk-volume-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 6px;
+  }
+
+  .tb-bulk-volume-chip {
+    display: inline-block;
+    padding: 1px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-family: $agent-mono-font;
+    background: rgba(0, 0, 0, 0.06);
+    color: rgba(0, 0, 0, 0.67);
+  }
+
+  .tb-bulk-empty-hint {
+    font-size: 12px;
+    color: rgba(0, 0, 0, 0.45);
+    font-style: italic;
+  }
+}
+
+.tb-bulk-preview {
+  border-top: 1px solid $agent-divider-light;
+  padding-top: 12px;
+
+  .tb-bulk-preview-header {
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(0, 0, 0, 0.76);
+    margin-bottom: 8px;
+  }
+
+  .tb-bulk-preview-counts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 12px;
+  }
+
+  .tb-bulk-count {
+    flex: 1;
+    padding: 10px 12px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.04);
+    text-align: center;
+
+    .value {
+      display: block;
+      font-size: 22px;
+      font-weight: 500;
+      color: rgba(0, 0, 0, 0.76);
+    }
+    .label {
+      display: block;
+      font-size: 11px;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+      color: $agent-text-secondary;
+      margin-top: 2px;
+    }
+
+    &.eligible {
+      background: $agent-success-surface;
+      .value { color: $agent-color-success; }
+    }
+    &.skipped {
+      background: #fff3e0;
+      .value { color: $agent-color-warning; }
+    }
+  }
+
+  .tb-bulk-skipped-block {
+    margin-top: 10px;
+    padding: 8px 12px;
+    background: rgba(239, 108, 0, 0.06);
+    border-radius: 4px;
+
+    .tb-bulk-skipped-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: $agent-color-warning;
+      margin-bottom: 4px;
+
+      mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+
+      &.error {
+        color: $agent-color-error;
+      }
+
+      .tb-bulk-skipped-count {
+        margin-left: auto;
+        background: $agent-divider-light;
+        color: rgba(0, 0, 0, 0.67);
+        padding: 0 8px;
+        border-radius: 10px;
+        font-size: 11px;
+      }
+    }
+
+    ul {
+      margin: 0;
+      padding-left: 24px;
+      font-size: 12px;
+      color: rgba(0, 0, 0, 0.67);
+      line-height: 1.55;
+    }
+
+    .tb-bulk-skipped-agent {
+      font-weight: 500;
+      color: rgba(0, 0, 0, 0.76);
+    }
+    .tb-bulk-skipped-sep {
+      margin: 0 4px;
+      color: $agent-text-hint;
+    }
+    .tb-bulk-skipped-app {
+      color: var(--tb-primary-500);
+      cursor: pointer;
+      text-decoration: none;
+      // styles.scss adds a blue border-bottom to every <a> (and a darker
+      // variant on hover/focus). Override both so we get exactly one underline
+      // on hover via text-decoration.
+      border-bottom: none;
+      &:hover,
+      &:focus {
+        text-decoration: underline;
+        border-bottom: none;
+      }
+    }
+    .tb-bulk-skipped-msg {
+      margin-left: 4px;
+      color: $agent-text-secondary;
+    }
+    .tb-bulk-skipped-more {
+      list-style: none;
+      margin-left: -16px;
+      font-style: italic;
+      color: $agent-text-secondary;
+    }
+  }
+
+  .tb-bulk-no-eligible {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.04);
+    border-radius: 4px;
+    color: $agent-text-secondary;
+    font-size: 13px;
+    margin-top: 12px;
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+  }
+}
+
+.tb-bulk-dialog-footer {
+  padding: 8px 16px;
+}

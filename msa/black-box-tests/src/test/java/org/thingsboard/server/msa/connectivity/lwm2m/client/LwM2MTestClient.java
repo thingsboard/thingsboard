@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2025 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.msa.connectivity.lwm2m.client;
 
 import lombok.Data;
@@ -65,6 +52,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_CONNECTION_ID_LENGTH;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RECOMMENDED_CIPHER_SUITES_ONLY;
 import static org.eclipse.leshan.core.LwM2mId.ACCESS_CONTROL;
@@ -72,6 +60,7 @@ import static org.eclipse.leshan.core.LwM2mId.DEVICE;
 import static org.eclipse.leshan.core.LwM2mId.FIRMWARE;
 import static org.eclipse.leshan.core.LwM2mId.SECURITY;
 import static org.eclipse.leshan.core.LwM2mId.SERVER;
+import static org.thingsboard.server.msa.PortFinder.isUDPPortAvailable;
 import static org.thingsboard.server.msa.connectivity.lwm2m.client.Lwm2mTestHelper.BINARY_APP_DATA_CONTAINER;
 import static org.thingsboard.server.msa.connectivity.lwm2m.client.Lwm2mTestHelper.LwM2MClientState.ON_BOOTSTRAP_FAILURE;
 import static org.thingsboard.server.msa.connectivity.lwm2m.client.Lwm2mTestHelper.LwM2MClientState.ON_BOOTSTRAP_STARTED;
@@ -95,7 +84,6 @@ import static org.thingsboard.server.msa.connectivity.lwm2m.client.Lwm2mTestHelp
 import static org.thingsboard.server.msa.connectivity.lwm2m.client.Lwm2mTestHelper.serverId;
 import static org.thingsboard.server.msa.connectivity.lwm2m.client.Lwm2mTestHelper.shortServerId;
 
-
 @Slf4j
 @Data
 public class LwM2MTestClient {
@@ -115,8 +103,11 @@ public class LwM2MTestClient {
     private int countUpdateRegistrationSuccess;
     private int countReadObserveAfterUpdateRegistrationSuccess;
 
+    private int clientPort;
+
     public void init(Security security, int clientPort) throws InvalidDDFFileException, IOException {
         assertThat(leshanClient).as("client already initialized").isNull();
+        this.clientPort = clientPort;
 
         List<ObjectModel> models = new ArrayList<>();
         for (String resourceName : resources) {
@@ -342,12 +333,27 @@ public class LwM2MTestClient {
             }
         });
 
+    }
+
+    public void start() {
         leshanClient.start();
+        if (clientPort > 0) {
+            log.error("Await UDP clientPort {} to be available before leshanClient.start()", clientPort);
+            await("Await UDP clientPort " + clientPort + " to be available before leshanClient.start()")
+                    .atMost(30, TimeUnit.SECONDS)
+                    .until(() -> isUDPPortAvailable(clientPort));
+        }
     }
 
     public void destroy() {
         if (leshanClient != null) {
             leshanClient.destroy(true);
+            if (clientPort > 0) {
+                log.error("Await UDP clientPort {} to disconnect after leshanClient.stop(deregister)", clientPort);
+                await("Await client UDP port " + clientPort + " to disconnect after leshanClient.stop(deregister)")
+                        .atMost(30, TimeUnit.SECONDS)
+                        .until(() -> isUDPPortAvailable(clientPort));
+            }
         }
         if (lwM2MDevice != null) {
             lwM2MDevice.destroy();

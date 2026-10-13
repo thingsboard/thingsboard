@@ -1,0 +1,15 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+:host {
+  .color-input-container {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
+  .color-input {
+    max-width: 72px;
+    margin-bottom: 4px;
+  }
+}
+
+

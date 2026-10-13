@@ -1,0 +1,55 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<fieldset class="fields-group">
+  <legend class="group-title">{{ entityGroupsTitle() }}</legend>
+  <div class="flex flex-col">
+    <div class="tb-control-list">
+      @for (ownerEntityGroupsFormGroup of ownerEntityGroupsArray(); track ownerEntityGroupsFormGroup; let isLast = $last) {
+        <div
+          class="flex flex-row pt-1 xs:flex-col gt-xs:items-center gt-xs:justify-start gt-xs:gap-4"
+          [formGroup]="ownerEntityGroupsFormGroup"
+          [class.pb-2]="!isLast">
+          <tb-owner-autocomplete
+            class="flex-1"
+            required
+            placeholderText="group-permission.group-owner"
+            notFoundText="group-permission.no-owners-matching"
+            requiredText="group-permission.target-owner-required"
+            appearance="outline"
+            [excludeOwnerIds]="excludeOwnerIds(ownerEntityGroupsFormGroup)"
+            formControlName="ownerId">
+          </tb-owner-autocomplete>
+          <tb-entity-group-list
+            class="flex-1"
+            [groupType]="entityType"
+            [ownerId]="ownerEntityGroupsFormGroup.get('ownerId').value"
+            appearance="outline"
+            required
+            formControlName="groupIds">
+          </tb-entity-group-list>
+          @if (!disabled && ownerEntityGroupsArray().length > 1) {
+            <button mat-icon-button style="min-width: 40px;"
+              type="button"
+              (click)="removeOwnerEntityGroups($index)"
+              matTooltip="{{ 'action.remove' | translate }}"
+              matTooltipPosition="above">
+              <mat-icon>delete</mat-icon>
+            </button>
+          }
+        </div>
+      }
+    </div>
+    <div style="padding-top: 16px;" class="flex flex-row">
+      <button mat-raised-button color="primary"
+        type="button"
+        [disabled]="disabled"
+        (click)="addOwnerEntityGroup()">
+        <span translate>version-control.add-entity-groups</span>
+      </button>
+    </div>
+  </div>
+</fieldset>

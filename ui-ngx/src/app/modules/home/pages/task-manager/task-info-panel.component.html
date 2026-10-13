@@ -1,0 +1,153 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-task-info-panel">
+  <div class="tb-task-info-title" translate>task.task-info</div>
+  <div class="tb-task-info-panel-content" [class.general-error]="job.result.generalError">
+    @if (job.result.generalError) {
+      <mat-icon>warning</mat-icon>
+      <div>{{ job.result.generalError }}</div>
+    } @else {
+      @switch (job.type) {
+        @case (JobType.CF_REPROCESSING) {
+          @if (job.status === JobStatus.COMPLETED || job.status === JobStatus.FAILED) {
+            <div class="metrics my-3 flex justify-between gap-4">
+              <span> {{ 'task.time-taken' | translate }}:</span>
+              <span class="font-normal">
+                @if (timeTaken >= 1000) {
+                  {{ timeTaken | milliSecondsToTimeString: true: true }}
+                } @else {
+                  {{ 'timewindow.short.milliseconds' | translate: {milliseconds: timeTaken} }}
+                }
+              </span>
+            </div>
+            <mat-divider></mat-divider>
+          }
+          <div class="metrics my-3 flex justify-between gap-4">
+            <span> {{ 'task.total-entities' | translate }}:</span>
+            <span class="font-normal">{{ job.result.totalCount || 0 }}</span>
+          </div>
+          <mat-divider></mat-divider>
+          @if (job.status === JobStatus.CANCELLED) {
+            <div class="metrics my-3 flex justify-between gap-4">
+              <span>{{ 'task.discarded' | translate }}:</span>
+              <span class="font-normal">{{ job.result.discardedCount }}</span>
+            </div>
+            <mat-divider></mat-divider>
+          }
+          <div class="metrics my-3 flex justify-between gap-4">
+            <span class="success">{{ 'task.successful' | translate }}:</span>
+            <span class="font-normal">{{ job.result.successfulCount }}</span>
+          </div>
+          <mat-divider></mat-divider>
+          <div class="metrics my-3 flex justify-between gap-4">
+            <span class="failed">{{ 'task.failed' | translate }}:</span>
+            <span class="font-normal">{{ job.result.failedCount }}</span>
+          </div>
+          @if (errors.length) {
+            <table class="table-error relative">
+              @for (error of errors; track error.detailsUrl) {
+                <tr>
+                  <td class="tb-entity-type">{{ error.typeName }}</td>
+                  <td class="tb-entity-name" tbTruncateWithTooltip>
+                    <a class="tb-reference" [routerLink]="error.detailsUrl">{{ error.entityName }}</a>
+                  </td>
+                  <td>
+                    <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
+                      [matTooltip]="error.error"
+                      class="tb-error tb-mat-16 align-middle">
+                      warning
+                    </mat-icon>
+                  </td>
+                </tr>
+              }
+            </table>
+          }
+        }
+        @case(JobType.REPORT) {
+          <div class="flex min-h-28 flex-1 flex-col items-center justify-center gap-2 rounded"
+            [class.tb-primary-fill]="job.status === JobStatus.COMPLETED"
+            [class.task-result-bg]="job.status !== JobStatus.COMPLETED">
+            @switch (job.status) {
+              @case (JobStatus.COMPLETED) {
+                <tb-icon color="primary">check_circle_outline</tb-icon>
+                <div class="flex flex-col items-center">
+                  <span class="metrics">{{ 'task.report-generate-successfully' | translate }}</span>
+                </div>
+              }
+              @case (JobStatus.RUNNING) {
+                <tb-icon color="primary">hourglass_top</tb-icon>
+                <div class="flex flex-col items-center">
+                  <span class="metrics">{{ 'task.report-generate-in-progress' | translate }}</span>
+                </div>
+              }
+              @case (JobStatus.CANCELLED) {
+                <tb-icon style="color: rgba(0, 0, 0, 0.54)">cancel</tb-icon>
+                <div class="flex flex-col items-center">
+                  <span class="metrics">{{ 'task.generate-report-canceled' | translate }}</span>
+                </div>
+              }
+              @case (JobStatus.FAILED) {
+                <tb-icon class="warn">warning</tb-icon>
+                <div class="flex flex-col items-center px-2">
+                  <div class="metrics info text-center">{{ job.result.results[0].error }}</div>
+                </div>
+              }
+            }
+          </div>
+        }
+      }
+    }
+  </div>
+  <div class="flex h-10 items-end justify-end gap-4">
+    @if (job.type === JobType.REPORT && job.status === JobStatus.COMPLETED) {
+      <button mat-raised-button
+        color="primary"
+        type="button"
+        (click)="downloadReport($event)">
+        <mat-icon>download</mat-icon>
+        {{ 'report.download' | translate }}
+      </button>
+      <span class="flex-1"></span>
+    }
+    <button mat-button
+      color="primary"
+      type="button"
+      (click)="cancel()">
+      {{ 'action.close' | translate }}
+    </button>
+    @if (job.status === JobStatus.FAILED && hasWritePermission && job.result.failedCount <= 100) {
+      @switch (job.type) {
+        @case (JobType.CF_REPROCESSING) {
+          <button mat-raised-button
+            color="primary"
+            type="button"
+            (click)="reprocess()">
+            {{ 'task.reprocess' | translate : {count: job.result.failedCount ?? 0} }}
+          </button>
+        }
+        @case (JobType.REPORT) {
+          <button mat-raised-button
+            color="primary"
+            type="button"
+            (click)="reprocess()">
+            {{ 'task.retry' | translate }}
+          </button>
+        }
+      }
+    }
+    @if (job.status === JobStatus.RUNNING && hasWritePermission) {
+      <button mat-raised-button
+        color="accent"
+        type="button"
+        (click)="cancelJob()">
+        {{ 'task.cancel-task' | translate }}
+      </button>
+    }
+  </div>
+</div>

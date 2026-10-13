@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2025 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.settings;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -20,6 +8,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FluentFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.EntityType;
@@ -27,6 +16,9 @@ import org.thingsboard.server.common.data.id.AdminSettingsId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.Validator;
 
@@ -43,6 +35,9 @@ public class AdminSettingsServiceImpl implements AdminSettingsService {
 
     @Autowired
     private DataValidator<AdminSettings> adminSettingsValidator;
+
+    @Autowired
+    protected ApplicationEventPublisher eventPublisher;
 
     @Override
     public AdminSettings findAdminSettingsById(TenantId tenantId, AdminSettingsId adminSettingsId) {
@@ -64,11 +59,16 @@ public class AdminSettingsServiceImpl implements AdminSettingsService {
     }
 
     @Override
+    public PageData<AdminSettings> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
+        return adminSettingsDao.findAllByTenantId(tenantId, pageLink);
+    }
+
+    @Override
     public AdminSettings saveAdminSettings(TenantId tenantId, AdminSettings adminSettings) {
         log.trace("Executing saveAdminSettings [{}]", adminSettings);
-        adminSettingsValidator.validate(adminSettings, data -> tenantId);
+        AdminSettings oldAdminSettings = adminSettingsValidator.validate(adminSettings, data -> tenantId);
         if (adminSettings.getKey().equals("mail")) {
-            AdminSettings mailSettings = findAdminSettingsByKey(tenantId, "mail");
+            AdminSettings mailSettings = findAdminSettingsByTenantIdAndKey(tenantId, "mail");
             if (mailSettings != null) {
                 JsonNode newJsonValue = adminSettings.getJsonValue();
                 JsonNode oldJsonValue = mailSettings.getJsonValue();
@@ -84,7 +84,10 @@ public class AdminSettingsServiceImpl implements AdminSettingsService {
         if (adminSettings.getTenantId() == null) {
             adminSettings.setTenantId(TenantId.SYS_TENANT_ID);
         }
-        return adminSettingsDao.save(tenantId, adminSettings);
+        AdminSettings savedAdminSettings = adminSettingsDao.save(tenantId, adminSettings);
+        eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedAdminSettings.getTenantId()).entityId(savedAdminSettings.getId())
+                .entity(savedAdminSettings).oldEntity(oldAdminSettings).created(adminSettings.getId() == null).build());
+        return savedAdminSettings;
     }
 
     @Override
