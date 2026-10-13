@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.cf.ctx.state;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -24,6 +11,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
@@ -40,12 +28,14 @@ import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
-import org.thingsboard.server.dao.usagerecord.ApiLimitService;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.service.cf.TelemetryCalculatedFieldResult;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
@@ -69,13 +59,16 @@ public class SimpleCalculatedFieldStateTest {
     private CalculatedFieldCtx ctx;
 
     @Mock
-    private ApiLimitService apiLimitService;
+    private TenantProfile tenantProfile;
+    @Mock
+    private TbTenantProfileCache tenantProfileCache;
     @InjectMocks
     private ActorSystemContext systemContext;
 
     @BeforeEach
     void setUp() {
-        when(apiLimitService.getLimit(any(), any())).thenReturn(1000L);
+        when(tenantProfileCache.get(any(TenantId.class))).thenReturn(tenantProfile);
+        when(tenantProfile.getProfileConfiguration()).thenReturn(Optional.of(new DefaultTenantProfileConfiguration()));
         ctx = new CalculatedFieldCtx(getCalculatedField(), systemContext);
         ctx.init();
         state = new SimpleCalculatedFieldState(ctx.getEntityId());
@@ -148,7 +141,7 @@ public class SimpleCalculatedFieldStateTest {
         Output output = getCalculatedFieldConfig().getOutput();
         assertThat(result.getType()).isEqualTo(output.getType());
         assertThat(result.getScope()).isEqualTo(output.getScope());
-        assertThat(result.getResult()).isEqualTo(JacksonUtil.valueToTree(Map.of("output", 49)));
+        assertThat(result.getResult()).isEqualTo(JacksonUtil.valueToTree(Map.of("output", 49L)));
     }
 
     @Test
@@ -178,7 +171,7 @@ public class SimpleCalculatedFieldStateTest {
         Output output = getCalculatedFieldConfig().getOutput();
         assertThat(result.getType()).isEqualTo(output.getType());
         assertThat(result.getScope()).isEqualTo(output.getScope());
-        assertThat(result.getResult()).isEqualTo(JacksonUtil.valueToTree(Map.of("output", 35)));
+        assertThat(result.getResult()).isEqualTo(JacksonUtil.valueToTree(Map.of("output", 35L)));
     }
 
     @Test

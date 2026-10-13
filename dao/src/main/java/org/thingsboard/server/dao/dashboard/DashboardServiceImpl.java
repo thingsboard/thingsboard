@@ -1,20 +1,11 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.dashboard;
 
+import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FluentFuture;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
@@ -31,40 +22,47 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.group.EntityGroup;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
-import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.customer.CustomerDao;
-import org.thingsboard.server.dao.edge.EdgeDao;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entity.EntityCountService;
-import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
-import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.sql.JpaExecutorService;
+import org.thingsboard.server.exception.DataValidationException;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
 import static org.thingsboard.server.dao.service.Validator.validateId;
+import static org.thingsboard.server.dao.service.Validator.validateIds;
+import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 
 @Service("DashboardDaoService")
 @Slf4j
@@ -82,9 +80,6 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
 
     @Autowired
     private CustomerDao customerDao;
-
-    @Autowired
-    private EdgeDao edgeDao;
 
     @Autowired
     private ImageService imageService;
@@ -155,6 +150,19 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     }
 
     @Override
+    public ListenableFuture<List<DashboardInfo>> findDashboardInfoByIdsAsync(TenantId tenantId, List<DashboardId> dashboardIds) {
+        log.trace("Executing findDashboardInfoByIdsAsync, dashboardIds [{}]", dashboardIds);
+        validateIds(dashboardIds, ids -> "Incorrect dashboardIds " + ids);
+        return dashboardInfoDao.findDashboardsByIdsAsync(tenantId.getId(), toUUIDs(dashboardIds));
+    }
+
+    @Override
+    public List<DashboardInfo> findDashboardInfoByIds(TenantId tenantId, List<DashboardId> dashboardIds) {
+        log.trace("Executing findDashboardInfoByIds, dashboardIds [{}]", dashboardIds);
+        return dashboardInfoDao.findDashboardsByIds(tenantId.getId(), toUUIDs(dashboardIds));
+    }
+
+    @Override
     public Dashboard saveDashboard(Dashboard dashboard) {
         return saveDashboard(dashboard, true);
     }
@@ -167,23 +175,24 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     private Dashboard doSaveDashboard(Dashboard dashboard, boolean doValidate) {
         log.trace("Executing saveDashboard [{}]", dashboard);
         if (doValidate) {
-            dashboardValidator.validate(dashboard, DashboardInfo::getTenantId);
+            dashboardValidator.validate(dashboard, Dashboard::getTenantId);
         }
         try {
             TenantId tenantId = dashboard.getTenantId();
             if (CollectionUtils.isNotEmpty(dashboard.getResources())) {
-                resourceService.importResources(tenantId, dashboard.getResources());
+                resourceService.importResources(tenantId, dashboard.getCustomerId(), dashboard.getResources());
             }
             imageService.updateImagesUsage(dashboard);
             resourceService.updateResourcesUsage(tenantId, dashboard);
 
             var saved = dashboardDao.save(tenantId, dashboard);
+            if (dashboard.getId() == null) {
+                entityGroupService.addEntityToEntityGroupAll(tenantId, saved.getOwnerId(), saved.getId());
+                countService.publishCountEntityEvictEvent(tenantId, EntityType.DASHBOARD);
+            }
             publishEvictEvent(new DashboardTitleEvictEvent(saved.getId()));
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId)
                     .entityId(saved.getId()).entity(saved).created(dashboard.getId() == null).build());
-            if (dashboard.getId() == null) {
-                countService.publishCountEntityEvictEvent(tenantId, EntityType.DASHBOARD);
-            }
             return saved;
         } catch (Exception e) {
             if (dashboard.getId() != null) {
@@ -237,13 +246,6 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         }
     }
 
-    private void updateAssignedCustomer(TenantId tenantId, DashboardId dashboardId, Customer customer) {
-        Dashboard dashboard = findDashboardById(tenantId, dashboardId);
-        if (dashboard.updateAssignedCustomer(customer)) {
-            saveDashboard(dashboard);
-        }
-    }
-
     @Override
     @Transactional
     public void deleteDashboard(TenantId tenantId, DashboardId dashboardId) {
@@ -278,18 +280,25 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     }
 
     @Override
+    public Long countDashboards() {
+        log.trace("Executing countDashboards");
+        return dashboardDao.countDashboards();
+    }
+
+    @Override
+    public PageData<DashboardInfo> findTenantDashboardsByTenantId(TenantId tenantId, PageLink pageLink) {
+        log.trace("Executing findTenantDashboardsByTenantId, tenantId [{}], pageLink [{}]", tenantId, pageLink);
+        Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        Validator.validatePageLink(pageLink);
+        return dashboardInfoDao.findTenantDashboardsByTenantId(tenantId.getId(), pageLink);
+    }
+
+    @Override
     public PageData<DashboardInfo> findMobileDashboardsByTenantId(TenantId tenantId, PageLink pageLink) {
         log.trace("Executing findMobileDashboardsByTenantId, tenantId [{}], pageLink [{}]", tenantId, pageLink);
         Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         Validator.validatePageLink(pageLink);
         return dashboardInfoDao.findMobileDashboardsByTenantId(tenantId.getId(), pageLink);
-    }
-
-    @Override
-    public void deleteDashboardsByTenantId(TenantId tenantId) {
-        log.trace("Executing deleteDashboardsByTenantId, tenantId [{}]", tenantId);
-        Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
-        tenantDashboardsRemover.removeEntities(tenantId, tenantId);
     }
 
     @Override
@@ -307,6 +316,15 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     }
 
     @Override
+    public PageData<DashboardInfo> findDashboardsByTenantIdAndCustomerIdIncludingSubCustomers(TenantId tenantId, CustomerId customerId, PageLink pageLink) {
+        log.trace("Executing findDashboardsByTenantIdAndCustomerIdIncludingSubsCustomers, tenantId [{}], customerId [{}], pageLink [{}]", tenantId, customerId, pageLink);
+        Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        Validator.validateId(customerId, id -> "Incorrect customerId " + id);
+        Validator.validatePageLink(pageLink);
+        return dashboardInfoDao.findDashboardsByTenantIdAndCustomerIdIncludingSubCustomers(tenantId.getId(), customerId.getId(), pageLink);
+    }
+
+    @Override
     public PageData<DashboardInfo> findMobileDashboardsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, PageLink pageLink) {
         log.trace("Executing findMobileDashboardsByTenantIdAndCustomerId, tenantId [{}], customerId [{}], pageLink [{}]", tenantId, customerId, pageLink);
         Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
@@ -316,73 +334,42 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     }
 
     @Override
-    public void unassignCustomerDashboards(TenantId tenantId, CustomerId customerId) {
-        log.trace("Executing unassignCustomerDashboards, customerId [{}]", customerId);
-        Validator.validateId(customerId, id -> "Incorrect customerId " + id);
-        Customer customer = customerDao.findById(tenantId, customerId.getId());
-        if (customer == null) {
-            throw new DataValidationException("Can't unassign dashboards from non-existent customer!");
-        }
-        new CustomerDashboardsRemover(customer).removeEntities(tenantId, customer);
-    }
-
-    @Override
-    public void updateCustomerDashboards(TenantId tenantId, CustomerId customerId) {
-        log.trace("Executing updateCustomerDashboards, customerId [{}]", customerId);
-        Validator.validateId(customerId, id -> "Incorrect customerId " + id);
-        Customer customer = customerDao.findById(tenantId, customerId.getId());
-        if (customer == null) {
-            throw new DataValidationException("Can't update dashboards for non-existent customer!");
-        }
-        new CustomerDashboardsUpdater(customer).removeEntities(tenantId, customer);
-    }
-
-    @Override
-    public Dashboard assignDashboardToEdge(TenantId tenantId, DashboardId dashboardId, EdgeId edgeId) {
-        Dashboard dashboard = findDashboardById(tenantId, dashboardId);
-        Edge edge = edgeDao.findById(tenantId, edgeId.getId());
-        if (edge == null) {
-            throw new DataValidationException("Can't assign dashboard to non-existent edge!");
-        }
-        if (!edge.getTenantId().equals(dashboard.getTenantId())) {
-            throw new DataValidationException("Can't assign dashboard to edge from different tenant!");
-        }
-        try {
-            createRelation(tenantId, new EntityRelation(edgeId, dashboardId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
-        } catch (Exception e) {
-            log.warn("[{}] Failed to create dashboard relation. Edge Id: [{}]", dashboardId, edgeId);
-            throw new RuntimeException(e);
-        }
-        eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).edgeId(edgeId).entityId(dashboardId)
-                .actionType(ActionType.ASSIGNED_TO_EDGE).build());
-        return dashboard;
-    }
-
-    @Override
-    public Dashboard unassignDashboardFromEdge(TenantId tenantId, DashboardId dashboardId, EdgeId edgeId) {
-        Dashboard dashboard = findDashboardById(tenantId, dashboardId);
-        Edge edge = edgeDao.findById(tenantId, edgeId.getId());
-        if (edge == null) {
-            throw new DataValidationException("Can't unassign dashboard from non-existent edge!");
-        }
-        try {
-            deleteRelation(tenantId, new EntityRelation(edgeId, dashboardId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
-        } catch (Exception e) {
-            log.warn("[{}] Failed to delete dashboard relation. Edge Id: [{}]", dashboardId, edgeId);
-            throw new RuntimeException(e);
-        }
-        eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).edgeId(edgeId).entityId(dashboardId)
-                .actionType(ActionType.UNASSIGNED_FROM_EDGE).build());
-        return dashboard;
-    }
-
-    @Override
-    public PageData<DashboardInfo> findDashboardsByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, PageLink pageLink) {
-        log.trace("Executing findDashboardsByTenantIdAndEdgeId, tenantId [{}], edgeId [{}], pageLink [{}]", tenantId, edgeId, pageLink);
+    public void deleteDashboardsByTenantId(TenantId tenantId) {
+        log.trace("Executing deleteDashboardsByTenantId, tenantId [{}]", tenantId);
         Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
-        Validator.validateId(edgeId, id -> INCORRECT_EDGE_ID + id);
-        Validator.validatePageLink(pageLink);
-        return dashboardInfoDao.findDashboardsByTenantIdAndEdgeId(tenantId.getId(), edgeId.getId(), pageLink);
+        tenantDashboardsRemover.removeEntities(tenantId, tenantId);
+    }
+
+    @Override
+    public void deleteDashboardsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId) {
+        log.trace("Executing deleteDashboardsByTenantIdAndCustomerId, tenantId [{}], customerId [{}]", tenantId, customerId);
+        Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        Validator.validateId(customerId, id -> "Incorrect customerId " + id);
+        customerDashboardsRemover.removeEntities(tenantId, customerId);
+    }
+
+    @Override
+    public PageData<DashboardInfo> findDashboardsByEntityGroupId(EntityGroupId groupId, PageLink pageLink) {
+        log.trace("Executing findDashboardsByEntityGroupId, groupId [{}], pageLink [{}]", groupId, pageLink);
+        validateId(groupId, id -> "Incorrect entityGroupId " + id);
+        validatePageLink(pageLink);
+        return dashboardInfoDao.findDashboardsByEntityGroupId(groupId.getId(), pageLink);
+    }
+
+    @Override
+    public PageData<DashboardInfo> findDashboardsByEntityGroupIds(List<EntityGroupId> groupIds, PageLink pageLink) {
+        log.trace("Executing findDashboardsByEntityGroupIds, groupIds [{}], pageLink [{}]", groupIds, pageLink);
+        validateIds(groupIds, ids -> "Incorrect groupIds " + ids);
+        validatePageLink(pageLink);
+        return dashboardInfoDao.findDashboardsByEntityGroupIds(toUUIDs(groupIds), pageLink);
+    }
+
+    @Override
+    public PageData<DashboardInfo> findMobileDashboardsByEntityGroupIds(List<EntityGroupId> groupIds, PageLink pageLink) {
+        log.trace("Executing findMobileDashboardsByEntityGroupIds, groupIds [{}], pageLink [{}]", groupIds, pageLink);
+        validateIds(groupIds, ids -> "Incorrect groupIds " + ids);
+        validatePageLink(pageLink);
+        return dashboardInfoDao.findMobileDashboardsByEntityGroupIds(toUUIDs(groupIds), pageLink);
     }
 
     @Override
@@ -414,12 +401,6 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         return dashboardDao.findAllIds(pageLink);
     }
 
-    @Override
-    public List<DashboardInfo> findDashboardInfoByIds(TenantId tenantId, List<DashboardId> dashboardIds) {
-        log.trace("Executing findDashboardInfoByIds, dashboardIds [{}]", dashboardIds);
-        return dashboardInfoDao.findDashboardsByIds(tenantId.getId(), toUUIDs(dashboardIds));
-    }
-
     private final PaginatedRemover<TenantId, DashboardId> tenantDashboardsRemover = new PaginatedRemover<>() {
 
         @Override
@@ -430,6 +411,19 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         @Override
         protected void removeEntity(TenantId tenantId, DashboardId dashboardId) {
             deleteDashboard(tenantId, dashboardId);
+        }
+    };
+
+    private final PaginatedRemover<CustomerId, DashboardInfo> customerDashboardsRemover = new PaginatedRemover<>() {
+
+        @Override
+        protected PageData<DashboardInfo> findEntities(TenantId tenantId, CustomerId id, PageLink pageLink) {
+            return dashboardInfoDao.findDashboardsByTenantIdAndCustomerId(tenantId.getId(), id.getId(), pageLink);
+        }
+
+        @Override
+        protected void removeEntity(TenantId tenantId, DashboardInfo entity) {
+            deleteDashboard(tenantId, new DashboardId(entity.getUuidId()));
         }
     };
 
@@ -454,44 +448,141 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         return EntityType.DASHBOARD;
     }
 
-    private class CustomerDashboardsRemover extends PaginatedRemover<Customer, DashboardInfo> {
-
-        private final Customer customer;
-
-        CustomerDashboardsRemover(Customer customer) {
-            this.customer = customer;
+    @Override
+    public List<Dashboard> exportDashboards(TenantId tenantId, EntityGroupId entityGroupId, TimePageLink pageLink) throws ThingsboardException {
+        PageData<DashboardInfo> pageData = findDashboardsByEntityGroupId(entityGroupId, pageLink);
+        if (pageData != null && !CollectionUtils.isEmpty(pageData.getData())) {
+            List<DashboardInfo> dashboardViews = pageData.getData();
+            Map<DashboardId, DashboardId> idMapping = new HashMap<>();
+            List<Dashboard> dashboards = new ArrayList<>();
+            for (DashboardInfo dashboardInfo : dashboardViews) {
+                Dashboard dashboard = findDashboardById(tenantId, dashboardInfo.getId());
+                DashboardId oldDashboardId = dashboard.getId();
+                DashboardId newDashboardId = new DashboardId(Uuids.timeBased());
+                idMapping.put(oldDashboardId, newDashboardId);
+                dashboard.setId(newDashboardId);
+                dashboard.setTenantId(null);
+                dashboard.setCustomerId(null);
+                dashboards.add(dashboard);
+            }
+            for (Dashboard dashboard : dashboards) {
+                JsonNode configuration = dashboard.getConfiguration();
+                searchDashboardIdRecursive(idMapping, configuration);
+            }
+            return dashboards;
         }
-
-        @Override
-        protected PageData<DashboardInfo> findEntities(TenantId tenantId, Customer customer, PageLink pageLink) {
-            return dashboardInfoDao.findDashboardsByTenantIdAndCustomerId(customer.getTenantId().getId(), customer.getId().getId(), pageLink);
-        }
-
-        @Override
-        protected void removeEntity(TenantId tenantId, DashboardInfo entity) {
-            unassignDashboardFromCustomer(customer.getTenantId(), new DashboardId(entity.getUuidId()), this.customer.getId());
-        }
-
+        return Collections.emptyList();
     }
 
-    private class CustomerDashboardsUpdater extends PaginatedRemover<Customer, DashboardInfo> {
-
-        private final Customer customer;
-
-        CustomerDashboardsUpdater(Customer customer) {
-            this.customer = customer;
+    private void searchDashboardIdRecursive(Map<DashboardId, DashboardId> idMapping, JsonNode node) throws ThingsboardException {
+        Iterator<String> iter = node.fieldNames();
+        boolean isDashboardId = false;
+        try {
+            while (iter.hasNext()) {
+                String field = iter.next();
+                if ("targetDashboardId".equals(field)) {
+                    isDashboardId = true;
+                    break;
+                }
+            }
+            if (isDashboardId) {
+                ObjectNode objNode = (ObjectNode) node;
+                String oldDashboardIdStr = node.get("targetDashboardId").asText();
+                DashboardId dashboardId = new DashboardId(UUID.fromString(oldDashboardIdStr));
+                DashboardId replacement = idMapping.get(dashboardId);
+                if (replacement != null) {
+                    objNode.put("targetDashboardId", replacement.getId().toString());
+                }
+            } else {
+                for (JsonNode jsonNode : node) {
+                    searchDashboardIdRecursive(idMapping, jsonNode);
+                }
+            }
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw new ThingsboardException(e.getMessage(), e, ThingsboardErrorCode.GENERAL);
         }
+    }
 
-        @Override
-        protected PageData<DashboardInfo> findEntities(TenantId tenantId, Customer customer, PageLink pageLink) {
-            return dashboardInfoDao.findDashboardsByTenantIdAndCustomerId(customer.getTenantId().getId(), customer.getId().getId(), pageLink);
+    @Override
+    public void importDashboards(TenantId tenantId, EntityGroupId entityGroupId, List<Dashboard> dashboards, boolean overwrite) throws ThingsboardException {
+        EntityGroup dashboardGroup = entityGroupService.findEntityGroupById(tenantId, entityGroupId);
+        resetDashboardOwnerCustomer(tenantId, dashboardGroup.getOwnerId(), dashboards);
+        if (overwrite) {
+            PageData<DashboardInfo> dashboardData = findDashboardsByEntityGroupId(entityGroupId, new PageLink(Integer.MAX_VALUE));
+            try {
+                List<DashboardInfo> dashboardInfos = dashboardData.getData();
+                if (!CollectionUtils.isEmpty(dashboardInfos)) {
+                    replaceOverwriteDashboardIds(dashboards, dashboardInfos);
+                } else {
+                    replaceDashboardIds(dashboards);
+                }
+                dashboards.forEach(d -> saveDashboardToEntityGroup(tenantId, entityGroupId, d));
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+                throw new ThingsboardException(e.getMessage(), e, ThingsboardErrorCode.GENERAL);
+            }
+        } else {
+            try {
+                replaceDashboardIds(dashboards);
+                dashboards.forEach(d -> saveDashboardToEntityGroup(tenantId, entityGroupId, d));
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+                throw new ThingsboardException(e.getMessage(), e, ThingsboardErrorCode.GENERAL);
+            }
         }
+    }
 
-        @Override
-        protected void removeEntity(TenantId tenantId, DashboardInfo entity) {
-            updateAssignedCustomer(customer.getTenantId(), new DashboardId(entity.getUuidId()), this.customer);
+    private void saveDashboardToEntityGroup(TenantId tenantId, EntityGroupId entityGroupId, Dashboard dashboard) {
+        Dashboard savedDashboard = saveDashboard(dashboard);
+        entityGroupService.addEntityToEntityGroupAll(savedDashboard.getTenantId(), savedDashboard.getOwnerId(), savedDashboard.getId());
+        entityGroupService.addEntityToEntityGroup(tenantId, entityGroupId, savedDashboard.getId());
+    }
+
+    private void replaceOverwriteDashboardIds(List<Dashboard> dashboards, List<DashboardInfo> persistentDashboards) throws Exception {
+        Map<DashboardId, DashboardId> idMapping = new HashMap<>();
+        for (Dashboard dashboard : dashboards) {
+            Optional<DashboardInfo> overwriteDashboardInfoOpt = persistentDashboards.stream().filter(d -> d.getTitle().equals(dashboard.getTitle())).findAny();
+            DashboardId importDashboardId = dashboard.getId();
+            DashboardId overwriteDashboardId;
+            if (overwriteDashboardInfoOpt.isPresent()) {
+                overwriteDashboardId = overwriteDashboardInfoOpt.get().getId();
+            } else {
+                overwriteDashboardId = new DashboardId(Uuids.timeBased());
+            }
+            idMapping.put(importDashboardId, overwriteDashboardId);
+            dashboard.setId(overwriteDashboardId);
         }
+        for (Dashboard dashboard : dashboards) {
+            JsonNode configuration = dashboard.getConfiguration();
+            searchDashboardIdRecursive(idMapping, configuration);
+        }
+    }
 
+    private void resetDashboardOwnerCustomer(TenantId tenantId, EntityId ownerId, List<Dashboard> dashboards) {
+        for (Dashboard dashboard : dashboards) {
+            dashboard.setTenantId(tenantId);
+            dashboard.setOwnerId(ownerId);
+        }
+    }
+
+    List<Dashboard> replaceDashboardIds(List<Dashboard> dashboards) throws Exception {
+        Map<DashboardId, DashboardId> idMapping = new HashMap<>();
+        for (Dashboard dashboard : dashboards) {
+            if (dashboard.getId() != null) {
+                DashboardId oldId = dashboard.getId();
+                DashboardId newId = new DashboardId(Uuids.timeBased());
+                idMapping.put(oldId, newId);
+                dashboard.setId(newId);
+            } else {
+                DashboardId newId = new DashboardId(Uuids.timeBased());
+                dashboard.setId(newId);
+            }
+        }
+        for (Dashboard dashboard : dashboards) {
+            searchDashboardIdRecursive(idMapping, dashboard.getConfiguration());
+        }
+        return dashboards;
     }
 
 }

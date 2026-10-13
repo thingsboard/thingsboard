@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.monitoring.service;
 
 import jakarta.annotation.PostConstruct;
@@ -51,8 +39,11 @@ public abstract class BaseHealthChecker<C extends MonitoringConfig, T extends Mo
     private MonitoringReporter reporter;
     @Autowired
     private TbStopWatch stopWatch;
+
     @Value("${monitoring.check_timeout_ms}")
     private int resultCheckTimeoutMs;
+    @Value("${monitoring.domain}")
+    protected String domain;
 
     @Getter
     private final Map<String, BaseHealthChecker<C, T>> associates = new HashMap<>();
@@ -89,11 +80,10 @@ public abstract class BaseHealthChecker<C extends MonitoringConfig, T extends Mo
             checkWsUpdates(wsClient, testValue);
 
             reporter.serviceIsOk(info);
-            reporter.serviceIsOk(MonitoredServiceKey.GENERAL);
         } catch (ServiceFailureException e) {
             reporter.serviceFailure(e.getServiceKey(), e);
         } catch (Exception e) {
-            reporter.serviceFailure(MonitoredServiceKey.GENERAL, e);
+            reporter.serviceFailure(info, e);
         }
 
         associates.values().forEach(healthChecker -> {

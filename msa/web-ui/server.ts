@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import express from 'express';
 import config from 'config';
 import { _logger}  from './config/logger';
@@ -60,6 +46,39 @@ let connections: Socket[] = [];
         const app = express();
         server = http.createServer(app);
 
+        // Build security headers map once at startup.
+        // node-config passes env var overrides as strings, so enabled can be boolean or string.
+        const isEnabled = (val: any) => val === true || val === 'true';
+        const securityHeaders: Record<string, string> = {};
+        const hc: any = config.get('security.headers');
+        if (isEnabled(hc['x-content-type-options']?.enabled)) {
+            securityHeaders['X-Content-Type-Options'] = 'nosniff';
+        }
+        if (isEnabled(hc['referrer-policy']?.enabled)) {
+            securityHeaders['Referrer-Policy'] = hc['referrer-policy']?.value || 'strict-origin-when-cross-origin';
+        }
+        if (isEnabled(hc['x-frame-options']?.enabled)) {
+            securityHeaders['X-Frame-Options'] = hc['x-frame-options']?.value || 'SAMEORIGIN';
+        }
+        if (isEnabled(hc['content-security-policy']?.enabled) && hc['content-security-policy']?.value) {
+            const csp = hc['content-security-policy'];
+            const name = isEnabled(csp['report-only'])
+                ? 'Content-Security-Policy-Report-Only' : 'Content-Security-Policy';
+            securityHeaders[name] = csp.value;
+        }
+        logger.info('Security headers: %s', JSON.stringify(securityHeaders));
+
+        const compressionEnabled = isEnabled(config.get('server.compression.enabled'));
+        logger.info('HTTP response compression enabled: %s', compressionEnabled);
+
+        // Apply security headers to all responses
+        app.use((_req, res, next) => {
+            for (const [name, value] of Object.entries(securityHeaders)) {
+                res.setHeader(name, value);
+            }
+            next();
+        });
+
         let apiProxy: httpProxy;
         if (useApiProxy) {
             apiProxy = httpProxy.createProxyServer({
@@ -96,7 +115,9 @@ let connections: Socket[] = [];
         }
 
         app.use(historyApiFallback());
-        app.use(compression());
+        if (compressionEnabled) {
+            app.use(compression());
+        }
 
         const root = path.join(webDir, 'public');
 

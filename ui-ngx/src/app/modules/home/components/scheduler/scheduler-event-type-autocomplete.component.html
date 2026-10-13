@@ -1,0 +1,46 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<mat-form-field [formGroup]="schedulerEventTypeFormGroup" class="mat-block"
+  [appearance]="appearance">
+  @if (label) {
+    <mat-label>{{ label }}</mat-label>
+  }
+  <input matInput type="text" placeholder="{{ placeholder }}"
+    #schedulerEventTypeInput
+    formControlName="schedulerEventType"
+    (focusin)="onFocus()"
+    [required]="required"
+    [matAutocomplete]="schedulerEventTypeAutocomplete">
+  @if (schedulerEventTypeFormGroup.get('schedulerEventType').value && !disabled) {
+    <button
+      type="button"
+      matSuffix mat-icon-button aria-label="Clear"
+      (click)="clear()">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  }
+  <mat-autocomplete
+    class="tb-autocomplete"
+    #schedulerEventTypeAutocomplete="matAutocomplete"
+    [displayWith]="displaySchedulerEventTypeFn">
+    @for (eventType of filteredSchedulerEventTypes | async; track eventType) {
+      <mat-option [value]="eventType">
+        <span [innerHTML]="displaySchedulerEventTypeFn(eventType) | highlight:searchText"></span>
+      </mat-option>
+    }
+  </mat-autocomplete>
+  @if (schedulerEventTypeFormGroup.get('schedulerEventType').hasError('required')) {
+    <mat-error>
+      {{ 'scheduler.event-type-required' | translate }}
+    </mat-error>
+  }
+  @if (schedulerEventTypeFormGroup.get('schedulerEventType').hasError('maxlength')) {
+    <mat-error>
+      {{ 'scheduler.event-type-max-length' | translate }}
+    </mat-error>
+  }
+</mat-form-field>

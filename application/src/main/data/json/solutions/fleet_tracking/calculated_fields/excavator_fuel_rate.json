@@ -1,0 +1,40 @@
+{
+  "reprocessingOrder": 0,
+  "entityId": {
+    "entityType": "DEVICE_PROFILE",
+    "id": "ff395d16-0c28-4985-802d-bad40f4bf4d0"
+  },
+  "type": "SCRIPT",
+  "name": "Excavator fuel rate",
+  "debugSettings": {
+    "failuresEnabled": true,
+    "allEnabled": false,
+    "allEnabledUntil": 0
+  },
+  "configurationVersion": 0,
+  "configuration": {
+    "type": "SCRIPT",
+    "arguments": {
+      "fuelLevel": {
+        "refEntityKey": {
+          "key": "fuelLevel",
+          "type": "TS_ROLLING"
+        },
+        "limit": 2,
+        "timeWindow": 450000
+      }
+    },
+    "expression": "return {\n    ts: ctx.latestTs,\n    values: {\n        fuelConsumptionRate: getConsumptionRate()\n    }\n};\n\n\nfunction getConsumptionRate() {\n    if (fuelLevel.count() < 2) {\n        return 0;\n    }\n    var first = fuelLevel.first();\n    var last = fuelLevel.last();\n    \n    \n    if (isNaN(first) || isNaN(last)) {\n        return 0;\n    }\n\n    var deltaLevelPercentage = first - last;\n    if (deltaLevelPercentage <= 0) {\n        return 0;\n    }\n    var fuelTankCapacity = 86.6; // gal (345 L)\n    var fuelConsumptionRate = (deltaLevelPercentage / 100.0) * fuelTankCapacity;\n    return toFixed(fuelConsumptionRate, 2);\n}",
+    "output": {
+      "type": "TIME_SERIES",
+      "strategy": {
+        "type": "IMMEDIATE",
+        "ttl": 0,
+        "saveTimeSeries": true,
+        "saveLatest": true,
+        "sendWsUpdate": true,
+        "processCfs": true
+      }
+    }
+  }
+}

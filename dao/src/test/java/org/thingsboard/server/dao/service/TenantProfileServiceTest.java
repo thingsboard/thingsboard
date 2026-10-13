@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.service;
 
 import com.fasterxml.jackson.databind.node.NullNode;
@@ -38,8 +26,8 @@ import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileCon
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
 import org.thingsboard.server.common.util.ProtoUtils;
-import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
+import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
 import java.util.ArrayList;
@@ -164,13 +152,13 @@ public class TenantProfileServiceTest extends AbstractServiceTest {
         TenantProfile savedTenantProfile1 = tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, tenantProfile1);
         TenantProfile savedTenantProfile2 = tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, tenantProfile2);
 
-        boolean result = tenantProfileService.setDefaultTenantProfile(TenantId.SYS_TENANT_ID, savedTenantProfile1.getId());
-        Assert.assertTrue(result);
+        TenantProfile setDefaultTenantProfile1 = tenantProfileService.setDefaultTenantProfile(TenantId.SYS_TENANT_ID, savedTenantProfile1.getId());
+        Assert.assertNotEquals(savedTenantProfile1.isDefault(), setDefaultTenantProfile1.isDefault());
         TenantProfile defaultTenantProfile = tenantProfileService.findDefaultTenantProfile(TenantId.SYS_TENANT_ID);
         Assert.assertNotNull(defaultTenantProfile);
         Assert.assertEquals(savedTenantProfile1.getId(), defaultTenantProfile.getId());
-        result = tenantProfileService.setDefaultTenantProfile(TenantId.SYS_TENANT_ID, savedTenantProfile2.getId());
-        Assert.assertTrue(result);
+        TenantProfile setDefaultTenantProfile2 = tenantProfileService.setDefaultTenantProfile(TenantId.SYS_TENANT_ID, savedTenantProfile2.getId());
+        Assert.assertNotEquals(savedTenantProfile2.isDefault(), setDefaultTenantProfile2.isDefault());
         defaultTenantProfile = tenantProfileService.findDefaultTenantProfile(TenantId.SYS_TENANT_ID);
         Assert.assertNotNull(defaultTenantProfile);
         Assert.assertEquals(savedTenantProfile2.getId(), defaultTenantProfile.getId());

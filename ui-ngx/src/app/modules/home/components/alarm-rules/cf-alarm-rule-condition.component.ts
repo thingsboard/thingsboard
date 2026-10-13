@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { ChangeDetectorRef, Component, forwardRef, Input, OnChanges, SimpleChanges } from '@angular/core';
 import {
   AbstractControl,
@@ -54,21 +40,22 @@ import { coerceBoolean } from "@shared/decorators/coercion";
 import { Observable } from "rxjs";
 
 @Component({
-  selector: 'tb-cf-alarm-rule-condition',
-  templateUrl: './cf-alarm-rule-condition.component.html',
-  styleUrls: ['./cf-alarm-rule-condition.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => CfAlarmRuleConditionComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => CfAlarmRuleConditionComponent),
-      multi: true,
-    }
-  ]
+    selector: 'tb-cf-alarm-rule-condition',
+    templateUrl: './cf-alarm-rule-condition.component.html',
+    styleUrls: ['./cf-alarm-rule-condition.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => CfAlarmRuleConditionComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => CfAlarmRuleConditionComponent),
+            multi: true,
+        }
+    ],
+    standalone: false
 })
 export class CfAlarmRuleConditionComponent implements ControlValueAccessor, Validator, OnChanges {
 
@@ -141,21 +128,24 @@ export class CfAlarmRuleConditionComponent implements ControlValueAccessor, Vali
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes.arguments) {
-      if (changes.arguments && !changes.arguments.firstChange) {
-        this.recalculateArgumentValidity();
+    if (changes.arguments && !changes.arguments.firstChange) {
+      if (this.recalculateArgumentValidity()) {
+        this.onValidatorChange();
       }
     }
   }
 
-  private recalculateArgumentValidity(): void {
+  private recalculateArgumentValidity(): boolean {
+    const prevFiltersValid = this.filtersArgumentsValid;
+    const prevSchedulerValid = this.schedulerArgumentsValid;
     if (!this.modelValue || !this.arguments) {
       this.filtersArgumentsValid = true;
       this.schedulerArgumentsValid = true;
-      return;
+    } else {
+      this.filtersArgumentsValid = this.areFilterAndPredicateArgumentsValid(this.modelValue, this.arguments);
+      this.schedulerArgumentsValid = this.isScheduleArgumentValid(this.modelValue, Object.keys(this.arguments));
     }
-    this.filtersArgumentsValid = this.areFilterAndPredicateArgumentsValid(this.modelValue, this.arguments);
-    this.schedulerArgumentsValid = this.isScheduleArgumentValid(this.modelValue, Object.keys(this.arguments));
+    return prevFiltersValid !== this.filtersArgumentsValid || prevSchedulerValid !== this.schedulerArgumentsValid;
   }
 
   private isScheduleArgumentValid(obj: any, validArguments: string[]): boolean {
@@ -295,6 +285,9 @@ export class CfAlarmRuleConditionComponent implements ControlValueAccessor, Vali
       }
     }).afterClosed().subscribe((result) => {
       if (result) {
+        if (!this.modelValue) {
+          this.modelValue = {} as AlarmRuleCondition;
+        }
         this.modelValue.schedule = result;
         this.updateModel();
       }

@@ -1,0 +1,134 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section class="tb-widget-settings tb-form-panel outlined flex flex-col" [formGroup]="schedulerEventsWidgetSettingsForm">
+  <mat-form-field class="mat-block flex-1" appearance="outline">
+    <mat-label translate>widgets.table.scheduler-events-table-title</mat-label>
+    <input matInput formControlName="title">
+  </mat-form-field>
+  <div class="tb-form-row space-between column-lt-md" style="height: auto; min-height: 56px;">
+    <div translate>widgets.table.display-columns</div>
+    <mat-chip-listbox multiple formControlName="displayColumns">
+      <mat-chip-option value="displayCreatedTime">{{ 'scheduler.created-time' | translate }}</mat-chip-option>
+      <mat-chip-option value="displayType">{{ 'scheduler.type' | translate }}</mat-chip-option>
+      <mat-chip-option value="displayCustomer">{{ 'scheduler.created_customer' | translate }}</mat-chip-option>
+      <mat-chip-option value="displaySchedule">{{ 'scheduler.schedule' | translate }}</mat-chip-option>
+    </mat-chip-listbox>
+  </div>
+  <div class="tb-form-panel stroked" style="margin-bottom:22px">
+    <div class="tb-form-panel-title" translate>widgets.table.pagination</div>
+    <mat-slide-toggle class="mat-slide !m-0" formControlName="displayPagination">
+      {{ 'widgets.table.display-pagination' | translate }}
+    </mat-slide-toggle>
+    <div class="tb-form-row space-between column-xs !m-0">
+      <div class="fixed-title-width !min-w-30">{{ 'widgets.table.page-step-settings' | translate }}</div>
+      <div class="flex flex-row items-center justify-start gap-2">
+        <div class="tb-small-label" translate>widgets.table.page-step-increment</div>
+        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+          <input matInput formControlName="pageStepIncrement" type="number" min="1" step="1" required
+            placeholder="{{ 'widget-config.set' | translate }}">
+          @if (schedulerEventsWidgetSettingsForm.get('pageStepIncrement').invalid
+            && schedulerEventsWidgetSettingsForm.get('pageStepIncrement').touched) {
+            <mat-icon matSuffix
+              matTooltipPosition="above"
+              matTooltipClass="tb-error-tooltip"
+                    [matTooltip]="(schedulerEventsWidgetSettingsForm.get('pageStepIncrement').hasError('required')
+                                     ? 'widgets.value-source.value-required'
+                                     : 'widgets.table.page-step-increment-format-message') | translate"
+              class="tb-error">
+              warning
+            </mat-icon>
+          }
+        </mat-form-field>
+        <mat-divider vertical class="xs:hidden"></mat-divider>
+        <div class="tb-small-label" translate>widgets.table.page-step-count</div>
+        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+          <input matInput formControlName="pageStepCount" type="number" min="1" max="100" step="1" required
+            placeholder="{{ 'widget-config.set' | translate }}">
+          @if (schedulerEventsWidgetSettingsForm.get('pageStepCount').invalid
+            && schedulerEventsWidgetSettingsForm.get('pageStepCount').touched) {
+            <mat-icon matSuffix
+              matTooltipPosition="above"
+              matTooltipClass="tb-error-tooltip"
+                    [matTooltip]="(schedulerEventsWidgetSettingsForm.get('pageStepCount').hasError('required')
+                                     ? 'widgets.value-source.value-required'
+                                     : 'widgets.table.page-step-count-format-message') | translate"
+              class="tb-error">
+              warning
+            </mat-icon>
+          }
+        </mat-form-field>
+      </div>
+    </div>
+    <div class="tb-form-row space-between column-xs !m-0">
+      <div translate>widgets.table.default-page-size</div>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="defaultPageSize" placeholder="{{ 'widget-config.set' | translate }}">
+          @for (size of pageStepSizeValues; track size) {
+            <mat-option [value]="size">
+              {{ size }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </div>
+  <mat-form-field class="mat-block flex-1" appearance="outline">
+    <mat-label translate>widgets.table.default-sort-order</mat-label>
+    <input matInput formControlName="defaultSortOrder">
+  </mat-form-field>
+  <mat-form-field class="mat-block flex-1" appearance="outline">
+    <mat-label translate>widgets.scheduler.enabled-scheduler-event-views</mat-label>
+    <mat-select formControlName="enabledViews">
+      <mat-option [value]="'both'">
+        {{ 'widgets.scheduler.enabled-scheduler-event-views-both' | translate }}
+      </mat-option>
+      <mat-option [value]="'list'">
+        {{ 'widgets.scheduler.enabled-scheduler-event-views-list' | translate }}
+      </mat-option>
+      <mat-option [value]="'calendar'">
+        {{ 'widgets.scheduler.enabled-scheduler-event-views-calendar' | translate }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+  <mat-form-field class="mat-block flex-1" appearance="outline">
+    <mat-label translate>widgets.table.no-data-display-message</mat-label>
+    <input matInput formControlName="noDataDisplayMessage">
+  </mat-form-field>
+  <mat-form-field class="mat-block flex-1" appearance="outline">
+    <mat-label translate>widgets.table.force-default-event-type</mat-label>
+    <input matInput formControlName="forceDefaultEventType">
+  </mat-form-field>
+  <fieldset class="fields-group" style="border: 1px solid rgba(0, 0, 0, 0.12);">
+    <legend class="group-title" translate>widgets.scheduler.custom-event-types</legend>
+    <div class="flex flex-col">
+      <div class="tb-control-list">
+        @for (customEventTypeControl of customEventTypesFormArray().controls; track customEventTypeControl; let isLast = $last) {
+          <div
+            class="flex flex-col" [class.pb-2]="!isLast">
+            <tb-custom-scheduler-event-type [formControl]="customEventTypeControl"
+              [expanded]="customEventTypeControl.new"
+              (removeCustomSchedulerEventType)="removeCustomEventType($index)">
+            </tb-custom-scheduler-event-type>
+          </div>
+        }
+      </div>
+      @if (!customEventTypesFormArray().controls.length) {
+        <div>
+          <span translate
+          class="tb-prompt flex items-center justify-center">widgets.scheduler.no-custom-event-types</span>
+        </div>
+      }
+      <div style="padding-top: 16px;">
+        <button mat-raised-button color="primary"
+          type="button"
+          (click)="addCustomEventType()">
+          <span translate>widgets.scheduler.add-custom-event-type</span>
+        </button>
+      </div>
+    </div>
+  </fieldset>
+</section>

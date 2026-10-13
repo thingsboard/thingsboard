@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.notification;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -23,9 +11,9 @@ import org.junit.Test;
 import org.junit.function.ThrowingRunnable;
 import org.mockito.MockedStatic;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.data.util.Pair;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.SystemUtil;
 import org.thingsboard.server.cache.limits.RateLimitService;
@@ -168,13 +156,13 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         triggerConfig.setUpdated(true);
         triggerConfig.setDeleted(true);
         createNotificationRule(triggerConfig, "${actionType}: ${entityType} [${entityId}]",
-                "User: ${userEmail}", createNotificationTarget(tenantAdminUserId).getId());
+                "${entity.type-user:translate}: ${userEmail}. Recipient: ${recipientEmail}", createNotificationTarget(tenantAdminUserId).getId());
 
         Device device = checkNotificationAfter(() -> {
             return createDevice("DEVICE!!!", "default", "12345");
         }, (notification, newDevice) -> {
             assertThat(notification.getSubject()).isEqualTo("added: Device [" + newDevice.getId() + "]");
-            assertThat(notification.getText()).isEqualTo("User: " + TENANT_ADMIN_EMAIL);
+            assertThat(notification.getText()).isEqualTo("User: " + TENANT_ADMIN_EMAIL + ". Recipient: " + TENANT_ADMIN_EMAIL);
         });
 
         checkNotificationAfter(() -> {
@@ -211,12 +199,12 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         notificationRule.setTriggerConfig(triggerConfig);
 
         EscalatedNotificationRuleRecipientsConfig recipientsConfig = new EscalatedNotificationRuleRecipientsConfig();
-        recipientsConfig.setTriggerType(NotificationRuleTriggerType.ALARM);
         Map<Integer, List<UUID>> escalationTable = new HashMap<>();
         recipientsConfig.setEscalationTable(escalationTable);
         Map<Integer, NotificationApiWsClient> clients = new HashMap<>();
         for (int delay = 0; delay <= 5; delay++) {
             Pair<User, NotificationApiWsClient> userAndClient = createUserAndConnectWsClient(Authority.TENANT_ADMIN);
+            loginTenantAdmin();
             NotificationTarget notificationTarget = createNotificationTarget(userAndClient.getFirst().getId());
             escalationTable.put(delay, List.of(notificationTarget.getUuidId()));
             clients.put(delay, userAndClient.getSecond());
@@ -238,12 +226,12 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
                 .set("createAlarm", BooleanNode.TRUE);
         postAttributes(device.getId(), AttributeScope.SERVER_SCOPE, attr.toString());
 
-        await().atMost(10, TimeUnit.SECONDS)
+        await().atMost(TIMEOUT, TimeUnit.SECONDS)
                 .until(() -> alarmSubscriptionService.findLatestByOriginatorAndType(tenantId, device.getId(), alarmType) != null);
         Alarm alarm = alarmSubscriptionService.findLatestByOriginatorAndType(tenantId, device.getId(), alarmType);
 
         long ts = System.currentTimeMillis();
-        await().atMost(15, TimeUnit.SECONDS)
+        await().atMost(TIMEOUT, TimeUnit.SECONDS)
                 .until(() -> clients.values().stream().allMatch(client -> client.getLastDataUpdate() != null));
         clients.forEach((expectedDelay, wsClient) -> {
             Notification notification = wsClient.getLastDataUpdate().getUpdate();
@@ -264,7 +252,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         });
 
         clients.values().forEach(TbTestWebSocketClient::registerWaitForUpdate);
-        alarmSubscriptionService.acknowledgeAlarm(tenantId, alarm.getId(), System.currentTimeMillis());
+        alarmSubscriptionService.acknowledgeAlarm(tenantId, alarm.getOriginator(), alarm.getId(), System.currentTimeMillis());
         AlarmStatus expectedStatus = AlarmStatus.ACTIVE_ACK;
         AlarmSeverity expectedSeverity = AlarmSeverity.CRITICAL;
         clients.values().forEach(wsClient -> {
@@ -291,8 +279,8 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         alarm.setOriginator(device.getId());
         alarm = doPost("/api/alarm", alarm, Alarm.class);
 
-        await().atMost(15, TimeUnit.SECONDS)
-                .pollDelay(2, TimeUnit.SECONDS)
+        await().atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollDelay(1, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     List<Notification> notifications = getMyNotifications(false, 10);
                     assertThat(notifications).singleElement().matches(notification -> {
@@ -329,7 +317,6 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         notificationRule.setTriggerConfig(triggerConfig);
 
         EscalatedNotificationRuleRecipientsConfig recipientsConfig = new EscalatedNotificationRuleRecipientsConfig();
-        recipientsConfig.setTriggerType(NotificationRuleTriggerType.ALARM);
         Map<Integer, List<UUID>> escalationTable = new HashMap<>();
         recipientsConfig.setEscalationTable(escalationTable);
 
@@ -345,7 +332,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
                 .set("createAlarm", BooleanNode.TRUE);
         postAttributes(device.getId(), AttributeScope.SERVER_SCOPE, attr.toString());
 
-        await().atMost(10, TimeUnit.SECONDS)
+        await().atMost(TIMEOUT, TimeUnit.SECONDS)
                 .until(() -> alarmSubscriptionService.findLatestByOriginatorAndType(tenantId, device.getId(), alarmType) != null);
         Alarm alarm = alarmSubscriptionService.findLatestByOriginatorAndType(tenantId, device.getId(), alarmType);
         getWsClient().waitForUpdate(true);
@@ -355,14 +342,14 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         assertThat(notification.getInfo()).asInstanceOf(type(AlarmNotificationInfo.class))
                 .extracting(AlarmNotificationInfo::getAlarmId).isEqualTo(alarm.getUuidId());
 
-        await().atMost(10, TimeUnit.SECONDS).until(() -> findNotificationRequests(EntityType.ALARM).getTotalElements() == escalationTable.size());
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> findNotificationRequests(EntityType.ALARM).getTotalElements() == escalationTable.size());
         NotificationRequestInfo scheduledNotificationRequest = findNotificationRequests(EntityType.ALARM).getData().stream()
                 .filter(NotificationRequest::isScheduled)
                 .findFirst().orElse(null);
         assertThat(scheduledNotificationRequest).extracting(NotificationRequest::getInfo).isEqualTo(notification.getInfo());
 
-        alarmSubscriptionService.clearAlarm(tenantId, alarm.getId(), System.currentTimeMillis(), null);
-        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+        alarmSubscriptionService.clearAlarm(tenantId, alarm.getOriginator(), alarm.getId(), System.currentTimeMillis(), null);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
             assertThat(findNotificationRequests(EntityType.ALARM).getData()).filteredOn(NotificationRequest::isScheduled).isEmpty();
         });
     }
@@ -432,6 +419,8 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
                 edge.setType("default");
                 edge.setSecret("secret_" + i);
                 edge.setRoutingKey("routingKey_" + i);
+                edge.setEdgeLicenseKey("licenseKey_" + i);
+                edge.setCloudEndpoint("endpoint");
                 doPost("/api/edge", edge);
             }
         }, notification -> {
@@ -480,7 +469,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         }
 
         loginTenantAdmin();
-        List<Notification> notifications = await().atMost(15, TimeUnit.SECONDS)
+        List<Notification> notifications = await().atMost(TIMEOUT, TimeUnit.SECONDS)
                 .until(() -> getMyNotifications(true, 10).stream()
                         .filter(notification -> notification.getType() == NotificationType.RATE_LIMITS)
                         .collect(Collectors.toList()), list -> list.size() == 3);
@@ -500,7 +489,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         });
 
         loginSysAdmin();
-        notifications = await().atMost(15, TimeUnit.SECONDS)
+        notifications = await().atMost(TIMEOUT, TimeUnit.SECONDS)
                 .until(() -> getMyNotifications(true, 10).stream()
                         .filter(notification -> notification.getType() == NotificationType.RATE_LIMITS)
                         .collect(Collectors.toList()), list -> list.size() == 1);
@@ -640,8 +629,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         EntityActionNotificationRuleTriggerConfig triggerConfig = new EntityActionNotificationRuleTriggerConfig();
         rule.setTriggerConfig(triggerConfig);
 
-        DefaultNotificationRuleRecipientsConfig recipientsConfig = new DefaultNotificationRuleRecipientsConfig();
-        recipientsConfig.setTriggerType(NotificationRuleTriggerType.ENTITY_ACTION);
+        DefaultNotificationRuleRecipientsConfig recipientsConfig = DefaultNotificationRuleRecipientsConfig.forTriggerType(NotificationRuleTriggerType.ENTITY_ACTION);
         recipientsConfig.setTargets(List.of(createNotificationTarget(tenantAdminUserId).getUuidId()));
         rule.setRecipientsConfig(recipientsConfig);
         rule = saveNotificationRule(rule);
@@ -671,8 +659,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         triggerConfig.setCreated(true);
         rule.setTriggerConfig(triggerConfig);
         NotificationTarget target = createNotificationTarget(tenantAdminUserId);
-        DefaultNotificationRuleRecipientsConfig recipientsConfig = new DefaultNotificationRuleRecipientsConfig();
-        recipientsConfig.setTriggerType(NotificationRuleTriggerType.ENTITY_ACTION);
+        DefaultNotificationRuleRecipientsConfig recipientsConfig = DefaultNotificationRuleRecipientsConfig.forTriggerType(NotificationRuleTriggerType.ENTITY_ACTION);
         recipientsConfig.setTargets(List.of(target.getUuidId()));
         rule.setRecipientsConfig(recipientsConfig);
         rule = saveNotificationRule(rule);
@@ -721,7 +708,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
                 .updateInfo(new UpdateMessage(true, "CHANGED", "test",
                         "test", "test", "test"))
                 .build());
-        await().atMost(5, TimeUnit.SECONDS)
+        await().atMost(TIMEOUT, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     assertThat(getMyNotifications(false, 100)).size().isEqualTo(2);
                 });
@@ -809,7 +796,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
             method.invoke(systemInfoService);
         }
 
-        await().atMost(10, TimeUnit.SECONDS).until(() -> getMyNotifications(false, 100).size() == 1);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> getMyNotifications(false, 100).size() == 1);
         Notification notification = getMyNotifications(false, 100).get(0);
         assertThat(notification.getSubject()).isEqualTo("Warning: RAM shortage");
         assertThat(notification.getText()).isEqualTo("RAM shortage");
@@ -836,7 +823,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
                     .build());
             TimeUnit.MILLISECONDS.sleep(300);
         }
-        await().atMost(10, TimeUnit.SECONDS).until(() -> getMyNotifications(false, 100).size() == 1);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> getMyNotifications(false, 100).size() == 1);
         Notification notification = getMyNotifications(false, 100).get(0);
         assertThat(notification.getSubject()).isEqualTo("Warning: RAM shortage");
         assertThat(notification.getText()).isEqualTo("RAM shortage");
@@ -848,7 +835,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
                 .serviceType("serviceType")
                 .serviceId("serviceId")
                 .build());
-        await("").atMost(5, TimeUnit.SECONDS).untilAsserted(() -> assertThat(getMyNotifications(false, 100)).size().isOne());
+        await("").atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> assertThat(getMyNotifications(false, 100)).size().isOne());
     }
 
     @Test
@@ -887,7 +874,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
 
         method.invoke(systemInfoService);
 
-        await().atMost(10, TimeUnit.SECONDS).until(() -> getMyNotifications(false, 100).size() == 1);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> getMyNotifications(false, 100).size() == 1);
         Notification notification = getMyNotifications(false, 100).get(0);
         assertThat(notification.getSubject()).isEqualTo("Warning: RAM shortage");
         assertThat(notification.getText()).isEqualTo("RAM shortage");

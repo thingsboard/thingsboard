@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { BasicActionWidgetComponent } from '@home/components/widget/lib/action/action-widget.models';
 import { ImagePipe } from '@shared/pipe/image.pipe';
@@ -26,10 +12,11 @@ import {
 import { WidgetButtonAppearance } from '@shared/components/button/widget-button.models';
 
 @Component({
-  selector: 'tb-action-button-widget',
-  templateUrl: './action-button-widget.component.html',
-  styleUrls: ['../action/action-widget.scss', './action-button-widget.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-action-button-widget',
+    templateUrl: './action-button-widget.component.html',
+    styleUrls: ['../action/action-widget.scss', './action-button-widget.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class ActionButtonWidgetComponent extends
   BasicActionWidgetComponent implements OnInit, AfterViewInit, OnDestroy {

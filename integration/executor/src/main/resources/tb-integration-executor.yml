@@ -1,0 +1,710 @@
+#
+# SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+# SPDX-License-Identifier: BUSL-1.1
+#
+
+# Server common parameters
+# Configures the HTTP server bind address, port, and maximum form POST size for the integration executor service.
+server:
+  # Server bind address
+  address: "${HTTP_BIND_ADDRESS:0.0.0.0}"
+  # Server bind port
+  port: "${HTTP_BIND_PORT:8082}"
+  tomcat:
+    # Maximum size of data that could be sent over HTTP form POST request
+    max-http-form-post-size: "${MAX_HTTP_FORM_POST_SIZE:10000000}" # 10Mb
+
+# Spring common parameters
+# Controls Spring Boot circular reference handling and multipart file upload size limits.
+spring.main.allow-circular-references: "true" # Spring Boot configuration property that controls whether circular dependencies between beans are allowed.
+spring.servlet.multipart.max-file-size: "${SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE:50MB}" # Total file size cannot exceed 50MB when configuring file uploads
+spring.servlet.multipart.max-request-size: "${SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE:50MB}" # Total request size for a multipart/form-data cannot exceed 50MB
+
+# ZooKeeper connection parameters. Used for service discovery.
+# Defines connection, session, retry settings and the node directory path for ZooKeeper-based cluster coordination.
+zk:
+  # Enable/disable ZooKeeper discovery service.
+  enabled: "${ZOOKEEPER_ENABLED:true}"
+  # ZooKeeper connect string
+  url: "${ZOOKEEPER_URL:localhost:2181}"
+  # ZooKeeper retry interval in milliseconds
+  retry_interval_ms: "${ZOOKEEPER_RETRY_INTERVAL_MS:3000}"
+  # ZooKeeper connection timeout in milliseconds
+  connection_timeout_ms: "${ZOOKEEPER_CONNECTION_TIMEOUT_MS:3000}"
+  # ZooKeeper session timeout in milliseconds
+  session_timeout_ms: "${ZOOKEEPER_SESSION_TIMEOUT_MS:3000}"
+  # Name of the directory in ZooKeeper 'filesystem'
+  zk_dir: "${ZOOKEEPER_NODES_DIR:/thingsboard}"
+  # The recalculate_delay property is recommended in a microservices architecture setup for rule-engine services.
+  # This property provides a pause to ensure that when a rule-engine service is restarted, other nodes don't immediately attempt to recalculate their partitions.
+  # The delay is recommended because the initialization of rule chain actors is time-consuming. Avoiding unnecessary recalculations during a restart can enhance system performance and stability.
+  recalculate_delay: "${ZOOKEEPER_RECALCULATE_DELAY_MS:0}"
+
+# Integration common parameters
+# Configures integration statistics, connection timeouts, hot reinitialization, and local network host access policy.
+integrations:
+  statistics:
+    # Enable/disable integrations statistics
+    enabled: "${INTEGRATIONS_STATISTICS_ENABLED:true}"
+    # Integration statistic persistence frequency in milliseconds
+    persist_frequency: "${INTEGRATIONS_STATISTICS_PERSIST_FREQUENCY:3600000}"
+  init:
+    # Maximum connection timeout allowed for integrations in seconds. Any greater user defined timeout will be reduced down to this limit.
+    connection_timeout_sec: "${INTEGRATIONS_INIT_CONNECTION_TIMEOUT_SEC:10}"
+    # Connection check timeout for API request in seconds
+    connection_check_api_request_timeout_sec: "${INTEGRATIONS_INIT_CONNECTION_CHECK_API_REQUEST_TIMEOUT_SEC:20}"
+  reinit:
+    # Enable/Disable integrations hot reinitialization
+    enabled: "${INTEGRATIONS_REINIT_ENABLED:true}"
+    # Checking interval for reinit integrations
+    frequency: "${INTEGRATIONS_REINIT_FREQUENCY:300000}"
+  # Enable/Disable integrations local network hosts
+  allow_Local_network_hosts: "${INTEGRATIONS_ALLOW_LOCAL_NETWORK_HOSTS:true}"
+  back_pressure:
+    # Stop reading from the MQTT broker when queued messages >= highWatermark
+    high_watermark: "${INTEGRATIONS_BACK_PRESSURE_HIGH_WATERMARK:450}"
+    # Resume reading when queued messages < lowWatermark
+    low_watermark: "${INTEGRATIONS_BACK_PRESSURE_LOW_WATERMARK:200}"
+  executor:
+    cache:
+      # Time-to-live for cached entities (devices/assets/profiles) in milliseconds. Default: 86400000ms (24 hours)
+      # Entities that are not accessed within this time period will be removed from the cache during cleanup
+      ttl_ms: "${INTEGRATION_EXECUTOR_CACHE_TTL_MS:86400000}"
+      # Cleanup interval in milliseconds. Default: 3600000ms (1 hour)
+      # How often the cleanup task runs to remove expired entities from the cache
+      cleanup_interval_ms: "${INTEGRATION_EXECUTOR_CACHE_CLEANUP_INTERVAL_MS:3600000}"
+      startup:
+        # Enable/disable preloading of profiles and entities managed by integrations on startup
+        # Preloading includes: all device and asset profiles, plus devices/assets with integration relations
+        preload: "${INTEGRATION_EXECUTOR_CACHE_STARTUP_PRELOAD:true}"
+        # Batch size for fetching data from tb-core during startup. Default: 1000
+        # Controls how many entities are fetched per request to tb-core
+        batch_size: "${INTEGRATION_EXECUTOR_CACHE_STARTUP_BATCH_SIZE:1000}"
+        # Relation type used to identify devices/assets managed by integrations during preloading
+        relation_type: "${INTEGRATION_EXECUTOR_CACHE_STARTUP_RELATION_TYPE:ManagedByIntegration}"
+        # Number of retry attempts when fetching data from tb-core during startup
+        retry_attempts: "${INTEGRATION_EXECUTOR_CACHE_STARTUP_RETRY_ATTEMPTS:5}"
+        # Delay in milliseconds between retry attempts
+        retry_delay_ms: "${INTEGRATION_EXECUTOR_CACHE_STARTUP_RETRY_DELAY_MS:5000}"
+        # Maximum time to wait for cache preloading in seconds. Default: 300 seconds (5 minutes)
+        # After this timeout, message processing will start even if the cache is not fully loaded
+        timeout_sec: "${INTEGRATION_EXECUTOR_CACHE_STARTUP_TIMEOUT_SEC:300}"
+
+# Queue common parameters
+# Defines the message queue type (Kafka) and all related producer, consumer, topic, and integration-specific queue settings.
+queue:
+  type: "${TB_QUEUE_TYPE:kafka}" # kafka (Apache Kafka)
+  prefix: "${TB_QUEUE_PREFIX:}" # Global queue prefix. If specified, prefix is added before default topic name: 'prefix.default_topic_name'. Prefix is applied to all topics (and consumer groups for kafka).
+  kafka:
+    # Kafka Bootstrap Servers
+    bootstrap.servers: "${TB_KAFKA_SERVERS:localhost:9092}"
+    ssl:
+      # Enable/Disable SSL Kafka communication
+      enabled: "${TB_KAFKA_SSL_ENABLED:false}"
+      # The location of the trust store file
+      truststore.location: "${TB_KAFKA_SSL_TRUSTSTORE_LOCATION:}"
+      # The password of trust store file if specified
+      truststore.password: "${TB_KAFKA_SSL_TRUSTSTORE_PASSWORD:}"
+      # The location of the key store file. This is optional for the client and can be used for two-way authentication for the client
+      keystore.location: "${TB_KAFKA_SSL_KEYSTORE_LOCATION:}"
+      # The store password for the key store file. This is optional for the client and only needed if ‘ssl.keystore.location’ is configured. Key store password is not supported for PEM format
+      keystore.password: "${TB_KAFKA_SSL_KEYSTORE_PASSWORD:}"
+      # The password of the private key in the key store file or the PEM key specified in ‘keystore.key’
+      key.password: "${TB_KAFKA_SSL_KEY_PASSWORD:}"
+    # The number of acknowledgments the producer requires the leader to have received before considering a request complete. This controls the durability of records that are sent. The following settings are allowed:0,1 and all
+    acks: "${TB_KAFKA_ACKS:all}"
+    # Number of retries. Resend any record whose send fails with a potentially transient error
+    retries: "${TB_KAFKA_RETRIES:1}"
+    # The compression type for all data generated by the producer. The default is none (i.e. no compression). Valid values: none, gzip or lz4
+    compression.type: "${TB_KAFKA_COMPRESSION_TYPE:none}" # none, gzip or lz4
+    # Default batch size. This setting gives the upper bound of the batch size to be sent
+    batch.size: "${TB_KAFKA_BATCH_SIZE:16384}"
+    # This variable creates a small amount of artificial delay—that is, rather than immediately sending out a record
+    linger.ms: "${TB_KAFKA_LINGER_MS:1}"
+    # The maximum size of a request in bytes. This setting will limit the number of record batches the producer will send in a single request to avoid sending huge requests
+    max.request.size: "${TB_KAFKA_MAX_REQUEST_SIZE:1048576}"
+    # The maximum number of unacknowledged requests the client will send on a single connection before blocking
+    max.in.flight.requests.per.connection: "${TB_KAFKA_MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION:5}"
+    # The total bytes of memory the producer can use to buffer records waiting to be sent to the server
+    buffer.memory: "${TB_BUFFER_MEMORY:33554432}"
+    # The multiple copies of data over the multiple brokers of Kafka
+    replication_factor: "${TB_QUEUE_KAFKA_REPLICATION_FACTOR:1}"
+    # The maximum delay between invocations of poll() when using consumer group management. This places an upper bound on the amount of time that the consumer can be idle before fetching more records
+    max_poll_interval_ms: "${TB_QUEUE_KAFKA_MAX_POLL_INTERVAL_MS:300000}"
+    # The maximum number of records returned in a single call to poll()
+    max_poll_records: "${TB_QUEUE_KAFKA_MAX_POLL_RECORDS:8192}"
+    # The maximum amount of data per-partition the server will return. Records are fetched in batches by the consumer
+    max_partition_fetch_bytes: "${TB_QUEUE_KAFKA_MAX_PARTITION_FETCH_BYTES:16777216}"
+    # The maximum amount of data the server will return. Records are fetched in batches by the consumer
+    fetch_max_bytes: "${TB_QUEUE_KAFKA_FETCH_MAX_BYTES:134217728}"
+    request.timeout.ms: "${TB_QUEUE_KAFKA_REQUEST_TIMEOUT_MS:30000}" # (30 seconds) # refer to https://docs.confluent.io/platform/current/installation/configuration/producer-configs.html#producerconfigs_request.timeout.ms
+    session.timeout.ms: "${TB_QUEUE_KAFKA_SESSION_TIMEOUT_MS:10000}" # (10 seconds) # refer to https://docs.confluent.io/platform/current/installation/configuration/consumer-configs.html#consumerconfigs_session.timeout.ms
+    # Enable/Disable using of Confluent Cloud
+    use_confluent_cloud: "${TB_QUEUE_KAFKA_USE_CONFLUENT_CLOUD:false}"
+    confluent:
+      # The endpoint identification algorithm used by clients to validate server hostname. The default value is https
+      ssl.algorithm: "${TB_QUEUE_KAFKA_CONFLUENT_SSL_ALGORITHM:https}"
+      # The mechanism used to authenticate Schema Registry requests. SASL/PLAIN should only be used with TLS/SSL as a transport layer to ensure that clear passwords are not transmitted on the wire without encryption
+      sasl.mechanism: "${TB_QUEUE_KAFKA_CONFLUENT_SASL_MECHANISM:PLAIN}"
+      # Using JAAS Configuration for specifying multiple SASL mechanisms on a broker
+      sasl.config: "${TB_QUEUE_KAFKA_CONFLUENT_SASL_JAAS_CONFIG:org.apache.kafka.common.security.plain.PlainLoginModule required username=\"CLUSTER_API_KEY\" password=\"CLUSTER_API_SECRET\";}"
+      # Protocol used to communicate with brokers. Valid values are: PLAINTEXT, SSL, SASL_PLAINTEXT, SASL_SSL
+      security.protocol: "${TB_QUEUE_KAFKA_CONFLUENT_SECURITY_PROTOCOL:SASL_SSL}"
+      # Optional: OAuth2 (OIDC) client-credentials settings. Applied only when sasl.mechanism is OAUTHBEARER.
+      # ThingsBoard wires Kafka's built-in OAuthBearerLoginCallbackHandler; the token is fetched and refreshed automatically.
+      oauth:
+        # Optional: OAuth2 client id
+        client-id: "${TB_QUEUE_KAFKA_CONFLUENT_OAUTH_CLIENT_ID:}"
+        # Optional: OAuth2 client secret
+        client-secret: "${TB_QUEUE_KAFKA_CONFLUENT_OAUTH_CLIENT_SECRET:}"
+        # Optional: OAuth2/OIDC token endpoint URL to request the bearer token from
+        endpoint-url: "${TB_QUEUE_KAFKA_CONFLUENT_OAUTH_ENDPOINT_URL:}"
+        # Optional: OAuth2 scope/audience requested for the token. Required by some IdPs for client-credentials (e.g. Azure AD's "api://<id>/.default")
+        scope: "${TB_QUEUE_KAFKA_CONFLUENT_OAUTH_SCOPE:}"
+    # Key-value properties for Kafka consumer per specific topic, e.g. tb_ota_package is a topic name for ota, tb_rule_engine.sq is a topic name for default SequentialByOriginator queue.
+    # Check TB_QUEUE_CORE_OTA_TOPIC and TB_QUEUE_RE_SQ_TOPIC params
+    consumer-properties-per-topic:
+      tb_ota_package:
+        # Key-value properties for Kafka consumer per specific topic, e.g. tb_ota_package is a topic name for ota, tb_rule_engine.sq is a topic name for default SequentialByOriginator queue. Check TB_QUEUE_CORE_OTA_TOPIC and TB_QUEUE_RE_SQ_TOPIC params
+        - key: max.poll.records
+          # Example of specific consumer properties value per topic
+          value: "${TB_QUEUE_KAFKA_OTA_MAX_POLL_RECORDS:10}"
+    #      tb_rule_engine.sq:
+    #        - key: max.poll.records
+    #          value: "${TB_QUEUE_KAFKA_SQ_MAX_POLL_RECORDS:1024}"
+    # If you override any default Kafka topic name using environment variables, you must also specify the related consumer properties
+    # for the new topic in `consumer-properties-per-topic-inline`. Otherwise, the topic will not inherit its expected configuration (e.g., max.poll.records, timeouts, etc).
+    # Format: "topic1:key1=value1,key2=value2;topic2:key=value"
+    # Example: "tb_core_modified.notifications:max.poll.records=10;tb_edge_modified:max.poll.records=10,enable.auto.commit=true"
+    consumer-properties-per-topic-inline: "${TB_QUEUE_KAFKA_CONSUMER_PROPERTIES_PER_TOPIC_INLINE:}"
+    other-inline: "${TB_QUEUE_KAFKA_OTHER_PROPERTIES:}" # In this section you can specify custom parameters (semicolon separated) for Kafka consumer/producer/admin # Example "metrics.recording.level:INFO;metrics.sample.window.ms:30000"
+    other: # DEPRECATED. In this section you can specify custom parameters for Kafka consumer/producer and expose the env variables to configure outside
+    #  - key: "request.timeout.ms" # refer to https://docs.confluent.io/platform/current/installation/configuration/producer-configs.html#producerconfigs_request.timeout.ms
+    #    value: "${TB_QUEUE_KAFKA_REQUEST_TIMEOUT_MS:30000}" # (30 seconds)
+    #  - key: "session.timeout.ms" # refer to https://docs.confluent.io/platform/current/installation/configuration/consumer-configs.html#consumerconfigs_session.timeout.ms
+    #    value: "${TB_QUEUE_KAFKA_SESSION_TIMEOUT_MS:10000}" # (10 seconds)
+    topic-properties:
+      # Kafka properties for Rule Engine
+      rule-engine: "${TB_QUEUE_KAFKA_RE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
+      # Kafka properties for Core topics
+      core: "${TB_QUEUE_KAFKA_CORE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
+      # Kafka properties for Transport Api topics
+      transport-api: "${TB_QUEUE_KAFKA_TA_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:1048576000;partitions:10;min.insync.replicas:1}"
+      # Kafka properties for Notifications topics
+      notifications: "${TB_QUEUE_KAFKA_NOTIFICATIONS_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
+      # Kafka properties for JS Executor topics
+      js-executor: "${TB_QUEUE_KAFKA_JE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:104857600;partitions:100;min.insync.replicas:1}"
+      # Kafka properties for Integration Api topics
+      integration-api: "${TB_QUEUE_KAFKA_INTEGRATION_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:1048576000;partitions:10;min.insync.replicas:1}"
+      # Kafka properties for Housekeeper tasks topic
+      housekeeper: "${TB_QUEUE_KAFKA_HOUSEKEEPER_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:1048576000;partitions:10;min.insync.replicas:1}"
+    consumer-stats:
+      # Prints lag between consumer group offset and last messages offset in Kafka topics
+      enabled: "${TB_QUEUE_KAFKA_CONSUMER_STATS_ENABLED:true}"
+      # Statistics printing interval for Kafka's consumer-groups stats
+      print-interval-ms: "${TB_QUEUE_KAFKA_CONSUMER_STATS_MIN_PRINT_INTERVAL_MS:60000}"
+      # Time to wait for the stats-loading requests to Kafka to finis
+      kafka-response-timeout-ms: "${TB_QUEUE_KAFKA_CONSUMER_STATS_RESPONSE_TIMEOUT_MS:1000}"
+    # Topics cache TTL in milliseconds. 5 minutes by default
+    topics_cache_ttl_ms: "${TB_QUEUE_KAFKA_TOPICS_CACHE_TTL_MS:300000}"
+  partitions:
+    hash_function_name: "${TB_QUEUE_PARTITIONS_HASH_FUNCTION_NAME:murmur3_128}" # murmur3_32, murmur3_128 or sha256
+  transport_api:
+    # Topic used to consume api requests from transport microservices
+    requests_topic: "${TB_QUEUE_TRANSPORT_API_REQUEST_TOPIC:tb_transport.api.requests}"
+    # Topic used to produce api responses to transport microservices
+    responses_topic: "${TB_QUEUE_TRANSPORT_API_RESPONSE_TOPIC:tb_transport.api.responses}"
+    # Maximum pending api requests from transport microservices to be handled by server
+    max_pending_requests: "${TB_QUEUE_TRANSPORT_MAX_PENDING_REQUESTS:10000}"
+    # Maximum timeout in milliseconds to handle api request from transport microservice by server
+    max_requests_timeout: "${TB_QUEUE_TRANSPORT_MAX_REQUEST_TIMEOUT:10000}"
+    # Amount of threads used to invoke callbacks
+    max_callback_threads: "${TB_QUEUE_TRANSPORT_MAX_CALLBACK_THREADS:100}"
+    # Interval in milliseconds to poll api requests from transport microservices
+    request_poll_interval: "${TB_QUEUE_TRANSPORT_REQUEST_POLL_INTERVAL_MS:25}"
+    # Interval in milliseconds to poll api response from transport microservices
+    response_poll_interval: "${TB_QUEUE_TRANSPORT_RESPONSE_POLL_INTERVAL_MS:25}"
+  core:
+    # Default topic name
+    topic: "${TB_QUEUE_CORE_TOPIC:tb_core}"
+    # For high-priority notifications that require minimum latency and processing time
+    notifications_topic: "${TB_QUEUE_CORE_NOTIFICATIONS_TOPIC:tb_core.notifications}"
+    # Interval in milliseconds to poll messages by Core microservices
+    poll-interval: "${TB_QUEUE_CORE_POLL_INTERVAL_MS:25}"
+    # Amount of partitions used by Core microservices
+    partitions: "${TB_QUEUE_CORE_PARTITIONS:10}"
+    # Timeout for processing a message pack by Core microservices
+    pack-processing-timeout: "${TB_QUEUE_CORE_PACK_PROCESSING_TIMEOUT_MS:2000}"
+    ota:
+      # Default topic name for OTA updates
+      topic: "${TB_QUEUE_CORE_OTA_TOPIC:tb_ota_package}"
+      # The interval of processing the OTA updates for devices. Used to avoid any harm to the network due to many parallel OTA updates
+      pack-interval-ms: "${TB_QUEUE_CORE_OTA_PACK_INTERVAL_MS:60000}"
+      # The size of OTA updates notifications fetched from the queue. The queue stores pairs of firmware and device ids
+      pack-size: "${TB_QUEUE_CORE_OTA_PACK_SIZE:100}"
+    # Stats topic name
+    usage-stats-topic: "${TB_QUEUE_US_TOPIC:tb_usage_stats}"
+    stats:
+      # Enable/disable statistics for Core microservices
+      enabled: "${TB_QUEUE_CORE_STATS_ENABLED:true}"
+      # Statistics printing interval for Core microservices
+      print-interval-ms: "${TB_QUEUE_CORE_STATS_PRINT_INTERVAL_MS:60000}"
+    housekeeper:
+      # Topic name for Housekeeper tasks
+      topic: "${TB_HOUSEKEEPER_TOPIC:tb_housekeeper}"
+  js:
+    # JS Eval request topic
+    request_topic: "${REMOTE_JS_EVAL_REQUEST_TOPIC:js_eval.requests}"
+    # JS Eval responses topic prefix that is combined with node id
+    response_topic_prefix: "${REMOTE_JS_EVAL_RESPONSE_TOPIC:js_eval.responses}"
+    # JS Eval max pending requests
+    max_pending_requests: "${REMOTE_JS_MAX_PENDING_REQUESTS:10000}"
+    # JS Eval max request timeout
+    max_eval_requests_timeout: "${REMOTE_JS_MAX_EVAL_REQUEST_TIMEOUT:60000}"
+    # JS max request timeout
+    max_requests_timeout: "${REMOTE_JS_MAX_REQUEST_TIMEOUT:10000}"
+    # JS response poll interval
+    response_poll_interval: "${REMOTE_JS_RESPONSE_POLL_INTERVAL_MS:25}"
+  rule-engine:
+    # Deprecated. It will be removed in the nearest releases
+    topic: "${TB_QUEUE_RULE_ENGINE_TOPIC:tb_rule_engine}"
+    # For high-priority notifications that require minimum latency and processing time
+    notifications_topic: "${TB_QUEUE_RULE_ENGINE_NOTIFICATIONS_TOPIC:tb_rule_engine.notifications}"
+    # Interval in milliseconds to poll messages by Rule Engine
+    poll-interval: "${TB_QUEUE_RULE_ENGINE_POLL_INTERVAL_MS:25}"
+    # Timeout for processing a message pack of Rule Engine
+    pack-processing-timeout: "${TB_QUEUE_RULE_ENGINE_PACK_PROCESSING_TIMEOUT_MS:2000}"
+    stats:
+      # Enable/disable statistics for Rule Engine
+      enabled: "${TB_QUEUE_RULE_ENGINE_STATS_ENABLED:true}"
+      # Statistics printing interval for Rule Engine
+      print-interval-ms: "${TB_QUEUE_RULE_ENGINE_STATS_PRINT_INTERVAL_MS:60000}"
+    queues:
+      - name: "${TB_QUEUE_RE_MAIN_QUEUE_NAME:Main}" # queue name
+        topic: "${TB_QUEUE_RE_MAIN_TOPIC:tb_rule_engine.main}" # queue topic
+        poll-interval: "${TB_QUEUE_RE_MAIN_POLL_INTERVAL_MS:25}" # poll interval
+        partitions: "${TB_QUEUE_RE_MAIN_PARTITIONS:10}" # number queue partitions
+        consumer-per-partition: "${TB_QUEUE_RE_MAIN_CONSUMER_PER_PARTITION:true}" # if true - use for each customer different partition
+        pack-processing-timeout: "${TB_QUEUE_RE_MAIN_PACK_PROCESSING_TIMEOUT_MS:2000}" # Timeout for processing a message pack
+        submit-strategy:
+          type: "${TB_QUEUE_RE_MAIN_SUBMIT_STRATEGY_TYPE:BURST}" # BURST, BATCH, SEQUENTIAL_BY_ORIGINATOR, SEQUENTIAL_BY_TENANT, SEQUENTIAL
+          # For BATCH only
+          batch-size: "${TB_QUEUE_RE_MAIN_SUBMIT_STRATEGY_BATCH_SIZE:1000}" # Maximum number of messages in batch
+        processing-strategy:
+          type: "${TB_QUEUE_RE_MAIN_PROCESSING_STRATEGY_TYPE:SKIP_ALL_FAILURES}" # SKIP_ALL_FAILURES, SKIP_ALL_FAILURES_AND_TIMED_OUT, RETRY_ALL, RETRY_FAILED, RETRY_TIMED_OUT, RETRY_FAILED_AND_TIMED_OUT
+          # For RETRY_ALL, RETRY_FAILED, RETRY_TIMED_OUT, RETRY_FAILED_AND_TIMED_OUT
+          retries: "${TB_QUEUE_RE_MAIN_PROCESSING_STRATEGY_RETRIES:3}" # Number of retries, 0 is unlimited
+          failure-percentage: "${TB_QUEUE_RE_MAIN_PROCESSING_STRATEGY_FAILURE_PERCENTAGE:0}" # Skip retry if failures or timeouts are less then X percentage of messages;
+          pause-between-retries: "${TB_QUEUE_RE_MAIN_PROCESSING_STRATEGY_RETRY_PAUSE:3}" # Time in seconds to wait in consumer thread before retries;
+          max-pause-between-retries: "${TB_QUEUE_RE_MAIN_PROCESSING_STRATEGY_MAX_RETRY_PAUSE:3}" # Max allowed time in seconds for pause between retries.
+      - name: "${TB_QUEUE_RE_HP_QUEUE_NAME:HighPriority}" # queue name
+        topic: "${TB_QUEUE_RE_HP_TOPIC:tb_rule_engine.hp}" # queue topic
+        poll-interval: "${TB_QUEUE_RE_HP_POLL_INTERVAL_MS:25}" # poll interval
+        partitions: "${TB_QUEUE_RE_HP_PARTITIONS:10}"  # number queue partitions
+        consumer-per-partition: "${TB_QUEUE_RE_HP_CONSUMER_PER_PARTITION:true}" # if true - use for each customer different partition
+        pack-processing-timeout: "${TB_QUEUE_RE_HP_PACK_PROCESSING_TIMEOUT_MS:2000}" # Timeout for processing a message pack
+        submit-strategy:
+          type: "${TB_QUEUE_RE_HP_SUBMIT_STRATEGY_TYPE:BURST}" # BURST, BATCH, SEQUENTIAL_BY_ORIGINATOR, SEQUENTIAL_BY_TENANT, SEQUENTIAL
+          # For BATCH only
+          batch-size: "${TB_QUEUE_RE_HP_SUBMIT_STRATEGY_BATCH_SIZE:100}" # Maximum number of messages in batch
+        processing-strategy:
+          type: "${TB_QUEUE_RE_HP_PROCESSING_STRATEGY_TYPE:RETRY_FAILED_AND_TIMED_OUT}" # SKIP_ALL_FAILURES, SKIP_ALL_FAILURES_AND_TIMED_OUT, RETRY_ALL, RETRY_FAILED, RETRY_TIMED_OUT, RETRY_FAILED_AND_TIMED_OUT
+          # For RETRY_ALL, RETRY_FAILED, RETRY_TIMED_OUT, RETRY_FAILED_AND_TIMED_OUT
+          retries: "${TB_QUEUE_RE_HP_PROCESSING_STRATEGY_RETRIES:0}" # Number of retries, 0 is unlimited
+          failure-percentage: "${TB_QUEUE_RE_HP_PROCESSING_STRATEGY_FAILURE_PERCENTAGE:0}" # Skip retry if failures or timeouts are less then X percentage of messages;
+          pause-between-retries: "${TB_QUEUE_RE_HP_PROCESSING_STRATEGY_RETRY_PAUSE:5}" # Time in seconds to wait in consumer thread before retries;
+          max-pause-between-retries: "${TB_QUEUE_RE_HP_PROCESSING_STRATEGY_MAX_RETRY_PAUSE:5}" # Max allowed time in seconds for pause between retries.
+      - name: "${TB_QUEUE_RE_SQ_QUEUE_NAME:SequentialByOriginator}" # queue name
+        topic: "${TB_QUEUE_RE_SQ_TOPIC:tb_rule_engine.sq}" # queue topic
+        poll-interval: "${TB_QUEUE_RE_SQ_POLL_INTERVAL_MS:25}" # poll interval
+        partitions: "${TB_QUEUE_RE_SQ_PARTITIONS:10}" # number queue partitions
+        consumer-per-partition: "${TB_QUEUE_RE_SQ_CONSUMER_PER_PARTITION:true}" # if true - use for each customer different partition
+        pack-processing-timeout: "${TB_QUEUE_RE_SQ_PACK_PROCESSING_TIMEOUT_MS:2000}" # Timeout for processing a message pack
+        submit-strategy:
+          type: "${TB_QUEUE_RE_SQ_SUBMIT_STRATEGY_TYPE:SEQUENTIAL_BY_ORIGINATOR}" # BURST, BATCH, SEQUENTIAL_BY_ORIGINATOR, SEQUENTIAL_BY_TENANT, SEQUENTIAL
+          # For BATCH only
+          batch-size: "${TB_QUEUE_RE_SQ_SUBMIT_STRATEGY_BATCH_SIZE:100}" # Maximum number of messages in batch
+        processing-strategy:
+          type: "${TB_QUEUE_RE_SQ_PROCESSING_STRATEGY_TYPE:RETRY_FAILED_AND_TIMED_OUT}" # SKIP_ALL_FAILURES, SKIP_ALL_FAILURES_AND_TIMED_OUT, RETRY_ALL, RETRY_FAILED, RETRY_TIMED_OUT, RETRY_FAILED_AND_TIMED_OUT
+          # For RETRY_ALL, RETRY_FAILED, RETRY_TIMED_OUT, RETRY_FAILED_AND_TIMED_OUT
+          retries: "${TB_QUEUE_RE_SQ_PROCESSING_STRATEGY_RETRIES:3}" # Number of retries, 0 is unlimited
+          failure-percentage: "${TB_QUEUE_RE_SQ_PROCESSING_STRATEGY_FAILURE_PERCENTAGE:0}" # Skip retry if failures or timeouts are less then X percentage of messages;
+          pause-between-retries: "${TB_QUEUE_RE_SQ_PROCESSING_STRATEGY_RETRY_PAUSE:5}" # Time in seconds to wait in consumer thread before retries;
+          max-pause-between-retries: "${TB_QUEUE_RE_SQ_PROCESSING_STRATEGY_MAX_RETRY_PAUSE:5}" # Max allowed time in seconds for pause between retries.
+  integration:
+    # Name of hash function used for consistent hash ring in Cluster Mode. See architecture docs for more details. Valid values - murmur3_32, murmur3_128 or sha256
+    partitions: "${TB_QUEUE_INTEGRATION_PARTITIONS:3}"
+    # For high-priority notifications that require minimum latency and processing time
+    notifications_topic: "${TB_QUEUE_INTEGRATION_NOTIFICATIONS_TOPIC:tb_integration_executor.notifications}"
+    # Default downlink topic name used by queue
+    downlink_topic: "${TB_QUEUE_INTEGRATION_DOWNLINK_TOPIC:tb_ie.downlink}"
+    # Downlink topic names for integration type (semicolor separated). Example: "MQTT:tb_ie.downlink.mqtt,HTTP:tb_ie.downlink.http"
+    # If not specified, the default topic will construct as before - 'downlink_topic' + IntegrationType.name()
+    downlink_topics: "${TB_QUEUE_INTEGRATION_DOWNLINK_TOPICS:}"
+    # Default uplink topic name used by queue
+    uplink_topic: "${TB_QUEUE_INTEGRATION_UPLINK_TOPIC:tb_ie.uplink}"
+    # Interval in milliseconds to poll messages by integrations
+    poll_interval: "${TB_QUEUE_INTEGRATION_POLL_INTERVAL_MS:25}"
+    # Timeout for processing a message pack by integrations
+    pack-processing-timeout: "${TB_QUEUE_INTEGRATION_PACK_PROCESSING_TIMEOUT_MS:10000}"
+  integration_api:
+    # Default Integration Api request topic name used by queue
+    requests_topic: "${TB_QUEUE_INTEGRATION_EXECUTOR_API_REQUEST_TOPIC:tb_ie.api.requests}"
+    # Default Integration Api response topic name used by queue
+    responses_topic: "${TB_QUEUE_INTEGRATION_EXECUTOR_API_RESPONSE_TOPIC:tb_ie.api.responses}"
+    # Maximum pending api requests from integration executor to be handled by server<
+    max_pending_requests: "${TB_QUEUE_INTEGRATION_EXECUTOR_MAX_PENDING_REQUESTS:10000}"
+    # Maximum timeout in milliseconds to handle api request from integration executor microservice by server
+    max_requests_timeout: "${TB_QUEUE_INTEGRATION_EXECUTOR_MAX_REQUEST_TIMEOUT:10000}"
+    # Amount of threads used to invoke callbacks
+    max_callback_threads: "${TB_QUEUE_INTEGRATION_EXECUTOR_MAX_CALLBACK_THREADS:10}"
+    # Interval in milliseconds to poll api requests from integration executor microservices
+    request_poll_interval: "${TB_QUEUE_INTEGRATION_EXECUTOR_REQUEST_POLL_INTERVAL_MS:25}"
+    # Interval in milliseconds to poll api response from integration executor microservices
+    response_poll_interval: "${TB_QUEUE_INTEGRATION_EXECUTOR_RESPONSE_POLL_INTERVAL_MS:25}"
+
+# Tbel parameters
+# Configures the ThingsBoard Expression Language (TBEL) engine including script size limits, execution timeouts, blacklisting, and thread pool.
+tbel:
+  # Enable/Disable TBEL feature.
+  enabled: "${TBEL_ENABLED:true}"
+  # Limit the number of arguments that are passed to the function to execute the script
+  max_total_args_size: "${TBEL_MAX_TOTAL_ARGS_SIZE:100000}"
+  # Maximum allowed symbols in a result after processing a script
+  max_result_size: "${TBEL_MAX_RESULT_SIZE:300000}"
+  # Maximum allowed symbols in the script body
+  max_script_body_size: "${TBEL_MAX_SCRIPT_BODY_SIZE:50000}"
+  # Maximum allowed TBEL script execution memory
+  max_memory_limit_mb: "${TBEL_MAX_MEMORY_LIMIT_MB: 8}"
+  # Maximum allowed TBEL script execution errors before it will be blacklisted
+  max_errors: "${TBEL_MAX_ERRORS:3}"
+  # TBEL Eval max request timeout in milliseconds. 0 - no timeout
+  max_requests_timeout: "${TBEL_MAX_REQUEST_TIMEOUT:500}"
+  # Maximum time in seconds for black listed function to stay in the list.
+  max_black_list_duration_sec: "${TBEL_MAX_BLACKLIST_DURATION_SEC:60}"
+  # Specify thread pool size for javascript executor service
+  thread_pool_size: "${TBEL_THREAD_POOL_SIZE:50}"
+  stats:
+    # Enable/Disable stats collection for TBEL engine
+    enabled: "${TB_TBEL_STATS_ENABLED:false}"
+    # Interval of logging for TBEL stats
+    print_interval_ms: "${TB_TBEL_STATS_PRINT_INTERVAL_MS:10000}"
+
+# JS parameters
+# Configures local and remote JavaScript execution environments including sandboxing, timeouts, blacklisting, and thread pools.
+js:
+  evaluator: "${JS_EVALUATOR:local}" # local/remote
+  # Built-in JVM JavaScript environment properties
+  local:
+    # Specify thread pool size for javascript executor service
+    js_thread_pool_size: "${LOCAL_JS_THREAD_POOL_SIZE:50}"
+    # Use Sandboxed (secured) JVM JavaScript environment
+    use_js_sandbox: "${USE_LOCAL_JS_SANDBOX:true}"
+    # Specify thread pool size for JavaScript sandbox resource monitor
+    monitor_thread_pool_size: "${LOCAL_JS_SANDBOX_MONITOR_THREAD_POOL_SIZE:4}"
+    # Maximum CPU time in milliseconds allowed for script execution
+    max_cpu_time: "${LOCAL_JS_SANDBOX_MAX_CPU_TIME:8000}"
+    # Maximum allowed JavaScript execution errors before JavaScript will be blacklisted
+    max_errors: "${LOCAL_JS_SANDBOX_MAX_ERRORS:3}"
+    # JS Eval max request timeout. 0 - no timeout
+    max_requests_timeout: "${LOCAL_JS_MAX_REQUEST_TIMEOUT:0}"
+    # Maximum time in seconds for black listed function to stay in the list.
+    max_black_list_duration_sec: "${LOCAL_JS_SANDBOX_MAX_BLACKLIST_DURATION_SEC:60}"
+    stats:
+      # Enable/Disable stats collection for local JS executor
+      enabled: "${TB_JS_LOCAL_STATS_ENABLED:false}"
+      # Interval of logging for local JS executor stats
+      print_interval_ms: "${TB_JS_LOCAL_STATS_PRINT_INTERVAL_MS:10000}"
+  # Remote JavaScript environment properties
+  remote:
+    # Specify thread pool size for javascript executor service
+    js_thread_pool_size: "${REMOTE_JS_THREAD_POOL_SIZE:50}"
+    # Maximum allowed JavaScript execution errors before JavaScript will be blacklisted
+    max_errors: "${REMOTE_JS_SANDBOX_MAX_ERRORS:3}"
+    # Maximum time in seconds for black listed function to stay in the list.
+    max_black_list_duration_sec: "${REMOTE_JS_SANDBOX_MAX_BLACKLIST_DURATION_SEC:60}"
+    stats:
+      # Enable/Disable stats collection for remote JS executor
+      enabled: "${TB_JS_REMOTE_STATS_ENABLED:false}"
+      # Interval of logging for remote JS executor stats
+      print_interval_ms: "${TB_JS_REMOTE_STATS_PRINT_INTERVAL_MS:10000}"
+
+# JSON converter parameters
+# Controls JSON telemetry/attribute parsing behaviour, including type casting and maximum string value length.
+transport:
+  json:
+    # Cast String data types to Numeric if possible when processing Telemetry/Attributes JSON
+    type_cast_enabled: "${JSON_TYPE_CAST_ENABLED:true}"
+    # Maximum allowed string value length when processing Telemetry/Attributes JSON (0 value disables string value length check)
+    max_string_value_length: "${JSON_MAX_STRING_VALUE_LENGTH:0}"
+
+# Cache parameters
+# Configures the cache backend type (Caffeine or Redis) and per-cache TTL and size limits.
+cache:
+  # caffeine or redis
+  type: "${CACHE_TYPE:redis}"
+  maximumPoolSize: "${CACHE_MAXIMUM_POOL_SIZE:16}" # max pool size to process futures that calls the external cache
+  specs:
+    devices:
+      timeToLiveInMinutes: "${CACHE_SPECS_DEVICES_TTL:1440}" # Device cache TTL
+      maxSize: "${CACHE_SPECS_DEVICES_MAX_SIZE:10000}" # 0 means the cache is disabled
+    # PE cache specs
+    downlink:
+      timeToLiveInMinutes: "${CACHE_SPECS_DOWNLINK_TTL:1440}" # Downlink converter cache specs TTL
+      maxSize: "${CACHE_SPECS_DOWNLINK_MAX_SIZE:100000}" # 0 means the cache is disabled
+    integrations:
+      timeToLiveInMinutes: "${CACHE_SPECS_INTEGRATIONS_TTL:1440}" # integrations cache specs TTL
+      maxSize: "${CACHE_SPECS_INTEGRATIONS_MAX_SIZE:10000}" # 0 means the cache is disabled
+
+  # deliberately placed outside 'specs' group above
+  rateLimits:
+    timeToLiveInMinutes: "${CACHE_SPECS_RATE_LIMITS_TTL:60}" # Rate limits cache TTL
+    maxSize: "${CACHE_SPECS_RATE_LIMITS_MAX_SIZE:100000}" # 0 means the cache is disabled
+
+
+# Redis/Valkey configuration parameters
+# Covers connection mode (standalone, cluster, sentinel), SSL, credentials, and connection pool tuning.
+redis:
+  # standalone or cluster or sentinel
+  connection:
+    # Redis deployment type: Standalone (single Redis node deployment) OR Cluster
+    type: "${REDIS_CONNECTION_TYPE:standalone}"
+  standalone:
+    # Redis connection host
+    host: "${REDIS_HOST:localhost}"
+    # Redis connection port
+    port: "${REDIS_PORT:6379}"
+    # Use the default Redis configuration file
+    useDefaultClientConfig: "${REDIS_USE_DEFAULT_CLIENT_CONFIG:true}"
+    # This value may be used only if you used not default ClientConfig
+    clientName: "${REDIS_CLIENT_NAME:standalone}"
+    # This value may be used only if you used not default ClientConfig
+    connectTimeout: "${REDIS_CLIENT_CONNECT_TIMEOUT:30000}"
+    # This value may be used only if you used not default ClientConfig
+    readTimeout: "${REDIS_CLIENT_READ_TIMEOUT:60000}"
+    # This value may be used only if you used not default ClientConfig
+    usePoolConfig: "${REDIS_CLIENT_USE_POOL_CONFIG:false}"
+  cluster:
+    # Comma-separated list of "host:port" pairs to bootstrap from.
+    nodes: "${REDIS_NODES:}"
+    # Maximum number of redirects to follow when executing commands across the cluster.
+    max-redirects: "${REDIS_MAX_REDIRECTS:12}"
+    # if set false will be used pool config build from values of the pool config section
+    useDefaultPoolConfig: "${REDIS_USE_DEFAULT_POOL_CONFIG:true}"
+  sentinel:
+    # name of the master node
+    master: "${REDIS_MASTER:}"
+    # comma-separated list of "host:port" pairs of sentinels
+    sentinels: "${REDIS_SENTINELS:}"
+    # password to authenticate with sentinel
+    password: "${REDIS_SENTINEL_PASSWORD:}"
+    # if set false will be used pool config build from values of the pool config section
+    useDefaultPoolConfig: "${REDIS_USE_DEFAULT_POOL_CONFIG:true}"
+  # db index
+  db: "${REDIS_DB:0}"
+  # db password
+  password: "${REDIS_PASSWORD:}"
+  # Redis username for ACL authentication (Redis 6.0+). Leave empty for legacy password-only auth
+  username: "${REDIS_USERNAME:}"
+  # ssl config
+  ssl:
+    # Enable/disable secure connection
+    enabled: "${TB_REDIS_SSL_ENABLED:false}"
+    # Server SSL credentials (only PEM format is supported)
+    credentials:
+      # Path redis server (CA) certificate
+      cert_file: "${TB_REDIS_SSL_PEM_CERT:}"
+      # Path to user certificate file. This is optional for the client and can be used for two-way authentication for the client
+      user_cert_file: "${TB_REDIS_SSL_PEM_KEY:}"
+      # Path to user private key file. This is optional for the client and only needed if ‘user_cert_file’ is configured.
+      user_key_file: "${TB_REDIS_SSL_PEM_KEY_PASSWORD:}"
+  # pool config
+  pool_config:
+    # Maximum number of connections that can be allocated by the connection pool
+    maxTotal: "${REDIS_POOL_CONFIG_MAX_TOTAL:128}"
+    # Maximum number of idle connections that can be maintained in the pool without being closed
+    maxIdle: "${REDIS_POOL_CONFIG_MAX_IDLE:128}"
+    # Minumum number of idle connections that can be maintained in the pool without being closed
+    minIdle: "${REDIS_POOL_CONFIG_MIN_IDLE:16}"
+    # Enable/Disable PING command sent when a connection is borrowed
+    testOnBorrow: "${REDIS_POOL_CONFIG_TEST_ON_BORROW:false}"
+    # The property is used to specify whether to test the connection before returning it to the connection pool.
+    testOnReturn: "${REDIS_POOL_CONFIG_TEST_ON_RETURN:false}"
+    # The property is used in the context of connection pooling in Redis
+    testWhileIdle: "${REDIS_POOL_CONFIG_TEST_WHILE_IDLE:true}"
+    # Minimum time that an idle connection should be idle before it can be evicted from the connection pool. The value is set in milliseconds
+    minEvictableMs: "${REDIS_POOL_CONFIG_MIN_EVICTABLE_MS:60000}"
+    # Specifies the time interval in milliseconds between two consecutive eviction runs
+    evictionRunsMs: "${REDIS_POOL_CONFIG_EVICTION_RUNS_MS:30000}"
+    # Maximum time in milliseconds where a client is willing to wait for a connection from the pool when all connections are exhausted
+    maxWaitMills: "${REDIS_POOL_CONFIG_MAX_WAIT_MS:60000}"
+    # Specifies the number of connections to test for eviction during each eviction run
+    numberTestsPerEvictionRun: "${REDIS_POOL_CONFIG_NUMBER_TESTS_PER_EVICTION_RUN:3}"
+    # Determines the behavior when a thread requests a connection from the pool, but there are no available connections, and the pool cannot create more due to the maxTotal configuration
+    blockWhenExhausted: "${REDIS_POOL_CONFIG_BLOCK_WHEN_EXHAUSTED:true}"
+
+# CoAP server parameters
+# Configures the CoAP server bind address, port, DTLS settings, and X.509 certificate credentials for integration use.
+coap:
+  server:
+    # Enable/disable coap server.
+    enabled: "${COAP_ENABLED:true}"
+  # CoAP bind address
+  bind_address: "${COAP_BIND_ADDRESS:0.0.0.0}"
+  # CoAP bind port
+  bind_port: "${COAP_BIND_PORT:5683}"
+  dtls:
+    # Enable/disable DTLS 1.2 support
+    enabled: "${COAP_DTLS_ENABLED:false}"
+    # RFC7925_RETRANSMISSION_TIMEOUT_IN_MILLISECONDS = 9000
+    retransmission_timeout: "${COAP_DTLS_RETRANSMISSION_TIMEOUT_IN_MILLISECONDS:9000}"
+    # CoAP DTLS bind address
+    bind_address: "${COAP_DTLS_BIND_ADDRESS:0.0.0.0}"
+    # CoAP DTLS bind port
+    bind_port: "${COAP_DTLS_BIND_PORT:5684}"
+    # CoAP DTLS connection ID length. RFC 9146, Connection Identifier for DTLS 1.2
+    connection_id_length: "${COAP_DTLS_CONNECTION_ID_LENGTH:}"
+    # Specify the MTU (Maximum Transmission Unit).
+    # Should be used if LAN MTU is not used, e.g. if IP tunnels are used or if the client uses a smaller value than the LAN MTU.
+    # Default = 1024
+    # Minimum value = 64
+    # If set to 0 - LAN MTU is used.
+    max_transmission_unit: "${COAP_DTLS_MAX_TRANSMISSION_UNIT:1024}"
+    # DTLS maximum fragment length (RFC 6066, Section 4).
+    # Default = 1024
+    # Possible values: 512, 1024, 2048, 4096.
+    # If set to 0, the default maximum fragment size of 2^14 bytes (16,384 bytes) is used.
+    # Without this extension, TLS specifies a fixed maximum plaintext fragment length of 2^14 bytes.
+    # It may be desirable for constrained clients to negotiate a smaller maximum fragment length due to memory limitations or bandwidth limitations.
+    # In order to negotiate smaller maximum fragment lengths,
+    # clients MAY include an extension of type "max_fragment_length" in the (extended) client hello.
+    # The "extension_data" field of this extension SHALL contain:
+    # enum {
+    #   2^9(1) == 512,
+    #   2^10(2) == 1024,
+    #   2^11(3) == 2048,
+    #   2^12(4) == 4096,
+    #   (255)
+    # } MaxFragmentLength;
+    # TLS already requires clients and servers to support fragmentation of handshake messages.
+    max_fragment_length: "${COAP_DTLS_MAX_FRAGMENT_LENGTH:1024}"
+    # Server DTLS credentials
+    credentials:
+      # Server credentials type (PEM - pem certificate file; KEYSTORE - java keystore)
+      type:  "${COAP_DTLS_CREDENTIALS_TYPE:PEM}"
+      # PEM server credentials
+      pem:
+        # Path to the server certificate file (holds server certificate or certificate chain, may include server private key)
+        cert_file: "${COAP_DTLS_PEM_CERT:coapserver.pem}"
+        # Path to the server certificate private key file. Optional by default. Required if the private key is not present in server certificate file;
+        key_file: "${COAP_DTLS_PEM_KEY:coapserver_key.pem}"
+        # Server certificate private key password (optional)
+        key_password: "${COAP_DTLS_PEM_KEY_PASSWORD:server_key_password}"
+      # Keystore server credentials
+      keystore:
+        # Type of the key store (JKS or PKCS12)
+        type: "${COAP_DTLS_KEY_STORE_TYPE:JKS}"
+        # Path to the key store that holds the SSL certificate
+        store_file: "${COAP_DTLS_KEY_STORE:coapserver.jks}"
+        # Password used to access the key store
+        store_password: "${COAP_DTLS_KEY_STORE_PASSWORD:server_ks_password}"
+        # Key alias
+        key_alias: "${COAP_DTLS_KEY_ALIAS:serveralias}"
+        # Password used to access the key
+        key_password: "${COAP_DTLS_KEY_PASSWORD:server_key_password}"
+    x509:
+      # Skip certificate validity check for client certificates.
+      skip_validity_check_for_client_cert: "${TB_COAP_X509_DTLS_SKIP_VALIDITY_CHECK_FOR_CLIENT_CERT:false}"
+      # Inactivity timeout of DTLS session. Used to cleanup cache
+      dtls_session_inactivity_timeout: "${TB_COAP_X509_DTLS_SESSION_INACTIVITY_TIMEOUT:86400000}"
+      # Interval of periodic eviction of the timed-out DTLS sessions
+      dtls_session_report_timeout: "${TB_COAP_X509_DTLS_SESSION_REPORT_TIMEOUT:1800000}"
+
+# Event parameters
+# Configures rate limiting for debug event persistence per tenant for integrations and converters.
+event:
+  debug:
+    rate_limits:
+      # If true rate limits will be active
+      enabled: "${DEBUG_MODE_RATE_LIMITS_PER_TENANT_ENABLED:true}"
+      # No more than 50000 messages per hour
+      integration: "${INTEGRATION_DEBUG_MODE_RATE_LIMITS_PER_TENANT:50000:3600}"
+      # No more than 50000 messages per hour
+      converter: "${CONVERTER_DEBUG_MODE_RATE_LIMITS_PER_TENANT:50000:3600}"
+
+# Service parameters
+# Identifies this microservice instance by type, unique ID, and the list of supported/excluded integration types.
+service:
+  type: "${TB_SERVICE_TYPE:tb-integration-executor}" # service type
+  # Unique id for this service (autogenerated if empty)
+  id: "${TB_SERVICE_ID:}"
+  integrations:
+    # Allow to enable integration on service/microservice integration executor. Allowed values: OCEANCONNECT, SIGFOX, THINGPARK, TPE, CHIRPSTACK, TUYA, UDP, TCP, TTN, TTI, AZURE_EVENT_HUB, OPC_UA, IBM_WATSON_IOT, AWS_IOT, AWS_SQS, LORIOT, COAP, AZURE_SERVICE_BUS, HTTP, MQTT or ALL to allow all
+    supported: "${TB_SERVICE_INTEGRATIONS_SUPPORTED:ALL}"
+    # List of integrations to exclude from processing on service/microservice integration executor. Allowed values: OCEANCONNECT, SIGFOX, THINGPARK, TPE, CHIRPSTACK, TUYA, UDP, TCP, TTN, TTI, AZURE_EVENT_HUB, OPC_UA, IBM_WATSON_IOT, AWS_IOT, AWS_SQS, LORIOT, COAP, AZURE_SERVICE_BUS, HTTP, MQTT. By default NONE
+    excluded: "${TB_SERVICE_INTEGRATIONS_EXCLUDED:NONE}"
+
+# Usage statistics parameters
+# Controls collection and reporting of API usage statistics at system, tenant, and customer levels.
+usage:
+  stats:
+    report:
+      # Enable/Disable the collection of statistics about API usage. Collected on a system and tenant level by default
+      enabled: "${USAGE_STATS_REPORT_ENABLED:true}"
+      # Enable/Disable collection of statistics about API usage on a customer level
+      enabled_per_customer: "${USAGE_STATS_REPORT_PER_CUSTOMER_ENABLED:false}"
+      # Interval of reporting the statistics. By default, the summarized statistics are sent every 10 seconds
+      interval: "${USAGE_STATS_REPORT_INTERVAL:60}"
+      # Reporting interval for urgent keys (e.g. SMS, Email) that require quicker usage state updates
+      urgent_interval: "${USAGE_STATS_REPORT_URGENT_INTERVAL:10}"
+      # Amount of statistic messages in pack
+      pack_size: "${USAGE_STATS_REPORT_PACK_SIZE:1024}"
+
+# Metrics parameters
+# Enables actuator-based metrics collection and configures histogram/timer percentile exports.
+metrics:
+  # Enable/disable actuator metrics.
+  enabled: "${METRICS_ENABLED:false}"
+  timer:
+    # Metrics percentiles returned by actuator for timer metrics. List of double values (divided by ,).
+    percentiles: "${METRICS_TIMER_PERCENTILES:0.5}"
+
+# General management parameters
+# Configures Spring Boot Actuator endpoint exposure, including the metrics and info endpoints.
+management:
+  endpoints:
+    web:
+      exposure:
+        # Expose metrics endpoint (use value 'prometheus' to enable prometheus metrics).
+        include: "${METRICS_ENDPOINTS_EXPOSE:info}"
+
+# Notification system parameters
+# Defines deduplication rules for notification triggers to prevent repeated alerts within a time window.
+notification_system:
+  rules:
+    # Semicolon-separated deduplication durations (in millis) for trigger types. Format: 'NotificationRuleTriggerType1:123;NotificationRuleTriggerType2:456'
+    deduplication_durations: "${TB_NOTIFICATION_RULES_DEDUPLICATION_DURATIONS:RATE_LIMITS:14400000;}"
+
+mqtt:
+  # MQTT client configuration parameters
+  client:
+    # Parameters that control the retransmission mechanism.
+    # This mechanism only applies to the handling of MQTT Publish, Subscribe, Unsubscribe and Pubrel messages.
+    # With the updated default settings:
+    #   - After sending the message, wait approximately 5000 ms (± jitter) for the 1st attempt.
+    #   - The 2nd attempt will occur after roughly 5000 * 2 = 10,000 ms (± jitter).
+    #   - The 3rd attempt will occur after roughly 5000 * 4 = 20,000 ms (± jitter).
+    #   - The 4th "attempt" will not actually perform a retransmission.
+    #     Instead, the system will detect that the maximum number of attempts has been reached and drop the pending message.
+    retransmission:
+      # Maximum number of retransmission attempts allowed.
+      # If the attempt count exceeds this value, retransmissions will stop and the pending message will be dropped.
+      max_attempts: "${TB_MQTT_CLIENT_RETRANSMISSION_MAX_ATTEMPTS:3}"
+      # Base delay (in milliseconds) before the first retransmission attempt, measured from the moment the message is sent.
+      # Subsequent delays are calculated using exponential backoff.
+      # This base delay is also used as the reference value for applying jitter.
+      initial_delay_millis: "${TB_MQTT_CLIENT_RETRANSMISSION_INITIAL_DELAY_MILLIS:5000}"
+      # Jitter factor applied to the calculated retransmission delay.
+      # The actual delay is randomized within a range defined by multiplying the base delay by a factor between (1 - jitter_factor) and (1 + jitter_factor).
+      # For example, a jitter_factor of 0.15 means the actual delay may vary by up to ±15% of the base delay.
+      jitter_factor: "${TB_MQTT_CLIENT_RETRANSMISSION_JITTER_FACTOR:0.15}"

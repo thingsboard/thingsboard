@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Component, DestroyRef, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import {
@@ -34,13 +20,15 @@ import { IAliasController } from '@core/api/widget-api.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { DataKeysCallbacks } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
 import { Datasource } from '@shared/models/widget.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-color-settings-panel',
-  templateUrl: './color-settings-panel.component.html',
-  providers: [],
-  styleUrls: ['./color-settings-panel.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-color-settings-panel',
+    templateUrl: './color-settings-panel.component.html',
+    providers: [],
+    styleUrls: ['./color-settings-panel.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class ColorSettingsPanelComponent extends PageComponent implements OnInit {
 
@@ -106,6 +94,12 @@ export class ColorSettingsPanelComponent extends PageComponent implements OnInit
         colorFunction: [this.colorSettings?.colorFunction, []]
       }
     );
+    this.colorSettingsFormGroup.get('type').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
+      this.updateValidators();
+      setTimeout(() => {this.popover?.updatePosition();}, 0);
+    });
     this.updateValidators();
   }
 

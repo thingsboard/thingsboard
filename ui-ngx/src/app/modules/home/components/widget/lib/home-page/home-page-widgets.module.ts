@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@app/shared/shared.module';
@@ -28,6 +15,7 @@ import { GettingStartedWidgetComponent } from '@home/components/widget/lib/home-
 import {
   GettingStartedCompletedDialogComponent
 } from '@home/components/widget/lib/home-page/getting-started-completed-dialog.component';
+import { LicenseUsageInfoComponent } from '@home/components/widget/lib/home-page/license-usage-info.component';
 import { UsageInfoWidgetComponent } from '@home/components/widget/lib/home-page/usage-info-widget.component';
 import { QuickLinksWidgetComponent } from '@home/components/widget/lib/home-page/quick-links-widget.component';
 import { QuickLinkComponent } from '@home/components/widget/lib/home-page/quick-link.component';
@@ -35,6 +23,8 @@ import { AddQuickLinkDialogComponent } from '@home/components/widget/lib/home-pa
 import {
   RecentDashboardsWidgetComponent
 } from '@home/components/widget/lib/home-page/recent-dashboards-widget.component';
+import { IotHubWidgetComponent } from '@home/components/widget/lib/home-page/iot-hub-widget.component';
+import { IotHubComponentsModule } from '@home/components/iot-hub/iot-hub-components.module';
 
 @NgModule({
   declarations:
@@ -48,15 +38,18 @@ import {
       EditLinksDialogComponent,
       GettingStartedWidgetComponent,
       GettingStartedCompletedDialogComponent,
+      LicenseUsageInfoComponent,
       UsageInfoWidgetComponent,
       QuickLinksWidgetComponent,
       QuickLinkComponent,
       AddQuickLinkDialogComponent,
-      RecentDashboardsWidgetComponent
+      RecentDashboardsWidgetComponent,
+      IotHubWidgetComponent
     ],
   imports: [
     CommonModule,
-    SharedModule
+    SharedModule,
+    IotHubComponentsModule
   ],
   exports: [
     ClusterInfoTableComponent,
@@ -68,11 +61,13 @@ import {
     EditLinksDialogComponent,
     GettingStartedWidgetComponent,
     GettingStartedCompletedDialogComponent,
+    LicenseUsageInfoComponent,
     UsageInfoWidgetComponent,
     QuickLinksWidgetComponent,
     QuickLinkComponent,
     AddQuickLinkDialogComponent,
-    RecentDashboardsWidgetComponent
+    RecentDashboardsWidgetComponent,
+    IotHubWidgetComponent
   ]
 })
 export class HomePageWidgetsModule { }

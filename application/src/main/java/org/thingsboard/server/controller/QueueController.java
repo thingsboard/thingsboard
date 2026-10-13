@@ -1,25 +1,15 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -30,13 +20,13 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.queue.TbQueueService;
-import org.thingsboard.server.service.security.permission.Operation;
-import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.UUID;
 
@@ -65,8 +55,7 @@ public class QueueController extends BaseController {
             notes = "Returns a page of queues registered in the platform. " +
                     PAGE_DATA_PARAMETERS + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/queues", params = {"serviceType", "pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/queues")
     public PageData<Queue> getTenantQueuesByServiceType(@Parameter(description = QUEUE_SERVICE_TYPE_DESCRIPTION, schema = @Schema(allowableValues = {"TB-RULE-ENGINE", "TB-CORE", "TB-TRANSPORT", "JS-EXECUTOR"}, requiredMode = Schema.RequiredMode.REQUIRED))
                                                         @RequestParam String serviceType,
                                                         @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
@@ -122,8 +111,7 @@ public class QueueController extends BaseController {
                     "Remove 'id', 'tenantId' from the request body example (below) to create new Queue entity. " +
                     SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/queues", params = {"serviceType"}, method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/queues")
     public Queue saveQueue(@Parameter(description = "A JSON value representing the queue.")
                            @RequestBody Queue queue,
                            @Parameter(description = QUEUE_SERVICE_TYPE_DESCRIPTION, schema = @Schema(allowableValues = {"TB-RULE-ENGINE", "TB-CORE", "TB-TRANSPORT", "JS-EXECUTOR"}, requiredMode = Schema.RequiredMode.REQUIRED))
@@ -156,4 +144,5 @@ public class QueueController extends BaseController {
         checkQueueId(queueId, Operation.DELETE);
         tbQueueService.deleteQueue(getTenantId(), queueId);
     }
+
 }

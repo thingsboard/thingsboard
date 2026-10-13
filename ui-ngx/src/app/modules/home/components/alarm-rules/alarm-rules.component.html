@@ -1,40 +1,32 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<div class="tb-details-buttons xs:flex xs:flex-col" *ngIf="!standalone">
-  <button mat-raised-button color="primary"
-          [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'open')"
-          [class.!hidden]="isEdit || isDetailsPage">
-    {{ 'common.open-details-page' | translate }}
-  </button>
-  <button mat-raised-button color="primary"
-          [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'export')"
-          [class.!hidden]="isEdit">
-    {{ 'action.export' | translate }}
-  </button>
-  <button mat-raised-button color="primary"
-          [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'delete')"
-          [class.!hidden]="hideDelete() || isEdit">
-    {{ 'action.delete' | translate }}
-  </button>
-</div>
+@if (!standalone) {
+  <div class="tb-details-buttons xs:flex xs:flex-col">
+    <button mat-stroked-button color="primary"
+            [disabled]="(isLoading$ | async)"
+            (click)="onEntityAction($event, 'open')"
+            [class.!hidden]="isEdit || isDetailsPage">
+      {{ 'common.open-details-page' | translate }}
+    </button>
+    <button mat-stroked-button color="primary"
+            [disabled]="(isLoading$ | async)"
+            (click)="onEntityAction($event, 'export')"
+            [class.!hidden]="isEdit">
+      {{ 'action.export' | translate }}
+    </button>
+    <button mat-stroked-button color="primary"
+            [disabled]="(isLoading$ | async)"
+            (click)="onEntityAction($event, 'delete')"
+            [class.!hidden]="hideDelete() || isEdit">
+      {{ 'action.delete' | translate }}
+    </button>
+  </div>
+}
 <div class="mat-padding flex flex-1 flex-col" [formGroup]="entityForm">
   <div class="tb-form-panel no-border no-padding">
     <div class="tb-form-panel no-gap">
@@ -47,8 +39,6 @@
             <mat-error>
               @if (entityForm.get('name').hasError('required')) {
                 {{ 'common.hint.title-required' | translate }}
-              } @else if (entityForm.get('name').hasError('pattern')) {
-                {{ 'common.hint.title-pattern' | translate }}
               } @else if (entityForm.get('name').hasError('maxlength')) {
                 {{ 'common.hint.title-max-length' | translate }}
               }
@@ -57,11 +47,11 @@
           <mat-hint></mat-hint>
         </mat-form-field>
         <tb-entity-debug-settings-button
-            formControlName="debugSettings"
-            style="margin-bottom: 22px"
-            [entityType]="EntityType.CALCULATED_FIELD"
-            [additionalActionConfig]="additionalDebugActionConfig"
-        />
+          formControlName="debugSettings"
+          style="margin-bottom: 22px"
+          [entityType]="EntityType.CALCULATED_FIELD"
+          [additionalActionConfig]="additionalDebugActionConfig"
+          />
       </div>
       <tb-entity-select formControlName="entityId"
                         appearance="outline"
@@ -79,6 +69,7 @@
                                              [entityId]="entityId"
                                              [tenantId]="tenantId"
                                              [ownerId]="ownerId"
+                                             [isEditValue]="isEditValue"
                                              [watchKeyChange]="true"
                                              [entityName]="entityName"/>
       </div>
@@ -97,18 +88,22 @@
             <tb-cf-alarm-rule formControlName="clearRule" class="flex-1" [arguments]="arguments" [testScript]="onTestScript.bind(this)" isClearCondition>
             </tb-cf-alarm-rule>
           </div>
-          <button mat-icon-button
-                  class="button-icon"
-                  type="button"
-                  (click)="removeClearAlarmRule()"
-                  matTooltip="{{ 'action.remove' | translate }}"
-                  matTooltipPosition="above">
-            <mat-icon>delete</mat-icon>
-          </button>
+          @if (isEditValue) {
+            <button mat-icon-button
+                    class="button-icon"
+                    type="button"
+                    (click)="removeClearAlarmRule()"
+                    matTooltip="{{ 'action.remove' | translate }}"
+                    matTooltipPosition="above">
+              <mat-icon>delete</mat-icon>
+            </button>
+          }
         </div>
-        <div *ngIf="!configFormGroup.get('clearRule').value">
-          <span translate class="tb-prompt flex items-center justify-center text-base">alarm-rule.no-clear-alarm-rule</span>
-        </div>
+        @if (!configFormGroup.get('clearRule').value) {
+          <div>
+            <span translate class="tb-prompt flex items-center justify-center text-base">alarm-rule.no-clear-alarm-rule</span>
+          </div>
+        }
         <div [class.!hidden]="configFormGroup.get('clearRule').value">
           <button mat-stroked-button color="primary"
                   [disabled]="!isEditValue"
@@ -137,6 +132,7 @@
                                       placeholder="{{ 'alarm-rule.alarm-rule-relation-types-list' | translate }}"
                                       hint="{{ 'alarm-rule.alarm-rule-relation-types-list-hint' | translate }}"
                                       [predefinedValues]="predefinedTypeValues"
+                                      subscriptSizing="dynamic"
                                       allowUserValue
                                       formControlName="propagateRelationTypes">
                 </tb-string-items-list>
@@ -145,6 +141,11 @@
             <div class="tb-form-row">
               <mat-slide-toggle class="mat-slide margin" formControlName="propagateToOwner">
                 {{ 'alarm-rule.propagate-alarm-to-owner' | translate }}
+              </mat-slide-toggle>
+            </div>
+            <div class="tb-form-row">
+              <mat-slide-toggle class="mat-slide margin" formControlName="propagateToOwnerHierarchy">
+                {{ 'alarm-rule.propagate-alarm-to-owner-hierarchy' | translate }}
               </mat-slide-toggle>
             </div>
             <div class="tb-form-row">

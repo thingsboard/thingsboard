@@ -1,0 +1,92 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+package org.thingsboard.server.service.edge.rpc.processor.apikey;
+
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.EdgeUtils;
+import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.edge.EdgeEvent;
+import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.data.id.ApiKeyId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.pat.ApiKey;
+import org.thingsboard.server.exception.DataValidationException;
+import org.thingsboard.server.gen.edge.v1.ApiKeyUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
+import org.thingsboard.server.gen.edge.v1.EdgeVersion;
+import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
+import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
+
+import java.util.UUID;
+
+@Slf4j
+@Component
+@TbCoreComponent
+public class ApiKeyEdgeProcessor extends BaseApiKeyProcessor implements ApiKeyProcessor {
+
+    @Override
+    public ListenableFuture<Void> processApiKeyMsgFromEdge(TenantId tenantId, Edge edge, ApiKeyUpdateMsg apiKeyUpdateMsg) {
+        ApiKeyId apiKeyId = new ApiKeyId(new UUID(apiKeyUpdateMsg.getIdMSB(), apiKeyUpdateMsg.getIdLSB()));
+        try {
+            edgeSynchronizationManager.getEdgeId().set(edge.getId());
+
+            return switch (apiKeyUpdateMsg.getMsgType()) {
+                case ENTITY_CREATED_RPC_MESSAGE, ENTITY_UPDATED_RPC_MESSAGE -> {
+                    boolean created = saveOrUpdateApiKey(tenantId, apiKeyId, apiKeyUpdateMsg);
+                    if (created) {
+                        ApiKey apiKey = edgeCtx.getApiKeyService().findApiKeyById(tenantId, apiKeyId);
+                        if (apiKey != null) {
+                            pushEntityEventToRuleEngine(tenantId, edge, apiKey, TbMsgType.ENTITY_CREATED);
+                        }
+                    }
+                    yield Futures.immediateFuture(null);
+                }
+                case ENTITY_DELETED_RPC_MESSAGE -> {
+                    deleteApiKey(tenantId, edge, apiKeyId);
+                    yield Futures.immediateFuture(null);
+                }
+                default -> handleUnsupportedMsgType(apiKeyUpdateMsg.getMsgType());
+            };
+        } catch (DataValidationException e) {
+            return Futures.immediateFailedFuture(e);
+        } finally {
+            edgeSynchronizationManager.getEdgeId().remove();
+        }
+    }
+
+    @Override
+    public DownlinkMsg convertEdgeEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
+        ApiKeyId apiKeyId = new ApiKeyId(edgeEvent.getEntityId());
+        switch (edgeEvent.getAction()) {
+            case ADDED, UPDATED -> {
+                ApiKey apiKey = edgeCtx.getApiKeyService().findApiKeyById(edgeEvent.getTenantId(), apiKeyId);
+                if (apiKey != null) {
+                    UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
+                    ApiKeyUpdateMsg apiKeyUpdateMsg = EdgeMsgConstructorUtils.constructApiKeyUpdatedMsg(msgType, apiKey);
+                    return DownlinkMsg.newBuilder()
+                            .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
+                            .addApiKeyUpdateMsg(apiKeyUpdateMsg)
+                            .build();
+                }
+            }
+            case DELETED -> {
+                ApiKeyUpdateMsg apiKeyUpdateMsg = EdgeMsgConstructorUtils.constructApiKeyDeleteMsg(apiKeyId);
+                return DownlinkMsg.newBuilder()
+                        .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
+                        .addApiKeyUpdateMsg(apiKeyUpdateMsg)
+                        .build();
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public EdgeEventType getEdgeEventType() {
+        return EdgeEventType.API_KEY;
+    }
+}

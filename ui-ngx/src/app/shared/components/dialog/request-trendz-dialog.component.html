@@ -1,0 +1,80 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="request-feature-dialog">
+  <div class="request-feature-title">{{ 'subscription.request-trendz-title' | translate : {name: name} }}</div>
+  <div class="request-feature-text">{{ 'subscription.request-trendz-text' | translate }}</div>
+  <div class="request-feature-cards-container">
+    <div class="request-feature-cards">
+      <div class="request-feature-card">
+        <div class="feature-title">
+          <tb-icon color="primary" class="tb-mat-24">show_chart</tb-icon>
+          <div class="feature-title-text">{{ 'subscription.trendz-card-metric-explorer-title' | translate }}</div>
+          <div class="feature-title-hint" tb-hint-tooltip-icon="{{ 'subscription.trendz-card-metric-explorer-text' | translate }}"></div>
+        </div>
+        <div class="feature-text">{{ 'subscription.trendz-card-metric-explorer-text' | translate }}</div>
+      </div>
+      <div class="request-feature-card">
+        <div class="feature-title">
+          <tb-icon color="primary" class="tb-mat-24">query_stats</tb-icon>
+          <div class="feature-title-text">{{ 'subscription.trendz-card-anomaly-title' | translate }}</div>
+          <div class="feature-title-hint" tb-hint-tooltip-icon="{{ 'subscription.trendz-card-anomaly-text' | translate }}"></div>
+        </div>
+        <div class="feature-text">{{ 'subscription.trendz-card-anomaly-text' | translate }}</div>
+      </div>
+      <div class="request-feature-card">
+        <div class="feature-title">
+          <tb-icon color="primary" class="tb-mat-24">calculate</tb-icon>
+          <div class="feature-title-text">{{ 'subscription.trendz-card-calculation-title' | translate }}</div>
+          <div class="feature-title-hint" tb-hint-tooltip-icon="{{ 'subscription.trendz-card-calculation-text' | translate }}"></div>
+        </div>
+        <div class="feature-text">{{ 'subscription.trendz-card-calculation-text' | translate }}</div>
+      </div>
+      <div class="request-feature-card">
+        <div class="feature-title">
+          <tb-icon color="primary" class="tb-mat-24">troubleshoot</tb-icon>
+          <div class="feature-title-text">{{ 'subscription.trendz-card-prediction-title' | translate }}</div>
+          <div class="feature-title-hint" tb-hint-tooltip-icon="{{ 'subscription.trendz-card-prediction-text' | translate }}"></div>
+        </div>
+        <div class="feature-text">{{ 'subscription.trendz-card-prediction-text' | translate }}</div>
+      </div>
+      <div class="request-feature-card">
+        <div class="feature-title">
+          <tb-icon color="primary" class="tb-mat-24">visibility-outline</tb-icon>
+          <div class="feature-title-text">{{ 'subscription.trendz-card-views-title' | translate }}</div>
+          <div class="feature-title-hint" tb-hint-tooltip-icon="{{ 'subscription.trendz-card-views-text' | translate }}"></div>
+        </div>
+        <div class="feature-text">{{ 'subscription.trendz-card-views-text' | translate }}</div>
+      </div>
+      <div class="request-feature-card">
+        <div class="feature-title">
+          <tb-icon color="primary" class="tb-mat-24">reviews</tb-icon>
+          <div class="feature-title-text">{{ 'subscription.trendz-card-ai-assistant-title' | translate }}</div>
+          <div class="feature-title-hint" tb-hint-tooltip-icon="{{ 'subscription.trendz-card-ai-assistant-text' | translate }}"></div>
+        </div>
+        <div class="feature-text">{{ 'subscription.trendz-card-ai-assistant-text' | translate }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="request-feature-actions">
+    <div class="request-feature-action-text">{{ 'subscription.request-trendz-action-text' | translate : {name: name} }}</div>
+    <div class="flex flex-row gap-2">
+      <button mat-flat-button color="primary" (click)="requestAccess($event)">
+        {{ 'subscription.request-access' | translate }}
+      </button>
+      <button mat-button color="primary" (click)="learnMore($event)">
+        {{ 'subscription.learn-more' | translate }}
+      </button>
+    </div>
+  </div>
+  @if (!isCustomerUser) {
+    <div class="request-feature-sysadmin-prompt">
+      {{ 'subscription.request-feature-sysadmin-text' | translate }}
+      <a href="" (click)="loginAsSysAdmin($event)"> {{ 'subscription.login-here' | translate }} </a>
+      {{ 'subscription.to-get-addon' | translate }}
+    </div>
+  }
+</div>

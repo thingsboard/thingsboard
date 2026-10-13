@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   AfterViewInit,
   ChangeDetectorRef,
@@ -21,7 +8,7 @@ import {
   ElementRef,
   Input,
   OnDestroy,
-  OnInit,
+  OnInit, Optional,
   Renderer2,
   TemplateRef,
   ViewChild,
@@ -52,14 +39,17 @@ import { TbTimeSeriesChart } from '@home/components/widget/lib/chart/time-series
 import { WidgetComponent } from '@home/components/widget/widget.component';
 import { TbUnit } from '@shared/models/unit.models';
 import { UnitService } from '@core/services/unit.service';
+import { ChartWidgetComponent } from '@home/components/widget/lib/chart/chart.models';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
-  selector: 'tb-range-chart-widget',
-  templateUrl: './range-chart-widget.component.html',
-  styleUrls: ['./range-chart-widget.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-range-chart-widget',
+    templateUrl: './range-chart-widget.component.html',
+    styleUrls: ['./range-chart-widget.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
-export class RangeChartWidgetComponent implements OnInit, OnDestroy, AfterViewInit {
+export class RangeChartWidgetComponent implements ChartWidgetComponent, OnInit, OnDestroy, AfterViewInit {
 
   @ViewChild('chartShape', {static: false})
   chartShape: ElementRef<HTMLElement>;
@@ -71,6 +61,10 @@ export class RangeChartWidgetComponent implements OnInit, OnDestroy, AfterViewIn
 
   @Input()
   widgetTitlePanel: TemplateRef<any>;
+
+  @Input()
+  @coerceBoolean()
+  reportMode = false;
 
   showLegend: boolean;
   legendClass: string;
@@ -90,7 +84,7 @@ export class RangeChartWidgetComponent implements OnInit, OnDestroy, AfterViewIn
 
   private timeSeriesChart: TbTimeSeriesChart;
 
-  constructor(public widgetComponent: WidgetComponent,
+  constructor(@Optional() public widgetComponent: WidgetComponent,
               private imagePipe: ImagePipe,
               private sanitizer: DomSanitizer,
               private renderer: Renderer2,
@@ -158,6 +152,12 @@ export class RangeChartWidgetComponent implements OnInit, OnDestroy, AfterViewIn
   public onDataUpdated() {
     if (this.timeSeriesChart) {
       this.timeSeriesChart.update();
+    }
+  }
+
+  public onLatestDataUpdated() {
+    if (this.timeSeriesChart) {
+      this.timeSeriesChart.latestUpdated();
     }
   }
 

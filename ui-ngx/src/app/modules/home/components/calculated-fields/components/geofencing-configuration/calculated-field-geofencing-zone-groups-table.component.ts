@@ -1,21 +1,9 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   AfterViewInit,
+  booleanAttribute,
   ChangeDetectorRef,
   Component,
   DestroyRef,
@@ -39,7 +27,7 @@ import {
   CalculatedFieldGeofencingValue,
   GeofencingReportStrategyTranslations,
 } from '@shared/models/calculated-field.models';
-import { MatButton } from '@angular/material/button';
+import { MatIconButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EntityId } from '@shared/models/id/entity-id';
@@ -60,21 +48,22 @@ import {
 } from '@home/components/calculated-fields/components/geofencing-configuration/calculated-field-geofencing-zone-groups-panel.component';
 
 @Component({
-  selector: 'tb-calculated-field-geofencing-zone-groups-table',
-  templateUrl: './calculated-field-geofencing-zone-groups-table.component.html',
-  styleUrls: [`../calculated-field-arguments/calculated-field-arguments-table.component.scss`],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => CalculatedFieldGeofencingZoneGroupsTableComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => CalculatedFieldGeofencingZoneGroupsTableComponent),
-      multi: true
-    }
-  ],
+    selector: 'tb-calculated-field-geofencing-zone-groups-table',
+    templateUrl: './calculated-field-geofencing-zone-groups-table.component.html',
+    styleUrls: [`../calculated-field-arguments/calculated-field-arguments-table.component.scss`],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => CalculatedFieldGeofencingZoneGroupsTableComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => CalculatedFieldGeofencingZoneGroupsTableComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class CalculatedFieldGeofencingZoneGroupsTableComponent implements ControlValueAccessor, Validator, AfterViewInit {
 
@@ -82,6 +71,8 @@ export class CalculatedFieldGeofencingZoneGroupsTableComponent implements Contro
   @Input({required: true}) tenantId: string;
   @Input({required: true}) entityName: string;
   @Input({required: true}) ownerId: EntityId;
+  @Input({ transform: booleanAttribute }) readonly: boolean;
+  @Input({transform: booleanAttribute}) isEditValue = true;
 
   @ViewChild(MatSort, { static: true }) sort: MatSort;
 
@@ -147,7 +138,7 @@ export class CalculatedFieldGeofencingZoneGroupsTableComponent implements Contro
     this.zoneGroupsFormArray.markAsDirty();
   }
 
-  manageZone($event: Event, matButton: MatButton, zone = {} as CalculatedFieldGeofencingValue, readonly: boolean = false): void {
+  manageZone($event: Event, matButton: MatIconButton, zone = {} as CalculatedFieldGeofencingValue, readonly: boolean = false): void {
     $event?.stopPropagation();
     if (this.popoverComponent && !this.popoverComponent.tbHidden) {
       this.popoverComponent.hide();

@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   AfterViewInit,
   ChangeDetectorRef,
@@ -47,7 +34,7 @@ import { BranchAutocompleteComponent } from '@shared/components/vc/branch-autoco
 import { isNotEmptyStr } from '@core/utils';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { EntityVersionCreateComponent } from '@home/components/vc/entity-version-create.component';
-import { MatButton } from '@angular/material/button';
+import { MatButton, MatIconButton } from '@angular/material/button';
 import { EntityVersionRestoreComponent } from '@home/components/vc/entity-version-restore.component';
 import { EntityVersionDiffComponent } from '@home/components/vc/entity-version-diff.component';
 import { ComplexVersionCreateComponent } from '@home/components/vc/complex-version-create.component';
@@ -55,11 +42,15 @@ import { ComplexVersionLoadComponent } from '@home/components/vc/complex-version
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { AdminService } from '@core/http/admin.service';
 import { FormBuilder } from '@angular/forms';
+import { EntityType } from '@app/shared/models/entity-type.models';
+import { Operation, Resource } from '@shared/models/security.models';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
 
 @Component({
-  selector: 'tb-entity-versions-table',
-  templateUrl: './entity-versions-table.component.html',
-  styleUrls: ['./entity-versions-table.component.scss']
+    selector: 'tb-entity-versions-table',
+    templateUrl: './entity-versions-table.component.html',
+    styleUrls: ['./entity-versions-table.component.scss'],
+    standalone: false
 })
 export class EntityVersionsTableComponent extends PageComponent implements OnInit, AfterViewInit, OnDestroy {
 
@@ -87,6 +78,8 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
   externalEntityIdValue: EntityId;
 
   viewsInited = false;
+
+  readonly = !this.userPermissionsService.hasGenericPermission(Resource.VERSION_CONTROL, Operation.WRITE);
 
   isReadOnly: Observable<boolean>;
 
@@ -123,6 +116,9 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
   entityId: EntityId;
 
   @Input()
+  groupType: EntityType;
+
+  @Input()
   entityName: string;
 
   @Output()
@@ -137,6 +133,7 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
               private entitiesVersionControlService: EntitiesVersionControlService,
               private adminService: AdminService,
               private popoverService: TbPopoverService,
+              private userPermissionsService: UserPermissionsService,
               private renderer: Renderer2,
               private cd: ChangeDetectorRef,
               private viewContainerRef: ViewContainerRef,
@@ -220,6 +217,7 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
         context: {
           branch: this.branch,
           entityId: this.entityId,
+          groupType: this.groupType,
           entityName: this.entityName,
           onBeforeCreateVersion: this.onBeforeCreateVersion,
           onClose: (result: VersionCreationResult | null, branch: string | null) => {
@@ -277,7 +275,7 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
     }
   }
 
-  toggleShowVersionDiff($event: Event, diffVersionButton: MatButton, entityVersion: EntityVersion) {
+  toggleShowVersionDiff($event: Event, diffVersionButton: MatIconButton, entityVersion: EntityVersion) {
     if ($event) {
       $event.stopPropagation();
     }
@@ -294,8 +292,10 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
         context: {
           versionName: entityVersion.name,
           versionId: entityVersion.id,
+          groupType: this.groupType,
           entityId: this.entityId,
-          externalEntityId: this.externalEntityIdValue
+          externalEntityId: this.externalEntityIdValue,
+          readonly: this.readonly
         },
         showCloseButton: false,
         isModal: true
@@ -307,7 +307,7 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
     }
   }
 
-  toggleRestoreEntityVersion($event: Event, restoreVersionButton: MatButton, entityVersion: EntityVersion) {
+  toggleRestoreEntityVersion($event: Event, restoreVersionButton: MatIconButton, entityVersion: EntityVersion) {
     if ($event) {
       $event.stopPropagation();
     }
@@ -324,6 +324,8 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
         context: {
           versionName: entityVersion.name,
           versionId: entityVersion.id,
+          groupType: this.groupType,
+          internalEntityId: this.entityId,
           externalEntityId: this.externalEntityIdValue,
           onClose: (result: VersionLoadResult | null) => {
             restoreVersionPopover.hide();
@@ -341,7 +343,7 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
     }
   }
 
-  toggleRestoreEntitiesVersion($event: Event, restoreEntitiesVersionButton: MatButton, entityVersion: EntityVersion) {
+  toggleRestoreEntitiesVersion($event: Event, restoreEntitiesVersionButton: MatIconButton, entityVersion: EntityVersion) {
     if ($event) {
       $event.stopPropagation();
     }
@@ -407,7 +409,7 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
     this.pageLink.pageSize = this.paginator.pageSize;
     this.pageLink.sortOrder.property = this.sort.active;
     this.pageLink.sortOrder.direction = Direction[this.sort.direction.toUpperCase()];
-    this.dataSource.loadEntityVersions(this.singleEntityMode, this.branch, this.externalEntityIdValue, this.pageLink);
+    this.dataSource.loadEntityVersions(this.singleEntityMode, this.branch, this.externalEntityIdValue, this.entityId, this.pageLink);
   }
 
   private resetSortAndFilter(update: boolean) {
@@ -447,11 +449,11 @@ class EntityVersionsDatasource implements DataSource<EntityVersion> {
   }
 
   loadEntityVersions(singleEntityMode: boolean,
-                     branch: string, externalEntityId: EntityId,
+                     branch: string, externalEntityId: EntityId, internalEntityId: EntityId,
                      pageLink: PageLink): Observable<PageData<EntityVersion>> {
     this.dataLoading = true;
     const result = new ReplaySubject<PageData<EntityVersion>>();
-    this.fetchEntityVersions(singleEntityMode, branch, externalEntityId, pageLink).pipe(
+    this.fetchEntityVersions(singleEntityMode, branch, externalEntityId, internalEntityId, pageLink).pipe(
       catchError(() => of(emptyPageData<EntityVersion>())),
     ).subscribe(
       (pageData) => {
@@ -465,14 +467,14 @@ class EntityVersionsDatasource implements DataSource<EntityVersion> {
   }
 
   fetchEntityVersions(singleEntityMode: boolean,
-                      branch: string, externalEntityId: EntityId,
+                      branch: string, externalEntityId: EntityId, internalEntityId: EntityId,
                       pageLink: PageLink): Observable<PageData<EntityVersion>> {
     if (!branch) {
       return of(emptyPageData<EntityVersion>());
     } else {
       if (singleEntityMode) {
         if (externalEntityId) {
-          return this.entitiesVersionControlService.listEntityVersions(pageLink, branch, externalEntityId, {ignoreErrors: true});
+          return this.entitiesVersionControlService.listEntityVersions(pageLink, branch, externalEntityId, internalEntityId,{ignoreErrors: true});
         } else {
           return of(emptyPageData<EntityVersion>());
         }

@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
  import { Component, DestroyRef, Inject } from '@angular/core';
  import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
  import { Store } from '@ngrx/store';
@@ -39,13 +26,15 @@
   isAdd: boolean;
   arguments: Record<string, CalculatedFieldArgument>;
   usedArguments: Array<string>;
+  readonly: boolean;
 }
 
 @Component({
-  selector: 'tb-alarm-rule-filter-dialog',
-  templateUrl: './alarm-rule-filter-dialog.component.html',
-  providers: [],
-  styleUrls: ['./alarm-rule-filter-dialog.component.scss']
+    selector: 'tb-alarm-rule-filter-dialog',
+    templateUrl: './alarm-rule-filter-dialog.component.html',
+    providers: [],
+    styleUrls: ['./alarm-rule-filter-dialog.component.scss'],
+    standalone: false
 })
 export class AlarmRuleFilterDialogComponent extends DialogComponent<AlarmRuleFilterDialogComponent, AlarmRuleFilter> {
 
@@ -65,6 +54,8 @@ export class AlarmRuleFilterDialogComponent extends DialogComponent<AlarmRuleFil
 
   arguments = this.data.arguments;
   argumentsList: Array<string>;
+
+  readonly = this.data.readonly;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -94,6 +85,11 @@ export class AlarmRuleFilterDialogComponent extends DialogComponent<AlarmRuleFil
       this.predicatesValid = isPredicateArgumentsValid(predicates, this.arguments);
     });
 
+
+    if (this.data.readonly) {
+      this.filterFormGroup.disable({emitEvent: false});
+    }
+
     this.filterFormGroup.get('valueType').valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe((valueType: EntityKeyValueType) => {
@@ -114,6 +110,10 @@ export class AlarmRuleFilterDialogComponent extends DialogComponent<AlarmRuleFil
         }
       }
     });
+
+    if (this.readonly) {
+      this.filterFormGroup.disable({emitEvent: false});
+    }
   }
 
   argumentInUse(argument: string): boolean {

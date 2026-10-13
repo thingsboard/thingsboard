@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, DestroyRef, forwardRef, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import {
   AbstractControl,
@@ -47,18 +34,19 @@ import { MatChipSelectionChange } from "@angular/material/chips";
 import { coerceBoolean } from "@shared/decorators/coercion";
 
 @Component({
-  selector: 'tb-cf-alarm-schedule',
-  templateUrl: './cf-alarm-schedule.component.html',
-  styleUrls: [],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => CfAlarmScheduleComponent),
-    multi: true
-  }, {
-    provide: NG_VALIDATORS,
-    useExisting: forwardRef(() => CfAlarmScheduleComponent),
-    multi: true
-  }]
+    selector: 'tb-cf-alarm-schedule',
+    templateUrl: './cf-alarm-schedule.component.html',
+    styleUrls: [],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => CfAlarmScheduleComponent),
+            multi: true
+        }, {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => CfAlarmScheduleComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class CfAlarmScheduleComponent implements ControlValueAccessor, Validator, OnInit, OnChanges {
 
@@ -298,8 +286,10 @@ export class CfAlarmScheduleComponent implements ControlValueAccessor, Validator
   }
 
   changeCustomScheduler($event: MatChipSelectionChange, index: number) {
-    const value = $event.selected;
-    this.disabledSelectedTime(value, index, true);
+    if (!this.disabled) {
+      const value = $event.selected;
+      this.disabledSelectedTime(value, index, true);
+    }
   }
 
   private disabledSelectedTime(enable: boolean, index: number, emitEvent = false) {

@@ -1,20 +1,9 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -22,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -38,17 +26,19 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.tenant.TbTenantService;
-import org.thingsboard.server.service.security.permission.Operation;
-import org.thingsboard.server.service.security.permission.Resource;
+import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 
 import static org.thingsboard.server.controller.ControllerConstants.HOME_DASHBOARD;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
@@ -133,7 +123,7 @@ public class TenantController extends BaseController {
 
     @ApiOperation(value = "Get Tenants (getTenants)", notes = "Returns a page of tenants registered in the platform. " + PAGE_DATA_PARAMETERS + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    @GetMapping(value = "/tenants", params = {"pageSize", "page"})
+    @GetMapping(value = "/tenants")
     public PageData<Tenant> getTenants(
             @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
@@ -145,14 +135,41 @@ public class TenantController extends BaseController {
             @RequestParam(required = false) String sortProperty,
             @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        accessControlService.checkPermission(getCurrentUser(), Resource.TENANT, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         return checkNotNull(tenantService.findTenants(pageLink));
+    }
+
+    @Hidden
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @GetMapping(value = "/tenants", params = {"tenantIds"})
+    public List<Tenant> getTenantsByIdsV1(
+            @Parameter(description = "A list of tenant ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")))
+            @RequestParam("tenantIds") Set<UUID> tenantUUIDs) throws ThingsboardException {
+        SecurityUser user = getCurrentUser();
+        TenantId tenantId = user.getTenantId();
+        List<TenantId> tenantIds = new ArrayList<>();
+        for (UUID tenantUUID : tenantUUIDs) {
+            tenantIds.add(TenantId.fromUUID(tenantUUID));
+        }
+        List<Tenant> tenants = tenantService.findTenantsByIds(tenantId, tenantIds);
+        return filterTenantsByReadPermission(tenants);
+    }
+
+    @ApiOperation(value = "Get Tenants By Ids (getTenantsByIds)",
+            notes = "Fetch Tenant objects based on the provided ids. " + SYSTEM_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @GetMapping(value = "/tenants/list")
+    public List<Tenant> getTenantsByIds(
+            @Parameter(description = "A list of tenant ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")))
+            @RequestParam("tenantIds") Set<UUID> tenantUUIDs) throws ThingsboardException {
+        return getTenantsByIdsV1(tenantUUIDs);
     }
 
     @ApiOperation(value = "Get Tenants Info (getTenants)", notes = "Returns a page of tenant info objects registered in the platform. "
             + TENANT_INFO_DESCRIPTION + PAGE_DATA_PARAMETERS + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    @GetMapping(value = "/tenantInfos", params = {"pageSize", "page"})
+    @GetMapping(value = "/tenantInfos")
     public PageData<TenantInfo> getTenantInfos(
             @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
@@ -165,21 +182,19 @@ public class TenantController extends BaseController {
             @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
             @RequestParam(required = false) String sortOrder
     ) throws ThingsboardException {
+        accessControlService.checkPermission(getCurrentUser(), Resource.TENANT, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         return checkNotNull(tenantService.findTenantInfos(pageLink));
     }
 
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
-    @GetMapping(value = "/tenants", params = {"tenantIds"})
-    public List<Tenant> getTenantsByIds(
-            @Parameter(description = "A list of tenant ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")))
-            @RequestParam("tenantIds") Set<UUID> tenantUUIDs) throws ThingsboardException {
-        TenantId tenantId = getCurrentUser().getTenantId();
-        List<TenantId> tenantIds = new ArrayList<>();
-        for (UUID tenantIdUUID : tenantUUIDs) {
-            tenantIds.add(TenantId.fromUUID(tenantIdUUID));
-        }
-        return tenantService.findTenantsByIds(tenantId, tenantIds);
+    private List<Tenant> filterTenantsByReadPermission(List<Tenant> tenants) {
+        return tenants.stream().filter(tenant -> {
+            try {
+                return accessControlService.hasPermission(getCurrentUser(), Resource.TENANT, Operation.READ, tenant.getId(), tenant);
+            } catch (ThingsboardException e) {
+                return false;
+            }
+        }).toList();
     }
 
 }

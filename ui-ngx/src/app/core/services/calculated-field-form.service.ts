@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { DestroyRef, inject, Injectable } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { pairwise, switchMap } from 'rxjs/operators';
@@ -25,11 +12,11 @@ import {
   CalculatedFieldType,
   OutputStrategyType
 } from '@shared/models/calculated-field.models';
-import { oneSpaceInsideRegex } from '@shared/models/regex.constants';
 import { isDefined } from '@core/utils';
 import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
 import { CalculatedFieldsTableEntity } from '@home/components/calculated-fields/calculated-fields-table-config';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { getTimezoneInfo } from '@shared/models/time/time.models';
 
 @Injectable({ providedIn: 'root' })
 export class CalculatedFieldFormService {
@@ -38,7 +25,7 @@ export class CalculatedFieldFormService {
 
   buildForm(): FormGroup {
     return this.fb.group({
-      name: ['', [Validators.required, Validators.pattern(oneSpaceInsideRegex), Validators.maxLength(255)]],
+      name: ['', [Validators.required, Validators.maxLength(255)]],
       entityId: [null, Validators.required],
       type: [CalculatedFieldType.SIMPLE],
       debugSettings: [],
@@ -48,7 +35,7 @@ export class CalculatedFieldFormService {
 
   buildAlarmRuleForm(): FormGroup {
     return this.fb.group({
-      name: ['', [Validators.required, Validators.pattern(oneSpaceInsideRegex), Validators.maxLength(255)]],
+      name: ['', [Validators.required, Validators.maxLength(255)]],
       entityId: [null, Validators.required],
       type: [CalculatedFieldType.ALARM],
       debugSettings: [],
@@ -57,6 +44,7 @@ export class CalculatedFieldFormService {
         arguments: this.fb.control({}, Validators.required),
         propagate: [false],
         propagateToOwner: [false],
+        propagateToOwnerHierarchy: [false],
         propagateToTenant: [false],
         propagateRelationTypes: [null],
         createRules: [null, Validators.required],
@@ -71,7 +59,7 @@ export class CalculatedFieldFormService {
       takeUntilDestroyed(destroyRef)
     ).subscribe(([prevType, nextType]) => {
       const shouldCheck = isEditActive ? isEditActive() : true;
-      if (shouldCheck) {
+      if (shouldCheck && prevType !== nextType) {
         if (![CalculatedFieldType.SIMPLE, CalculatedFieldType.SCRIPT].includes(prevType) ||
           ![CalculatedFieldType.SIMPLE, CalculatedFieldType.SCRIPT].includes(nextType)) {
           form.get('configuration').setValue({} as CalculatedFieldConfiguration, { emitEvent: false });
@@ -85,6 +73,9 @@ export class CalculatedFieldFormService {
     if (config.type !== CalculatedFieldType.ALARM) {
       if (isDefined(config?.output) && !config?.output?.strategy) {
         config.output.strategy = { type: OutputStrategyType.RULE_CHAIN };
+      }
+      if (config.type === CalculatedFieldType.ENTITY_AGGREGATION && config.interval) {
+        config.interval.tz = getTimezoneInfo(config.interval.tz, undefined, true)?.id;
       }
     }
     return config;
@@ -101,7 +92,12 @@ export class CalculatedFieldFormService {
       return this.calculatedFieldsService.getLatestCalculatedFieldDebugEvent(calculatedFieldId, {ignoreLoading: true})
         .pipe(
           switchMap(event => {
-            const args = event?.arguments ? JSON.parse(event.arguments) : null;
+            let args = null;
+            if (event?.arguments) {
+              try {
+                args = JSON.parse(event.arguments);
+              } catch (e) {}
+            }
             return testDialogFn(formValue, args, false, expression);
           }),
           takeUntilDestroyed(destroyRef)

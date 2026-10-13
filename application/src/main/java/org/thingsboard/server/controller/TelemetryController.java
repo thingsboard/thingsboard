@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -24,7 +12,12 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Parameters;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -67,12 +60,15 @@ import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseDeleteTsKvQuery;
+import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.IntervalType;
 import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.data.kv.ReadTsKvQueryResult;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.permission.Operation;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.msg.rule.engine.DeviceAttributesEventNotificationMsg;
 import org.thingsboard.server.config.annotations.ApiOperation;
@@ -80,7 +76,6 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.AccessValidator;
 import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.telemetry.AttributeData;
 import org.thingsboard.server.service.telemetry.TbTelemetryService;
 import org.thingsboard.server.service.telemetry.TsData;
@@ -112,6 +107,7 @@ import static org.thingsboard.server.controller.ControllerConstants.LATEST_TS_NO
 import static org.thingsboard.server.controller.ControllerConstants.LATEST_TS_STRICT_DATA_EXAMPLE;
 import static org.thingsboard.server.controller.ControllerConstants.MARKDOWN_CODE_BLOCK_END;
 import static org.thingsboard.server.controller.ControllerConstants.MARKDOWN_CODE_BLOCK_START;
+import static org.thingsboard.server.controller.ControllerConstants.READ_TS_KV_QUERY_RESULT_EXAMPLE;
 import static org.thingsboard.server.controller.ControllerConstants.SAVE_ATTIRIBUTES_STATUS_BAD_REQUEST;
 import static org.thingsboard.server.controller.ControllerConstants.SAVE_ATTIRIBUTES_STATUS_OK;
 import static org.thingsboard.server.controller.ControllerConstants.SAVE_ATTRIBUTES_REQUEST_PAYLOAD;
@@ -166,7 +162,8 @@ public class TelemetryController extends BaseController {
                     "\n\n * SERVER_SCOPE - supported for all entity types;" +
                     "\n * CLIENT_SCOPE - supported for devices;" +
                     "\n * SHARED_SCOPE - supported for devices. "
-                    + "\n\n" + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+                    + "\n\n" + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
+            responses = @ApiResponse(responseCode = "200", description = "OK", content = @Content(array = @ArraySchema(schema = @Schema(type = "string")))))
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/{entityType}/{entityId}/keys/attributes")
     public DeferredResult<ResponseEntity> getAttributeKeys(
@@ -180,7 +177,8 @@ public class TelemetryController extends BaseController {
                     "\n\n * SERVER_SCOPE - supported for all entity types;" +
                     "\n * CLIENT_SCOPE - supported for devices;" +
                     "\n * SHARED_SCOPE - supported for devices. "
-                    + "\n\n" + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+                    + "\n\n" + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
+            responses = @ApiResponse(responseCode = "200", description = "OK", content = @Content(array = @ArraySchema(schema = @Schema(type = "string")))))
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/{entityType}/{entityId}/keys/attributes/{scope}")
     public DeferredResult<ResponseEntity> getAttributeKeysByScope(
@@ -197,13 +195,18 @@ public class TelemetryController extends BaseController {
                     + MARKDOWN_CODE_BLOCK_START
                     + ATTRIBUTE_DATA_EXAMPLE
                     + MARKDOWN_CODE_BLOCK_END
-                    + "\n\n " + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+                    + "\n\n " + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
+            responses = @ApiResponse(responseCode = "200", description = "OK", content = @Content(array = @ArraySchema(schema = @Schema(implementation = AttributeData.class)))))
+    @Parameters({
+            @Parameter(name = "key", description = "Repeatable key query parameter (alternative to comma-separated 'keys')", in = ParameterIn.QUERY, required = false, array = @ArraySchema(schema = @Schema(type = "string")))
+    })
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/{entityType}/{entityId}/values/attributes")
     public DeferredResult<ResponseEntity> getAttributes(
             @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "DEVICE")) @PathVariable("entityType") String entityType,
             @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true) @PathVariable("entityId") String entityIdStr,
             @Parameter(description = ATTRIBUTES_KEYS_DESCRIPTION) @RequestParam(name = "keys", required = false) String keysStr,
+            @Parameter(hidden = true)
             @RequestParam MultiValueMap<String, String> params) throws ThingsboardException {
         List<String> keys = getKeys(keysStr, params);
         SecurityUser user = getCurrentUser();
@@ -220,7 +223,11 @@ public class TelemetryController extends BaseController {
                     + MARKDOWN_CODE_BLOCK_START
                     + ATTRIBUTE_DATA_EXAMPLE
                     + MARKDOWN_CODE_BLOCK_END
-                    + "\n\n " + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+                    + "\n\n " + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
+            responses = @ApiResponse(responseCode = "200", description = "OK",  content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = AttributeData.class)))))
+    @Parameters({
+            @Parameter(name = "key", description = "Repeatable key query parameter (alternative to comma-separated 'keys')", in = ParameterIn.QUERY, required = false, array = @ArraySchema(schema = @Schema(type = "string")))
+    })
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/{entityType}/{entityId}/values/attributes/{scope}")
     public DeferredResult<ResponseEntity> getAttributesByScope(
@@ -228,6 +235,7 @@ public class TelemetryController extends BaseController {
             @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true) @PathVariable("entityId") String entityIdStr,
             @Parameter(description = ATTRIBUTES_SCOPE_DESCRIPTION, schema = @Schema(allowableValues = {"SERVER_SCOPE", "SHARED_SCOPE", "CLIENT_SCOPE"}, requiredMode = Schema.RequiredMode.REQUIRED)) @PathVariable("scope") AttributeScope scope,
             @Parameter(description = ATTRIBUTES_KEYS_DESCRIPTION) @RequestParam(name = "keys", required = false) String keysStr,
+            @Parameter(hidden = true)
             @RequestParam MultiValueMap<String, String> params) throws ThingsboardException {
         List<String> keys = getKeys(keysStr, params);
         SecurityUser user = getCurrentUser();
@@ -237,7 +245,8 @@ public class TelemetryController extends BaseController {
 
     @ApiOperation(value = "Get time series keys (getTimeseriesKeys)",
             notes = "Returns a set of unique time series key names for the selected entity. " +
-                    "\n\n" + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+                    "\n\n" + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
+            responses = @ApiResponse(responseCode = "200", description = "OK", content = @Content(array = @ArraySchema(schema = @Schema(type = "string")))))
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/{entityType}/{entityId}/keys/timeseries")
     public DeferredResult<ResponseEntity> getTimeseriesKeys(
@@ -258,7 +267,11 @@ public class TelemetryController extends BaseController {
                     + MARKDOWN_CODE_BLOCK_START
                     + LATEST_TS_STRICT_DATA_EXAMPLE
                     + MARKDOWN_CODE_BLOCK_END
-                    + "\n\n " + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+                    + "\n\n " + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
+            responses = @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(type = "object", additionalPropertiesSchema = TsData[].class))))
+    @Parameters({
+            @Parameter(name = "key", description = "Repeatable key query parameter (alternative to comma-separated 'keys')", in = ParameterIn.QUERY, required = false, array = @ArraySchema(schema = @Schema(type = "string")))
+    })
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/{entityType}/{entityId}/values/timeseries")
     public DeferredResult<ResponseEntity> getLatestTimeseries(
@@ -267,6 +280,7 @@ public class TelemetryController extends BaseController {
             @Parameter(description = TELEMETRY_KEYS_DESCRIPTION) @RequestParam(name = "keys", required = false) String keysStr,
             @Parameter(description = STRICT_DATA_TYPES_DESCRIPTION)
             @RequestParam(name = "useStrictDataTypes", required = false, defaultValue = "false") Boolean useStrictDataTypes,
+            @Parameter(hidden = true)
             @RequestParam MultiValueMap<String, String> params) throws ThingsboardException {
         List<String> keys = getKeys(keysStr, params);
         SecurityUser user = getCurrentUser();
@@ -274,7 +288,32 @@ public class TelemetryController extends BaseController {
                 (result, tenantId, entityId) -> getLatestTimeseriesValuesCallback(result, user, entityId, keys, useStrictDataTypes));
     }
 
-    @ApiOperation(value = "Get time series data (getTimeseries)",
+    @Hidden
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @GetMapping(value = "/{entityType}/{entityId}/values/timeseries", params = {"startTs", "endTs"})
+    public DeferredResult<ResponseEntity> getTimeseries(
+            @PathVariable("entityType") String entityType,
+            @PathVariable("entityId") String entityIdStr,
+            @RequestParam(name = "keys", required = false) String keysStr,
+            @RequestParam(name = "startTs") Long startTs,
+            @RequestParam(name = "endTs") Long endTs,
+            @RequestParam(name = "intervalType", required = false) IntervalType intervalType,
+            @RequestParam(name = "interval", defaultValue = "0") Long interval,
+            @RequestParam(name = "timeZone", required = false) String timeZone,
+            @RequestParam(name = "limit", defaultValue = "100") Integer limit,
+            @RequestParam(name = "agg", defaultValue = "NONE") String aggStr,
+            @RequestParam(name = "orderBy", defaultValue = "DESC") String orderBy,
+            @RequestParam(name = "useStrictDataTypes", required = false, defaultValue = "false") Boolean useStrictDataTypes,
+            @RequestParam MultiValueMap<String, String> params) throws ThingsboardException {
+        List<String> keys = getKeys(keysStr, params);
+        DeferredResult<ResponseEntity> response = new DeferredResult<>();
+        Futures.addCallback(tbTelemetryService.getTimeseries(EntityIdFactory.getByTypeAndId(entityType, entityIdStr), keys, startTs, endTs,
+                        intervalType, interval, timeZone, limit, Aggregation.valueOf(aggStr), orderBy, useStrictDataTypes, getCurrentUser()),
+                getTsKvListCallback(response, useStrictDataTypes), MoreExecutors.directExecutor());
+        return response;
+    }
+
+    @ApiOperation(value = "Get time series data (getTimeseriesHistory)",
             notes = "Returns a range of time series values for specified entity. " +
                     "Returns not aggregated data by default. " +
                     "Use aggregation function ('agg') and aggregation interval ('interval') to enable aggregation of the results on the database / server side. " +
@@ -282,10 +321,14 @@ public class TelemetryController extends BaseController {
                     + MARKDOWN_CODE_BLOCK_START
                     + TS_STRICT_DATA_EXAMPLE
                     + MARKDOWN_CODE_BLOCK_END
-                    + "\n\n" + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+                    + "\n\n" + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
+            responses = @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(type = "object", additionalPropertiesSchema = TsData[].class))))
+    @Parameters({
+            @Parameter(name = "key", description = "Repeatable key query parameter (alternative to comma-separated 'keys')", in = ParameterIn.QUERY, required = false, array = @ArraySchema(schema = @Schema(type = "string")))
+    })
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @GetMapping(value = "/{entityType}/{entityId}/values/timeseries", params = {"keys", "startTs", "endTs"})
-    public DeferredResult<ResponseEntity> getTimeseries(
+    @GetMapping(value = "/{entityType}/{entityId}/values/timeseries/history")
+    public DeferredResult<ResponseEntity> getTimeseriesHistory(
             @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "DEVICE")) @PathVariable("entityType") String entityType,
             @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true) @PathVariable("entityId") String entityIdStr,
             @Parameter(description = TELEMETRY_KEYS_BASE_DESCRIPTION) @RequestParam(name = "keys", required = false) String keysStr,
@@ -310,12 +353,28 @@ public class TelemetryController extends BaseController {
             @RequestParam(name = "orderBy", defaultValue = "DESC") String orderBy,
             @Parameter(description = STRICT_DATA_TYPES_DESCRIPTION)
             @RequestParam(name = "useStrictDataTypes", required = false, defaultValue = "false") Boolean useStrictDataTypes,
+            @Parameter(hidden = true)
             @RequestParam MultiValueMap<String, String> params) throws ThingsboardException {
-        List<String> keys = getKeys(keysStr, params);
+        return getTimeseries(entityType, entityIdStr, keysStr, startTs, endTs, intervalType, interval, timeZone, limit, aggStr, orderBy, useStrictDataTypes, params);
+    }
+
+    @ApiOperation(value = "Get time series data by read queries (getTimeseriesByReadTsKvQueries)",
+            notes = "Returns aggregated time series values according to queries for specified entity. "
+                    + MARKDOWN_CODE_BLOCK_START
+                    + READ_TS_KV_QUERY_RESULT_EXAMPLE
+                    + MARKDOWN_CODE_BLOCK_END
+                    + "\n\n" + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
+            responses = @ApiResponse(responseCode = "200", description = "OK", content = @Content(array = @ArraySchema(schema = @Schema(implementation = ReadTsKvQueryResult.class)))))
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PostMapping(value = "/{entityType}/{entityId}/values/timeseries")
+    public DeferredResult<ResponseEntity> getTimeseriesByReadTsKvQueries(
+            @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "DEVICE")) @PathVariable("entityType") String entityType,
+            @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true) @PathVariable("entityId") String entityIdStr,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON array of time series read queries.", content = @Content(array = @ArraySchema(schema = @Schema(implementation = BaseReadTsKvQuery.class))))
+            @RequestBody List<BaseReadTsKvQuery> queries) throws ThingsboardException {
         DeferredResult<ResponseEntity> response = new DeferredResult<>();
-        Futures.addCallback(tbTelemetryService.getTimeseries(EntityIdFactory.getByTypeAndId(entityType, entityIdStr), keys, startTs, endTs,
-                        intervalType, interval, timeZone, limit, Aggregation.valueOf(aggStr), orderBy, useStrictDataTypes, getCurrentUser()),
-                getTsKvListCallback(response, useStrictDataTypes), MoreExecutors.directExecutor());
+        Futures.addCallback(tbTelemetryService.getTimeseriesByReadQueries(EntityIdFactory.getByTypeAndId(entityType, entityIdStr), queries, getCurrentUser()),
+                getReadTsKvQueryResult(response), MoreExecutors.directExecutor());
         return response;
     }
 
@@ -338,7 +397,8 @@ public class TelemetryController extends BaseController {
                                                                @PathVariable("deviceId") String deviceIdStr,
                                                                @Parameter(description = ATTRIBUTES_SCOPE_DESCRIPTION, schema = @Schema(allowableValues = {"SERVER_SCOPE", "SHARED_SCOPE"}, requiredMode = Schema.RequiredMode.REQUIRED))
                                                                @PathVariable("scope") AttributeScope scope,
-                                                               @io.swagger.v3.oas.annotations.parameters.RequestBody(description = ATTRIBUTES_JSON_REQUEST_DESCRIPTION, required = true)
+                                                               @io.swagger.v3.oas.annotations.parameters.RequestBody(description = ATTRIBUTES_JSON_REQUEST_DESCRIPTION, required = true,
+                                                                       content = @Content(mediaType = "text/plain", schema = @Schema(type = "string")))
                                                                @RequestBody String request) throws ThingsboardException {
         EntityId entityId = EntityIdFactory.getByTypeAndUuid(EntityType.DEVICE, deviceIdStr);
         return saveAttributes(getTenantId(), entityId, scope, request);
@@ -363,7 +423,8 @@ public class TelemetryController extends BaseController {
                                                                  @PathVariable("entityId") String entityIdStr,
                                                                  @Parameter(description = ATTRIBUTES_SCOPE_DESCRIPTION, schema = @Schema(allowableValues = {"SERVER_SCOPE", "SHARED_SCOPE"}))
                                                                  @PathVariable("scope") AttributeScope scope,
-                                                                 @io.swagger.v3.oas.annotations.parameters.RequestBody(description = ATTRIBUTES_JSON_REQUEST_DESCRIPTION, required = true)
+                                                                 @io.swagger.v3.oas.annotations.parameters.RequestBody(description = ATTRIBUTES_JSON_REQUEST_DESCRIPTION, required = true,
+                                                                         content = @Content(mediaType = "text/plain", schema = @Schema(type = "string")))
                                                                  @RequestBody String request) throws ThingsboardException {
         EntityId entityId = EntityIdFactory.getByTypeAndId(entityType, entityIdStr);
         return saveAttributes(getTenantId(), entityId, scope, request);
@@ -388,7 +449,8 @@ public class TelemetryController extends BaseController {
                                                                  @PathVariable("entityId") String entityIdStr,
                                                                  @Parameter(description = ATTRIBUTES_SCOPE_DESCRIPTION, schema = @Schema(allowableValues = {"SERVER_SCOPE", "SHARED_SCOPE"}, requiredMode = Schema.RequiredMode.REQUIRED))
                                                                  @PathVariable("scope") AttributeScope scope,
-                                                                 @io.swagger.v3.oas.annotations.parameters.RequestBody(description = ATTRIBUTES_JSON_REQUEST_DESCRIPTION, required = true)
+                                                                 @io.swagger.v3.oas.annotations.parameters.RequestBody(description = ATTRIBUTES_JSON_REQUEST_DESCRIPTION, required = true,
+                                                                         content = @Content(mediaType = "text/plain", schema = @Schema(type = "string")))
                                                                  @RequestBody String request) throws ThingsboardException {
         EntityId entityId = EntityIdFactory.getByTypeAndId(entityType, entityIdStr);
         return saveAttributes(getTenantId(), entityId, scope, request);
@@ -412,7 +474,8 @@ public class TelemetryController extends BaseController {
             @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "DEVICE")) @PathVariable("entityType") String entityType,
             @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true) @PathVariable("entityId") String entityIdStr,
             @Parameter(description = TELEMETRY_SCOPE_DESCRIPTION, required = true, schema = @Schema(allowableValues = "ANY")) @PathVariable("scope") String scope,
-            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = TELEMETRY_JSON_REQUEST_DESCRIPTION, required = true) @RequestBody String requestBody) throws ThingsboardException {
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = TELEMETRY_JSON_REQUEST_DESCRIPTION, required = true,
+                    content = @Content(mediaType = "text/plain", schema = @Schema(type = "string"))) @RequestBody String requestBody) throws ThingsboardException {
         EntityId entityId = EntityIdFactory.getByTypeAndId(entityType, entityIdStr);
         return saveTelemetry(getTenantId(), entityId, requestBody, 0L);
     }
@@ -436,7 +499,8 @@ public class TelemetryController extends BaseController {
             @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true) @PathVariable("entityId") String entityIdStr,
             @Parameter(description = TELEMETRY_SCOPE_DESCRIPTION, required = true, schema = @Schema(allowableValues = "ANY")) @PathVariable("scope") String scope,
             @Parameter(description = "A long value representing TTL (Time to Live) parameter.", required = true) @PathVariable("ttl") Long ttl,
-            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = TELEMETRY_JSON_REQUEST_DESCRIPTION, required = true) @RequestBody String requestBody) throws ThingsboardException {
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = TELEMETRY_JSON_REQUEST_DESCRIPTION, required = true,
+                    content = @Content(mediaType = "text/plain", schema = @Schema(type = "string"))) @RequestBody String requestBody) throws ThingsboardException {
         EntityId entityId = EntityIdFactory.getByTypeAndId(entityType, entityIdStr);
         return saveTelemetry(getTenantId(), entityId, requestBody, ttl);
     }
@@ -449,6 +513,9 @@ public class TelemetryController extends BaseController {
                     " Use 'rewriteLatestIfDeleted' to rewrite latest value (stored in separate table for performance) if the value's timestamp matches the time-range and 'deleteLatest' param is true." +
                     " The replacement value will be fetched from the 'time series' table, and its timestamp will be the most recent one before the defined time-range. " +
                     TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @Parameters({
+            @Parameter(name = "key", description = "Repeatable key query parameter (alternative to comma-separated 'keys')", in = ParameterIn.QUERY, required = false, array = @ArraySchema(schema = @Schema(type = "string")))
+    })
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Time series for the selected keys in the request was removed. " +
                     "Platform creates an audit log event about entity time series removal with action type 'TIMESERIES_DELETED'."),
@@ -473,6 +540,7 @@ public class TelemetryController extends BaseController {
             @RequestParam(name = "deleteLatest", required = false, defaultValue = "true") boolean deleteLatest,
             @Parameter(description = "If the parameter is set to true, the latest telemetry will be rewritten in case that current latest value was removed, otherwise, in case that parameter is set to false the new latest value will not set.")
             @RequestParam(name = "rewriteLatestIfDeleted", defaultValue = "false") boolean rewriteLatestIfDeleted,
+            @Parameter(hidden = true)
             @RequestParam MultiValueMap<String, String> params) throws ThingsboardException {
         List<String> keys = getKeys(keysStr, params);
         EntityId entityId = EntityIdFactory.getByTypeAndId(entityType, entityIdStr);
@@ -530,6 +598,9 @@ public class TelemetryController extends BaseController {
     @ApiOperation(value = "Delete device attributes (deleteDeviceAttributes)",
             notes = "Delete device attributes using provided Device Id, scope and a list of keys. " +
                     "Referencing a non-existing Device Id will cause an error" + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @Parameters({
+            @Parameter(name = "key", description = "Repeatable key query parameter (alternative to comma-separated 'keys')", in = ParameterIn.QUERY, required = false, array = @ArraySchema(schema = @Schema(type = "string")))
+    })
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Device attributes was removed for the selected keys in the request. " +
                     "Platform creates an audit log event about device attributes removal with action type 'ATTRIBUTES_DELETED'."),
@@ -544,6 +615,7 @@ public class TelemetryController extends BaseController {
             @Parameter(description = DEVICE_ID_PARAM_DESCRIPTION, required = true) @PathVariable(DEVICE_ID) String deviceIdStr,
             @Parameter(description = ATTRIBUTES_SCOPE_DESCRIPTION, schema = @Schema(allowableValues = {"SERVER_SCOPE", "SHARED_SCOPE", "CLIENT_SCOPE"}, requiredMode = Schema.RequiredMode.REQUIRED)) @PathVariable("scope") AttributeScope scope,
             @Parameter(description = ATTRIBUTES_KEYS_DESCRIPTION) @RequestParam(name = "keys", required = false) String keysStr,
+            @Parameter(hidden = true)
             @RequestParam MultiValueMap<String, String> params) throws ThingsboardException {
         List<String> keys = getKeys(keysStr, params);
         EntityId entityId = EntityIdFactory.getByTypeAndUuid(EntityType.DEVICE, deviceIdStr);
@@ -552,9 +624,13 @@ public class TelemetryController extends BaseController {
 
     @ApiOperation(value = "Delete entity attributes (deleteEntityAttributes)",
             notes = "Delete entity attributes using provided Entity Id, scope and a list of keys. " +
+                    "This operation is idempotent: keys that do not exist are silently ignored and the response is still 200 OK. " +
                     INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @Parameters({
+            @Parameter(name = "key", description = "Repeatable key query parameter (alternative to comma-separated 'keys')", in = ParameterIn.QUERY, required = false, array = @ArraySchema(schema = @Schema(type = "string")))
+    })
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Entity attributes was removed for the selected keys in the request. " +
+            @ApiResponse(responseCode = "200", description = "Entity attributes were removed for the selected keys in the request (keys that did not exist are silently ignored). " +
                     "Platform creates an audit log event about entity attributes removal with action type 'ATTRIBUTES_DELETED'."),
             @ApiResponse(responseCode = "400", description = "Platform returns a bad request in case if keys or scope are not specified."),
             @ApiResponse(responseCode = "401", description = "User is not authorized to delete entity attributes for selected entity. Most likely, User belongs to different Customer or Tenant."),
@@ -568,6 +644,7 @@ public class TelemetryController extends BaseController {
             @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true) @PathVariable("entityId") String entityIdStr,
             @Parameter(description = ATTRIBUTES_SCOPE_DESCRIPTION, required = true, schema = @Schema(allowableValues = {"SERVER_SCOPE", "SHARED_SCOPE", "CLIENT_SCOPE"})) @PathVariable("scope") AttributeScope scope,
             @Parameter(description = ATTRIBUTES_KEYS_DESCRIPTION) @RequestParam(name = "keys", required = false) String keysStr,
+            @Parameter(hidden = true)
             @RequestParam MultiValueMap<String, String> params) throws ThingsboardException {
         List<String> keys = getKeys(keysStr, params);
         EntityId entityId = EntityIdFactory.getByTypeAndId(entityType, entityIdStr);
@@ -825,6 +902,21 @@ public class TelemetryController extends BaseController {
                     result.computeIfAbsent(entry.getKey(), k -> new ArrayList<>()).add(new TsData(entry.getTs(), value));
                 }
                 response.setResult(new ResponseEntity<>(result, HttpStatus.OK));
+            }
+
+            @Override
+            public void onFailure(Throwable e) {
+                log.error("Failed to fetch historical data", e);
+                AccessValidator.handleError(e, response, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        };
+    }
+
+    private FutureCallback<List<ReadTsKvQueryResult>> getReadTsKvQueryResult(final DeferredResult<ResponseEntity> response) {
+        return new FutureCallback<>() {
+            @Override
+            public void onSuccess(List<ReadTsKvQueryResult> data) {
+                response.setResult(new ResponseEntity<>(data, HttpStatus.OK));
             }
 
             @Override

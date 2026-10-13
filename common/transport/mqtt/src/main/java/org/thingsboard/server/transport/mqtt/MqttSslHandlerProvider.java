@@ -1,22 +1,11 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.mqtt;
 
 import io.netty.handler.ssl.SslHandler;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,7 +20,7 @@ import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsRes
 import org.thingsboard.server.common.transport.config.ssl.SslCredentials;
 import org.thingsboard.server.common.transport.config.ssl.SslCredentialsConfig;
 import org.thingsboard.server.common.transport.util.SslUtil;
-import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.ValidateOrCreateDeviceX509CertRequestMsg;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
@@ -48,7 +37,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @Component("MqttSslHandlerProvider")
 @TbMqttSslTransportComponent
-public class MqttSslHandlerProvider {
+public class MqttSslHandlerProvider implements SmartInitializingSingleton {
 
     @Value("${transport.mqtt.ssl.protocol}")
     private String sslProtocol;
@@ -66,13 +55,35 @@ public class MqttSslHandlerProvider {
     @Qualifier("mqttSslCredentials")
     private SslCredentialsConfig mqttSslCredentialsConfig;
 
-    private SSLContext sslContext;
+    private volatile SSLContext sslContext;
+
+    @Override
+    public void afterSingletonsInstantiated() {
+        // Eagerly build the initial context so the handshake path is a lock-free volatile read.
+        this.sslContext = createSslContext();
+        mqttSslCredentialsConfig.registerReloadCallback(() -> {
+            log.info("MQTT SSL certificates reloaded. Rebuilding SSL context...");
+            // Build the new context first; if it fails, the old one stays in place, and
+            // the exception propagates to CertificateReloadManager's retry/backoff logic.
+            this.sslContext = createSslContext();
+            log.info("MQTT SSL context rebuilt. New connections will use the new certificate.");
+        });
+    }
 
     public SslHandler getSslHandler() {
-        if (sslContext == null) {
-            sslContext = createSslContext();
+        SSLContext ctx = sslContext;
+        // Defensive lazy init in case afterSingletonsInstantiated hasn't run yet (e.g., test wiring).
+        // In normal operation ctx is non-null here, so the handshake path is lock-free.
+        if (ctx == null) {
+            synchronized (this) {
+                ctx = sslContext;
+                if (ctx == null) {
+                    ctx = createSslContext();
+                    sslContext = ctx;
+                }
+            }
         }
-        SSLEngine sslEngine = sslContext.createSSLEngine();
+        SSLEngine sslEngine = ctx.createSSLEngine();
         sslEngine.setUseClientMode(false);
         sslEngine.setNeedClientAuth(false);
         sslEngine.setWantClientAuth(true);
@@ -98,7 +109,7 @@ public class MqttSslHandlerProvider {
             sslContext.init(km, tm, null);
             return sslContext;
         } catch (Exception e) {
-            log.error("Unable to set up SSL context. Reason: " + e.getMessage(), e);
+            log.error("Unable to set up SSL context. Reason: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to get SSL context", e);
         }
     }
@@ -106,8 +117,8 @@ public class MqttSslHandlerProvider {
     private TrustManager getX509TrustManager(TrustManagerFactory tmf) throws Exception {
         X509TrustManager x509Tm = null;
         for (TrustManager tm : tmf.getTrustManagers()) {
-            if (tm instanceof X509TrustManager) {
-                x509Tm = (X509TrustManager) tm;
+            if (tm instanceof X509TrustManager x509TrustManager) {
+                x509Tm = x509TrustManager;
                 break;
             }
         }
@@ -145,7 +156,7 @@ public class MqttSslHandlerProvider {
             CountDownLatch latch = new CountDownLatch(1);
             try {
                 String certificateChain = SslUtil.getCertificateChainString(chain);
-                transportService.process(DeviceTransportType.MQTT, TransportProtos.ValidateOrCreateDeviceX509CertRequestMsg
+                transportService.process(DeviceTransportType.MQTT, ValidateOrCreateDeviceX509CertRequestMsg
                                 .newBuilder().setCertificateChain(certificateChain).build(),
                         new TransportServiceCallback<>() {
                             @Override
@@ -191,5 +202,7 @@ public class MqttSslHandlerProvider {
                 return false;
             }
         }
+
     }
+
 }

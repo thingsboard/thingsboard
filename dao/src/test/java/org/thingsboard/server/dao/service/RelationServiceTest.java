@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.service;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
@@ -35,9 +23,9 @@ import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
 import org.thingsboard.server.common.data.relation.RelationPathLevel;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
-import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
+import org.thingsboard.server.exception.DataValidationException;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -65,7 +53,7 @@ public class RelationServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testSaveRelation() {
+    public void testSaveRelation() throws ExecutionException, InterruptedException {
         AssetId parentId = new AssetId(Uuids.timeBased());
         AssetId childId = new AssetId(Uuids.timeBased());
 
@@ -80,6 +68,14 @@ public class RelationServiceTest extends AbstractServiceTest {
         Assert.assertFalse(relationService.checkRelation(SYSTEM_TENANT_ID, childId, parentId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON));
 
         Assert.assertFalse(relationService.checkRelation(SYSTEM_TENANT_ID, childId, parentId, "NOT_EXISTING_TYPE", RelationTypeGroup.COMMON));
+
+        Assert.assertTrue(relationService.checkRelationAsync(SYSTEM_TENANT_ID, parentId, childId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON).get());
+
+        Assert.assertFalse(relationService.checkRelationAsync(SYSTEM_TENANT_ID, parentId, childId, "NOT_EXISTING_TYPE", RelationTypeGroup.COMMON).get());
+
+        Assert.assertFalse(relationService.checkRelationAsync(SYSTEM_TENANT_ID, childId, parentId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON).get());
+
+        Assert.assertFalse(relationService.checkRelationAsync(SYSTEM_TENANT_ID, childId, parentId, "NOT_EXISTING_TYPE", RelationTypeGroup.COMMON).get());
     }
 
     @Test
@@ -99,6 +95,10 @@ public class RelationServiceTest extends AbstractServiceTest {
         Assert.assertFalse(relationService.checkRelation(SYSTEM_TENANT_ID, parentId, childId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON));
 
         Assert.assertTrue(relationService.checkRelation(SYSTEM_TENANT_ID, childId, subChildId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON));
+
+        Assert.assertFalse(relationService.checkRelationAsync(SYSTEM_TENANT_ID, parentId, childId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON).get());
+
+        Assert.assertTrue(relationService.checkRelationAsync(SYSTEM_TENANT_ID, childId, subChildId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON).get());
 
         Assert.assertTrue(relationService.deleteRelationAsync(SYSTEM_TENANT_ID, childId, subChildId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON).get());
     }
@@ -137,6 +137,10 @@ public class RelationServiceTest extends AbstractServiceTest {
         Assert.assertFalse(relationService.checkRelation(SYSTEM_TENANT_ID, parentId, childId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON));
 
         Assert.assertFalse(relationService.checkRelation(SYSTEM_TENANT_ID, childId, subChildId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON));
+
+        Assert.assertFalse(relationService.checkRelationAsync(SYSTEM_TENANT_ID, parentId, childId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON).get());
+
+        Assert.assertFalse(relationService.checkRelationAsync(SYSTEM_TENANT_ID, childId, subChildId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON).get());
     }
 
     @Test
@@ -681,8 +685,8 @@ public class RelationServiceTest extends AbstractServiceTest {
                     assertThat(rel.getFrom()).isEqualTo(assetC);
                 });
 
-        // verify the returned subset is part of all created relations
-        assertThat(result).isEqualTo(allThirdLevelRelations);
+        // verify all created relations are returned; the query applies LIMIT without ORDER BY, so row order is undefined
+        assertThat(result).containsExactlyInAnyOrderElementsOf(allThirdLevelRelations);
     }
 
     @Test

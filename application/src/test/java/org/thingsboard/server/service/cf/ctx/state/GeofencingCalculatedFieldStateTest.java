@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.cf.ctx.state;
 
 import com.google.common.util.concurrent.Futures;
@@ -25,6 +12,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
@@ -44,8 +32,9 @@ import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationPathLevel;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.relation.RelationService;
-import org.thingsboard.server.dao.usagerecord.ApiLimitService;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.service.cf.TelemetryCalculatedFieldResult;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingCalculatedFieldState;
@@ -54,6 +43,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
@@ -92,7 +82,9 @@ public class GeofencingCalculatedFieldStateTest {
     private CalculatedFieldCtx ctx;
 
     @Mock
-    private ApiLimitService apiLimitService;
+    private TenantProfile tenantProfile;
+    @Mock
+    private TbTenantProfileCache tenantProfileCache;
     @Mock
     private RelationService relationService;
     @InjectMocks
@@ -100,7 +92,8 @@ public class GeofencingCalculatedFieldStateTest {
 
     @BeforeEach
     void setUp() {
-        when(apiLimitService.getLimit(any(), any())).thenReturn(1000L);
+        when(tenantProfileCache.get(any(TenantId.class))).thenReturn(tenantProfile);
+        when(tenantProfile.getProfileConfiguration()).thenReturn(Optional.of(new DefaultTenantProfileConfiguration()));
         ctx = new CalculatedFieldCtx(getCalculatedField(), systemContext);
         ctx.init();
         state = new GeofencingCalculatedFieldState(ctx.getEntityId());

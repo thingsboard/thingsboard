@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -60,6 +48,7 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.context.WebApplicationContext;
@@ -93,6 +82,7 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.AssetProfile;
+import org.thingsboard.server.common.data.cf.AlarmRuleDefinition;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldInfo;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
@@ -110,9 +100,12 @@ import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeCon
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.group.EntityGroup;
+import org.thingsboard.server.common.data.group.EntityGroupInfo;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.JobId;
@@ -122,6 +115,8 @@ import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.job.Job;
 import org.thingsboard.server.common.data.job.JobType;
+import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.NotificationType;
@@ -159,6 +154,7 @@ import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.device.ClaimDevicesService;
+import org.thingsboard.server.dao.group.EntityGroupService;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.memory.InMemoryStorage;
@@ -176,6 +172,7 @@ import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -195,6 +192,7 @@ import static org.springframework.security.test.web.servlet.setup.SecurityMockMv
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -224,9 +222,13 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     protected static final String DIFFERENT_TENANT_ADMIN_PASSWORD = "difftenant";
 
     protected static final String CUSTOMER_USER_EMAIL = "testcustomer@thingsboard.org";
+    protected static final String SUB_CUSTOMER_ADMIN_USER_EMAIL = "testsubcustomeradmin@thingsboard.org";
+    protected static final String CUSTOMER_ADMIN_EMAIL = "testcustomeradmin@thingsboard.org";
     private static final String CUSTOMER_USER_PASSWORD = "customer";
+    private static final String CUSTOMER_ADMIN_USER_PASSWORD = "customerAdmin";
 
     protected static final String DIFFERENT_CUSTOMER_USER_EMAIL = "testdifferentcustomer@thingsboard.org";
+    protected static final String DIFFERENT_CUSTOMER_ADMIN_USER_EMAIL = "testdifferentcustomeradmin@thingsboard.org";
 
     protected static final String DIFFERENT_TENANT_CUSTOMER_USER_EMAIL = "testdifferenttenantcustomer@thingsboard.org";
     private static final String DIFFERENT_CUSTOMER_USER_PASSWORD = "diffcustomer";
@@ -257,13 +259,17 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     protected UserId tenantAdminUserId;
     protected User tenantAdminUser;
     protected CustomerId tenantAdminCustomerId;
-    protected CustomerId customerId;
     protected TenantId differentTenantId;
+    protected CustomerId customerId;
+    protected CustomerId subCustomerId;
     protected CustomerId differentCustomerId;
 
     protected CustomerId differentTenantCustomerId;
     protected UserId customerUserId;
+    protected UserId subCustomerAdminUserId;
+    protected UserId customerAdminUserId;
     protected UserId differentCustomerUserId;
+    protected UserId differentCustomerAdminUserId;
 
     protected UserId differentTenantCustomerUserId;
     protected UserId currentUserId;
@@ -288,6 +294,9 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     @Autowired
     protected AttributesService attributesService;
+
+    @Autowired
+    public EntityGroupService entityGroupService;
 
     @Autowired
     protected DefaultActorService actorService;
@@ -349,7 +358,14 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
         if (this.mockMvc == null) {
             this.mockMvc = webAppContextSetup(webApplicationContext)
-                    .apply(springSecurity()).build();
+                    .apply(springSecurity())
+                    // conditional printing of non 2xx responses
+                    .alwaysDo(result -> {
+                        if (result.getResponse().getStatus() >= 400) {
+                            MockMvcResultHandlers.log().handle(result);
+                        }
+                    })
+                    .build();
         }
         loginSysAdmin();
 
@@ -381,8 +397,32 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         customerUser.setCustomerId(savedCustomer.getId());
         customerUser.setEmail(CUSTOMER_USER_EMAIL);
 
-        customerUser = createUserAndLogin(customerUser, CUSTOMER_USER_PASSWORD);
+        customerUser = createUser(customerUser, CUSTOMER_USER_PASSWORD);
         customerUserId = customerUser.getId();
+
+        User customerAUser = new User();
+        customerAUser.setAuthority(Authority.CUSTOMER_USER);
+        customerAUser.setTenantId(tenantId);
+        customerAUser.setCustomerId(customerId);
+        customerAUser.setEmail(CUSTOMER_ADMIN_EMAIL);
+        EntityGroupInfo customerAdminsGroup = findCustomerAdminsGroup(customerId);
+        customerAdminUserId = createUser(customerAUser, CUSTOMER_ADMIN_USER_PASSWORD, customerAdminsGroup.getId()).getId();
+
+        Customer subCustomer = new Customer();
+        subCustomer.setTitle("SubCustomer");
+        subCustomer.setTenantId(tenantId);
+        subCustomer.setParentCustomerId(customerId);
+        Customer savedSubCustomer = doPost("/api/customer", subCustomer, Customer.class);
+        subCustomerId = savedSubCustomer.getId();
+
+        User subCustomerAdminUser = new User();
+        subCustomerAdminUser.setAuthority(Authority.CUSTOMER_USER);
+        subCustomerAdminUser.setTenantId(tenantId);
+        subCustomerAdminUser.setCustomerId(savedSubCustomer.getId());
+        subCustomerAdminUser.setEmail(SUB_CUSTOMER_ADMIN_USER_EMAIL);
+        EntityGroupInfo subCustomerAdminsGroup = findCustomerAdminsGroup(subCustomerId);
+
+        subCustomerAdminUserId = createUser(subCustomerAdminUser, CUSTOMER_ADMIN_USER_PASSWORD, subCustomerAdminsGroup.getId()).getId();
 
         resetTokens();
 
@@ -390,29 +430,33 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     }
 
     private void setupMailServiceMock() throws ThingsboardException {
-        Mockito.doNothing().when(mailService).sendAccountActivatedEmail(anyString(), anyString());
+        Mockito.doNothing().when(mailService).sendAccountActivatedEmail(any(), anyString(), anyString());
         Mockito.doAnswer(new Answer<Void>() {
             public Void answer(InvocationOnMock invocation) {
                 Object[] args = invocation.getArguments();
-                String activationLink = (String) args[0];
+                String activationLink = (String) args[1];
                 currentActivateToken = activationLink.split("=")[1];
                 return null;
             }
-        }).when(mailService).sendActivationEmail(anyString(), anyLong(), anyString());
+        }).when(mailService).sendActivationEmail(any(), anyString(), anyLong(), anyString());
 
         Mockito.doAnswer(new Answer<Void>() {
             public Void answer(InvocationOnMock invocation) {
                 Object[] args = invocation.getArguments();
-                String passwordResetLink = (String) args[0];
+                String passwordResetLink = (String) args[1];
                 currentResetPasswordToken = passwordResetLink.split("=")[1];
                 return null;
             }
-        }).when(mailService).sendResetPasswordEmailAsync(anyString(), anyLong(), anyString());
+        }).when(mailService).sendResetPasswordEmailAsync(any(), anyString(), anyLong(), anyString());
     }
 
     @After
     public void teardownWebTest() throws Exception {
         log.debug("Executing web test teardown");
+
+        // Drain any pending housekeeper work left by the test body (e.g., bulk tenant deletes)
+        // before proceeding with teardown deletions, to avoid 90s per-tenant wait timing out.
+        awaitHousekeeperDrained();
 
         loginSysAdmin();
         deleteTenant(tenantId);
@@ -422,8 +466,9 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         tenantProfileService.deleteTenantProfiles(TenantId.SYS_TENANT_ID);
 
         jdbcTemplate.execute("TRUNCATE TABLE notification");
+        jdbcTemplate.execute("TRUNCATE TABLE audit_log");
 
-        log.info("Executed web test teardown");
+        log.debug("Executed web test teardown");
     }
 
     private void verifyNoTenantsLeft() throws Exception {
@@ -436,12 +481,19 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     }
 
     protected void deleteTenant(TenantId tenantId) {
-        try {
-            doDelete("/api/tenant/" + tenantId.getId()).andExpect(status().isOk());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        if (tenantId != null) {
+            try {
+                doDelete("/api/tenant/" + tenantId.getId()).andExpect(status().isOk());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            Awaitility.await("all tasks processed").atMost(90, TimeUnit.SECONDS).during(300, TimeUnit.MILLISECONDS)
+                    .until(() -> storage.getLag("tb_housekeeper") == 0);
         }
-        Awaitility.await("all tasks processed").atMost(90, TimeUnit.SECONDS).during(300, TimeUnit.MILLISECONDS)
+    }
+
+    protected void awaitHousekeeperDrained() {
+        Awaitility.await("housekeeper drained").atMost(5, TimeUnit.MINUTES).during(300, TimeUnit.MILLISECONDS)
                 .until(() -> storage.getLag("tb_housekeeper") == 0);
     }
 
@@ -472,6 +524,14 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         login(CUSTOMER_USER_EMAIL, CUSTOMER_USER_PASSWORD);
     }
 
+    protected void loginCustomerAdminUser() throws Exception {
+        login(CUSTOMER_ADMIN_EMAIL, CUSTOMER_ADMIN_USER_PASSWORD);
+    }
+
+    protected void loginSubCustomerAdminUser() throws Exception {
+        login(SUB_CUSTOMER_ADMIN_USER_EMAIL, CUSTOMER_ADMIN_USER_PASSWORD);
+    }
+
     protected void loginUser(String userName, String password) throws Exception {
         login(userName, password);
     }
@@ -481,6 +541,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     private Customer savedDifferentCustomer;
     private Customer savedDifferentTenantCustomer;
     protected User differentCustomerUser;
+    protected User differentCustomerAdminUser;
     protected User differentTenantCustomerUser;
 
     protected void loginDifferentTenant() throws Exception {
@@ -497,7 +558,6 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         tenant.setTitle(TEST_DIFFERENT_TENANT_NAME);
         savedDifferentTenant = saveTenant(tenant);
         differentTenantId = savedDifferentTenant.getId();
-        Assert.assertNotNull(savedDifferentTenant);
         User differentTenantAdmin = new User();
         differentTenantAdmin.setAuthority(Authority.TENANT_ADMIN);
         differentTenantAdmin.setTenantId(savedDifferentTenant.getId());
@@ -525,6 +585,24 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
             differentCustomerUser = createUserAndLogin(differentCustomerUser, DIFFERENT_CUSTOMER_USER_PASSWORD);
             differentCustomerUserId = differentCustomerUser.getId();
         }
+    }
+
+    protected void loginDifferentCustomerAdmin() throws Exception {
+        if (savedDifferentCustomer == null) {
+            createDifferentCustomer();
+        }
+        if (differentCustomerAdminUser == null) {
+            loginTenantAdmin();
+            differentCustomerAdminUser = new User();
+            differentCustomerAdminUser.setAuthority(Authority.CUSTOMER_USER);
+            differentCustomerAdminUser.setTenantId(tenantId);
+            differentCustomerAdminUser.setCustomerId(savedDifferentCustomer.getId());
+            differentCustomerAdminUser.setEmail(DIFFERENT_CUSTOMER_ADMIN_USER_EMAIL);
+
+            EntityGroupInfo customerAdminsGroup = findCustomerAdminsGroup(savedDifferentCustomer.getId());
+            differentCustomerAdminUserId = createUser(differentCustomerAdminUser, "diffCustomerAdmin", customerAdminsGroup.getId()).getId();
+        }
+        login(DIFFERENT_CUSTOMER_ADMIN_USER_EMAIL, "diffCustomerAdmin");
     }
 
     protected void loginDifferentTenantCustomer() throws Exception {
@@ -574,6 +652,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
             loginSysAdmin();
             deleteTenant(savedDifferentTenant.getId());
             savedDifferentTenant = null;
+            differentTenantId = null;
         }
     }
 
@@ -587,11 +666,41 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     }
 
     protected User createUser(User user, String password) throws Exception {
-        User savedUser = doPost("/api/user", user, User.class);
+        return createUser(user, password, null);
+    }
+
+    protected User createUser(User user, String password, EntityGroupId entityGroupId) throws Exception {
+        String url = "/api/user";
+        if (entityGroupId != null) {
+            url += "?entityGroupId=" + entityGroupId.toString();
+        }
+        User savedUser = doPost(url, user, User.class);
         JsonNode activateRequest = getActivateRequest(password);
         ResultActions resultActions = doPost("/api/noauth/activate", activateRequest);
         resultActions.andExpect(status().isOk());
         return doGet("/api/user/" + savedUser.getId(), User.class);
+    }
+
+    protected EntityGroupInfo findCustomerAdminsGroup(CustomerId customerId) throws Exception {
+        return findGroupByOwnerIdTypeAndName(customerId, EntityType.USER, EntityGroup.GROUP_CUSTOMER_ADMINS_NAME);
+    }
+
+    protected EntityGroupInfo findGroupByOwnerIdTypeAndName(EntityId ownerId, EntityType groupType, String name) throws Exception {
+        List<EntityGroupInfo> groupsList = getEntityGroupsByOwnerAndType(ownerId, groupType);
+        EntityGroupInfo result = null;
+        for (EntityGroupInfo tmp : groupsList) {
+            if (name.equals(tmp.getName())) {
+                result = tmp;
+            }
+        }
+        Assert.assertNotNull(result);
+        return result;
+    }
+
+    protected List<EntityGroupInfo> getEntityGroupsByOwnerAndType(EntityId ownerId, EntityType groupType) throws Exception {
+        return JacksonUtil.convertValue(
+                doGet("/api/entityGroups/" + ownerId.getEntityType() + "/" + ownerId.getId() + "/" + groupType.name(), JsonNode.class),
+                new TypeReference<>() {});
     }
 
     private JsonNode getActivateRequest(String password) throws Exception {
@@ -669,9 +778,12 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         this.apiKey = apiKey;
     }
 
-    protected void setApiKey(MockHttpServletRequestBuilder request) {
+    protected void setApiKey(MockHttpServletRequestBuilder request, UserId userId) {
         if (this.apiKey != null) {
             request.header(ThingsboardSecurityConfiguration.AUTHORIZATION_HEADER, API_KEY_HEADER_PREFIX + this.apiKey);
+        }
+        if (userId != null) {
+            request.header("X-User-Id", userId.toString());
         }
     }
 
@@ -709,6 +821,10 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         return assetProfile;
     }
 
+    protected Device createDevice(String name) throws Exception {
+        return createDevice(name, "default", null, null);
+    }
+
     protected Device createDevice(String name, String accessToken) throws Exception {
         return createDevice(name, "default", null, accessToken);
     }
@@ -722,12 +838,11 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         deviceData.setTransportConfiguration(new DefaultDeviceTransportConfiguration());
         deviceData.setConfiguration(new DefaultDeviceConfiguration());
         device.setDeviceData(deviceData);
-        return doPost("/api/device?accessToken=" + accessToken, device, Device.class);
-    }
-
-    protected Device assignDeviceToCustomer(DeviceId deviceId, CustomerId customerId) {
-        String deviceIdStr = String.valueOf(deviceId.getId());
-        return doPost("/api/customer/" + customerId.getId() + "/device/" + deviceIdStr, Device.class);
+        if (accessToken != null) {
+            return doPost("/api/device?accessToken=" + accessToken, device, Device.class);
+        } else {
+            return doPost("/api/device", device, Device.class);
+        }
     }
 
     protected MqttDeviceProfileTransportConfiguration createMqttDeviceProfileTransportConfiguration(TransportPayloadTypeConfiguration transportPayloadTypeConfiguration, boolean sendAckOnValidationException) {
@@ -773,6 +888,50 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         return doPost("/api/device-with-credentials", request, Device.class);
     }
 
+    /**
+     * {@code doGet()} leaves MockMvc's simulated request at its default servlet path (an empty string), which
+     * {@code SystemSetupFilter}'s path check - matching on {@code request.getServletPath()} - never matches
+     * against {@code "/api/**"}. Left as plain {@code doGet()}, an assertion of a 423 setup lock would pass
+     * vacuously: the filter would answer "not protected" and let the request through regardless of setup
+     * state. Setting the servlet path explicitly reproduces what a real, root-mapped {@code DispatcherServlet}
+     * actually reports, which is what the filter reads from.
+     * <p>
+     * Lives here rather than in one test class because the trap is invisible at the call site: any test that
+     * asserts the setup lock through the plain helpers is silently testing nothing.
+     */
+    protected ResultActions doLockAwareGet(String urlTemplate) throws Exception {
+        MockHttpServletRequestBuilder request = get(urlTemplate).servletPath(servletPathOf(urlTemplate));
+        setJwtToken(request);
+        return mockMvc.perform(request);
+    }
+
+    /** Bodyless POST counterpart of {@link #doLockAwareGet}; see that method for why the servlet path is set. */
+    protected ResultActions doLockAwarePost(String urlTemplate) throws Exception {
+        MockHttpServletRequestBuilder request = post(urlTemplate).servletPath(servletPathOf(urlTemplate));
+        setJwtToken(request);
+        return mockMvc.perform(request);
+    }
+
+    /**
+     * Lock-aware, like {@link #doLockAwarePost(String)}, and additionally carries a request through Spring
+     * MVC's async dispatch. An endpoint that returns a {@code DeferredResult} needs this, because without it
+     * the first {@code mockMvc.perform} only proves the request started processing asynchronously - the
+     * status that actually answers whether the call succeeded is only available after the second, dispatched
+     * request that {@code asyncDispatch} produces.
+     */
+    protected ResultActions doLockAwareAsyncPost(String urlTemplate, Object content) throws Exception {
+        MockHttpServletRequestBuilder requestBuilder = post(urlTemplate).servletPath(servletPathOf(urlTemplate));
+        setJwtToken(requestBuilder);
+        requestBuilder.contentType(contentType).content(json(content));
+        MvcResult result = mockMvc.perform(requestBuilder).andExpect(request().asyncStarted()).andReturn();
+        return mockMvc.perform(asyncDispatch(result));
+    }
+
+    private String servletPathOf(String urlTemplate) {
+        int queryStart = urlTemplate.indexOf('?');
+        return queryStart < 0 ? urlTemplate : urlTemplate.substring(0, queryStart);
+    }
+
     protected ResultActions doGetAsync(String urlTemplate, MultiValueMap<String, String> params) throws Exception {
         MockHttpServletRequestBuilder getRequest = get(urlTemplate).params(params);
         setJwtToken(getRequest);
@@ -794,7 +953,13 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     protected ResultActions doGetWithApiKey(String urlTemplate, Object... urlVariables) throws Exception {
         MockHttpServletRequestBuilder getRequest = get(urlTemplate, urlVariables);
-        setApiKey(getRequest);
+        setApiKey(getRequest, null);
+        return mockMvc.perform(getRequest);
+    }
+
+    protected ResultActions doGetWithInternalApiKey(String urlTemplate, UserId userId, Object... urlVariables) throws Exception {
+        MockHttpServletRequestBuilder getRequest = get(urlTemplate, urlVariables);
+        setApiKey(getRequest, userId);
         return mockMvc.perform(getRequest);
     }
 
@@ -853,6 +1018,30 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         return readResponse(doGet(urlTemplate, vars).andExpect(status().isOk()), responseType);
     }
 
+    protected <T> T doGetTypedWithPageLinkAndInternalApiKey(String urlTemplate, TypeReference<T> responseType,
+                                                            PageLink pageLink, UserId userId,
+                                                            Object... urlVariables) throws Exception {
+        List<Object> pageLinkVariables = new ArrayList<>();
+        urlTemplate += "pageSize={pageSize}&page={page}";
+        pageLinkVariables.add(pageLink.getPageSize());
+        pageLinkVariables.add(pageLink.getPage());
+        if (StringUtils.isNotEmpty(pageLink.getTextSearch())) {
+            urlTemplate += "&textSearch={textSearch}";
+            pageLinkVariables.add(pageLink.getTextSearch());
+        }
+        if (pageLink.getSortOrder() != null) {
+            urlTemplate += "&sortProperty={sortProperty}&sortOrder={sortOrder}";
+            pageLinkVariables.add(pageLink.getSortOrder().getProperty());
+            pageLinkVariables.add(pageLink.getSortOrder().getDirection().name());
+        }
+
+        Object[] vars = new Object[urlVariables.length + pageLinkVariables.size()];
+        System.arraycopy(urlVariables, 0, vars, 0, urlVariables.length);
+        System.arraycopy(pageLinkVariables.toArray(), 0, vars, urlVariables.length, pageLinkVariables.size());
+
+        return readResponse(doGetWithInternalApiKey(urlTemplate, userId, vars).andExpect(status().isOk()), responseType);
+    }
+
     protected <T> T doGetTypedWithTimePageLink(String urlTemplate, TypeReference<T> responseType,
                                                TimePageLink pageLink,
                                                Object... urlVariables) throws Exception {
@@ -904,9 +1093,17 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         }
     }
 
-    protected <T, R> R doPostWithApiKey(String urlTemplate, T content, Class<R> responseClass, String... params) {
+    protected <T, R> R doPostWithApiKey(String urlTemplate, T content, Class<R> responseClass, UserId userId, String... params) {
         try {
-            return readResponse(doPostWithApiKey(urlTemplate, content, params).andExpect(status().isOk()), responseClass);
+            return readResponse(doPostWithApiKey(urlTemplate, content, userId, params).andExpect(status().isOk()), responseClass);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    protected <T, R> R doPatch(String urlTemplate, T content, Class<R> responseClass, String... params) {
+        try {
+            return readResponse(doPatch(urlTemplate, content, params).andExpect(status().isOk()), responseClass);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -979,9 +1176,17 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         return mockMvc.perform(postRequest);
     }
 
-    protected <T> ResultActions doPostWithApiKey(String urlTemplate, T content, String... params) throws Exception {
+    protected <T> ResultActions doPostWithApiKey(String urlTemplate, T content, UserId userId, String... params) throws Exception {
         MockHttpServletRequestBuilder postRequest = post(urlTemplate, params);
-        setApiKey(postRequest);
+        setApiKey(postRequest, userId);
+        String json = json(content);
+        postRequest.contentType(contentType).content(json);
+        return mockMvc.perform(postRequest);
+    }
+
+    protected <T> ResultActions doPatch(String urlTemplate, T content, String... params) throws Exception {
+        MockHttpServletRequestBuilder postRequest = patch(urlTemplate, params);
+        setJwtToken(postRequest);
         String json = json(content);
         postRequest.contentType(contentType).content(json);
         return mockMvc.perform(postRequest);
@@ -1013,9 +1218,16 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         return mockMvc.perform(asyncDispatch(result));
     }
 
+    protected ResultActions doDeleteWithInternalApiKey(String urlTemplate, UserId userId, String... params) throws Exception {
+        MockHttpServletRequestBuilder deleteRequest = delete(urlTemplate);
+        setApiKey(deleteRequest, userId);
+        populateParams(deleteRequest, params);
+        return mockMvc.perform(deleteRequest);
+    }
+
     protected ResultActions doDeleteWithApiKey(String urlTemplate, String... params) throws Exception {
         MockHttpServletRequestBuilder deleteRequest = delete(urlTemplate);
-        setApiKey(deleteRequest);
+        setApiKey(deleteRequest, null);
         populateParams(deleteRequest, params);
         return mockMvc.perform(deleteRequest);
     }
@@ -1051,10 +1263,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     @SuppressWarnings("unchecked")
     protected <T> T readResponse(ResultActions result, Class<T> responseClass) throws Exception {
-        byte[] content = result.andReturn().getResponse().getContentAsByteArray();
-        MockHttpInputMessage mockHttpInputMessage = new MockHttpInputMessage(content);
-        HttpMessageConverter converter = responseClass.equals(String.class) ? stringHttpMessageConverter : mappingJackson2HttpMessageConverter;
-        return (T) converter.read(responseClass, mockHttpInputMessage);
+        return readResponse(result.andReturn(), responseClass);
     }
 
     protected <T> T readResponse(ResultActions result, TypeReference<T> type) throws Exception {
@@ -1064,6 +1273,13 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     protected <T> T readResponse(MvcResult result, TypeReference<T> type) throws Exception {
         byte[] content = result.getResponse().getContentAsByteArray();
         return JacksonUtil.OBJECT_MAPPER.readerFor(type).readValue(content);
+    }
+
+    protected <T> T readResponse(MvcResult result, Class<T> responseClass) throws Exception {
+        byte[] content = result.getResponse().getContentAsByteArray();
+        MockHttpInputMessage mockHttpInputMessage = new MockHttpInputMessage(content);
+        HttpMessageConverter converter = responseClass.equals(String.class) ? stringHttpMessageConverter : mappingJackson2HttpMessageConverter;
+        return (T) converter.read(responseClass, mockHttpInputMessage);
     }
 
     protected String getErrorMessage(ResultActions result) throws Exception {
@@ -1103,6 +1319,8 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         edge.setType(type);
         edge.setRoutingKey(routingKey);
         edge.setSecret(secret);
+        edge.setEdgeLicenseKey(StringUtils.randomAlphanumeric(20));
+        edge.setCloudEndpoint("http://localhost:8080");
         return edge;
     }
 
@@ -1133,7 +1351,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
             assertThat(findRelationsByTo(entityTo)).hasSize(1);
 
             doDelete(urlDelete)
-                    .andExpect(status().isInternalServerError());
+                    .andExpect(status().isBadRequest());
 
             assertThat(findRelationsByTo(entityTo)).hasSize(1);
         } finally {
@@ -1210,7 +1428,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         Awaitility.await("CF state for entity actor ready to refresh dynamic arguments").atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> {
             CalculatedFieldState calculatedFieldState = statesMap.get(cfId);
             boolean isReady = calculatedFieldState != null && ((GeofencingCalculatedFieldState) calculatedFieldState).getLastScheduledRefreshTs() <
-                                                              System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(scheduledUpdateInterval);
+                    System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(scheduledUpdateInterval);
             log.warn("entityId {}, cfId {}, state ready to refresh == {}", entityId, cfId, isReady);
             return isReady;
         });
@@ -1260,7 +1478,8 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         TenantProfile oldTenantProfile = tenantProfileService.findDefaultTenantProfile(TenantId.SYS_TENANT_ID);
         TenantProfile tenantProfile = JacksonUtil.clone(oldTenantProfile);
         updater.accept(tenantProfile);
-        tbTenantProfileService.save(TenantId.SYS_TENANT_ID, tenantProfile, oldTenantProfile);
+        // user should be sysadmin as this operation allowed only for sysadmins. But for the simplification of the test - already existed variable provided. This affects only an audit log content
+        tbTenantProfileService.save(TenantId.SYS_TENANT_ID, tenantProfile, oldTenantProfile, tenantAdminUser);
     }
 
     protected OAuth2Client createOauth2Client(TenantId tenantId, String title) {
@@ -1327,7 +1546,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     protected NotificationTarget createNotificationTarget(UsersFilter usersFilter) {
         NotificationTarget notificationTarget = new NotificationTarget();
-        notificationTarget.setName(usersFilter.toString() + RandomStringUtils.randomNumeric(5));
+        notificationTarget.setName(usersFilter.toString() + RandomStringUtils.secure().nextNumeric(5));
         PlatformUsersNotificationTargetConfig targetConfig = new PlatformUsersNotificationTargetConfig();
         targetConfig.setUsersFilter(usersFilter);
         notificationTarget.setConfiguration(targetConfig);
@@ -1401,7 +1620,18 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     protected List<Job> findJobs(List<JobType> types, List<UUID> entities) throws Exception {
         return doGetTypedWithPageLink("/api/jobs?types=" + types.stream().map(Enum::name).collect(Collectors.joining(",")) +
-                                      "&entities=" + entities.stream().map(UUID::toString).collect(Collectors.joining(",")) + "&",
+                        "&entities=" + entities.stream().map(UUID::toString).collect(Collectors.joining(",")) + "&",
+                new TypeReference<PageData<Job>>() {}, new PageLink(100, 0, null, new SortOrder("createdTime", SortOrder.Direction.DESC))).getData();
+    }
+
+    protected List<Job> findJobs(boolean includeCustomers) throws Exception {
+        return doGetTypedWithPageLink("/api/jobs?includeCustomers=" + includeCustomers + "&",
+                new TypeReference<PageData<Job>>() {}, new PageLink(100, 0, null, new SortOrder("createdTime", SortOrder.Direction.DESC))).getData();
+    }
+
+    protected List<Job> findJobs(boolean includeCustomers, List<JobType> types) throws Exception {
+        return doGetTypedWithPageLink("/api/jobs?includeCustomers=" + includeCustomers +
+                        "&types=" + types.stream().map(Enum::name).collect(Collectors.joining(",")) + "&",
                 new TypeReference<PageData<Job>>() {}, new PageLink(100, 0, null, new SortOrder("createdTime", SortOrder.Direction.DESC))).getData();
     }
 
@@ -1415,21 +1645,50 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     protected void postTelemetry(EntityId entityId, String payload) throws Exception {
         doPostAsync("/api/plugins/telemetry/" + entityId.getEntityType() + "/" + entityId.getId() +
-                    "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode(payload), 30_000L).andExpect(status().isOk());
+                "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode(payload), 30_000L).andExpect(status().isOk());
+    }
+
+    protected void postTelemetry(EntityId entityId, TsKvEntry entry) throws Exception {
+        var values = JacksonUtil.newObjectNode();
+        JacksonUtil.addKvEntry(values, entry);
+
+        var payload = JacksonUtil.newObjectNode()
+                .put("ts", entry.getTs())
+                .set("values", values);
+
+        var url = "/api/plugins/telemetry/" + entityId.getEntityType() + "/" + entityId.getId() + "/timeseries/any";
+        doPostAsync(url, payload, 30_000L).andExpect(status().isOk());
     }
 
     protected void postAttributes(EntityId entityId, AttributeScope scope, String payload) throws Exception {
         doPostAsync("/api/plugins/telemetry/" + entityId.getEntityType() + "/" + entityId.getId() +
-                    "/attributes/" + scope, JacksonUtil.toJsonNode(payload), 30_000L).andExpect(status().isOk());
+                "/attributes/" + scope, JacksonUtil.toJsonNode(payload), 30_000L).andExpect(status().isOk());
+    }
+
+    protected void postAttributes(EntityId entityId, AttributeScope scope, KvEntry... attributes) throws Exception {
+        postAttributes(entityId, scope, Arrays.asList(attributes));
+    }
+
+    protected void postAttributes(EntityId entityId, AttributeScope scope, Collection<? extends KvEntry> attributes) throws Exception {
+        var url = "/api/plugins/telemetry/" + entityId.getEntityType() + "/" + entityId.getId() + "/attributes/" + scope;
+        var payload = JacksonUtil.newObjectNode();
+        for (KvEntry entry : attributes) {
+            JacksonUtil.addKvEntry(payload, entry);
+        }
+        doPostAsync(url, payload, 30_000L).andExpect(status().isOk());
     }
 
     protected CalculatedField saveCalculatedField(CalculatedField calculatedField) {
         return doPost("/api/calculatedField", calculatedField, CalculatedField.class);
     }
 
+    protected AlarmRuleDefinition saveAlarmRule(AlarmRuleDefinition alarmRule) {
+        return doPost("/api/alarm/rule", alarmRule, AlarmRuleDefinition.class);
+    }
+
     protected PageData<CalculatedField> getEntityCalculatedFields(EntityId entityId, CalculatedFieldType type, PageLink pageLink) throws Exception {
         return doGetTypedWithPageLink("/api/" + entityId.getEntityType() + "/" + entityId.getId() + "/calculatedFields" +
-                                      (type != null ? "?type=" + type.name() + "&" : "?"), new TypeReference<>() {}, pageLink);
+                (type != null ? "?type=" + type.name() + "&" : "?"), new TypeReference<>() {}, pageLink);
     }
 
     protected PageData<String> getCalculatedFieldNames(CalculatedFieldType type, PageLink pageLink) throws Exception {
@@ -1442,11 +1701,11 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
                                                             List<UUID> entities,
                                                             List<String> names) throws Exception {
         return doGetTypedWithPageLink("/api/calculatedFields?" +
-                                      (type != null ? "types=" + type + "&" : "") +
-                                      (entityType != null ? "entityType=" + entityType + "&" : "") +
-                                      (entities != null ? "entities=" + String.join(",",
-                                              entities.stream().map(UUID::toString).toList()) + "&" : "") +
-                                      (names != null ? names.stream().map(name -> "name=" + name + "&").collect(Collectors.joining("")) : ""),
+                        (type != null ? "types=" + type + "&" : "") +
+                        (entityType != null ? "entityType=" + entityType + "&" : "") +
+                        (entities != null ? "entities=" + String.join(",",
+                                entities.stream().map(UUID::toString).toList()) + "&" : "") +
+                        (names != null ? names.stream().map(name -> "name=" + name + "&").collect(Collectors.joining("")) : ""),
                 new TypeReference<PageData<CalculatedFieldInfo>>() {}, new PageLink(10)).getData();
     }
 

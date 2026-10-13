@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   AfterViewInit,
   ChangeDetectorRef,
@@ -48,11 +35,21 @@ import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { MatSort } from '@angular/material/sort';
 import { DashboardInfo } from '@shared/models/dashboard.models';
 import { DashboardAutocompleteComponent } from '@shared/components/dashboard-autocomplete.component';
+import { UtilsService } from '@core/services/utils.service';
+import { Datasource, DatasourceType, widgetType } from '@shared/models/widget.models';
+import { IWidgetSubscription, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
+import { formattedDataFormDatasourceData } from '@core/utils';
+import { AliasFilterType } from '@shared/models/alias.models';
+import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
+import { EntityType } from '@shared/models/entity-type.models';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { Operation, Resource } from '@shared/models/security.models';
 
 @Component({
-  selector: 'tb-recent-dashboards-widget',
-  templateUrl: './recent-dashboards-widget.component.html',
-  styleUrls: ['./home-page-widget.scss', './recent-dashboards-widget.component.scss']
+    selector: 'tb-recent-dashboards-widget',
+    templateUrl: './recent-dashboards-widget.component.html',
+    styleUrls: ['./home-page-widget.scss', './recent-dashboards-widget.component.scss'],
+    standalone: false
 })
 export class RecentDashboardsWidgetComponent extends PageComponent implements OnInit, AfterViewInit, OnDestroy {
 
@@ -76,25 +73,68 @@ export class RecentDashboardsWidgetComponent extends PageComponent implements On
   lastVisitedDashboardsPageLink: PageLink;
 
   starredDashboardValue = null;
+
+  dashboardsLink = '/dashboards/all';
   hasDashboardsAccess = true;
+  hasDevice = true;
 
   dirty = false;
-  public customerId: string;
   private isFullscreenMode = getCurrentAuthState(this.store).forceFullscreen;
+  private subscription: IWidgetSubscription;
 
   constructor(protected store: Store<AppState>,
               private cd: ChangeDetectorRef,
+              private utils: UtilsService,
+              private userPermissionsService: UserPermissionsService,
               private userSettingService: UserSettingsService) {
     super(store);
   }
 
   ngOnInit() {
-    if (this.authUser.authority === Authority.CUSTOMER_USER) {
-      this.customerId = this.authUser.customerId;
+    if (!this.userPermissionsService.hasReadGenericPermission(Resource.DASHBOARD)) {
+      if (this.userPermissionsService.hasSharedReadGroupsPermission(EntityType.DASHBOARD)) {
+        this.dashboardsLink = '/dashboards/shared';
+      } else {
+        this.hasDashboardsAccess = false;
+      }
     }
-    this.hasDashboardsAccess = [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER].includes(this.authUser.authority);
     if (this.hasDashboardsAccess) {
       this.reload();
+      if (window.location.pathname.startsWith('/home') && this.authUser.authority === Authority.TENANT_ADMIN
+        && this.userPermissionsService.hasGenericPermission(Resource.DASHBOARD, Operation.CREATE)) {
+        const ds: Datasource = {
+          type: DatasourceType.entityCount,
+          name: '',
+          entityFilter: {
+            entityType: EntityType.DEVICE,
+            type: AliasFilterType.entityType
+          },
+          dataKeys: [this.utils.createKey({ name: 'count'}, DataKeyType.count)]
+        }
+
+        const apiUsageSubscriptionOptions: WidgetSubscriptionOptions = {
+          datasources: [ds],
+          useDashboardTimewindow: false,
+          type: widgetType.latest,
+          callbacks: {
+            onDataUpdated: (subscription) => {
+              const data = formattedDataFormDatasourceData(subscription.data);
+              this.hasDevice = (data[0].count || 0) !== 0;
+              this.cd.detectChanges();
+            }
+          }
+        };
+        this.ctx.subscriptionApi.createSubscription(apiUsageSubscriptionOptions, true).subscribe((subscription) => {
+          this.subscription = subscription;
+        });
+      }
+    }
+  }
+
+  ngOnDestroy() {
+    super.ngOnDestroy();
+    if (this.subscription) {
+      this.ctx.subscriptionApi.removeSubscription(this.subscription.id);
     }
   }
 
@@ -118,7 +158,7 @@ export class RecentDashboardsWidgetComponent extends PageComponent implements On
   }
 
   public createDashboardUrl(id: string): string {
-    const baseUrl = this.isFullscreenMode ? '/dashboard/' : '/dashboards/';
+    const baseUrl = this.isFullscreenMode ? '/dashboard/' : '/dashboards/all/';
     return baseUrl + id;
   }
 

@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   DataKey,
   Datasource,
@@ -200,9 +187,11 @@ export const defaultBaseDataLayerSettings = (mapType: MapType): Partial<MapDataL
   }
 })
 
-export type MapDataLayerType = 'trips' | 'markers' | 'polygons' | 'circles' | 'polylines';
+export const mapDataLayerTypes = ['trips', 'markers', 'polygons', 'circles', 'polylines'] as const;
 
-export const mapDataLayerTypes: MapDataLayerType[] = ['trips', 'markers', 'polygons', 'circles', 'polylines'];
+export type MapDataLayerType = typeof mapDataLayerTypes[number];
+
+export const latestMapDataLayerTypes: MapDataLayerType[] = ['markers', 'polygons', 'circles', 'polylines'];
 
 export const mapDataLayerValid = (dataLayer: MapDataLayerSettings, type: MapDataLayerType): boolean => {
   if (!dataLayer.dsType || ![DatasourceType.function, DatasourceType.device, DatasourceType.entity].includes(dataLayer.dsType)) {
@@ -929,7 +918,9 @@ export const defaultMapActionButtonSettings: MapActionButtonSettings = {
 }
 
 export enum MapProvider {
+  openfreemap = 'openfreemap',
   openstreet = 'openstreet',
+  carto = 'carto',
   google = 'google',
   here = 'here',
   tencent = 'tencent',
@@ -940,7 +931,9 @@ export const mapProviders = Object.keys(MapProvider) as MapProvider[];
 
 export const mapProviderTranslationMap = new Map<MapProvider, string>(
   [
+    [MapProvider.openfreemap, 'widgets.maps.layer.provider.openfreemap.title'],
     [MapProvider.openstreet, 'widgets.maps.layer.provider.openstreet.title'],
+    [MapProvider.carto, 'widgets.maps.layer.provider.carto.title'],
     [MapProvider.google, 'widgets.maps.layer.provider.google.title'],
     [MapProvider.here, 'widgets.maps.layer.provider.here.title'],
     [MapProvider.tencent, 'widgets.maps.layer.provider.tencent.title'],
@@ -975,9 +968,15 @@ export const mapLayerValid = (layer: MapLayerSettings): boolean => {
     return false;
   }
   switch (layer.provider) {
+    case MapProvider.openfreemap:
+      const openFreeMapLayer = layer as OpenFreeMapLayerSettings;
+      return !!openFreeMapLayer.layerType;
     case MapProvider.openstreet:
       const openStreetLayer = layer as OpenStreetMapLayerSettings;
       return !!openStreetLayer.layerType;
+    case MapProvider.carto:
+      const cartoLayer = layer as CartoMapLayerSettings;
+      return !!cartoLayer.layerType;
     case MapProvider.google:
       const googleLayer = layer as GoogleMapLayerSettings;
       return !!googleLayer.layerType;
@@ -1008,9 +1007,15 @@ export const defaultLayerTitle = (layer: MapLayerSettings): string => {
     return null;
   }
   switch (layer.provider) {
+    case MapProvider.openfreemap:
+      const ofmLayer = layer as OpenFreeMapLayerSettings;
+      return openFreeMapStyleTranslationMap.get(ofmLayer.layerType);
     case MapProvider.openstreet:
       const openStreetLayer = layer as OpenStreetMapLayerSettings;
       return openStreetMapLayerTranslationMap.get(openStreetLayer.layerType);
+    case MapProvider.carto:
+      const cartoLayer = layer as CartoMapLayerSettings;
+      return cartoLayerTranslationMap.get(cartoLayer.layerType);
     case MapProvider.google:
       const googleLayer = layer as GoogleMapLayerSettings;
       return googleMapLayerTranslationMap.get(googleLayer.layerType);
@@ -1030,9 +1035,7 @@ export enum OpenStreetLayerType {
   openStreetHot = 'OpenStreetMap.HOT',
   esriWorldStreetMap = 'Esri.WorldStreetMap',
   esriWorldTopoMap = 'Esri.WorldTopoMap',
-  esriWorldImagery = 'Esri.WorldImagery',
-  cartoDbPositron = 'CartoDB.Positron',
-  cartoDbDarkMatter = 'CartoDB.DarkMatter'
+  esriWorldImagery = 'Esri.WorldImagery'
 }
 
 export const openStreetLayerTypes = Object.values(OpenStreetLayerType) as OpenStreetLayerType[];
@@ -1043,9 +1046,7 @@ export const openStreetMapLayerTranslationMap = new Map<OpenStreetLayerType, str
     [OpenStreetLayerType.openStreetHot, 'widgets.maps.layer.provider.openstreet.hot'],
     [OpenStreetLayerType.esriWorldStreetMap, 'widgets.maps.layer.provider.openstreet.esri-street'],
     [OpenStreetLayerType.esriWorldTopoMap, 'widgets.maps.layer.provider.openstreet.esri-topo'],
-    [OpenStreetLayerType.esriWorldImagery, 'widgets.maps.layer.provider.openstreet.esri-imagery'],
-    [OpenStreetLayerType.cartoDbPositron, 'widgets.maps.layer.provider.openstreet.cartodb-positron'],
-    [OpenStreetLayerType.cartoDbDarkMatter, 'widgets.maps.layer.provider.openstreet.cartodb-dark-matter']
+    [OpenStreetLayerType.esriWorldImagery, 'widgets.maps.layer.provider.openstreet.esri-imagery']
   ]
 );
 
@@ -1057,6 +1058,58 @@ export interface OpenStreetMapLayerSettings extends MapLayerSettings {
 export const defaultOpenStreetMapLayerSettings: OpenStreetMapLayerSettings = {
   provider: MapProvider.openstreet,
   layerType: OpenStreetLayerType.openStreetMapnik
+}
+
+export enum OpenFreeMapStyleType {
+  bright = 'bright',
+  positron = 'positron',
+  liberty = 'liberty'
+}
+
+export const openFreeMapStyleTypes = Object.values(OpenFreeMapStyleType) as OpenFreeMapStyleType[];
+
+export const openFreeMapStyleTranslationMap = new Map<OpenFreeMapStyleType, string>(
+  [
+    [OpenFreeMapStyleType.liberty, 'widgets.maps.layer.provider.openfreemap.liberty'],
+    [OpenFreeMapStyleType.bright, 'widgets.maps.layer.provider.openfreemap.bright'],
+    [OpenFreeMapStyleType.positron, 'widgets.maps.layer.provider.openfreemap.positron']
+  ]
+);
+
+export interface OpenFreeMapLayerSettings extends MapLayerSettings {
+  provider: MapProvider.openfreemap;
+  layerType: OpenFreeMapStyleType;
+}
+
+export const defaultOpenFreeMapLayerSettings: OpenFreeMapLayerSettings = {
+  provider: MapProvider.openfreemap,
+  layerType: OpenFreeMapStyleType.bright
+}
+
+export enum CartoLayerType {
+  cartoPositron = 'CartoDB.Positron',
+  cartoDarkMatter = 'CartoDB.DarkMatter'
+}
+
+export const cartoLayerTypes = Object.values(CartoLayerType) as CartoLayerType[];
+
+export const cartoLayerTranslationMap = new Map<CartoLayerType, string>(
+  [
+    [CartoLayerType.cartoPositron, 'widgets.maps.layer.provider.carto.positron'],
+    [CartoLayerType.cartoDarkMatter, 'widgets.maps.layer.provider.carto.dark-matter']
+  ]
+);
+
+export interface CartoMapLayerSettings extends MapLayerSettings {
+  provider: MapProvider.carto;
+  layerType: CartoLayerType;
+  apiKey?: string;
+}
+
+export const defaultCartoMapLayerSettings: CartoMapLayerSettings = {
+  provider: MapProvider.carto,
+  layerType: CartoLayerType.cartoPositron,
+  apiKey: null
 }
 
 export enum GoogleLayerType {
@@ -1119,6 +1172,16 @@ export const defaultHereMapLayerSettings: HereMapLayerSettings = {
   apiKey: 'kVXykxAfZ6LS4EbCTO02soFVfjA7HoBzNVVH9u7nzoE'
 }
 
+const hereV3Variants: {[v2Variant: string]: string} = {
+  normalDay: 'exploreDay',
+  normalNight: 'exploreNight',
+  hybridDay: 'exploreSatelliteDay',
+  terrainDay: 'topoDay'
+};
+
+export const hereV3Provider = (layerType: string): string =>
+  `HERE.${hereV3Variants[layerType?.split('.')[1]] || hereV3Variants.normalDay}`;
+
 export enum TencentLayerType {
   tencentNormal = 'Tencent.Normal',
   tencentSatellite = 'Tencent.Satellite',
@@ -1148,6 +1211,8 @@ export const defaultTencentMapLayerSettings: TencentMapLayerSettings = {
 export interface CustomMapLayerSettings extends MapLayerSettings {
   provider: MapProvider.custom;
   tileUrl: string;
+  vectorTiles?: boolean;
+  customAttribution?: string;
 }
 
 export const defaultCustomMapLayerSettings: CustomMapLayerSettings = {
@@ -1155,10 +1220,31 @@ export const defaultCustomMapLayerSettings: CustomMapLayerSettings = {
   tileUrl: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
 }
 
+export const mapProviderHasApiKey = (provider: MapProvider): boolean =>
+  [MapProvider.carto, MapProvider.google, MapProvider.here].includes(provider);
+
+export const mapProviderRequiresApiKey = (provider: MapProvider): boolean =>
+  [MapProvider.google, MapProvider.here].includes(provider);
+
+const legacyOpenStreetCartoLayerTypes = new Set<string>(cartoLayerTypes);
+
+// CARTO layers used to be stored under the OpenStreetMap provider, keep reading them as CARTO layers
+export const normalizeMapLayerSettings = (layer: MapLayerSettings): MapLayerSettings => {
+  if (layer?.provider === MapProvider.openstreet &&
+    legacyOpenStreetCartoLayerTypes.has((layer as OpenStreetMapLayerSettings).layerType)) {
+    return {...layer, provider: MapProvider.carto};
+  }
+  return layer;
+};
+
 export const defaultMapLayerSettings = (provider: MapProvider): MapLayerSettings => {
   switch (provider) {
+    case MapProvider.openfreemap:
+      return defaultOpenFreeMapLayerSettings;
     case MapProvider.openstreet:
       return defaultOpenStreetMapLayerSettings;
+    case MapProvider.carto:
+      return defaultCartoMapLayerSettings;
     case MapProvider.google:
       return defaultGoogleMapLayerSettings;
     case MapProvider.here:
@@ -1173,9 +1259,9 @@ export const defaultMapLayerSettings = (provider: MapProvider): MapLayerSettings
 export const defaultMapLayers: MapLayerSettings[] = [
   {
     label: '{i18n:widgets.maps.layer.roadmap}',
-    provider: MapProvider.openstreet,
-    layerType: OpenStreetLayerType.openStreetMapnik,
-  } as OpenStreetMapLayerSettings,
+    provider: MapProvider.openfreemap,
+    layerType: OpenFreeMapStyleType.bright,
+  } as OpenFreeMapLayerSettings,
   {
     label: '{i18n:widgets.maps.layer.satellite}',
     provider: MapProvider.openstreet,
@@ -1210,6 +1296,8 @@ export interface ImageMapSourceSettings {
   entityAliasId?: string;
   entityKey?: DataKey;
 }
+
+export const WEBGL_ERROR_EVENT = 'gl-error';
 
 export const imageMapSourceSettingsValid = (imageSource: ImageMapSourceSettings): boolean => {
   if (!imageSource?.sourceType) {
@@ -1447,7 +1535,7 @@ const imageLoader = (imageUrl: string): Observable<HTMLImageElement> => new Obse
   image.src = imageUrl;
 });
 
-const loadImageSize = (imageUrl: string): Observable<[number, number]> =>
+export const loadImageSize = (imageUrl: string): Observable<[number, number]> =>
   imageLoader(imageUrl).pipe(map(image => [image.width, image.height]));
 
 export interface ImageWithAspect {

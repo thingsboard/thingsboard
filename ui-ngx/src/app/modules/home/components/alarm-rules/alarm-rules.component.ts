@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { ChangeDetectorRef, Component, DestroyRef, inject, Inject, Input } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -22,19 +9,19 @@ import { FormBuilder, FormGroup } from '@angular/forms';
 import { EntityType } from '@shared/models/entity-type.models';
 import { TranslateService } from '@ngx-translate/core';
 import {
+  CalculatedFieldAlarmRuleConfiguration,
+  CalculatedFieldAlarmRuleInfo,
   CalculatedFieldArgument,
-  CalculatedFieldConfiguration,
-  CalculatedFieldInfo,
   CalculatedFieldType
 } from '@shared/models/calculated-field.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { BaseData } from '@shared/models/base-data';
 import { Observable } from 'rxjs';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
-import {
-  CalculatedFieldsTableConfig,
-  CalculatedFieldsTableEntity
-} from '@home/components/calculated-fields/calculated-fields-table-config';
+import type {
+  AlarmRulesTableConfig,
+  AlarmRuleTableEntity
+} from '@home/components/alarm-rules/alarm-rules-table-config';
 import { TenantId } from '@shared/models/id/tenant-id';
 import { StringItemsOption } from '@shared/components/string-items-list.component';
 import { RelationTypes } from '@shared/models/relation.models';
@@ -51,11 +38,12 @@ import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { EntityService } from '@core/http/entity.service';
 
 @Component({
-  selector: 'tb-alarm-rules',
-  templateUrl: './alarm-rules.component.html',
-  styleUrls: []
+    selector: 'tb-alarm-rules',
+    templateUrl: './alarm-rules.component.html',
+    styleUrls: ['./alarm-rule-dialog.component.scss'],
+    standalone: false
 })
-export class AlarmRulesComponent extends EntityComponent<CalculatedFieldsTableEntity> {
+export class AlarmRulesComponent extends EntityComponent<AlarmRuleTableEntity> {
 
   @Input()
   standalone = false;
@@ -63,7 +51,7 @@ export class AlarmRulesComponent extends EntityComponent<CalculatedFieldsTableEn
   @Input()
   entityName: string;
 
-  ownerId = new TenantId(getCurrentAuthUser(this.store).tenantId);
+  ownerId: EntityId = new TenantId(getCurrentAuthUser(this.store).tenantId);
   readonly tenantId = getCurrentAuthUser(this.store).tenantId;
   readonly EntityType = EntityType;
   readonly alarmRuleEntityTypeList = alarmRuleEntityTypeList;
@@ -74,8 +62,8 @@ export class AlarmRulesComponent extends EntityComponent<CalculatedFieldsTableEn
 
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
-              @Inject('entity') protected entityValue: CalculatedFieldInfo,
-              @Inject('entitiesTableConfig') protected entitiesTableConfigValue: CalculatedFieldsTableConfig,
+              @Inject('entity') protected entityValue: CalculatedFieldAlarmRuleInfo,
+              @Inject('entitiesTableConfig') protected entitiesTableConfigValue: AlarmRulesTableConfig,
               protected fb: FormBuilder,
               protected cd: ChangeDetectorRef,
               private entityService: EntityService) {
@@ -92,34 +80,28 @@ export class AlarmRulesComponent extends EntityComponent<CalculatedFieldsTableEn
 
   additionalDebugActionConfig = {
     ...this.entitiesTableConfig.additionalDebugActionConfig,
-    action: () => this.entitiesTableConfig.additionalDebugActionConfig.action(
-      { id: this.entity.id, ...this.entityFormValue() }, false,
-      (expression) => {
-        if (expression) {
-          this.entityForm.get('configuration').setValue({...this.entityFormValue().configuration, expression});
-          this.entityForm.get('configuration').markAsDirty();
-        }
-      }),
+    action: () => this.entitiesTableConfig.additionalDebugActionConfig.action({id: this.entity.id, ...this.entityFormValue()})
   };
 
   get entityId(): EntityId {
     return this.entityForm.get('entityId').value;
   }
 
-  get entitiesTableConfig(): CalculatedFieldsTableConfig {
+  get entitiesTableConfig(): AlarmRulesTableConfig {
     return this.entitiesTableConfigValue;
   }
 
   changeEntity(entity: BaseData<EntityId>): void {
     this.entityName = entity?.name;
+    this.ownerId = entity?.ownerId ?? new TenantId(getCurrentAuthUser(this.store).tenantId);
   }
 
-  buildForm(_entity?: CalculatedFieldInfo): FormGroup {
+  buildForm(_entity?: CalculatedFieldAlarmRuleInfo): FormGroup {
     return inject(CalculatedFieldFormService).buildAlarmRuleForm();
   }
 
-  updateForm(entity: CalculatedFieldInfo) {
-    const { configuration = {} as CalculatedFieldConfiguration, type = CalculatedFieldType.ALARM, debugSettings = { failuresEnabled: true, allEnabled: true }, entityId = this.entityId, ...value } = entity ?? {};
+  updateForm(entity: CalculatedFieldAlarmRuleInfo) {
+    const { configuration = {} as CalculatedFieldAlarmRuleConfiguration, type = CalculatedFieldType.ALARM, debugSettings = { failuresEnabled: true, allEnabled: true }, entityId = this.entityId, ...value } = entity ?? {};
     this.entityForm.patchValue({ configuration, debugSettings, entityId, ...value }, {emitEvent: false});
     if (!entityId) {
       this.entityForm.get('configuration').disable({emitEvent: false});
@@ -175,7 +157,8 @@ export class AlarmRulesComponent extends EntityComponent<CalculatedFieldsTableEn
         expression: {
           type: AlarmRuleExpressionType.SIMPLE
         }
-      }
+      },
+      alarmDetails: null
     };
     this.configFormGroup.patchValue({clearRule: clearAlarmRule});
   }
@@ -184,16 +167,11 @@ export class AlarmRulesComponent extends EntityComponent<CalculatedFieldsTableEn
     if (entityId?.entityType === EntityType.DEVICE || entityId?.entityType === EntityType.ASSET) {
       this.entityService.getEntity(entityId.entityType, entityId.id, { ignoreLoading: true, ignoreErrors: true }).subscribe(
         (entity: AssetInfo | DeviceInfo) => {
-          if (this.isAssignedToCustomer(entity)) {
-            this.ownerId = entity.customerId;
+          if (entity.ownerId) {
+            this.ownerId = entity.ownerId;
           }
         }
       );
     }
   }
-
-  private isAssignedToCustomer(entity: AssetInfo | DeviceInfo): boolean {
-    return entity && entity.customerId && entity.customerId.id !== NULL_UUID;
-  }
-
 }

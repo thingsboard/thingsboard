@@ -1,0 +1,57 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="pubSubIntegrationConfigForm">
+
+  <fieldset class="fields-group">
+    <legend class="group-title" translate>integration.credentials</legend>
+    <div class="flex flex-row xs:flex-col gt-xs:gap-2">
+      <mat-form-field appearance="outline" class="mat-block flex-1">
+        <mat-label translate>integration.project-id</mat-label>
+        <input matInput formControlName="projectId" required>
+        @if (pubSubIntegrationConfigForm.get('projectId').hasError('required')) {
+          <mat-error translate>
+            integration.project-id-required
+          </mat-error>
+        }
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="mat-block flex-1">
+        <mat-label translate>integration.subscription-id</mat-label>
+        <input matInput formControlName="subscriptionId" required>
+        @if (pubSubIntegrationConfigForm.get('subscriptionId').hasError('required')) {
+          <mat-error translate>
+            integration.subscription-id-required
+          </mat-error>
+        }
+      </mat-form-field>
+    </div>
+    <fieldset [disabled]="disabled">
+      <tb-secret-file-input formControlName="serviceAccountKey"
+                            label="{{'integration.service-account-key' | translate}}"
+                            inputId="service-account-key"
+                            required
+                            [existingFileName]="pubSubIntegrationConfigForm.get('serviceAccountKeyFileName').value"
+                            (fileNameChanged)="pubSubIntegrationConfigForm.get('serviceAccountKeyFileName').setValue($event)">
+      </tb-secret-file-input>
+    </fieldset>
+  </fieldset>
+
+  <ng-container [ngTemplateOutlet]="executeRemotelyTemplate">
+  </ng-container>
+
+  <mat-expansion-panel class="configuration-panel">
+    <mat-expansion-panel-header>
+      <mat-panel-description class="flex items-stretch justify-end" translate>
+        integration.advanced-settings
+      </mat-panel-description>
+    </mat-expansion-panel-header>
+    <ng-template matExpansionPanelContent>
+      <ng-container [ngTemplateOutlet]="genericAdditionalInfoTemplate">
+      </ng-container>
+    </ng-template>
+  </mat-expansion-panel>
+
+</section>

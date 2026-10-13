@@ -1,0 +1,76 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="azureIotConfigForm" class="flex flex-col">
+  <fieldset formGroupName="clientConfiguration">
+    <div class="flex flex-row xs:flex-col gt-xs:gap-2">
+      <mat-form-field appearance="outline" class="mat-block flex-1">
+        <mat-label translate>integration.hostname</mat-label>
+        <input matInput required formControlName="host">
+        @if (azureIotConfigForm.get('clientConfiguration.host').hasError('required')) {
+          <mat-error translate>
+            integration.hostname-required
+          </mat-error>
+        }
+        @if (azureIotConfigForm.get('clientConfiguration.host').hasError('privateNetwork')) {
+          <mat-error translate>
+            integration.host-private
+          </mat-error>
+        }
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="mat-block flex-1">
+        <mat-label translate>integration.device-id</mat-label>
+        <input required matInput formControlName="clientId" autocomplete="new-clientId" maxlength="65535">
+        @if (azureIotConfigForm.get('clientConfiguration.clientId').hasError('required')) {
+          <mat-error translate>
+            integration.device-id-required
+          </mat-error>
+        }
+        @if (azureIotConfigForm.get('clientConfiguration.clientId').hasError('maxlength')) {
+          <mat-error translate>
+            integration.device-id-range
+          </mat-error>
+        }
+      </mat-form-field>
+    </div>
+    <tb-integration-credentials formControlName="credentials"
+                                ignoreCaCert
+                                [allowCredentialTypes]="[IntegrationCredentialType.SAS, IntegrationCredentialType.CertPEM]">
+    </tb-integration-credentials>
+  </fieldset>
+
+  <tb-mqtt-topic-filters formControlName="topicFilters" [excludeQos]="[MqttQos.EXACTLY_ONCE]">
+  </tb-mqtt-topic-filters>
+  <ng-container [ngTemplateOutlet]="executeRemotelyTemplate">
+  </ng-container>
+
+  <mat-expansion-panel class="configuration-panel" formGroupName="clientConfiguration">
+    <mat-expansion-panel-header>
+      <mat-panel-description class="flex items-stretch justify-end" translate>
+        integration.advanced-settings
+      </mat-panel-description>
+    </mat-expansion-panel-header>
+    <ng-template matExpansionPanelContent>
+      <tb-mqtt-version-select subscriptSizing="fixed" appearance="outline" formControlName="protocolVersion" [excludeVersions]="[MqttVersion.MQTT_3_1, MqttVersion.MQTT_5]"></tb-mqtt-version-select>
+      <mat-form-field appearance="outline" class="mat-block flex-1">
+        <mat-label translate>integration.max-bytes-in-message</mat-label>
+        <input matInput type="number" formControlName="maxBytesInMessage">
+        @if (azureIotConfigForm.get('clientConfiguration.maxBytesInMessage').hasError('min')) {
+          <mat-error translate>
+            integration.max-bytes-in-message-range
+          </mat-error>
+        }
+        @if (azureIotConfigForm.get('clientConfiguration.maxBytesInMessage').hasError('max')) {
+          <mat-error translate>
+            integration.max-bytes-in-message-range
+          </mat-error>
+        }
+      </mat-form-field>
+      <ng-container [ngTemplateOutlet]="genericAdditionalInfoTemplate">
+      </ng-container>
+    </ng-template>
+  </mat-expansion-panel>
+</section>

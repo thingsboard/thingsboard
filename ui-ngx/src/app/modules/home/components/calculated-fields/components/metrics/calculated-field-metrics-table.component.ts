@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   AfterViewInit,
   booleanAttribute,
@@ -41,7 +28,7 @@ import {
   CalculatedFieldAggMetric,
   CalculatedFieldAggMetricValue,
 } from '@shared/models/calculated-field.models';
-import { MatButton } from '@angular/material/button';
+import { MatIconButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { isDefinedAndNotNull, isEqual } from '@core/utils';
@@ -59,21 +46,22 @@ import { AceHighlightRules } from '@shared/models/ace/ace.models';
 import { Observable } from "rxjs";
 
 @Component({
-  selector: 'tb-calculated-field-metrics-table',
-  templateUrl: './calculated-field-metrics-table.component.html',
-  styleUrls: [`../calculated-field-arguments/calculated-field-arguments-table.component.scss`],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => CalculatedFieldMetricsTableComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => CalculatedFieldMetricsTableComponent),
-      multi: true
-    }
-  ],
+    selector: 'tb-calculated-field-metrics-table',
+    templateUrl: './calculated-field-metrics-table.component.html',
+    styleUrls: [`../calculated-field-arguments/calculated-field-arguments-table.component.scss`],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => CalculatedFieldMetricsTableComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => CalculatedFieldMetricsTableComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class CalculatedFieldMetricsTableComponent implements OnInit, ControlValueAccessor, Validator, AfterViewInit {
 
@@ -82,6 +70,7 @@ export class CalculatedFieldMetricsTableComponent implements OnInit, ControlValu
   @Input() highlightRules: AceHighlightRules;
   @Input({transform: booleanAttribute}) simpleMode: boolean = false;
   @Input({required: true}) testScript: (expression?: string) => Observable<string>;
+  @Input({transform: booleanAttribute}) readonly: boolean;
 
   @ViewChild(MatSort, { static: true }) sort: MatSort;
 
@@ -153,7 +142,7 @@ export class CalculatedFieldMetricsTableComponent implements OnInit, ControlValu
     this.metricsFormArray.markAsDirty();
   }
 
-  manageMetrics($event: Event, matButton: MatButton, metric = {} as CalculatedFieldAggMetricValue, readonly: boolean = false): void {
+  manageMetrics($event: Event, matButton: MatIconButton, metric = {} as CalculatedFieldAggMetricValue, readonly: boolean = false): void {
     $event?.stopPropagation();
     if (this.popoverComponent && !this.popoverComponent.tbHidden) {
       this.popoverComponent.hide();

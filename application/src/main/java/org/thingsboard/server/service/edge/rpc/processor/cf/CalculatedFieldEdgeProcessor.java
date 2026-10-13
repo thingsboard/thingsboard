@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.edge.rpc.processor.cf;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -22,9 +10,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.edge.rpc.EdgeVersionComparator;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
@@ -46,6 +36,9 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 
 import java.util.UUID;
+
+import static org.thingsboard.server.common.data.cf.CalculatedFieldType.SCRIPT;
+import static org.thingsboard.server.common.data.cf.CalculatedFieldType.SIMPLE;
 
 @Slf4j
 @Component
@@ -91,7 +84,7 @@ public class CalculatedFieldEdgeProcessor extends BaseCalculatedFieldProcessor i
         switch (edgeEvent.getAction()) {
             case ADDED, UPDATED -> {
                 CalculatedField calculatedField = edgeCtx.getCalculatedFieldService().findById(edgeEvent.getTenantId(), calculatedFieldId);
-                if (calculatedField != null) {
+                if (calculatedField != null && isValidCfToSend(calculatedField.getType(), edgeVersion)) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
                     CalculatedFieldUpdateMsg calculatedFieldUpdateMsg = EdgeMsgConstructorUtils.constructCalculatedFieldUpdatedMsg(msgType, calculatedField);
                     return DownlinkMsg.newBuilder()
@@ -109,6 +102,10 @@ public class CalculatedFieldEdgeProcessor extends BaseCalculatedFieldProcessor i
             }
         }
         return null;
+    }
+
+    private boolean isValidCfToSend(CalculatedFieldType type, EdgeVersion edgeVersion) {
+        return EdgeVersionComparator.INSTANCE.compare(edgeVersion, EdgeVersion.V_4_3_0) >= 0 || (type == SIMPLE || type == SCRIPT);
     }
 
     @Override
@@ -134,7 +131,7 @@ public class CalculatedFieldEdgeProcessor extends BaseCalculatedFieldProcessor i
 
                     return edgeId != null ?
                             saveEdgeEvent(tenantId, edgeId, type, actionType, entityId, body) :
-                            processNotificationToRelatedEdges(tenantId, calculatedFieldOwnerId, entityId, type, actionType, originatorEdgeId);
+                            pushNotificationToAllRelatedEdges(tenantId, calculatedFieldOwnerId, entityId, type, actionType, null, null, originatorEdgeId);
                 } else {
                     return processActionForAllEdges(tenantId, type, actionType, entityId, null, originatorEdgeId);
                 }

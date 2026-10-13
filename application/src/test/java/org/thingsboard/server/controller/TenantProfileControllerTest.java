@@ -1,21 +1,10 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import org.awaitility.Awaitility;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
@@ -25,9 +14,12 @@ import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.audit.AuditLog;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.queue.ProcessingStrategy;
 import org.thingsboard.server.common.data.queue.ProcessingStrategyType;
@@ -47,6 +39,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -81,12 +74,17 @@ public class TenantProfileControllerTest extends AbstractControllerTest {
 
         testBroadcastEntityStateChangeEventTimeManyTimeTenantProfile(savedTenantProfile, ComponentLifecycleEvent.CREATED, 1);
 
+        awaitAuditLog("Wait for async audit log to be persisted (ADDED expected)", savedTenantProfile.getId(), ActionType.ADDED);
+
         savedTenantProfile.setName("New tenant profile");
-        doPost("/api/tenantProfile", savedTenantProfile, TenantProfile.class);
+        doPost("/api/tenantProfile", savedTenantProfile).andExpect(status().isOk());
         TenantProfile foundTenantProfile = doGet("/api/tenantProfile/" + savedTenantProfile.getId().getId().toString(), TenantProfile.class);
         Assert.assertEquals(foundTenantProfile.getName(), savedTenantProfile.getName());
 
         testBroadcastEntityStateChangeEventTimeManyTimeTenantProfile(savedTenantProfile, ComponentLifecycleEvent.UPDATED, 1);
+
+        awaitAuditLog("Wait for async audit log to be persisted (UPDATED expected)", savedTenantProfile.getId(), ActionType.UPDATED);
+
     }
 
     @Test
@@ -180,6 +178,8 @@ public class TenantProfileControllerTest extends AbstractControllerTest {
         Assert.assertNotNull(foundDefaultTenantProfile);
         Assert.assertEquals(savedTenantProfile.getName(), foundDefaultTenantProfile.getName());
         Assert.assertEquals(savedTenantProfile.getId(), foundDefaultTenantProfile.getId());
+
+        awaitAuditLog("Wait for async audit log to be persisted (UPDATED expected for NEW DEFAULT Tenant Profile)", savedTenantProfile.getId(), ActionType.UPDATED);
     }
 
     @Test
@@ -244,6 +244,8 @@ public class TenantProfileControllerTest extends AbstractControllerTest {
 
         doDelete("/api/tenantProfile/" + savedTenantProfile.getId().getId().toString())
                 .andExpect(status().isOk());
+
+        awaitAuditLog("Wait for async audit log to be persisted for deleted tenant profile", savedTenantProfile.getId(), ActionType.DELETED);
 
         testBroadcastEntityStateChangeEventTimeManyTimeTenantProfile(savedTenantProfile, ComponentLifecycleEvent.DELETED, 1);
 
@@ -393,6 +395,17 @@ public class TenantProfileControllerTest extends AbstractControllerTest {
         testBroadcastEntityStateChangeEventNeverTenantProfile();
     }
 
+    private void awaitAuditLog(String awaitMessage, TenantProfileId tenantProfileId, ActionType expectedAction) {
+        Awaitility.await(awaitMessage)
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .until(() -> doGetTypedWithTimePageLink(
+                        "/api/audit/logs?",
+                        new TypeReference<PageData<AuditLog>>() {},
+                        new TimePageLink(100)).getData().stream()
+                        .anyMatch(log -> log.getEntityId().equals(tenantProfileId) && log.getActionType() == expectedAction)
+                );
+    }
+
     private TenantProfile createTenantProfile(String name) {
         TenantProfile tenantProfile = new TenantProfile();
         tenantProfile.setName(name);
@@ -428,7 +441,6 @@ public class TenantProfileControllerTest extends AbstractControllerTest {
         profileData.setQueueConfiguration(Collections.singletonList(mainQueueConfiguration));
         tenantProfile.setProfileData(profileData);
     }
-
 
     private void testBroadcastEntityStateChangeEventTimeManyTimeTenantProfile(TenantProfile tenantProfile, ComponentLifecycleEvent event, int cntTime) {
         ArgumentMatcher<TenantProfile> matcherTenantProfile = cntTime == 1 ? argument -> argument.equals(tenantProfile) :

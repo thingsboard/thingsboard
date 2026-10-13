@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.cf.ctx.state.geofencing;
 
 import lombok.Data;
@@ -51,9 +38,10 @@ public class GeofencingZoneState {
         this.ts = attributeKvEntry.getLastUpdateTs();
         this.version = attributeKvEntry.getVersion();
         if (entry.getValueAsString() == null) {
-            throw new IllegalArgumentException("Perimeter attribute key '" + entry.getKey() + "' not found for Zone with id: " + zoneId);
+            throw new IllegalArgumentException("Perimeter attribute '" + entry.getKey() + "' not found for Zone with id: " + zoneId);
         }
-        this.perimeterDefinition = JacksonUtil.fromString(entry.getValueAsString(), PerimeterDefinition.class);
+        this.perimeterDefinition = JacksonUtil.fromString(entry.getValueAsString(), PerimeterDefinition.class,
+                "Invalid perimeter definition format for Zone with id: " + zoneId + ". Failed to parse attribute '" + entry.getKey() + "'");
     }
 
     public GeofencingZoneState(GeofencingZoneProto proto) {

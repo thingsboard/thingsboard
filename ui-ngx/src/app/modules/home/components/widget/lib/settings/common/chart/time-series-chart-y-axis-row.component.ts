@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   ChangeDetectorRef,
   Component,
@@ -29,11 +16,11 @@ import {
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import {
-  AxisPosition,
+  AxisPosition, normalizeAxisLimit,
   timeSeriesAxisPositionTranslations,
   TimeSeriesChartYAxisSettings
 } from '@home/components/widget/lib/chart/time-series-chart.models';
-import { MatButton } from '@angular/material/button';
+import { MatIconButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import {
@@ -46,17 +33,18 @@ import { TimeSeriesChartYAxesPanelComponent } from '@home/components/widget/lib/
 import { ValueSourceType } from '@shared/models/widget-settings.models';
 
 @Component({
-  selector: 'tb-time-series-chart-y-axis-row',
-  templateUrl: './time-series-chart-y-axis-row.component.html',
-  styleUrls: ['./time-series-chart-y-axis-row.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => TimeSeriesChartYAxisRowComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-time-series-chart-y-axis-row',
+    templateUrl: './time-series-chart-y-axis-row.component.html',
+    styleUrls: ['./time-series-chart-y-axis-row.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TimeSeriesChartYAxisRowComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class TimeSeriesChartYAxisRowComponent implements ControlValueAccessor, OnInit {
 
@@ -74,6 +62,10 @@ export class TimeSeriesChartYAxisRowComponent implements ControlValueAccessor, O
   @Input()
   @coerceBoolean()
   supportsUnitConversion = false;
+
+  @Input()
+  @coerceBoolean()
+  reportMode = false;
 
   @Output()
   axisRemoved = new EventEmitter();
@@ -135,8 +127,8 @@ export class TimeSeriesChartYAxisRowComponent implements ControlValueAccessor, O
 
   writeValue(value: TimeSeriesChartYAxisSettings): void {
     this.modelValue = value;
-    const min = this.normalizeLimit(value.min);
-    const max = this.normalizeLimit(value.max);
+    const min = this.reportMode ? value.min : normalizeAxisLimit(value.min);
+    const max = this.reportMode ? value.max : normalizeAxisLimit(value.max);
 
     this.axisFormGroup.patchValue({
       label: value.label,
@@ -152,7 +144,7 @@ export class TimeSeriesChartYAxisRowComponent implements ControlValueAccessor, O
     this.cd.markForCheck();
   }
 
-  editAxis($event: Event, matButton: MatButton) {
+  editAxis($event: Event, matButton: MatIconButton) {
     if ($event) {
       $event.stopPropagation();
     }
@@ -171,6 +163,7 @@ export class TimeSeriesChartYAxisRowComponent implements ControlValueAccessor, O
           panelTitle: this.translate.instant('widgets.time-series-chart.axis.y-axis-settings'),
           axisSettings: deepClone(this.modelValue),
           advanced: this.advanced,
+          reportMode: this.reportMode,
           aliasController: this.timeSeriesChartYAxesPanel.aliasController,
           dataKeyCallbacks: this.timeSeriesChartYAxesPanel.dataKeyCallbacks,
           datasource: this.timeSeriesChartYAxesPanel.datasource
@@ -250,28 +243,5 @@ export class TimeSeriesChartYAxisRowComponent implements ControlValueAccessor, O
       entityKey: [null, []],
       entityKeyType: [null, []]
     });
-  }
-
-  private normalizeLimit(limit: any) {
-    const base = {
-      type: ValueSourceType.constant,
-      value: null,
-      latestKey: null,
-      latestKeyType: null,
-      entityAlias: null,
-      entityKey: null,
-      entityKeyType: null
-    };
-
-    if (limit == null) return base;
-
-    if (typeof limit === 'number' || typeof limit === 'string') {
-      return { ...base, type: ValueSourceType.constant, value: Number(limit) };
-    }
-
-    return {
-      ...base,
-      ...limit,
-    };
   }
 }

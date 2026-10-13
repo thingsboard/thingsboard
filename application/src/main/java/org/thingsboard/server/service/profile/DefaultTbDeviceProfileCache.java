@@ -1,21 +1,9 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.profile;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -23,15 +11,19 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -140,6 +132,25 @@ public class DefaultTbDeviceProfileCache implements TbDeviceProfileCache {
         ConcurrentMap<EntityId, BiConsumer<DeviceId, DeviceProfile>> deviceListeners = deviceProfileListeners.get(tenantId);
         if (deviceListeners != null) {
             deviceListeners.remove(listenerId);
+        }
+    }
+
+    @EventListener(ComponentLifecycleMsg.class)
+    public void onComponentLifecycleEvent(ComponentLifecycleMsg event) {
+        switch (event.getEntityId().getEntityType()) {
+            case TENANT:
+                if (event.getEvent() == ComponentLifecycleEvent.DELETED) {
+                    TenantId tenantId = event.getTenantId();
+                    Set<DeviceProfileId> toRemove = deviceProfilesMap.values().stream()
+                            .filter(deviceProfile -> deviceProfile.getTenantId().equals(tenantId))
+                            .map(DeviceProfile::getId)
+                            .collect(Collectors.toSet());
+                    deviceProfilesMap.keySet().removeAll(toRemove);
+                    devicesMap.entrySet().removeIf(entry -> toRemove.contains(entry.getValue()));
+                    profileListeners.remove(tenantId);
+                    deviceProfileListeners.remove(tenantId);
+                }
+                break;
         }
     }
 

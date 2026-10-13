@@ -1,23 +1,11 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable } from '@angular/core';
 import {
   checkBoxCell,
   DateEntityTableColumn,
+  defaultEntityTablePermissions,
   EntityTableColumn,
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
@@ -44,6 +32,7 @@ import { PageLink } from '@shared/models/page/page-link';
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { ResourcesTableHeaderComponent } from '@home/pages/admin/resource/resources-table-header.component';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
 import { ResourceLibraryTabsComponent } from '@home/pages/admin/resource/resource-library-tabs.component';
 import { forkJoin, Observable, of } from "rxjs";
 import {
@@ -64,6 +53,7 @@ export class ResourcesLibraryTableConfigResolver  {
 
   constructor(private store: Store<AppState>,
               private resourceService: ResourceService,
+              private userPermissionsService: UserPermissionsService,
               private translate: TranslateService,
               private router: Router,
               private dialog: MatDialog,
@@ -149,7 +139,7 @@ export class ResourcesLibraryTableConfigResolver  {
   }
 
   resolve(): EntityTableConfig<Resource, PageLink, ResourceInfo> {
-    this.config.tableTitle = this.translate.instant('resource.resources-library');
+    this.config.tableTitle = this.translate.instant('resource.files');
     this.config.componentsData = {
       resourceType: ''
     };
@@ -157,6 +147,7 @@ export class ResourcesLibraryTableConfigResolver  {
     this.config.deleteEnabled = (resource) => this.isResourceEditable(resource, authUser.authority);
     this.config.entitySelectionEnabled = (resource) => this.isResourceEditable(resource, authUser.authority);
     this.config.detailsReadonly = (resource) => this.detailsReadonly(resource, authUser.authority);
+    defaultEntityTablePermissions(this.userPermissionsService, this.config);
     return this.config;
   }
 

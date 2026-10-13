@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { DestroyRef, inject, NgModule } from '@angular/core';
 import { ActivatedRouteSnapshot, ResolveFn, Router, RouterModule, RouterStateSnapshot, Routes } from '@angular/router';
 import { Authority } from '@shared/models/authority.enum';
@@ -22,14 +9,11 @@ import { AlarmsMode } from '@shared/models/alarm.models';
 import { MenuId } from '@core/services/menu.models';
 import { RouterTabsComponent } from "@home/components/router-tabs.component";
 import { AlarmRulesTableComponent } from "@home/components/alarm-rules/alarm-rules-table.component";
-import { CalculatedFieldsTableComponent } from '@home/components/calculated-fields/calculated-fields-table.component';
 import { EntityDetailsPageComponent } from '@home/components/entity/entity-details-page.component';
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
 import { entityDetailsPageBreadcrumbLabelFunction } from '@home/pages/home-pages.models';
 import { BreadCrumbConfig } from '@shared/components/breadcrumb';
-import { CalculatedFieldsTableConfigResolver } from '@home/pages/calculated-fields/calculated-fields-routing.module';
-import { CalculatedFieldsTableConfig } from '@home/components/calculated-fields/calculated-fields-table-config';
-import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
+import { AlarmRulesService } from '@core/http/alarm-rules.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
@@ -39,11 +23,14 @@ import { ImportExportService } from '@shared/import-export/import-export.service
 import { EntityDebugSettingsService } from '@home/components/entity/debug/entity-debug-settings.service';
 import { UtilsService } from '@core/services/utils.service';
 import { AlarmRulesTableConfig } from '@home/components/alarm-rules/alarm-rules-table-config';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { AiAssistantAlarmButtonComponent } from '@home/components/alarm/ai-assistant-alarm-button.component';
+import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
 
 export const AlarmRulesTableConfigResolver: ResolveFn<AlarmRulesTableConfig> =
   (_route: ActivatedRouteSnapshot,
    _state: RouterStateSnapshot,
-   calculatedFieldsService = inject(CalculatedFieldsService),
+   alarmRulesService = inject(AlarmRulesService),
    translate = inject(TranslateService),
    dialog = inject(MatDialog),
    store = inject(Store<AppState>),
@@ -53,9 +40,11 @@ export const AlarmRulesTableConfigResolver: ResolveFn<AlarmRulesTableConfig> =
    entityDebugSettingsService = inject(EntityDebugSettingsService),
    utilsService = inject(UtilsService),
    router = inject(Router),
+   userPermissionsService = inject(UserPermissionsService),
+   iotHubActions = inject(IotHubActionsService),
   ) => {
     return new AlarmRulesTableConfig(
-      calculatedFieldsService,
+      alarmRulesService,
       translate,
       dialog,
       datePipe,
@@ -69,6 +58,10 @@ export const AlarmRulesTableConfigResolver: ResolveFn<AlarmRulesTableConfig> =
       entityDebugSettingsService,
       utilsService,
       router,
+      false,
+      false,
+      userPermissionsService,
+      iotHubActions,
       true,
     );
   };
@@ -81,7 +74,8 @@ const routes: Routes = [
       auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
       breadcrumb: {
         menuId: MenuId.alarms_center
-      }
+      },
+      routerTabsHeaderComponent: AiAssistantAlarmButtonComponent
     },
     children: [
       {
@@ -133,6 +127,7 @@ const routes: Routes = [
               } as BreadCrumbConfig<EntityDetailsPageComponent>,
               auth: [Authority.TENANT_ADMIN],
               title: 'entity.type-calculated-fields',
+              hideTabs: true,
             },
             resolve: {
               entitiesTableConfig: AlarmRulesTableConfigResolver

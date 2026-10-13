@@ -1,20 +1,9 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -99,7 +88,7 @@ public class TwoFactorAuthController extends BaseController {
         }
     }
 
-    @ApiOperation(value = "Get available 2FA providers (getAvailableTwoFaProviders)", notes =
+    @ApiOperation(value = "Get available 2FA providers (getAvailableTwoFaProviderInfos)", notes =
             "Get the list of 2FA provider infos available for user to use. Example:\n" +
             "```\n[\n" +
             "  {\n    \"type\": \"EMAIL\",\n    \"default\": true,\n    \"contact\": \"ab*****ko@gmail.com\"\n  },\n" +
@@ -108,7 +97,7 @@ public class TwoFactorAuthController extends BaseController {
             "]\n```")
     @GetMapping("/providers")
     @PreAuthorize("hasAuthority('PRE_VERIFICATION_TOKEN')")
-    public List<TwoFaProviderInfo> getAvailableTwoFaProviders() throws ThingsboardException {
+    public List<TwoFaProviderInfo> getAvailableTwoFaProviderInfos() throws ThingsboardException {
         SecurityUser user = getCurrentUser();
         Optional<PlatformTwoFaSettings> platformTwoFaSettings = twoFaConfigManager.getPlatformTwoFaSettings(user.getTenantId(), true);
         return twoFaConfigManager.getAccountTwoFaSettings(user.getTenantId(), user)
@@ -153,7 +142,7 @@ public class TwoFactorAuthController extends BaseController {
 
     private JwtPair createTokenPair(SecurityUser user) {
         log.debug("[{}][{}] Creating token pair for user", user.getTenantId(), user.getId());
-        user = new SecurityUser(userService.findUserById(user.getTenantId(), user.getId()), true, user.getUserPrincipal());
+        user = new SecurityUser(userService.findUserById(user.getTenantId(), user.getId()), true, user.getUserPrincipal(), getMergedUserPermissions(user, false));
         return tokenFactory.createTokenPair(user);
     }
 
@@ -166,6 +155,7 @@ public class TwoFactorAuthController extends BaseController {
     @Builder
     public static class TwoFaProviderInfo {
         private TwoFaProviderType type;
+        @JsonProperty("default")
         private boolean isDefault;
         private String contact;
         private Integer minVerificationCodeSendPeriod;

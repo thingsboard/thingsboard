@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.dao.sql.cf;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -74,6 +61,7 @@ public class DefaultNativeCalculatedFieldRepository implements NativeCalculatedF
                 JsonNode configuration = JacksonUtil.toJsonNode((String) row.get("configuration"));
                 long version = row.get("version") != null ? (long) row.get("version") : 0;
                 String debugSettings = (String) row.get("debug_settings");
+                JsonNode additionalInfo = JacksonUtil.toJsonNode((String) row.get("additional_info"));
 
                 CalculatedField calculatedField = new CalculatedField();
                 calculatedField.setId(new CalculatedFieldId(id));
@@ -91,6 +79,7 @@ public class DefaultNativeCalculatedFieldRepository implements NativeCalculatedF
                 }
                 calculatedField.setVersion(version);
                 calculatedField.setDebugSettings(JacksonUtil.fromString(debugSettings, DebugSettings.class));
+                calculatedField.setAdditionalInfo(additionalInfo);
 
                 return calculatedField;
             }).collect(Collectors.toList());

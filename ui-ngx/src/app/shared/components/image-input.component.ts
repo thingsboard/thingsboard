@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   AfterViewInit,
   ChangeDetectorRef,
@@ -30,7 +17,7 @@ import { AppState } from '@core/core.state';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { FlowDirective } from '@flowjs/ngx-flow';
+import { FlowConfig } from '@flowjs/ngx-flow';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { UtilsService } from '@core/services/utils.service';
 import { DialogService } from '@core/services/dialog.service';
@@ -40,16 +27,17 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 
 @Component({
-  selector: 'tb-image-input',
-  templateUrl: './image-input.component.html',
-  styleUrls: ['./image-input.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ImageInputComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-image-input',
+    templateUrl: './image-input.component.html',
+    styleUrls: ['./image-input.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ImageInputComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class ImageInputComponent extends PageComponent implements AfterViewInit, OnDestroy, ControlValueAccessor {
 
@@ -58,6 +46,21 @@ export class ImageInputComponent extends PageComponent implements AfterViewInit,
 
   @Input()
   label: string;
+
+  @Input()
+  emptyImageText = this.translate.instant('dashboard.empty-image');
+
+  @Input()
+  noImageText = this.translate.instant('dashboard.no-image');
+
+  @Input()
+  dropLabel = this.translate.instant('image-input.drag-and-drop');
+
+  @Input()
+  maxImageSize = 0;
+
+  @Input()
+  allowedImageMimeTypes: string[];
 
   @Input()
   maxSizeByte: number;
@@ -78,6 +81,18 @@ export class ImageInputComponent extends PageComponent implements AfterViewInit,
 
   @Input()
   disabled: boolean;
+
+  @Output()
+  imageTypeChanged = new EventEmitter<string>();
+
+  @Output()
+  imageSizeOverflow = new EventEmitter();
+
+  @Output()
+  imageTypeError = new EventEmitter();
+
+  @Output()
+  imageCleared = new EventEmitter();
 
   @Input()
   showClearButton = true;
@@ -109,24 +124,25 @@ export class ImageInputComponent extends PageComponent implements AfterViewInit,
   @Output()
   fileNameChanged = new EventEmitter<string>();
 
+  imageType: string;
   imageUrl: string;
   file: File;
 
   safeImageUrl: SafeUrl;
 
   @ViewChild('flow', {static: true})
-  flow: FlowDirective;
+  flow: FlowConfig;
 
   autoUploadSubscription: Subscription;
 
   private propagateChange = null;
 
   constructor(protected store: Store<AppState>,
+              private translate: TranslateService,
               private utils: UtilsService,
               private sanitizer: DomSanitizer,
               private imagePipe: ImagePipe,
               private dialog: DialogService,
-              private translate: TranslateService,
               private fileSize: FileSizePipe,
               private cd: ChangeDetectorRef) {
     super(store);
@@ -149,19 +165,55 @@ export class ImageInputComponent extends PageComponent implements AfterViewInit,
         }
         if (this.filterFile(flowFile)) {
           const reader = new FileReader();
-          reader.onload = (_loadEvent) => {
+          reader.onload = (loadEvent) => {
+            let allowedImage = true;
+            let type;
+            let dataUrl;
             if (typeof reader.result === 'string' && reader.result.startsWith('data:image/')) {
-              this.imageUrl = reader.result;
-              this.safeImageUrl = this.sanitizer.bypassSecurityTrustUrl(this.imageUrl);
+              dataUrl = reader.result;
+              type = this.extractType(dataUrl);
+              if (this.allowedImageMimeTypes && this.allowedImageMimeTypes.length) {
+                if (!type || this.allowedImageMimeTypes.indexOf(type) === -1) {
+                  allowedImage = false;
+                }
+              }
+            } else {
+              allowedImage = false;
+            }
+            if (allowedImage) {
+              this.imageType = type;
+              this.imageUrl = dataUrl;
+              this.safeImageUrl = this.sanitizer.bypassSecurityTrustUrl(dataUrl);
               this.file = file;
               this.fileName = fileName;
               this.updateModel();
+            } else {
+              this.imageTypeError.emit();
             }
           };
-          reader.readAsDataURL(file);
+          if (this.maxImageSize > 0 && file.size > this.maxImageSize) {
+            this.imageSizeOverflow.emit();
+          } else {
+            reader.readAsDataURL(file);
+          }
         }
       }
     });
+  }
+
+  private extractType(dataUrl: string): string {
+    let type;
+    if (dataUrl) {
+      let res: string | string[] = dataUrl.split(';');
+      if (res && res.length) {
+        res = res[0];
+        res = res.split(':');
+        if (res && res.length > 1) {
+          type = res[1];
+        }
+      }
+    }
+    return type;
   }
 
   ngOnDestroy() {
@@ -181,6 +233,7 @@ export class ImageInputComponent extends PageComponent implements AfterViewInit,
 
   writeValue(value: string): void {
     this.imageUrl = value;
+    this.imageType = this.extractType(value);
     if (this.imageUrl) {
       if (this.processImageApiLink) {
         this.imagePipe.transform(this.imageUrl, {preview: true, ignoreLoadingImage: true}).subscribe(
@@ -202,6 +255,7 @@ export class ImageInputComponent extends PageComponent implements AfterViewInit,
       this.propagateChange(this.file);
     } else {
       this.propagateChange(this.imageUrl);
+      this.imageTypeChanged.emit(this.imageType);
     }
     this.fileNameChanged.emit(this.fileName);
   }
@@ -215,10 +269,12 @@ export class ImageInputComponent extends PageComponent implements AfterViewInit,
   }
 
   clearImage() {
+    this.imageType = null;
     this.imageUrl = null;
     this.safeImageUrl = null;
     this.file = null;
     this.fileName = null;
     this.updateModel();
+    this.imageCleared.emit();
   }
 }

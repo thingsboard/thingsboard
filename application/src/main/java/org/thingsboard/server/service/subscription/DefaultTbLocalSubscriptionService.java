@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.subscription;
 
 import jakarta.annotation.PostConstruct;
@@ -57,6 +45,7 @@ import org.thingsboard.server.service.ws.WebSocketService;
 import org.thingsboard.server.service.ws.WebSocketSessionRef;
 import org.thingsboard.server.service.ws.notification.sub.NotificationRequestUpdate;
 import org.thingsboard.server.service.ws.notification.sub.NotificationsSubscriptionUpdate;
+import org.thingsboard.server.service.log.sub.LogsSubscriptionUpdate;
 import org.thingsboard.server.service.ws.telemetry.sub.AlarmSubscriptionUpdate;
 import org.thingsboard.server.service.ws.telemetry.sub.TelemetrySubscriptionUpdate;
 
@@ -348,7 +337,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
                         if (sub.isLatestValues()) {
                             for (TsKvEntry kv : data) {
                                 Long stateTs = keyStates.get(kv.getKey());
-                                if (stateTs == null || kv.getTs() >= stateTs) {
+                                if (stateTs == null || kv.getTs() >= stateTs || kv.isDeletedEntry()) {
                                     if (updateData == null) {
                                         updateData = new ArrayList<>();
                                     }
@@ -362,7 +351,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
                         for (TsKvEntry kv : data) {
                             Long stateTs = keyStates.get(kv.getKey());
                             if (stateTs != null) {
-                                if (!sub.isLatestValues() || kv.getTs() >= stateTs) {
+                                if (!sub.isLatestValues() || kv.getTs() >= stateTs || kv.isDeletedEntry()) {
                                     if (updateData == null) {
                                         updateData = new ArrayList<>();
                                     }
@@ -448,6 +437,21 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
         processSubscriptionData(entityId,
                 sub -> TbSubscriptionType.NOTIFICATIONS.equals(sub.getType()) || TbSubscriptionType.NOTIFICATIONS_COUNT.equals(sub.getType()),
                 update, callback);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public void onLogsUpdate(EntityId entityId, LogsSubscriptionUpdate update, TbCallback callback) {
+        var subs = subscriptionsByEntityId.get(entityId.getId());
+        if (subs != null) {
+            subs.getSubs().forEach(s -> {
+                if (TbSubscriptionType.LOGS.equals(s.getType())) {
+                    TbSubscription<LogsSubscriptionUpdate> sub = (TbSubscription<LogsSubscriptionUpdate>) s;
+                    sub.getUpdateProcessor().accept(sub, update);
+                }
+            });
+        }
+        callback.onSuccess();
     }
 
     @Override

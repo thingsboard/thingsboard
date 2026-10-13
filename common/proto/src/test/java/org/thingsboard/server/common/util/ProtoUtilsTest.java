@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -27,13 +15,21 @@ import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.ApiUsageState;
+import org.thingsboard.server.common.data.AssetCacheInfo;
+import org.thingsboard.server.common.data.AssetProfileCacheInfo;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceCacheInfo;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceProfileCacheInfo;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.asset.AssetProfile;
+import org.thingsboard.server.common.data.converter.Converter;
+import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceConfiguration;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.DeviceConfiguration;
@@ -41,12 +37,18 @@ import org.thingsboard.server.common.data.device.data.DeviceTransportConfigurati
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.id.IntegrationId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.integration.Integration;
+import org.thingsboard.server.common.data.integration.IntegrationInfo;
+import org.thingsboard.server.common.data.integration.IntegrationType;
 import org.thingsboard.server.common.data.kv.AttributeKey;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
@@ -76,6 +78,9 @@ import org.thingsboard.server.common.msg.rule.engine.DeviceAttributesEventNotifi
 import org.thingsboard.server.common.msg.rule.engine.DeviceCredentialsUpdateNotificationMsg;
 import org.thingsboard.server.common.msg.rule.engine.DeviceEdgeUpdateMsg;
 import org.thingsboard.server.common.msg.rule.engine.DeviceNameOrTypeUpdateMsg;
+import org.thingsboard.server.gen.integration.ConverterProto;
+import org.thingsboard.server.gen.integration.IntegrationInfoProto;
+import org.thingsboard.server.gen.integration.IntegrationProto;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
 import java.util.List;
@@ -229,6 +234,17 @@ class ProtoUtilsTest {
     }
 
     @Test
+    void protoFromDeviceRpcResponseOnewaySerialization() {
+        // Oneway RPC success: response and error are both null. Relies on the proto
+        // 'optional string response' presence bit so the receiver round-trips null
+        // rather than seeing the proto3 default "".
+        FromDeviceRpcResponseActorMsg msg = new FromDeviceRpcResponseActorMsg(23, tenantId, deviceId, new FromDeviceRpcResponse(id, null, null));
+        TransportProtos.ToDeviceActorNotificationMsgProto serializedMsg = ProtoUtils.toProto(msg);
+        Assertions.assertNotNull(serializedMsg);
+        assertThat(ProtoUtils.fromProto(serializedMsg)).as("deserialized").isEqualTo(msg);
+    }
+
+    @Test
     void protoRemoveRpcActorSerialization() {
         RemoveRpcActorMsg msg = new RemoveRpcActorMsg(tenantId, deviceId, id);
         TransportProtos.ToDeviceActorNotificationMsgProto serializedMsg = ProtoUtils.toProto(msg);
@@ -279,10 +295,62 @@ class ProtoUtilsTest {
         TransportProtos.RepositorySettingsProto settingsProto = ProtoUtils.toProto(expectedSettings);
         RepositorySettings actualSettings = ProtoUtils.fromProto(settingsProto);
         assertEqualDeserializedEntity(expectedSettings, actualSettings, "RepositorySettings");
+
+        Integration expectedIntegration = easyRandom.nextObject(Integration.class);
+        expectedIntegration.setDebugMode(false); // Debug Mode is always false until removed.
+        expectedIntegration.setDebugSettings(DebugSettings.failures());
+        IntegrationProto integrationProto = ProtoUtils.toProto(expectedIntegration);
+        Integration actualIntegration = ProtoUtils.fromProto(integrationProto);
+        assertEqualDeserializedEntity(expectedIntegration, actualIntegration, "Integration");
+
+        Converter expectedConverter = easyRandom.nextObject(Converter.class);
+        expectedConverter.setDebugMode(false); // Debug Mode is always false until removed.
+        expectedConverter.setDebugSettings(DebugSettings.failures());
+        ConverterProto converterProto = ProtoUtils.toProto(expectedConverter);
+        Converter actualConverter = ProtoUtils.fromProto(converterProto);
+        assertEqualDeserializedEntity(expectedConverter, actualConverter, "Converter");
     }
 
     private void assertEqualDeserializedEntity(Object expected, Object actual, String entityName) {
         assertThat(actual).as(String.format(description, entityName, entityName)).isEqualTo(expected);
+    }
+
+    @Test
+    void integrationInfoToProtoCarriesEveryProtoScalar() {
+        // The broadcast integration list maps each IntegrationInfo (loaded config-free from the integration info
+        // view) via ProtoUtils.toIntegrationInfoProto. This pins that the mapping reads — and so the source
+        // query must supply — every scalar IntegrationInfoProto carries, guarding against a newly added proto
+        // field shipping empty or a dropped source column.
+        IntegrationInfo info = new IntegrationInfo(new IntegrationId(UUID.fromString("0a4a3b2c-1d2e-4f5a-8b9c-0d1e2f3a4b5c")));
+        info.setTenantId(TenantId.fromUUID(UUID.fromString("35e10f77-16e7-424d-ae46-ee780f87ac4f")));
+        info.setName("Modbus North");
+        info.setType(IntegrationType.MQTT);
+        // Alternating boolean pattern so a transposition of adjacent boolean fields in the mapping fails.
+        info.setEnabled(true);
+        info.setRemote(false);
+        info.setAllowCreateDevicesOrAssets(true);
+
+        IntegrationInfoProto proto = ProtoUtils.toIntegrationInfoProto(info);
+
+        assertThat(proto.getIntegrationIdMSB()).isEqualTo(info.getId().getId().getMostSignificantBits());
+        assertThat(proto.getIntegrationIdLSB()).isEqualTo(info.getId().getId().getLeastSignificantBits());
+        assertThat(proto.getTenantIdMSB()).isEqualTo(info.getTenantId().getId().getMostSignificantBits());
+        assertThat(proto.getTenantIdLSB()).isEqualTo(info.getTenantId().getId().getLeastSignificantBits());
+        assertThat(proto.getName()).isEqualTo(info.getName());
+        assertThat(proto.getType()).isEqualTo(info.getType().name());
+        assertThat(proto.getEnabled()).isEqualTo(info.isEnabled());
+        assertThat(proto.getRemote()).isEqualTo(info.isRemote());
+        assertThat(proto.getAllowCreateDevicesOrAssets()).isEqualTo(info.isAllowCreateDevicesOrAssets());
+
+        // Consumer side of the broadcast: the proto round-trips back into an equivalent lightweight Integration.
+        Integration back = ProtoUtils.fromProtoToIntegration(proto);
+        assertThat(back.getId()).isEqualTo(info.getId());
+        assertThat(back.getTenantId()).isEqualTo(info.getTenantId());
+        assertThat(back.getName()).isEqualTo(info.getName());
+        assertThat(back.getType()).isEqualTo(info.getType());
+        assertThat(back.isEnabled()).isEqualTo(info.isEnabled());
+        assertThat(back.isRemote()).isEqualTo(info.isRemote());
+        assertThat(back.isAllowCreateDevicesOrAssets()).isEqualTo(info.isAllowCreateDevicesOrAssets());
     }
 
     @ParameterizedTest
@@ -364,6 +432,218 @@ class ProtoUtilsTest {
         // fromProto
         EntityId restored = ProtoUtils.fromProto(proto);
         assertThat(restored).isNotNull().isEqualTo(original);
+    }
+
+
+    @ParameterizedTest
+    @EnumSource(EntityType.class)
+    void testEntityIDProto_fromProto_withLegacyField(EntityType entityType) throws Exception {
+        UUID uuid = UUID.fromString("51a514d7-ea8f-496d-b567-f6e76f0f9b83");
+        EntityId original = EntityIdFactory.getByTypeAndUuid(entityType, uuid);
+
+        TransportProtos.EntityIdProto legacyOnly =
+                TransportProtos.EntityIdProto.newBuilder()
+                        .setEntityIdMSB(uuid.getMostSignificantBits())
+                        .setEntityIdLSB(uuid.getLeastSignificantBits())
+                        .setEntityType(entityType.name())
+                        .build();
+
+        // fromProto should restore via legacy string
+        EntityId restored = ProtoUtils.fromProto(legacyOnly);
+
+        assertThat(restored).isNotNull().isEqualTo(original);
+
+        // Also, verify fromBytes path behaves the same
+        byte[] bytes = legacyOnly.toByteArray();
+        EntityId restoredFromBytes = ProtoUtils.fromProto(TransportProtos.EntityIdProto.parseFrom(bytes));
+        assertThat(restoredFromBytes).isEqualTo(original);
+    }
+
+    @Test
+    void testToSessionInfoWithNodeId() {
+        UUID sessionId = UUID.randomUUID();
+        String nodeId = "test-node";
+        Device device = easyRandom.nextObject(Device.class);
+
+        TransportProtos.SessionInfoProto sessionInfo = ProtoUtils.toSessionInfo(sessionId, nodeId, device);
+
+        assertThat(sessionInfo.getSessionIdMSB()).isEqualTo(sessionId.getMostSignificantBits());
+        assertThat(sessionInfo.getSessionIdLSB()).isEqualTo(sessionId.getLeastSignificantBits());
+        assertThat(sessionInfo.getTenantIdMSB()).isEqualTo(device.getTenantId().getId().getMostSignificantBits());
+        assertThat(sessionInfo.getTenantIdLSB()).isEqualTo(device.getTenantId().getId().getLeastSignificantBits());
+        assertThat(sessionInfo.getDeviceIdMSB()).isEqualTo(device.getId().getId().getMostSignificantBits());
+        assertThat(sessionInfo.getDeviceIdLSB()).isEqualTo(device.getId().getId().getLeastSignificantBits());
+        assertThat(sessionInfo.getDeviceName()).isEqualTo(device.getName());
+        assertThat(sessionInfo.getDeviceType()).isEqualTo(device.getType());
+        assertThat(sessionInfo.getDeviceProfileIdMSB()).isEqualTo(device.getDeviceProfileId().getId().getMostSignificantBits());
+        assertThat(sessionInfo.getDeviceProfileIdLSB()).isEqualTo(device.getDeviceProfileId().getId().getLeastSignificantBits());
+        assertThat(sessionInfo.getNodeId()).isEqualTo(nodeId);
+        assertThat(sessionInfo.getIsGateway()).isFalse();
+
+        if (device.getCustomerId() != null && !device.getCustomerId().isNullUid()) {
+            assertThat(sessionInfo.getCustomerIdMSB()).isEqualTo(device.getCustomerId().getId().getMostSignificantBits());
+            assertThat(sessionInfo.getCustomerIdLSB()).isEqualTo(device.getCustomerId().getId().getLeastSignificantBits());
+        }
+    }
+
+    @Test
+    void protoCacheInfoSerialization() {
+        Device expectedDevice = easyRandom.nextObject(Device.class);
+        TransportProtos.DeviceCacheInfoProto deviceCacheProto = ProtoUtils.toCacheProto(expectedDevice);
+        DeviceCacheInfo actualDeviceCacheInfo = ProtoUtils.fromCacheProto(deviceCacheProto);
+
+        assertThat(actualDeviceCacheInfo.getId()).isEqualTo(expectedDevice.getUuidId());
+        assertThat(actualDeviceCacheInfo.name()).isEqualTo(expectedDevice.getName());
+        assertThat(actualDeviceCacheInfo.type()).isEqualTo(expectedDevice.getType());
+        assertThat(actualDeviceCacheInfo.tenantId()).isEqualTo(expectedDevice.getTenantId());
+        assertThat(actualDeviceCacheInfo.customerId()).isEqualTo(expectedDevice.getCustomerId());
+        assertThat(actualDeviceCacheInfo.deviceProfileId()).isEqualTo(expectedDevice.getDeviceProfileId());
+
+        Asset expectedAsset = easyRandom.nextObject(Asset.class);
+        TransportProtos.AssetCacheInfoProto assetCacheProto = ProtoUtils.toCacheProto(expectedAsset);
+        AssetCacheInfo actualAssetCacheInfo = ProtoUtils.fromCacheProto(assetCacheProto);
+
+        assertThat(actualAssetCacheInfo.getId()).isEqualTo(expectedAsset.getUuidId());
+        assertThat(actualAssetCacheInfo.name()).isEqualTo(expectedAsset.getName());
+        assertThat(actualAssetCacheInfo.type()).isEqualTo(expectedAsset.getType());
+        assertThat(actualAssetCacheInfo.tenantId()).isEqualTo(expectedAsset.getTenantId());
+        assertThat(actualAssetCacheInfo.customerId()).isEqualTo(expectedAsset.getCustomerId());
+        assertThat(actualAssetCacheInfo.assetProfileId()).isEqualTo(expectedAsset.getAssetProfileId());
+
+        DeviceProfile expectedDeviceProfile = easyRandom.nextObject(DeviceProfile.class);
+        TransportProtos.DeviceProfileCacheInfoProto deviceProfileCacheProto = ProtoUtils.toCacheProto(expectedDeviceProfile);
+        DeviceProfileCacheInfo actualDeviceProfileCacheInfo = ProtoUtils.fromCacheProto(deviceProfileCacheProto);
+
+        assertThat(actualDeviceProfileCacheInfo.getId()).isEqualTo(expectedDeviceProfile.getUuidId());
+        assertThat(actualDeviceProfileCacheInfo.tenantId()).isEqualTo(expectedDeviceProfile.getTenantId());
+        assertThat(actualDeviceProfileCacheInfo.name()).isEqualTo(expectedDeviceProfile.getName());
+        assertThat(actualDeviceProfileCacheInfo.defaultRuleChainId()).isEqualTo(expectedDeviceProfile.getDefaultRuleChainId());
+        assertThat(actualDeviceProfileCacheInfo.defaultQueueName()).isEqualTo(expectedDeviceProfile.getDefaultQueueName());
+
+        AssetProfile expectedAssetProfile = easyRandom.nextObject(AssetProfile.class);
+        TransportProtos.AssetProfileCacheInfoProto assetProfileCacheProto = ProtoUtils.toCacheProto(expectedAssetProfile);
+        org.thingsboard.server.common.data.AssetProfileCacheInfo actualAssetProfileCacheInfo = ProtoUtils.fromCacheProto(assetProfileCacheProto);
+
+        assertThat(actualAssetProfileCacheInfo.getId()).isEqualTo(expectedAssetProfile.getUuidId());
+        assertThat(actualAssetProfileCacheInfo.tenantId()).isEqualTo(expectedAssetProfile.getTenantId());
+        assertThat(actualAssetProfileCacheInfo.name()).isEqualTo(expectedAssetProfile.getName());
+        assertThat(actualAssetProfileCacheInfo.defaultRuleChainId()).isEqualTo(expectedAssetProfile.getDefaultRuleChainId());
+        assertThat(actualAssetProfileCacheInfo.defaultQueueName()).isEqualTo(expectedAssetProfile.getDefaultQueueName());
+    }
+
+    @Test
+    void protoCacheInfoSerialization_withNullOptionalFields() {
+        Device device = easyRandom.nextObject(Device.class);
+        device.setCustomerId(null);
+        TransportProtos.DeviceCacheInfoProto deviceProto = ProtoUtils.toCacheProto(device);
+        DeviceCacheInfo deviceCacheInfo = ProtoUtils.fromCacheProto(deviceProto);
+        assertThat(deviceCacheInfo.customerId()).isNull();
+        assertThat(deviceCacheInfo.name()).isEqualTo(device.getName());
+
+        Asset asset = easyRandom.nextObject(Asset.class);
+        asset.setCustomerId(null);
+        TransportProtos.AssetCacheInfoProto assetProto = ProtoUtils.toCacheProto(asset);
+        AssetCacheInfo assetCacheInfo = ProtoUtils.fromCacheProto(assetProto);
+        assertThat(assetCacheInfo.customerId()).isNull();
+        assertThat(assetCacheInfo.name()).isEqualTo(asset.getName());
+
+        DeviceProfile deviceProfile = easyRandom.nextObject(DeviceProfile.class);
+        deviceProfile.setDefaultRuleChainId(null);
+        deviceProfile.setDefaultQueueName(null);
+        TransportProtos.DeviceProfileCacheInfoProto dpProto = ProtoUtils.toCacheProto(deviceProfile);
+        DeviceProfileCacheInfo dpCacheInfo = ProtoUtils.fromCacheProto(dpProto);
+        assertThat(dpCacheInfo.defaultRuleChainId()).isNull();
+        assertThat(dpCacheInfo.defaultQueueName()).isNull();
+        assertThat(dpCacheInfo.name()).isEqualTo(deviceProfile.getName());
+
+        AssetProfile assetProfile = easyRandom.nextObject(AssetProfile.class);
+        assetProfile.setDefaultRuleChainId(null);
+        assetProfile.setDefaultQueueName(null);
+        TransportProtos.AssetProfileCacheInfoProto apProto = ProtoUtils.toCacheProto(assetProfile);
+        org.thingsboard.server.common.data.AssetProfileCacheInfo apCacheInfo = ProtoUtils.fromCacheProto(apProto);
+        assertThat(apCacheInfo.defaultRuleChainId()).isNull();
+        assertThat(apCacheInfo.defaultQueueName()).isNull();
+        assertThat(apCacheInfo.name()).isEqualTo(assetProfile.getName());
+    }
+
+    @Test
+    void protoCacheInfoRoundTrip_viaCacheInfoOverload() {
+        UUID deviceId = UUID.randomUUID();
+        TenantId tid = TenantId.fromUUID(UUID.randomUUID());
+        CustomerId custId = new CustomerId(UUID.randomUUID());
+        DeviceProfileId dpId = new DeviceProfileId(UUID.randomUUID());
+        DeviceCacheInfo originalDevice = new DeviceCacheInfo(deviceId, tid, custId, "dev1", "type1", dpId);
+
+        TransportProtos.DeviceCacheInfoProto deviceProto = ProtoUtils.toCacheProto(originalDevice);
+        DeviceCacheInfo restored = ProtoUtils.fromCacheProto(deviceProto);
+        assertThat(restored.getId()).isEqualTo(originalDevice.getId());
+        assertThat(restored.name()).isEqualTo(originalDevice.name());
+        assertThat(restored.type()).isEqualTo(originalDevice.type());
+        assertThat(restored.tenantId()).isEqualTo(originalDevice.tenantId());
+        assertThat(restored.customerId()).isEqualTo(originalDevice.customerId());
+        assertThat(restored.deviceProfileId()).isEqualTo(originalDevice.deviceProfileId());
+
+        UUID assetId = UUID.randomUUID();
+        org.thingsboard.server.common.data.id.AssetProfileId apId = new org.thingsboard.server.common.data.id.AssetProfileId(UUID.randomUUID());
+        AssetCacheInfo originalAsset = new AssetCacheInfo(assetId, tid, custId, "asset1", "assetType", apId);
+        TransportProtos.AssetCacheInfoProto assetProto = ProtoUtils.toCacheProto(originalAsset);
+        AssetCacheInfo restoredAsset = ProtoUtils.fromCacheProto(assetProto);
+        assertThat(restoredAsset.getId()).isEqualTo(originalAsset.getId());
+        assertThat(restoredAsset.name()).isEqualTo(originalAsset.name());
+        assertThat(restoredAsset.type()).isEqualTo(originalAsset.type());
+        assertThat(restoredAsset.tenantId()).isEqualTo(originalAsset.tenantId());
+        assertThat(restoredAsset.customerId()).isEqualTo(originalAsset.customerId());
+        assertThat(restoredAsset.assetProfileId()).isEqualTo(originalAsset.assetProfileId());
+
+        RuleChainId rcId = new RuleChainId(UUID.randomUUID());
+        DeviceProfileCacheInfo originalDp = new DeviceProfileCacheInfo(UUID.randomUUID(), tid, "dpName", rcId, "myQueue");
+        TransportProtos.DeviceProfileCacheInfoProto dpProto = ProtoUtils.toCacheProto(originalDp);
+        DeviceProfileCacheInfo restoredDp = ProtoUtils.fromCacheProto(dpProto);
+        assertThat(restoredDp.getId()).isEqualTo(originalDp.getId());
+        assertThat(restoredDp.name()).isEqualTo(originalDp.name());
+        assertThat(restoredDp.tenantId()).isEqualTo(originalDp.tenantId());
+        assertThat(restoredDp.defaultRuleChainId()).isEqualTo(originalDp.defaultRuleChainId());
+        assertThat(restoredDp.defaultQueueName()).isEqualTo(originalDp.defaultQueueName());
+
+        AssetProfileCacheInfo originalAp =
+                new AssetProfileCacheInfo(UUID.randomUUID(), tid, "apName", rcId, "apQueue");
+        TransportProtos.AssetProfileCacheInfoProto apProto = ProtoUtils.toCacheProto(originalAp);
+        AssetProfileCacheInfo restoredAp = ProtoUtils.fromCacheProto(apProto);
+        assertThat(restoredAp.getId()).isEqualTo(originalAp.getId());
+        assertThat(restoredAp.name()).isEqualTo(originalAp.name());
+        assertThat(restoredAp.tenantId()).isEqualTo(originalAp.tenantId());
+        assertThat(restoredAp.defaultRuleChainId()).isEqualTo(originalAp.defaultRuleChainId());
+        assertThat(restoredAp.defaultQueueName()).isEqualTo(originalAp.defaultQueueName());
+    }
+
+    @Test
+    void testToSessionInfoWithGateway() {
+        UUID sessionId = UUID.randomUUID();
+        Device device = easyRandom.nextObject(Device.class);
+        DeviceId gatewayId = new DeviceId(UUID.randomUUID());
+        boolean isGateway = true;
+
+        TransportProtos.SessionInfoProto sessionInfo = ProtoUtils.toSessionInfo(sessionId, null, device, gatewayId, isGateway);
+
+        assertThat(sessionInfo.getSessionIdMSB()).isEqualTo(sessionId.getMostSignificantBits());
+        assertThat(sessionInfo.getSessionIdLSB()).isEqualTo(sessionId.getLeastSignificantBits());
+        assertThat(sessionInfo.getTenantIdMSB()).isEqualTo(device.getTenantId().getId().getMostSignificantBits());
+        assertThat(sessionInfo.getTenantIdLSB()).isEqualTo(device.getTenantId().getId().getLeastSignificantBits());
+        assertThat(sessionInfo.getDeviceIdMSB()).isEqualTo(device.getId().getId().getMostSignificantBits());
+        assertThat(sessionInfo.getDeviceIdLSB()).isEqualTo(device.getId().getId().getLeastSignificantBits());
+        assertThat(sessionInfo.getDeviceName()).isEqualTo(device.getName());
+        assertThat(sessionInfo.getDeviceType()).isEqualTo(device.getType());
+        assertThat(sessionInfo.getDeviceProfileIdMSB()).isEqualTo(device.getDeviceProfileId().getId().getMostSignificantBits());
+        assertThat(sessionInfo.getDeviceProfileIdLSB()).isEqualTo(device.getDeviceProfileId().getId().getLeastSignificantBits());
+        assertThat(sessionInfo.getNodeId()).isEmpty();
+        assertThat(sessionInfo.getIsGateway()).isEqualTo(isGateway);
+        assertThat(sessionInfo.getGatewayIdMSB()).isEqualTo(gatewayId.getId().getMostSignificantBits());
+        assertThat(sessionInfo.getGatewayIdLSB()).isEqualTo(gatewayId.getId().getLeastSignificantBits());
+
+        if (device.getCustomerId() != null && !device.getCustomerId().isNullUid()) {
+            assertThat(sessionInfo.getCustomerIdMSB()).isEqualTo(device.getCustomerId().getId().getMostSignificantBits());
+            assertThat(sessionInfo.getCustomerIdLSB()).isEqualTo(device.getCustomerId().getId().getLeastSignificantBits());
+        }
     }
 
 }

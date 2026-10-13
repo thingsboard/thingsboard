@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { BaseData } from '@shared/models/base-data';
 import { TenantId } from '@shared/models/id/tenant-id';
 import { AlarmId } from '@shared/models/id/alarm-id';
@@ -26,8 +13,7 @@ import { TableCellButtonActionDescriptor } from '@home/components/widget/lib/tab
 import { AlarmCommentId } from '@shared/models/id/alarm-comment-id';
 import { UserId } from '@shared/models/id/user-id';
 import { AlarmFilter } from '@shared/models/query/query.models';
-import { HasTenantId } from '@shared/models/entity.models';
-import { isNotEmptyStr } from '@core/utils';
+import { isDefinedAndNotNull, isNotEmptyStr } from '@core/utils';
 
 export enum AlarmsMode {
   ALL,
@@ -106,7 +92,7 @@ export const alarmSeverityBackgroundColors = new Map<AlarmSeverity, string>(
   ]
 );
 
-export interface Alarm extends BaseData<AlarmId>, HasTenantId {
+export interface Alarm extends BaseData<AlarmId> {
   tenantId: TenantId;
   customerId: CustomerId;
   assigneeId: UserId;
@@ -391,18 +377,20 @@ export class AlarmQueryV2 {
 
 export const getUserDisplayName = (alarmAssignee: AlarmAssignee |  AlarmCommentInfo) => {
   let displayName = '';
-  if (isNotEmptyStr(alarmAssignee.firstName) || isNotEmptyStr(alarmAssignee.lastName)) {
-    if (alarmAssignee.firstName) {
-      displayName += alarmAssignee.firstName;
-    }
-    if (alarmAssignee.lastName) {
-      if (displayName.length > 0) {
-        displayName += ' ';
+  if (isDefinedAndNotNull(alarmAssignee)) {
+   if (isNotEmptyStr(alarmAssignee.firstName) || isNotEmptyStr(alarmAssignee.lastName)) {
+      if (alarmAssignee.firstName) {
+       displayName += alarmAssignee.firstName;
       }
-      displayName += alarmAssignee.lastName;
+      if (alarmAssignee.lastName) {
+        if (displayName.length > 0) {
+          displayName += ' ';
+        }
+        displayName += alarmAssignee.lastName;
+      }
+    }   else {
+      displayName = alarmAssignee.email;
     }
-  } else {
-    displayName = alarmAssignee.email;
   }
   return displayName;
 };

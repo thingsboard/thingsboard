@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import {
   ChangeDetectorRef,
   Component,
@@ -38,13 +24,15 @@ import { SHARED_MODULE_TOKEN } from '@shared/components/tokens';
 import { guid, isDefinedAndNotNull } from '@core/utils';
 import { Observable, of, ReplaySubject } from 'rxjs';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { sanitizeTemplate } from './markdown-sanitize.helper';
 
 let defaultMarkdownStyle: string;
 
 @Component({
-  selector: 'tb-markdown',
-  templateUrl: './markdown.component.html',
-  styleUrls: ['./markdown.component.scss']
+    selector: 'tb-markdown',
+    templateUrl: './markdown.component.html',
+    styleUrls: ['./markdown.component.scss'],
+    standalone: false
 })
 export class TbMarkdownComponent implements OnChanges {
 
@@ -113,7 +101,7 @@ export class TbMarkdownComponent implements OnChanges {
   }
 
   private render(markdown: string) {
-    const compiled = this.markdownService.parse(markdown, { decodeHtml: false });
+    const compiled = this.markdownService.parse(markdown, { decodeHtml: false, disableSanitizer: true });
     let markdownClass = 'tb-markdown-view';
     if (this.markdownClass) {
       markdownClass += ` ${this.markdownClass}`;
@@ -132,7 +120,7 @@ export class TbMarkdownComponent implements OnChanges {
       const preHtml = preElements.item(i).outerHTML.replace('ngnonbindable=""', 'ngNonBindable');
       template = template.replace(matches[i][0], preHtml);
     }
-    template = this.sanitize(template);
+    template = sanitizeTemplate(template);
     this.markdownContainer.clear();
     let styles: string[] = [];
     let readyObservable: Observable<void>;
@@ -264,10 +252,6 @@ export class TbMarkdownComponent implements OnChanges {
     } else {
       return of(null);
     }
-  }
-
-  private sanitize(template: string): string {
-    return template.replace(/{/g, '&#123;').replace(/}/g, '&#125;').replace(/@/g, '&#64;');
   }
 
   private destroyMarkdownInstanceResources() {

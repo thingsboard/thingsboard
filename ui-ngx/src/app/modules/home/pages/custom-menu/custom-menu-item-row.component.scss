@@ -1,0 +1,122 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@import "../../../../../scss/constants";
+@import '../../../../../scss/mixins';
+
+.tb-custom-menu-item-row-component-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.tb-custom-menu-item-row-component {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  .mat-mdc-icon-button.mat-mdc-button-base {
+    &:not(.tb-drag-handle) {
+      @media #{$mat-xs} {
+        @include tb-mat-icon-button-size(24);
+      }
+      @media #{$mat-sm} {
+        @include tb-mat-icon-button-size(32);
+      }
+    }
+    &:not(:disabled) {
+      .mat-icon {
+        color: rgba(0, 0, 0, 0.54);
+      }
+    }
+    &:disabled {
+      .mat-icon {
+        color: rgba(0, 0, 0, 0.12);
+      }
+    }
+  }
+  .tb-form-row {
+    flex: 1;
+    min-width: 0;
+    &.tb-no-padding-left {
+      padding-left: 0;
+    }
+    .tb-custom-menu-item-start-block {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      min-width: 0;
+    }
+    .tb-custom-menu-item-icon-name-block {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+    .tb-custom-menu-item-input-block {
+      display: flex;
+      gap: 8px;
+      flex: 1;
+    }
+  }
+}
+
+.tb-custom-menu-item-pages-container {
+  display: flex;
+  flex-direction: row;
+  gap: 0;
+}
+
+.tb-custom-menu-item-pages-left {
+  border-left: 1px solid rgba(0,0,0,0.12);
+  margin-left: 8px;
+  margin-bottom: 28px;
+}
+
+.tb-custom-menu-item-pages-right {
+  margin-top: 8px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  .tb-custom-menu-item-pages-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    .tb-custom-menu-item-page-item {
+      display: flex;
+      flex-direction: row;
+      gap: 0;
+      .tb-custom-menu-item-page-line {
+        width: 8px;
+        border-top: 1px solid rgba(0, 0, 0, 0.12);
+        margin-top: 28px;
+      }
+    }
+  }
+}
+
+.tb-custom-menu-item-page {
+  background: #fff;
+}
+
+.mdc-button.tb-add-custom-menu-subitem-button {
+  min-height: 36px;
+  margin-left: 16px;
+  margin-top: 8px;
+  margin-right: 112px;
+  font-weight: 400;
+}
+
+.tb-custom-menu-item-info {
+  .mdc-text-field:not(.mdc-text-field--disabled) {
+    input.mdc-text-field__input {
+      cursor: default;
+      &::placeholder {
+        color: var(--tb-primary-500);
+      }
+      &:-ms-input-placeholder {
+        color: var(--tb-primary-500);
+      }
+    }
+  }
+}

@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.msa.ui.pages;
 
 import org.openqa.selenium.WebDriver;
@@ -46,6 +34,10 @@ public class ProfilesPageElements extends OtherPageElementsHelper {
     private static final String DEFAULT = ENTITY + "/../..//mat-icon[text() = 'check_box']";
     private static final String DEVICE_PROFILE_VIEW_MAKE_DEFAULT_BTN = "//span[text() = ' Make device profile default ']/..";
     private static final String ASSET_PROFILE_VIEW_MAKE_DEFAULT_BTN = "//span[text() = ' Make asset profile default ']/..";
+    private static final String PROFILE_VIEW_EDIT_PENCIL_BTN = "//mat-icon[contains(text(),'edit')]/ancestor::button";
+    private static final String PROFILE_VIEW_DONE_BTN = "//mat-icon[contains(text(),'done')]/ancestor::button";
+    private static final String PROFILE_VIEW_HELP_BTN = "//mat-icon[contains(text(),'help')]/ancestor::button";
+    private static final String ALL_NAMES = "//mat-cell[contains(@class,'name')]/span";
 
     protected String getDeviseProfileViewDeleteBtn() {
         return DEVICE_PROFILE_VIEW_DELETE_BTN;
@@ -173,5 +165,26 @@ public class ProfilesPageElements extends OtherPageElementsHelper {
 
     public WebElement assetProfileViewMakeDefaultBtn() {
         return waitUntilElementToBeClickable(ASSET_PROFILE_VIEW_MAKE_DEFAULT_BTN);
+    }
+
+    public WebElement profileViewEditPencilBtn() {
+        waitUntilVisibilityOfElementLocated(PROFILE_VIEW_EDIT_PENCIL_BTN);
+        return waitUntilElementToBeClickable(PROFILE_VIEW_EDIT_PENCIL_BTN);
+    }
+
+    public WebElement profileViewDoneBtn() {
+        return waitUntilElementToBeClickable(PROFILE_VIEW_DONE_BTN);
+    }
+
+    public WebElement profileViewVisibleDoneBtn() {
+        return waitUntilVisibilityOfElementLocated(PROFILE_VIEW_DONE_BTN);
+    }
+
+    public WebElement profileViewHelpBtn() {
+        return waitUntilElementToBeClickable(PROFILE_VIEW_HELP_BTN);
+    }
+
+    public List<WebElement> allNames() {
+        return waitUntilElementsToBeClickable(ALL_NAMES);
     }
 }

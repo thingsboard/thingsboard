@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.edge;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
@@ -73,6 +60,7 @@ public class CalculatedFieldEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(DEFAULT_CF_NAME, calculatedFieldFromMsg.getName());
         Assert.assertEquals(savedDevice.getId(), calculatedFieldFromMsg.getEntityId());
         Assert.assertEquals(config, calculatedFieldFromMsg.getConfiguration());
+        Assert.assertEquals(calculatedField.getAdditionalInfo(), calculatedFieldFromMsg.getAdditionalInfo());
 
         edgeImitator.expectMessageAmount(1);
         savedCalculatedField.setName(UPDATED_CF_NAME);
@@ -147,7 +135,7 @@ public class CalculatedFieldEdgeTest extends AbstractEdgeTest {
         CalculatedFieldUpdateMsg calculatedFieldUpdateMsg = (CalculatedFieldUpdateMsg) latestMessage;
         CalculatedField calculatedFieldFromEdge = JacksonUtil.fromString(calculatedFieldUpdateMsg.getEntity(), CalculatedField.class, true);
         Assert.assertNotNull(calculatedFieldFromEdge);
-        Assert.assertEquals(savedCalculatedField, calculatedFieldFromEdge);
+        compareHasVersionEntities(savedCalculatedField, calculatedFieldFromEdge);
         Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, calculatedFieldUpdateMsg.getMsgType());
     }
 
@@ -229,6 +217,7 @@ public class CalculatedFieldEdgeTest extends AbstractEdgeTest {
         config.setOutput(output);
 
         calculatedField.setConfiguration(config);
+        calculatedField.setAdditionalInfo(JacksonUtil.newObjectNode());
 
         return calculatedField;
     }
@@ -260,6 +249,7 @@ public class CalculatedFieldEdgeTest extends AbstractEdgeTest {
         CalculatedField calculatedField = doGet("/api/calculatedField/" + uuid, CalculatedField.class);
         Assert.assertNotNull(calculatedField);
         Assert.assertEquals(resourceTitle, calculatedField.getName());
+        Assert.assertEquals(JacksonUtil.newObjectNode(), calculatedField.getAdditionalInfo());
     }
 
 }

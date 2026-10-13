@@ -1,23 +1,13 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div [formGroup]="relatedAggregationConfiguration" class="tb-form-panel no-border no-padding">
   <div class="tb-form-panel">
-    <div class="tb-form-panel-title" tbTruncateWithTooltip tb-hint-tooltip-icon="{{ 'calculated-fields.hint.aggregation-path-related-entities' | translate }}">
+    <div class="tb-form-panel-title" tbTruncateWithTooltip tb-hint-tooltip-icon="{{ 'calculated-fields.hint.aggregation-path-related-entities' | translate: {max: maxRelatedEntitiesToReturnPerCfArgument} }}">
       {{ 'calculated-fields.aggregation-path-related-entities' | translate }}
     </div>
     <div class="flex gap-3 xs:flex-col" formGroupName="relation">
@@ -48,7 +38,9 @@
                                             [entityId]="entityId"
                                             [tenantId]="tenantId"
                                             [entityName]="entityName"
-                                            [relation]="relatedAggregationConfiguration.get('relation').value"/>
+                                            [isEditValue]="isEditValue"
+                                            [relation]="relatedAggregationConfiguration.get('relation').value"
+                                            [readonly]="readonly" />
   </div>
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ 'calculated-fields.hint.metrics' | translate }}">
@@ -59,6 +51,7 @@
                                        [arguments]="arguments$ | async"
                                        [highlightRules]="argumentsHighlightRules$ | async"
                                        [editorCompleter]="argumentsEditorCompleter$ | async"
+                                       [readonly]="readonly"
     ></tb-calculated-field-metrics-table>
     <tb-time-unit-input required
                         sameWidthInputs

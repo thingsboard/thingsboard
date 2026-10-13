@@ -1,28 +1,21 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.queue;
 
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.integration.api.data.IntegrationDownlinkMsg;
 import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.ApiUsageState;
@@ -38,19 +31,29 @@ import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.agent.AgentAppEvent;
+import org.thingsboard.server.common.data.agent.ProcessingStartStatus;
+import org.thingsboard.server.common.data.agent.AgentAppUnitInfo;
+import org.thingsboard.server.common.data.agent.AgentBulkAction;
+import org.thingsboard.server.common.data.agent.BulkOperationRequest;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.data.id.AgentId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -71,16 +74,22 @@ import org.thingsboard.server.common.msg.rule.engine.DeviceEdgeUpdateMsg;
 import org.thingsboard.server.common.msg.rule.engine.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.dao.edge.EdgeService;
+import org.thingsboard.server.dao.group.EntityGroupService;
+import org.thingsboard.server.gen.integration.ToIntegrationExecutorNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.AgentAppEventNotificationProto;
+import org.thingsboard.server.gen.transport.TransportProtos.LogStreamRequestProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ComponentLifecycleMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceStateServiceMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.EdgeNotificationMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.EntityDeleteMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.FromDeviceRPCResponseProto;
+import org.thingsboard.server.gen.transport.TransportProtos.IntegrationDownlinkMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.QueueDeleteMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.QueueUpdateMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ResourceDeleteMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ResourceUpdateMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToAgentNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
@@ -89,6 +98,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToEdgeMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToEdgeNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineNotificationMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToTbReportNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToVersionControlServiceMsg;
 import org.thingsboard.server.queue.TbQueueCallback;
@@ -99,8 +109,9 @@ import org.thingsboard.server.queue.common.TbRuleEngineProducerService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
+import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.gateway_device.GatewayNotificationsService;
-import org.thingsboard.server.service.ota.OtaPackageStateService;
+import org.thingsboard.server.dao.ota.OtaPackageStateService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 
@@ -126,6 +137,7 @@ public class DefaultTbClusterService implements TbClusterService {
 
     private final AtomicInteger toCoreMsgs = new AtomicInteger(0);
     private final AtomicInteger toCoreNfs = new AtomicInteger(0);
+    private final AtomicInteger toIntegrationExecutorNfs = new AtomicInteger(0);
     private final AtomicInteger toRuleEngineMsgs = new AtomicInteger(0);
     private final AtomicInteger toRuleEngineNfs = new AtomicInteger(0);
     private final AtomicInteger toTransportNfs = new AtomicInteger(0);
@@ -149,8 +161,11 @@ public class DefaultTbClusterService implements TbClusterService {
     private final TbDeviceProfileCache deviceProfileCache;
     private final TbAssetProfileCache assetProfileCache;
     private final GatewayNotificationsService gatewayNotificationsService;
+    private final EntityGroupService entityGroupService;
     private final EdgeService edgeService;
     private final TbTransactionalCache<EdgeId, String> edgeIdServiceIdCache;
+    private final DbCallbackExecutorService dbCallbackExecutor;
+    private final TbTransactionalCache<AgentId, String> agentIdServiceIdCache;
 
     @Override
     public void pushMsgToCore(TenantId tenantId, EntityId entityId, ToCoreMsg msg, TbQueueCallback callback) {
@@ -187,6 +202,22 @@ public class DefaultTbClusterService implements TbClusterService {
     }
 
     @Override
+    public void broadcastToRuleEngine(ToRuleEngineNotificationMsg toRuleEngineMsg) {
+        UUID msgId = UUID.randomUUID();
+        TbQueueProducer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> toRuleEngineNfProducer =
+                producerProvider.getRuleEngineNotificationsMsgProducer();
+        // Unlike broadcast(ComponentLifecycleMsg), the core service ids are not subtracted: a monolith is one
+        // process running both consumers, and the second arrival loses the reconvergence tryLock without doing
+        // any work. Subtracting would instead make a rule-engine-only signal skip monolith nodes entirely.
+        Set<String> tbRuleEngineServices = partitionService.getAllServiceIds(ServiceType.TB_RULE_ENGINE);
+        for (String serviceId : tbRuleEngineServices) {
+            TopicPartitionInfo tpi = topicService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, serviceId);
+            toRuleEngineNfProducer.send(tpi, new TbProtoQueueMsg<>(msgId, toRuleEngineMsg), null);
+            toRuleEngineNfs.incrementAndGet();
+        }
+    }
+
+    @Override
     public void broadcastToCalculatedFields(ToCalculatedFieldNotificationMsg toCfMsg, TbQueueCallback callback) {
         UUID msgId = UUID.randomUUID();
         TbQueueProducer<TbProtoQueueMsg<ToCalculatedFieldNotificationMsg>> toCfProducer = producerProvider.getCalculatedFieldsNotificationsMsgProducer();
@@ -204,19 +235,28 @@ public class DefaultTbClusterService implements TbClusterService {
         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_VC_EXECUTOR, TenantId.SYS_TENANT_ID, tenantId);
         log.trace("PUSHING msg: {} to:{}", msg, tpi);
         producerProvider.getTbVersionControlMsgProducer().send(tpi, new TbProtoQueueMsg<>(tenantId.getId(), msg), callback);
-        //TODO: ashvayka
         toCoreMsgs.incrementAndGet();
+    }
+
+    @Override
+    public void pushNotificationToCore(String serviceId, IntegrationDownlinkMsg downlink, TbQueueCallback callback) {
+        TopicPartitionInfo tpi = topicService.getNotificationsTopic(ServiceType.TB_CORE, serviceId);
+        IntegrationDownlinkMsgProto.Builder builder = IntegrationDownlinkMsgProto.newBuilder()
+                .setTenantIdMSB(downlink.getTenantId().getId().getMostSignificantBits())
+                .setTenantIdLSB(downlink.getTenantId().getId().getLeastSignificantBits())
+                .setIntegrationIdMSB(downlink.getIntegrationId().getId().getMostSignificantBits())
+                .setIntegrationIdLSB(downlink.getIntegrationId().getId().getLeastSignificantBits())
+                .setDataProto(TbMsg.toProto(downlink.getTbMsg()));
+        ToCoreNotificationMsg msg = ToCoreNotificationMsg.newBuilder().setIntegrationDownlinkMsg(builder).build();
+        producerProvider.getTbCoreNotificationsMsgProducer().send(tpi, new TbProtoQueueMsg<>(downlink.getTbMsg().getId(), msg), callback);
+        toCoreNfs.incrementAndGet();
     }
 
     @Override
     public void pushNotificationToCore(String serviceId, FromDeviceRpcResponse response, TbQueueCallback callback) {
         TopicPartitionInfo tpi = topicService.getNotificationsTopic(ServiceType.TB_CORE, serviceId);
-        log.trace("PUSHING msg: {} to:{}", response, tpi);
-        FromDeviceRPCResponseProto.Builder builder = FromDeviceRPCResponseProto.newBuilder()
-                .setRequestIdMSB(response.getId().getMostSignificantBits())
-                .setRequestIdLSB(response.getId().getLeastSignificantBits())
-                .setError(response.getError().isPresent() ? response.getError().get().ordinal() : -1);
-        response.getResponse().ifPresent(builder::setResponse);
+        log.trace("PUSHING msg: {} to core: {}", response, tpi);
+        var builder = prepareRPCResponseProto(response);
         ToCoreNotificationMsg msg = ToCoreNotificationMsg.newBuilder().setFromDeviceRpcResponse(builder).build();
         producerProvider.getTbCoreNotificationsMsgProducer().send(tpi, new TbProtoQueueMsg<>(response.getId(), msg), callback);
         toCoreNfs.incrementAndGet();
@@ -325,12 +365,8 @@ public class DefaultTbClusterService implements TbClusterService {
     @Override
     public void pushNotificationToRuleEngine(String serviceId, FromDeviceRpcResponse response, TbQueueCallback callback) {
         TopicPartitionInfo tpi = topicService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, serviceId);
-        log.trace("PUSHING msg: {} to:{}", response, tpi);
-        FromDeviceRPCResponseProto.Builder builder = FromDeviceRPCResponseProto.newBuilder()
-                .setRequestIdMSB(response.getId().getMostSignificantBits())
-                .setRequestIdLSB(response.getId().getLeastSignificantBits())
-                .setError(response.getError().isPresent() ? response.getError().get().ordinal() : -1);
-        response.getResponse().ifPresent(builder::setResponse);
+        log.trace("PUSHING msg: {} to rule engine: {}", response, tpi);
+        var builder = prepareRPCResponseProto(response);
         ToRuleEngineNotificationMsg msg = ToRuleEngineNotificationMsg.newBuilder().setFromDeviceRpcResponse(builder).build();
         producerProvider.getRuleEngineNotificationsMsgProducer().send(tpi, new TbProtoQueueMsg<>(response.getId(), msg), callback);
         toRuleEngineNfs.incrementAndGet();
@@ -471,12 +507,34 @@ public class DefaultTbClusterService implements TbClusterService {
     }
 
     @Override
+    public void onUserUpdated(User user, User oldUser) {
+        if (oldUser != null && !Objects.equals(user.getCustomMenuId(), oldUser.getCustomMenuId())) {
+            UserId userId = user.getId();
+            broadcastToCore(TransportProtos.ToCoreNotificationMsg.newBuilder()
+                    .setCustomMenuCacheInvalidateMsg(TransportProtos.CustomMenuCacheInvalidateMsg.newBuilder()
+                            .setUserIdMSB(userId.getId().getMostSignificantBits())
+                            .setUserIdLSB(userId.getId().getLeastSignificantBits())
+                            .build())
+                    .build());
+        }
+    }
+
+    @Override
     public void onCustomerUpdated(Customer customer, Customer oldCustomer) {
+        if (oldCustomer != null && !Objects.equals(customer.getCustomMenuId(), oldCustomer.getCustomMenuId())) {
+            CustomerId customerId = customer.getId();
+            broadcastToCore(TransportProtos.ToCoreNotificationMsg.newBuilder()
+                    .setCustomMenuCacheInvalidateMsg(TransportProtos.CustomMenuCacheInvalidateMsg.newBuilder()
+                            .setCustomerIdMSB(customerId.getId().getMostSignificantBits())
+                            .setCustomerIdLSB(customerId.getId().getLeastSignificantBits())
+                            .build())
+                    .build());
+        }
         ComponentLifecycleMsg msg = ComponentLifecycleMsg.builder()
                 .tenantId(customer.getTenantId())
                 .entityId(customer.getId())
                 .event(oldCustomer == null ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED)
-                .ownerChanged(false) // for compatibility with PE
+                .ownerChanged(oldCustomer != null && !customer.getOwnerId().equals(oldCustomer.getOwnerId()))
                 .build();
         broadcast(msg);
     }
@@ -600,7 +658,23 @@ public class DefaultTbClusterService implements TbClusterService {
         TbQueueProducer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> toRuleEngineProducer = producerProvider.getRuleEngineNotificationsMsgProducer();
         Set<String> tbRuleEngineServices = partitionService.getAllServiceIds(ServiceType.TB_RULE_ENGINE);
         EntityType entityType = msg.getEntityId().getEntityType();
-        if (entityType.isOneOf(
+
+        boolean toIntegrationExecutor = entityType.isOneOf(EntityType.CONVERTER, EntityType.INTEGRATION);
+
+        if (entityType.isOneOf(EntityType.TENANT, EntityType.TENANT_PROFILE, EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE,
+                EntityType.DEVICE, EntityType.ASSET) || toIntegrationExecutor) {
+            TbQueueProducer<TbProtoQueueMsg<ToIntegrationExecutorNotificationMsg>> toIeNfProducer = producerProvider.getTbIntegrationExecutorNotificationsMsgProducer();
+            Set<String> tbIeServices = partitionService.getAllServiceIds(ServiceType.TB_INTEGRATION_EXECUTOR);
+            tbIeServices.addAll(partitionService.getAllServiceIds(ServiceType.TB_CORE));
+            for (String serviceId : tbIeServices) {
+                TopicPartitionInfo tpi = topicService.getNotificationsTopic(ServiceType.TB_INTEGRATION_EXECUTOR, serviceId);
+                ToIntegrationExecutorNotificationMsg toIeMsg = ToIntegrationExecutorNotificationMsg.newBuilder().setComponentLifecycle(componentLifecycleMsgProto).build();
+                toIeNfProducer.send(tpi, new TbProtoQueueMsg<>(msg.getEntityId().getId(), toIeMsg), null);
+                toIntegrationExecutorNfs.incrementAndGet();
+            }
+        }
+
+        boolean toCore = entityType.isOneOf(
                 EntityType.TENANT,
                 EntityType.API_USAGE_STATE,
                 EntityType.ENTITY_VIEW,
@@ -610,12 +684,19 @@ public class DefaultTbClusterService implements TbClusterService {
                 EntityType.DEVICE_PROFILE,
                 EntityType.ASSET_PROFILE,
                 EntityType.JOB,
+                EntityType.CALCULATED_FIELD,
                 EntityType.TB_RESOURCE,
                 EntityType.CUSTOMER,
                 EntityType.USER)
                 || (entityType == EntityType.ASSET && msg.getEvent() == ComponentLifecycleEvent.UPDATED)
-                || (entityType == EntityType.DEVICE && msg.getEvent() == ComponentLifecycleEvent.UPDATED)
-        ) {
+                || (entityType == EntityType.DEVICE && msg.getEvent() == ComponentLifecycleEvent.UPDATED);
+
+        boolean toRuleEngine = !toIntegrationExecutor;
+
+        boolean toTbReport = entityType.isOneOf(EntityType.JOB, EntityType.TENANT);
+        Set<String> tbReportServices = partitionService.getAllServiceIds(ServiceType.TB_REPORT);
+
+        if (toCore) {
             TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> toCoreNfProducer = producerProvider.getTbCoreNotificationsMsgProducer();
             Set<String> tbCoreServices = partitionService.getAllServiceIds(ServiceType.TB_CORE);
             for (String serviceId : tbCoreServices) {
@@ -626,12 +707,25 @@ public class DefaultTbClusterService implements TbClusterService {
             }
             // No need to push notifications twice
             tbRuleEngineServices.removeAll(tbCoreServices);
+            tbReportServices.removeAll(tbCoreServices);
         }
-        for (String serviceId : tbRuleEngineServices) {
-            TopicPartitionInfo tpi = topicService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, serviceId);
-            ToRuleEngineNotificationMsg toRuleEngineMsg = ToRuleEngineNotificationMsg.newBuilder().setComponentLifecycle(componentLifecycleMsgProto).build();
-            toRuleEngineProducer.send(tpi, new TbProtoQueueMsg<>(msg.getEntityId().getId(), toRuleEngineMsg), null);
-            toRuleEngineNfs.incrementAndGet();
+        if (toRuleEngine) {
+            for (String serviceId : tbRuleEngineServices) {
+                TopicPartitionInfo tpi = topicService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, serviceId);
+                ToRuleEngineNotificationMsg toRuleEngineMsg = ToRuleEngineNotificationMsg.newBuilder().setComponentLifecycle(componentLifecycleMsgProto).build();
+                toRuleEngineProducer.send(tpi, new TbProtoQueueMsg<>(msg.getEntityId().getId(), toRuleEngineMsg), null);
+                toRuleEngineNfs.incrementAndGet();
+            }
+            tbReportServices.removeAll(tbRuleEngineServices);
+        }
+        if (toTbReport) {
+            ToTbReportNotificationMsg toTbReportMsg = ToTbReportNotificationMsg.newBuilder()
+                    .setComponentLifecycleMsg(componentLifecycleMsgProto)
+                    .build();
+            for (String serviceId : tbReportServices) {
+                TopicPartitionInfo tpi = topicService.getNotificationsTopic(ServiceType.TB_REPORT, serviceId);
+                producerProvider.getTbReportNotificationsMsgProducer().send(tpi, new TbProtoQueueMsg<>(msg.getEntityId().getId(), toTbReportMsg), null);
+            }
         }
     }
 
@@ -640,14 +734,16 @@ public class DefaultTbClusterService implements TbClusterService {
         if (statsEnabled) {
             int toCoreMsgCnt = toCoreMsgs.getAndSet(0);
             int toCoreNfsCnt = toCoreNfs.getAndSet(0);
+            int toIeNfsCnt = toIntegrationExecutorNfs.getAndSet(0);
             int toRuleEngineMsgsCnt = toRuleEngineMsgs.getAndSet(0);
             int toRuleEngineNfsCnt = toRuleEngineNfs.getAndSet(0);
             int toTransportNfsCnt = toTransportNfs.getAndSet(0);
             int toEdgeMsgCnt = toEdgeMsgs.getAndSet(0);
             int toEdgeNfsCnt = toEdgeNfs.getAndSet(0);
-            if (toCoreMsgCnt > 0 || toCoreNfsCnt > 0 || toRuleEngineMsgsCnt > 0 || toRuleEngineNfsCnt > 0 || toTransportNfsCnt > 0 || toEdgeMsgCnt > 0 || toEdgeNfsCnt > 0) {
-                log.info("To TbCore: [{}] messages [{}] notifications; To TbRuleEngine: [{}] messages [{}] notifications; To Transport: [{}] notifications;" +
-                        "To Edge: [{}] messages [{}] notifications", toCoreMsgCnt, toCoreNfsCnt, toRuleEngineMsgsCnt, toRuleEngineNfsCnt, toTransportNfsCnt, toEdgeMsgCnt, toEdgeNfsCnt);
+            if (toCoreMsgCnt > 0 || toCoreNfsCnt > 0 || toIeNfsCnt > 0 || toRuleEngineMsgsCnt > 0 || toRuleEngineNfsCnt > 0 || toTransportNfsCnt > 0 || toEdgeMsgCnt > 0 || toEdgeNfsCnt > 0) {
+                log.info("To TbCore: [{}] messages [{}] notifications; To TbRuleEngine: [{}] messages [{}] notifications; To Transport: [{}] notifications; " +
+                                "To Integration Executor: [{}] notifications; To Edge: [{}] messages [{}] notifications",
+                        toCoreMsgCnt, toCoreNfsCnt, toRuleEngineMsgsCnt, toRuleEngineNfsCnt, toTransportNfsCnt, toIeNfsCnt, toEdgeMsgCnt, toEdgeNfsCnt);
             }
         }
     }
@@ -693,7 +789,7 @@ public class DefaultTbClusterService implements TbClusterService {
         }
         broadcast(msg.build());
         sendDeviceStateServiceEvent(entity.getTenantId(), entity.getId(), created, !created, false);
-        otaPackageStateService.update(entity, old);
+        otaPackageStateService.update(entity);
     }
 
     @Override
@@ -748,7 +844,15 @@ public class DefaultTbClusterService implements TbClusterService {
     }
 
     @Override
-    public void sendNotificationMsgToEdge(TenantId tenantId, EdgeId edgeId, EntityId entityId, String body, EdgeEventType type, EdgeEventActionType action, EdgeId originatorEdgeId) {
+    public void sendNotificationMsgToEdge(TenantId tenantId, EdgeId edgeId, EntityId entityId, String body,
+                                          EdgeEventType type, EdgeEventActionType action, EdgeId originatorEdgeId) {
+        sendNotificationMsgToEdge(tenantId, edgeId, entityId, body, type, action, null, null, originatorEdgeId);
+    }
+
+    @Override
+    public void sendNotificationMsgToEdge(TenantId tenantId, EdgeId edgeId, EntityId entityId, String body,
+                                          EdgeEventType type, EdgeEventActionType action,
+                                          EntityType entityGroupType, EntityGroupId entityGroupId, EdgeId originatorEdgeId) {
         if (!edgesEnabled) {
             return;
         }
@@ -781,6 +885,13 @@ public class DefaultTbClusterService implements TbClusterService {
         if (body != null) {
             builder.setBody(body);
         }
+        if (entityGroupType != null) {
+            builder.setEntityGroupType(entityGroupType.name());
+        }
+        if (entityGroupId != null) {
+            builder.setEntityGroupIdMSB(entityGroupId.getId().getMostSignificantBits());
+            builder.setEntityGroupIdLSB(entityGroupId.getId().getLeastSignificantBits());
+        }
         if (originatorEdgeId != null) {
             builder.setOriginatorEdgeIdMSB(originatorEdgeId.getId().getMostSignificantBits());
             builder.setOriginatorEdgeIdLSB(originatorEdgeId.getId().getLeastSignificantBits());
@@ -789,25 +900,179 @@ public class DefaultTbClusterService implements TbClusterService {
         log.trace("[{}] sending notification to edge service {}", tenantId.getId(), msg);
         pushMsgToEdge(tenantId, entityId != null ? entityId : tenantId, ToEdgeMsg.newBuilder().setEdgeNotificationMsg(msg).build(), null);
 
-        if (entityId != null && EntityType.DEVICE.equals(entityId.getEntityType())) {
-            pushDeviceUpdateMessage(tenantId, edgeId, entityId, action);
+        if (entityId != null && (EntityType.DEVICE.equals(entityGroupType) || EntityType.DEVICE.equals(entityId.getEntityType()))) {
+            pushDeviceUpdateMessage(tenantId, edgeId, entityId, action, entityGroupType);
         }
     }
 
-    private void pushDeviceUpdateMessage(TenantId tenantId, EdgeId edgeId, EntityId entityId, EdgeEventActionType action) {
-        log.trace("{} Going to send edge update notification for device actor, device id {}, edge id {}", tenantId, entityId, edgeId);
-        switch (action) {
-            case ASSIGNED_TO_EDGE -> pushMsgToCore(new DeviceEdgeUpdateMsg(tenantId, new DeviceId(entityId.getId()), edgeId), null);
-            case UNASSIGNED_FROM_EDGE -> {
-                EdgeId relatedEdgeId = findRelatedEdgeIdIfAny(tenantId, entityId);
-                pushMsgToCore(new DeviceEdgeUpdateMsg(tenantId, new DeviceId(entityId.getId()), relatedEdgeId), null);
-            }
+    @Override
+    public void onAgentAppEvent(TenantId tenantId, AgentId agentId, AgentAppEvent event) {
+        AgentAppEventDelivery delivery = event.getStartStatus() == ProcessingStartStatus.DELIVERED
+                ? AgentAppEventDelivery.DELIVERED : AgentAppEventDelivery.PENDING;
+        sendAgentAppEventNotification(agentId, buildAgentAppEventProto(tenantId, agentId, event, delivery));
+    }
+
+    @Override
+    public void onAgentAppEventCancelled(TenantId tenantId, AgentId agentId, AgentAppEvent event) {
+        sendAgentAppEventNotification(agentId, buildAgentAppEventProto(tenantId, agentId, event, AgentAppEventDelivery.CANCELLED));
+    }
+
+    @Override
+    public void startAgentLogStream(TenantId tenantId, AgentAppUnitInfo unitInfo) {
+        sendAgentLogStreamRequest(tenantId, unitInfo, false);
+    }
+
+    @Override
+    public void stopAgentLogStream(TenantId tenantId, AgentAppUnitInfo unitInfo) {
+        sendAgentLogStreamRequest(tenantId, unitInfo, true);
+    }
+
+    private void sendAgentLogStreamRequest(TenantId tenantId, AgentAppUnitInfo unitInfo, boolean stop) {
+        AgentId agentId = unitInfo.getAgentId();
+        LogStreamRequestProto proto = LogStreamRequestProto.newBuilder()
+                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .setAgentIdMSB(agentId.getId().getMostSignificantBits())
+                .setAgentIdLSB(agentId.getId().getLeastSignificantBits())
+                .setAgentUnitIdMSB(unitInfo.getId().getId().getMostSignificantBits())
+                .setAgentUnitIdLSB(unitInfo.getId().getId().getLeastSignificantBits())
+                .setProjectName(unitInfo.getProjectName())
+                .setUnitIdentifier(unitInfo.getIdentifier())
+                .setStop(stop)
+                .build();
+        routeToAgent(agentId, ToAgentNotificationMsg.newBuilder().setLogStreamRequest(proto).build());
+    }
+
+    private void sendAgentAppEventNotification(AgentId agentId, AgentAppEventNotificationProto proto) {
+        routeToAgent(agentId, ToAgentNotificationMsg.newBuilder().setAgentAppEventNotification(proto).build());
+    }
+
+    private void routeToAgent(AgentId agentId, ToAgentNotificationMsg msg) {
+        var cached = agentIdServiceIdCache.get(agentId);
+        String serviceId = cached == null ? null : cached.get();
+        if (serviceId != null) {
+            pushMsgToAgentNotification(msg, serviceId);
+        } else {
+            broadcastAgentNotification(msg);
         }
+    }
+
+    private void broadcastAgentNotification(ToAgentNotificationMsg msg) {
+        Set<String> serviceIds = partitionService.getAllServiceIds(ServiceType.TB_CORE);
+        for (String serviceId : serviceIds) {
+            pushMsgToAgentNotification(msg, serviceId);
+        }
+    }
+
+    private enum AgentAppEventDelivery { PENDING, DELIVERED, CANCELLED }
+
+    private AgentAppEventNotificationProto buildAgentAppEventProto(TenantId tenantId, AgentId agentId,
+                                                                   AgentAppEvent event, AgentAppEventDelivery delivery) {
+        return AgentAppEventNotificationProto.newBuilder()
+                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .setAgentIdMSB(agentId.getId().getMostSignificantBits())
+                .setAgentIdLSB(agentId.getId().getLeastSignificantBits())
+                .setApplicationIdMSB(event.getApplicationId() != null ? event.getApplicationId().getId().getMostSignificantBits() : 0)
+                .setApplicationIdLSB(event.getApplicationId() != null ? event.getApplicationId().getId().getLeastSignificantBits() : 0)
+                .setEventIdMSB(event.getId().getId().getMostSignificantBits())
+                .setEventIdLSB(event.getId().getId().getLeastSignificantBits())
+                .setActionType(event.getActionType().name())
+                .setDelivered(delivery == AgentAppEventDelivery.DELIVERED)
+                .setCancelled(delivery == AgentAppEventDelivery.CANCELLED)
+                .build();
+    }
+
+    private void pushMsgToAgentNotification(ToAgentNotificationMsg msg, String serviceId) {
+        TopicPartitionInfo tpi = topicService.getAgentNotificationsTopic(serviceId);
+        TbQueueProducer<TbProtoQueueMsg<ToAgentNotificationMsg>> producer = producerProvider.getTbAgentNotificationsMsgProducer();
+        producer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), msg), null);
+    }
+
+    @Override
+    public void pushMsgToAgentBulkOps(AgentBulkAction bulkAction, BulkOperationRequest request) {
+        UUID bulkActionId = bulkAction.getId().getId();
+        UUID tenantId = bulkAction.getTenantId().getId();
+
+        TransportProtos.AgentBulkOperationMsg.Builder builder = TransportProtos.AgentBulkOperationMsg.newBuilder()
+                .setBulkActionIdMSB(bulkActionId.getMostSignificantBits())
+                .setBulkActionIdLSB(bulkActionId.getLeastSignificantBits())
+                .setTenantIdMSB(tenantId.getMostSignificantBits())
+                .setTenantIdLSB(tenantId.getLeastSignificantBits())
+                .setAgentProfileIdMSB(bulkAction.getAgentProfileId().getMostSignificantBits())
+                .setAgentProfileIdLSB(bulkAction.getAgentProfileId().getLeastSignificantBits())
+                .setApplicationProfileIdMSB(bulkAction.getApplicationProfileId().getMostSignificantBits())
+                .setApplicationProfileIdLSB(bulkAction.getApplicationProfileId().getLeastSignificantBits())
+                .setActionType(bulkAction.getActionType().name());
+
+        if (request.getStepInputs() != null) {
+            builder.setStepInputs(JacksonUtil.toString(request.getStepInputs()));
+        }
+
+        producerProvider.getTbAgentBulkOpsMsgProducer().send(topicService.getAgentBulkOpsTopic(),
+                new TbProtoQueueMsg<>(bulkActionId, builder.build()), null);
+    }
+
+    private void pushDeviceUpdateMessage(TenantId tenantId, EdgeId edgeId, EntityId entityId, EdgeEventActionType action, EntityType entityGroupType) {
+        switch (entityId.getEntityType()) {
+            case ENTITY_GROUP:
+                if (EntityType.DEVICE.equals(entityGroupType)) {
+                    switch (action) {
+                        case ASSIGNED_TO_EDGE, UNASSIGNED_FROM_EDGE ->
+                                pushDeviceUpdateMessageByEntityGroupId(tenantId, new EntityGroupId(entityId.getId()), edgeId, action);
+                    }
+                }
+                break;
+            case DEVICE:
+                switch (action) {
+                    case ADDED_TO_ENTITY_GROUP, REMOVED_FROM_ENTITY_GROUP -> {
+                        EdgeId relatedEdgeId = findRelatedEdgeIdIfAny(tenantId, entityId);
+                        log.trace("{} Going to send edge update notification for device actor, device id {}, edge id {}", tenantId, entityId, relatedEdgeId);
+
+                        pushMsgToCore(new DeviceEdgeUpdateMsg(tenantId, new DeviceId(entityId.getId()), relatedEdgeId), null);
+                    }
+                }
+        }
+    }
+
+    private void pushDeviceUpdateMessageByEntityGroupId(TenantId tenantId, EntityGroupId entityGroupId, EdgeId edgeId, EdgeEventActionType action) {
+        ListenableFuture<List<EntityId>> entityIdsFuture = entityGroupService.findAllEntityIdsAsync(tenantId, entityGroupId, new PageLink(Integer.MAX_VALUE));
+        Futures.addCallback(entityIdsFuture, new FutureCallback<>() {
+            @Override
+            public void onSuccess(@Nullable List<EntityId> entityIds) {
+                if (entityIds != null && !entityIds.isEmpty()) {
+                    for (EntityId entityId : entityIds) {
+                        EdgeId relatedEdgeId = edgeId;
+                        if (EdgeEventActionType.UNASSIGNED_FROM_EDGE.equals(action)) {
+                            relatedEdgeId = findRelatedEdgeIdIfAny(tenantId, entityId);
+                        }
+                        log.trace("{} Going to send edge update notification for device actor, device id {}, edge id {}", tenantId, entityId, relatedEdgeId);
+                        pushMsgToCore(new DeviceEdgeUpdateMsg(tenantId, new DeviceId(entityId.getId()), relatedEdgeId), null);
+                    }
+                } else {
+                    log.trace("{} No entities found for the provided entity group {}", tenantId, entityGroupId);
+                }
+            }
+
+            @Override
+            public void onFailure(Throwable th) {
+                log.error("[{}] Failed to find all entity ids, entityGroupId = {}", tenantId, entityGroupId, th);
+            }
+        }, dbCallbackExecutor);
     }
 
     private EdgeId findRelatedEdgeIdIfAny(TenantId tenantId, EntityId entityId) {
         PageData<EdgeId> pageData = edgeService.findRelatedEdgeIdsByEntityId(tenantId, entityId, new PageLink(1));
         return Optional.ofNullable(pageData).filter(pd -> pd.getTotalElements() > 0).map(pd -> pd.getData().get(0)).orElse(null);
+    }
+
+    private static FromDeviceRPCResponseProto.Builder prepareRPCResponseProto(FromDeviceRpcResponse response) {
+        FromDeviceRPCResponseProto.Builder builder = FromDeviceRPCResponseProto.newBuilder()
+                .setRequestIdMSB(response.getId().getMostSignificantBits())
+                .setRequestIdLSB(response.getId().getLeastSignificantBits())
+                .setError(response.getError().isPresent() ? response.getError().get().ordinal() : -1);
+        response.getResponse().ifPresent(builder::setResponse);
+        return builder;
     }
 
     @Override

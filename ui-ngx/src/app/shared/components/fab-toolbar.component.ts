@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import {
   AfterViewInit,
   Component,
@@ -28,19 +14,20 @@ import {
   ViewEncapsulation
 } from '@angular/core';
 import { WINDOW } from '@core/services/window.service';
-import { _Constructor, CanColor, mixinColor, ThemePalette } from '@angular/material/core';
+import { ThemePalette } from '@angular/material/core';
 
 export declare type FabToolbarDirection = 'left' | 'right';
 
 class MatFabToolbarBase {
+
   // eslint-disable-next-line @typescript-eslint/naming-convention, no-underscore-dangle, id-blacklist, id-match
   constructor(public _elementRef: ElementRef) {}
 }
-const MatFabToolbarMixinBase: _Constructor<CanColor> & typeof MatFabToolbarBase = mixinColor(MatFabToolbarBase);
 
 @Directive({
-  // eslint-disable-next-line @angular-eslint/directive-selector
-  selector: 'mat-fab-trigger'
+    // eslint-disable-next-line @angular-eslint/directive-selector
+    selector: 'mat-fab-trigger',
+    standalone: false
 })
 export class FabTriggerDirective {
 
@@ -50,8 +37,9 @@ export class FabTriggerDirective {
 }
 
 @Directive({
-  // eslint-disable-next-line @angular-eslint/directive-selector
-  selector: 'mat-fab-actions'
+    // eslint-disable-next-line @angular-eslint/directive-selector
+    selector: 'mat-fab-actions',
+    standalone: false
 })
 export class FabActionsDirective implements OnInit {
 
@@ -68,13 +56,17 @@ export class FabActionsDirective implements OnInit {
 
 // @dynamic
 @Component({
-  // eslint-disable-next-line @angular-eslint/component-selector
-  selector: 'mat-fab-toolbar',
-  templateUrl: './fab-toolbar.component.html',
-  styleUrls: ['./fab-toolbar.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    // eslint-disable-next-line @angular-eslint/component-selector
+    selector: 'mat-fab-toolbar',
+    templateUrl: './fab-toolbar.component.html',
+    styleUrls: ['./fab-toolbar.component.scss'],
+    host: {
+      '[class]': 'color ? "mat-" + color : ""',
+    },
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
-export class FabToolbarComponent extends MatFabToolbarMixinBase implements OnInit, OnDestroy, AfterViewInit, OnChanges {
+export class FabToolbarComponent extends MatFabToolbarBase implements OnInit, OnDestroy, AfterViewInit, OnChanges {
 
   private fabToolbarResize$: ResizeObserver;
 
@@ -86,6 +78,9 @@ export class FabToolbarComponent extends MatFabToolbarMixinBase implements OnIni
 
   @Input()
   color: ThemePalette;
+
+  @Input()
+  defaultColor: ThemePalette | undefined;
 
   constructor(private el: ElementRef<HTMLElement>,
               @Inject(WINDOW) private window: Window) {

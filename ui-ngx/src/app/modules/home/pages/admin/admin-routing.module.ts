@@ -1,29 +1,28 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { inject, NgModule } from '@angular/core';
-import { ActivatedRouteSnapshot, ResolveFn, Router, RouterModule, RouterStateSnapshot, Routes } from '@angular/router';
-
+import {
+  ActivatedRouteSnapshot,
+  CanActivateFn,
+  ResolveFn,
+  Router,
+  RouterModule,
+  RouterStateSnapshot,
+  Routes,
+  UrlTree
+} from '@angular/router';
 import { MailServerComponent } from '@modules/home/pages/admin/mail-server.component';
+import { SmsProviderComponent } from '@home/pages/admin/sms-provider.component';
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
 import { Authority } from '@shared/models/authority.enum';
-import { GeneralSettingsComponent } from '@modules/home/pages/admin/general-settings.component';
+import { GeneralSettingsComponent } from '@home/pages/admin/general-settings.component';
 import { SecuritySettingsComponent } from '@modules/home/pages/admin/security-settings.component';
-import { forkJoin, of } from 'rxjs';
-import { SmsProviderComponent } from '@home/pages/admin/sms-provider.component';
+import { MailTemplatesComponent } from '@home/pages/admin/mail-templates.component';
+import { forkJoin, mergeMap, Observable, of } from 'rxjs';
+import { MailTemplatesSettings } from '@shared/models/settings.models';
+import { WhiteLabelingComponent } from '@home/pages/admin/white-labeling.component';
+import { SelfRegistrationComponent } from '@home/pages/admin/self-registration.component';
 import { HomeSettingsComponent } from '@home/pages/admin/home-settings.component';
 import { EntitiesTableComponent } from '@home/components/entity/entities-table.component';
 import { ResourcesLibraryTableConfigResolver } from '@home/pages/admin/resource/resources-library-table-config.resolve';
@@ -38,16 +37,80 @@ import { widgetsLibraryRoutes } from '@home/pages/widget/widget-library-routing.
 import { RouterTabsComponent } from '@home/components/router-tabs.component';
 import { auditLogsRoutes } from '@home/pages/audit-log/audit-log-routing.module';
 import { ImageGalleryComponent } from '@shared/components/image/image-gallery.component';
+import { rolesRoutes } from '@home/pages/role/role-routing.module';
+import { WhiteLabelingService } from '@core/http/white-labeling.service';
+import { CustomTranslationRoutes } from '@home/pages/custom-translation/custom-translation-routing.module';
 import { oAuth2Routes } from '@home/pages/admin/oauth2/oauth2-routing.module';
 import { ImageResourceType, IMAGES_URL_PREFIX, ResourceSubType } from '@shared/models/resource.models';
 import { ScadaSymbolComponent } from '@home/pages/scada-symbol/scada-symbol.component';
 import { ImageService } from '@core/http/image.service';
 import { ScadaSymbolData } from '@home/pages/scada-symbol/scada-symbol-editor.models';
 import { MenuId } from '@core/services/menu.models';
-import { catchError } from 'rxjs/operators';
+import { CustomMenuRoutes } from '@home/pages/custom-menu/custom-menu-routing.module';
+import { catchError, tap } from 'rxjs/operators';
 import { JsLibraryTableConfigResolver } from '@home/pages/admin/resource/js-library-table-config.resolver';
-import { TrendzSettingsComponent } from '@home/pages/admin/trendz-settings.component';
+import { secretsRoutes } from '@home/pages/secret-storage/secret-storage-routing.module';
 import { aiModelRoutes } from '@home/pages/ai-model/ai-model-routing.module';
+import { LicenseManagementComponent } from '@home/pages/admin/license-management.component';
+import { SubscriptionInfo } from '@shared/models/subscription.models';
+import { AdminService } from '@core/http/admin.service';
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
+import { AuthService } from '@core/auth/auth.service';
+import { AppState } from '@core/core.state';
+import { Store } from '@ngrx/store';
+import { ActionUpdateLicenseParams } from '@core/auth/auth.actions';
+
+export const subscriptionInfoResolver: ResolveFn<SubscriptionInfo> = (
+  route: ActivatedRouteSnapshot,
+  state: RouterStateSnapshot,
+  store = inject(Store<AppState>),
+  adminService = inject(AdminService)
+): Observable<SubscriptionInfo> => getCurrentAuthState(store).licenseVersion > 1 ? refreshAndGetLicenseInfo(adminService, store) : of(null);
+
+const refreshAndGetLicenseInfo = (adminService: AdminService,
+                                                                        store: Store<AppState>): Observable<SubscriptionInfo> => {
+  return adminService.getSubscriptionInfo().pipe(
+    mergeMap((info: SubscriptionInfo) => {
+      if (!info.offline && !info.nonProduction) {
+        return adminService.refreshLicense().pipe(
+          tap((refreshed) => {
+            store.dispatch(new ActionUpdateLicenseParams(
+              {
+                edgeEnabled: refreshed.edgeEnabled,
+                trendzEnabled: refreshed.trendzEnabled,
+                communityGrantLicense: refreshed.communityGrantLicense
+              }
+            ));
+          }),
+          catchError(() => of(info))
+        );
+      } else {
+        return of(info);
+      }
+    })
+  );
+};
+
+/**
+ * The license management page describes a v2 subscription, so a v1 license has nothing to show there and the page
+ * would dereference the null the resolver returns. The menu entry is already hidden on the same condition
+ * (see MenuId.license_management); this keeps a typed-in URL from reaching the page.
+ */
+export const licenseManagementGuard: CanActivateFn = (
+  route: ActivatedRouteSnapshot,
+  state: RouterStateSnapshot,
+  store = inject(Store<AppState>),
+  authService = inject(AuthService)
+): boolean | UrlTree => {
+  const authState = getCurrentAuthState(store);
+  return authState.licenseVersion > 1 ? true : authService.defaultUrl(true, authState);
+};
+
+export const mailTemplateSettingsResolver: ResolveFn<MailTemplatesSettings> = (
+  route: ActivatedRouteSnapshot,
+  state: RouterStateSnapshot,
+  wl = inject(WhiteLabelingService)
+): Observable<MailTemplatesSettings> => wl.getMailTemplates(true);
 
 export const scadaSymbolResolver: ResolveFn<ScadaSymbolData> =
   (route: ActivatedRouteSnapshot,
@@ -75,7 +138,7 @@ const routes: Routes = [
   {
     path: 'resources',
     data: {
-      auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
+      auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
       breadcrumb: {
         menuId: MenuId.resources
       }
@@ -85,8 +148,12 @@ const routes: Routes = [
         path: '',
         children: [],
         data: {
-          auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
-          redirectTo: '/resources/widgets-library'
+          auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+          redirectTo: {
+            SYS_ADMIN: '/resources/widgets-library',
+            TENANT_ADMIN: '/resources/widgets-library',
+            CUSTOMER_USER: '/resources/images'
+          }
         }
       },
       ...widgetsLibraryRoutes,
@@ -102,8 +169,8 @@ const routes: Routes = [
             path: '',
             component: ImageGalleryComponent,
             data: {
-              auth: [Authority.TENANT_ADMIN, Authority.SYS_ADMIN],
-              title: 'image.gallery',
+              auth: [Authority.TENANT_ADMIN, Authority.SYS_ADMIN, Authority.CUSTOMER_USER],
+              title: 'image.images',
               imageSubType: ResourceSubType.IMAGE
             }
           }
@@ -121,7 +188,7 @@ const routes: Routes = [
             path: '',
             component: ImageGalleryComponent,
             data: {
-              auth: [Authority.TENANT_ADMIN, Authority.SYS_ADMIN],
+              auth: [Authority.TENANT_ADMIN, Authority.SYS_ADMIN, Authority.CUSTOMER_USER],
               title: 'scada.symbols',
               imageSubType: ResourceSubType.SCADA_SYMBOL
             }
@@ -135,7 +202,7 @@ const routes: Routes = [
                 labelFunction: scadaSymbolBreadcumbLabelFunction,
                 icon: 'view_in_ar'
               } as BreadCrumbConfig<ScadaSymbolComponent>,
-              auth: [Authority.TENANT_ADMIN, Authority.SYS_ADMIN],
+              auth: [Authority.TENANT_ADMIN, Authority.SYS_ADMIN, Authority.CUSTOMER_USER],
               title: 'scada.symbol.symbol'
             },
             resolve: {
@@ -157,7 +224,7 @@ const routes: Routes = [
             component: EntitiesTableComponent,
             data: {
               auth: [Authority.TENANT_ADMIN, Authority.SYS_ADMIN],
-              title: 'resource.resources-library',
+              title: 'resource.files',
             },
             resolve: {
               entitiesTableConfig: ResourcesLibraryTableConfigResolver
@@ -194,7 +261,7 @@ const routes: Routes = [
             component: EntitiesTableComponent,
             data: {
               auth: [Authority.TENANT_ADMIN, Authority.SYS_ADMIN],
-              title: 'javascript.javascript-library',
+              title: 'javascript.scripts',
             },
             resolve: {
               entitiesTableConfig: JsLibraryTableConfigResolver
@@ -224,7 +291,7 @@ const routes: Routes = [
     path: 'settings',
     component: RouterTabsComponent,
     data: {
-      auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
+      auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
       showMainLoadingBar: false,
       breadcrumb: {
         menuId: MenuId.settings
@@ -235,10 +302,11 @@ const routes: Routes = [
         path: '',
         children: [],
         data: {
-          auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
+          auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
           redirectTo: {
             SYS_ADMIN: '/settings/general',
-            TENANT_ADMIN: '/settings/home'
+            TENANT_ADMIN: '/settings/home',
+            CUSTOMER_USER: '/settings/home'
           }
         }
       },
@@ -259,7 +327,7 @@ const routes: Routes = [
         component: MailServerComponent,
         canDeactivate: [ConfirmOnExitGuard],
         data: {
-          auth: [Authority.SYS_ADMIN],
+          auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
           title: 'admin.outgoing-mail-settings',
           breadcrumb: {
             menuId: MenuId.mail_server
@@ -320,7 +388,7 @@ const routes: Routes = [
         component: HomeSettingsComponent,
         canDeactivate: [ConfirmOnExitGuard],
         data: {
-          auth: [Authority.TENANT_ADMIN],
+          auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
           title: 'admin.home-settings',
           breadcrumb: {
             menuId: MenuId.home_settings
@@ -351,22 +419,14 @@ const routes: Routes = [
           }
         }
       },
-      {
-        path: 'trendz',
-        component: TrendzSettingsComponent,
-        canDeactivate: [ConfirmOnExitGuard],
-        data: {
-          auth: [Authority.TENANT_ADMIN],
-          title: 'admin.trendz-settings',
-          breadcrumb: {
-            menuId: MenuId.trendz_settings
-          }
-        }
-      },
       ...aiModelRoutes,
       {
         path: 'security-settings',
         redirectTo: '/security-settings/general'
+      },
+      {
+        path: 'selfRegistration',
+        redirectTo: '/security-settings/selfRegistration'
       },
       {
         path: 'oauth2',
@@ -392,9 +452,24 @@ const routes: Routes = [
     ]
   },
   {
+    path: 'license',
+    component: LicenseManagementComponent,
+    canActivate: [licenseManagementGuard],
+    data: {
+      auth: [Authority.SYS_ADMIN],
+      title: 'subscription.license-management',
+      breadcrumb: {
+        menuId: MenuId.license_management
+      }
+    },
+    resolve: {
+      subscriptionInfo: subscriptionInfoResolver
+    }
+  },
+  {
     path: 'security-settings',
     data: {
-      auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
+      auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
       breadcrumb: {
         menuId: MenuId.security_settings
       }
@@ -404,10 +479,11 @@ const routes: Routes = [
         path: '',
         children: [],
         data: {
-          auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
+          auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
           redirectTo: {
             SYS_ADMIN: '/security-settings/general',
-            TENANT_ADMIN: '/security-settings/auditLogs'
+            TENANT_ADMIN: '/security-settings/2fa',
+            CUSTOMER_USER: '/security-settings/roles',
           }
         }
       },
@@ -428,7 +504,7 @@ const routes: Routes = [
         component: TwoFactorAuthSettingsComponent,
         canDeactivate: [ConfirmOnExitGuard],
         data: {
-          auth: [Authority.SYS_ADMIN],
+          auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
           title: 'admin.2fa.2fa',
           breadcrumb: {
             menuId: MenuId.two_fa
@@ -436,7 +512,93 @@ const routes: Routes = [
         }
       },
       ...oAuth2Routes,
+      ...rolesRoutes,
+      ...secretsRoutes,
+      {
+        path: 'selfRegistration',
+        component: SelfRegistrationComponent,
+        canDeactivate: [ConfirmOnExitGuard],
+        data: {
+          auth: [Authority.TENANT_ADMIN],
+          title: 'self-registration.self-registration',
+          breadcrumb: {
+            menuId: MenuId.self_registration
+          }
+        }
+      },
       ...auditLogsRoutes
+    ]
+  },
+  {
+    path: 'white-labeling',
+    component: RouterTabsComponent,
+    data: {
+      auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+      showMainLoadingBar: false,
+      breadcrumb: {
+        menuId: MenuId.white_labeling
+      }
+    },
+    children: [
+      {
+        path: '',
+        children: [],
+        data: {
+          auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+          redirectTo: {
+            SYS_ADMIN: '/white-labeling/whiteLabel',
+            TENANT_ADMIN: '/white-labeling/whiteLabel',
+            CUSTOMER_USER: '/white-labeling/whiteLabel'
+          }
+        }
+      },
+      {
+        path: 'whiteLabel',
+        component: WhiteLabelingComponent,
+        canDeactivate: [ConfirmOnExitGuard],
+        data: {
+          auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+          title: 'white-labeling.white-labeling',
+          isLoginWl: false,
+          breadcrumb: {
+            menuId: MenuId.white_labeling_general
+          }
+        }
+      },
+      {
+        path: 'loginWhiteLabel',
+        component: WhiteLabelingComponent,
+        canDeactivate: [ConfirmOnExitGuard],
+        data: {
+          auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+          title: 'white-labeling.login-white-labeling',
+          isLoginWl: true,
+          breadcrumb: {
+            menuId: MenuId.login_white_labeling
+          }
+        }
+      },
+      {
+        path: 'mail-template',
+        component: MailTemplatesComponent,
+        canDeactivate: [ConfirmOnExitGuard],
+        data: {
+          auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
+          title: 'admin.mail-template-settings',
+          breadcrumb: {
+            menuId: MenuId.mail_templates
+          }
+        },
+        resolve: {
+          mailTemplatesSettings: mailTemplateSettingsResolver
+        }
+      },
+      ...CustomTranslationRoutes,
+      ...CustomMenuRoutes,
+      {
+        path: 'selfRegistration',
+        redirectTo: '/security-settings/selfRegistration'
+      }
     ]
   }
 ];

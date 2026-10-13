@@ -1,0 +1,54 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [class.!hidden]="!schedulerEventType" [formGroup]="schedulerEventConfigFormGroup" class="tb-scheduler-event flex flex-col">
+  @if(showOriginator) {
+    <div>
+      <small translate>scheduler.originator</small>
+      <tb-originator-select
+        formControlName="originatorId">
+      </tb-originator-select>
+    </div>
+  }
+  @if(showMsgType) {
+    <tb-message-type-autocomplete
+      appearance="outline"
+      formControlName="msgType"
+    ></tb-message-type-autocomplete>
+  }
+  @if(useDefinedTemplate) {
+    <tb-scheduler-event-template-config
+      [schedulerEventType]="schedulerEventType"
+      [schedulerEventConfigTypes]="schedulerEventConfigTypes"
+      formControlName="configuration">
+    </tb-scheduler-event-template-config>
+  }
+  @if(!useDefinedTemplate) {
+    <tb-json-object-edit
+      class="tb-scheduler-event-configuration-json"
+      formControlName="msgBody"
+      label="{{ 'scheduler.message-body' | translate }}"
+      jsonRequired
+      [fillHeight]="true">
+    </tb-json-object-edit>
+  }
+  @if (showMetadata) {
+    <div>
+      <div style="height: 24px;"></div>
+      <mat-expansion-panel [expanded]="false" class="mb-1">
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            <div class="tb-panel-title" translate>rulenode.metadata</div>
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+        <tb-key-val-map
+          formControlName="metadata"
+          titleText="rulenode.metadata"
+        ></tb-key-val-map>
+      </mat-expansion-panel>
+    </div>
+  }
+</section>

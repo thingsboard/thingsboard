@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.transport.lwm2m.client;
 
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +19,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicInteger;
 import static org.thingsboard.server.dao.service.OtaPackageServiceTest.TARGET_FW_VERSION;
 import static org.thingsboard.server.dao.service.OtaPackageServiceTest.TITLE;
@@ -137,48 +123,74 @@ public class FwLwM2MDevice extends BaseInstanceEnabler implements Destroyable {
     @Override
     public void destroy() {
         scheduler.shutdownNow();
+        this.leshanClient = null;
     }
 
     private void startDownloading() {
+        long delay = 500;
+        // Step 1: state = 1
         scheduler.schedule(() -> {
-            try {
-                state.set(1);
-                fireResourceChange(3);
-                Thread.sleep(100);
-                state.set(2);
-                fireResourceChange(3);
-            } catch (Exception e) {
-            }
-        }, 100, TimeUnit.MILLISECONDS);
+            state.set(1);               // DOWNLOADING
+            fireResourceChange(3);
+            log.info("Downloading started: state=[{}]", state.get());
+        }, delay, TimeUnit.MILLISECONDS); // 500 ms
+
+        delay += 1000; // next step after 100 ms
+
+        // Step 2: state = 2
+        scheduler.schedule(() -> {
+            state.set(2);               // DOWNLOADED
+            fireResourceChange(3);
+            log.info("Downloading in progress: state=[{}]", state.get());
+        }, delay, TimeUnit.MILLISECONDS);   // 1500 ms
     }
+
 
     private void startUpdating(LwM2mServer identity) {
         scheduler.schedule(() -> {
             try {
+                // Update state + result
                 state.set(3);
                 fireResourceChange(3);
-                Thread.sleep(100);
+
                 updateResult.set(1);
                 fireResourceChange(5);
-                this.pkgName = TITLE;
-                fireResourceChange(6);
-                this.pkgVersion = TARGET_FW_VERSION;
-                fireResourceChange(7);
+
                 if (this.leshanClient != null) {
                     log.info("Stop/reboot LwM2M client {}", this.leshanClient.getEndpoint(identity));
-                    this.leshanClient.stop(false);
+                    try {
+                        this.leshanClient.stop(false);
+                    } catch (Exception stopEx) {
+                        // Leshan may throw NPE during CoAP observe-relation cleanup when the server
+                        // reference is null (race condition in NotificationDataStore.toKey()).
+                        // The client is still considered stopped at this point — proceed with restart.
+                        log.warn("Exception during LwM2M client stop, proceeding with restart: {}", stopEx.getMessage());
+                    }
+
                     log.info("Start after update fw LwM2M client {}", this.leshanClient.getEndpoint(identity));
                     this.leshanClient.start();
-                    this.pkgName = this.pkgNameDef;
-                    this.pkgVersion = this.pkgVersionDef;
+
+                    // Delayed reset pkgName/pkgVersion, after reboot + registration
+                    // If a client stops, ThingsBoard can mark it as Offline.
+                    // A new registration may take a few seconds.
+                    scheduler.schedule(() -> {
+                        this.pkgName = this.pkgNameDef;
+                        fireResourceChange(6);
+
+                        this.pkgVersion = this.pkgVersionDef;
+                        fireResourceChange(7);
+
+                        log.info("FW resources updating to new values: pkgName=[{}], pkgVersion=[{}]",
+                                this.pkgName, this.pkgVersion);
+                    }, 5, TimeUnit.SECONDS); // 5 sec — safe timing
                 }
             } catch (Exception e) {
+                log.error("Error during firmware update", e);
             }
-        }, 100, TimeUnit.MILLISECONDS);
+        }, 1, TimeUnit.SECONDS); // delay 1 sec to allow CoAP Execute response to be delivered before client stops
     }
 
     protected void setLeshanClient(LeshanClient leshanClient) {
         this.leshanClient = leshanClient;
     }
-
 }

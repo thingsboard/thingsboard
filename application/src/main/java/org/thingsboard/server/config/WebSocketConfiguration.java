@@ -1,22 +1,10 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.config;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.WebSocketHandler;
@@ -40,11 +28,16 @@ public class WebSocketConfiguration implements WebSocketConfigurer {
 
     private final WebSocketHandler wsHandler;
 
+    @Value("${server.ws.max_text_message_buffer_size:32768}")
+    private int maxTextMessageBufferSize;
+    @Value("${server.ws.max_binary_message_buffer_size:32768}")
+    private int maxBinaryMessageBufferSize;
+
     @Bean
     public ServletServerContainerFactoryBean createWebSocketContainer() {
         ServletServerContainerFactoryBean container = new ServletServerContainerFactoryBean();
-        container.setMaxTextMessageBufferSize(32768);
-        container.setMaxBinaryMessageBufferSize(32768);
+        container.setMaxTextMessageBufferSize(maxTextMessageBufferSize);
+        container.setMaxBinaryMessageBufferSize(maxBinaryMessageBufferSize);
         return container;
     }
 
@@ -54,7 +47,8 @@ public class WebSocketConfiguration implements WebSocketConfigurer {
             log.error("TbWebSocketHandler expected but [{}] provided", wsHandler);
             throw new RuntimeException("TbWebSocketHandler expected but " + wsHandler + " provided");
         }
-        registry.addHandler(wsHandler, WS_API_MAPPING).setAllowedOriginPatterns("*");
+        registry.addHandler(wsHandler, WS_API_MAPPING)
+                .setAllowedOriginPatterns("*");
     }
 
 }

@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import {
   AbstractControl,
@@ -30,27 +17,29 @@ import {
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { SubscriptSizing } from '@angular/material/form-field';
+import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { isDefinedAndNotNull, isEqual } from '@core/utils';
 
 @Component({
-  selector: 'tb-key-val-map',
-  templateUrl: './kv-map.component.html',
-  styleUrls: ['./kv-map.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => KeyValMapComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => KeyValMapComponent),
-      multi: true,
-    }
-  ]
+    selector: 'tb-key-val-map',
+    templateUrl: './kv-map.component.html',
+    styleUrls: ['./kv-map.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => KeyValMapComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => KeyValMapComponent),
+            multi: true,
+        }
+    ],
+    standalone: false
 })
 export class KeyValMapComponent extends PageComponent implements ControlValueAccessor, OnInit, OnDestroy, Validator {
 
@@ -66,8 +55,15 @@ export class KeyValMapComponent extends PageComponent implements ControlValueAcc
 
   @Input() noDataText: string;
 
+  @Input() singlePredefinedKey: string;
+
+  @Input() isStrokedButton = false;
+
   @Input()
   subscriptSizing: SubscriptSizing = 'fixed';
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
   kvListFormGroup: UntypedFormGroup;
 
@@ -116,7 +112,7 @@ export class KeyValMapComponent extends PageComponent implements ControlValueAcc
 
   writeValue(keyValMap: {[key: string]: string}): void {
     const keyValsControls: Array<AbstractControl> = [];
-    if (keyValMap) {
+    if (keyValMap && !isEqual(keyValMap, {})) {
       for (const property of Object.keys(keyValMap)) {
         if (Object.prototype.hasOwnProperty.call(keyValMap, property)) {
           keyValsControls.push(this.fb.group({
@@ -127,6 +123,9 @@ export class KeyValMapComponent extends PageComponent implements ControlValueAcc
       }
     }
     this.kvListFormGroup.setControl('keyVals', this.fb.array(keyValsControls), {emitEvent: false});
+    if (this.isSinglePredefinedKey && !keyValsControls.length) {
+      this.addKeyVal();
+    }
     if (this.disabled) {
       this.kvListFormGroup.disable({emitEvent: false});
     } else {
@@ -141,13 +140,21 @@ export class KeyValMapComponent extends PageComponent implements ControlValueAcc
   public addKeyVal() {
     const keyValsFormArray = this.kvListFormGroup.get('keyVals') as UntypedFormArray;
     keyValsFormArray.push(this.fb.group({
-      key: ['', [Validators.required]],
+      key: [this.isSinglePredefinedKey ? this.singlePredefinedKey : '', [Validators.required]],
       value: ['', this.isValueRequired ? [Validators.required] : []]
     }));
   }
 
   public validate(): ValidationErrors | null {
     return this.kvListFormGroup.valid ? null : { keyVals: { valid: false } };
+  }
+
+  get isSingleMode(): boolean {
+    return isDefinedAndNotNull(this.singlePredefinedKey);
+  }
+
+  get isSinglePredefinedKey(): boolean {
+    return isDefinedAndNotNull(this.singlePredefinedKey);
   }
 
   private updateModel() {

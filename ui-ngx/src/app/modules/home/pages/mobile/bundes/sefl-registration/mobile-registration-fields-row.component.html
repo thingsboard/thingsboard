@@ -1,0 +1,40 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div [formGroup]="fieldForm" class="tb-form-table-row tb-mobile-registration-field-row">
+  <mat-checkbox class="tb-required-field" formControlName="required"></mat-checkbox>
+  <mat-form-field class="tb-inline-field tb-field-type-field" appearance="outline" subscriptSizing="dynamic">
+    <mat-select formControlName="id" placeholder="{{ 'widget-config.set' | translate }}">
+      @if (fieldForm.get('id').value) {
+        <mat-option [value]="fieldForm.get('id').value">
+          {{ SignUpFieldMap.get(fieldForm.get('id').value).label | translate }}
+        </mat-option>
+      }
+      @for (fieldId of allowFieldIds; track fieldId) {
+        <mat-option [value]="fieldId">
+          {{ SignUpFieldMap.get(fieldId).label | translate }}
+        </mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+  <mat-form-field class="tb-inline-field tb-label-field" appearance="outline" subscriptSizing="dynamic">
+    <input matInput formControlName="label" placeholder="{{ 'widget-config.set' | translate }}">
+  </mat-form-field>
+  <div class="tb-form-table-row-cell-buttons">
+    <div class="tb-remove-button">
+      @if (!hideModify) {
+        <button type="button"
+          mat-icon-button
+          [disabled]="disabled"
+          (click)="fieldRemoved.emit()"
+          matTooltip="{{ 'mobile.self-registration.remove-registration-field' | translate }}"
+          matTooltipPosition="above">
+          <mat-icon>delete</mat-icon>
+        </button>
+      }
+    </div>
+  </div>
+</div>
