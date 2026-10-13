@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2025 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.edge;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -25,6 +13,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.action.TbChangeOwnerNode;
 import org.thingsboard.rule.engine.action.TbSaveToCustomCassandraTableNode;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNode;
@@ -38,12 +27,45 @@ import org.thingsboard.rule.engine.rest.TbSendRestApiCallReplyNode;
 import org.thingsboard.rule.engine.telemetry.TbCalculatedFieldsNode;
 import org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode;
 import org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode;
+import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.asset.AssetProfile;
+import org.thingsboard.server.common.data.converter.Converter;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.data.group.EntityGroup;
+import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.AssetProfileId;
+import org.thingsboard.server.common.data.id.ConverterId;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DashboardId;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.EntityGroupId;
+import org.thingsboard.server.common.data.id.EntityViewId;
+import org.thingsboard.server.common.data.id.IntegrationId;
+import org.thingsboard.server.common.data.id.ReportTemplateId;
+import org.thingsboard.server.common.data.id.RoleId;
+import org.thingsboard.server.common.data.id.SchedulerEventId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.integration.Integration;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.report.ReportTemplate;
+import org.thingsboard.server.common.data.role.Role;
+import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.common.data.scheduler.SchedulerEvent;
+import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.gen.edge.v1.EdgeConfiguration;
 import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 
@@ -77,6 +99,7 @@ public class EdgeMsgConstructorUtilsTest {
                     new TbSaveToCustomCassandraTableNode(),
                     new TbMsgAttributesNode(),
                     new TbMsgTimeseriesNode(),
+                    new TbChangeOwnerNode(),
                     new TbSendRestApiCallReplyNode(),
                     new TbAwsLambdaNode(),
                     new TbCalculatedFieldsNode(),
@@ -129,6 +152,25 @@ public class EdgeMsgConstructorUtilsTest {
             checkUpdateNodeConfigurationsForLegacyEdge(ruleNode, edgeVersion);
             checkRemoveExcludedNodesForLegacyEdge(ruleNode, edgeVersion);
         });
+    }
+
+    @Test
+    @DisplayName("Test constructEdgeConfiguration with null edgeLicenseKey and cloudEndpoint")
+    public void testConstructEdgeConfigurationWithNulls() {
+        Edge edge = new Edge();
+        edge.setId(new EdgeId(UUID.randomUUID()));
+        edge.setTenantId(TenantId.fromUUID(UUID.randomUUID()));
+        edge.setName("Test Edge");
+        edge.setType("Test Type");
+        edge.setRoutingKey(UUID.randomUUID().toString());
+        edge.setSecret(UUID.randomUUID().toString());
+        edge.setEdgeLicenseKey(null);
+        edge.setCloudEndpoint(null);
+        edge.setAdditionalInfo(JacksonUtil.newObjectNode());
+
+        EdgeConfiguration edgeConfiguration = EdgeMsgConstructorUtils.constructEdgeConfiguration(edge, 1);
+        Assertions.assertNotNull(edgeConfiguration);
+        Assertions.assertEquals(edge.getName(), edgeConfiguration.getName());
     }
 
     private List<RuleNode> sanitizeMetadataForLegacyEdgeVersion(EdgeVersion edgeVersion) {
@@ -230,8 +272,33 @@ public class EdgeMsgConstructorUtilsTest {
         Assertions.assertEquals(8, getIntValue(assetMergedAttrAD.getBody(), "d"));
     }
 
+    @Test
+    public void testMergeDownlinkDuplicates_attrBodyHasNoTs_returnOriginalList() {
+        UUID deviceId = UUID.randomUUID();
+        TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());
+
+        var deviceAttrUpdate1 = createEdgeEvent(tenantId, 1, EdgeEventActionType.ATTRIBUTES_UPDATED,
+                deviceId, EdgeEventType.DEVICE, createAttrBodyWithoutTs("{\"a\":1,\"b\":1,\"d\":1}"));
+        var deviceAttrUpdate2 = createEdgeEvent(tenantId, 2, EdgeEventActionType.ATTRIBUTES_UPDATED,
+                deviceId, EdgeEventType.DEVICE, createAttrBodyWithoutTs("{\"a\":2,\"b\":2,\"c\":2}"));
+        var deviceAttrUpdate3 = createEdgeEvent(tenantId, 3, EdgeEventActionType.ATTRIBUTES_UPDATED,
+                deviceId, EdgeEventType.DEVICE, createAttrBodyWithoutTs("{\"a\":3,\"d\":3}"));
+
+        List<EdgeEvent> input = List.of(deviceAttrUpdate1, deviceAttrUpdate2, deviceAttrUpdate3);
+        List<EdgeEvent> merged = EdgeMsgConstructorUtils.mergeAndFilterDownlinkDuplicates(input);
+
+        Assertions.assertEquals(3, merged.size());
+        Assertions.assertEquals(deviceAttrUpdate1, merged.get(0));
+        Assertions.assertEquals(deviceAttrUpdate2, merged.get(1));
+        Assertions.assertEquals(deviceAttrUpdate3, merged.get(2));
+    }
+
     private Integer getIntValue(JsonNode body, String key) {
         return body.get("kv").get(key) != null ? body.get("kv").get(key).asInt() : null;
+    }
+
+    private static JsonNode createAttrBodyWithoutTs(String kvJson) {
+        return JacksonUtil.toJsonNode("{\"kv\":" + kvJson + "}");
     }
 
     private static JsonNode createAttrBody(long ts, String kvJson) {
@@ -252,5 +319,253 @@ public class EdgeMsgConstructorUtilsTest {
         edgeEvent.setType(type);
         edgeEvent.setBody(body);
         return edgeEvent;
+    }
+
+    @Test
+    public void testConstructAssetUpdatedMsg_versionIsReset() {
+        Asset asset = new Asset();
+        asset.setId(new AssetId(UUID.randomUUID()));
+        asset.setName("Test Asset");
+        asset.setVersion(42L);
+
+        String entity = EdgeMsgConstructorUtils.constructAssetUpdatedMsg(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, asset, null).getEntity();
+        JsonNode json = JacksonUtil.toJsonNode(entity);
+
+        Assertions.assertTrue(json.get("version") == null || json.get("version").isNull(),
+                "Asset version should be null in serialized message");
+    }
+
+    @Test
+    public void testConstructAssetProfileUpdatedMsg_versionIsReset() {
+        AssetProfile assetProfile = new AssetProfile();
+        assetProfile.setId(new AssetProfileId(UUID.randomUUID()));
+        assetProfile.setName("Test Asset Profile");
+        assetProfile.setVersion(42L);
+
+        String entity = EdgeMsgConstructorUtils.constructAssetProfileUpdatedMsg(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, assetProfile).getEntity();
+        JsonNode json = JacksonUtil.toJsonNode(entity);
+
+        Assertions.assertTrue(json.get("version") == null || json.get("version").isNull(),
+                "AssetProfile version should be null in serialized message");
+    }
+
+    @Test
+    public void testConstructCustomerUpdatedMsg_versionIsReset() {
+        Customer customer = new Customer();
+        customer.setId(new CustomerId(UUID.randomUUID()));
+        customer.setTitle("Test Customer");
+        customer.setVersion(42L);
+
+        String entity = EdgeMsgConstructorUtils.constructCustomerUpdatedMsg(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, customer, null).getEntity();
+        JsonNode json = JacksonUtil.toJsonNode(entity);
+
+        Assertions.assertTrue(json.get("version") == null || json.get("version").isNull(),
+                "Customer version should be null in serialized message");
+    }
+
+    @Test
+    public void testConstructDashboardUpdatedMsg_versionIsReset() {
+        Dashboard dashboard = new Dashboard();
+        dashboard.setId(new DashboardId(UUID.randomUUID()));
+        dashboard.setTitle("Test Dashboard");
+        dashboard.setVersion(42L);
+
+        String entity = EdgeMsgConstructorUtils.constructDashboardUpdatedMsg(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, dashboard, null).getEntity();
+        JsonNode json = JacksonUtil.toJsonNode(entity);
+
+        Assertions.assertTrue(json.get("version") == null || json.get("version").isNull(),
+                "Dashboard version should be null in serialized message");
+    }
+
+    @Test
+    public void testConstructDeviceUpdatedMsg_versionIsReset() {
+        Device device = new Device();
+        device.setId(new DeviceId(UUID.randomUUID()));
+        device.setName("Test Device");
+        device.setVersion(42L);
+
+        String entity = EdgeMsgConstructorUtils.constructDeviceUpdatedMsg(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, device, null).getEntity();
+        JsonNode json = JacksonUtil.toJsonNode(entity);
+
+        Assertions.assertTrue(json.get("version") == null || json.get("version").isNull(),
+                "Device version should be null in serialized message");
+    }
+
+    @Test
+    public void testConstructDeviceCredentialsUpdatedMsg_versionIsReset() {
+        DeviceCredentials credentials = new DeviceCredentials();
+        credentials.setVersion(42L);
+
+        String entity = EdgeMsgConstructorUtils.constructDeviceCredentialsUpdatedMsg(credentials).getEntity();
+        JsonNode json = JacksonUtil.toJsonNode(entity);
+
+        Assertions.assertTrue(json.get("version") == null || json.get("version").isNull(),
+                "DeviceCredentials version should be null in serialized message");
+    }
+
+    @Test
+    public void testConstructEntityViewUpdatedMsg_versionIsReset() {
+        EntityView entityView = new EntityView();
+        entityView.setId(new EntityViewId(UUID.randomUUID()));
+        entityView.setName("Test EntityView");
+        entityView.setVersion(42L);
+
+        String entity = EdgeMsgConstructorUtils.constructEntityViewUpdatedMsg(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, entityView, null).getEntity();
+        JsonNode json = JacksonUtil.toJsonNode(entity);
+
+        Assertions.assertTrue(json.get("version") == null || json.get("version").isNull(),
+                "EntityView version should be null in serialized message");
+    }
+
+    @Test
+    public void testConstructRelationUpdatedMsg_versionIsReset() {
+        EntityRelation relation = new EntityRelation();
+        relation.setVersion(42L);
+
+        String entity = EdgeMsgConstructorUtils.constructRelationUpdatedMsg(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, relation).getEntity();
+        JsonNode json = JacksonUtil.toJsonNode(entity);
+
+        Assertions.assertTrue(json.get("version") == null || json.get("version").isNull(),
+                "EntityRelation version should be null in serialized message");
+    }
+
+    @Test
+    public void testConstructRuleChainUpdatedMsg_versionIsReset() {
+        RuleChain ruleChain = new RuleChain();
+        ruleChain.setId(new org.thingsboard.server.common.data.id.RuleChainId(UUID.randomUUID()));
+        ruleChain.setName("Test RuleChain");
+        ruleChain.setVersion(42L);
+
+        String entity = EdgeMsgConstructorUtils.constructRuleChainUpdatedMsg(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, ruleChain, false).getEntity();
+        JsonNode json = JacksonUtil.toJsonNode(entity);
+
+        Assertions.assertTrue(json.get("version") == null || json.get("version").isNull(),
+                "RuleChain version should be null in serialized message");
+    }
+
+    @Test
+    public void testConstructTenantUpdateMsg_versionIsReset() {
+        Tenant tenant = new Tenant();
+        tenant.setId(TenantId.fromUUID(UUID.randomUUID()));
+        tenant.setTitle("Test Tenant");
+        tenant.setVersion(42L);
+
+        String entity = EdgeMsgConstructorUtils.constructTenantUpdateMsg(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, tenant).getEntity();
+        JsonNode json = JacksonUtil.toJsonNode(entity);
+
+        Assertions.assertTrue(json.get("version") == null || json.get("version").isNull(),
+                "Tenant version should be null in serialized message");
+    }
+
+    @Test
+    public void testConstructUserUpdatedMsg_versionIsReset() {
+        User user = new User();
+        user.setId(new UserId(UUID.randomUUID()));
+        user.setEmail("test@test.com");
+        user.setVersion(42L);
+
+        String entity = EdgeMsgConstructorUtils.constructUserUpdatedMsg(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, user, null).getEntity();
+        JsonNode json = JacksonUtil.toJsonNode(entity);
+
+        Assertions.assertTrue(json.get("version") == null || json.get("version").isNull(),
+                "User version should be null in serialized message");
+    }
+
+    @Test
+    public void testConstructRuleChainMetadataUpdatedMsg_versionIsReset() {
+        RuleChainMetaData metaData = new RuleChainMetaData();
+        metaData.setVersion(42L);
+
+        String entity = EdgeMsgConstructorUtils.constructRuleChainMetadataUpdatedMsg(
+                UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, metaData, EdgeVersion.V_4_0_0).getEntity();
+        JsonNode json = JacksonUtil.toJsonNode(entity);
+
+        Assertions.assertTrue(json.get("version") == null || json.get("version").isNull(),
+                "RuleChainMetaData version should be null in serialized message");
+    }
+
+    @Test
+    public void testConstructConverterUpdateMsg_versionIsReset() {
+        Converter converter = new Converter();
+        converter.setId(new ConverterId(UUID.randomUUID()));
+        converter.setName("Test Converter");
+        converter.setVersion(42L);
+
+        String entity = EdgeMsgConstructorUtils.constructConverterUpdateMsg(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, converter).getEntity();
+        JsonNode json = JacksonUtil.toJsonNode(entity);
+
+        Assertions.assertTrue(json.get("version") == null || json.get("version").isNull(),
+                "Converter version should be null in serialized message");
+    }
+
+    @Test
+    public void testConstructEntityGroupUpdatedMsg_versionIsReset() {
+        EntityGroup entityGroup = new EntityGroup();
+        entityGroup.setId(new EntityGroupId(UUID.randomUUID()));
+        entityGroup.setName("Test EntityGroup");
+        entityGroup.setVersion(42L);
+
+        String entity = EdgeMsgConstructorUtils.constructEntityGroupUpdatedMsg(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, entityGroup).getEntity();
+        JsonNode json = JacksonUtil.toJsonNode(entity);
+
+        Assertions.assertTrue(json.get("version") == null || json.get("version").isNull(),
+                "EntityGroup version should be null in serialized message");
+    }
+
+    @Test
+    public void testConstructRoleProto_versionIsReset() {
+        Role role = new Role();
+        role.setId(new RoleId(UUID.randomUUID()));
+        role.setName("Test Role");
+        role.setVersion(42L);
+
+        String entity = EdgeMsgConstructorUtils.constructRoleProto(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, role).getEntity();
+        JsonNode json = JacksonUtil.toJsonNode(entity);
+
+        Assertions.assertTrue(json.get("version") == null || json.get("version").isNull(),
+                "Role version should be null in serialized message");
+    }
+
+    @Test
+    public void testConstructIntegrationUpdateMsg_versionIsReset() {
+        Integration integration = new Integration();
+        integration.setId(new IntegrationId(UUID.randomUUID()));
+        integration.setName("Test Integration");
+        integration.setVersion(42L);
+
+        String entity = EdgeMsgConstructorUtils.constructIntegrationUpdateMsg(
+                UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, integration, JacksonUtil.newObjectNode()).getEntity();
+        JsonNode json = JacksonUtil.toJsonNode(entity);
+
+        Assertions.assertTrue(json.get("version") == null || json.get("version").isNull(),
+                "Integration version should be null in serialized message");
+    }
+
+    @Test
+    public void testConstructSchedulerEventUpdatedMsg_versionIsReset() {
+        SchedulerEvent schedulerEvent = new SchedulerEvent();
+        schedulerEvent.setId(new SchedulerEventId(UUID.randomUUID()));
+        schedulerEvent.setName("Test SchedulerEvent");
+        schedulerEvent.setVersion(42L);
+
+        String entity = EdgeMsgConstructorUtils.constructSchedulerEventUpdatedMsg(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, schedulerEvent).getEntity();
+        JsonNode json = JacksonUtil.toJsonNode(entity);
+
+        Assertions.assertTrue(json.get("version") == null || json.get("version").isNull(),
+                "SchedulerEvent version should be null in serialized message");
+    }
+
+    @Test
+    public void testConstructReportTemplateUpdatedMsg_versionIsReset() {
+        ReportTemplate reportTemplate = new ReportTemplate();
+        reportTemplate.setId(new ReportTemplateId(UUID.randomUUID()));
+        reportTemplate.setName("Test ReportTemplate");
+        reportTemplate.setVersion(42L);
+
+        String entity = EdgeMsgConstructorUtils.constructReportTemplateUpdatedMsg(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, reportTemplate).getEntity();
+        JsonNode json = JacksonUtil.toJsonNode(entity);
+
+        Assertions.assertTrue(json.get("version") == null || json.get("version").isNull(),
+                "ReportTemplate version should be null in serialized message");
     }
 }

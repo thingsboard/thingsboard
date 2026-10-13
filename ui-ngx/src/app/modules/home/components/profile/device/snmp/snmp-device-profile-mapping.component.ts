@@ -1,20 +1,8 @@
-///
-/// Copyright © 2016-2025 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { Component, DestroyRef, forwardRef, inject, Input, OnDestroy, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -28,28 +16,29 @@ import {
   Validators
 } from '@angular/forms';
 import { SnmpMapping } from '@shared/models/device.models';
-import { Subject } from 'rxjs';
 import { DataType, DataTypeTranslationMap } from '@shared/models/constants';
 import { isUndefinedOrNull } from '@core/utils';
-import { takeUntil } from 'rxjs/operators';
+import { GtSmBreakpointAwareDirective } from '@shared/components/gt-sm-breakpoint-aware.directive';
 
 @Component({
-  selector: 'tb-snmp-device-profile-mapping',
-  templateUrl: './snmp-device-profile-mapping.component.html',
-  styleUrls: ['./snmp-device-profile-mapping.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => SnmpDeviceProfileMappingComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => SnmpDeviceProfileMappingComponent),
-      multi: true
-    }]
+    selector: 'tb-snmp-device-profile-mapping',
+    templateUrl: './snmp-device-profile-mapping.component.html',
+    styleUrls: ['./snmp-device-profile-mapping.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => SnmpDeviceProfileMappingComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => SnmpDeviceProfileMappingComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
-export class SnmpDeviceProfileMappingComponent implements OnInit, OnDestroy, ControlValueAccessor, Validator {
+export class SnmpDeviceProfileMappingComponent extends GtSmBreakpointAwareDirective implements OnInit, OnDestroy, ControlValueAccessor, Validator {
 
   mappingsConfigForm: UntypedFormGroup;
 
@@ -61,23 +50,27 @@ export class SnmpDeviceProfileMappingComponent implements OnInit, OnDestroy, Con
 
   private readonly oidPattern: RegExp  = /^\.?([0-2])((\.0)|(\.[1-9][0-9]*))*$/;
 
-  private destroy$ = new Subject<void>();
+  private isDestroyed = false;
+
+  private destroyRef = inject(DestroyRef);
+
   private propagateChange = (v: any) => { };
 
-  constructor(private fb: UntypedFormBuilder) { }
-
-  ngOnInit() {
+  constructor(private fb: UntypedFormBuilder) {
+    super();
     this.mappingsConfigForm = this.fb.group({
       mappings: this.fb.array([])
     });
+  }
+
+  ngOnInit() {
     this.mappingsConfigForm.valueChanges.pipe(
-      takeUntil(this.destroy$)
+      takeUntilDestroyed(this.destroyRef)
     ).subscribe(() => this.updateModel());
   }
 
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
+  ngOnDestroy(): void {
+    this.isDestroyed = true;
   }
 
   registerOnChange(fn: any) {
@@ -114,7 +107,7 @@ export class SnmpDeviceProfileMappingComponent implements OnInit, OnDestroy, Con
       }
       this.mappingsConfigForm.setControl('mappings', this.fb.array(mappingsControl), {emitEvent: false});
       if (!mappings || !mappings.length) {
-        this.addMappingConfig();
+        this.mappingsConfigFormArray.push(this.createdFormGroup(), {emitEvent: false});
       }
       if (this.disabled) {
         this.mappingsConfigForm.disable({emitEvent: false});
@@ -123,7 +116,11 @@ export class SnmpDeviceProfileMappingComponent implements OnInit, OnDestroy, Con
       }
     }
     if (!this.disabled && !this.mappingsConfigForm.valid) {
-      this.updateModel();
+      Promise.resolve().then(() => {
+        if (!this.isDestroyed) {
+          this.updateModel();
+        }
+      });
     }
   }
 

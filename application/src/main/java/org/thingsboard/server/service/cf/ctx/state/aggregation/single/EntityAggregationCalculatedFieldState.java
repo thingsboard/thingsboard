@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2025 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.cf.ctx.state.aggregation.single;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -23,7 +11,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.common.util.DebugModeUtil;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.script.api.tbel.TbUtils;
 import org.thingsboard.script.api.tbel.TbelCfArg;
 import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
@@ -36,11 +23,13 @@ import org.thingsboard.server.common.data.cf.configuration.aggregation.single.in
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.service.cf.CalculatedFieldProcessingService;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
+import org.thingsboard.server.service.cf.DefaultCalculatedFieldReprocessingService.EntityAggCfReprocessingCtx;
 import org.thingsboard.server.service.cf.TelemetryCalculatedFieldResult;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.BaseCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
+import org.thingsboard.common.util.NumberUtils;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -67,6 +56,8 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
     private EntityAggregationDebugArgumentsTracker debugTracker;
 
     private CalculatedFieldProcessingService cfProcessingService;
+
+    private long now;
 
     public EntityAggregationCalculatedFieldState(EntityId entityId) {
         super(entityId);
@@ -100,7 +91,7 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
     @Override
     public ListenableFuture<CalculatedFieldResult> performCalculation(Map<String, ArgumentEntry> updatedArgs, CalculatedFieldCtx ctx) throws Exception {
         createIntervalIfNotExist();
-        long now = System.currentTimeMillis();
+        now = System.currentTimeMillis();
 
         if (DebugModeUtil.isDebugFailuresAvailable(ctx.getCalculatedField())) {
             if (debugTracker == null) {
@@ -114,7 +105,7 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
         Map<AggIntervalEntry, Map<String, ArgumentEntry>> results = new HashMap<>();
         List<AggIntervalEntry> expiredIntervals = new ArrayList<>();
         getIntervals().forEach((intervalEntry, argIntervalStatuses) -> {
-            processInterval(now, intervalEntry, argIntervalStatuses, expiredIntervals, results);
+            processInterval(intervalEntry, argIntervalStatuses, expiredIntervals, results);
         });
         removeExpiredIntervals(expiredIntervals);
 
@@ -154,8 +145,10 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
     }
 
     private void fillMissingIntervals() {
+        long now = System.currentTimeMillis();
         ZoneId zoneId = interval.getZoneId();
         long currentIntervalEndTs = interval.getCurrentIntervalEndTs();
+        long watermarkThresholdTs = now - watermarkDuration;
 
         Map<AggIntervalEntry, Map<String, AggIntervalEntryStatus>> intervals = getIntervals();
         AggIntervalEntry lastIntervalEntry = intervals.keySet().stream().max(Comparator.comparing(AggIntervalEntry::getEndTs)).orElse(null);
@@ -169,6 +162,13 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
         while (nextEnd.toInstant().toEpochMilli() <= currentIntervalEndTs) {
             long nextStartTs = nextStart.toInstant().toEpochMilli();
             long nextEndTs = nextEnd.toInstant().toEpochMilli();
+
+            if (nextEndTs < watermarkThresholdTs) {
+                nextStart = nextEnd;
+                nextEnd = interval.getNextIntervalStart(nextStart);
+                continue;
+            }
+
             AggIntervalEntry missing = new AggIntervalEntry(nextStartTs, nextEndTs);
 
             arguments.forEach((argName, argumentEntry) -> {
@@ -193,8 +193,7 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
         return intervals;
     }
 
-    private void processInterval(long now,
-                                 AggIntervalEntry intervalEntry,
+    private void processInterval(AggIntervalEntry intervalEntry,
                                  Map<String, AggIntervalEntryStatus> args,
                                  List<AggIntervalEntry> expiredIntervals,
                                  Map<AggIntervalEntry, Map<String, ArgumentEntry>> results) {
@@ -235,11 +234,11 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
         args.forEach((argName, argEntryIntervalStatus) -> {
             if (argEntryIntervalStatus.intervalPassed(cfCheckInterval)) {
                 if (argEntryIntervalStatus.argsUpdated()) {
-                    argEntryIntervalStatus.setLastMetricsEvalTs(System.currentTimeMillis());
+                    argEntryIntervalStatus.setLastMetricsEvalTs(now);
                     argEntryIntervalStatus.setLastArgsRefreshTs(DEFAULT_LAST_UPDATE_TS);
                     processArgument(intervalEntry, argName, false, results);
                 } else if (argEntryIntervalStatus.getLastMetricsEvalTs() == DEFAULT_LAST_UPDATE_TS) {
-                    argEntryIntervalStatus.setLastMetricsEvalTs(System.currentTimeMillis());
+                    argEntryIntervalStatus.setLastMetricsEvalTs(now);
                     processArgument(intervalEntry, argName, true, results);
                 }
             }
@@ -281,9 +280,9 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
                 ArgumentEntry argumentEntry = entry.getValue();
                 if (!argumentEntry.isEmpty()) {
                     Object resultValue = argumentEntry.getValue() instanceof Number number
-                            ? TbUtils.roundResult(number.doubleValue(), precision)
+                            ? NumberUtils.roundResult(number.doubleValue(), precision)
                             : argumentEntry.getValue();
-                    metricsNode.put(metricName, JacksonUtil.toString(resultValue));
+                    metricsNode.set(metricName, JacksonUtil.valueToTree(resultValue));
                 }
             }
             if (!metricsNode.isEmpty()) {
@@ -300,6 +299,26 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
             }
         });
         return result;
+    }
+
+    public ListenableFuture<CalculatedFieldResult> performAggregationDuringInterval(EntityAggCfReprocessingCtx reprocessingCtx) {
+        Set<String> argNames = ctx.getArguments().keySet();
+        AggIntervalEntry aggInterval = reprocessingCtx.getIntervalCursor();
+        Map<AggIntervalEntry, Map<String, ArgumentEntry>> results = new HashMap<>();
+        argNames.forEach(argName -> {
+            processArgument(aggInterval, argName, false, results);
+        });
+
+        Output output = ctx.getOutput();
+        ArrayNode result = toResult(results, output.getDecimalsByDefault());
+        if (result.isEmpty()) {
+            return Futures.immediateFuture(TelemetryCalculatedFieldResult.EMPTY);
+        }
+        return Futures.immediateFuture(TelemetryCalculatedFieldResult.builder()
+                .type(output.getType())
+                .scope(output.getScope())
+                .result(result)
+                .build());
     }
 
     @Override

@@ -1,0 +1,184 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@import "../../../../../scss/constants";
+
+:host-context(.tb-fullscreen-dialog .mat-mdc-dialog-container) {
+  max-width: 820px;
+  min-width: 100%;
+  width: 700px;
+  display: grid;
+  grid-template-rows: min-content 4px minmax(auto, 1fr) min-content min-content;
+
+  .mat-mdc-dialog-content {
+    grid-row: 3;
+  }
+
+  .mat-divider {
+    grid-row: 4;
+  }
+
+  .mat-mdc-dialog-actions {
+    grid-row: 5;
+  }
+
+
+  @media #{$mat-lt-md} {
+    width: 100%;
+    min-width: 80vw;
+  }
+
+  @media #{$mat-gt-xs} {
+    .mat-mdc-dialog-content {
+      max-height: 75vh;
+    }
+  }
+
+  .remote-integration-setting {
+    box-shadow: none;
+    border: 1px groove rgba(0, 0, 0, .25);
+    border-radius: 4px;
+
+    .mat-expansion-panel-header {
+      padding: 0 24px 0 16px;
+
+      &.mat-expanded {
+        height: 48px;
+      }
+    }
+  }
+
+  .connection-status {
+    font-weight: 500;
+    letter-spacing: 0.25px;
+    text-align: center;
+  }
+
+  .connection-icon {
+    height: 32px;
+    font-size: 32px;
+    width: 32px;
+    margin-bottom: 4px;
+  }
+
+  .error_msg {
+    text-align: center;
+    margin-top: 8px;
+    font-size: 14px;
+    line-height: 130%;
+    letter-spacing: 0.25px;
+    opacity: 0.9;
+  }
+
+  .success {
+    color: #198038;
+  }
+
+  .error {
+    color: #D12730;
+  }
+
+  .tb-hint-edge {
+    border-radius: 6px;
+    background-color: rgba(48, 86, 128, 0.04);
+    line-height: 16px;
+    letter-spacing: 0.25px;
+    margin-bottom: 8px;
+    padding: 8px 12px;
+    color: rgba(0, 0, 0, 0.54);
+  }
+
+  .tb-form-panel.tb-converter-panel {
+    @media #{$mat-gt-xs} {
+      box-shadow: none;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      border-radius: 6px;
+    }
+    @media #{$mat-xs} {
+      padding: 0;
+      box-shadow: none;
+      border-radius: 0;
+    }
+  }
+
+}
+
+:host ::ng-deep {
+  .mat-mdc-dialog-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 0 !important;
+
+    tb-converter {
+      .mat-padding {
+        padding: 0;
+      }
+    }
+
+    .mat-stepper-horizontal {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
+      @media #{$mat-lt-sm} {
+        .mat-step-label {
+          white-space: normal;
+          overflow: visible;
+          .mat-step-text-label {
+            overflow: visible;
+          }
+        }
+      }
+      .mat-horizontal-stepper-wrapper {
+        max-height: 100%;
+      }
+      .mat-horizontal-content-container {
+        height: 580px;
+        max-height: 100%;
+        width: 100%;;
+        padding-top: 12px;
+        overflow-y: auto;
+        scrollbar-gutter: stable;
+        @media #{$mat-gt-sm} {
+          min-width: 500px;
+        }
+      }
+      .mat-horizontal-stepper-content[aria-expanded=true] {
+        height: 100%;
+        position: relative;
+      }
+    }
+  }
+
+  .remote-integration-setting {
+    .mat-content {
+      overflow: visible;
+    }
+    .mat-expansion-panel-body {
+      padding: 0;
+      .remote-integration-setting-content {
+        margin: 0 16px;
+      }
+    }
+  }
+  .remote-config-panel {
+    padding: 16px;
+    margin: 8px 8px 16px;
+  }
+
+  .mat-horizontal-stepper-header-container {
+    padding: 0 12px;
+  }
+
+  .mat-stepper-label-position-bottom .mat-horizontal-stepper-header {
+    padding: 20px 12px 12px;
+  }
+
+  .tb-js-func {
+    background-color: transparent !important;
+  }
+
+  tb-key-val-map {
+    margin-bottom: 6px;
+  }
+}

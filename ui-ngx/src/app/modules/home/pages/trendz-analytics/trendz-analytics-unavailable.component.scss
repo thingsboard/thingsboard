@@ -1,0 +1,24 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+.trendz-unavailable {
+  max-width: 750px;
+  color: rgba(0, 0, 0, 0.76);
+
+  .trendz-unavailable-content {
+    padding: 24px;
+  }
+
+  .trendz-unavailable-title {
+    font-size: 20px;
+    font-weight: 600
+  }
+  .trendz-unavailable-text {
+    line-height: 20px;
+  }
+
+  .trendz-unavailable-actions {
+    padding: 8px;
+  }
+}
+
+

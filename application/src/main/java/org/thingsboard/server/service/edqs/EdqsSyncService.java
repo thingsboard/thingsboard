@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2025 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.edqs;
 
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +13,7 @@ import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.edqs.AttributeKv;
 import org.thingsboard.server.common.data.edqs.EdqsEventType;
 import org.thingsboard.server.common.data.edqs.EdqsObject;
+import org.thingsboard.server.common.data.edqs.EdqsSyncRequest;
 import org.thingsboard.server.common.data.edqs.Entity;
 import org.thingsboard.server.common.data.edqs.LatestTsKv;
 import org.thingsboard.server.common.data.edqs.fields.EntityFields;
@@ -37,6 +26,7 @@ import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.attributes.AttributesDao;
 import org.thingsboard.server.dao.dictionary.KeyDictionaryDao;
 import org.thingsboard.server.dao.entity.EntityDaoRegistry;
+import org.thingsboard.server.dao.group.EntityGroupDao;
 import org.thingsboard.server.dao.model.sql.AttributeKvEntity;
 import org.thingsboard.server.dao.model.sql.RelationEntity;
 import org.thingsboard.server.dao.model.sqlts.dictionary.KeyDictionaryEntry;
@@ -51,6 +41,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.thingsboard.server.common.data.ObjectType.ATTRIBUTE_KV;
+import static org.thingsboard.server.common.data.ObjectType.ENTITY_GROUP;
 import static org.thingsboard.server.common.data.ObjectType.LATEST_TS_KV;
 import static org.thingsboard.server.common.data.ObjectType.RELATION;
 import static org.thingsboard.server.common.data.ObjectType.edqsTenantTypes;
@@ -71,6 +62,8 @@ public abstract class EdqsSyncService {
     @Autowired
     private RelationRepository relationRepository;
     @Autowired
+    private EntityGroupDao entityGroupDao;
+    @Autowired
     private TsKvLatestRepository tsKvLatestRepository;
     @Autowired
     @Lazy
@@ -83,19 +76,38 @@ public abstract class EdqsSyncService {
 
     public abstract boolean isSyncNeeded();
 
-    public void sync() {
+    public void sync(EdqsSyncRequest syncRequest) {
         log.info("Synchronizing data to EDQS");
         long startTs = System.currentTimeMillis();
         counters.clear();
 
-        syncTenantEntities();
-        syncRelations();
-        loadKeyDictionary();
-        syncAttributes();
-        syncLatestTimeseries();
+        if (syncRequest.getObjectTypes() != null && !syncRequest.getObjectTypes().isEmpty()) {
+            log.info("Sync request for entity types: {}", syncRequest.getObjectTypes());
+            for (ObjectType objectType : syncRequest.getObjectTypes()) {
+                syncObjectType(objectType);
+            }
+        } else {
+            log.info("Sync request for all entity types");
+            syncTenantEntities();
+            syncEntityGroups();
+            syncRelations();
+            loadKeyDictionary();
+            syncAttributes();
+            syncLatestTimeseries();
+        }
 
         counters.clear();
         log.info("Finished synchronizing data to EDQS in {} ms", (System.currentTimeMillis() - startTs));
+    }
+
+    private void syncObjectType(ObjectType objectType) {
+        switch (objectType) {
+            case ENTITY_GROUP -> syncEntityGroups();
+            case RELATION -> syncRelations();
+            case ATTRIBUTE_KV -> syncAttributes();
+            case LATEST_TS_KV -> syncLatestTimeseries();
+            default -> syncTenantEntity(objectType);
+        }
     }
 
     private void process(TenantId tenantId, ObjectType type, EdqsObject object) {
@@ -108,26 +120,54 @@ public abstract class EdqsSyncService {
 
     private void syncTenantEntities() {
         for (ObjectType type : edqsTenantTypes) {
-            log.info("Synchronizing {} entities to EDQS", type);
-            long ts = System.currentTimeMillis();
-            EntityType entityType = type.toEntityType();
-            Dao<?> dao = entityDaoRegistry.getDao(entityType);
-            UUID lastId = UUID.fromString("00000000-0000-0000-0000-000000000000");
-            while (true) {
-                var batch = dao.findNextBatch(lastId, entityBatchSize);
-                if (batch.isEmpty()) {
-                    break;
-                }
-                for (EntityFields entityFields : batch) {
-                    TenantId tenantId = TenantId.fromUUID(entityFields.getTenantId());
-                    entityInfoMap.put(entityFields.getId(), new EntityIdInfo(entityType, tenantId));
-                    process(tenantId, type, new Entity(entityType, entityFields));
-                }
-                EntityFields lastRecord = batch.get(batch.size() - 1);
-                lastId = lastRecord.getId();
-            }
-            log.info("Finished synchronizing {} entities to EDQS in {} ms", type, (System.currentTimeMillis() - ts));
+            syncTenantEntity(type);
         }
+    }
+
+    private void syncTenantEntity(ObjectType type) {
+        log.info("Synchronizing {} entities to EDQS", type);
+        long ts = System.currentTimeMillis();
+        EntityType entityType = type.toEntityType();
+        Dao<?> dao = entityDaoRegistry.getDao(entityType);
+        UUID lastId = UUID.fromString("00000000-0000-0000-0000-000000000000");
+        while (true) {
+            var batch = dao.findNextBatch(lastId, entityBatchSize);
+            if (batch.isEmpty()) {
+                break;
+            }
+            for (EntityFields entityFields : batch) {
+                TenantId tenantId = TenantId.fromUUID(entityFields.getTenantId());
+                entityInfoMap.put(entityFields.getId(), new EntityIdInfo(entityType, tenantId));
+                process(tenantId, type, new Entity(entityType, entityFields));
+            }
+            EntityFields lastRecord = batch.get(batch.size() - 1);
+            lastId = lastRecord.getId();
+        }
+        log.info("Finished synchronizing {} entities to EDQS in {} ms", type, (System.currentTimeMillis() - ts));
+    }
+    private void syncEntityGroups() {
+        log.info("Synchronizing entity groups to EDQS");
+        long ts = System.currentTimeMillis();
+
+        UUID lastId = UUID.fromString("00000000-0000-0000-0000-000000000000");
+        while (true) {
+            var batch = entityGroupDao.findNextBatch(lastId, entityBatchSize);
+            if (batch.isEmpty()) {
+                break;
+            }
+            for (EntityFields groupFields : batch) {
+                EntityIdInfo entityIdInfo = entityInfoMap.get(groupFields.getOwnerId());
+                if (entityIdInfo != null) {
+                    entityInfoMap.put(groupFields.getId(), new EntityIdInfo(EntityType.ENTITY_GROUP, entityIdInfo.tenantId()));
+                    process(entityIdInfo.tenantId(), ENTITY_GROUP, new Entity(EntityType.ENTITY_GROUP, groupFields));
+                } else {
+                    log.info("Entity group owner not found: {} ", groupFields);
+                }
+            }
+            EntityFields lastRecord = batch.get(batch.size() - 1);
+            lastId = lastRecord.getId();
+        }
+        log.info("Finished synchronizing entity groups to EDQS in {} ms", (System.currentTimeMillis() - ts));
     }
 
     private void syncRelations() {
@@ -162,7 +202,7 @@ public abstract class EdqsSyncService {
     private void processRelationBatch(List<RelationEntity> relations) {
         for (RelationEntity relation : relations) {
             try {
-                if (RelationTypeGroup.COMMON.name().equals(relation.getRelationTypeGroup())) {
+                if (RelationTypeGroup.COMMON.name().equals(relation.getRelationTypeGroup()) || (RelationTypeGroup.FROM_ENTITY_GROUP.name().equals(relation.getRelationTypeGroup()))) {
                     EntityIdInfo entityIdInfo = entityInfoMap.get(relation.getFromId());
                     if (entityIdInfo != null) {
                         process(entityIdInfo.tenantId(), RELATION, relation.toData());
@@ -286,7 +326,6 @@ public abstract class EdqsSyncService {
         return strKey;
     }
 
-    public record EntityIdInfo(EntityType entityType, TenantId tenantId) {
-    }
+    public record EntityIdInfo(EntityType entityType, TenantId tenantId) {}
 
 }

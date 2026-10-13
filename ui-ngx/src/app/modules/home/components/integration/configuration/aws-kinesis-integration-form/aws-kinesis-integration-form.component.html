@@ -1,0 +1,109 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="awsKinesisConfigForm">
+  <div class="flex flex-row xs:flex-col gt-xs:gap-2">
+    <mat-form-field appearance="outline" class="mat-block flex-1">
+      <mat-label translate>integration.kinesis-stream-name</mat-label>
+      <input matInput required formControlName="streamName">
+      @if (awsKinesisConfigForm.get('streamName').hasError('required')) {
+        <mat-error translate>integration.kinesis-stream-name-required</mat-error>
+      }
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="mat-block flex-1">
+      <mat-label translate>integration.kinesis-region</mat-label>
+      <input matInput required formControlName="region">
+      @if (awsKinesisConfigForm.get('region').hasError('required')) {
+        <mat-error translate>integration.kinesis-region-required</mat-error>
+      }
+    </mat-form-field>
+  </div>
+  <mat-form-field appearance="outline" class="mat-block flex-1">
+    <mat-label translate>integration.kinesis-initial-position-in-stream</mat-label>
+    <mat-select required formControlName="initialPositionInStream">
+      @for (stream of initialPositionInStreams; track stream) {
+        <mat-option [value]="stream">
+          {{ getInitialPositionInStreamTranslation(stream) }}
+        </mat-option>
+      }
+    </mat-select>
+    @if (awsKinesisConfigForm.get('initialPositionInStream').hasError('required')) {
+      <mat-error translate>integration.kinesis-initial-position-in-stream-required</mat-error>
+    }
+  </mat-form-field>
+
+  <section class="fields-group block">
+    <mat-slide-toggle [aria-label]="'integration.kinesis-use-credentials-from-instance-metadata' | translate"
+                        formControlName="useCredentialsFromInstanceMetadata">
+      {{ 'integration.kinesis-use-credentials-from-instance-metadata' | translate }}
+    </mat-slide-toggle>
+    @if (!awsKinesisConfigForm.get('useCredentialsFromInstanceMetadata').value) {
+      <div class="flex flex-col">
+        <mat-form-field appearance="outline" class="mat-block flex-1">
+          <mat-label translate>integration.kinesis-access-key-id</mat-label>
+          <input matInput required formControlName="accessKeyId" autocomplete="new-id">
+          @if (awsKinesisConfigForm.get('accessKeyId').hasError('required')) {
+            <mat-error translate>integration.kinesis-access-key-id-required</mat-error>
+          }
+        </mat-form-field>
+        <tb-secret-key-input formControlName="secretAccessKey" class="mat-block flex-1"
+                             required
+                             appearance="outline"
+                             label="{{ 'integration.kinesis-secret-access-key' | translate }}"
+                             requiredText="{{ 'integration.kinesis-secret-access-key-required' | translate }}">
+        </tb-secret-key-input>
+      </div>
+    }
+  </section>
+
+  <section class="fields-group">
+    <mat-slide-toggle [aria-label]="'integration.kinesis-use-consumers-with-enhanced-fan-out' | translate"
+                      formControlName="useConsumersWithEnhancedFanOut">
+      {{ 'integration.kinesis-use-consumers-with-enhanced-fan-out' | translate }}
+    </mat-slide-toggle>
+    @if (!awsKinesisConfigForm.get('useConsumersWithEnhancedFanOut').value) {
+      <div class="flex flex-row xs:flex-col gt-xs:gap-2">
+        <mat-form-field appearance="outline" class="mat-block flex-1">
+          <mat-label translate>integration.kinesis-max-records</mat-label>
+          <input matInput required type="number" min="1" max="10000" step="1" formControlName="maxRecords">
+          @if (awsKinesisConfigForm.get('maxRecords').hasError('required')) {
+            <mat-error translate>integration.kinesis-max-records-required</mat-error>
+          }
+          @if (awsKinesisConfigForm.get('maxRecords').hasError('min')
+          || awsKinesisConfigForm.get('maxRecords').hasError('max')) {
+            <mat-error translate>integration.kinesis-max-records-length-range</mat-error>
+          }
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="mat-block flex-1">
+          <mat-label translate>integration.kinesis-request-timeout</mat-label>
+          <input matInput required type="number" step="1" formControlName="requestTimeout">
+          @if (awsKinesisConfigForm.get('requestTimeout').hasError('required')) {
+            <mat-error translate>integration.kinesis-request-timeout-required</mat-error>
+          }
+        </mat-form-field>
+      </div>
+    }
+  </section>
+
+  <ng-container [ngTemplateOutlet]="executeRemotelyTemplate">
+  </ng-container>
+
+  <mat-expansion-panel class="configuration-panel">
+    <mat-expansion-panel-header>
+      <mat-panel-description class="flex items-stretch justify-end" translate>
+        integration.advanced-settings
+      </mat-panel-description>
+    </mat-expansion-panel-header>
+    <ng-template matExpansionPanelContent>
+      <mat-form-field appearance="outline" class="mat-block flex-1">
+        <mat-label translate>integration.kinesis-application-name</mat-label>
+        <input matInput formControlName="applicationName">
+      </mat-form-field>
+      <ng-container [ngTemplateOutlet]="genericAdditionalInfoTemplate">
+      </ng-container>
+    </ng-template>
+  </mat-expansion-panel>
+</section>

@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2025 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Component, ElementRef, Input, NgZone, OnDestroy, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { WidgetContext } from '@home/models/widget-component.models';
@@ -134,9 +120,10 @@ interface MultipleInputWidgetSource {
 }
 
 @Component({
-  selector: 'tb-multiple-input-widget ',
-  templateUrl: './multiple-input-widget.component.html',
-  styleUrls: ['./multiple-input-widget.component.scss']
+    selector: 'tb-multiple-input-widget ',
+    templateUrl: './multiple-input-widget.component.html',
+    styleUrls: ['./multiple-input-widget.component.scss'],
+    standalone: false
 })
 export class MultipleInputWidgetComponent extends PageComponent implements OnInit, OnDestroy {
 
@@ -572,7 +559,7 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
 
   public radioButtonSelectedColor(radioColor: string) {
     if (isDefinedAndNotNull(radioColor)) {
-      return `--mdc-radio-selected-icon-color: ${radioColor}; --mdc-radio-selected-focus-icon-color: ${radioColor}; --mdc-radio-selected-hover-icon-color: ${radioColor}; --mdc-radio-selected-pressed-icon-color: ${radioColor}; --mat-radio-checked-ripple-color: ${radioColor};`
+      return `--mat-radio-selected-icon-color: ${radioColor}; --mat-radio-selected-focus-icon-color: ${radioColor}; --mat-radio-selected-hover-icon-color: ${radioColor}; --mat-radio-selected-pressed-icon-color: ${radioColor}; --mat-radio-checked-ripple-color: ${radioColor};`
     }
   }
 

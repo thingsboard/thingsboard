@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2025 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.queue.usagestats;
 
 import com.google.common.collect.Lists;
@@ -63,8 +50,10 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
     private boolean enabled;
     @Value("${usage.stats.report.enabled_per_customer:false}")
     private boolean enabledPerCustomer;
-    @Value("${usage.stats.report.interval:10}")
+    @Value("${usage.stats.report.interval:60}")
     private int interval;
+    @Value("${usage.stats.report.urgent_interval:10}")
+    private int urgentInterval;
     @Value("${usage.stats.report.pack_size:1024}")
     private int packSize;
 
@@ -83,20 +72,30 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
             for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {
                 stats.put(key, new ConcurrentHashMap<>());
             }
+            Random random = new Random();
             scheduler.scheduleWithFixedDelay(() -> {
                 try {
-                    reportStats();
+                    reportStats(false);
                 } catch (Exception e) {
                     log.warn("Failed to report statistics: ", e);
                 }
-            }, new Random().nextInt(interval), interval, TimeUnit.SECONDS);
+            }, random.nextInt(interval), interval, TimeUnit.SECONDS);
+            scheduler.scheduleWithFixedDelay(() -> {
+                try {
+                    reportStats(true);
+                } catch (Exception e) {
+                    log.warn("Failed to report urgent statistics: ", e);
+                }
+            }, random.nextInt(urgentInterval), urgentInterval, TimeUnit.SECONDS);
         }
     }
 
-    private void reportStats() {
+    private void reportStats(boolean urgent) {
         ConcurrentMap<ParentEntity, UsageStatsServiceMsg.Builder> report = new ConcurrentHashMap<>();
 
         for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {
+            if (key.isUrgent() != urgent) continue;
+
             ConcurrentMap<ReportLevel, AtomicLong> statsForKey = stats.get(key);
             statsForKey.forEach((reportLevel, statsValue) -> {
                 long value = statsValue.get();

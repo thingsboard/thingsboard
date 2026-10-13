@@ -1,29 +1,16 @@
-/**
- * Copyright © 2016-2025 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.cf.ctx.state.propagation;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Output;
-import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.util.CollectionsUtil;
 import org.thingsboard.server.service.cf.CalculatedFieldProcessingService;
@@ -41,6 +28,7 @@ import java.util.Map;
 
 import static org.thingsboard.server.common.data.cf.configuration.PropagationCalculatedFieldConfiguration.PROPAGATION_CONFIG_ARGUMENT;
 
+@Slf4j
 public class PropagationCalculatedFieldState extends ScriptCalculatedFieldState {
 
     private CalculatedFieldProcessingService cfProcessingService;
@@ -67,12 +55,17 @@ public class PropagationCalculatedFieldState extends ScriptCalculatedFieldState 
         super.init(restored);
         if (restored) {
             cfProcessingService.fetchPropagationArgumentFromDb(ctx, entityId).ifPresent(fromDb -> {
-                fromDb.setIgnoreRemovedEntities(true);
+                fromDb.setSyncWithDb(true);
                 var updatedArgs = update(Map.of(PROPAGATION_CONFIG_ARGUMENT, fromDb), ctx);
                 if (updatedArgs.isEmpty()) {
                     return;
                 }
-                ctx.scheduleReevaluation(0L, actorCtx);
+                log.warn("[{}][{}] Propagation argument was out of sync during state restore and was reconciled with DB.", ctx.getCfId(), entityId);
+                var updatedPropagationArgument = (PropagationArgumentEntry) arguments.get(PROPAGATION_CONFIG_ARGUMENT);
+                if (updatedPropagationArgument.getAdded() != null) {
+                    log.warn("[{}][{}] New propagation entities were detected during restore. Scheduling reevaluation for new entities...", ctx.getCfId(), entityId);
+                    ctx.scheduleReevaluation(0L, actorCtx);
+                }
             });
         }
     }
@@ -164,8 +157,7 @@ public class PropagationCalculatedFieldState extends ScriptCalculatedFieldState 
             throw new IllegalArgumentException("Unsupported argument type: " + argumentEntry.getType() + " detected for argument: " + outputKey + ". " +
                                                "Only Latest telemetry or Attribute arguments supported for 'Arguments Only' propagation mode!");
         });
-        ObjectNode result = toSimpleResult(output.getType() == OutputType.TIME_SERIES, valuesNode);
-        telemetryCfBuilder.result(result);
+        telemetryCfBuilder.result(toResultNode(valuesNode));
         return telemetryCfBuilder.build();
     }
 

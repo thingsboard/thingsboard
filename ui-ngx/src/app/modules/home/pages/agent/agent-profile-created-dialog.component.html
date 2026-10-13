@@ -1,0 +1,77 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div mat-dialog-title class="tb-agent-profile-created-header">
+  <h2 class="flex-1">
+    <mat-icon class="success-icon">check_circle</mat-icon>
+    <span translate>agent.agent-profile-created</span>
+  </h2>
+  <div tb-help="agentProfileProvisionCommand"></div>
+  <button mat-icon-button (click)="close()" tabindex="-1">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<div mat-dialog-content class="tb-agent-profile-created-body">
+
+  <section class="instructions-section">
+    <h3>
+      <mat-icon class="section-icon">terminal</mat-icon>
+      <span translate>agent.docker-run-command</span>
+    </h3>
+
+    <div class="command-block">
+      <button mat-flat-button class="copy-command-btn"
+        ngxClipboard
+        [cbContent]="dockerCommand"
+        (cbOnSuccess)="onCopied()">
+        <mat-icon>content_copy</mat-icon>
+        <span translate>action.copy</span>
+      </button>
+      <pre>{{ dockerCommand }}</pre>
+    </div>
+
+    <div class="tb-info-box info">
+      <mat-icon>info</mat-icon>
+      <div>
+        <p translate>agent.agent-profile-created-hint</p>
+        <ol>
+          <li translate>agent.agent-profile-created-step-1</li>
+          <li translate>agent.agent-profile-created-step-2</li>
+          @if (autoInstallEnabled) {
+            <li translate>agent.agent-profile-created-step-3</li>
+          }
+        </ol>
+      </div>
+    </div>
+
+    <div class="tb-info-box muted">
+      <mat-icon>help_outline</mat-icon>
+      <div>
+        <p class="muted-title">
+          {{ 'agent.provisioning-strategy-label' | translate: {
+          strategy: agentProvisionTypeTranslationMap.get(agentProfile?.provisionType) | translate
+          } }}
+        </p>
+        <p>{{ agentProvisionTypeDescriptionMap.get(agentProfile?.provisionType) | translate }}</p>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div mat-dialog-actions align="end" class="tb-agent-profile-created-footer">
+  <button mat-button (click)="close()">
+    {{ 'action.close' | translate }}
+  </button>
+  @if (agentProfile?.id?.id) {
+    <button mat-raised-button color="primary"
+      (click)="goToProfile()">
+      <mat-icon>open_in_new</mat-icon>
+      <span translate>agent.go-to-profile</span>
+    </button>
+  }
+</div>

@@ -1,36 +1,30 @@
-/**
- * Copyright © 2016-2025 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.awaitility.Awaitility;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.audit.AuditLog;
+import org.thingsboard.server.common.data.group.EntityGroup;
+import org.thingsboard.server.common.data.group.EntityGroupInfo;
 import org.thingsboard.server.common.data.id.AuditLogId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -49,6 +43,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.apache.commons.lang3.time.DateFormatUtils.ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.eq;
@@ -60,15 +55,18 @@ import static org.mockito.Mockito.verify;
 @DaoSqlTest
 public class AuditLogControllerTest extends AbstractControllerTest {
 
+    // Small enough to force multiple pages, verifying pagination loop correctness
+    private static final int SMALL_PAGE_SIZE = 5;
+
     private Tenant savedTenant;
     private User tenantAdmin;
 
     @Autowired
     private AuditLogDao auditLogDao;
     @Getter
-    @SpyBean
+    @MockitoSpyBean
     private SqlPartitioningRepository partitioningRepository;
-    @SpyBean
+    @MockitoSpyBean
     private AuditLogsCleanUpService auditLogsCleanUpService;
 
     @Value("#{${sql.audit_logs.partition_size} * 60 * 60 * 1000}")
@@ -111,48 +109,93 @@ public class AuditLogControllerTest extends AbstractControllerTest {
             doPost("/api/device", device, Device.class);
         }
 
+        Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() ->
+                assertThat(getAuditLogs(SMALL_PAGE_SIZE, "/api/audit/logs?")).hasSize(11 + 1));
+
+        Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() ->
+                assertThat(getAuditLogs(SMALL_PAGE_SIZE, "/api/audit/logs/customer/" + ModelConstants.NULL_UUID + "?")).hasSize(11 + 1));
+
+        Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() ->
+                assertThat(getAuditLogs(SMALL_PAGE_SIZE, "/api/audit/logs/user/" + tenantAdmin.getId().getId().toString() + "?")).hasSize(11 + 1));
+    }
+
+    @Test
+    public void testAuditLogsSysAdmin() throws Exception {
+        loginSysAdmin();
+        List<AuditLog> loadedAuditLogsBefore = getAuditLogs(100, "/api/audit/logs?");
+
+        for (int i = 0; i < 3; i++) {
+            TenantProfile tenantProfile = new TenantProfile();
+            tenantProfile.setName("Profile " + UUID.randomUUID());
+            doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
+        }
+
+        int expectedSize = loadedAuditLogsBefore.size() + 3;
+        Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() ->
+                Assert.assertEquals("Have X audit log before this test + New tenant profiles in the test",
+                        expectedSize, getAuditLogs(100, "/api/audit/logs?").size()));
+    }
+
+    @Test
+    public void testAuditLogsByCustomerId_customerUserAccessControl() throws Exception {
+        // Create customers while logged in as tenantAdmin
+        Customer customerA = new Customer();
+        customerA.setTitle("Customer A");
+        customerA = doPost("/api/customer", customerA, Customer.class);
+
+        Customer subCustomerOfA = new Customer();
+        subCustomerOfA.setTitle("Sub-customer of A");
+        subCustomerOfA.setParentCustomerId(customerA.getId());
+        subCustomerOfA = doPost("/api/customer", subCustomerOfA, Customer.class);
+
+        Customer customerB = new Customer();
+        customerB.setTitle("Customer B");
+        customerB = doPost("/api/customer", customerB, Customer.class);
+
+        // Create a user under customerA's "Customer Users" group and switch to that session.
+        // "Customer Users" has the auto-generated "Customer User" role (Resource.ALL + READ operations),
+        // which satisfies the generic AUDIT_LOG.READ check before the entity-level ownership check.
+        User userA = new User();
+        userA.setAuthority(Authority.CUSTOMER_USER);
+        userA.setTenantId(savedTenant.getId());
+        userA.setCustomerId(customerA.getId());
+        userA.setEmail("customerA@thingsboard.org");
+        EntityGroupInfo customerUsersGroup = findGroupByOwnerIdTypeAndName(
+                customerA.getId(), EntityType.USER, EntityGroup.GROUP_CUSTOMER_USERS_NAME);
+        createUser(userA, "testPassword1", customerUsersGroup.getId());
+        login("customerA@thingsboard.org", "testPassword1");
+
+        // Own customer ID → 200 OK
+        doGet("/api/audit/logs/customer/" + customerA.getId().getId() + "?pageSize=10&page=0")
+                .andExpect(status().isOk());
+
+        // Subcustomer (child of A) → 200 OK (PE hierarchical ownership: parent sees child)
+        doGet("/api/audit/logs/customer/" + subCustomerOfA.getId().getId() + "?pageSize=10&page=0")
+                .andExpect(status().isOk());
+
+        // NULL_UUID → 404 (not a real customer entity, existence check fails)
+        doGet("/api/audit/logs/customer/" + ModelConstants.NULL_UUID + "?pageSize=10&page=0")
+                .andExpect(status().isNotFound());
+
+        // Sibling customer's ID → 403 Forbidden (no ownership over customerB)
+        doGet("/api/audit/logs/customer/" + customerB.getId().getId() + "?pageSize=10&page=0")
+                .andExpect(status().isForbidden());
+    }
+
+    private List<AuditLog> getAuditLogs(int pageSize, String urlTemplate) throws Exception {
         List<AuditLog> loadedAuditLogs = new ArrayList<>();
-        TimePageLink pageLink = new TimePageLink(5);
+        TimePageLink pageLink = new TimePageLink(pageSize);
         PageData<AuditLog> pageData;
         do {
-            pageData = doGetTypedWithTimePageLink("/api/audit/logs?",
-                    new TypeReference<PageData<AuditLog>>() {
+            pageData = doGetTypedWithTimePageLink(urlTemplate,
+                    new TypeReference<>() {
                     }, pageLink);
             loadedAuditLogs.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
-
-        Assert.assertEquals(11 + 1, loadedAuditLogs.size());
-
-        loadedAuditLogs = new ArrayList<>();
-        pageLink = new TimePageLink(5);
-        do {
-            pageData = doGetTypedWithTimePageLink("/api/audit/logs/customer/" + ModelConstants.NULL_UUID + "?",
-                    new TypeReference<PageData<AuditLog>>() {
-                    }, pageLink);
-            loadedAuditLogs.addAll(pageData.getData());
-            if (pageData.hasNext()) {
-                pageLink = pageLink.nextPageLink();
-            }
-        } while (pageData.hasNext());
-
-        Assert.assertEquals(11 + 1, loadedAuditLogs.size());
-
-        loadedAuditLogs = new ArrayList<>();
-        pageLink = new TimePageLink(5);
-        do {
-            pageData = doGetTypedWithTimePageLink("/api/audit/logs/user/" + tenantAdmin.getId().getId().toString() + "?",
-                    new TypeReference<PageData<AuditLog>>() {
-                    }, pageLink);
-            loadedAuditLogs.addAll(pageData.getData());
-            if (pageData.hasNext()) {
-                pageLink = pageLink.nextPageLink();
-            }
-        } while (pageData.hasNext());
-
-        Assert.assertEquals(11 + 1, loadedAuditLogs.size());
+        return loadedAuditLogs;
     }
 
     @Test
@@ -166,20 +209,31 @@ public class AuditLogControllerTest extends AbstractControllerTest {
             savedDevice = doPost("/api/device", savedDevice, Device.class);
         }
 
-        List<AuditLog> loadedAuditLogs = new ArrayList<>();
-        TimePageLink pageLink = new TimePageLink(5);
-        PageData<AuditLog> pageData;
-        do {
-            pageData = doGetTypedWithTimePageLink("/api/audit/logs/entity/DEVICE/" + savedDevice.getId().getId() + "?",
-                    new TypeReference<PageData<AuditLog>>() {
-                    }, pageLink);
-            loadedAuditLogs.addAll(pageData.getData());
-            if (pageData.hasNext()) {
-                pageLink = pageLink.nextPageLink();
-            }
-        } while (pageData.hasNext());
+        Device finalSavedDevice = savedDevice;
+        Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() ->
+                assertThat(getAuditLogs(SMALL_PAGE_SIZE, "/api/audit/logs/entity/DEVICE/" + finalSavedDevice.getId().getId() + "?")).hasSize(11 + 1));
+    }
 
-        Assert.assertEquals(11 + 1, loadedAuditLogs.size());
+    @Test
+    public void testAuditLogs_byTenantIdAndEntityId_Sysadmin() throws Exception {
+        loginSysAdmin();
+
+        //created
+        TenantProfile tenantProfile = new TenantProfile();
+        tenantProfile.setName("Profile " + UUID.randomUUID());
+        tenantProfile = doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
+
+        //updated
+        tenantProfile.setName(tenantProfile.getName() + "(old)");
+        tenantProfile = doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
+
+        TenantProfile finalTenantProfile = tenantProfile;
+        Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() ->
+                assertThat(getAuditLogs(SMALL_PAGE_SIZE, "/api/audit/logs/entity/" + finalTenantProfile.getId().getEntityType() + "/" + finalTenantProfile.getId().getId() + "?"))
+                        .as("Audit logs count by Tenant Profile entity").hasSize(2));
+
+        //cleanup
+        doDelete("/api/tenantProfile/" + tenantProfile.getId().getId().toString());
     }
 
     @Test

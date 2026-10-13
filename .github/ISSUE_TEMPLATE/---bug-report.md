@@ -18,7 +18,6 @@ A clear and concise description of what the bug is.
   * Deployment: monolith or microservices
   * Deployment type: deb, rpm, exe, docker-compose, k8s, ami
   * ThingsBoard Version
-  * Community or Professional Edition
   * OS Name and Version
 
 **Your Client Environment**

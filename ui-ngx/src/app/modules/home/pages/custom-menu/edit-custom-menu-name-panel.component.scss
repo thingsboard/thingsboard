@@ -1,0 +1,25 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+.tb-edit-custom-menu-name-panel {
+  --mat-form-field-outlined-outline-color: rgba(0,0,0,0.12);
+
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  .tb-edit-custom-menu-name-title {
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 24px;
+    letter-spacing: 0.25px;
+    color: rgba(0, 0, 0, 0.87);
+  }
+  .tb-edit-custom-menu-name-panel-buttons {
+    height: 40px;
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+    justify-content: flex-end;
+    align-items: flex-end;
+  }
+}

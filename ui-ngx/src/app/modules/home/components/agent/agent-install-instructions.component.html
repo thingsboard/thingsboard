@@ -1,0 +1,44 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section class="instructions-section">
+  <h3 translate>agent.install-instructions</h3>
+  <p translate>agent.install-instructions-hint</p>
+
+  <div class="step-label">
+    <span class="step-num">1</span>
+    <span translate>agent.install-step-docker</span>
+  </div>
+
+  <div class="step-label">
+    <span class="step-num">2</span>
+    <span translate>agent.install-step-run</span>
+  </div>
+
+  <div class="command-block">
+    <button mat-flat-button class="copy-command-btn"
+      ngxClipboard
+      [cbContent]="dockerCommand"
+      (cbOnSuccess)="onCopied()">
+      <mat-icon>content_copy</mat-icon>
+      <span translate>action.copy</span>
+    </button>
+    <pre>{{ dockerCommand }}</pre>
+  </div>
+
+  <div class="tb-info-box">
+    <mat-icon>info</mat-icon>
+    <span translate>agent.install-instructions-replace-hint</span>
+  </div>
+
+  @if (edge) {
+    <div class="step-label">
+      <span class="step-num">3</span>
+      <span translate>agent.deploy-status-edge-ui-title</span>
+    </div>
+    <p class="edge-ui-desc" [innerHTML]="'agent.deploy-status-edge-ui-desc' | translate"></p>
+  }
+</section>

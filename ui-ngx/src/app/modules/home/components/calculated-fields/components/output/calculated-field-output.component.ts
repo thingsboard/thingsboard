@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2025 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Component, DestroyRef, forwardRef, inject, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import {
   ControlValueAccessor,
@@ -42,21 +28,22 @@ import { merge } from 'rxjs';
 import { deepClone } from '@core/utils';
 
 @Component({
-  selector: 'tb-calculate-field-output',
-  templateUrl: './calculated-field-output.component.html',
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => CalculatedFieldOutputComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => CalculatedFieldOutputComponent),
-      multi: true
-    }
-  ],
-  styleUrls: ['./calculated-field-output.component.scss'],
+    selector: 'tb-calculate-field-output',
+    templateUrl: './calculated-field-output.component.html',
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => CalculatedFieldOutputComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => CalculatedFieldOutputComponent),
+            multi: true
+        }
+    ],
+    styleUrls: ['./calculated-field-output.component.scss'],
+    standalone: false
 })
 export class CalculatedFieldOutputComponent implements ControlValueAccessor, Validator, OnInit, OnChanges {
 
@@ -148,7 +135,7 @@ export class CalculatedFieldOutputComponent implements ControlValueAccessor, Val
     for (const propName of Object.keys(changes)) {
       const change = changes[propName];
       if (change.currentValue !== change.previousValue) {
-        if (propName === 'simpleMode') {
+        if (propName === 'simpleMode' && !this.disabled) {
           this.updatedFormWithMode();
           if (!change.firstChange) {
             this.outputForm.updateValueAndValidity();
@@ -167,7 +154,7 @@ export class CalculatedFieldOutputComponent implements ControlValueAccessor, Val
     if (value.type === OutputType.Timeseries && value.strategy?.type === OutputStrategyType.IMMEDIATE && value.strategy?.ttl) {
       this.outputForm.get('strategy.useCustomTtl').setValue(true, {emitEvent: false});
     }
-    this.outputForm.get('type').updateValueAndValidity({onlySelf: true});
+    this.outputForm.get('type').updateValueAndValidity({onlySelf: true, emitEvent: false});
   }
 
   registerOnChange(fn: (config: CalculatedFieldOutput | CalculatedFieldSimpleOutput) => void): void {
@@ -186,6 +173,9 @@ export class CalculatedFieldOutputComponent implements ControlValueAccessor, Val
       this.toggleScopeByOutputType(this.outputForm.get('type').value);
       this.updatedStrategy();
       this.updateTimeSeriesTtl(this.outputForm.get('strategy.saveTimeSeries').value);
+      if (this.outputForm.invalid) {
+        this.outputForm.updateValueAndValidity();
+      }
     }
   }
 
@@ -253,7 +243,7 @@ export class CalculatedFieldOutputComponent implements ControlValueAccessor, Val
 
   private updateTimeSeriesTtl(value: boolean) {
     if (value) {
-      this.outputForm.get('strategy.useCustomTtl').enable({emitEvent: true});
+      this.outputForm.get('strategy.useCustomTtl').enable({emitEvent: false});
     } else {
       this.outputForm.get('strategy.useCustomTtl').disable({emitEvent: false});
       this.outputForm.get('strategy.ttl').disable({emitEvent: false});

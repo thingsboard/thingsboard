@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2025 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.edqs;
 
 import com.google.protobuf.ByteString;
@@ -50,10 +38,12 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.data.ota.DeviceGroupOtaPackage;
 import org.thingsboard.server.common.msg.edqs.EdqsApiService;
 import org.thingsboard.server.common.msg.edqs.EdqsService;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.dao.attributes.AttributesService;
+import org.thingsboard.server.dao.sql.citus.CitusSettings;
 import org.thingsboard.server.edqs.processor.EdqsProducer;
 import org.thingsboard.server.edqs.state.EdqsPartitionService;
 import org.thingsboard.server.edqs.util.DefaultEdqsMapper;
@@ -73,6 +63,7 @@ import org.thingsboard.server.queue.util.AfterStartUp;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -92,6 +83,7 @@ public class DefaultEdqsService implements EdqsService {
     private final EdqsPartitionService edqsPartitionService;
     private final TbServiceInfoProvider serviceInfoProvider;
     private final DiscoveryService discoveryService;
+    private final CitusSettings citusSettings;
     @Autowired @Lazy
     private TbClusterService clusterService;
     @Autowired @Lazy
@@ -150,12 +142,10 @@ public class DefaultEdqsService implements EdqsService {
         executor.submit(() -> {
             try {
                 EdqsSyncState syncState = getSyncState();
-                if (edqsSyncService.isSyncNeeded() || syncState == null || syncState.getStatus() != EdqsSyncStatus.FINISHED) {
-                    if (hashPartitionService.isSystemPartitionMine(ServiceType.TB_CORE)) {
-                        processSystemRequest(ToCoreEdqsRequest.builder()
-                                .syncRequest(new EdqsSyncRequest())
-                                .build());
-                    }
+                if (edqsSyncService.isSyncNeeded() || syncState == null) {
+                    requestEdqsSync(new EdqsSyncRequest());
+                } else if (syncState.getStatus() != EdqsSyncStatus.FINISHED) {
+                    requestEdqsSync(new EdqsSyncRequest(syncState.getObjectTypes()));
                 } else {
                     // only if topic/RocksDB is not empty and sync is finished
                     onSyncStatusUpdate(EdqsSyncStatus.FINISHED);
@@ -166,11 +156,19 @@ public class DefaultEdqsService implements EdqsService {
         });
     }
 
+    private void requestEdqsSync(EdqsSyncRequest syncRequest) {
+        if (hashPartitionService.isSystemPartitionMine(ServiceType.TB_CORE)) {
+            processSystemRequest(ToCoreEdqsRequest.builder()
+                    .syncRequest(syncRequest)
+                    .build());
+        }
+    }
+
     @Override
     public void processSystemRequest(ToCoreEdqsRequest request) {
         log.info("Processing system request {}", request);
         if (request.getSyncRequest() != null) {
-            saveSyncState(EdqsSyncStatus.REQUESTED);
+            saveSyncState(EdqsSyncStatus.REQUESTED, request.getSyncRequest().getObjectTypes());
         }
         broadcast(ToCoreEdqsMsg.builder()
                 .syncRequest(request.getSyncRequest())
@@ -198,7 +196,8 @@ public class DefaultEdqsService implements EdqsService {
                     onSyncStatusUpdate(msg.getSyncStatus());
                 }
 
-                if (msg.getSyncRequest() != null) {
+                EdqsSyncRequest syncRequest = msg.getSyncRequest();
+                if (syncRequest != null) {
                     syncLock.lock();
                     try {
                         EdqsSyncState syncState = getSyncState();
@@ -209,15 +208,15 @@ public class DefaultEdqsService implements EdqsService {
                                 return;
                             }
                         }
-                        saveSyncState(EdqsSyncStatus.STARTED);
+                        saveSyncState(EdqsSyncStatus.STARTED, syncRequest.getObjectTypes());
 
-                        edqsSyncService.sync();
+                        edqsSyncService.sync(syncRequest);
 
                         saveSyncState(EdqsSyncStatus.FINISHED);
                         broadcastSyncStatusUpdate(EdqsSyncStatus.FINISHED);
                     } catch (Exception e) {
                         log.error("Failed to complete sync", e);
-                        saveSyncState(EdqsSyncStatus.FAILED);
+                        saveSyncState(EdqsSyncStatus.FAILED, syncRequest.getObjectTypes());
                         broadcastSyncStatusUpdate(EdqsSyncStatus.FAILED);
                     } finally {
                         syncLock.unlock();
@@ -287,7 +286,7 @@ public class DefaultEdqsService implements EdqsService {
     public void onUpdate(TenantId tenantId, EntityId entityId, Object entity) {
         EntityType entityType = entityId.getEntityType();
         ObjectType objectType = ObjectType.fromEntityType(entityType);
-        if (!isEdqsType(tenantId, objectType)) {
+        if (ignoreEvent(tenantId, entity, objectType)) {
             log.trace("[{}][{}] Ignoring update event, type {} not supported", tenantId, entityId, entityType);
             return;
         }
@@ -300,14 +299,18 @@ public class DefaultEdqsService implements EdqsService {
     }
 
     @Override
-    public void onDelete(TenantId tenantId, EntityId entityId) {
+    public void onDelete(TenantId tenantId, EntityId entityId, Object entity) {
         EntityType entityType = entityId.getEntityType();
         ObjectType objectType = ObjectType.fromEntityType(entityType);
-        if (!isEdqsType(tenantId, objectType)) {
+        if (ignoreEvent(tenantId, entity, objectType)) {
             log.trace("[{}][{}] Ignoring deletion event, type {} not supported", tenantId, entityId, entityType);
             return;
         }
         onDelete(tenantId, objectType, new Entity(entityType, entityId.getId(), Long.MAX_VALUE));
+    }
+
+    private boolean ignoreEvent(TenantId tenantId, Object entity, ObjectType objectType) {
+        return !isEdqsType(tenantId, objectType) || entity instanceof DeviceGroupOtaPackage;
     }
 
     @Override
@@ -326,6 +329,12 @@ public class DefaultEdqsService implements EdqsService {
                         .setEventType(eventType.name());
                 if (version != null) {
                     eventMsg.setVersion(version);
+                }
+                // On Citus, per-row versions restart at 1 when a deleted row is re-created, so a DELETED event must
+                // tell EDQS to drop the delete tombstone (otherwise the re-create at a lower version would be rejected
+                // as stale). Read from CitusSettings so this fact has a single binding point.
+                if (eventType == EdqsEventType.DELETED && citusSettings.isEnabled()) {
+                    eventMsg.setVersionsResetOnDelete(true);
                 }
                 eventsProducer.send(tenantId, objectType, key, ToEdqsMsg.newBuilder()
                         .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
@@ -369,7 +378,12 @@ public class DefaultEdqsService implements EdqsService {
 
     @SneakyThrows
     private void saveSyncState(EdqsSyncStatus status) {
-        EdqsSyncState state = new EdqsSyncState(status);
+        saveSyncState(status, null);
+    }
+
+    @SneakyThrows
+    private void saveSyncState(EdqsSyncStatus status, Set<ObjectType> objectTypes) {
+        EdqsSyncState state = new EdqsSyncState(status, objectTypes);
         log.info("New EDQS sync state: {}", state);
         attributesService.save(TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID, AttributeScope.SERVER_SCOPE, new BaseAttributeKvEntry(
                 new JsonDataEntry("edqsSyncState", JacksonUtil.toString(state)),
@@ -381,13 +395,6 @@ public class DefaultEdqsService implements EdqsService {
         executor.shutdown();
         scheduler.shutdownNow();
         eventsProducer.stop();
-    }
-
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    private static class EdqsSyncState {
-        private EdqsSyncStatus status;
     }
 
 }

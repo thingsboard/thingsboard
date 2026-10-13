@@ -1,20 +1,9 @@
-/**
- * Copyright © 2016-2025 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.common.data.cf.configuration;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -25,9 +14,10 @@ import org.thingsboard.server.common.data.relation.RelationPathLevel;
 
 import java.util.List;
 
+@Schema
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class PropagationCalculatedFieldConfiguration extends BaseCalculatedFieldConfiguration implements HasRelationPathLevel {
+public class PropagationCalculatedFieldConfiguration extends BaseCalculatedFieldConfiguration implements HasRelationPathLevel, HasUseLatestTsConfig {
 
     public static final String PROPAGATION_CONFIG_ARGUMENT = "propagationCtx";
 
@@ -36,6 +26,12 @@ public class PropagationCalculatedFieldConfiguration extends BaseCalculatedField
     private RelationPathLevel relation;
 
     private boolean applyExpressionToResolvedArguments;
+
+    @Override
+    @JsonIgnore
+    public boolean isUseLatestTs() {
+        return output.getType() == OutputType.TIME_SERIES;
+    }
 
     @Override
     public CalculatedFieldType getType() {

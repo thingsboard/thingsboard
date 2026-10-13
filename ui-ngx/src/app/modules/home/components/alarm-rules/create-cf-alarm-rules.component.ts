@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2025 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Component, DestroyRef, forwardRef, Input } from '@angular/core';
 import {
   AbstractControl,
@@ -27,30 +13,30 @@ import {
   Validator,
   Validators
 } from '@angular/forms';
-import { AlarmSeverity, alarmSeverityTranslations } from '@shared/models/alarm.models';
+import { AlarmSeverity, alarmSeverityColors, alarmSeverityTranslations } from '@shared/models/alarm.models';
 import { AlarmRule } from "@shared/models/alarm-rule.models";
 import { CalculatedFieldArgument } from "@shared/models/calculated-field.models";
-import { AlarmSeverityNotificationColors } from "@shared/models/notification.models";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { coerceBoolean } from "@shared/decorators/coercion";
 import { Observable } from "rxjs";
 
 @Component({
-  selector: 'tb-create-cf-alarm-rules',
-  templateUrl: './create-cf-alarm-rules.component.html',
-  styleUrls: ['./create-cf-alarm-rules.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => CreateCfAlarmRulesComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => CreateCfAlarmRulesComponent),
-      multi: true,
-    }
-  ]
+    selector: 'tb-create-cf-alarm-rules',
+    templateUrl: './create-cf-alarm-rules.component.html',
+    styleUrls: ['./create-cf-alarm-rules.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => CreateCfAlarmRulesComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => CreateCfAlarmRulesComponent),
+            multi: true,
+        }
+    ],
+    standalone: false
 })
 export class CreateCfAlarmRulesComponent implements ControlValueAccessor, Validator {
 
@@ -68,7 +54,7 @@ export class CreateCfAlarmRulesComponent implements ControlValueAccessor, Valida
   alarmSeverityEnum = AlarmSeverity;
   alarmSeverityTranslationMap = alarmSeverityTranslations;
 
-  AlarmSeverityNotificationColors = AlarmSeverityNotificationColors;
+  AlarmSeverityNotificationColors = alarmSeverityColors;
 
   createAlarmRulesFormGroup = this.fb.group({
     createAlarmRules: this.fb.array<{severity: AlarmSeverity, alarmRule: AlarmRule}>([])
@@ -77,12 +63,16 @@ export class CreateCfAlarmRulesComponent implements ControlValueAccessor, Valida
   private usedSeverities: AlarmSeverity[] = [];
 
   private propagateChange = (v: any) => { };
+  private onValidatorChange = () => { };
 
   constructor(private fb: FormBuilder,
               private destroyRef: DestroyRef) {
     this.createAlarmRulesFormGroup.valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(() => this.updateModel());
+    this.createAlarmRulesFormGroup.statusChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => this.onValidatorChange());
   }
 
   registerOnChange(fn: any): void {
@@ -90,6 +80,10 @@ export class CreateCfAlarmRulesComponent implements ControlValueAccessor, Valida
   }
 
   registerOnTouched(fn: any): void {
+  }
+
+  registerOnValidatorChange(fn: () => void): void {
+    this.onValidatorChange = fn;
   }
 
   createAlarmRulesFormArray(): UntypedFormArray {
@@ -115,13 +109,13 @@ export class CreateCfAlarmRulesComponent implements ControlValueAccessor, Valida
         }
         createAlarmRulesControls.push(this.fb.group({
           severity: [severity, Validators.required],
-          alarmRule: [createAlarmRule, Validators.required]
+          alarmRule: [{value: createAlarmRule, disabled: this.disabled}, Validators.required]
         }));
       });
     }
     const formArray = this.createAlarmRulesFormGroup.get('createAlarmRules') as FormArray;
-    formArray.clear();
-    createAlarmRulesControls.forEach(c => formArray.push(c));
+    formArray.clear({emitEvent: false});
+    createAlarmRulesControls.forEach(c => formArray.push(c, {emitEvent: false}));
     if (this.disabled) {
       this.createAlarmRulesFormGroup.disable({emitEvent: false});
     } else {

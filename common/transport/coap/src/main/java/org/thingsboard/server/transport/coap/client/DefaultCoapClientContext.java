@@ -1,30 +1,18 @@
-/**
- * Copyright © 2016-2025 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.coap.client;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.coap.CoAP;
 import org.eclipse.californium.core.coap.Response;
+import org.eclipse.californium.core.config.CoapConfig;
 import org.eclipse.californium.core.observe.ObserveRelation;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.coapserver.CoapServerContext;
 import org.thingsboard.server.coapserver.TbCoapTransportComponent;
 import org.thingsboard.server.common.adaptor.AdaptorException;
 import org.thingsboard.server.common.data.DataConstants;
@@ -84,7 +72,6 @@ import static org.eclipse.californium.core.coap.Message.NONE;
 @TbCoapTransportComponent
 public class DefaultCoapClientContext implements CoapClientContext {
 
-    private final CoapServerContext config;
     private final CoapTransportContext transportContext;
     private final TransportService transportService;
     private final TransportDeviceProfileCache profileCache;
@@ -92,10 +79,8 @@ public class DefaultCoapClientContext implements CoapClientContext {
     private final ConcurrentMap<DeviceId, TbCoapClientState> clients = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, TbCoapClientState> clientsByToken = new ConcurrentHashMap<>();
 
-    public DefaultCoapClientContext(CoapServerContext config, @Lazy CoapTransportContext transportContext,
-                                    TransportService transportService, TransportDeviceProfileCache profileCache,
-                                    PartitionService partitionService) {
-        this.config = config;
+    public DefaultCoapClientContext(@Lazy CoapTransportContext transportContext, TransportService transportService,
+                                    TransportDeviceProfileCache profileCache, PartitionService partitionService) {
         this.transportContext = transportContext;
         this.transportService = transportService;
         this.profileCache = profileCache;
@@ -514,7 +499,8 @@ public class DefaultCoapClientContext implements CoapClientContext {
             if (attrs != null) {
                 try {
                     boolean conRequest = AbstractSyncSessionCallback.isConRequest(state.getAttrs());
-                    int requestId = getNextMsgId();
+                    boolean isMulticastRequest = AbstractSyncSessionCallback.isMulticastRequest(state.getAttrs());
+                    int requestId = getNextMsgId(isMulticastRequest);
                     Response response = state.getAdaptor().convertToPublish(msg);
                     response.getOptions().setObserve(attrs.getObserveCounter().getAndIncrement());
                     response.setConfirmable(conRequest);
@@ -578,7 +564,8 @@ public class DefaultCoapClientContext implements CoapClientContext {
             boolean sent = false;
             String error = null;
             boolean conRequest = AbstractSyncSessionCallback.isConRequest(state.getRpc());
-            int requestId = getNextMsgId();
+            boolean isMulticastRequest = AbstractSyncSessionCallback.isMulticastRequest(state.getRpc());
+            int requestId = getNextMsgId(isMulticastRequest);
             try {
                 Response response = state.getAdaptor().convertToPublish(msg, state.getConfiguration().getRpcRequestDynamicMessageBuilder());
                 response.getOptions().setObserve(state.getRpc().getObserveCounter().getAndIncrement());
@@ -807,8 +794,14 @@ public class DefaultCoapClientContext implements CoapClientContext {
         }
     }
 
-    protected int getNextMsgId() {
-        return ThreadLocalRandom.current().nextInt(NONE, MAX_MID + 1);
+    protected int getNextMsgId(boolean multicast) {
+        if (multicast) {
+            // Range [65000...65535]
+            return ThreadLocalRandom.current().nextInt(CoapConfig.DEFAULT_MULTICAST_BASE_MID, MAX_MID + 1);
+        } else {
+            // Range [0...64999]
+            return ThreadLocalRandom.current().nextInt(NONE, CoapConfig.DEFAULT_MULTICAST_BASE_MID);
+        }
     }
 
     private void cancelRpcSubscription(TbCoapClientState state) {

@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2025 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.rule.engine.action;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
@@ -27,7 +15,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
-import org.thingsboard.rule.engine.TestDbCallbackExecutor;
+import org.thingsboard.common.util.DirectListeningExecutor;
 import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
 import org.thingsboard.rule.engine.api.ScriptEngine;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -84,7 +72,7 @@ class TbClearAlarmNodeTest {
 
     @BeforeEach
     void before() {
-        dbExecutor = new TestDbCallbackExecutor();
+        dbExecutor = DirectListeningExecutor.INSTANCE;
         metadata = new TbMsgMetaData();
     }
 
@@ -115,7 +103,7 @@ class TbClearAlarmNodeTest {
 
         when(alarmDetailsScriptMock.executeJsonAsync(msg)).thenReturn(immediateFuture(null));
         when(alarmServiceMock.findLatestActiveByOriginatorAndTypeAsync(tenantId, msgOriginator, "SomeType")).thenReturn(FluentFuture.from(immediateFuture(activeAlarm)));
-        when(alarmServiceMock.clearAlarm(eq(activeAlarm.getTenantId()), eq(activeAlarm.getId()), anyLong(), nullable(JsonNode.class)))
+        when(alarmServiceMock.clearAlarm(eq(activeAlarm.getTenantId()), eq(activeAlarm.getOriginator()), eq(activeAlarm.getId()), anyLong(), nullable(JsonNode.class)))
                 .thenReturn(AlarmApiCallResult.builder()
                         .successful(true)
                         .cleared(true)
@@ -175,7 +163,7 @@ class TbClearAlarmNodeTest {
 
         when(alarmDetailsScriptMock.executeJsonAsync(msg)).thenReturn(immediateFuture(null));
         when(alarmServiceMock.findAlarmByIdAsync(tenantId, id)).thenReturn(immediateFuture(activeAlarm));
-        when(alarmServiceMock.clearAlarm(eq(activeAlarm.getTenantId()), eq(activeAlarm.getId()), anyLong(), nullable(JsonNode.class)))
+        when(alarmServiceMock.clearAlarm(eq(activeAlarm.getTenantId()), eq(activeAlarm.getOriginator()), eq(activeAlarm.getId()), anyLong(), nullable(JsonNode.class)))
                 .thenReturn(AlarmApiCallResult.builder()
                         .successful(true)
                         .cleared(true)

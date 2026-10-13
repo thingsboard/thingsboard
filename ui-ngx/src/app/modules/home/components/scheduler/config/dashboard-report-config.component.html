@@ -1,0 +1,151 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="reportConfigFormGroup" class="tb-form-panel no-border no-padding flex flex-col">
+  @if (!pdfReportMode) {
+    <div class="tb-form-panel stroked">
+      <mat-expansion-panel class="tb-settings" [expanded]="true">
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            <div class="tb-panel-title" translate>report.general-report-settings</div>
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+        <div class="no-gap flex flex-col">
+          <mat-form-field class="name-pattern-field mat-block flex-1" appearance="outline">
+            <mat-label translate>report.name-pattern</mat-label>
+            <input matInput formControlName="namePattern">
+            <div matIconSuffix tb-help-popup="date/date-format" [tb-help-popup-style]="{width: '800px'}"></div>
+            @if (reportConfigFormGroup.get('namePattern').hasError('required')) {
+              <mat-error>
+                {{ 'report.name-pattern-required' | translate }}
+              </mat-error>
+            }
+          </mat-form-field>
+          <mat-form-field class="mat-block flex-1" appearance="outline">
+            <mat-label translate>report.type</mat-label>
+            <mat-select matInput formControlName="type">
+              @for (reportType of reportTypesList; track reportType) {
+                <mat-option [value]="reportType">
+                  {{ reportTypeNames.get(reportType) }}
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </mat-expansion-panel>
+    </div>
+  }
+  <div class="tb-form-panel stroked report-target-dashboard">
+    <mat-expansion-panel class="tb-settings" [expanded]="true">
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          <div class="tb-panel-title" translate>report.target-dashboard</div>
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <div class="no-gap flex flex-col">
+        <mat-form-field class="mat-block flex-1" appearance="outline">
+          <mat-label translate>report.base-url</mat-label>
+          <input matInput formControlName="baseUrl">
+          @if (reportConfigFormGroup.get('baseUrl').hasError('required')) {
+            <mat-error>
+              {{ 'report.base-url-required' | translate }}
+            </mat-error>
+          }
+        </mat-form-field>
+        <tb-entity-autocomplete
+          class="flex-1"
+          required
+          appearance="outline"
+          [entityType]="entityType.DASHBOARD"
+          formControlName="dashboardId">
+        </tb-entity-autocomplete>
+        <mat-form-field class="mat-block flex-1" appearance="outline">
+          <mat-label translate>report.dashboard-state-param</mat-label>
+          <input matInput formControlName="state">
+          <button type="button"
+            matSuffix
+            mat-icon-button
+            (click)="selectDashboardState()"
+            matTooltip="{{ 'scheduler.select-dashboard-state' | translate }}"
+            matTooltipPosition="above"
+            [disabled]="disabled || !reportConfigFormGroup.get('dashboardId').value">
+            <mat-icon>open_in_new</mat-icon>
+          </button>
+        </mat-form-field>
+        <div class="flex flex-col">
+          <tb-timezone-select
+            userTimezoneByDefault
+            appearance="outline"
+            [required]="!pdfReportMode"
+            formControlName="timezone">
+          </tb-timezone-select>
+          @if (!reportConfigFormGroup.get('timezone').hasError('required')) {
+            <div class="tb-hint" translate>
+              report.timezone-description
+            </div>
+          }
+        </div>
+        <div class="tb-form-panel no-border no-padding flex flex-col">
+          <div class="tb-form-row space-between column-xs">
+            <mat-slide-toggle class="mat-slide" formControlName="useDashboardTimewindow">
+              <label (click)="$event.stopPropagation();"
+                class="break-word"
+                tb-hint-tooltip-icon="{{ 'report.use-dashboard-timewindow-description' | translate }}">
+                {{ 'report.use-dashboard-timewindow' | translate }}
+              </label>
+            </mat-slide-toggle>
+            <tb-timewindow
+              asButton
+              aggregation
+              class="margin-right"
+              formControlName="timewindow">
+            </tb-timewindow>
+          </div>
+          @if (!pdfReportMode) {
+            <div [class.!hidden]="!isTenantAdmin" class="tb-form-panel stroked"
+              [class.no-padding-bottom]="!reportConfigFormGroup.get('useCurrentUserCredentials').value">
+              <div class="flex w-full flex-1 flex-row items-center justify-between gap-0 xs:flex-col xs:items-start xs:gap-3">
+                <div class="fixed-title-width" translate
+                  tb-hint-tooltip-icon="{{ 'report.user-credentials-description' | translate }}">
+                  report.credentials
+                </div>
+                <tb-toggle-select formControlName="useCurrentUserCredentials" appearance="fill">
+                  <tb-toggle-option [value]="true">
+                    {{ 'report.current-user' | translate }}
+                  </tb-toggle-option>
+                  <tb-toggle-option [value]="false">
+                    {{ 'report.customer-user' | translate }}
+                  </tb-toggle-option>
+                </tb-toggle-select>
+              </div>
+              <tb-entity-autocomplete
+                [class.!hidden]="reportConfigFormGroup.get('useCurrentUserCredentials').value"
+                required
+                appearance="outline"
+                [entityType]="entityType.USER"
+                labelText="report.customer-user-credentials"
+                requiredText="report.customer-user-credentials-required"
+                formControlName="userId">
+              </tb-entity-autocomplete>
+            </div>
+          }
+          <div class="tb-form-row space-between test-generate-row">
+            <div class="fixed-title-width">{{ 'report.preview-report' | translate }}</div>
+            @if (!disabled) {
+              <button mat-raised-button color="primary"
+                type="button"
+                [disabled]="(isLoading$ | async) || reportConfigFormGroup.invalid"
+                (click)="generateTestReport()"
+                class="margin-right">
+                {{ 'report.generate-test-report' | translate }}
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+    </mat-expansion-panel>
+  </div>
+</section>

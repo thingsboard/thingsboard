@@ -1,0 +1,280 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@use '@angular/material' as mat;
+
+:root {
+
+  --tb-brand: #17685a;
+  --tb-brand-ink: #0e5a4e;
+  --tb-brand-tint: #e2f1ec;
+  --tb-link: #106cc8;
+  --tb-ink: rgba(0, 0, 0, 0.87);
+  --tb-ink-2: rgba(0, 0, 0, 0.6);
+  --tb-ink-3: rgba(0, 0, 0, 0.38);
+  --tb-line: rgba(0, 0, 0, 0.12);
+
+  --tb-commercial: #00695c;
+  --tb-noncommercial: #1560b4;
+  --tb-development: #f36900;
+  --tb-caution: #b26500;
+  --tb-caution-tint: rgb(255 167 38 / 0.16);
+  --tb-crit: #D12730;
+  --tb-crit-tint: rgb(209 39 48 / 0.06);
+  --tb-value-ink: rgba(0, 0, 0, 0.76);
+  --mark-gutter: 100px;
+  --tb-radius-card: 8px;
+  --tb-elev-card: 0 1px 2px rgba(15, 36, 32, 0.05), 0 6px 20px rgba(15, 36, 32, 0.07);
+
+  --tb-shade-blue: 0 51 202;
+  --tb-shade-blue-out: 0 88 196;
+  --tb-shade-teal: 0 105 92;
+
+  --tb-pack-ground:
+    radial-gradient(120% 110% at 0% 0%,
+    rgb(255 255 255 / 0.9) 0%,
+    rgb(255 255 255 / 0) 58%),
+    linear-gradient(115deg,
+    rgb(var(--tb-shade-teal) / 0.11) 0%,
+    rgb(var(--tb-shade-teal) / 0.06) 38%,
+    rgb(var(--tb-shade-blue-out) / 0.065) 72%,
+    rgb(var(--tb-shade-blue) / 0.10) 100%);
+
+  --tb-pro-ink: #023e36;
+
+  --tb-primary-50: #{map_get(mat.$m2-teal-palette, 50)};
+  --tb-primary-100: #{map_get(mat.$m2-teal-palette, 100)};
+  --tb-primary-200: #{map_get(mat.$m2-teal-palette, 200)};
+  --tb-primary-300: #{map_get(mat.$m2-teal-palette, 300)};
+  --tb-primary-400: #{map_get(mat.$m2-teal-palette, 400)};
+  --tb-primary-500: #{map_get(mat.$m2-teal-palette, 800)};
+  --tb-primary-600: #{map_get(mat.$m2-teal-palette, 600)};
+  --tb-primary-700: #{map_get(mat.$m2-teal-palette, 700)};
+  --tb-primary-800: #{map_get(mat.$m2-teal-palette, 800)};
+  --tb-primary-900: #{map_get(mat.$m2-teal-palette, 900)};
+  --tb-primary-A100: #{map_get(mat.$m2-teal-palette, A100)};
+  --tb-primary-A200: #{map_get(mat.$m2-teal-palette, A200)};
+  --tb-primary-A400: #{map_get(mat.$m2-teal-palette, A400)};
+  --tb-primary-A700: #{map_get(mat.$m2-teal-palette, A700)};
+  --tb-primary-contrast-50: #{mat.m2-get-contrast-color-from-palette(mat.$m2-teal-palette, 50)};
+  --tb-primary-contrast-100: #{mat.m2-get-contrast-color-from-palette(mat.$m2-teal-palette, 100)};
+  --tb-primary-contrast-200: #{mat.m2-get-contrast-color-from-palette(mat.$m2-teal-palette, 200)};
+  --tb-primary-contrast-300: #{mat.m2-get-contrast-color-from-palette(mat.$m2-teal-palette, 300)};
+  --tb-primary-contrast-400: #{mat.m2-get-contrast-color-from-palette(mat.$m2-teal-palette, 400)};
+  --tb-primary-contrast-500: #{mat.m2-get-contrast-color-from-palette(mat.$m2-teal-palette, 500)};
+  --tb-primary-contrast-600: #{mat.m2-get-contrast-color-from-palette(mat.$m2-teal-palette, 600)};
+  --tb-primary-contrast-700: #{mat.m2-get-contrast-color-from-palette(mat.$m2-teal-palette, 700)};
+  --tb-primary-contrast-800: #{mat.m2-get-contrast-color-from-palette(mat.$m2-teal-palette, 800)};
+  --tb-primary-contrast-900: #{mat.m2-get-contrast-color-from-palette(mat.$m2-teal-palette, 900)};
+  --tb-primary-contrast-A100: #{mat.m2-get-contrast-color-from-palette(mat.$m2-teal-palette, A100)};
+  --tb-primary-contrast-A200: #{mat.m2-get-contrast-color-from-palette(mat.$m2-teal-palette, A200)};
+  --tb-primary-contrast-A400: #{mat.m2-get-contrast-color-from-palette(mat.$m2-teal-palette, A400)};
+  --tb-primary-contrast-A700: #{mat.m2-get-contrast-color-from-palette(mat.$m2-teal-palette, A700)};
+  --tb-accent-50: #{map_get(mat.$m2-deep-orange-palette, 50)};
+  --tb-accent-100: #{map_get(mat.$m2-deep-orange-palette, 100)};
+  --tb-accent-200: #{map_get(mat.$m2-deep-orange-palette, 200)};
+  --tb-accent-300: #{map_get(mat.$m2-deep-orange-palette, 300)};
+  --tb-accent-400: #{map_get(mat.$m2-deep-orange-palette, 400)};
+  --tb-accent-500: #{map_get(mat.$m2-deep-orange-palette, 500)};
+  --tb-accent-600: #{map_get(mat.$m2-deep-orange-palette, 600)};
+  --tb-accent-700: #{map_get(mat.$m2-deep-orange-palette, 700)};
+  --tb-accent-800: #{map_get(mat.$m2-deep-orange-palette, 800)};
+  --tb-accent-900: #{map_get(mat.$m2-deep-orange-palette, 900)};
+  --tb-accent-A100: #{map_get(mat.$m2-deep-orange-palette, A100)};
+  --tb-accent-A200: #{map_get(mat.$m2-deep-orange-palette, A200)};
+  --tb-accent-A400: #{map_get(mat.$m2-deep-orange-palette, A400)};
+  --tb-accent-A700: #{map_get(mat.$m2-deep-orange-palette, A700)};
+  --tb-accent-contrast-50: #{mat.m2-get-contrast-color-from-palette(mat.$m2-deep-orange-palette, 50)};
+  --tb-accent-contrast-100: #{mat.m2-get-contrast-color-from-palette(mat.$m2-deep-orange-palette, 100)};
+  --tb-accent-contrast-200: #{mat.m2-get-contrast-color-from-palette(mat.$m2-deep-orange-palette, 200)};
+  --tb-accent-contrast-300: #{mat.m2-get-contrast-color-from-palette(mat.$m2-deep-orange-palette, 300)};
+  --tb-accent-contrast-400: #{mat.m2-get-contrast-color-from-palette(mat.$m2-deep-orange-palette, 400)};
+  --tb-accent-contrast-500: #{mat.m2-get-contrast-color-from-palette(mat.$m2-deep-orange-palette, 500)};
+  --tb-accent-contrast-600: #{mat.m2-get-contrast-color-from-palette(mat.$m2-deep-orange-palette, 600)};
+  --tb-accent-contrast-700: #{mat.m2-get-contrast-color-from-palette(mat.$m2-deep-orange-palette, 700)};
+  --tb-accent-contrast-800: #{mat.m2-get-contrast-color-from-palette(mat.$m2-deep-orange-palette, 800)};
+  --tb-accent-contrast-900: #{mat.m2-get-contrast-color-from-palette(mat.$m2-deep-orange-palette, 900)};
+  --tb-accent-contrast-A100: #{mat.m2-get-contrast-color-from-palette(mat.$m2-deep-orange-palette, A100)};
+  --tb-accent-contrast-A200: #{mat.m2-get-contrast-color-from-palette(mat.$m2-deep-orange-palette, A200)};
+  --tb-accent-contrast-A400: #{mat.m2-get-contrast-color-from-palette(mat.$m2-deep-orange-palette, A400)};
+  --tb-accent-contrast-A700: #{mat.m2-get-contrast-color-from-palette(mat.$m2-deep-orange-palette, A700)};
+  --tb-primary-background-color: #fff;
+  --tb-primary-text-color: rgba(0,0,0,0.87);
+  --tb-primary-right-border: 1px solid rgba(0, 0, 0, 0.12);
+  --tb-primary-bottom-border: 1px solid rgba(0, 0, 0, 0.12);
+  --tb-menu-text-color: rgba(0, 0, 0, .76);
+  --tb-menu-border-color: rgba(0, 0, 0, .08);
+}
+
+$mat-tb-primary: (
+  50: var(--tb-primary-50),
+  100: var(--tb-primary-100),
+  200: var(--tb-primary-200),
+  300: var(--tb-primary-300),
+  400: var(--tb-primary-400),
+  500: var(--tb-primary-500),
+  600: var(--tb-primary-600),
+  700: var(--tb-primary-700),
+  800: var(--tb-primary-800),
+  900: var(--tb-primary-900),
+  A100: var(--tb-primary-A100),
+  A200: var(--tb-primary-A200),
+  A400: var(--tb-primary-A400),
+  A700: var(--tb-primary-A700),
+  contrast: (
+    50: var(--tb-primary-contrast-50),
+    100: var(--tb-primary-contrast-100),
+    200: var(--tb-primary-contrast-200),
+    300: var(--tb-primary-contrast-300),
+    400: var(--tb-primary-contrast-400),
+    500: var(--tb-primary-contrast-500),
+    600: var(--tb-primary-contrast-600),
+    700: var(--tb-primary-contrast-700),
+    800: var(--tb-primary-contrast-800),
+    900: var(--tb-primary-contrast-900),
+    A100: var(--tb-primary-contrast-A100),
+    A200: var(--tb-primary-contrast-A200),
+    A400: var(--tb-primary-contrast-A400),
+    A700: var(--tb-primary-contrast-A700)
+  )
+);
+
+$mat-tb-accent: (
+  50: var(--tb-accent-50),
+  100: var(--tb-accent-100),
+  200: var(--tb-accent-200),
+  300: var(--tb-accent-300),
+  400: var(--tb-accent-400),
+  500: var(--tb-accent-500),
+  600: var(--tb-accent-600),
+  700: var(--tb-accent-700),
+  800: var(--tb-accent-800),
+  900: var(--tb-accent-900),
+  A100: var(--tb-accent-A100),
+  A200: var(--tb-accent-A200),
+  A400: var(--tb-accent-A400),
+  A700: var(--tb-accent-A700),
+  contrast: (
+    50: var(--tb-accent-contrast-50),
+    100: var(--tb-accent-contrast-100),
+    200: var(--tb-accent-contrast-200),
+    300: var(--tb-accent-contrast-300),
+    400: var(--tb-accent-contrast-400),
+    500: var(--tb-accent-contrast-500),
+    600: var(--tb-accent-contrast-600),
+    700: var(--tb-accent-contrast-700),
+    800: var(--tb-accent-contrast-800),
+    900: var(--tb-accent-contrast-900),
+    A100: var(--tb-accent-contrast-A100),
+    A200: var(--tb-accent-contrast-A200),
+    A400: var(--tb-accent-contrast-A400),
+    A700: var(--tb-accent-contrast-A700)
+  )
+);
+
+@mixin mat-fab-toolbar-theme($theme) {
+  $primary: map-get($theme, primary);
+  $accent: map-get($theme, accent);
+  $warn: map-get($theme, warn);
+  $background: map-get($theme, background);
+  $foreground: map-get($theme, foreground);
+
+  mat-fab-toolbar {
+    .mat-fab-toolbar-background {
+      background: var(--mat-toolbar-container-background-color, var(--mat-sys-surface));
+      color: var(--mat-toolbar-container-text-color, var(--mat-sys-on-surface));
+    }
+    &.mat-primary {
+      .mat-fab-toolbar-background {
+        background: mat.m2-get-color-from-palette($primary);
+        color: mat.m2-get-color-from-palette($primary, default-contrast);
+      }
+    }
+    &.mat-accent {
+      .mat-fab-toolbar-background {
+        background: mat.m2-get-color-from-palette($accent);
+        color: mat.m2-get-color-from-palette($accent, default-contrast);
+      }
+    }
+    &.mat-warn {
+      .mat-fab-toolbar-background {
+        background: mat.m2-get-color-from-palette($warn);
+        color: mat.m2-get-color-from-palette($warn, default-contrast);
+      }
+    }
+  }
+}
+
+@mixin _mat-toolbar-inverse-color($palette) {
+  background: #fff;
+  color: rgba(black, 0.87);
+}
+
+@mixin mat-fab-toolbar-inverse-theme($theme) {
+  $primary: map-get($theme, primary);
+  $accent: map-get($theme, accent);
+  $warn: map-get($theme, warn);
+  $background: map-get($theme, foreground);
+  $foreground: map-get($theme, background);
+
+  mat-fab-toolbar {
+    .mat-fab-toolbar-background {
+      background: #fff;
+      color: mat.m2-get-color-from-palette($foreground, text);
+    }
+    &.mat-primary {
+      .mat-fab-toolbar-background {
+        @include _mat-toolbar-inverse-color($primary);
+      }
+    }
+    mat-toolbar {
+      &.mat-primary {
+        @include _mat-toolbar-inverse-color($primary);
+        button.mat-mdc-icon-button {
+          .mat-icon {
+            color: mat.m2-get-color-from-palette($primary);
+          }
+        }
+      }
+    }
+    .mat-mdc-fab {
+      &.mat-primary {
+        background: #fff;
+        color: mat.m2-get-color-from-palette($primary);
+      }
+    }
+  }
+
+}
+
+@mixin tb-components-theme($theme) {
+  $primary: map-get($theme, primary);
+  $warn: map-get($theme, warn);
+
+  mat-toolbar{
+    &.mat-hue-3 {
+      background-color: mat.m2-get-color-from-palette($primary, 'A100');
+    }
+  }
+
+  @include mat-fab-toolbar-theme($theme);
+
+  div.tb-dashboard-page.mobile-app {
+    @include mat-fab-toolbar-inverse-theme($theme);
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(203, 203, 203, 0.8);
+    &:hover {
+      background: rgba(165, 165, 165, 0.65);
+    }
+  }
+}

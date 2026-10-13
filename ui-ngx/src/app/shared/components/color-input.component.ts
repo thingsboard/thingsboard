@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2025 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   ChangeDetectorRef,
   Component,
@@ -42,18 +29,20 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { ColorPickerPanelComponent } from '@shared/components/color-picker/color-picker-panel.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 
 @Component({
-  selector: 'tb-color-input',
-  templateUrl: './color-input.component.html',
-  styleUrls: ['./color-input.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ColorInputComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-color-input',
+    templateUrl: './color-input.component.html',
+    styleUrls: ['./color-input.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ColorInputComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class ColorInputComponent extends PageComponent implements OnInit, ControlValueAccessor {
 
@@ -76,11 +65,39 @@ export class ColorInputComponent extends PageComponent implements OnInit, Contro
 
   @Input()
   @coerceBoolean()
+  colorClearPicker = false;
+
+  @Input()
+  @coerceBoolean()
+  useThemePalette = false;
+
+  @Input()
+  @coerceBoolean()
+  disableAlpha = false;
+
+  @Input()
+  @coerceBoolean()
   openOnInput = false;
 
   @Input()
   @coerceBoolean()
   noBorder = false;
+
+  @Input()
+  @coerceBoolean()
+  palettePreview = false;
+
+  @Input()
+  pickerButtonIcon: string;
+
+  @Input()
+  defaultColor: string;
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
+
+  @Input()
+  subscriptSizing: SubscriptSizing = 'fixed';
 
   private requiredValue: boolean;
   get required(): boolean {
@@ -110,7 +127,6 @@ export class ColorInputComponent extends PageComponent implements OnInit, Contro
 
   constructor(protected store: Store<AppState>,
               private dialogs: DialogService,
-              private translate: TranslateService,
               private popoverService: TbPopoverService,
               private renderer: Renderer2,
               private viewContainerRef: ViewContainerRef,
@@ -174,15 +190,15 @@ export class ColorInputComponent extends PageComponent implements OnInit, Contro
     $event.stopPropagation();
     if (!this.disabled && !this.readonly) {
       this.dialogs.colorPicker(this.colorFormGroup.get('color').value,
-          this.colorClearButton).subscribe(
-          (result) => {
-            if (!result?.canceled) {
-              this.colorFormGroup.patchValue(
-                  {color: result?.color}, {emitEvent: true}
-              );
-              this.cd.markForCheck();
-            }
+        this.colorClearButton || this.colorClearPicker, this.useThemePalette, this.disableAlpha, this.defaultColor).subscribe(
+        (result) => {
+          if (!result?.canceled) {
+            this.colorFormGroup.patchValue(
+              {color: result?.color}, {emitEvent: true}
+            );
+            this.cd.markForCheck();
           }
+        }
       );
     }
   }
@@ -205,6 +221,8 @@ export class ColorInputComponent extends PageComponent implements OnInit, Contro
           context: {
             color: this.colorFormGroup.get('color').value,
             colorClearButton: this.colorClearButton,
+            useThemePalette: this.useThemePalette,
+            disableAlpha: this.disableAlpha,
             colorCancelButton: true
           },
           showCloseButton: false,
@@ -215,7 +233,7 @@ export class ColorInputComponent extends PageComponent implements OnInit, Contro
         colorPickerPopover.tbComponentRef.instance.colorSelected.subscribe((color) => {
           colorPickerPopover.hide();
           this.colorFormGroup.patchValue(
-              {color}, {emitEvent: true}
+            {color}, {emitEvent: true}
           );
           this.cd.markForCheck();
         });
